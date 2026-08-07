@@ -490,6 +490,21 @@ public remote with a fully passing hosted CI run. Named stakeholder sign-off
 remains open.
 These are not inferred from technical evidence.
 
+## Active next product expansion
+
+The active programme adds role-specific personal workspaces, an auditable
+notification centre, managed PDF, DOCX and PPTX dissemination or approved HTTPS
+product links, effective-dated organisation and bounded workflow configuration,
+team-planning enhancements and further scoped operational statistics.
+
+This work is specified in
+[Operational Product Evolution](specs/operational-product-evolution.md) and
+sequenced in the
+[Next Product Expansion Plan](NEXT_PRODUCT_EXPANSION_PLAN.md). It is active work,
+not part of the implemented MVP baseline until accepted. No phase is complete until its own
+migrations, permission matrix, security, accessibility, browser, recovery,
+performance and named-acceptance evidence passes.
+
 ## Production readiness, intentionally separate
 
 The local MVP is not a production deployment. Production remains blocked until:
@@ -509,14 +524,17 @@ The local MVP is not a production deployment. Production remains blocked until:
 - monitoring, alerting, incident response, support and rollback owners accept the
   release.
 
-## Deferred capabilities
+## Capabilities outside the implemented baseline
 
-- binary attachments and managed file outputs;
-- external messaging, external calendar synchronisation and automatic
-  notifications;
+- role-specific personal inboxes, in-application notifications, managed product
+  files and versioned configuration are governed by the proposed next expansion
+  plan and remain unimplemented;
+- external messaging and external calendar synchronisation remain deferred until
+  separate connector specifications and threat models are approved;
 - automated classification, matching, prioritisation, routing or recommendations;
 - predictive analytics, forecasting and automated capacity optimisation;
-- external-system integration, process migration and dynamic form design.
+- unrestricted external-system integration, in-flight process migration and
+  arbitrary dynamic form or workflow design.
 
 ## Definition of complete
 

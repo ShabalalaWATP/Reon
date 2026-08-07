@@ -121,14 +121,16 @@ can be exercised. Teams never borrow OSG users.
 
 ## Complete synthetic user directory
 
-The local/test MVP contains the following 72 users. Every account uses its
+The local/test product contains the following 73 users. The original MVP's 72
+accounts remain unchanged, and `admin73` provides the independent configuration
+approval identity required by the active product evolution. Every account uses its
 sequential logon and the local-only password `admin`. All accounts start active
 except `admin16`, which is intentionally inactive for access-control testing.
 Names are synthetic fixtures borrowed from Scottish football and do not describe
 the real people. The machine-readable source of truth is `DEMO_IDENTITIES` in
 `apps/api/src/istari_service/demo_seed.py`. The directory below deliberately
-enumerates every account. Automated seed tests assert the count of 72, the exact
-`admin1` to `admin72` sequence, unique display names, role totals and at least one
+enumerates every account. Automated seed tests assert the count of 73, the exact
+`admin1` to `admin73` sequence, unique display names, role totals and at least one
 active Manager and Analyst in every team.
 
 | Logon | Display name | Representative role | Organisational assignment | Initial state |
@@ -205,6 +207,7 @@ active Manager and Analyst in every team.
 | `admin70` | Greg Taylor | Team Analyst | Grove Team | Active |
 | `admin71` | Ryan Jack | Team Manager | Prism Team | Active |
 | `admin72` | Stuart Armstrong | Team Analyst | Prism Team | Active |
+| `admin73` | Jim Leighton | Platform Administrator | Platform configuration approval | Active |
 
 ## Selection and authorisation
 

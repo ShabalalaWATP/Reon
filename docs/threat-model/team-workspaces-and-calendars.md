@@ -4,8 +4,11 @@
 
 This model covers team workspace access, membership lifecycle, calendar events,
 commitments, work packages, saved views, capacity reservations and workflow board
-projections. Protected assets include private calendar text, staffing history,
-individual availability, workload, package notes and exact team boundaries.
+projections. It also covers package templates, checklist instances, blockers,
+dependencies, iterations, handover previews and versioned capacity scenarios in
+the planning cockpit. Protected assets include private calendar text, staffing
+history, individual availability, workload, package notes and exact team
+boundaries.
 
 ## Trust boundaries
 
@@ -13,6 +16,7 @@ individual availability, workload, package notes and exact team boundaries.
 Team browser -> React team workspace -> FastAPI action policy
                                     -> PostgreSQL membership and grants
                                     -> calendar, packages and reservations
+                                    -> planning scenarios and projections
                                     -> workflow-derived request projection
 
 Only named workflow commands cross the existing outbox boundary to Camunda.
@@ -37,6 +41,13 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 | Large package history exhausts database connections | Bound package pages to 1–100 records and bulk-load contributors, dependencies, activity and reservations through a dedicated read projection |
 | Cross-team saved view leaks identifiers | Scope filters and returned rows on every execution, not only view creation |
 | Capacity reports expose private reasons | Use availability and duration only; omit event title, notes and dispute text |
+| A capacity estimate automatically assigns work | Label estimates and source freshness; require a named Manager-led assignment or handover command and never move a Camunda task from a scenario |
+| A stale planning scenario overwrites commitments | Bind preview and commit to membership, calendar, work, package and reservation versions; return a conflict when any source drifts |
+| Reassignment loses accountable handover | Preview affected tasks, packages, commitments and reservations, then record the Manager, reason, previous owner and accepted target in one transaction |
+| A dependency cycle makes planning unusable | Reject cycles in the package dependency graph and bound traversal depth and result size |
+| Blocker or checklist text leaks across teams | Apply exact-team ownership and grant policy on list, detail, notification and saved-view execution |
+| Iteration completion becomes an individual ranking | Report factual team commitment and completion only; do not create Analyst league tables, surveillance scores or inferred performance measures |
+| Planning notification exposes private calendar detail | Publish content-minimal assignment, blocker, due-risk, iteration and dispute events without event title, notes or private reasons |
 | Notes or calendar text reaches logs | Structured metadata logging with sensitive-field redaction and regression tests |
 
 ## Required evidence
@@ -51,8 +62,16 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 - Commitment acknowledgement, dispute, stale-preview and reservation tests.
 - Board invalid-transition, assignment, stale-state and Camunda-outage tests.
 - Package ownership, dependency-cycle, WIP and reservation consistency tests.
+- Template/checklist ownership, blocker ageing and iteration-boundary tests.
+- Capacity-scenario drift across leave, recurrence, transfer, active work,
+  reservations, commitments and reassignment.
+- Manager-led handover audit tests and proof that no scenario, board gesture or
+  planning notification mutates Camunda directly.
+- Planning-notification recipient and content-minimisation tests.
+- Fixed 5,000-occurrence and 2,500-package performance evidence with visible
+  source freshness.
 - Keyboard alternatives for board and calendar, 200 per cent zoom and reduced
-  motion review.
+  motion review, extended to every planning-cockpit command.
 
 ## Residual risks and gates
 
@@ -60,3 +79,6 @@ Availability and workload metadata remain sensitive even when notes are hidden.
 The pilot needs an agreed retention period, privacy notice and support procedure.
 External calendar synchronisation, email notifications and arbitrary exports are
 blocked until separately threat-modelled and approved.
+Capacity scenarios can still influence human decisions. Representative-user
+acceptance must confirm that estimates are understood as advisory and do not
+become an informal performance-ranking mechanism.

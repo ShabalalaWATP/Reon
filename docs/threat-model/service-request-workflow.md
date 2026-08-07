@@ -3,10 +3,11 @@
 ## Scope and assets
 
 Assets include synthetic user accounts, server-side sessions, submitted request
-content, workflow identifiers, organisation routes, assignments, service product
-text, dissemination records,
-feedback and append-only audit history. Camunda and PostgreSQL are trusted service
-boundaries, not browser-facing dependencies.
+content, workflow identifiers, organisation routes, assignments, action and
+notification projections, versioned product packages, managed artefacts, approved
+external links, dissemination and access records, feedback and append-only audit
+history. Camunda, PostgreSQL, private object storage and the scanner are trusted
+service boundaries, not browser-facing authorities.
 
 The Platform Administrator is a supporting principal with access to identity,
 role, team and safe configuration metadata only. Administrative status does not
@@ -17,6 +18,10 @@ grant request-content access.
 ```text
 Browser -> React -> FastAPI -> Product PostgreSQL
                          -> Camunda V2 API -> Camunda-owned storage
+Browser -> single-purpose upload intent -> private quarantine object store
+Quarantine object store -> format and malware scanner -> released object store
+Browser -> authorised short-lived grant -> private released object store
+Authenticated redirect -> approved external HTTPS destination (browser only)
 ```
 
 ## Principal threats and controls
@@ -30,6 +35,11 @@ Browser -> React -> FastAPI -> Product PostgreSQL
 | A link target changes between search and save | Revalidate target scope and released-product state in the locked source transaction |
 | Duplicate or concurrent link submissions | Source optimistic version, row locks and unique source/target/type constraint produce one winner |
 | A possible duplicate is treated as workflow truth | Keep links informational and append-only; never change Camunda variables or request state from a link |
+| An action projection becomes a second task authority | Keep source and source version on every projection; invoke only named use cases that recheck authoritative state and never mutate from the projection itself |
+| A stale action is presented as current | Return measured freshness and source version, reject stale mutations with conflict metadata and repair projections idempotently |
+| Notification retry creates duplicates | Use the source event plus recipient as a unique idempotency key and reconcile through the transactional outbox |
+| A notification leaks protected content | Store a minimum safe subject only; exclude request narrative, clarification text, product content, Customer identity and private calendar text from payloads, logs and metrics |
+| A copied notification deep link grants access | Recheck current recipient, role, object, assignment and organisation policy at the target endpoint; notification possession is never authority |
 | Administrator uses support role as a content bypass | Separate metadata ports and routes; deny administrator request list, detail and mutation policy |
 | A stolen Administrator session changes access | Require password step-up bound to that opaque session, CSRF and trusted origin; expire elevation after five minutes |
 | Elevation is replayed in another browser session | Store elevation only on the server-side session row and return only its expiry time |
@@ -56,7 +66,15 @@ Browser -> React -> FastAPI -> Product PostgreSQL
 | Direct Camunda access | Bind local ports to loopback; production uses private networking, OIDC and explicit client authorisation |
 | Sensitive data in logs | Structured event metadata only; never log passwords, cookies, CSRF tokens or request bodies |
 | Backup is missing, unreadable or incomplete | Encrypted scheduled backup, restricted restore access and evidenced restore rehearsal before pilot |
-| Malicious file upload | Binary uploads are excluded until quarantine, scanning and controlled download are implemented |
+| A forged upload intent writes an arbitrary object | Issue a short-lived single-purpose intent with a server-chosen key, size and media type; quarantine identity cannot write released storage |
+| A malicious or disguised file reaches review | Check extension, media type, magic bytes, Office structure, encryption, archive expansion and active content, then require a current clean malware result before promotion |
+| Scanner failure or stale result is treated as success | Fail closed for unknown, failed, timed-out or superseded scans; bind promotion to object checksum and scan-policy version |
+| Quarantined or released objects become public | Deny public bucket access, separate storage privileges and test unauthenticated object retrieval before release |
+| An artefact changes after approval | Bind Manager review and QC dissemination to the immutable package version and checksum; any change creates a new version and invalidates approval |
+| A guessed or shared product object is retrieved | Authorise the active Customer, dissemination and artefact lifecycle on every download before issuing a short-lived grant or stream |
+| An external product link enables SSRF | Accept constrained absolute HTTPS links but never fetch or preview them in the backend |
+| Link normalisation bypasses the allow-list | Normalise once and reject credentials, fragments, non-standard schemes, loopback, literal private-network hosts and domains outside the versioned allow-list |
+| An expired or withdrawn external product opens | Recheck recipient, release, expiry and lifecycle in the authenticated redirect and apply safe browser isolation |
 | Synthetic identity confusion | Display one environment-level mock-data notice and document that identities and public-safe sibling names are fictional; do not mark valid routes as demonstration-only |
 | Product link is guessed or shared | Serve through an authenticated, no-store application endpoint; require the originating Customer, completed state and dissemination record on every request |
 | Product response causes active-content execution | Return UTF-8 plain text with safe reference-derived attachment filename, `nosniff` and restrictive security headers |
@@ -85,6 +103,12 @@ Browser -> React -> FastAPI -> Product PostgreSQL
   pilot, use a distinct migration owner, deny runtime UPDATE and DELETE on audit
   tables, grant only required sequence/table operations, and schedule an integrity
   verification job with an owned alert path.
+- Managed artefacts cannot be enabled until file and package limits, production
+  storage region, encryption-key ownership, scanner operation, quarantine
+  response and retention have named owners and tested runbooks.
+- Approved external destinations remain third-party trust boundaries. QC must
+  attest Customer access and handling suitability; ISTARI Service cannot prove
+  the destination's continued availability or content after redirect.
 
 ## Required abuse-case evidence
 
@@ -101,9 +125,16 @@ Browser -> React -> FastAPI -> Product PostgreSQL
 - Engine outage, database rollback, outbox retry and duplicate-command tests.
 - Analyst clarification scope, repeated-loop, same-assignment, competing-open and
   process-version tests.
+- Action-source, stale-state, pagination and cross-scope deep-link tests proving
+  that action projections cannot change workflow state directly.
+- Notification event-recipient, replay, content-minimisation, revoked-access,
+  disabled-account, lag and reconciliation tests.
+- PDF, DOCX and PPTX validation and malware corpus tests, including mismatched,
+  macro-enabled, encrypted, expanded, oversized, timed-out and orphan cases.
+- Upload-intent forgery, public-object probe, immutable package version,
+  pre-release, cross-Customer, replaced and withdrawn download tests.
+- External-link scheme, credential, fragment, private-host, allow-list, expiry,
+  no-fetch and authenticated-redirect tests.
+- Object-store and scanner interruption, quarantine, cleanup and joined restore
+  rehearsals.
 - Backup restore and recovery-point verification before pilot exit.
-
-If binary files enter scope, the threat model must be revised before code is
-accepted. Type allow-lists, magic-byte validation, size limits, quarantine,
-malware scanning, immutable versions, content disposition and download
-authorisation would then become mandatory controls.

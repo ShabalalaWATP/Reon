@@ -25,6 +25,7 @@ history keep a valid actor reference.
 | `admin10` | Craig Gordon | Ops Routing User | All configured Ops groups | Active |
 | `admin15` | Angus Gunn | QC Manager | Shared QC | Active |
 | `admin16` | James Forrest | Customer | Requesting Area A | Inactive |
+| `admin73` | Jim Leighton | Platform Administrator | Platform configuration approval | Active |
 
 ## Team staffing
 

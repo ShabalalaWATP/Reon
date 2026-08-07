@@ -304,3 +304,11 @@ gates remain above 95 per cent for both lines and branches.
   both cross-platform issues and pushed commit `47a0a6b`. GitHub Actions run
   `31169475483` then passed every application, CodeQL, secret, dependency,
   licence, PostgreSQL, container, Trivy and bounded Camunda job.
+- Defined the next product expansion without relabelling it as existing
+  capability. The specification and implementation plan were subsequently
+  accepted for implementation and cover personal
+  action workspaces, durable notifications, securely scanned PDF, DOCX and PPTX
+  products or approved HTTPS links, versioned organisation and bounded workflow
+  configuration, planning enhancements and further scoped statistics. The plan
+  keeps human routing, immutable in-flight versions and the completed MVP
+  evidence intact.
