@@ -23,7 +23,12 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+          version: 0.12.0
       - run: pnpm install --frozen-lockfile
+      - run: uv sync --project apps/api --all-groups --frozen
       - run: pnpm check
       - run: pnpm smoke-contract
       - run: pwsh -File workflow/validate-bpmn.ps1
@@ -70,12 +75,12 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm audit --audit-level=high --prod
-      - run: pnpm licence-check
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           enable-cache: true
           version: 0.12.0
       - run: uv sync --project apps/api --all-groups --frozen
+      - run: pnpm licence-check
       - name: Export locked runtime dependencies
         run: >-
           uv export --project apps/api --locked --no-default-groups

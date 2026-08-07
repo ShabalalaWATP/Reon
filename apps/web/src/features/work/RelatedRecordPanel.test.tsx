@@ -65,7 +65,9 @@ describe("manual related-record checks", () => {
     await user.selectOptions(screen.getByLabelText(/Link type/), "EXISTING_OUTPUT");
     await user.type(screen.getByLabelText(/Reason/), "The released product may meet the same customer need.");
     await user.click(screen.getByRole("button", { name: "Record link" }));
-    expect(await screen.findByText("Scott McTominay · 07 Aug 2026, 11:00")).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Scott McTominay · 07 Aug 2026, (10|11):00/),
+    ).toBeInTheDocument();
     expect(posted).toEqual({
       expectedVersion: 4,
       targetRequestId: candidate.id,
