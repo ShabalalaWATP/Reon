@@ -221,10 +221,17 @@ def _team_identities() -> tuple[DemoIdentity, ...]:
     return tuple(identities)
 
 
+_APPROVER_SCOPE = "Platform configuration approval"
 DEMO_IDENTITIES = tuple(
     replace(identity, username=f"admin{index}")
     for index, identity in enumerate(
-        (*_BASE_IDENTITIES, *_ADDITIONAL_OSG_STAFF, *_team_identities()), start=1
+        (
+            *_BASE_IDENTITIES,
+            *_ADDITIONAL_OSG_STAFF,
+            *_team_identities(),
+            _identity("Jim Leighton", UserRole.PLATFORM_ADMIN, _APPROVER_SCOPE),
+        ),
+        start=1,
     )
 )
 

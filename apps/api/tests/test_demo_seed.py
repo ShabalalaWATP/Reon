@@ -52,13 +52,13 @@ async def db_session() -> AsyncIterator[AsyncSession]:
 
 
 def test_demo_identity_contract_covers_every_team() -> None:
-    assert len(DEMO_IDENTITIES) == 72
+    assert len(DEMO_IDENTITIES) == 73
     assert [identity.username for identity in DEMO_IDENTITIES] == [
-        f"admin{number}" for number in range(1, 73)
+        f"admin{number}" for number in range(1, 74)
     ]
-    assert len({identity.display_name for identity in DEMO_IDENTITIES}) == 72
+    assert len({identity.display_name for identity in DEMO_IDENTITIES}) == 73
     assert Counter(identity.role for identity in DEMO_IDENTITIES) == {
-        UserRole.PLATFORM_ADMIN: 1,
+        UserRole.PLATFORM_ADMIN: 2,
         UserRole.REQUESTER: 3,
         UserRole.INTAKE_TRIAGE: 2,
         UserRole.SERVICE_COORDINATION: 1,
@@ -166,8 +166,8 @@ async def test_seeding_inserts_fixture_and_is_idempotent(
     )
     stored = list((await db_session.scalars(select(User))).all())
 
-    assert (first, second) == (72, 0)
-    assert len(stored) == 72
+    assert (first, second) == (73, 0)
+    assert len(stored) == 73
     assert {user.username for user in stored} == {
         identity.username for identity in DEMO_IDENTITIES
     }
@@ -237,7 +237,7 @@ async def test_legacy_username_is_renamed_without_changing_user_id(
     )
 
     migrated = await db_session.scalar(select(User).where(User.username == "admin1"))
-    assert created == 71
+    assert created == 72
     assert migrated is not None
     assert migrated.id == legacy_id
     assert (migrated.display_name, migrated.role, migrated.is_active) == (
