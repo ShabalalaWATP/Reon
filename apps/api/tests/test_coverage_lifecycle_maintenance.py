@@ -9,7 +9,10 @@ from typing import Any, cast
 import pytest
 
 import istari_service.workflow_maintenance as maintenance_module
-from istari_service.workflow_maintenance import run_workflow_maintenance
+from istari_service.workflow_maintenance import (
+    WorkflowMaintenanceHealth,
+    run_workflow_maintenance,
+)
 
 
 class LoopDispatcher:
@@ -36,6 +39,19 @@ class LoopReconciler:
         if self.stop is not None:
             self.stop.set()
         return self.result
+
+
+class FlakyDispatcher:
+    def __init__(self, stop: asyncio.Event) -> None:
+        self.stop = stop
+        self.calls = 0
+
+    async def dispatch_once(self) -> bool:
+        self.calls += 1
+        if self.calls == 1:
+            raise RuntimeError("synthetic transient maintenance failure")
+        self.stop.set()
+        return False
 
 
 @pytest.mark.asyncio
@@ -92,3 +108,21 @@ async def test_maintenance_retries_after_idle_timeout(
         stop,
         interval_seconds=0.25,
     )
+
+
+@pytest.mark.asyncio
+async def test_maintenance_recovers_after_an_unexpected_iteration_failure() -> None:
+    stop = asyncio.Event()
+    dispatcher = FlakyDispatcher(stop)
+    health = WorkflowMaintenanceHealth()
+    await run_workflow_maintenance(
+        cast(Any, dispatcher),
+        cast(Any, LoopReconciler(False)),
+        stop,
+        interval_seconds=0,
+        health=health,
+    )
+    assert dispatcher.calls == 2
+    assert health.consecutive_failures == 0
+    assert health.last_failure_at is not None
+    assert health.last_success_at is not None

@@ -89,6 +89,7 @@ async def package_view(session: AsyncSession, package: ProductPackage) -> Packag
         request_id=package.request_id,
         request_reference=request.reference,
         request_title=request.title,
+        request_status=request.status,
         author_display_name=author_name,
         package_version=package.package_version,
         status=package.status,

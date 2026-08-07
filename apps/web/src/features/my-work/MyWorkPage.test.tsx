@@ -108,7 +108,7 @@ describe("My work", () => {
         if (response === 403) return json({ detail: "Denied" }, 403);
         if (response === 409) return json({ detail: "Changed" }, 409);
         if (response === 500) return json({ detail: "Unavailable" }, 500);
-        return json({ ...workspace, items: [], savedViews: [], counts: { needsMyAction: 0, waiting: 0, dueSoon: 0, recentlyCompleted: 0 }, freshness: { ...workspace.freshness, status: "CURRENT" } });
+        return json({ ...workspace, items: [], savedViews: [], counts: { needsMyAction: 0, waiting: 0, dueSoon: 0, recentlyCompleted: 0 }, freshness: { ...workspace.freshness, status: "DEGRADED", projectedAt: null, sourceChangedAt: null, pendingCount: 0 } });
       }
       throw new Error(`Unexpected ${url.pathname}`);
     }, true, true, true, false, true, false);
@@ -116,6 +116,7 @@ describe("My work", () => {
     const user = userEvent.setup();
     const empty = renderApp("/my-work");
     expect(await screen.findByRole("heading", { name: "No work in this view" })).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Starting No action update checkpoint");
     await user.type(screen.getByLabelText("Save current view"), "Unavailable view");
     await user.click(screen.getByRole("button", { name: "Save view" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Saved view changed");

@@ -17,7 +17,10 @@ from istari_service.models import (
     WorkflowOutbox,
 )
 from istari_service.work_command_types import WorkCommandType
-from istari_service.workflow.errors import WorkflowRequestRejected
+from istari_service.workflow.errors import (
+    WorkflowContractError,
+    WorkflowRequestRejected,
+)
 from istari_service.workflow.types import StartedProcess
 from istari_service.workflow_command_dispatch import WorkflowCommandDispatcher
 from istari_service.workflow_dispatch import PendingStart, WorkflowOutboxDispatcher
@@ -131,6 +134,28 @@ async def test_start_dispatcher_tolerates_instance_removed_before_recording(
     monkeypatch.setattr(dispatcher, "_lock_current_lease", current_lease)
     await dispatcher._record_success(pending, started, None)
     assert locked == [pending]
+
+
+def test_start_dispatcher_rejects_an_identity_outside_the_pending_pin() -> None:
+    pending = PendingStart(
+        outbox_id=OUTBOX_ID,
+        request_id=REQUEST_ID,
+        requester_id=REQUESTER_ID,
+        attempts=1,
+        lease_owner="synthetic-lease",
+        lease_generation=1,
+        process_id="service_request",
+        process_version=2,
+    )
+    started = StartedProcess(
+        process_instance_key="process-1",
+        process_definition_key="definition-1",
+        process_definition_id="other_process",
+        process_definition_version=3,
+        business_id=str(REQUEST_ID),
+    )
+    with pytest.raises(WorkflowContractError):
+        WorkflowOutboxDispatcher._validate_started_identity(pending, started)
 
 
 async def test_reconciler_rejects_task_with_unexpected_element(

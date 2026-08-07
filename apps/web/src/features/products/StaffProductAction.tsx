@@ -37,6 +37,9 @@ function EnabledStaffProductAction({ requestId, requestVersion, stage }: { reque
     }
     return <p className="product-inline-state product-inline-state--error">Product package is not available.</p>;
   }
+  if (role === "DELIVERY_SPECIALIST" && stage === "REWORK_REQUIRED" && productPackage.data.status !== "DRAFT") {
+    return <Link className="button button--primary button--wide" to={`/product-packages/new?requestId=${encodeURIComponent(requestId)}&version=${requestVersion}`}><PackageOpen aria-hidden="true" size={16} />Start revised package</Link>;
+  }
   const labels = { DELIVERY_SPECIALIST: "Open product package", DELIVERY_TEAM_LEAD: "Review product package", QUALITY_RELEASE: "Review and release package" } as const;
   return <Link className="button button--primary button--wide" to={`/product-packages/${productPackage.data.id}`}><PackageOpen aria-hidden="true" size={16} />{labels[role as keyof typeof labels]}</Link>;
 }

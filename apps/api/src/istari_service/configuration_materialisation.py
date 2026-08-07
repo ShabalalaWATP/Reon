@@ -28,6 +28,7 @@ from istari_service.organisation_models import (
     UserOrganisationMembership,
 )
 from istari_service.repositories.configuration_staffing import load_staffing_counts
+from istari_service.repositories.management import rebuild_organisation_closure
 
 
 async def materialise_configuration_units(
@@ -79,6 +80,7 @@ async def materialise_configuration_units(
         if unit_id not in configured_ids:
             unit.is_configured = False
     await session.flush()
+    await rebuild_organisation_closure(session)
 
 
 async def _update_team_member_scopes(

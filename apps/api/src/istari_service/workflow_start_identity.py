@@ -55,3 +55,18 @@ def pinned_start_identity_matches(
         and instance_process_version == pinned.process_version
         and instance_process_checksum == pinned.process_checksum
     )
+
+
+def returned_start_matches(
+    *,
+    expected_process_id: str,
+    expected_process_version: int,
+    actual_process_id: str,
+    actual_process_version: int,
+) -> bool:
+    """Compare a Camunda start response with the requested immutable identity."""
+
+    return actual_process_id == expected_process_id and (
+        expected_process_version == -1
+        or actual_process_version == expected_process_version
+    )

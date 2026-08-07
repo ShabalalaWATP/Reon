@@ -15,7 +15,7 @@ const artefacts: ProductArtefact[] = [
 
 const basePackage: ProductPackage = {
   id: "pkg-1", requestId: requestSummary.id, requestReference: requestSummary.reference,
-  requestTitle: requestSummary.title, authorDisplayName: "Lewis Ferguson", packageVersion: 2,
+  requestTitle: requestSummary.title, requestStatus: "IN_PROGRESS", authorDisplayName: "Lewis Ferguson", packageVersion: 2,
   status: "DRAFT", packageChecksum: null, version: 1, artefacts,
   managerApprovedAt: null, managerApprovedBy: null, disseminatedAt: null,
   disseminatedBy: null, withdrawalReason: null,
@@ -159,7 +159,7 @@ describe("managed product package journey", () => {
   });
 
   it("requires QC attestation for external links, disseminates and supports withdrawal", async () => {
-    let current: ProductPackage = { ...basePackage, status: "MANAGER_APPROVED", packageChecksum: "c".repeat(64) };
+    let current: ProductPackage = { ...basePackage, requestStatus: "READY_FOR_RELEASE", status: "MANAGER_APPROVED", packageChecksum: "c".repeat(64) };
     const actions: string[] = [];
     mockCrypto();
     mockFeatureFetch((url, init) => {
@@ -217,6 +217,32 @@ describe("managed product package journey", () => {
     });
     renderApp("/delivery/my-work");
     expect(await screen.findByRole("link", { name: "Start product package" })).toHaveAttribute("href", `/product-packages/new?requestId=${requestSummary.id}&version=7`);
+  });
+
+  it("offers a revised package when rework points at an immutable version", async () => {
+    const session = roleSession("DELIVERY_SPECIALIST");
+    mockFeatureFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(session);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
+      if (url.pathname.endsWith("/work-items")) return json({ items: [{ ...workItem, stage: "REWORK_REQUIRED", requestVersion: 8, assigneeId: session.user.id, availableActions: ["submit"] }] });
+      if (url.pathname.endsWith(`/requests/${requestSummary.id}`)) return json({ ...requestDetail, status: "REWORK_REQUIRED" });
+      if (url.pathname.endsWith(`/product-packages/by-request/${requestSummary.id}`)) return json({ ...basePackage, status: "REVIEW_READY" });
+      throw new Error(url.pathname);
+    });
+    renderApp("/delivery/my-work");
+    expect(await screen.findByRole("link", { name: "Start revised package" })).toHaveAttribute("href", `/product-packages/new?requestId=${requestSummary.id}&version=8`);
+  });
+
+  it("withholds dissemination until the workflow reaches release readiness", async () => {
+    mockFeatureFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(roleSession("QUALITY_RELEASE"));
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
+      if (url.pathname.endsWith("/product-packages/pkg-1")) return json({ ...basePackage, requestStatus: "QUALITY_REVIEW", status: "MANAGER_APPROVED", packageChecksum: "c".repeat(64) });
+      throw new Error(url.pathname);
+    });
+    renderApp("/product-packages/pkg-1");
+    expect(await screen.findByText(/Complete the workflow review/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Disseminate to Customer" })).not.toBeInTheDocument();
   });
 
   it.each([

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import exists, or_, select
+from sqlalchemy import and_, exists, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
@@ -41,6 +41,11 @@ def disseminated_product_exists() -> ColumnElement[bool]:
 def available_product_exists() -> ColumnElement[bool]:
     """Correlate either managed dissemination or a released legacy product."""
 
+    managed_product = exists(
+        select(ProductPackage.id).where(
+            ProductPackage.request_id == ServiceRequest.id,
+        )
+    )
     released_legacy_product = exists(
         select(Deliverable.id).where(
             Deliverable.request_id == ServiceRequest.id,
@@ -49,7 +54,10 @@ def available_product_exists() -> ColumnElement[bool]:
             ServiceRequest.status == RequestStatus.COMPLETED,
         )
     )
-    return or_(disseminated_product_exists(), released_legacy_product)
+    return or_(
+        disseminated_product_exists(),
+        and_(~managed_product, released_legacy_product),
+    )
 
 
 async def has_disseminated_product(session: AsyncSession, request_id: UUID) -> bool:

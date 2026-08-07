@@ -7,6 +7,7 @@ from uuid import UUID
 from anyio import to_thread
 
 from istari_service.admin_audit import append_admin_event
+from istari_service.admin_management_grants import synchronise_admin_manager_grant
 from istari_service.admin_policy import is_security_change, membership_error
 from istari_service.auth_service import PasswordHasher
 from istari_service.config import Environment, Settings
@@ -90,6 +91,14 @@ class AdminService:
             actor_id=actor.id,
         )
         await self._repository.replace_memberships(user.id, units)
+        await synchronise_admin_manager_grant(
+            self._repository.session,
+            actor_user_id=actor.id,
+            subject_user_id=user.id,
+            role=user.role,
+            team_id=units[0].id if units else None,
+            is_active=user.is_active,
+        )
         await self._repository.recalculate_teams({unit.id for unit in units})
         await self._audit(
             actor,
@@ -152,6 +161,14 @@ class AdminService:
             user.credential_version += 1
             await self._repository.revoke_sessions(user.id)
         await self._repository.replace_memberships(user.id, units)
+        await synchronise_admin_manager_grant(
+            self._repository.session,
+            actor_user_id=actor.id,
+            subject_user_id=user.id,
+            role=user.role,
+            team_id=units[0].id if units else None,
+            is_active=user.is_active,
+        )
         await self._repository.recalculate_teams(old_ids | next_ids)
         await self._audit(
             actor,
@@ -186,6 +203,14 @@ class AdminService:
         user.locked_until = None
         await self._repository.revoke_sessions(user.id)
         await self._repository.session.flush()
+        await synchronise_admin_manager_grant(
+            self._repository.session,
+            actor_user_id=actor.id,
+            subject_user_id=user.id,
+            role=user.role,
+            team_id=next(iter(team_ids), None),
+            is_active=user.is_active,
+        )
         await self._repository.recalculate_teams(team_ids)
         await self._audit(
             actor,

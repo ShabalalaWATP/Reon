@@ -56,6 +56,7 @@ from istari_service.workflow.types import (
     WorkflowTaskState,
 )
 from istari_service.workflow.variables import completion_variables
+from istari_service.workflow_start_identity import returned_start_matches
 
 T = TypeVar("T")
 Sleep = Callable[[float], Awaitable[None]]
@@ -106,7 +107,6 @@ class CamundaWorkflowEngine:
                 data.tenant_id = TenantId(command.tenant_id)
         except ValueError as exc:
             raise WorkflowContractError("invalid Camunda V2 process identity") from exc
-
         try:
             result = await self._call(
                 "start_process",
@@ -119,6 +119,13 @@ class CamundaWorkflowEngine:
             )
         if result.business_id is None or str(result.business_id) != request_id:
             raise WorkflowContractError("Camunda returned the wrong business ID")
+        if not returned_start_matches(
+            expected_process_id=command.process_definition_id,
+            expected_process_version=command.process_definition_version,
+            actual_process_id=str(result.process_definition_id),
+            actual_process_version=result.process_definition_version,
+        ):
+            raise WorkflowContractError("Camunda returned the wrong process identity")
         return StartedProcess(
             process_instance_key=str(result.process_instance_key),
             process_definition_key=str(result.process_definition_key),
@@ -128,8 +135,7 @@ class CamundaWorkflowEngine:
         )
 
     async def find_started_process(
-        self,
-        query: StartedProcessQuery,
+        self, query: StartedProcessQuery
     ) -> StartedProcess | None:
         filter_ = ProcessInstanceSearchQueryFilter(
             process_definition_id=query.process_definition_id,

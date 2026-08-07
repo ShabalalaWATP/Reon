@@ -243,9 +243,9 @@ async def seed_demo_users(
     environment: str,
     enabled: bool,
     shared_password: str | None,
+    ensure_organisation: bool = True,
 ) -> int:
     """Insert fixtures or migrate legacy usernames without overwriting admin edits."""
-
     if not enabled:
         return 0
     if environment not in {"local", "test"}:
@@ -253,8 +253,8 @@ async def seed_demo_users(
     # The literal is a public placeholder marker, never an accepted credential.
     if not shared_password or shared_password == "CHANGE_ME":  # noqa: S105  # nosec B105
         raise RuntimeError("a non-placeholder demo password is required")
-    await seed_organisation_units(session)
-
+    if ensure_organisation:
+        await seed_organisation_units(session)
     recognised_usernames = {
         username
         for identity in DEMO_IDENTITIES

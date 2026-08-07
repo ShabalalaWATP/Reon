@@ -51,6 +51,8 @@ administration dependencies.
 | Rollback erases attribution | Activate a validated superseding version and retain every prior version, approval and request pin |
 | Domain allow-list grants request-content access | Keep link-domain policy as metadata; administration never resolves released products or Customer recipients |
 | Staffing display drifts from access reality | Recalculate from active, role-qualified Manager and Analyst memberships after relevant mutations; preserve the derived result on reseed |
+| An administrator-created Team Manager lacks operational authority | Create audited exact-team management grants in the account transaction and revoke those standard grants when role, team or status changes |
+| A restart overwrites activated organisation configuration with fixtures | Restore and rematerialise the immutable active version at startup; seed the synthetic baseline only when no active configuration exists |
 | Sequential username allocation races | Allocate the next `adminN` under a database lock and retain a unique constraint as the final guard |
 | Administrative history is altered | Append canonical, prior-hash-linked audit events containing actor, target, action and metadata-only before/after state |
 | Password appears in the browser or logs | Read the local fixture password from server configuration, hash with Argon2id off the async event loop, never return it and redact credentials from logs |
@@ -86,6 +88,9 @@ administration dependencies.
 - One shared weak password prevents individual credential assurance. It is
   accepted only for an isolated synthetic local/test MVP.
 - Sequential usernames are intentionally discoverable and require no secrecy.
+- Account-only lockout can be abused to deny a predictable user access. Before a
+  connected pilot, add an approved trusted-edge source limiter or shared throttle
+  with safe proxy handling, alerting and a documented unlock procedure.
 - Local database roles do not yet provide an independent append-only enforcement
   layer for the admin audit table.
 - Before any pilot or production use, replace demo authentication with approved

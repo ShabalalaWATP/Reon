@@ -8,6 +8,7 @@ from uuid import UUID, uuid5
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from istari_service.configuration_materialisation import materialise_configuration_units
 from istari_service.configuration_models import (
     ApprovedWorkflowDefinition,
     ConfigurationCandidateGroup,
@@ -30,6 +31,7 @@ from istari_service.configuration_types import (
 )
 from istari_service.models import User, UserRole
 from istari_service.organisation_models import OrganisationKind, OrganisationUnit
+from istari_service.repositories.configuration import SqlAlchemyConfigurationRepository
 
 CONFIGURATION_NAMESPACE = UUID("69f571ac-2f72-4a86-86b0-7784f3f064b1")
 BUNDLED_BPMN_CHECKSUM = (
@@ -129,6 +131,22 @@ async def seed_baseline_configuration(session: AsyncSession) -> bool:
     registry.next_sequence = 2
     registry.version += 1
     await session.flush()
+    return True
+
+
+async def restore_active_configuration_projection(session: AsyncSession) -> bool:
+    """Restore the live organisation projection from its approved source of truth."""
+
+    registry = await session.get(ConfigurationRegistry, 1)
+    if registry is None or registry.active_version_id is None:
+        return False
+    repository = SqlAlchemyConfigurationRepository(session)
+    bundle = await repository.bundle(registry.active_version_id)
+    await materialise_configuration_units(
+        session,
+        bundle.specification(),
+        at=datetime.now(UTC),
+    )
     return True
 
 

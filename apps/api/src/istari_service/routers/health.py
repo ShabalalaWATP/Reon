@@ -14,6 +14,7 @@ from istari_service.dependencies import (
     AppSettings,
     ReadinessDatabaseSession,
     WorkflowDependency,
+    WorkflowMaintenanceDependency,
 )
 
 router = APIRouter(tags=["health"])
@@ -23,6 +24,7 @@ class ReadinessChecks(BaseModel):
     database: Literal["ok", "unavailable"]
     workflow: Literal["ok", "unavailable"]
     configuration: Literal["ok", "unavailable", "disabled"]
+    maintenance: Literal["ok", "unavailable", "disabled"]
 
 
 class ReadinessResponse(BaseModel):
@@ -41,6 +43,7 @@ async def readiness(
     session: ReadinessDatabaseSession,
     engine: WorkflowDependency,
     settings: AppSettings,
+    maintenance: WorkflowMaintenanceDependency,
 ) -> ReadinessResponse:
     try:
         await session.execute(text("SELECT 1"))
@@ -59,9 +62,15 @@ async def readiness(
     workflow_status: Literal["ok", "unavailable"] = (
         "ok" if await engine.is_reachable() else "unavailable"
     )
+    maintenance_status: Literal["ok", "unavailable", "disabled"] = (
+        "disabled"
+        if maintenance is None
+        else ("ok" if maintenance.ready else "unavailable")
+    )
     ready = (
         database_status == workflow_status == "ok"
         and configuration_status != "unavailable"
+        and maintenance_status != "unavailable"
     )
     if not ready:
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
@@ -71,5 +80,6 @@ async def readiness(
             database=database_status,
             workflow=workflow_status,
             configuration=configuration_status,
+            maintenance=maintenance_status,
         ),
     )

@@ -48,7 +48,7 @@ describe("configuration draft editors", () => {
     await user.type(screen.getByLabelText("Effective retirement"), "2026-10-01T12:00");
     await user.click(screen.getByRole("button", { name: "Save draft change" }));
     const retired = retire.mock.calls[0][0] as ConfigurationDraftInput;
-    expect(retired.units.find((unit) => unit.unitId === "unit-team")).toMatchObject({ routingEnabled: false, effectiveUntil: new Date("2026-10-01T12:00").toISOString() });
+    expect(retired.units.find((unit) => unit.unitId === "unit-team")).toMatchObject({ routingEnabled: true, effectiveUntil: new Date("2026-10-01T12:00").toISOString() });
     expect(retired.edges.find((edge) => edge.childUnitId === "unit-team")?.effectiveUntil).toBeTruthy();
   });
 

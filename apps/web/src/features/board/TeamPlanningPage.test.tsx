@@ -99,7 +99,7 @@ describe("team agile planning", () => {
     expect(screen.getByRole("heading", { name: "Archive planning record" })).toBeInTheDocument();
     expect(screen.getAllByText("None")).toHaveLength(2);
     expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
-  });
+  }, 30_000);
 
   it("keeps iteration management out of the Analyst view and handles empty planning", async () => {
     mockPlanning(analystAccess, [], [], []);

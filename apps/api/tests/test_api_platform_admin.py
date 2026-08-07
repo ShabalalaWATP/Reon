@@ -8,7 +8,9 @@ from sqlalchemy import select
 
 from conftest import ApiHarness
 from istari_service.admin_audit import verify_admin_audit_integrity
+from istari_service.admin_management_grants import STANDARD_MANAGER_GRANT_REASON
 from istari_service.admin_models import AdminAuditEvent
+from istari_service.management_models import ManagementGrant, ManagementGrantAction
 from istari_service.models import Session, User
 from istari_service.organisation_models import (
     OrganisationUnit,
@@ -191,6 +193,68 @@ async def test_status_rules_staffing_and_local_only_gate(
     unavailable = await harness.client.get("/api/v1/admin/users")
     assert unavailable.status_code == 404
     harness.settings.allow_demo_users = True
+
+
+async def test_admin_managed_team_manager_receives_and_loses_exact_authority(
+    api_harness: ApiHarness,
+) -> None:
+    harness = api_harness
+    await _admin_login(harness)
+    team_id = await harness.unit_id("OSG_TEAM")
+    created = await harness.client.post(
+        "/api/v1/admin/users",
+        json=_profile(
+            name="Synthetic Grant Manager",
+            role="DELIVERY_TEAM_LEAD",
+            scope="ignored",
+            units=[str(team_id)],
+        ),
+        headers=harness.mutation_headers(),
+    )
+    assert created.status_code == 201, created.text
+    account = created.json()
+    async with harness.sessions() as session:
+        grant = await session.scalar(
+            select(ManagementGrant).where(
+                ManagementGrant.subject_user_id == UUID(account["id"]),
+                ManagementGrant.reason == STANDARD_MANAGER_GRANT_REASON,
+                ManagementGrant.revoked_at.is_(None),
+            )
+        )
+        assert grant is not None
+        assert grant.root_unit_id == team_id
+        assert not grant.include_descendants
+        actions = set(
+            await session.scalars(
+                select(ManagementGrantAction.action).where(
+                    ManagementGrantAction.grant_id == grant.id
+                )
+            )
+        )
+        assert actions
+    updated = await harness.client.patch(
+        f"/api/v1/admin/users/{account['id']}",
+        json={
+            **_profile(
+                name="Synthetic Grant Analyst",
+                role="DELIVERY_SPECIALIST",
+                scope="ignored",
+                units=[str(team_id)],
+            ),
+            "expectedVersion": account["version"],
+        },
+        headers=harness.mutation_headers(),
+    )
+    assert updated.status_code == 200, updated.text
+    async with harness.sessions() as session:
+        active = await session.scalar(
+            select(ManagementGrant.id).where(
+                ManagementGrant.subject_user_id == UUID(account["id"]),
+                ManagementGrant.reason == STANDARD_MANAGER_GRANT_REASON,
+                ManagementGrant.revoked_at.is_(None),
+            )
+        )
+        assert active is None
 
 
 async def test_membership_compatibility_missing_objects_and_audit_integrity(

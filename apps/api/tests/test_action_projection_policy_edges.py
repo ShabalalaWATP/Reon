@@ -82,6 +82,10 @@ async def test_request_action_policy_status_branches(api_harness: ApiHarness) ->
         is ActionSection.NEEDS_MY_ACTION
     )
     assert (
+        _section(_request(RequestStatus.COMPLETED), now, "RECENTLY_COMPLETED")
+        is ActionSection.RECENTLY_COMPLETED
+    )
+    assert (
         _section(_request(RequestStatus.CANCELLED), now)
         is ActionSection.RECENTLY_COMPLETED
     )

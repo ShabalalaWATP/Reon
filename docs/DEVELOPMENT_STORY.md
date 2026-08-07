@@ -348,3 +348,17 @@ gates remain above 95 per cent for both lines and branches.
   deployed Camunda sibling routing, target object-store/scanner operation,
   multi-browser, load, recovery and named product, security, operational and UAT
   acceptance remain open in the product-evolution Definition of Done matrix.
+- A subsequent whole-product defect review hardened the release candidate at its
+  trust boundaries. Managed withdrawal is now authoritative over legacy product
+  access, cancelled or completed requests cannot mutate drafts, QC dissemination
+  is hidden until its workflow stage, and revised packages can start after rework.
+- Configuration activation now rebuilds organisation closure, restart restores
+  the immutable active projection instead of reseeding fixtures, and future-dated
+  moves and retirements preserve their current routes until effective. New Team
+  Managers receive audited exact-team grants which are revoked on role, team or
+  status changes.
+- Workflow dispatch now verifies the engine-returned process identity, recovers
+  only explicitly retryable exhausted commands, supervises maintenance failures
+  and fails readiness closed after repeated faults. Backup and restore scripts
+  use protected temporary libpq service files so database passwords do not appear
+  in child-process arguments, and the expected revision follows the actual head.

@@ -97,7 +97,7 @@ function moveUnit(draft: ConfigurationDraftInput, unitId: string, parentUnitId: 
 }
 
 function retireUnit(draft: ConfigurationDraftInput, unitId: string, effectiveUntil: string) {
-  replaceUnit(draft, unitId, { effectiveUntil, routingEnabled: false });
+  replaceUnit(draft, unitId, { effectiveUntil });
   draft.edges = draft.edges.map((edge) => edge.childUnitId === unitId && !edge.effectiveUntil ? { ...edge, effectiveUntil } : edge);
 }
 

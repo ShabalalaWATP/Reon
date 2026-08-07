@@ -6,7 +6,7 @@ param(
     [string]$EvidenceDirectory,
     [Parameter(Mandatory = $true)]
     [string]$Confirmation,
-    [string]$ExpectedRevision = '0011_operational_evidence'
+    [string]$ExpectedRevision = '0017_legacy_workflow_identity'
 )
 
 Set-StrictMode -Version Latest
@@ -23,6 +23,7 @@ foreach ($command in @('psql', 'pg_restore', 'uv')) {
         throw "$command is required."
     }
 }
+. (Join-Path $PSScriptRoot 'lib/PostgresServiceFile.ps1')
 
 $backup = (Resolve-Path -LiteralPath $BackupFile).Path
 $manifestPath = "$backup.sha256.json"
@@ -39,8 +40,13 @@ if ($LASTEXITCODE -ne 0) {
     throw 'Backup validation failed before restore.'
 }
 
+$previousServiceFile = $env:PGSERVICEFILE
+$serviceFile = New-PostgresServiceFile $env:ISTARI_RESTORE_DATABASE_URL
+$env:PGSERVICEFILE = $serviceFile
+try {
+
 $tableCount = & psql `
-    --dbname=$env:ISTARI_RESTORE_DATABASE_URL `
+    --dbname=service=istari_maintenance `
     --tuples-only `
     --no-align `
     --command="SELECT count(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public';"
@@ -52,7 +58,7 @@ if ([int]$tableCount.Trim() -ne 0) {
 }
 
 & pg_restore `
-    --dbname=$env:ISTARI_RESTORE_DATABASE_URL `
+    --dbname=service=istari_maintenance `
     --exit-on-error `
     --no-owner `
     --no-acl `
@@ -82,6 +88,11 @@ try {
 }
 finally {
     $env:DATABASE_URL = $previousDatabaseUrl
+}
+}
+finally {
+    $env:PGSERVICEFILE = $previousServiceFile
+    Remove-Item -LiteralPath $serviceFile -Force -ErrorAction SilentlyContinue
 }
 Write-Output ([pscustomobject]@{
     restored = $true

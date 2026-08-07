@@ -16,6 +16,7 @@ if (-not (Get-Command pg_dump -ErrorAction SilentlyContinue)) {
 if (-not (Get-Command pg_restore -ErrorAction SilentlyContinue)) {
     throw 'pg_restore is required.'
 }
+. (Join-Path $PSScriptRoot 'lib/PostgresServiceFile.ps1')
 
 $target = [System.IO.Path]::GetFullPath($OutputDirectory)
 if (-not (Test-Path -LiteralPath $target)) {
@@ -26,6 +27,9 @@ $stamp = [DateTimeOffset]::UtcNow.ToString('yyyyMMddTHHmmssZ')
 $temporary = Join-Path $target "istari-$stamp.dump.partial"
 $backup = Join-Path $target "istari-$stamp.dump"
 $manifest = "$backup.sha256.json"
+$previousServiceFile = $env:PGSERVICEFILE
+$serviceFile = New-PostgresServiceFile $env:ISTARI_BACKUP_DATABASE_URL
+$env:PGSERVICEFILE = $serviceFile
 
 function Protect-BackupFile([string]$Path) {
     if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) {
@@ -52,7 +56,7 @@ function Protect-BackupFile([string]$Path) {
 
 try {
     & pg_dump `
-        --dbname=$env:ISTARI_BACKUP_DATABASE_URL `
+        --dbname=service=istari_maintenance `
         --format=custom `
         --no-owner `
         --no-acl `
@@ -82,6 +86,8 @@ try {
     })
 }
 finally {
+    $env:PGSERVICEFILE = $previousServiceFile
+    Remove-Item -LiteralPath $serviceFile -Force -ErrorAction SilentlyContinue
     if (Test-Path -LiteralPath $temporary) {
         Remove-Item -LiteralPath $temporary
     }

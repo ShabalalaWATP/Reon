@@ -23,6 +23,7 @@ from istari_service.models import (
     WorkflowInstanceStatus,
     WorkflowOutbox,
 )
+from istari_service.product_models import ProductPackage
 from istari_service.repositories.configuration_pins import (
     SqlAlchemyConfigurationPinRepository,
 )
@@ -247,6 +248,13 @@ class SqlAlchemyRequestRepository:
             )
         ).one_or_none()
         if request is None or request.status is not RequestStatus.COMPLETED:
+            return None
+        managed_package = await self._session.scalar(
+            select(ProductPackage.id)
+            .where(ProductPackage.request_id == request_id)
+            .limit(1)
+        )
+        if managed_package is not None:
             return None
         deliverable = await self._session.scalar(
             select(Deliverable)

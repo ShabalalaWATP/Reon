@@ -69,6 +69,7 @@ async def project_request_action(
     actions = SqlAlchemyActionRepository(session)
     projected_at = _utc(event.created_at)
     active_keys: list[str] = []
+    action_type = await _action_type(session, request)
     for audience in await action_audiences(session, request):
         key = f"request:{request.id}:{audience.suffix}"
         active_keys.append(key)
@@ -82,8 +83,8 @@ async def project_request_action(
             candidate_role=audience.candidate_role,
             required_scope=audience.required_scope,
             organisation_unit_id=audience.organisation_unit_id,
-            section=_section(request, projected_at),
-            action_type=await _action_type(session, request),
+            section=_section(request, projected_at, action_type),
+            action_type=action_type,
             reference=request.reference,
             safe_title=request.title,
             current_owner=request.current_owner,
@@ -224,11 +225,16 @@ async def _action_type(session: AsyncSession, request: ServiceRequest) -> str:
     return ACTION_BY_STATUS.get(request.status, (None, None, "REVIEW_REQUEST"))[2]
 
 
-def _section(request: ServiceRequest, changed_at: datetime) -> ActionSection:
+def _section(
+    request: ServiceRequest,
+    changed_at: datetime,
+    action_type: str | None = None,
+) -> ActionSection:
     if _terminal(request.status):
         return (
             ActionSection.NEEDS_MY_ACTION
             if request.status is RequestStatus.COMPLETED
+            and action_type != "RECENTLY_COMPLETED"
             else ActionSection.RECENTLY_COMPLETED
         )
     if request.status is RequestStatus.ON_HOLD or request.awaiting_team_staffing:

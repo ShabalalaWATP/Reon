@@ -24,7 +24,10 @@ from istari_service.repositories.notification_projection import (
 )
 from istari_service.request_event_projection import NotificationProjectionReconciler
 from istari_service.request_notification_projection import serialise_rule
-from istari_service.workflow_maintenance import run_workflow_maintenance
+from istari_service.workflow_maintenance import (
+    WorkflowMaintenanceHealth,
+    run_workflow_maintenance,
+)
 
 
 async def _publish_pending(
@@ -188,17 +191,20 @@ async def test_maintenance_runs_optional_notification_reconciler(
 
 
 @pytest.mark.asyncio
-async def test_maintenance_propagates_notification_reconciler_failure() -> None:
+async def test_maintenance_supervises_notification_reconciler_failure() -> None:
     stop = asyncio.Event()
     failure = RuntimeError("synthetic reconciliation failure")
-    notification_reconciler = _MaintenanceStep(False, error=failure)
+    notification_reconciler = _MaintenanceStep(False, stop=stop, error=failure)
+    health = WorkflowMaintenanceHealth()
 
-    with pytest.raises(RuntimeError, match="synthetic reconciliation failure"):
-        await run_workflow_maintenance(
-            cast(Any, _MaintenanceStep(False)),
-            cast(Any, _MaintenanceStep(False)),
-            stop,
-            notification_reconciler=cast(Any, notification_reconciler),
-        )
+    await run_workflow_maintenance(
+        cast(Any, _MaintenanceStep(False)),
+        cast(Any, _MaintenanceStep(False)),
+        stop,
+        notification_reconciler=cast(Any, notification_reconciler),
+        health=health,
+    )
 
     assert notification_reconciler.calls == 1
+    assert health.consecutive_failures == 1
+    assert health.last_failure_at is not None

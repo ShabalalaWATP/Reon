@@ -91,6 +91,30 @@ services:
       - data
       - service
 
+  product-storage-init:
+    image: python:3.12-alpine3.23@sha256:601d3d3797e90e2534782e69c85fafb7971b43f24c7b1b079b7e48dd435e458d
+    user: "0:0"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        mkdir -p /var/lib/istari-products &&
+        chmod 0750 /var/lib/istari-products &&
+        chown -R 10001:10001 /var/lib/istari-products
+    network_mode: none
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - product-storage:/var/lib/istari-products
+    restart: "no"
+
   api:
     build:
       context: .
@@ -143,6 +167,8 @@ services:
       postgres:
         condition: service_healthy
       migrator:
+        condition: service_completed_successfully
+      product-storage-init:
         condition: service_completed_successfully
     restart: unless-stopped
     volumes:

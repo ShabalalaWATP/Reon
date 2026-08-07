@@ -18,6 +18,7 @@ from istari_service.repositories.auth import SqlAlchemyAuthRepository
 from istari_service.security import require_csrf
 from istari_service.team_membership_sync import synchronise_due_team_memberships
 from istari_service.workflow.engine import WorkflowEngine
+from istari_service.workflow_maintenance import WorkflowMaintenanceHealth
 
 
 def settings_from_request(request: Request) -> Settings:
@@ -26,6 +27,15 @@ def settings_from_request(request: Request) -> Settings:
 
 def workflow_from_request(request: Request) -> WorkflowEngine:
     return cast(WorkflowEngine, request.app.state.workflow_engine)
+
+
+def workflow_maintenance_from_request(
+    request: Request,
+) -> WorkflowMaintenanceHealth | None:
+    return cast(
+        WorkflowMaintenanceHealth | None,
+        getattr(request.app.state, "workflow_maintenance_health", None),
+    )
 
 
 async def database_session(request: Request) -> AsyncIterator[AsyncSession]:
@@ -64,6 +74,10 @@ ReadinessDatabaseSession = Annotated[
 ]
 AppSettings = Annotated[Settings, Depends(settings_from_request)]
 WorkflowDependency = Annotated[WorkflowEngine, Depends(workflow_from_request)]
+WorkflowMaintenanceDependency = Annotated[
+    WorkflowMaintenanceHealth | None,
+    Depends(workflow_maintenance_from_request),
+]
 
 
 def session_factory_from_request(

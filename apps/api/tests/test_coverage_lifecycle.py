@@ -34,6 +34,7 @@ def disable_organisation_seed(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(main_module, "seed_organisation_units", no_seed)
     monkeypatch.setattr(main_module, "seed_baseline_configuration", no_seed)
+    monkeypatch.setattr(main_module, "restore_active_configuration_projection", no_seed)
     monkeypatch.setattr(main_module, "initialise_admin_identity_sequence", no_seed)
     monkeypatch.setattr(main_module, "initialise_admin_audit_anchor", no_seed)
 
@@ -164,6 +165,7 @@ async def test_lifespan_passes_optional_demo_password_to_seeder(
             "environment": "test",
             "enabled": True,
             "shared_password": expected_password,
+            "ensure_organisation": False,
         }
     ]
     assert sessions.sessions[0].entered == 0
@@ -238,11 +240,13 @@ async def test_lifespan_starts_and_stops_maintenance(
         *,
         command_dispatcher: object,
         notification_reconciler: object | None,
+        health: object,
     ) -> None:
         assert actual_dispatcher is dispatcher
         assert actual_reconciler is reconciler
         assert command_dispatcher is expected_command_dispatcher
         assert notification_reconciler is None
+        assert health is application.state.workflow_maintenance_health
         lifecycle.append("started")
         await stop.wait()
         lifecycle.append("stopped")
@@ -320,6 +324,7 @@ async def test_health_and_readiness_cover_dependency_combinations(
         cast(Any, session),
         cast(Any, HealthEngineDouble(workflow_ok)),
         make_settings(),
+        None,
     )
 
     assert await health() == {"status": "ok"}
@@ -328,4 +333,5 @@ async def test_health_and_readiness_cover_dependency_combinations(
     assert result.checks.database == ("ok" if database_ok else "unavailable")
     assert result.checks.workflow == ("ok" if workflow_ok else "unavailable")
     assert result.checks.configuration == "disabled"
+    assert result.checks.maintenance == "disabled"
     assert session.rollbacks == (0 if database_ok else 1)

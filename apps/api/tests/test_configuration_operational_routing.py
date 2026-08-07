@@ -16,6 +16,7 @@ from configuration_support import (
 from conftest import ApiHarness
 from istari_service.configuration_models import RequestConfigurationPin
 from istari_service.configuration_types import CandidateGroupPurpose
+from istari_service.management_models import OrganisationClosure
 from istari_service.models import ServiceRequest
 from istari_service.organisation_models import (
     OrganisationKind,
@@ -96,6 +97,20 @@ async def test_activation_materialises_staffs_and_routes_new_team_from_pin(
         assert materialised is not None
         assert materialised.parent_id == organisation_id("NIMBUS_OPS")
         assert materialised.staffing_status is StaffingStatus.UNSTAFFED
+        closure = list(
+            await session.scalars(
+                select(OrganisationClosure).where(
+                    OrganisationClosure.descendant_id == new_team_id
+                )
+            )
+        )
+        assert any(
+            row.ancestor_id == new_team_id and row.depth == 0 for row in closure
+        )
+        assert any(
+            row.ancestor_id == organisation_id("NIMBUS_OPS") and row.depth == 1
+            for row in closure
+        )
 
     await harness.login("admin2")
     visible = await harness.client.get("/api/v1/organisation/units")

@@ -61,6 +61,9 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | A stale or repeated task action changes state | Commit a durable intent first, then recheck the active actor, scope, assignment, task, state and version immediately before dispatch |
 | API stops after the engine effect | Recover only from the exact Camunda task, expected next task or explicit terminal process state |
 | Workflow and projection drift | Recoverable command leases, expected task-element checks, bounded retry, and version/process-key-fenced reconciliation with a visible support-owned error state |
+| Recovery replays a permanent or malformed workflow failure | Requeue only exact retry-exhaustion markers for claim or completion and the exact transient start failure; preserve every other failure for support review |
+| A workflow engine returns an unexpected process after start | Compare the returned process ID and version with the immutable pending-start identity before projecting success |
+| The workflow maintenance loop dies silently | Supervise each iteration, record consecutive failures, retry transient faults and fail readiness closed after the configured threshold |
 | A terminated process is treated as a successful dissemination | Only `COMPLETED` proves a terminal human action; `TERMINATED` follows a separate support path and cannot release a product |
 | Audit history is altered | Canonical event hashes, prior-hash chaining and tested integrity verification; database-level append-only grants remain a production gate |
 | Direct Camunda access | Bind local ports to loopback; production uses private networking, OIDC and explicit client authorisation |
@@ -79,6 +82,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | An external product link enables SSRF | Accept constrained absolute HTTPS links but never fetch or preview them in the backend |
 | Link normalisation bypasses the allow-list | Normalise once and reject credentials, fragments, non-standard schemes, loopback, literal private-network hosts and domains outside the versioned allow-list |
 | An expired or withdrawn external product opens | Recheck recipient, release, expiry and lifecycle in the authenticated redirect and apply safe browser isolation |
+| A withdrawn managed package falls back to an older product endpoint | Treat the existence of any managed package as authoritative and forbid legacy availability or download fallback |
 | Synthetic identity confusion | Display one environment-level mock-data notice and document that identities and public-safe sibling names are fictional; do not mark valid routes as demonstration-only |
 | Product link is guessed or shared | Serve through an authenticated, no-store application endpoint; require the originating Customer, completed state and dissemination record on every request |
 | Product response causes active-content execution | Return UTF-8 plain text with safe reference-derived attachment filename, `nosniff` and restrictive security headers |
@@ -126,6 +130,10 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 - Approved external destinations remain third-party trust boundaries. QC must
   attest Customer access and handling suitability; ISTARI Service cannot prove
   the destination's continued availability or content after redirect.
+- Clean-object promotion and its database scan record are not yet one durable
+  atomic operation. Before production object storage is enabled, introduce a
+  persisted promotion state or transactional outbox plus orphan reconciliation,
+  and prove crash recovery between object promotion and database commit.
 
 ## Required abuse-case evidence
 

@@ -22,6 +22,7 @@ from istari_service.models import (
 from istari_service.models import WorkflowTask as StoredWorkflowTask
 from istari_service.workflow.types import WorkflowTask, WorkflowTaskState
 from istari_service.workflow_command_results import (
+    RETRY_EXHAUSTED_MESSAGE,
     RETRY_MESSAGE,
     SUPPORT_MESSAGE,
     mark_support_failure,
@@ -89,10 +90,10 @@ async def test_schedule_retry_projects_pending_and_exhausted_states(
         session, outbox, uuid4(), max_attempts=2
     )
 
-    expected = SUPPORT_MESSAGE if exhausted else RETRY_MESSAGE
+    expected = RETRY_EXHAUSTED_MESSAGE if exhausted else RETRY_MESSAGE
     assert outbox.status is (OutboxStatus.FAILED if exhausted else OutboxStatus.PENDING)
     assert outbox.last_error == expected
-    assert request.workflow_error == expected
+    assert request.workflow_error == (SUPPORT_MESSAGE if exhausted else RETRY_MESSAGE)
     expected_task = (
         WorkflowTaskStatus.ERROR if exhausted else WorkflowTaskStatus.CLAIM_PENDING
     )

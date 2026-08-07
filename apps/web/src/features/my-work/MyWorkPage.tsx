@@ -40,14 +40,20 @@ export function MyWorkPage() {
   const items = query.data.pages.flatMap((page) => page.items);
   const actionTypes = [...new Set([...items.map((item) => item.actionType), ...filters.actionTypes])].sort();
   const mutationError = createView.error ?? updateView.error ?? deleteView.error;
-  const freshness = freshnessMessage(first.freshness);
   const applyView = (view: SavedActionView) => { setFilters(view.filters); setColumns(view.visibleColumns); };
   const countAnnouncement = Object.values(first.counts).reduce((sum, value) => sum + value, 0);
+  const awaitingInitialCheckpoint = countAnnouncement === 0
+    && first.freshness.status === "DEGRADED"
+    && first.freshness.projectedAt === null
+    && first.freshness.sourceChangedAt === null;
+  const freshness = awaitingInitialCheckpoint
+    ? "No action update checkpoint has been recorded yet. This view will keep checking for changes."
+    : freshnessMessage(first.freshness);
   return <main className="page-stack my-work-page">
     <header className="page-heading"><div><span>{roleLabels[session!.user.role]}</span><h1>My work</h1><p>Your current actions, waiting items and recent progress from authorised workflow records.</p></div><Link className="button button--quiet" to="/notifications">Notifications</Link></header>
     <p className="sr-only" aria-live="polite">{countAnnouncement} work items across all sections.</p>
     <div className="work-counts" aria-label="Work counts" role="group">{actionSections.map((section) => <button className={filters.sections[0] === section ? "work-count work-count--active" : "work-count"} key={section} onClick={() => setFilters((current) => ({ ...current, sections: current.sections[0] === section ? [] : [section] }))} type="button"><span>{sectionLabels[section]}</span><strong>{first.counts[sectionCountKeys[section]]}</strong></button>)}</div>
-    {freshness ? <p className="freshness-banner" role="status"><strong>{first.freshness.pendingCount ? "Updating" : humaniseCode(first.freshness.status)}</strong> {freshness}</p> : null}
+    {freshness ? <p className="freshness-banner" role="status"><strong>{awaitingInitialCheckpoint ? "Starting" : first.freshness.pendingCount ? "Updating" : humaniseCode(first.freshness.status)}</strong> {freshness}</p> : null}
     <section className="work-tools" aria-label="Work view controls">
       <SavedViewControls columns={columns} filters={filters} onApply={applyView} onCreate={(name) => createView.mutate(name)} onDelete={(view) => deleteView.mutate(view)} onUpdate={(view) => updateView.mutate(view)} pending={createView.isPending || updateView.isPending || deleteView.isPending} selectedId={selectedView} setSelectedId={setSelectedView} views={first.savedViews} />
       <div className="work-filters"><label className="form-field"><span>Action type</span><select onChange={(event) => setFilters((current) => ({ ...current, actionTypes: event.target.value ? [event.target.value] : [] }))} value={filters.actionTypes[0] ?? ""}><option value="">All action types</option>{actionTypes.map((type) => <option key={type} value={type}>{humaniseCode(type)}</option>)}</select></label><label className="form-field"><span>Due before</span><input onChange={(event) => setFilters((current) => ({ ...current, dueBefore: event.target.value || null }))} type="date" value={filters.dueBefore ?? ""} /></label><fieldset className="column-picker"><legend>Visible columns</legend>{actionColumns.map((column) => <label key={column}><input checked={columns.includes(column)} disabled={columns.length === 1 && columns[0] === column} onChange={() => setColumns((current) => current.includes(column) ? current.filter((value) => value !== column) : [...current, column])} type="checkbox" />{columnLabels[column]}</label>)}</fieldset></div>

@@ -76,8 +76,6 @@ function CreateDraftPanel({ disabled, onCreated, source }: { disabled: boolean; 
       draft.basedOnVersionId = source.id;
       draft.effectiveFrom = new Date(effectiveFrom).toISOString();
       draft.label = label;
-      draft.units = draft.units.map((unit) => ({ ...unit, effectiveFrom: draft.effectiveFrom }));
-      draft.edges = draft.edges.map((edge) => ({ ...edge, effectiveFrom: draft.effectiveFrom }));
       return configurationApi.create(draft, session!.csrfToken);
     },
     onSuccess: (created) => onCreated(created.id),

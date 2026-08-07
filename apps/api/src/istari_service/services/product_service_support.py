@@ -8,7 +8,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from istari_service.domain import Actor
-from istari_service.models import UserRole
+from istari_service.models import RequestStatus, UserRole
 from istari_service.product_errors import (
     ProductConflict,
     ProductDependencyUnavailable,
@@ -82,6 +82,11 @@ class ProductServiceSupport:
             or actor.role is not UserRole.DELIVERY_SPECIALIST
             or request.assigned_specialist_id != actor.id
             or not ProductServiceSupport._assigned_team(actor, request)
+            or request.status
+            not in {
+                RequestStatus.IN_PROGRESS.value,
+                RequestStatus.REWORK_REQUIRED.value,
+            }
         ):
             raise ProductConflict()
 

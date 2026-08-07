@@ -7,6 +7,7 @@ from uuid import UUID
 
 from pydantic import Field
 
+from istari_service.models import RequestStatus
 from istari_service.product_types import (
     ArtefactKind,
     ArtefactLifecycle,
@@ -88,6 +89,7 @@ class PackageView(ApiModel):
     request_id: UUID
     request_reference: str
     request_title: str
+    request_status: RequestStatus
     author_display_name: str
     package_version: int
     status: PackageStatus

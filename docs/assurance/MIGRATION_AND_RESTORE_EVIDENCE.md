@@ -4,28 +4,34 @@
 
 Recorded on 7 August 2026.
 
-Migration `0011_operational_evidence` has passed an empty-database upgrade,
-metadata drift check, upgrade from `0010`, downgrade to `0010`, re-upgrade to
-head and a second drift check using the isolated SQLite compatibility harness.
-The maintenance interface then passed a dry-run retention check, restore
-verification and a deliberately unhealthy operational snapshot.
+The current migration head is `0017_legacy_workflow_identity`. The application,
+restore script and restore verifier use that same default rather than a stale
+embedded revision. Empty-database upgrade, metadata drift and downgrade/re-upgrade
+checks run through the isolated compatibility harness as release gates. The
+maintenance interface also covers dry-run retention, restore verification and a
+deliberately unhealthy operational snapshot.
 
 The PostgreSQL backup and restore controls are implemented in:
 
 - `scripts/backup-postgres.ps1`;
 - `scripts/restore-postgres.ps1`;
 - `scripts/test-operations-scripts.ps1`;
-- `apps/api/src/istari_api/restore_verification.py`.
+- `scripts/lib/PostgresServiceFile.ps1`;
+- `apps/api/src/istari_service/restore_verification.py`.
 
 The scripts require a custom-format archive, validate its catalogue, protect the
 result with a SHA-256 manifest, refuse a non-empty restore target, verify the
-checksum and run schema, row-count and audit-chain checks after restore. Static
-PowerShell parsing and control-contract checks pass.
+checksum and run schema, row-count and audit-chain checks after restore. Database
+credentials are passed to PostgreSQL tools through a permission-restricted,
+temporary libpq service file, not a password-bearing child-process argument.
+Static PowerShell parsing and control-contract checks pass.
 
-## PostgreSQL 17.9 rehearsal
+## Historical PostgreSQL 17.9 rehearsal
 
 Recorded on 7 August 2026 using two isolated, disposable containers and no
-existing development data.
+existing development data. This rehearsal covered head `0011_operational_evidence`;
+it remains historical evidence and does not replace a rehearsal at the current
+head before pilot acceptance.
 
 | Check | Result |
 | --- | --- |

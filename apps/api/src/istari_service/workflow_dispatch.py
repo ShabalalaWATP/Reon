@@ -28,6 +28,7 @@ from istari_service.repositories.event_store import append_request_event
 from istari_service.workflow.engine import WorkflowEngine
 from istari_service.workflow.errors import (
     WorkflowConflict,
+    WorkflowContractError,
     WorkflowError,
     WorkflowTaskNotVisible,
 )
@@ -88,6 +89,7 @@ class WorkflowOutboxDispatcher:
         )
         try:
             started = await self._start_idempotently(command)
+            self._validate_started_identity(pending, started)
             task = await self._find_initial_task(started)
             await self._record_success(pending, started, task)
         except WorkflowTaskNotVisible:
@@ -95,6 +97,23 @@ class WorkflowOutboxDispatcher:
         except WorkflowError:
             await self._record_retry(pending)
         return True
+
+    @staticmethod
+    def _validate_started_identity(
+        pending: PendingStart,
+        started: StartedProcess,
+    ) -> None:
+        if (
+            started.business_id != str(pending.request_id)
+            or started.process_definition_id != pending.process_id
+            or (
+                pending.process_version != -1
+                and started.process_definition_version != pending.process_version
+            )
+        ):
+            raise WorkflowContractError(
+                "The started workflow does not match the immutable request pin."
+            )
 
     async def _claim_next(self) -> PendingStart | None:
         now = datetime.now(UTC)

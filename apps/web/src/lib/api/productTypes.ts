@@ -40,6 +40,7 @@ export interface ProductPackage {
   requestId: string;
   requestReference: string;
   requestTitle: string;
+  requestStatus: string;
   packageVersion: number;
   status: ProductPackageStatus;
   packageChecksum: string | null;

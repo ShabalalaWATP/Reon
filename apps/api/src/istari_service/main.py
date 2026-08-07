@@ -21,7 +21,10 @@ from istari_service.admin_audit import initialise_admin_audit_anchor
 from istari_service.admin_sequence import initialise_admin_identity_sequence
 from istari_service.auth_service import DUMMY_HASH_INPUT, PasswordHasher
 from istari_service.config import Environment, Settings, get_settings
-from istari_service.configuration_seed import seed_baseline_configuration
+from istari_service.configuration_seed import (
+    restore_active_configuration_projection,
+    seed_baseline_configuration,
+)
 from istari_service.database import SessionFactory
 from istari_service.demo_seed import seed_demo_users
 from istari_service.errors import ServiceError
@@ -57,6 +60,7 @@ from istari_service.workflow.engine import WorkflowEngine
 from istari_service.workflow_command_dispatch import WorkflowCommandDispatcher
 from istari_service.workflow_dispatch import WorkflowOutboxDispatcher
 from istari_service.workflow_maintenance import (
+    WorkflowMaintenanceHealth,
     WorkflowReconciler,
     run_workflow_maintenance,
 )
@@ -160,7 +164,11 @@ def create_app(
         application.state.workflow_engine = engine
 
         async with sessions() as session, session.begin():
-            await seed_organisation_units(session)
+            restored_configuration = await restore_active_configuration_projection(
+                session
+            )
+            if not restored_configuration:
+                await seed_organisation_units(session)
             if configured.allow_demo_users:
                 password = (
                     configured.demo_user_password.get_secret_value()
@@ -173,14 +181,20 @@ def create_app(
                     environment=configured.environment.value,
                     enabled=True,
                     shared_password=password,
+                    ensure_organisation=False,
                 )
                 await initialise_admin_identity_sequence(session)
                 await initialise_admin_audit_anchor(session)
-            await seed_baseline_configuration(session)
+            if restored_configuration:
+                await restore_active_configuration_projection(session)
+            else:
+                await seed_baseline_configuration(session)
 
         stop = asyncio.Event()
         maintenance: asyncio.Task[None] | None = None
         if start_background_worker:
+            maintenance_health = WorkflowMaintenanceHealth()
+            application.state.workflow_maintenance_health = maintenance_health
             dispatcher = WorkflowOutboxDispatcher(
                 sessions,
                 engine,
@@ -203,6 +217,7 @@ def create_app(
                         if configured.notifications_enabled
                         else None
                     ),
+                    health=maintenance_health,
                 ),
                 name="workflow-maintenance",
             )
@@ -224,6 +239,7 @@ def create_app(
     application.state.session_factory = sessions
     application.state.password_hasher = hasher
     application.state.dummy_password_hash = hasher.hash(DUMMY_HASH_INPUT)
+    application.state.workflow_maintenance_health = None
     if managed_products is not None:
         application.state.product_runtime = managed_products
     application.add_middleware(

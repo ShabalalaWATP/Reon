@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
@@ -28,6 +29,20 @@ from istari_service.workflow.projection import (
 from istari_service.workflow.types import ActiveTaskQuery
 from istari_service.workflow_command_dispatch import WorkflowCommandDispatcher
 from istari_service.workflow_dispatch import WorkflowOutboxDispatcher
+
+LOGGER = logging.getLogger(__name__)
+
+
+@dataclass(slots=True)
+class WorkflowMaintenanceHealth:
+    running: bool = True
+    consecutive_failures: int = 0
+    last_success_at: datetime | None = None
+    last_failure_at: datetime | None = None
+
+    @property
+    def ready(self) -> bool:
+        return self.running and self.consecutive_failures < 3
 
 
 @dataclass(frozen=True, slots=True)
@@ -150,25 +165,47 @@ async def run_workflow_maintenance(
     command_dispatcher: WorkflowCommandDispatcher | None = None,
     notification_reconciler: NotificationProjectionReconciler | None = None,
     interval_seconds: float = 0.5,
+    health: WorkflowMaintenanceHealth | None = None,
 ) -> None:
     """Run bounded maintenance without delaying API liveness."""
 
-    while not stop.is_set():
-        worked = await dispatcher.dispatch_once()
-        command_worked = (
-            await command_dispatcher.dispatch_once()
-            if command_dispatcher is not None
-            else False
-        )
-        reconciled = await reconciler.reconcile_once()
-        notifications_reconciled = (
-            await notification_reconciler.reconcile_once()
-            if notification_reconciler is not None
-            else False
-        )
-        if worked or command_worked or reconciled or notifications_reconciled:
-            continue
-        try:
-            await asyncio.wait_for(stop.wait(), timeout=interval_seconds)
-        except TimeoutError:
-            continue
+    state = health or WorkflowMaintenanceHealth()
+    state.running = True
+    try:
+        while not stop.is_set():
+            try:
+                worked = await dispatcher.dispatch_once()
+                command_worked = (
+                    await command_dispatcher.dispatch_once()
+                    if command_dispatcher is not None
+                    else False
+                )
+                reconciled = await reconciler.reconcile_once()
+                notifications_reconciled = (
+                    await notification_reconciler.reconcile_once()
+                    if notification_reconciler is not None
+                    else False
+                )
+            except Exception:
+                state.consecutive_failures += 1
+                state.last_failure_at = datetime.now(UTC)
+                LOGGER.exception("Workflow maintenance iteration failed.")
+                await _wait_for_next_iteration(stop, interval_seconds)
+                continue
+            state.consecutive_failures = 0
+            state.last_success_at = datetime.now(UTC)
+            if worked or command_worked or reconciled or notifications_reconciled:
+                continue
+            await _wait_for_next_iteration(stop, interval_seconds)
+    finally:
+        state.running = False
+
+
+async def _wait_for_next_iteration(
+    stop: asyncio.Event,
+    interval_seconds: float,
+) -> None:
+    try:
+        await asyncio.wait_for(stop.wait(), timeout=interval_seconds)
+    except TimeoutError:
+        return

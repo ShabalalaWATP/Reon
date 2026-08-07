@@ -10,7 +10,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from conftest import ApiHarness
-from istari_service.configuration_models import ConfigurationWorkflowTemplate
+from istari_service.configuration_models import (
+    ConfigurationRegistry,
+    ConfigurationWorkflowTemplate,
+)
 from istari_service.domain import Actor
 from istari_service.models import RequestStatus, ServiceRequest, User
 from istari_service.product_security import AllowedHttpsLinkPolicy, SafeDocumentScanner
@@ -102,9 +105,12 @@ async def create_product_request(
         await session.flush()
         await initialise_request_route(session, request_id)
         template = await session.scalar(
-            select(ConfigurationWorkflowTemplate)
-            .order_by(ConfigurationWorkflowTemplate.created_at.desc())
-            .limit(1)
+            select(ConfigurationWorkflowTemplate).where(
+                ConfigurationWorkflowTemplate.configuration_version_id
+                == select(ConfigurationRegistry.active_version_id)
+                .where(ConfigurationRegistry.id == 1)
+                .scalar_subquery()
+            )
         )
         assert template is not None
         template.approved_link_domains = list(approved_link_domains)

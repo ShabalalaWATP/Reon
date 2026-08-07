@@ -251,16 +251,15 @@ async def test_complete_representative_workflow_and_feedback(
 
     await harness.login("admin2")
     product = await harness.client.get(f"/api/v1/requests/{request_id}/product")
-    assert product.status_code == 200
-    assert (
-        product.text == "This is a complete fictional deliverable prepared for testing."
+    assert product.status_code == 404
+    managed_product = await harness.client.get(
+        f"/api/v1/releases/requests/{request_id}"
     )
-    assert product.headers["content-type"] == "text/plain; charset=utf-8"
-    assert product.headers["content-disposition"] == (
-        f'attachment; filename="{detail.json()["reference"]}-service-product.txt"'
+    assert managed_product.status_code == 200
+    assert managed_product.json()["status"] == "DISSEMINATED"
+    assert managed_product.json()["artefacts"][0]["destinationDomain"] == (
+        "products.example.test"
     )
-    assert product.headers["cache-control"] == "no-store"
-    assert product.headers["x-content-type-options"] == "nosniff"
 
     feedback = await harness.client.post(
         f"/api/v1/requests/{request_id}/feedback",

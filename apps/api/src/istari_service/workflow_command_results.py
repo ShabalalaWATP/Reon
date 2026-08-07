@@ -25,6 +25,7 @@ from istari_service.workflow.types import WorkflowTask
 
 SUPPORT_MESSAGE = "A recorded workflow action needs support."
 RETRY_MESSAGE = "A workflow action is recorded and will be retried."
+RETRY_EXHAUSTED_MESSAGE = "Workflow retries are exhausted; support may requeue it."
 
 
 async def schedule_retry(
@@ -39,7 +40,7 @@ async def schedule_retry(
     outbox.available_at = datetime.now(UTC) + timedelta(
         seconds=min(2**outbox.attempts, 30)
     )
-    outbox.last_error = SUPPORT_MESSAGE if exhausted else RETRY_MESSAGE
+    outbox.last_error = RETRY_EXHAUSTED_MESSAGE if exhausted else RETRY_MESSAGE
     request = await session.get(ServiceRequest, outbox.request_id)
     task = await session.get(StoredWorkflowTask, work_id)
     if request is not None:
