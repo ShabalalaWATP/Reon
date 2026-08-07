@@ -112,7 +112,8 @@ The hierarchy, post-delivery assurance path and safe activation rules are define
 - [x] Pin local Camunda 8.9.14 and PostgreSQL 17 architecture.
 - [ ] Record sponsor confirmation or an explicit exception for each baseline
   decision above.
-- [ ] Select the private GitHub repository or approve continued local-only work.
+- [x] Select the GitHub repository and record its visibility and publication
+  authority.
 - [x] Create and secret-scan the reviewed local root commit before any remote
   publication.
 
@@ -484,8 +485,9 @@ images pass at high and critical severity. Captured live logs were also checked
 for known request, clarification, product, feedback and authentication values,
 with no prohibited value found.
 
-The reviewed local Git baseline is committed. A private remote or signed
-local-only exception and named stakeholder sign-off remain open.
+The reviewed Git baseline is committed and published to the explicitly selected
+public remote with a fully passing hosted CI run. Named stakeholder sign-off
+remains open.
 These are not inferred from technical evidence.
 
 ## Production readiness, intentionally separate

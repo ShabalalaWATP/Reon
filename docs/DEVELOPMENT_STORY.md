@@ -298,3 +298,9 @@ gates remain above 95 per cent for both lines and branches.
   Renamed the tests, reran all 550 backend tests and amended the unpublished root
   commit. Digest-pinned TruffleHog then scanned 513 chunks and 2,828,642 bytes of
   reachable history with zero verified or unknown finding.
+- Published the reviewed baseline to the Repository Owner's explicitly selected
+  public `ShabalalaWATP/Reon` remote. The first hosted run exposed a missing `uv`
+  setup in two Linux jobs and a timezone-dependent frontend assertion. Corrected
+  both cross-platform issues and pushed commit `47a0a6b`. GitHub Actions run
+  `31169475483` then passed every application, CodeQL, secret, dependency,
+  licence, PostgreSQL, container, Trivy and bounded Camunda job.

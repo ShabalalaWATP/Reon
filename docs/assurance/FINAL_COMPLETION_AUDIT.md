@@ -3,11 +3,11 @@
 ## Audit result
 
 Recorded on 7 August 2026. The requested MVP product capabilities are
-implemented and has a reviewed local root commit. The programme is not yet
-formally accepted because the remote or local-only exception, baseline decision
-owners, named operational ownership and human acceptance evidence remain
-outstanding. This audit does not relabel those dependencies as implementation
-defects or self-approve them.
+implemented, has a reviewed root commit, an approved remote and a fully passing
+hosted CI run. The programme is not yet formally accepted because baseline
+decision owners, named operational ownership and human acceptance evidence
+remain outstanding. This audit does not relabel those dependencies as
+implementation defects or self-approve them.
 
 ## Requested capability audit
 
@@ -58,7 +58,6 @@ The full organisation and every synthetic account are recorded in
 | Gate | Required next action | Owner needed |
 | --- | --- | --- |
 | DOD-00 | Record baseline measure targets, information-handling decision and named decision owners | Product owner |
-| DOD-01 | Approve a private remote or signed local-only exception for the committed local baseline | Repository owner |
 | DOD-43 | Replace pending role ownership with named people and accepted escalation channels | Operational owner |
 | DOD-50 to DOD-53 | Product, security, operations and representative-user acceptance | Named stakeholders |
 

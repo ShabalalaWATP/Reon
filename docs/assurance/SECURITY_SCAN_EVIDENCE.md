@@ -15,7 +15,7 @@ Recorded on 7 August 2026 against the current working tree.
 | Source secret scan | Pinned Gitleaks 8.30.0 scanned the dedicated source inventory, including docs and tests but excluding `.env`, caches, browser profiles and generated output; 2.71 MB scanned with no leak found |
 | PostgreSQL bootstrap | Migration, runtime, backup and Camunda identities were non-superuser, non-creator roles with isolated database access; read-only backup write denial passed |
 | CI static analysis | Pinned CodeQL security-extended jobs exist for Python and JavaScript/TypeScript |
-| Git history secret scan | Digest-pinned TruffleHog 3.96.0 scanned 513 chunks and 2.83 MB of reachable Git history with zero verified or unknown secret; the matching hosted CI job awaits a remote |
+| Git history secret scan | Digest-pinned TruffleHog 3.96.0 scanned reachable Git history with zero verified or unknown secret locally and in GitHub Actions run `31169475483` |
 | CI image scan | Pinned Trivy high/critical gates exist for API and web images; execution awaits the CI baseline |
 
 The reproducible source scan is `docker build --file
@@ -32,8 +32,8 @@ The Git-history gate is `docker build --file
 scripts/trufflehog-scan.Dockerfile --target gate .`. It copies only `.git` into
 the digest-pinned scanner, avoiding generated files and Docker Desktop bind-mount
 behaviour. The final local run scanned 513 chunks and 2,828,642 bytes with zero
-verified and zero unknown finding. This is local evidence; the equivalent hosted
-CI job still awaits a remote and is not represented as having run.
+verified and zero unknown finding. The pinned hosted job also passed against
+`origin/main` in GitHub Actions run `31169475483`.
 
 The final API and web reports are retained as
 `output/security/trivy-api-final.txt` and

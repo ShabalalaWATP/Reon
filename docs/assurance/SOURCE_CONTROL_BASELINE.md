@@ -34,8 +34,16 @@ It uses digest-pinned TruffleHog 3.96.0 and copies only `.git` into the scanner
 image. The final run scanned 513 chunks and 2,828,642 bytes, finding zero
 verified and zero unknown secrets.
 
-## Remaining repository decision
+## Approved remote and hosted verification
 
-No remote is configured. DOD-01 is therefore `IN PROGRESS`, not complete. The
-Repository Owner must approve a private remote and preserve this history there,
-or sign the local-only exception in the pilot baseline decision record.
+The Repository Owner directed publication to
+`https://github.com/ShabalalaWATP/Reon`. The repository visibility is `PUBLIC`.
+That visibility is recorded explicitly because private remains the default for
+new projects. This repository contains only synthetic, public-safe material and
+both current-tree and history secret gates passed before publication.
+
+Commit `47a0a6b6d3d331822c06cc7627d07ff125c5355a` was pushed to `origin/main`.
+GitHub Actions run `31169475483` completed successfully, including backend and
+frontend coverage, CodeQL, secret scanning, dependency and licence audits,
+PostgreSQL bootstrap, container builds, Trivy scans and the bounded Camunda
+smoke. DOD-01 is evidence-ready.

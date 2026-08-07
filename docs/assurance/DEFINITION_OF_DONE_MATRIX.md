@@ -15,7 +15,7 @@ defined in `docs/PROGRAMME_DEFINITIONS_OF_DONE.md`.
 | Gate | Definition of done | Required evidence | Status |
 | --- | --- | --- | --- |
 | DOD-00 | All baseline product decisions have a named owner, decision, date and rationale | `docs/decisions/PILOT_BASELINE_DECISIONS.md` with no undecided row | OPEN |
-| DOD-01 | Source control has an initial reviewed baseline and an approved private remote or a signed local-only exception | `docs/assurance/SOURCE_CONTROL_BASELINE.md`, remote record and decision entry | IN PROGRESS |
+| DOD-01 | Source control has an initial reviewed baseline and an approved remote with recorded visibility, or a signed local-only exception | `docs/assurance/SOURCE_CONTROL_BASELINE.md`, remote record and decision entry | EVIDENCE READY |
 | DOD-02 | Every feature has an accepted specification, applicable ADR and threat-model coverage | Spec/ADR/threat-model traceability review | EVIDENCE READY |
 | DOD-03 | Representative terminology is clean and every hand-written source file is at most 350 lines | `pnpm terminology` and `pnpm line-limit` | EVIDENCE READY |
 | DOD-04 | Backend and frontend independently meet 95% line and branch coverage | Aggregate pytest and Vitest coverage reports | EVIDENCE READY |
