@@ -1,0 +1,23 @@
+.app-shell { display: grid; grid-template-columns: minmax(224px, 258px) minmax(0, 1fr); min-height: 100vh; background: linear-gradient(180deg, var(--bg), var(--surface-muted)); }
+.nav-rail { position: sticky; top: 0; display: flex; flex-direction: column; align-self: start; min-height: 100vh; border-right: 1px solid var(--border); padding: 22px 16px; background: linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 100% 36px, color-mix(in srgb, var(--surface) 80%, #000 20%); }
+.shell-brand { display: grid; grid-template-columns: 42px 1fr; gap: 11px; align-items: center; min-height: 52px; margin-bottom: 28px; text-decoration: none; }
+.shell-brand img { display: block; border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 50%; box-shadow: var(--glow); }
+.shell-brand strong, .shell-brand small { display: block; }
+.shell-brand strong { font-size: 1rem; letter-spacing: .09em; }
+.shell-brand small { margin-top: 2px; color: var(--muted); font-size: .69rem; }
+.nav-rail nav { display: grid; gap: 4px; }
+.nav-link { position: relative; min-height: 40px; border-radius: var(--radius-sm); padding: 10px 12px; color: var(--muted); font-size: .88rem; font-weight: 680; text-decoration: none; transition: background var(--speed-fast), color var(--speed-fast); }
+.nav-link::before { content: ""; position: absolute; top: 9px; bottom: 9px; left: 0; width: 2px; border-radius: 9px; background: transparent; transition: background var(--speed-fast); }
+.nav-link:hover, .nav-link:focus-visible { background: color-mix(in srgb, var(--accent) 9%, transparent); color: var(--text); }
+.nav-link--active { background: color-mix(in srgb, var(--accent) 13%, transparent); color: var(--text); }
+.nav-link--active::before { background: var(--accent); }
+.nav-profile { display: grid; gap: 3px; margin-top: auto; border-top: 1px solid var(--border); padding: 18px 10px 2px; }
+.nav-profile strong { font-size: .86rem; }
+.nav-profile small { color: var(--accent); font-size: .72rem; }
+.nav-profile span { color: var(--muted); font-size: .72rem; }
+.workspace { min-width: 0; }
+.top-bar { position: sticky; z-index: 20; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 66px; border-bottom: 1px solid var(--border); padding: 0 26px; background: color-mix(in srgb, var(--bg) 84%, transparent); backdrop-filter: blur(12px); }
+.top-bar__context { color: var(--muted); font-family: var(--font-mono); font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.top-bar__actions { display: flex; align-items: center; gap: 8px; }
+.top-bar__error { position: absolute; top: calc(100% + 8px); right: 24px; margin: 0; border: 1px solid var(--critical); border-radius: var(--radius-md); padding: 9px 12px; background: var(--surface); color: var(--critical); font-size: .8rem; }
+.workspace__main { width: min(100%, 1510px); padding: clamp(22px, 3vw, 34px); }

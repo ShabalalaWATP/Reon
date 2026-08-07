@@ -1,0 +1,107 @@
+"""Customer draft use cases independent of HTTP and persistence details."""
+
+from __future__ import annotations
+
+from typing import Protocol
+from uuid import UUID
+
+from istari_service.domain import Actor
+from istari_service.errors import ObjectNotFound
+from istari_service.models import UserRole
+from istari_service.schemas.drafts import (
+    RequestDraftCreate,
+    RequestDraftSubmit,
+    RequestDraftUpdate,
+    RequestDraftView,
+)
+from istari_service.schemas.requests import RequestDetail
+
+
+class DraftRepository(Protocol):
+    async def list_for_requester(
+        self, requester_id: UUID
+    ) -> list[RequestDraftView]: ...
+    async def get(
+        self, draft_id: UUID, requester_id: UUID
+    ) -> RequestDraftView | None: ...
+    async def create(
+        self, actor: Actor, command: RequestDraftCreate
+    ) -> RequestDraftView: ...
+    async def update(
+        self, draft_id: UUID, actor: Actor, command: RequestDraftUpdate
+    ) -> RequestDraftView: ...
+    async def delete(
+        self, draft_id: UUID, requester_id: UUID, expected_version: int
+    ) -> None: ...
+    async def submit(
+        self, draft_id: UUID, actor: Actor, command: RequestDraftSubmit
+    ) -> RequestDetail: ...
+
+
+class DraftService:
+    def __init__(self, repository: DraftRepository) -> None:
+        self._repository = repository
+
+    @staticmethod
+    def _require_customer(actor: Actor) -> None:
+        if actor.role is not UserRole.REQUESTER:
+            raise ObjectNotFound()
+
+    @staticmethod
+    def _validate_scope(actor: Actor, supplied_scope: str | None) -> None:
+        if supplied_scope is not None and supplied_scope != actor.scope:
+            raise ObjectNotFound()
+
+    @classmethod
+    def _scope_create(
+        cls, actor: Actor, command: RequestDraftCreate
+    ) -> RequestDraftCreate:
+        cls._validate_scope(actor, command.requesting_business_area)
+        return command.model_copy(update={"requesting_business_area": actor.scope})
+
+    @classmethod
+    def _scope_update(
+        cls, actor: Actor, command: RequestDraftUpdate
+    ) -> RequestDraftUpdate:
+        supplied = command.requesting_business_area
+        cls._validate_scope(actor, supplied)
+        return command.model_copy(update={"requesting_business_area": actor.scope})
+
+    async def list(self, actor: Actor) -> list[RequestDraftView]:
+        self._require_customer(actor)
+        return await self._repository.list_for_requester(actor.id)
+
+    async def get(self, actor: Actor, draft_id: UUID) -> RequestDraftView:
+        self._require_customer(actor)
+        draft = await self._repository.get(draft_id, actor.id)
+        if draft is None:
+            raise ObjectNotFound()
+        return draft
+
+    async def create(
+        self, actor: Actor, command: RequestDraftCreate
+    ) -> RequestDraftView:
+        self._require_customer(actor)
+        scoped = self._scope_create(actor, command)
+        return await self._repository.create(actor, scoped)
+
+    async def update(
+        self, actor: Actor, draft_id: UUID, command: RequestDraftUpdate
+    ) -> RequestDraftView:
+        self._require_customer(actor)
+        scoped = self._scope_update(actor, command)
+        return await self._repository.update(
+            actor=actor, draft_id=draft_id, command=scoped
+        )
+
+    async def delete(self, actor: Actor, draft_id: UUID, expected_version: int) -> None:
+        self._require_customer(actor)
+        await self._repository.delete(draft_id, actor.id, expected_version)
+
+    async def submit(
+        self, actor: Actor, draft_id: UUID, command: RequestDraftSubmit
+    ) -> RequestDetail:
+        self._require_customer(actor)
+        if command.requesting_business_area != actor.scope:
+            raise ObjectNotFound()
+        return await self._repository.submit(draft_id, actor, command)

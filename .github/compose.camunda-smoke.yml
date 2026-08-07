@@ -1,0 +1,15 @@
+services:
+  postgres:
+    cpus: 1.0
+    mem_limit: 768m
+
+  camunda-data-init:
+    cpus: 0.5
+    mem_limit: 512m
+
+  orchestration:
+    cpus: 2.0
+    mem_limit: 4g
+    environment:
+      JAVA_TOOL_OPTIONS: -Xms512m -Xmx3g
+      CAMUNDA_PROCESSINSTANCECREATION_BUSINESSIDUNIQUENESSENABLED: "true"

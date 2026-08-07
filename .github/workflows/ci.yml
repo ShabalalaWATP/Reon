@@ -1,0 +1,255 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  root-static:
+    name: Root static gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ff378ebe6b225b0680b81c1ad4498ae0d1d3a5e3 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm smoke-contract
+      - run: pwsh -File workflow/validate-bpmn.ps1
+      - run: pwsh -File workflow/test-validator.ps1
+
+  frontend:
+    name: Frontend tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ff378ebe6b225b0680b81c1ad4498ae0d1d3a5e3 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @istari-service/web test
+
+  backend:
+    name: Backend static checks and tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+          version: 0.12.0
+      - run: uv sync --project apps/api --all-groups --frozen
+      - run: uv run --directory apps/api ruff format --check .
+      - run: uv run --directory apps/api ruff check .
+      - run: uv run --directory apps/api mypy
+      - run: uv run --directory apps/api bandit -c pyproject.toml -r src alembic
+      - run: uv run --directory apps/api pytest
+
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ff378ebe6b225b0680b81c1ad4498ae0d1d3a5e3 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --audit-level=high --prod
+      - run: pnpm licence-check
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+          version: 0.12.0
+      - run: uv sync --project apps/api --all-groups --frozen
+      - name: Export locked runtime dependencies
+        run: >-
+          uv export --project apps/api --locked --no-default-groups
+          --no-emit-project --format requirements-txt --quiet
+          --output-file "${RUNNER_TEMP}/api-requirements.txt"
+      - run: >-
+          uv run --directory apps/api pip-audit --strict
+          --requirement "${RUNNER_TEMP}/api-requirements.txt"
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: trufflesecurity/trufflehog@6f3c981e7b77f235fd2702dd74af25fc4b72bf11 # v3.96.0
+        with:
+          version: 3.96.0
+          extra_args: --results=verified,unknown
+
+  dependency-review:
+    name: Pull request dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
+        with:
+          fail-on-severity: high
+
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, python]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: github/codeql-action/init@24c7eb380a2dc368f2d129e4c65e51d172983a1e # v4
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended
+      - uses: github/codeql-action/analyze@24c7eb380a2dc368f2d129e4c65e51d172983a1e # v4
+
+  postgres-component:
+    name: PostgreSQL bootstrap component
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: shellcheck infra/postgres/*.sh
+      - run: bash infra/postgres/test-init-databases.sh
+
+  camunda-smoke:
+    name: Bounded Camunda V2 smoke
+    needs: [root-static, postgres-component]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      COMPOSE_PROJECT_NAME: istari-camunda-smoke
+      APP_DATABASE_NAME: app_smoke
+      APP_DATABASE_USER: app_smoke_owner
+      APP_RUNTIME_DATABASE_USER: app_smoke
+      APP_BACKUP_DATABASE_USER: app_smoke_backup
+      CAMUNDA_DATABASE_NAME: camunda_smoke
+      CAMUNDA_DATABASE_USER: camunda_smoke
+      ENVIRONMENT: local
+      SESSION_COOKIE_SECURE: "false"
+      WEB_ORIGIN: http://127.0.0.1:5173
+      ALLOW_DEMO_USERS: "true"
+      POSTGRES_HOST_PORT: "55432"
+      CAMUNDA_HOST_PORT: "18080"
+      CAMUNDA_MANAGEMENT_HOST_PORT: "19600"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Generate job-scoped credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          admin_password="$(openssl rand -hex 24)"
+          app_password="$(openssl rand -hex 24)"
+          runtime_password="$(openssl rand -hex 24)"
+          backup_password="$(openssl rand -hex 24)"
+          camunda_password="$(openssl rand -hex 24)"
+          demo_password="$(openssl rand -hex 24)"
+          audit_key="$(openssl rand -hex 32)"
+          migration_url="postgresql+asyncpg://app_smoke_owner:${app_password}@postgres:5432/app_smoke"
+          database_url="postgresql+asyncpg://app_smoke:${runtime_password}@postgres:5432/app_smoke"
+          for value in "$admin_password" "$app_password" "$runtime_password" "$backup_password" "$camunda_password" "$demo_password" "$audit_key" "$migration_url" "$database_url"; do
+            printf '::add-mask::%s\n' "$value"
+          done
+          {
+            printf 'POSTGRES_ADMIN_PASSWORD=%s\n' "$admin_password"
+            printf 'APP_DATABASE_PASSWORD=%s\n' "$app_password"
+            printf 'APP_RUNTIME_DATABASE_PASSWORD=%s\n' "$runtime_password"
+            printf 'APP_BACKUP_DATABASE_PASSWORD=%s\n' "$backup_password"
+            printf 'CAMUNDA_DATABASE_PASSWORD=%s\n' "$camunda_password"
+            printf 'DEMO_USER_PASSWORD=%s\n' "$demo_password"
+            printf 'AUDIT_HMAC_KEY=%s\n' "$audit_key"
+            printf 'MIGRATION_DATABASE_URL=%s\n' "$migration_url"
+            printf 'DATABASE_URL=%s\n' "$database_url"
+          } >> "$GITHUB_ENV"
+      - name: Start pinned data and workflow services
+        run: >-
+          timeout --signal=TERM --kill-after=10s 6m docker compose
+          -f docker-compose.yml -f .github/compose.camunda-smoke.yml
+          up --detach --wait --wait-timeout 330 postgres orchestration
+      - name: Exercise staffed completion and unstaffed destination routes
+        shell: pwsh
+        run: >-
+          ./scripts/smoke-camunda.ps1 -BaseUri http://127.0.0.1:18080
+          -MaxAttempts 8 -RetryDelaySeconds 1
+      - name: Capture bounded diagnostics
+        if: failure()
+        run: |
+          timeout --signal=TERM --kill-after=10s 30s docker compose \
+            -f docker-compose.yml -f .github/compose.camunda-smoke.yml \
+            ps || true
+          timeout --signal=TERM --kill-after=10s 45s docker compose \
+            -f docker-compose.yml -f .github/compose.camunda-smoke.yml \
+            logs --no-color --tail 150 orchestration postgres || true
+      - name: Tear down smoke services
+        if: always()
+        run: >-
+          timeout --signal=TERM --kill-after=10s 90s docker compose
+          -f docker-compose.yml -f .github/compose.camunda-smoke.yml
+          down --volumes --remove-orphans --timeout 20
+
+  container-config:
+    name: Container and Compose validation
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_ADMIN_PASSWORD: ci-admin-validation-only
+      APP_DATABASE_NAME: app_validation
+      APP_DATABASE_USER: app_validation_owner
+      APP_DATABASE_PASSWORD: ci-app-validation-only
+      APP_RUNTIME_DATABASE_USER: app_validation
+      APP_RUNTIME_DATABASE_PASSWORD: ci-runtime-validation-only
+      APP_BACKUP_DATABASE_USER: app_validation_backup
+      APP_BACKUP_DATABASE_PASSWORD: ci-backup-validation-only
+      MIGRATION_DATABASE_URL: postgresql+asyncpg://app_validation_owner:ci-app-validation-only@postgres:5432/app_validation
+      DATABASE_URL: postgresql+asyncpg://app_validation:ci-runtime-validation-only@postgres:5432/app_validation
+      CAMUNDA_DATABASE_NAME: camunda_validation
+      CAMUNDA_DATABASE_USER: camunda_validation
+      CAMUNDA_DATABASE_PASSWORD: ci-camunda-validation-only
+      ENVIRONMENT: local
+      SESSION_COOKIE_SECURE: "false"
+      WEB_ORIGIN: http://127.0.0.1:5173
+      ALLOW_DEMO_USERS: "true"
+      DEMO_USER_PASSWORD: ci-demo-validation-only
+      AUDIT_HMAC_KEY: ci-audit-validation-only-at-least-32-bytes
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: docker compose config --quiet
+      - run: docker compose build api web
+      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: istari-service-local-api
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: istari-service-local-web
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+# The bounded smoke job starts the data and workflow services only. Full product
+# topology and browser journeys remain separate verification stages.

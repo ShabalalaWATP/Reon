@@ -1,0 +1,100 @@
+"""Content-free, table-first operational statistics contract."""
+
+from __future__ import annotations
+
+from datetime import date, datetime
+from typing import Literal
+from uuid import UUID
+
+from pydantic import Field
+
+from istari_service.analytics_models import ProjectionHealth
+from istari_service.organisation_models import OrganisationKind
+from istari_service.schemas.common import ApiModel
+
+
+class StatisticsScope(ApiModel):
+    id: str
+    unit_id: UUID | None
+    name: str
+    kind: OrganisationKind | Literal["PLATFORM"]
+    include_descendants: bool
+
+
+class StatisticsScopeList(ApiModel):
+    items: list[StatisticsScope]
+
+
+class StatisticsRange(ApiModel):
+    from_date: date
+    to_date: date
+    time_zone: str
+    as_of_date: date
+
+
+class ProjectionFreshness(ApiModel):
+    health: ProjectionHealth
+    last_projected_at: datetime | None
+    source_event_count: int = Field(ge=0)
+    projected_request_count: int = Field(ge=0)
+
+
+class MetricDefinition(ApiModel):
+    key: str
+    label: str
+    description: str
+
+
+class SummaryMetric(ApiModel):
+    key: str
+    label: str
+    value: int | float | None
+    unit: Literal["count", "percentage", "rating", "hours"]
+    suppressed: bool = False
+
+
+class CategoryCount(ApiModel):
+    key: str
+    label: str
+    count: int = Field(ge=0)
+
+
+class DailyThroughput(ApiModel):
+    date: date
+    received: int = Field(ge=0)
+    completed: int = Field(ge=0)
+
+
+class StageDuration(ApiModel):
+    key: str
+    label: str
+    completed_intervals: int = Field(ge=0)
+    median_hours: float
+    p90_hours: float
+
+
+class ChildUnitComparison(ApiModel):
+    unit_id: UUID
+    name: str
+    kind: OrganisationKind
+    received: int = Field(ge=0)
+    active: int = Field(ge=0)
+    completed: int = Field(ge=0)
+    overdue: int = Field(ge=0)
+    feedback_count: int = Field(ge=0)
+    average_rating: float | None
+    rating_suppressed: bool
+
+
+class StatisticsDashboard(ApiModel):
+    scope: StatisticsScope
+    range: StatisticsRange
+    freshness: ProjectionFreshness
+    definitions: list[MetricDefinition]
+    summary: list[SummaryMetric]
+    status: list[CategoryCount]
+    age: list[CategoryCount]
+    due_risk: list[CategoryCount]
+    throughput: list[DailyThroughput]
+    stage_durations: list[StageDuration]
+    children: list[ChildUnitComparison]

@@ -1,0 +1,39 @@
+# Local development only. The API is deliberately unprotected and must remain
+# reachable only through the loopback binding in docker-compose.yml.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
+camunda:
+  process-instance-creation:
+    business-id-uniqueness-enabled: true
+  backup:
+    webapps:
+      enabled: false
+  system:
+    cpu-thread-count: "2"
+    io-thread-count: "2"
+  security:
+    authentication:
+      method: basic
+      unprotected-api: true
+    authorizations:
+      enabled: false
+  data:
+    secondary-storage:
+      type: rdbms
+      rdbms:
+        url: jdbc:postgresql://postgres:5432/${CAMUNDA_DATABASE_NAME}
+        username: ${CAMUNDA_DATABASE_USER}
+        password: ${CAMUNDA_DATABASE_PASSWORD}
+        flush-interval: PT0.5S
+        queue-size: 1000
+  mcp:
+    enabled: false

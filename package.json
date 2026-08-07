@@ -1,0 +1,21 @@
+{
+  "name": "istari-service",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "pnpm --filter @istari-service/web build",
+    "check": "pnpm quality-gate-tests && pnpm line-limit && pnpm terminology && pnpm operations-contract && pnpm licence-check && pnpm --filter @istari-service/web typecheck && pnpm --filter @istari-service/web lint",
+    "line-limit": "node scripts/check-file-lines.mjs",
+    "licence-check": "pwsh -File scripts/check-licences.ps1",
+    "operations-contract": "pwsh -File scripts/test-operations-scripts.ps1",
+    "quality-gate-tests": "node scripts/test-quality-gates.mjs",
+    "smoke-contract": "node scripts/test-smoke-camunda.mjs",
+    "terminology": "node scripts/check-terminology.mjs",
+    "test": "pnpm --filter @istari-service/web test"
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=11"
+  },
+  "packageManager": "pnpm@11.16.0"
+}

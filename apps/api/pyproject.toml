@@ -1,0 +1,127 @@
+[project]
+name = "istari-service-api"
+version = "0.1.0"
+description = "FastAPI service for the synthetic ISTARI service-request demonstration."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "alembic>=1.16.4,<2",
+  "argon2-cffi>=25.1,<26",
+  "asyncpg>=0.30,<1",
+  "camunda-orchestration-sdk==9.0.1",
+  "fastapi>=0.116,<1",
+  "httpx>=0.28,<1",
+  "pydantic[email]>=2.11,<3",
+  "pydantic-settings>=2.10,<3",
+  "sqlalchemy[asyncio]>=2.0.41,<3",
+  "tzdata>=2025.2,<2027",
+  "uvicorn[standard]>=0.35,<1",
+]
+
+[project.scripts]
+istari-maintenance = "istari_service.maintenance:main"
+
+[dependency-groups]
+dev = [
+  "bandit>=1.8.6,<2",
+  "mypy>=1.17,<2",
+  "pip-licenses>=5.5,<6",
+  "pip-audit>=2.9,<3",
+  "ruff>=0.12,<1",
+]
+test = [
+  "aiosqlite>=0.21,<1",
+  "pytest>=9.0.3,<10",
+  "pytest-asyncio>=1.1,<2",
+  "pytest-cov>=6.2,<7",
+]
+
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/istari_service"]
+
+[tool.uv]
+build-constraint-dependencies = ["hatchling==1.27.0"]
+default-groups = ["dev", "test"]
+
+[tool.pytest.ini_options]
+addopts = [
+  "--strict-config",
+  "--strict-markers",
+  "--cov=istari_service",
+  "--cov-branch",
+  "--cov-report=term-missing",
+  "--cov-report=json:coverage.json",
+  "--cov-report=xml",
+  "--cov-fail-under=95",
+]
+asyncio_default_fixture_loop_scope = "function"
+asyncio_mode = "auto"
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+concurrency = ["greenlet", "thread"]
+source = ["istari_service"]
+
+[tool.coverage.report]
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+  "raise NotImplementedError",
+]
+fail_under = 95
+show_missing = true
+
+[tool.ruff]
+line-length = 88
+src = ["src", "tests"]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+  "ARG",
+  "ASYNC",
+  "B",
+  "C4",
+  "DTZ",
+  "E",
+  "F",
+  "I",
+  "PIE",
+  "RUF",
+  "S",
+  "SIM",
+  "UP",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"alembic/versions/*.py" = ["E501"]
+"tests/**/*.py" = ["S101", "S105", "S106"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["istari_service"]
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+files = ["src", "alembic/env.py"]
+no_implicit_reexport = true
+plugins = ["pydantic.mypy"]
+python_version = "3.12"
+show_error_codes = true
+strict_equality = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
+
+[tool.bandit]
+exclude_dirs = [".venv", "tests"]

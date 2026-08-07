@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" id="service_request_definitions" targetNamespace="http://example.test/service-request" exporter="Camunda Modeler" exporterVersion="5.39.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <bpmn:process id="service-request-v1" name="Service request delivery" isExecutable="true">
+    <bpmn:documentation>Workflow variables are restricted to requestId, requesterId, assignedDeliveryTeamId, assignedSpecialistId, selectedCommandId, selectedCommandCandidateGroup, selectedOpsId, selectedOpsCandidateGroup, selectedTeamId, selectedTeamManagerCandidateGroup, selectedTeamAnalystCandidateGroup and the named decision values on outgoing gateways. Request and clarification content, reasons and security context remain in product storage.</bpmn:documentation>
+    <bpmn:startEvent id="request_submitted" name="Request submitted">
+      <bpmn:outgoing>flow_start_intake</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="intake_review" name="JIOC Routing">
+      <bpmn:extensionElements><zeebe:assignmentDefinition candidateGroups="jioc-routing" /><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>flow_start_intake</bpmn:incoming><bpmn:outgoing>flow_intake_gateway</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="intake_outcome" name="Intake outcome">
+      <bpmn:incoming>flow_intake_gateway</bpmn:incoming>
+      <bpmn:outgoing>flow_intake_information</bpmn:outgoing><bpmn:outgoing>flow_intake_close</bpmn:outgoing><bpmn:outgoing>flow_intake_progress</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="requester_response" name="Provide requested information">
+      <bpmn:extensionElements><zeebe:assignmentDefinition assignee="= requesterId" /><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>flow_intake_information</bpmn:incoming><bpmn:outgoing>flow_information_gateway</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="requester_outcome" name="Requester outcome">
+      <bpmn:incoming>flow_information_gateway</bpmn:incoming>
+      <bpmn:outgoing>flow_information_resubmit</bpmn:outgoing><bpmn:outgoing>flow_information_withdraw</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="coordination_review" name="Command Routing">
+      <bpmn:extensionElements><zeebe:assignmentDefinition candidateGroups="= selectedCommandCandidateGroup" /><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>flow_intake_progress</bpmn:incoming><bpmn:incoming>flow_hold_resume</bpmn:incoming><bpmn:incoming>flow_allocation_return</bpmn:incoming><bpmn:outgoing>flow_coordination_gateway</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="coordination_outcome" name="Coordination outcome">
+      <bpmn:incoming>flow_coordination_gateway</bpmn:incoming>
+      <bpmn:outgoing>flow_coordination_return</bpmn:outgoing><bpmn:outgoing>flow_coordination_hold</bpmn:outgoing><bpmn:outgoing>flow_coordination_close</bpmn:outgoing><bpmn:outgoing>flow_coordination_allocate</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="on_hold" name="Resolve coordination hold">
+      <bpmn:extensionElements><zeebe:assignmentDefinition candidateGroups="= selectedCommandCandidateGroup" /><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>flow_coordination_hold</bpmn:incoming><bpmn:outgoing>flow_hold_gateway</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="hold_outcome" name="Hold outcome">
+      <bpmn:incoming>flow_hold_gateway</bpmn:incoming><bpmn:outgoing>flow_hold_resume</bpmn:outgoing><bpmn:outgoing>flow_hold_close</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="allocation_review" name="Ops Routing">
+      <bpmn:extensionElements><zeebe:assignmentDefinition candidateGroups="= selectedOpsCandidateGroup" /><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>flow_coordination_allocate</bpmn:incoming><bpmn:incoming>flow_planning_reallocate</bpmn:incoming><bpmn:outgoing>flow_allocation_gateway</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="allocation_outcome" name="Allocation outcome">
+      <bpmn:incoming>flow_allocation_gateway</bpmn:incoming><bpmn:outgoing>flow_allocation_return</bpmn:outgoing><bpmn:outgoing>flow_allocation_plan</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="delivery_planning" name="Team Assignment">
+      <bpmn:extensionElements><zeebe:assignmentDefinition candidateGroups="= selectedTeamManagerCandidateGroup" /><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>flow_allocation_plan</bpmn:incoming><bpmn:outgoing>flow_planning_gateway</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="planning_outcome" name="Planning outcome">
+      <bpmn:incoming>flow_planning_gateway</bpmn:incoming><bpmn:outgoing>flow_planning_reallocate</bpmn:outgoing><bpmn:outgoing>flow_planning_delivery</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="delivery_work" name="Product Production">
+      <bpmn:extensionElements><zeebe:assignmentDefinition assignee="= assignedSpecialistId" candidateGroups="= selectedTeamAnalystCandidateGroup" /><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>flow_planning_delivery</bpmn:incoming><bpmn:incoming>flow_lead_rework</bpmn:incoming><bpmn:incoming>flow_quality_rework</bpmn:incoming><bpmn:incoming>flow_clarification_resume</bpmn:incoming><bpmn:outgoing>flow_delivery_gateway</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="delivery_outcome" name="Production outcome">
+      <bpmn:incoming>flow_delivery_gateway</bpmn:incoming><bpmn:outgoing>flow_delivery_lead</bpmn:outgoing><bpmn:outgoing>flow_delivery_clarification</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="customer_clarification_response" name="Provide production information">
+      <bpmn:extensionElements><zeebe:assignmentDefinition assignee="= requesterId" /><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>flow_delivery_clarification</bpmn:incoming><bpmn:outgoing>flow_clarification_gateway</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="clarification_outcome" name="Clarification outcome">
+      <bpmn:incoming>flow_clarification_gateway</bpmn:incoming><bpmn:outgoing>flow_clarification_resume</bpmn:outgoing><bpmn:outgoing>flow_clarification_withdraw</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="lead_review" name="Manager Review">
+      <bpmn:extensionElements><zeebe:assignmentDefinition candidateGroups="= selectedTeamManagerCandidateGroup" /><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>flow_delivery_lead</bpmn:incoming><bpmn:outgoing>flow_lead_gateway</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="lead_review_outcome" name="Lead review outcome">
+      <bpmn:incoming>flow_lead_gateway</bpmn:incoming><bpmn:outgoing>flow_lead_rework</bpmn:outgoing><bpmn:outgoing>flow_lead_quality</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="quality_review" name="QC Review">
+      <bpmn:extensionElements><zeebe:assignmentDefinition candidateGroups="qc-managers" /><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>flow_lead_quality</bpmn:incoming><bpmn:outgoing>flow_quality_gateway</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="quality_outcome" name="Quality outcome">
+      <bpmn:incoming>flow_quality_gateway</bpmn:incoming><bpmn:outgoing>flow_quality_rework</bpmn:outgoing><bpmn:outgoing>flow_quality_release</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="release" name="Dissemination">
+      <bpmn:extensionElements><zeebe:assignmentDefinition candidateGroups="qc-managers" /><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>flow_quality_release</bpmn:incoming><bpmn:outgoing>flow_release_completed</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="completed" name="Completed"><bpmn:incoming>flow_release_completed</bpmn:incoming></bpmn:endEvent>
+    <bpmn:endEvent id="closed" name="Closed without delivery"><bpmn:incoming>flow_intake_close</bpmn:incoming><bpmn:incoming>flow_coordination_close</bpmn:incoming><bpmn:incoming>flow_hold_close</bpmn:incoming></bpmn:endEvent>
+    <bpmn:endEvent id="cancelled" name="Cancelled"><bpmn:incoming>flow_information_withdraw</bpmn:incoming><bpmn:incoming>flow_clarification_withdraw</bpmn:incoming></bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="flow_start_intake" sourceRef="request_submitted" targetRef="intake_review" />
+    <bpmn:sequenceFlow id="flow_intake_gateway" sourceRef="intake_review" targetRef="intake_outcome" />
+    <bpmn:sequenceFlow id="flow_intake_information" name="Request information" sourceRef="intake_outcome" targetRef="requester_response"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= intakeDecision = "request_information"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_intake_close" name="Close" sourceRef="intake_outcome" targetRef="closed"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= intakeDecision = "close"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_intake_progress" name="Progress" sourceRef="intake_outcome" targetRef="coordination_review"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= intakeDecision = "progress"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_information_gateway" sourceRef="requester_response" targetRef="requester_outcome" />
+    <bpmn:sequenceFlow id="flow_information_resubmit" name="Provide information" sourceRef="requester_outcome" targetRef="intake_review"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= requesterDecision = "provide_information"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_information_withdraw" name="Withdraw" sourceRef="requester_outcome" targetRef="cancelled"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= requesterDecision = "withdraw"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_coordination_gateway" sourceRef="coordination_review" targetRef="coordination_outcome" />
+    <bpmn:sequenceFlow id="flow_coordination_return" name="Return to intake" sourceRef="coordination_outcome" targetRef="intake_review"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= coordinationDecision = "return_to_triage"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_coordination_hold" name="Hold" sourceRef="coordination_outcome" targetRef="on_hold"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= coordinationDecision = "hold"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_coordination_close" name="Close" sourceRef="coordination_outcome" targetRef="closed"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= coordinationDecision = "close"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_coordination_allocate" name="Send to allocation" sourceRef="coordination_outcome" targetRef="allocation_review"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= coordinationDecision = "send_to_allocation"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_hold_gateway" sourceRef="on_hold" targetRef="hold_outcome" />
+    <bpmn:sequenceFlow id="flow_hold_resume" name="Resume" sourceRef="hold_outcome" targetRef="coordination_review"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= holdDecision = "resume"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_hold_close" name="Close" sourceRef="hold_outcome" targetRef="closed"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= holdDecision = "close"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_allocation_gateway" sourceRef="allocation_review" targetRef="allocation_outcome" />
+    <bpmn:sequenceFlow id="flow_allocation_return" name="Return to coordination" sourceRef="allocation_outcome" targetRef="coordination_review"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= allocationDecision = "return_to_coordination"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_allocation_plan" name="Allocate" sourceRef="allocation_outcome" targetRef="delivery_planning"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= allocationDecision = "allocate"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_planning_gateway" sourceRef="delivery_planning" targetRef="planning_outcome" />
+    <bpmn:sequenceFlow id="flow_planning_reallocate" name="Return for reallocation" sourceRef="planning_outcome" targetRef="allocation_review"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= planningDecision = "return_for_reallocation"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_planning_delivery" name="Assign" sourceRef="planning_outcome" targetRef="delivery_work"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= planningDecision = "assign"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_delivery_gateway" sourceRef="delivery_work" targetRef="delivery_outcome" />
+    <bpmn:sequenceFlow id="flow_delivery_lead" name="Submit product" sourceRef="delivery_outcome" targetRef="lead_review"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= deliveryDecision = "submit"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_delivery_clarification" name="Request information" sourceRef="delivery_outcome" targetRef="customer_clarification_response"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= deliveryDecision = "request_clarification"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_clarification_gateway" sourceRef="customer_clarification_response" targetRef="clarification_outcome" />
+    <bpmn:sequenceFlow id="flow_clarification_resume" name="Provide information" sourceRef="clarification_outcome" targetRef="delivery_work"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= clarificationDecision = "provide_clarification"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_clarification_withdraw" name="Withdraw" sourceRef="clarification_outcome" targetRef="cancelled"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= clarificationDecision = "withdraw"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_lead_gateway" sourceRef="lead_review" targetRef="lead_review_outcome" />
+    <bpmn:sequenceFlow id="flow_lead_rework" name="Changes required" sourceRef="lead_review_outcome" targetRef="delivery_work"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= leadReviewDecision = "changes_required"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_lead_quality" name="Approve" sourceRef="lead_review_outcome" targetRef="quality_review"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= leadReviewDecision = "approve"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_quality_gateway" sourceRef="quality_review" targetRef="quality_outcome" />
+    <bpmn:sequenceFlow id="flow_quality_rework" name="Changes required" sourceRef="quality_outcome" targetRef="delivery_work"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= qualityDecision = "changes_required"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_quality_release" name="Approve" sourceRef="quality_outcome" targetRef="release"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= qualityDecision = "approve"</bpmn:conditionExpression></bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_release_completed" sourceRef="release" targetRef="completed" />
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="service_request_diagram">
+    <bpmndi:BPMNPlane id="service_request_plane" bpmnElement="service-request-v1">
+      <bpmndi:BPMNShape id="shape_start" bpmnElement="request_submitted"><dc:Bounds x="100" y="260" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_intake" bpmnElement="intake_review"><dc:Bounds x="180" y="238" width="130" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_intake_outcome" bpmnElement="intake_outcome" isMarkerVisible="true"><dc:Bounds x="350" y="253" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_information" bpmnElement="requester_response"><dc:Bounds x="360" y="70" width="150" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_requester_outcome" bpmnElement="requester_outcome" isMarkerVisible="true"><dc:Bounds x="550" y="85" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_coordination" bpmnElement="coordination_review"><dc:Bounds x="500" y="238" width="130" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_coordination_outcome" bpmnElement="coordination_outcome" isMarkerVisible="true"><dc:Bounds x="670" y="253" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_hold" bpmnElement="on_hold"><dc:Bounds x="630" y="415" width="140" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_hold_outcome" bpmnElement="hold_outcome" isMarkerVisible="true"><dc:Bounds x="820" y="430" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_allocation" bpmnElement="allocation_review"><dc:Bounds x="820" y="238" width="130" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_allocation_outcome" bpmnElement="allocation_outcome" isMarkerVisible="true"><dc:Bounds x="990" y="253" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_planning" bpmnElement="delivery_planning"><dc:Bounds x="1140" y="238" width="130" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_planning_outcome" bpmnElement="planning_outcome" isMarkerVisible="true"><dc:Bounds x="1310" y="253" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_delivery" bpmnElement="delivery_work"><dc:Bounds x="1460" y="238" width="130" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_delivery_outcome" bpmnElement="delivery_outcome" isMarkerVisible="true"><dc:Bounds x="1630" y="253" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_customer_clarification" bpmnElement="customer_clarification_response"><dc:Bounds x="1460" y="430" width="150" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_clarification_outcome" bpmnElement="clarification_outcome" isMarkerVisible="true"><dc:Bounds x="1660" y="445" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_lead" bpmnElement="lead_review"><dc:Bounds x="1780" y="238" width="130" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_lead_outcome" bpmnElement="lead_review_outcome" isMarkerVisible="true"><dc:Bounds x="1950" y="253" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_quality" bpmnElement="quality_review"><dc:Bounds x="2100" y="238" width="130" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_quality_outcome" bpmnElement="quality_outcome" isMarkerVisible="true"><dc:Bounds x="2270" y="253" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_release" bpmnElement="release"><dc:Bounds x="2420" y="238" width="130" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_completed" bpmnElement="completed"><dc:Bounds x="2590" y="260" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_closed" bpmnElement="closed"><dc:Bounds x="827" y="560" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_cancelled" bpmnElement="cancelled"><dc:Bounds x="650" y="92" width="36" height="36" /></bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="edge_start_intake" bpmnElement="flow_start_intake"><di:waypoint x="136" y="278" /><di:waypoint x="180" y="278" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_intake_gateway" bpmnElement="flow_intake_gateway"><di:waypoint x="310" y="278" /><di:waypoint x="350" y="278" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_intake_information" bpmnElement="flow_intake_information"><di:waypoint x="375" y="253" /><di:waypoint x="375" y="150" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_intake_close" bpmnElement="flow_intake_close"><di:waypoint x="375" y="303" /><di:waypoint x="375" y="578" /><di:waypoint x="827" y="578" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_intake_progress" bpmnElement="flow_intake_progress"><di:waypoint x="400" y="278" /><di:waypoint x="500" y="278" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_information_gateway" bpmnElement="flow_information_gateway"><di:waypoint x="510" y="110" /><di:waypoint x="550" y="110" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_information_resubmit" bpmnElement="flow_information_resubmit"><di:waypoint x="575" y="135" /><di:waypoint x="575" y="170" /><di:waypoint x="245" y="170" /><di:waypoint x="245" y="238" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_information_withdraw" bpmnElement="flow_information_withdraw"><di:waypoint x="600" y="110" /><di:waypoint x="650" y="110" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_coordination_gateway" bpmnElement="flow_coordination_gateway"><di:waypoint x="630" y="278" /><di:waypoint x="670" y="278" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_coordination_return" bpmnElement="flow_coordination_return"><di:waypoint x="695" y="253" /><di:waypoint x="695" y="205" /><di:waypoint x="245" y="205" /><di:waypoint x="245" y="238" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_coordination_hold" bpmnElement="flow_coordination_hold"><di:waypoint x="695" y="303" /><di:waypoint x="695" y="415" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_coordination_close" bpmnElement="flow_coordination_close"><di:waypoint x="710" y="293" /><di:waypoint x="790" y="373" /><di:waypoint x="790" y="578" /><di:waypoint x="827" y="578" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_coordination_allocate" bpmnElement="flow_coordination_allocate"><di:waypoint x="720" y="278" /><di:waypoint x="820" y="278" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_hold_gateway" bpmnElement="flow_hold_gateway"><di:waypoint x="770" y="455" /><di:waypoint x="820" y="455" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_hold_resume" bpmnElement="flow_hold_resume"><di:waypoint x="845" y="430" /><di:waypoint x="845" y="370" /><di:waypoint x="565" y="370" /><di:waypoint x="565" y="318" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_hold_close" bpmnElement="flow_hold_close"><di:waypoint x="845" y="480" /><di:waypoint x="845" y="560" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_allocation_gateway" bpmnElement="flow_allocation_gateway"><di:waypoint x="950" y="278" /><di:waypoint x="990" y="278" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_allocation_return" bpmnElement="flow_allocation_return"><di:waypoint x="1015" y="253" /><di:waypoint x="1015" y="220" /><di:waypoint x="565" y="220" /><di:waypoint x="565" y="238" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_allocation_plan" bpmnElement="flow_allocation_plan"><di:waypoint x="1040" y="278" /><di:waypoint x="1140" y="278" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_planning_gateway" bpmnElement="flow_planning_gateway"><di:waypoint x="1270" y="278" /><di:waypoint x="1310" y="278" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_planning_reallocate" bpmnElement="flow_planning_reallocate"><di:waypoint x="1335" y="253" /><di:waypoint x="1335" y="185" /><di:waypoint x="885" y="185" /><di:waypoint x="885" y="238" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_planning_delivery" bpmnElement="flow_planning_delivery"><di:waypoint x="1360" y="278" /><di:waypoint x="1460" y="278" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_delivery_gateway" bpmnElement="flow_delivery_gateway"><di:waypoint x="1590" y="278" /><di:waypoint x="1630" y="278" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_delivery_lead" bpmnElement="flow_delivery_lead"><di:waypoint x="1680" y="278" /><di:waypoint x="1780" y="278" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_delivery_clarification" bpmnElement="flow_delivery_clarification"><di:waypoint x="1655" y="303" /><di:waypoint x="1655" y="390" /><di:waypoint x="1535" y="390" /><di:waypoint x="1535" y="430" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_clarification_gateway" bpmnElement="flow_clarification_gateway"><di:waypoint x="1610" y="470" /><di:waypoint x="1660" y="470" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_clarification_resume" bpmnElement="flow_clarification_resume"><di:waypoint x="1685" y="445" /><di:waypoint x="1685" y="365" /><di:waypoint x="1525" y="365" /><di:waypoint x="1525" y="318" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_clarification_withdraw" bpmnElement="flow_clarification_withdraw"><di:waypoint x="1710" y="470" /><di:waypoint x="1745" y="470" /><di:waypoint x="1745" y="40" /><di:waypoint x="668" y="40" /><di:waypoint x="668" y="92" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_lead_gateway" bpmnElement="flow_lead_gateway"><di:waypoint x="1910" y="278" /><di:waypoint x="1950" y="278" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_lead_rework" bpmnElement="flow_lead_rework"><di:waypoint x="1975" y="303" /><di:waypoint x="1975" y="350" /><di:waypoint x="1525" y="350" /><di:waypoint x="1525" y="318" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_lead_quality" bpmnElement="flow_lead_quality"><di:waypoint x="2000" y="278" /><di:waypoint x="2100" y="278" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_quality_gateway" bpmnElement="flow_quality_gateway"><di:waypoint x="2230" y="278" /><di:waypoint x="2270" y="278" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_quality_rework" bpmnElement="flow_quality_rework"><di:waypoint x="2295" y="303" /><di:waypoint x="2295" y="385" /><di:waypoint x="1525" y="385" /><di:waypoint x="1525" y="318" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_quality_release" bpmnElement="flow_quality_release"><di:waypoint x="2320" y="278" /><di:waypoint x="2420" y="278" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_release_completed" bpmnElement="flow_release_completed"><di:waypoint x="2550" y="278" /><di:waypoint x="2590" y="278" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

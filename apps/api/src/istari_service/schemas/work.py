@@ -1,0 +1,186 @@
+"""Role-scoped work-item schemas and allowed completion commands."""
+
+from __future__ import annotations
+
+from datetime import date, datetime
+from typing import Annotated, Literal
+from uuid import UUID
+
+from pydantic import Field, field_validator
+
+from istari_service.models import RequestStatus
+from istari_service.schemas.common import ApiModel, StrictApiModel
+
+
+class RequestInformation(StrictApiModel):
+    action: Literal["request_information"]
+    reason: str = Field(min_length=3, max_length=2000)
+
+
+class ProgressRequest(StrictApiModel):
+    action: Literal["progress"]
+    category: str = Field(min_length=2, max_length=80)
+    priority: Literal["LOW", "MEDIUM", "HIGH", "URGENT"]
+    destination_unit_id: UUID
+
+
+class CloseRequest(StrictApiModel):
+    action: Literal["close"]
+    reason: str = Field(min_length=3, max_length=2000)
+
+
+class ProvideInformation(StrictApiModel):
+    action: Literal["provide_information"]
+    information: str = Field(min_length=3, max_length=5000)
+
+
+class WithdrawRequest(StrictApiModel):
+    action: Literal["withdraw"]
+    reason: str = Field(min_length=3, max_length=2000)
+
+
+class SendToAllocation(StrictApiModel):
+    action: Literal["send_to_allocation"]
+    destination_unit_id: UUID
+    note: str = Field(min_length=3, max_length=2000)
+
+
+class ReturnToTriage(StrictApiModel):
+    action: Literal["return_to_triage"]
+    reason: str = Field(min_length=3, max_length=2000)
+
+
+class HoldRequest(StrictApiModel):
+    action: Literal["hold"]
+    reason: str = Field(min_length=3, max_length=2000)
+
+
+class ResumeRequest(StrictApiModel):
+    action: Literal["resume"]
+    note: str = Field(min_length=3, max_length=2000)
+
+
+class AllocateRequest(StrictApiModel):
+    action: Literal["allocate"]
+    destination_unit_id: UUID
+    required_capabilities: list[str] = Field(min_length=1, max_length=20)
+
+    @field_validator("required_capabilities")
+    @classmethod
+    def capabilities_are_bounded(cls, value: list[str]) -> list[str]:
+        return _bounded_unique_strings(value, "required capability")
+
+
+class ReturnToCoordination(StrictApiModel):
+    action: Literal["return_to_coordination"]
+    reason: str = Field(min_length=3, max_length=2000)
+
+
+class AssignSpecialist(StrictApiModel):
+    action: Literal["assign"]
+    specialist_id: UUID
+
+
+class ReturnForReallocation(StrictApiModel):
+    action: Literal["return_for_reallocation"]
+    reason: str = Field(min_length=3, max_length=2000)
+
+
+class SubmitDeliverable(StrictApiModel):
+    action: Literal["submit"]
+    deliverable_title: str = Field(min_length=3, max_length=160)
+    deliverable_text: str = Field(min_length=20, max_length=20_000)
+
+
+class RequestClarification(StrictApiModel):
+    action: Literal["request_clarification"]
+    question: str = Field(min_length=3, max_length=2000)
+    reason: str = Field(min_length=3, max_length=2000)
+    response_deadline: date
+
+
+class ProvideClarification(StrictApiModel):
+    action: Literal["provide_clarification"]
+    thread_id: UUID
+    expected_version: int = Field(ge=1)
+    information: str = Field(min_length=3, max_length=5000)
+
+
+class ApproveWork(StrictApiModel):
+    action: Literal["approve"]
+
+
+class ChangesRequired(StrictApiModel):
+    action: Literal["changes_required"]
+    reason: str = Field(min_length=3, max_length=2000)
+
+
+class ReleaseDeliverable(StrictApiModel):
+    action: Literal["release"]
+    recipients: list[str] = Field(min_length=1, max_length=20)
+
+    @field_validator("recipients")
+    @classmethod
+    def recipients_are_bounded(cls, value: list[str]) -> list[str]:
+        return _bounded_unique_strings(value, "recipient")
+
+
+def _bounded_unique_strings(value: list[str], label: str) -> list[str]:
+    cleaned = [item.strip() for item in value]
+    if any(not item or len(item) > 120 for item in cleaned):
+        raise ValueError(f"each {label} must contain 1 to 120 characters")
+    if len(set(cleaned)) != len(cleaned):
+        raise ValueError(f"{label}s must be unique")
+    return cleaned
+
+
+CompletionPayload = Annotated[
+    RequestInformation
+    | ProgressRequest
+    | CloseRequest
+    | ProvideInformation
+    | WithdrawRequest
+    | SendToAllocation
+    | ReturnToTriage
+    | HoldRequest
+    | ResumeRequest
+    | AllocateRequest
+    | ReturnToCoordination
+    | AssignSpecialist
+    | ReturnForReallocation
+    | SubmitDeliverable
+    | RequestClarification
+    | ProvideClarification
+    | ApproveWork
+    | ChangesRequired
+    | ReleaseDeliverable,
+    Field(discriminator="action"),
+]
+
+
+class WorkItem(ApiModel):
+    id: UUID
+    request_id: UUID
+    request_reference: str
+    title: str
+    stage: RequestStatus
+    status: str
+    assignee_id: UUID | None
+    assignee_display_name: str | None
+    delivery_team: str | None
+    available_actions: list[str]
+    created_at: datetime
+    updated_at: datetime
+
+
+class WorkItemList(ApiModel):
+    items: list[WorkItem]
+
+
+class EligibleSpecialist(ApiModel):
+    id: UUID
+    display_name: str
+
+
+class EligibleSpecialistList(ApiModel):
+    items: list[EligibleSpecialist]

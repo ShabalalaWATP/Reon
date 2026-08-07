@@ -1,0 +1,181 @@
+# LOCAL DEVELOPMENT ONLY. This topology exposes an unauthenticated Camunda API
+# on host loopback and is not a production deployment template.
+name: istari-service-local
+
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: infra/postgres/Dockerfile
+    image: istari/postgres-local:17.9
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Set POSTGRES_ADMIN_PASSWORD in .env}
+      POSTGRES_DB: postgres
+      APP_DATABASE_NAME: ${APP_DATABASE_NAME:?Set APP_DATABASE_NAME in .env}
+      APP_DATABASE_USER: ${APP_DATABASE_USER:?Set APP_DATABASE_USER in .env}
+      APP_DATABASE_PASSWORD: ${APP_DATABASE_PASSWORD:?Set APP_DATABASE_PASSWORD in .env}
+      APP_RUNTIME_DATABASE_USER: ${APP_RUNTIME_DATABASE_USER:?Set APP_RUNTIME_DATABASE_USER in .env}
+      APP_RUNTIME_DATABASE_PASSWORD: ${APP_RUNTIME_DATABASE_PASSWORD:?Set APP_RUNTIME_DATABASE_PASSWORD in .env}
+      APP_BACKUP_DATABASE_USER: ${APP_BACKUP_DATABASE_USER:?Set APP_BACKUP_DATABASE_USER in .env}
+      APP_BACKUP_DATABASE_PASSWORD: ${APP_BACKUP_DATABASE_PASSWORD:?Set APP_BACKUP_DATABASE_PASSWORD in .env}
+      CAMUNDA_DATABASE_NAME: ${CAMUNDA_DATABASE_NAME:?Set CAMUNDA_DATABASE_NAME in .env}
+      CAMUNDA_DATABASE_USER: ${CAMUNDA_DATABASE_USER:?Set CAMUNDA_DATABASE_USER in .env}
+      CAMUNDA_DATABASE_PASSWORD: ${CAMUNDA_DATABASE_PASSWORD:?Set CAMUNDA_DATABASE_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready --host 127.0.0.1 --username postgres --dbname postgres
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - data
+
+  camunda-data-init:
+    image: camunda/camunda:8.9.14@sha256:0a3b161ddf9018d052f1e20bda0696cdf4667e8c749f6ac86f6586fb14598f58
+    user: "0:0"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        chown -R 1001:1001 /usr/local/camunda/data
+        /usr/local/camunda/camunda-data &&
+        chmod -R 0750 /usr/local/camunda/data
+        /usr/local/camunda/camunda-data
+    volumes:
+      - camunda-primary-data:/usr/local/camunda/data
+      - camunda-runtime-data:/usr/local/camunda/camunda-data
+    restart: "no"
+
+  orchestration:
+    build:
+      context: .
+      dockerfile: infra/camunda/Dockerfile
+    image: istari/camunda-local:8.9.14
+    environment:
+      CAMUNDA_DATABASE_NAME: ${CAMUNDA_DATABASE_NAME:?Set CAMUNDA_DATABASE_NAME in .env}
+      CAMUNDA_DATABASE_USER: ${CAMUNDA_DATABASE_USER:?Set CAMUNDA_DATABASE_USER in .env}
+      CAMUNDA_DATABASE_PASSWORD: ${CAMUNDA_DATABASE_PASSWORD:?Set CAMUNDA_DATABASE_PASSWORD in .env}
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75.0
+    ports:
+      - "127.0.0.1:${CAMUNDA_HOST_PORT:-8080}:8080"
+      - "127.0.0.1:${CAMUNDA_MANAGEMENT_HOST_PORT:-9600}:9600"
+    volumes:
+      - camunda-primary-data:/usr/local/camunda/data
+      - camunda-runtime-data:/usr/local/camunda/camunda-data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          bash -c 'exec 3<>/dev/tcp/127.0.0.1/9600 &&
+          printf "GET /actuator/health/status HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3 &&
+          grep -q "200" <&3'
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 45s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      camunda-data-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks:
+      - data
+      - service
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:?Set ENVIRONMENT in .env}
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+      CAMUNDA_REST_ADDRESS: http://orchestration:8080
+      CAMUNDA_AUTH_MODE: NONE
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:?Set SESSION_COOKIE_SECURE in .env}
+      WEB_ORIGIN: ${WEB_ORIGIN:?Set WEB_ORIGIN in .env}
+      TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,api}
+      MAX_REQUEST_BODY_BYTES: ${MAX_REQUEST_BODY_BYTES:-1048576}
+      ALLOW_DEMO_USERS: ${ALLOW_DEMO_USERS:?Set ALLOW_DEMO_USERS in .env}
+      DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:?Set DEMO_USER_PASSWORD in .env}
+      AUDIT_HMAC_KEY: ${AUDIT_HMAC_KEY:?Set AUDIT_HMAC_KEY in .env}
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import urllib.request;
+          urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks:
+      - data
+      - service
+
+  migrator:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command:
+      - sh
+      - -c
+      - alembic upgrade head && python -m istari_service.postgres_permissions
+    environment:
+      DATABASE_URL: ${MIGRATION_DATABASE_URL:?Set MIGRATION_DATABASE_URL in .env}
+      APP_RUNTIME_DATABASE_USER: ${APP_RUNTIME_DATABASE_USER:?Set APP_RUNTIME_DATABASE_USER in .env}
+      APP_BACKUP_DATABASE_USER: ${APP_BACKUP_DATABASE_USER:?Set APP_BACKUP_DATABASE_USER in .env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - data
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "127.0.0.1:5173:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --spider http://127.0.0.1/"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - service
+
+volumes:
+  postgres-data:
+  camunda-primary-data:
+  camunda-runtime-data:
+
+networks:
+  data:
+    internal: true
+  service:

@@ -1,0 +1,109 @@
+from __future__ import annotations
+
+import asyncio
+import os
+from logging.config import fileConfig
+from typing import Any
+
+from alembic import context
+from sqlalchemy import Connection, Enum, pool
+from sqlalchemy.ext.asyncio import async_engine_from_config
+
+from istari_service.models import Base
+
+config = context.config
+
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+target_metadata = Base.metadata
+
+enum_check_names = frozenset(
+    f"ck_{table.name}_{column.type.name}"
+    for table in target_metadata.tables.values()
+    for column in table.columns
+    if isinstance(column.type, Enum)
+    and column.type.create_constraint
+    and column.type.name is not None
+)
+
+
+def include_schema_object(
+    _object: Any,
+    name: str | None,
+    type_: str,
+    reflected: bool,
+    compare_to: Any,
+) -> bool:
+    """Ignore reflected checks already represented by portable enum columns.
+
+    Portable enum membership changes require an explicit migration.
+    """
+    return not (
+        type_ == "check_constraint"
+        and reflected
+        and compare_to is None
+        and name in enum_check_names
+    )
+
+
+def database_url() -> str:
+    """Return the explicitly configured product database URL."""
+    value = os.getenv("DATABASE_URL")
+    if not value:
+        message = "DATABASE_URL must be set before running Alembic"
+        raise RuntimeError(message)
+    return value
+
+
+def run_migrations_offline() -> None:
+    """Run migrations without creating a database connection."""
+    context.configure(
+        url=database_url(),
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+        compare_server_default=True,
+        compare_type=True,
+        include_object=include_schema_object,
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def run_migrations(connection: Connection) -> None:
+    """Run migrations against an established synchronous connection."""
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        compare_server_default=True,
+        compare_type=True,
+        include_object=include_schema_object,
+        render_as_batch=connection.dialect.name == "sqlite",
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+async def run_async_migrations() -> None:
+    """Create an async engine and adapt its connection for Alembic."""
+    escaped_url = database_url().replace("%", "%%")
+    config.set_main_option("sqlalchemy.url", escaped_url)
+    connectable = async_engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+
+    async with connectable.connect() as connection:
+        await connection.run_sync(run_migrations)
+
+    await connectable.dispose()
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    asyncio.run(run_async_migrations())
