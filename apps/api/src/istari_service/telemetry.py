@@ -27,6 +27,7 @@ class OperationalTelemetryMiddleware:
             await self._app(scope, receive, send)
             return
         correlation_id = _correlation_id(scope)
+        scope.setdefault("state", {})["correlation_id"] = correlation_id
         started = perf_counter()
         status_code = 500
 

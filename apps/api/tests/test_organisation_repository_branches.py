@@ -26,6 +26,8 @@ from istari_service.organisation_seed import organisation_id, seed_organisation_
 from istari_service.repositories.organisation import (
     SqlAlchemyOrganisationRepository,
     has_route_membership,
+)
+from istari_service.repositories.request_route_initialisation import (
     initialise_request_route,
 )
 from istari_service.services.organisation_service import (

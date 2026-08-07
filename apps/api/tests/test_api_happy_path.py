@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any
+from uuid import uuid4
+
+from sqlalchemy import select
 
 from conftest import ApiHarness, request_payload
+from istari_service.configuration_models import ConfigurationWorkflowTemplate
+from istari_service.product_runtime import ProductRuntime
+from istari_service.product_security import AllowedHttpsLinkPolicy
 
 
 async def _claim_current(harness: ApiHarness) -> dict[str, Any]:
@@ -52,6 +59,10 @@ async def test_complete_representative_workflow_and_feedback(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
+    async with harness.sessions() as database, database.begin():
+        template = await database.scalar(select(ConfigurationWorkflowTemplate))
+        assert template is not None
+        template.approved_link_domains = ["products.example.test"]
     session = await harness.login("admin2")
     assert session["user"]["role"] == "REQUESTER"
     me = await harness.client.get("/api/v1/auth/me")
@@ -120,6 +131,45 @@ async def test_complete_representative_workflow_and_feedback(
     assert "OSG_TEAM" not in str(specialist_session)
     item = await _claim_current(harness)
     assert item["assigneeId"] == str(specialist_id)
+    transport = harness.client._transport
+    app = transport.app  # type: ignore[attr-defined]
+    runtime: ProductRuntime = app.state.product_runtime
+    app.state.product_runtime = replace(
+        runtime,
+        link_policy=AllowedHttpsLinkPolicy(frozenset({"products.example.test"})),
+    )
+    package_response = await harness.client.post(
+        "/api/v1/product-packages",
+        json={
+            "requestId": request_id,
+            "expectedVersion": item["requestVersion"],
+            "idempotencyKey": str(uuid4()),
+        },
+        headers=harness.mutation_headers(),
+    )
+    assert package_response.status_code == 201, package_response.text
+    package = package_response.json()
+    link_response = await harness.client.post(
+        f"/api/v1/product-packages/{package['id']}/external-links",
+        json={
+            "expectedVersion": package["version"],
+            "idempotencyKey": str(uuid4()),
+            "label": "Synthetic service product",
+            "url": "https://products.example.test/service-product",
+        },
+        headers=harness.mutation_headers(),
+    )
+    assert link_response.status_code == 200, link_response.text
+    package_response = await harness.client.post(
+        f"/api/v1/product-packages/{package['id']}/submit",
+        json={
+            "expectedVersion": link_response.json()["version"],
+            "idempotencyKey": str(uuid4()),
+        },
+        headers=harness.mutation_headers(),
+    )
+    assert package_response.status_code == 200, package_response.text
+    package = package_response.json()
     await _complete(
         harness,
         item,
@@ -133,6 +183,17 @@ async def test_complete_representative_workflow_and_feedback(
     )
 
     await harness.login("admin8")
+    approval = await harness.client.post(
+        f"/api/v1/product-packages/{package['id']}/manager-approve",
+        json={
+            "expectedVersion": package["version"],
+            "idempotencyKey": str(uuid4()),
+            "packageChecksum": package["packageChecksum"],
+        },
+        headers=harness.mutation_headers(),
+    )
+    assert approval.status_code == 200, approval.text
+    package = approval.json()
     await _complete(
         harness,
         await _claim_current(harness),
@@ -145,6 +206,17 @@ async def test_complete_representative_workflow_and_feedback(
         await _claim_current(harness),
         {"action": "approve"},
     )
+    dissemination = await harness.client.post(
+        f"/api/v1/releases/{package['id']}/disseminate",
+        json={
+            "expectedVersion": package["version"],
+            "idempotencyKey": str(uuid4()),
+            "packageChecksum": package["packageChecksum"],
+            "externalLinkAttested": True,
+        },
+        headers=harness.mutation_headers(),
+    )
+    assert dissemination.status_code == 200, dissemination.text
     await _complete(
         harness,
         await _claim_current(harness),
@@ -157,6 +229,7 @@ async def test_complete_representative_workflow_and_feedback(
     assert detail.json()["status"] == "COMPLETED"
     assert detail.json()["deliverable"]["title"] == "Synthetic service summary"
     assert detail.json()["assignedDeliveryTeam"] == "OSG Team"
+    assert detail.json()["productAvailable"] is True
     assert "OSG_TEAM" not in detail.text
 
     await harness.login("admin3")

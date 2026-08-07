@@ -23,8 +23,14 @@ from istari_service.models import (
     WorkflowInstanceStatus,
     WorkflowOutbox,
 )
+from istari_service.repositories.configuration_pins import (
+    SqlAlchemyConfigurationPinRepository,
+)
 from istari_service.repositories.event_store import append_request_event
-from istari_service.repositories.organisation import (
+from istari_service.repositories.product_availability import (
+    available_product_exists,
+)
+from istari_service.repositories.request_route_initialisation import (
     initialise_request_route,
 )
 from istari_service.repositories.request_scope import scoped_request
@@ -47,21 +53,33 @@ def record_from_request(request: ServiceRequest) -> RequestRecord:
         requester_id=request.requester_id,
         status=request.status,
         assigned_delivery_team=request.assigned_delivery_team,
+        assigned_delivery_team_id=getattr(request, "assigned_delivery_team_id", None),
         assigned_specialist_id=request.assigned_specialist_id,
         version=request.version,
     )
 
 
 class SqlAlchemyRequestRepository:
-    def __init__(self, session: AsyncSession, *, process_id: str) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        *,
+        process_id: str,
+        configuration_pins: SqlAlchemyConfigurationPinRepository | None = None,
+    ) -> None:
         self._session = session
         self._process_id = process_id
+        self._configuration_pins = configuration_pins
 
     async def create(
         self,
         actor: Actor,
         command: RequestCreate,
     ) -> RequestDetail:
+        if self._configuration_pins is None:
+            raise RuntimeError(
+                "immutable workflow configuration is required for submission"
+            )
         existing = await self._session.scalar(
             select(ServiceRequest).where(
                 ServiceRequest.submission_key == command.submission_key
@@ -84,28 +102,58 @@ class SqlAlchemyRequestRepository:
             **command.model_dump(),
         )
         self._session.add(request)
+        await self._session.flush()
+        pin = await self._configuration_pins.pin_request(request_id, now=now)
+        pinned_process_id = pin.snapshot.get("processId")
+        if not isinstance(pinned_process_id, str) or not pinned_process_id:
+            pinned_process_id = self._process_id
+        pinned_process_version = pin.snapshot.get("processVersion")
+        if (
+            not isinstance(pinned_process_version, int)
+            or isinstance(pinned_process_version, bool)
+            or pinned_process_version < 1
+        ):
+            pinned_process_version = None
+        pinned_process_checksum = pin.snapshot.get("processChecksum")
+        if (
+            not isinstance(pinned_process_checksum, str)
+            or len(pinned_process_checksum) != 64
+        ):
+            pinned_process_checksum = None
         self._session.add(
             WorkflowInstance(
                 request_id=request_id,
-                process_id=self._process_id,
+                process_id=pinned_process_id,
+                process_version=pinned_process_version,
+                process_checksum=pinned_process_checksum,
                 status=WorkflowInstanceStatus.START_PENDING,
             )
         )
+        start_payload: dict[str, object] = {
+            "requestId": str(request_id),
+            "requesterId": str(actor.id),
+            "processId": pinned_process_id,
+        }
+        if pinned_process_version is not None:
+            start_payload["processVersion"] = pinned_process_version
+        if pinned_process_checksum is not None:
+            start_payload["processChecksum"] = pinned_process_checksum
         self._session.add(
             WorkflowOutbox(
                 request_id=request_id,
                 event_type="START_PROCESS",
-                payload={
-                    "requestId": str(request_id),
-                    "requesterId": str(actor.id),
-                },
+                payload=start_payload,
                 idempotency_key=f"start:{request_id}",
                 status=OutboxStatus.PENDING,
                 available_at=now,
             )
         )
         await self._session.flush()
-        await initialise_request_route(self._session, request_id)
+        await initialise_request_route(
+            self._session,
+            request_id,
+            root_id=pin.organisation_root_id,
+        )
         await append_request_event(
             self._session,
             request_id=request_id,
@@ -123,13 +171,7 @@ class SqlAlchemyRequestRepository:
         )
 
     async def list_for_requester(self, requester_id: UUID) -> list[RequestSummary]:
-        released_product = exists(
-            select(Deliverable.id).where(
-                Deliverable.request_id == ServiceRequest.id,
-                Deliverable.status == DeliverableStatus.RELEASED,
-                Deliverable.released_at.is_not(None),
-            )
-        )
+        released_product = available_product_exists()
         submitted_feedback = exists(
             select(Feedback.id).where(Feedback.request_id == ServiceRequest.id)
         )

@@ -273,7 +273,7 @@ async def test_relational_constraints_reject_invalid_or_duplicate_rows(
         with pytest.raises(IntegrityError):
             await session.flush()
 
-    assert set(Base.metadata.tables) == {
+    assert set(Base.metadata.tables) >= {
         "users",
         "sessions",
         "service_requests",

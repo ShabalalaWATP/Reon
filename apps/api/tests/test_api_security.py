@@ -52,6 +52,16 @@ async def test_csrf_requires_current_token_and_trusted_origin(
 
     me = await harness.client.get("/api/v1/auth/me")
     assert me.status_code == 200
+    capabilities = await harness.client.get("/api/v1/me/capabilities")
+    assert capabilities.json() == {
+        "myWork": True,
+        "notifications": True,
+        "configuration": True,
+        "products": True,
+        "managedFileUploads": True,
+        "planning": True,
+        "statistics": True,
+    }
     harness.csrf_token = me.json()["csrfToken"]
     stale = await harness.client.post(
         "/api/v1/requests",

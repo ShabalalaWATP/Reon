@@ -78,6 +78,7 @@ def bundle(
         id=record.id,
         request_id=request.id,
         request_reference="SR-SYNTHETIC",
+        request_version=request.version,
         title="Synthetic service request",
         stage=status,
         status=resolved_status.value,

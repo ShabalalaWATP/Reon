@@ -85,6 +85,7 @@ async def test_direct_service_happy_paths_cover_transactional_continuations(
         )
         assert reactivated.is_active
 
+        harness.settings.configuration_admin_enabled = False
         cedar = await repository.load_units([await harness.unit_id("CEDAR_TEAM")])
         renamed = await service.rename_unit(
             actor,

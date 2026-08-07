@@ -6,6 +6,7 @@ import type {
   TrackedRequest,
   WorkItem,
 } from "../lib/api/types";
+import type { ServerCapabilities } from "../lib/api/capabilityClient";
 import { organisationUnit } from "./organisationFixtures";
 
 export {
@@ -25,6 +26,16 @@ export const requesterSession: Session = {
   csrfToken: "csrf-token",
   expiresAt: "2026-08-07T12:00:00Z",
   elevatedUntil: null,
+};
+
+export const enabledCapabilities: ServerCapabilities = {
+  myWork: true,
+  notifications: true,
+  configuration: true,
+  products: true,
+  managedFileUploads: true,
+  planning: true,
+  statistics: true,
 };
 
 export const staffSession: Session = {
@@ -106,6 +117,7 @@ export const workItem: WorkItem = {
   id: "55555555-5555-4555-8555-555555555555",
   requestId: requestDetail.id,
   requestReference: requestDetail.reference,
+  requestVersion: 1,
   title: requestDetail.title,
   stage: "TRIAGE_REVIEW",
   status: "AVAILABLE",

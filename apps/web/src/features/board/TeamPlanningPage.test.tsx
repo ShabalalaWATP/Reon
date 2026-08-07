@@ -6,8 +6,8 @@ import { describe, expect, it } from "vitest";
 import type { Iteration, WorkPackage } from "../../lib/api/boardTypes";
 import type { Session } from "../../lib/api/types";
 import type { TeamMember, TeamWorkspaceAccess } from "../../lib/api/teamTypes";
-import { requesterSession } from "../../test/fixtures";
-import { json, mockFetch, renderApp } from "../../test/render";
+import { enabledCapabilities, requesterSession } from "../../test/fixtures";
+import { json, mockFeatureFetch, renderApp } from "../../test/render";
 
 const session: Session = { ...requesterSession, user: { ...requesterSession.user, id: "manager-osg", username: "admin8", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", scope: "OSG Team" } };
 const access: TeamWorkspaceAccess = { teamId: "team-osg", teamCode: "OSG_TEAM", teamName: "OSG Team", grantId: "grant-osg", permissions: ["BOARD", "CAPACITY"] };
@@ -112,8 +112,9 @@ describe("team agile planning", () => {
 
   it("retries failed reads and reports planning mutation conflicts", async () => {
     let packageAttempts = 0;
-    mockFetch(async (url, init) => {
+    mockFeatureFetch(async (url, init) => {
       if (url.pathname.endsWith("/auth/me")) return json(session);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       if (url.pathname.endsWith("/team-workspaces")) return json({ items: [access] });
       if (url.pathname.endsWith("/packages")) { packageAttempts += 1; return packageAttempts === 1 ? json({ detail: "Unavailable" }, 503) : json({ items: [workPackage] }); }
       if (url.pathname.endsWith("/iterations") && !init.method) return json({ items: [iteration] });
@@ -150,10 +151,11 @@ describe("team agile planning", () => {
 });
 
 function mockPlanning(workspace: TeamWorkspaceAccess, packages: WorkPackage[], iterations: Iteration[], calls: Array<{ path: string; body: Record<string, unknown> }>) {
-  return mockFetch(async (url, init) => {
+  return mockFeatureFetch(async (url, init) => {
     const body = init.body ? JSON.parse(String(init.body)) as Record<string, unknown> : {};
     if (init.method) calls.push({ path: url.pathname, body });
     if (url.pathname.endsWith("/auth/me")) return json(workspace.grantId ? session : { ...session, user: { ...session.user, id: "analyst-osg", role: "DELIVERY_SPECIALIST" } });
+    if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
     if (url.pathname.endsWith("/team-workspaces")) return json({ items: [workspace] });
     if (url.pathname.endsWith("/people")) return json({ items: members });
     if (url.pathname.endsWith("/packages") && !init.method) return json({ items: packages });

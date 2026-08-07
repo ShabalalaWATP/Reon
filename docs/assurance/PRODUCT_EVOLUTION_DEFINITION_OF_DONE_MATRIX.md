@@ -20,10 +20,10 @@ implementation or acceptance is implied by this document.
 | Gate | Objective completion condition | Required evidence | Status |
 | --- | --- | --- | --- |
 | PE-DOD-00 | The evolution specification, ADRs 0015–0017, permission matrix, recipient matrix and all named operational decisions are accepted by their owners | Dated approvals; decision register has no unresolved file, scanner, link-domain, approver, reminder, retention or export row | OPEN |
-| PE-DOD-01 | Migrations 0012–0015 preserve existing identifiers and history and pin existing requests to configuration version 1 | PostgreSQL empty/previous upgrade, drift, safe downgrade, re-upgrade, backfill-oracle and rollback reports | OPEN |
-| PE-DOD-02 | New records remain inaccessible while their release flags are disabled and projections rebuild idempotently | API denial matrix plus duplicate-free projection rebuild and checkpoint evidence | OPEN |
-| PE-DOD-03 | Every changed hand-written source file stays within 350 lines and the full repository passes format, lint, type, build, terminology, OpenAPI and BPMN checks | Hosted CI logs and exact local command transcript from the release candidate | OPEN |
-| PE-DOD-04 | Backend and frontend independently retain at least 95 per cent line and branch coverage | Release-candidate pytest and Vitest coverage reports with thresholds unchanged | OPEN |
+| PE-DOD-01 | Migrations 0012–0017 preserve existing identifiers and history, stable team assignment and the bounded legacy workflow identity | PostgreSQL empty/previous upgrade, drift, safe downgrade, re-upgrade, backfill-oracle and rollback reports; local SQLite rehearsal is complete | IN PROGRESS |
+| PE-DOD-02 | New records remain inaccessible while their release flags are disabled and projections rebuild idempotently | API denial matrix plus duplicate-free projection rebuild and checkpoint evidence | IN PROGRESS |
+| PE-DOD-03 | Every changed hand-written source file stays within 350 lines and the full repository passes format, lint, type, build, terminology, OpenAPI and BPMN checks | Hosted CI logs and exact local command transcript from the release candidate | EVIDENCE READY |
+| PE-DOD-04 | Backend and frontend independently retain at least 95 per cent line and branch coverage | Release-candidate pytest and Vitest coverage reports with thresholds unchanged | EVIDENCE READY |
 
 ## Action workspace gates
 
@@ -48,7 +48,7 @@ implementation or acceptance is implied by this document.
 
 | Gate | Objective completion condition | Required evidence | Status |
 | --- | --- | --- | --- |
-| PE-DOD-30 | Clean PDF, DOCX and PPTX artefacts pass upload intent, quarantine, validation, malware scan, Manager review, independent QC dissemination and Customer dashboard access | End-to-end API, object-store, scanner and three-browser journeys for each type | OPEN |
+| PE-DOD-30 | Clean PDF, DOCX and PPTX artefacts pass upload intent, quarantine, validation, malware scan, Manager review, independent QC dissemination and Customer dashboard access | End-to-end API, object-store, scanner and three-browser journeys for each type | IN PROGRESS |
 | PE-DOD-31 | Extension or magic-byte mismatch, macro, archive expansion, encryption, oversize, malware, timeout, unknown result and orphan uploads cannot reach review or dissemination | Format corpus results, scanner failure matrix and lifecycle database/object assertions | OPEN |
 | PE-DOD-32 | Review and dissemination bind to one immutable package version and any artefact change invalidates earlier approval | Version/checksum concurrency tests and append-only dissemination audit trace | OPEN |
 | PE-DOD-33 | Unreleased, cross-Customer, Administrator, unrelated-team, replaced, withdrawn and expired artefact access is denied on every attempt | Direct download/redirect abuse matrix and content-free allowed/denied access audit | OPEN |
@@ -59,7 +59,7 @@ implementation or acceptance is implied by this document.
 
 | Gate | Objective completion condition | Required evidence | Status |
 | --- | --- | --- | --- |
-| PE-DOD-40 | A valid sibling branch can be drafted, validated, independently approved and activated without application code changes | Configuration history, different-actor step-up evidence and live PostgreSQL/Camunda route journey with distinct Manager and Analyst groups | OPEN |
+| PE-DOD-40 | A valid sibling branch can be drafted, validated, independently approved and activated without application code changes | Configuration history, different-actor step-up evidence and live PostgreSQL/Camunda route journey with distinct Manager and Analyst groups | IN PROGRESS |
 | PE-DOD-41 | Validation rejects cycles, orphans, skipped levels, duplicate identifiers, invalid candidate groups and loss of every complete Customer-to-team route | Deterministic validation corpus and UI finding-to-unit links | OPEN |
 | PE-DOD-42 | Concurrent edit or activation has one winner, and rollback uses a validated superseding version without rewriting history | Concurrency tests, immutable version audit and rollback rehearsal | OPEN |
 | PE-DOD-43 | Declarative templates cannot add code, scripts, expressions or arbitrary BPMN, weaken mandatory fields, bypass a human stage or grant content access | Signed-schema negative corpus, incompatible BPMN denial and permission tests | OPEN |
@@ -80,7 +80,7 @@ implementation or acceptance is implied by this document.
 
 | Gate | Objective completion condition | Required evidence | Status |
 | --- | --- | --- | --- |
-| PE-DOD-60 | All abuse cases in the four updated threat models have an assigned automated or manual test layer and no unresolved high or critical finding | Threat-to-test traceability and versioned dependency, static, secret, licence, container and object-scanner reports | OPEN |
+| PE-DOD-60 | All abuse cases in the four updated threat models have an assigned automated or manual test layer and no unresolved high or critical finding | Threat-to-test traceability and versioned dependency, static, secret, licence, container and object-scanner reports | IN PROGRESS |
 | PE-DOD-61 | Every mutation enforces CSRF, trusted origin, active session, current role/scope, expected version and idempotency where retry can duplicate an effect | API security matrix and browser negative cases | OPEN |
 | PE-DOD-62 | Product, notification, configuration, planning and analytics logs, metrics and audit metadata meet the documented minimisation rules | Captured-log and audit-field inspection with prohibited-value canaries | OPEN |
 | PE-DOD-63 | `My work`, notifications, product review/release, configuration, planning and statistics pass keyboard, focus, 200 per cent zoom, reduced motion, chart-table parity and 390-pixel-width review with no serious or critical axe finding | Named-page accessibility record, axe reports, screenshots and keyboard transcripts | OPEN |
@@ -101,4 +101,5 @@ implementation or acceptance is implied by this document.
 | PE-DOD-74 | Final requirement-by-requirement review finds no missing, stale, indirect or contradictory evidence and hosted CI is clean for the accepted revision | Product-evolution completion audit mapping each specification outcome and gate to immutable evidence | OPEN |
 
 Until every applicable row is `ACCEPTED`, the existing MVP remains the truthful
-product baseline and the evolution capabilities remain planned work.
+accepted product baseline and the evolution capabilities remain a non-production
+local release candidate.

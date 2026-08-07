@@ -208,6 +208,10 @@ class AdminService:
         unit = await self._repository.locked_unit(unit_id, payload.expected_version)
         if unit.name == payload.name:
             return OrganisationUnitView.model_validate(unit)
+        if self._settings.configuration_admin_enabled:
+            raise InvalidAdministrationChange(
+                "Rename configured units through Configuration administration."
+            )
         await self._repository.ensure_unique_sibling_name(unit, payload.name)
         old_name = unit.name
         unit.name = payload.name

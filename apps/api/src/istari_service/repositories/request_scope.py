@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import Select, select
+from sqlalchemy import Select, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.domain import Actor
@@ -94,7 +94,12 @@ async def _waiting_clarification_request(
         )
     )
     if actor.role is UserRole.DELIVERY_TEAM_LEAD:
-        query = query.where(ServiceRequest.assigned_delivery_team == actor.scope)
+        query = query.where(
+            or_(
+                ServiceRequest.assigned_delivery_team_id.is_not(None),
+                ServiceRequest.assigned_delivery_team == actor.scope,
+            )
+        )
     else:
         query = query.where(ServiceRequest.assigned_specialist_id == actor.id)
     membership = route_membership_condition(actor)
@@ -143,7 +148,12 @@ def _active_work_query(
         )
     )
     if actor.role is UserRole.DELIVERY_TEAM_LEAD:
-        query = query.where(ServiceRequest.assigned_delivery_team == actor.scope)
+        query = query.where(
+            or_(
+                ServiceRequest.assigned_delivery_team_id.is_not(None),
+                ServiceRequest.assigned_delivery_team == actor.scope,
+            )
+        )
     elif actor.role is UserRole.DELIVERY_SPECIALIST:
         query = query.where(ServiceRequest.assigned_specialist_id == actor.id)
     membership = route_membership_condition(actor)

@@ -30,6 +30,9 @@ class StateSession:
     async def scalar(self, _statement: object) -> object | None:
         return self._rows.pop(0) if self._rows else True
 
+    async def scalars(self, _statement: object) -> list[object]:
+        return []
+
     async def get(self, _model: type[object], _identity: object) -> object | None:
         return self._specialist
 
@@ -66,6 +69,7 @@ def _state(
         requester_id=uuid4(),
         status=status,
         assigned_delivery_team=assigned_team,
+        assigned_delivery_team_id=None,
         assigned_specialist_id=None,
         version=3,
     )

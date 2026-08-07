@@ -9,6 +9,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from istari_service.configuration_models import RequestConfigurationPin
 from istari_service.models import (
     OutboxStatus,
     RequestStatus,
@@ -42,6 +43,7 @@ from istari_service.workflow.types import (
     StartProcessCommand,
     WorkflowTask,
 )
+from istari_service.workflow_start_validation import reject_invalid_start_identity
 
 DEFAULT_START_LOOKUP_POLICY = TaskLookupPolicy()
 
@@ -54,6 +56,8 @@ class PendingStart:
     attempts: int
     lease_owner: str
     lease_generation: int
+    process_id: str = "service-request-v1"
+    process_version: int = -1
 
 
 class WorkflowOutboxDispatcher:
@@ -77,9 +81,10 @@ class WorkflowOutboxDispatcher:
         if pending is None:
             return False
         command = StartProcessCommand(
-            process_definition_id=self._process_id,
+            process_definition_id=pending.process_id,
             request_id=pending.request_id,
             requester_id=pending.requester_id,
+            process_definition_version=pending.process_version,
         )
         try:
             started = await self._start_idempotently(command)
@@ -115,6 +120,18 @@ class WorkflowOutboxDispatcher:
                 outbox.lease_owner = None
                 outbox.last_error = "Associated request is missing."
                 return None
+            instance = await session.scalar(
+                select(WorkflowInstance).where(
+                    WorkflowInstance.request_id == outbox.request_id
+                )
+            )
+            pin = await session.scalar(
+                select(RequestConfigurationPin).where(
+                    RequestConfigurationPin.request_id == outbox.request_id
+                )
+            )
+            if reject_invalid_start_identity(pin, outbox, request, instance):
+                return None
             lease_owner = uuid4().hex
             outbox.status = OutboxStatus.PROCESSING
             outbox.attempts += 1
@@ -128,7 +145,26 @@ class WorkflowOutboxDispatcher:
                 attempts=outbox.attempts,
                 lease_owner=lease_owner,
                 lease_generation=outbox.lease_generation,
+                process_id=self._outbox_process_id(outbox.payload),
+                process_version=self._outbox_process_version(outbox.payload),
             )
+
+    def _outbox_process_id(self, payload: dict[str, object]) -> str:
+        process_id = payload.get("processId")
+        if isinstance(process_id, str) and 0 < len(process_id) <= 160:
+            return process_id
+        return self._process_id
+
+    @staticmethod
+    def _outbox_process_version(payload: dict[str, object]) -> int:
+        process_version = payload.get("processVersion")
+        if (
+            isinstance(process_version, int)
+            and not isinstance(process_version, bool)
+            and process_version >= 1
+        ):
+            return process_version
+        return -1
 
     async def _start_idempotently(
         self,

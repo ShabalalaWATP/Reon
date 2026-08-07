@@ -16,6 +16,7 @@ class Actor:
     display_name: str
     role: UserRole
     scope: str
+    organisation_unit_ids: frozenset[UUID] = frozenset()
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +45,7 @@ class RequestRecord:
     assigned_delivery_team: str | None
     assigned_specialist_id: UUID | None
     version: int
+    assigned_delivery_team_id: UUID | None = None
 
 
 @dataclass(frozen=True, slots=True)

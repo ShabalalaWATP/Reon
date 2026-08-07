@@ -47,3 +47,8 @@ async def get_statistics(
         to_date=to_date or today,
         time_zone_name=time_zone,
     )
+
+
+from istari_service.routers import statistics_evolution as _evolution  # noqa: E402
+
+router.include_router(_evolution.router)

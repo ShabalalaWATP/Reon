@@ -23,10 +23,16 @@ export function mockFetch(
   useEmptyDraftRegister = true,
   useEmptyStatisticsScopes = true,
   useEmptyTeamWorkspaces = true,
+  useEmptyActionWorkspace = true,
+  useEmptyNotificationWorkspace = true,
+  useDisabledCapabilities = true,
 ) {
   const mock = vi.fn((input: RequestInfo | URL, init: RequestInit = {}) => {
     const value = typeof input === "string" ? input : input.toString();
     const url = new URL(value, "http://localhost");
+    if (useDisabledCapabilities && url.pathname.endsWith("/me/capabilities")) {
+      return Promise.resolve(json({ myWork: false, notifications: false, configuration: false, products: false, planning: false, statistics: false }));
+    }
     if (
       useEmptyDraftRegister
       && url.pathname.endsWith("/request-drafts")
@@ -42,10 +48,54 @@ export function mockFetch(
       && url.pathname.endsWith("/statistics/scopes")
       && (!init.method || init.method === "GET")
     ) return Promise.resolve(json({ items: [] }));
+    if (
+      useEmptyActionWorkspace
+      && url.pathname.endsWith("/me/actions")
+      && (!init.method || init.method === "GET")
+    ) return Promise.resolve(json({
+      items: [],
+      counts: { needsMyAction: 0, waiting: 0, dueSoon: 0, recentlyCompleted: 0 },
+      savedViews: [],
+      nextCursor: null,
+      freshness: { status: "CURRENT", projectedAt: null, sourceChangedAt: null, lagSeconds: null, pendingCount: 0 },
+    }));
+    if (useEmptyNotificationWorkspace && url.pathname.endsWith("/me/notifications/count")) {
+      return Promise.resolve(json({ unreadCount: 0, projectedAt: null }));
+    }
+    if (useEmptyNotificationWorkspace && url.pathname.endsWith("/me/notifications/preferences")) {
+      return Promise.resolve(json({ groups: [] }));
+    }
+    if (
+      useEmptyNotificationWorkspace
+      && url.pathname.endsWith("/me/notifications")
+      && (!init.method || init.method === "GET")
+    ) return Promise.resolve(json({
+      items: [], unreadCount: 0, nextCursor: null,
+      freshness: { status: "CURRENT", projectedAt: null, sourceChangedAt: null, lagSeconds: null, pendingCount: 0 },
+    }));
     return Promise.resolve(handler(url, init));
   });
   vi.stubGlobal("fetch", mock);
   return mock;
+}
+
+export function mockFeatureFetch(
+  handler: FetchHandler,
+  useEmptyDraftRegister = true,
+  useEmptyStatisticsScopes = true,
+  useEmptyTeamWorkspaces = true,
+  useEmptyActionWorkspace = true,
+  useEmptyNotificationWorkspace = true,
+) {
+  return mockFetch(
+    handler,
+    useEmptyDraftRegister,
+    useEmptyStatisticsScopes,
+    useEmptyTeamWorkspaces,
+    useEmptyActionWorkspace,
+    useEmptyNotificationWorkspace,
+    false,
+  );
 }
 
 export function TestProviders({ children }: { children: ReactNode }) {

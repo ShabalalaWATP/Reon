@@ -33,6 +33,7 @@ def disable_organisation_seed(monkeypatch: pytest.MonkeyPatch) -> None:
         return 0
 
     monkeypatch.setattr(main_module, "seed_organisation_units", no_seed)
+    monkeypatch.setattr(main_module, "seed_baseline_configuration", no_seed)
     monkeypatch.setattr(main_module, "initialise_admin_identity_sequence", no_seed)
     monkeypatch.setattr(main_module, "initialise_admin_audit_anchor", no_seed)
 
@@ -236,10 +237,12 @@ async def test_lifespan_starts_and_stops_maintenance(
         stop: asyncio.Event,
         *,
         command_dispatcher: object,
+        notification_reconciler: object | None,
     ) -> None:
         assert actual_dispatcher is dispatcher
         assert actual_reconciler is reconciler
         assert command_dispatcher is expected_command_dispatcher
+        assert notification_reconciler is None
         lifecycle.append("started")
         await stop.wait()
         lifecycle.append("stopped")
@@ -316,6 +319,7 @@ async def test_health_and_readiness_cover_dependency_combinations(
         response,
         cast(Any, session),
         cast(Any, HealthEngineDouble(workflow_ok)),
+        make_settings(),
     )
 
     assert await health() == {"status": "ok"}
@@ -323,4 +327,5 @@ async def test_health_and_readiness_cover_dependency_combinations(
     assert result.status == ("ready" if expected_status == 200 else "not_ready")
     assert result.checks.database == ("ok" if database_ok else "unavailable")
     assert result.checks.workflow == ("ok" if workflow_ok else "unavailable")
+    assert result.checks.configuration == "disabled"
     assert session.rollbacks == (0 if database_ok else 1)

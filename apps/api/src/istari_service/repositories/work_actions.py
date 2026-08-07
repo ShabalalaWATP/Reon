@@ -26,6 +26,9 @@ from istari_service.repositories.organisation import (
     apply_routing_selection,
     clear_route_from,
 )
+from istari_service.repositories.product_workflow import (
+    validate_product_workflow_effect,
+)
 from istari_service.schemas.work import (
     AllocateRequest,
     ApproveWork,
@@ -65,7 +68,11 @@ async def validate_work_effect(
     request: ServiceRequest,
     actor: Actor,
     payload: CompletionPayload,
+    *,
+    managed_products_enabled: bool = False,
 ) -> None:
+    if managed_products_enabled:
+        await validate_product_workflow_effect(session, request, actor.id, payload)
     if isinstance(payload, (RequestClarification, ProvideClarification)):
         await validate_clarification_effect(session, request, actor, payload)
     if isinstance(payload, (ChangesRequired, ApproveWork, ReleaseDeliverable)):

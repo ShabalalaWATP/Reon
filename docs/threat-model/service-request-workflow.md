@@ -68,10 +68,14 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | Backup is missing, unreadable or incomplete | Encrypted scheduled backup, restricted restore access and evidenced restore rehearsal before pilot |
 | A forged upload intent writes an arbitrary object | Issue a short-lived single-purpose intent with a server-chosen key, size and media type; quarantine identity cannot write released storage |
 | A malicious or disguised file reaches review | Check extension, media type, magic bytes, Office structure, encryption, archive expansion and active content, then require a current clean malware result before promotion |
+| A local heuristic result is mistaken for production semantic assurance | Give every scanner runtime an explicit assurance class; advertise and permit managed-file uploads in production only for an injected `APPROVED_SEMANTIC_CDR` runtime. Local heuristic and ClamAV composition never self-identify as CDR |
 | Scanner failure or stale result is treated as success | Fail closed for unknown, failed, timed-out or superseded scans; bind promotion to object checksum and scan-policy version |
+| A scanner protocol or archive parser is abused | Run strict PDF/Office structure checks before a bounded ClamAV `INSTREAM` scan; cap object bytes, archive entries, expanded bytes, compression ratio, scanner time and scanner response length |
+| The malware service becomes a network pivot | Keep clamd on a dedicated internal network with no published port; send bytes through `INSTREAM` only and never pass an application-controlled filesystem path |
 | Quarantined or released objects become public | Deny public bucket access, separate storage privileges and test unauthenticated object retrieval before release |
 | An artefact changes after approval | Bind Manager review and QC dissemination to the immutable package version and checksum; any change creates a new version and invalidates approval |
 | A guessed or shared product object is retrieved | Authorise the active Customer, dissemination and artefact lifecycle on every download before issuing a short-lived grant or stream |
+| Download or redirect probing is hidden | Append content-free allowed, denied and unavailable access evidence; deny runtime update and delete rights on the access-event table |
 | An external product link enables SSRF | Accept constrained absolute HTTPS links but never fetch or preview them in the backend |
 | Link normalisation bypasses the allow-list | Normalise once and reject credentials, fragments, non-standard schemes, loopback, literal private-network hosts and domains outside the versioned allow-list |
 | An expired or withdrawn external product opens | Recheck recipient, release, expiry and lifecycle in the authenticated redirect and apply safe browser isolation |
@@ -106,6 +110,19 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 - Managed artefacts cannot be enabled until file and package limits, production
   storage region, encryption-key ownership, scanner operation, quarantine
   response and retention have named owners and tested runbooks.
+- The bundled private filesystem adapter and ClamAV container are local-pilot
+  foundations. Production enabling requires an explicitly injected private
+  object-storage runtime, approved encryption and retention controls, and an
+  internally reachable ClamAV service with current signatures.
+- The local deterministic inspector rejects encoded PDF action names, object
+  streams, incremental updates, embedded/active parts, OOXML external
+  relationships, DDE, OLE and bounded archive abuse. It is not a semantic
+  content-disarm-and-reconstruction service. Production managed documents remain
+  blocked until an approved maintained parser or CDR boundary and adversarial
+  corpus prove equivalent or stronger fail-closed behaviour.
+- Product links and managed-file uploads have separate server capabilities.
+  Production may keep allow-listed, non-fetched external links enabled while
+  managed-file upload routes fail closed when semantic/CDR assurance is absent.
 - Approved external destinations remain third-party trust boundaries. QC must
   attest Customer access and handling suitability; ISTARI Service cannot prove
   the destination's continued availability or content after redirect.

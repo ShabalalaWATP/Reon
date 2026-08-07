@@ -19,6 +19,9 @@ class ActorLike(Protocol):
     @property
     def scope(self) -> str: ...
 
+    @property
+    def organisation_unit_ids(self) -> frozenset[UUID]: ...
+
 
 class RequestLike(Protocol):
     @property
@@ -29,6 +32,9 @@ class RequestLike(Protocol):
 
     @property
     def assigned_delivery_team(self) -> str | None: ...
+
+    @property
+    def assigned_delivery_team_id(self) -> UUID | None: ...
 
     @property
     def assigned_specialist_id(self) -> UUID | None: ...
@@ -86,7 +92,11 @@ def is_object_scoped(actor: ActorLike, request: RequestLike) -> bool:
     if actor.role == UserRole.REQUESTER:
         return request.requester_id == actor.id
     if actor.role == UserRole.DELIVERY_TEAM_LEAD:
-        return request.assigned_delivery_team == actor.scope
+        return (
+            request.assigned_delivery_team_id in actor.organisation_unit_ids
+            if request.assigned_delivery_team_id is not None
+            else request.assigned_delivery_team == actor.scope
+        )
     if actor.role == UserRole.DELIVERY_SPECIALIST:
         return request.assigned_specialist_id == actor.id
     return actor.role in {
@@ -112,7 +122,11 @@ def can_view_request(actor: ActorLike, request: RequestLike) -> bool:
         if actor.role is UserRole.DELIVERY_SPECIALIST:
             return request.assigned_specialist_id == actor.id
         if actor.role is UserRole.DELIVERY_TEAM_LEAD:
-            return request.assigned_delivery_team == actor.scope
+            return (
+                request.assigned_delivery_team_id in actor.organisation_unit_ids
+                if request.assigned_delivery_team_id is not None
+                else request.assigned_delivery_team == actor.scope
+            )
     return can_access_work(actor, request)
 
 

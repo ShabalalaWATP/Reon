@@ -37,3 +37,13 @@ class SessionResponse(ApiModel):
     csrf_token: str
     expires_at: datetime
     elevated_until: datetime | None
+
+
+class ClientCapabilities(ApiModel):
+    my_work: bool
+    notifications: bool
+    configuration: bool
+    products: bool
+    managed_file_uploads: bool
+    planning: bool
+    statistics: bool

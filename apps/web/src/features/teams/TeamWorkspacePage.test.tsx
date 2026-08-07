@@ -10,8 +10,8 @@ import type {
   TeamMember,
   TeamWorkspaceAccess,
 } from "../../lib/api/teamTypes";
-import { json, mockFetch, renderApp } from "../../test/render";
-import { requesterSession } from "../../test/fixtures";
+import { json, mockFeatureFetch, renderApp } from "../../test/render";
+import { enabledCapabilities, requesterSession } from "../../test/fixtures";
 
 const managerSession: Session = {
   ...requesterSession,
@@ -206,8 +206,9 @@ describe("team workspace", () => {
   });
 
   it("reports an empty assignment and recovers workspace and overview queries", async () => {
-    mockFetch(async (url) => {
+    mockFeatureFetch(async (url) => {
       if (url.pathname.endsWith("/auth/me")) return json(managerSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       throw new Error(`Unexpected ${url.pathname}`);
     });
     renderApp("/teams/team-osg/overview");
@@ -216,8 +217,9 @@ describe("team workspace", () => {
     let workspaceAttempts = 0;
     let overviewAttempts = 0;
     const quartz = { ...managerAccess, teamId: "team-quartz", teamCode: "QUARTZ_TEAM", teamName: "Quartz Team" };
-    mockFetch(async (url) => {
+    mockFeatureFetch(async (url) => {
       if (url.pathname.endsWith("/auth/me")) return json(managerSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       if (url.pathname.endsWith("/team-workspaces")) {
         workspaceAttempts += 1;
         return workspaceAttempts === 1 ? json({ detail: "Unavailable" }, 503) : json({ items: [managerAccess, quartz] });
@@ -243,8 +245,9 @@ describe("team workspace", () => {
 
   it("recovers activity, people and roster-option errors and reports failed changes", async () => {
     let activityAttempts = 0;
-    mockFetch(async (url) => {
+    mockFeatureFetch(async (url) => {
       if (url.pathname.endsWith("/auth/me")) return json(managerSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       if (url.pathname.endsWith("/team-workspaces")) return json({ items: [managerAccess] });
       if (url.pathname.endsWith("/activity")) {
         activityAttempts += 1;
@@ -260,8 +263,9 @@ describe("team workspace", () => {
 
     let peopleAttempts = 0;
     let eligibleAttempts = 0;
-    mockFetch(async (url) => {
+    mockFeatureFetch(async (url) => {
       if (url.pathname.endsWith("/auth/me")) return json(managerSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       if (url.pathname.endsWith("/team-workspaces")) return json({ items: [managerAccess] });
       if (url.pathname.endsWith("/people")) {
         peopleAttempts += 1;
@@ -291,8 +295,9 @@ function mockTeamApi(
   access: TeamWorkspaceAccess,
   bodies: Array<Record<string, unknown>> = [],
 ) {
-  return mockFetch(async (url, init) => {
+  return mockFeatureFetch(async (url, init) => {
     if (url.pathname.endsWith("/auth/me")) return json(session);
+    if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
     if (url.pathname.endsWith("/team-workspaces")) return json({ items: [access] });
     if (url.pathname.endsWith("/eligible-analysts")) return json({ items: eligible });
     if (url.pathname.endsWith("/people")) return json({ items: people.map((item) => access.grantId ? item : { ...item, startReason: null, endReason: null }) });

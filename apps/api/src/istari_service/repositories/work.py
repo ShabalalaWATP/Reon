@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -31,6 +31,7 @@ from istari_service.ownership import OWNER_BY_STATUS
 from istari_service.repositories.auth import actor_from_user
 from istari_service.repositories.event_store import append_request_event
 from istari_service.repositories.organisation import SqlAlchemyOrganisationRepository
+from istari_service.repositories.product_workflow import product_workflow_details
 from istari_service.repositories.request_views import build_request_detail
 from istari_service.repositories.task_projection import next_task_projection
 from istari_service.repositories.work_actions import (
@@ -39,6 +40,7 @@ from istari_service.repositories.work_actions import (
     validate_work_effect,
     work_event_details,
 )
+from istari_service.repositories.work_claim_projection import project_claim
 from istari_service.repositories.work_intents import (
     prepare_claim_intent,
     prepare_completion_intent,
@@ -58,8 +60,11 @@ from istari_service.workflow.types import WorkflowAction, WorkflowTask
 
 
 class SqlAlchemyWorkRepository:
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(
+        self, session: AsyncSession, *, managed_products_enabled: bool = False
+    ) -> None:
         self._session = session
+        self._managed_products_enabled = managed_products_enabled
 
     async def list_for_actor(self, actor: Actor) -> list[WorkBundle]:
         rows = (
@@ -111,13 +116,37 @@ class SqlAlchemyWorkRepository:
             return None
         return build_work_bundle(*row)
 
-    async def find_specialist(self, user_id: UUID) -> Actor | None:
-        user = await self._session.get(User, user_id)
+    async def find_specialist(
+        self, user_id: UUID, *, delivery_team_id: UUID | None = None
+    ) -> Actor | None:
+        query = select(User).where(User.id == user_id)
+        if delivery_team_id is not None:
+            query = query.join(
+                UserOrganisationMembership,
+                UserOrganisationMembership.user_id == User.id,
+            ).where(UserOrganisationMembership.unit_id == delivery_team_id)
+        user = await self._session.scalar(query)
         if user is None or not user.is_active:
             return None
-        return actor_from_user(user)
+        return actor_from_user(
+            user,
+            frozenset({delivery_team_id})
+            if delivery_team_id is not None
+            else frozenset(),
+        )
 
-    async def list_active_specialists(self, delivery_team: str) -> list[Actor]:
+    async def list_active_specialists(
+        self, delivery_team: str, *, delivery_team_id: UUID | None = None
+    ) -> list[Actor]:
+        filters = (
+            (UserOrganisationMembership.unit_id == delivery_team_id,)
+            if delivery_team_id is not None
+            else (
+                User.scope == delivery_team,
+                OrganisationUnit.name == delivery_team,
+                OrganisationUnit.is_configured.is_(True),
+            )
+        )
         users = (
             await self._session.scalars(
                 select(User)
@@ -131,15 +160,18 @@ class SqlAlchemyWorkRepository:
                 )
                 .where(
                     User.role == UserRole.DELIVERY_SPECIALIST,
-                    User.scope == delivery_team,
                     User.is_active.is_(True),
-                    OrganisationUnit.name == delivery_team,
-                    OrganisationUnit.is_configured.is_(True),
+                    *filters,
                 )
                 .order_by(User.display_name, User.id)
             )
         ).all()
-        return [actor_from_user(user) for user in users]
+        memberships = (
+            frozenset({delivery_team_id})
+            if delivery_team_id is not None
+            else frozenset()
+        )
+        return [actor_from_user(user, memberships) for user in users]
 
     async def routing_options(
         self,
@@ -159,7 +191,13 @@ class SqlAlchemyWorkRepository:
         request = await self._session.get(ServiceRequest, work.request.id)
         if request is None:
             raise InvalidAction()
-        await validate_work_effect(self._session, request, actor, payload)
+        await validate_work_effect(
+            self._session,
+            request,
+            actor,
+            payload,
+            managed_products_enabled=self._managed_products_enabled,
+        )
 
     async def prepare_claim(self, work: WorkRecord, actor: Actor) -> UUID:
         return await prepare_claim_intent(self._session, work, actor)
@@ -170,7 +208,13 @@ class SqlAlchemyWorkRepository:
         actor: Actor,
         payload: CompletionPayload,
     ) -> UUID:
-        return await prepare_completion_intent(self._session, work, actor, payload)
+        return await prepare_completion_intent(
+            self._session,
+            work,
+            actor,
+            payload,
+            managed_products_enabled=self._managed_products_enabled,
+        )
 
     async def commit_intent(self) -> None:
         await self._session.commit()
@@ -190,36 +234,8 @@ class SqlAlchemyWorkRepository:
         work: WorkRecord,
         actor: Actor,
     ) -> WorkItem | None:
-        result = await self._session.execute(
-            update(StoredWorkflowTask)
-            .where(
-                StoredWorkflowTask.id == work.id,
-                StoredWorkflowTask.status == WorkflowTaskStatus.CLAIM_PENDING,
-                StoredWorkflowTask.assignee_user_id == actor.id,
-            )
-            .values(
-                status=WorkflowTaskStatus.CLAIMED,
-                claimed_at=datetime.now(UTC),
-            )
-        )
-        if result.rowcount != 1:  # type: ignore[attr-defined]
+        if not await project_claim(self._session, work, actor):
             return None
-        await self._session.flush()
-        request = await self._session.get(ServiceRequest, work.request.id)
-        if request is None:
-            return None
-        request.workflow_error = None
-        await append_request_event(
-            self._session,
-            request_id=request.id,
-            actor_id=actor.id,
-            event_type="workflow_claimed",
-            message="Work item claimed.",
-            prior_status=request.status,
-            next_status=request.status,
-            details={"taskKey": work.engine_task_key},
-        )
-        await self._session.flush()
         bundle = await self.get(work.id)
         return bundle.view if bundle else None
 
@@ -258,10 +274,21 @@ class SqlAlchemyWorkRepository:
             or request.version != work.request.version
         ):
             raise InvalidAction()
-        await validate_work_effect(self._session, request, actor, payload)
+        await validate_work_effect(
+            self._session,
+            request,
+            actor,
+            payload,
+            managed_products_enabled=self._managed_products_enabled,
+        )
         prior_status = request.status
         action = WorkflowAction(payload.action)
         next_status = status_after_action(prior_status, action)
+        event_details = work_event_details(action, routing)
+        if self._managed_products_enabled:
+            event_details.update(
+                await product_workflow_details(self._session, request.id, payload)
+            )
         await apply_work_effect(self._session, request, actor, payload, routing)
         now = datetime.now(UTC)
         task.status = WorkflowTaskStatus.COMPLETED
@@ -297,7 +324,7 @@ class SqlAlchemyWorkRepository:
             message=event_message(payload, prior_status),
             prior_status=prior_status,
             next_status=next_status,
-            details=work_event_details(action, routing),
+            details=event_details,
         )
         await self._session.flush()
         return await build_request_detail(

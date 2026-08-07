@@ -67,12 +67,14 @@ class WorkflowCommandDispatcher:
         lookup_policy: TaskLookupPolicy = DEFAULT_COMMAND_LOOKUP,
         max_attempts: int = 30,
         lease_seconds: int = 30,
+        managed_products_enabled: bool = False,
     ) -> None:
         self._sessions = session_factory
         self._engine = engine
         self._lookup_policy = lookup_policy
         self._max_attempts = max_attempts
         self._lease_seconds = lease_seconds
+        self._managed_products_enabled = managed_products_enabled
 
     async def dispatch(self, outbox_id: UUID) -> bool:
         processed, error = await self._run(outbox_id)
@@ -117,7 +119,10 @@ class WorkflowCommandDispatcher:
                     outbox.attempts,
                 )
                 actor, work = await validated_command_state(
-                    session, command, outbox.request_id
+                    session,
+                    command,
+                    outbox.request_id,
+                    managed_products_enabled=self._managed_products_enabled,
                 )
                 if command.command_type is WorkCommandType.CLAIM_TASK:
                     error = await self._claim(session, outbox, command, actor, work)
@@ -223,7 +228,10 @@ class WorkflowCommandDispatcher:
                 session, outbox, work.id, max_attempts=self._max_attempts
             )
             return error
-        detail = await SqlAlchemyWorkRepository(session).apply_completion(
+        detail = await SqlAlchemyWorkRepository(
+            session,
+            managed_products_enabled=self._managed_products_enabled,
+        ).apply_completion(
             work,
             actor,
             payload,

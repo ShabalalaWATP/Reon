@@ -35,7 +35,12 @@ def work_scope_conditions(actor: Actor) -> tuple[ColumnElement[bool], ...]:
     if actor.role is UserRole.REQUESTER:
         conditions.append(ServiceRequest.requester_id == actor.id)
     elif actor.role is UserRole.DELIVERY_TEAM_LEAD:
-        conditions.append(ServiceRequest.assigned_delivery_team == actor.scope)
+        conditions.append(
+            or_(
+                ServiceRequest.assigned_delivery_team_id.is_not(None),
+                ServiceRequest.assigned_delivery_team == actor.scope,
+            )
+        )
     elif actor.role is UserRole.DELIVERY_SPECIALIST:
         conditions.append(ServiceRequest.assigned_specialist_id == actor.id)
     membership = route_membership_condition(actor)

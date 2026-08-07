@@ -7,8 +7,8 @@ import type {
   StatisticsDashboard,
   StatisticsScope,
 } from "../../lib/api/statisticsTypes";
-import { adminSession } from "../../test/fixtures";
-import { json, mockFetch, renderApp } from "../../test/render";
+import { adminSession, enabledCapabilities } from "../../test/fixtures";
+import { json, mockFeatureFetch, renderApp } from "../../test/render";
 
 const platformScope: StatisticsScope = {
   id: "platform",
@@ -100,8 +100,9 @@ const dashboard: StatisticsDashboard = {
 describe("operational statistics", () => {
   it("shows only granted scopes with accessible chart-table parity", async () => {
     const requestedScopes: string[] = [];
-    mockFetch((url) => {
+    mockFeatureFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(adminSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       if (url.pathname.endsWith("/statistics/scopes")) {
         return json({ items: [platformScope, commandScope] });
       }
@@ -135,8 +136,9 @@ describe("operational statistics", () => {
 
   it("handles unavailable access and retries scope failures", async () => {
     let scopeAttempts = 0;
-    mockFetch((url) => {
+    mockFeatureFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(adminSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       if (url.pathname.endsWith("/statistics/scopes")) {
         scopeAttempts += 1;
         return scopeAttempts === 1 ? json({ detail: "Unavailable" }, 503) : json({ items: [] });
@@ -152,8 +154,9 @@ describe("operational statistics", () => {
 
   it("reports dashboard failures and renders an empty degraded projection", async () => {
     let dashboardAttempts = 0;
-    mockFetch((url) => {
+    mockFeatureFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(adminSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       if (url.pathname.endsWith("/statistics/scopes")) return json({ items: [platformScope] });
       if (url.pathname.endsWith("/statistics")) {
         dashboardAttempts += 1;

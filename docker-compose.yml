@@ -105,6 +105,21 @@ services:
       TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,api}
       MAX_REQUEST_BODY_BYTES: ${MAX_REQUEST_BODY_BYTES:-1048576}
+      PRODUCT_STORAGE_PATH: ${PRODUCT_STORAGE_PATH:-/var/lib/istari-products}
+      PRODUCT_ALLOWED_EXTERNAL_DOMAINS: ${PRODUCT_ALLOWED_EXTERNAL_DOMAINS:-products.example.test}
+      PRODUCT_UPLOAD_TTL_SECONDS: ${PRODUCT_UPLOAD_TTL_SECONDS:-600}
+      PRODUCT_MAX_FILE_BYTES: ${PRODUCT_MAX_FILE_BYTES:-26214400}
+      PRODUCT_MAX_PACKAGE_BYTES: ${PRODUCT_MAX_PACKAGE_BYTES:-104857600}
+      PRODUCT_CLAMAV_HOST: ${PRODUCT_CLAMAV_HOST:-clamav}
+      PRODUCT_CLAMAV_PORT: ${PRODUCT_CLAMAV_PORT:-3310}
+      PRODUCT_CLAMAV_TIMEOUT_SECONDS: ${PRODUCT_CLAMAV_TIMEOUT_SECONDS:-30}
+      ACTION_WORKSPACE_ENABLED: ${ACTION_WORKSPACE_ENABLED:-false}
+      NOTIFICATIONS_ENABLED: ${NOTIFICATIONS_ENABLED:-false}
+      MANAGED_PRODUCTS_ENABLED: ${MANAGED_PRODUCTS_ENABLED:-false}
+      MANAGED_FILE_UPLOADS_ENABLED: ${MANAGED_FILE_UPLOADS_ENABLED:-true}
+      CONFIGURATION_ADMIN_ENABLED: ${CONFIGURATION_ADMIN_ENABLED:-false}
+      PLANNING_EVOLUTION_ENABLED: ${PLANNING_EVOLUTION_ENABLED:-false}
+      STATISTICS_EVOLUTION_ENABLED: ${STATISTICS_EVOLUTION_ENABLED:-false}
       ALLOW_DEMO_USERS: ${ALLOW_DEMO_USERS:?Set ALLOW_DEMO_USERS in .env}
       DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:?Set DEMO_USER_PASSWORD in .env}
       AUDIT_HMAC_KEY: ${AUDIT_HMAC_KEY:?Set AUDIT_HMAC_KEY in .env}
@@ -123,14 +138,29 @@ services:
       retries: 20
       start_period: 20s
     depends_on:
+      clamav:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       migrator:
         condition: service_completed_successfully
     restart: unless-stopped
+    volumes:
+      - product-storage:/var/lib/istari-products
     networks:
       - data
+      - scanner
       - service
+
+  clamav:
+    image: clamav/clamav:1.5.3@sha256:d06c1d6a451d616e1dd79b42f44c8c8c291bba9cf4e75ebc4d0e43c1c6dd87bb
+    environment:
+      CLAMAV_NO_MILTERD: "true"
+    volumes:
+      - clamav-data:/var/lib/clamav
+    restart: unless-stopped
+    networks:
+      - scanner
 
   migrator:
     build:
@@ -174,8 +204,12 @@ volumes:
   postgres-data:
   camunda-primary-data:
   camunda-runtime-data:
+  clamav-data:
+  product-storage:
 
 networks:
   data:
+    internal: true
+  scanner:
     internal: true
   service:

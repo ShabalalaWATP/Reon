@@ -17,6 +17,7 @@ from istari_service.models import (
     ServiceRequest,
 )
 from istari_service.repositories.clarification_views import clarification_views
+from istari_service.repositories.product_availability import has_available_product
 from istari_service.schemas.requests import (
     DeliverableView,
     FeedbackView,
@@ -98,11 +99,7 @@ async def build_request_detail(
     specialist = request.assigned_specialist
     summary = summary_from_request(
         request,
-        product_available=(
-            deliverable is not None
-            and deliverable.status is DeliverableStatus.RELEASED
-            and deliverable.released_at is not None
-        ),
+        product_available=await has_available_product(session, request_id),
         feedback_submitted=feedback is not None,
     )
     return RequestDetail(

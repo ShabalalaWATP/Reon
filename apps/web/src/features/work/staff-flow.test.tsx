@@ -284,7 +284,7 @@ describe("staff work queue", () => {
     ["/coordination", "Command routing queue"],
     ["/allocation", "Ops routing queue"],
     ["/delivery/team", "Team queue"],
-    ["/delivery/my-work", "My work"],
+    ["/delivery/my-work", "Production queue"],
     ["/quality-release", "QC queue"],
   ])("renders the shared queue at %s for its role", async (path, title) => {
     const roleByPath = {

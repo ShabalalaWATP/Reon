@@ -51,7 +51,12 @@ route, priority, assignee, approval or dissemination recipient.
 - Configuration activation needs one-winner concurrency, reconciliation and
   superseding-version recovery evidence.
 - Compatible BPMN deployment remains an operator responsibility outside the
-  administration editor.
+  administration editor. The loopback deployment path records the exact process
+  ID, version, definition key, deployment key, checksum, compatibility key and a
+  hashed operator subject before marking it available. The Camunda-only smoke
+  explicitly skips this database attestation because it does not initialise the
+  application schema; that exception is contract-tested and does not mark a
+  workflow available to the application.
 
 ## Rejected alternatives
 

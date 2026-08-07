@@ -19,6 +19,9 @@ from istari_service.calendar_models import (
     CalendarEventKind,
 )
 from istari_service.errors import InvalidCalendarChange, StaleVersion
+from istari_service.operational_analytics_projection import (
+    project_capacity_snapshot_facts,
+)
 from istari_service.repositories.calendar import SqlAlchemyCalendarRepository
 from istari_service.schemas.calendar import (
     CalendarOccurrence,
@@ -101,6 +104,7 @@ class CalendarCapacityService:
         )
         self._session.add(snapshot)
         await self._session.flush()
+        await project_capacity_snapshot_facts(self._session, snapshot, occurred_at=now)
         return CapacitySnapshot(snapshot_id=snapshot.id, days=days)
 
     async def _calculate(

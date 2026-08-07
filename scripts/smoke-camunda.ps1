@@ -13,7 +13,11 @@ Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot "camunda-smoke-support.ps1")
 
 Assert-SmokeEndpoint -Endpoint $BaseUri
-$deploymentOutput = @(& (Join-Path $PSScriptRoot "deploy-workflow.ps1") -BaseUri $BaseUri)
+$deploymentOutput = @(
+    & (Join-Path $PSScriptRoot "deploy-workflow.ps1") `
+        -BaseUri $BaseUri `
+        -SkipAvailabilityAttestation
+)
 $deployment = $deploymentOutput |
     Where-Object { $_.PSObject.Properties["ProcessDefinitionKey"] } |
     Select-Object -Last 1

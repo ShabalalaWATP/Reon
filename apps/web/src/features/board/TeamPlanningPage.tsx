@@ -12,6 +12,7 @@ import type { Session } from "../../lib/api/types";
 import { useAuth } from "../../lib/auth/AuthProvider";
 import { localInput } from "../calendar/calendarDates";
 import { WorkPackageEditForm } from "./WorkPackageEditForm";
+import { PlanningEnhancements } from "./PlanningEnhancements";
 
 export function TeamPlanningPage({ access }: { access: TeamWorkspaceAccess }) {
   const { session } = useAuth();
@@ -37,6 +38,7 @@ function AuthenticatedTeamPlanning({ access, session }: { access: TeamWorkspaceA
   return (
     <div className="planning-page page-stack">
       <header className="planning-heading"><span>Delivery context</span><h2>Team planning</h2><p>Iterations and reservations organise team delivery. Camunda remains authoritative for every customer request stage.</p></header>
+      <PlanningEnhancements access={access} session={session} />
       {access.grantId && access.permissions.includes("BOARD") ? <IterationForm access={access} onChanged={refresh} session={session} /> : null}
       <IterationRegister access={access} items={iterations.data.items} onChanged={refresh} session={session} />
       <section className="planning-layout">

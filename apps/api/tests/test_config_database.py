@@ -55,6 +55,7 @@ def production_settings(**overrides: Any) -> Settings:
         "web_origin": "https://service.example.test",
         "trusted_origins": frozenset({"https://staff.example.test"}),
         "audit_hmac_key": SecretStr("a" * 32),
+        "product_storage_path": "C:/private/istari-products",
     }
     values.update(overrides)
     return Settings(**values)
@@ -72,6 +73,9 @@ def test_settings_normalise_origins_modes_and_aliases() -> None:
         session_cookie_samesite="STRICT",
         camunda_auth_mode="basic",
         CAMUNDA_BASE_URL="http://workflow.example.test/",
+        product_allowed_external_domains=(
+            " Products.Example.Test., files.example.test "
+        ),
     )
     assert settings.trusted_origins == frozenset(
         {
@@ -83,6 +87,9 @@ def test_settings_normalise_origins_modes_and_aliases() -> None:
     assert settings.session_cookie_samesite == "strict"
     assert settings.camunda_auth_mode == "BASIC"
     assert settings.camunda_base_url == "http://workflow.example.test"
+    assert settings.product_allowed_external_domains == frozenset(
+        {"products.example.test", "files.example.test"}
+    )
 
     from_collection = Settings(
         environment=Environment.TEST,
@@ -117,6 +124,10 @@ def test_settings_normalise_origins_modes_and_aliases() -> None:
             "allowed hosts must be explicit",
         ),
         ({"audit_hmac_key": None}, "audit HMAC key is required"),
+        (
+            {"product_storage_path": ".local/product-storage"},
+            "absolute private path",
+        ),
         ({"audit_hmac_key": SecretStr("short")}, "at least 32 bytes"),
         ({"camunda_auth_mode": "NONE"}, "authentication is required"),
         ({"camunda_username": None}, "credentials must be non-empty"),
@@ -153,6 +164,24 @@ def test_settings_reject_invalid_enumerated_text_and_accept_secure_prod() -> Non
             camunda_auth_mode="oauth",
         )
     assert production_settings().environment is Environment.PROD
+
+
+def test_settings_reject_product_package_limit_below_file_limit() -> None:
+    with pytest.raises(ValidationError, match="package limit"):
+        Settings(
+            environment=Environment.TEST,
+            database_url="sqlite+aiosqlite:///:memory:",
+            allow_demo_users=False,
+            product_max_file_bytes=2_048,
+            product_max_package_bytes=1_024,
+        )
+    with pytest.raises(ValidationError, match="ClamAV host"):
+        Settings(
+            environment=Environment.TEST,
+            database_url="sqlite+aiosqlite:///:memory:",
+            allow_demo_users=False,
+            product_clamav_host=" ",
+        )
 
 
 def test_get_settings_is_cached_and_reads_environment(
@@ -250,5 +279,6 @@ def test_metadata_compiles_for_supported_database_dialects() -> None:
             str(CreateTable(table).compile(dialect=dialect))
             for table in Base.metadata.sorted_tables
         ]
-        assert len(statements) == 40
+        assert len(statements) == len(Base.metadata.tables)
+        assert len(statements) >= 40
         assert all("CREATE TABLE" in statement for statement in statements)

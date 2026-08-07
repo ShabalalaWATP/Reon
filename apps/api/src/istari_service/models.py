@@ -19,6 +19,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     Uuid,
+    false,
     func,
     text,
 )
@@ -205,6 +206,9 @@ class ServiceRequest(TimestampMixin, Base):
     triage_category: Mapped[str | None] = mapped_column(String(80))
     priority: Mapped[str | None] = mapped_column(String(20))
     assigned_delivery_team: Mapped[str | None] = mapped_column(String(80), index=True)
+    assigned_delivery_team_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("organisation_units.id", ondelete="RESTRICT"), index=True
+    )
     assigned_specialist_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="RESTRICT"), index=True
     )
@@ -261,6 +265,8 @@ class WorkflowInstance(TimestampMixin, Base):
     process_id: Mapped[str] = mapped_column(String(160))
     process_definition_key: Mapped[str | None] = mapped_column(String(128))
     process_version: Mapped[int | None] = mapped_column(Integer)
+    process_checksum: Mapped[str | None] = mapped_column(String(64))
+    legacy_unpinned_identity: Mapped[bool] = mapped_column(server_default=false())
     process_instance_key: Mapped[str | None] = mapped_column(String(128), unique=True)
     status: Mapped[WorkflowInstanceStatus] = mapped_column(
         _enum(WorkflowInstanceStatus, "workflow_instance_status"),
@@ -324,14 +330,19 @@ class Deliverable(CreatedMixin, Base):
     released_at: Mapped[datetime | None] = mapped_column(UTC_TS)
 
 
+import istari_service.action_notification_models as _action_models  # noqa: E402, F401
 import istari_service.admin_models as _admin_models  # noqa: E402, F401
+import istari_service.analytics_evolution_models as _evolution_models  # noqa: E402, F401
 import istari_service.analytics_models as _analytics_models  # noqa: E402, F401
 import istari_service.board_models as _board_models  # noqa: E402, F401
 import istari_service.calendar_models as _calendar_models  # noqa: E402, F401
 import istari_service.clarification_models as _clarification_models  # noqa: E402, F401
+import istari_service.configuration_models as _configuration_models  # noqa: E402, F401
 import istari_service.management_models as _management_models  # noqa: E402, F401
 import istari_service.operations_models as _operations_models  # noqa: E402, F401
 import istari_service.organisation_models as _organisation_models  # noqa: E402, F401
+import istari_service.planning_analytics_models as _planning_models  # noqa: E402, F401
+import istari_service.product_models as _product_models  # noqa: E402, F401
 import istari_service.related_record_models as _related_record_models  # noqa: E402, F401
 import istari_service.request_draft_models as _request_draft_models  # noqa: E402, F401
 import istari_service.team_models as _team_models  # noqa: E402, F401

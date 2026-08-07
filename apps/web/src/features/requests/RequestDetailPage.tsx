@@ -5,7 +5,7 @@ import { Link, useParams } from "react-router";
 import { PageState } from "../../components/PageState";
 import { StatusJourney } from "../../components/StatusJourney";
 import { StatusPill } from "../../components/StatusPill";
-import { api, ApiError, productDownloadUrl } from "../../lib/api/client";
+import { api, ApiError } from "../../lib/api/client";
 import type { FeedbackInput } from "../../lib/api/types";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import { useAuth } from "../../lib/auth/AuthProvider";
@@ -14,6 +14,7 @@ import { FeedbackForm } from "./FeedbackForm";
 import { RequesterAction } from "./RequesterAction";
 import { RequestOverview } from "./RequestOverview";
 import { requestDetailPollInterval } from "./requestPolling";
+import { CustomerProductPanel } from "../products/CustomerProductPanel";
 
 export function RequestDetailPage() {
   const { requestId = "" } = useParams();
@@ -66,11 +67,11 @@ export function RequestDetailPage() {
           </section>
           <section className="detail-section" aria-labelledby="deliverable-title">
             <div className="section-heading"><span>Disseminated result</span><h2 id="deliverable-title">Service product</h2></div>
-            {releasedProduct ? <article className="deliverable"><h3>{releasedProduct.title}</h3><p>{releasedProduct.text}</p><small>Disseminated {formatDate(releasedProduct.releasedAt!, true)}</small><a className="button product-download" href={productDownloadUrl(request.id)}>Download product</a></article> : <p className="inline-empty">The product will appear here after dissemination.</p>}
+            {request.productAvailable ? <CustomerProductPanel requestId={request.id} /> : <p className="inline-empty">The product will appear here after dissemination.</p>}
           </section>
           <section className="detail-section" aria-labelledby="feedback-title">
             <div className="section-heading"><span>After completion</span><h2 id="feedback-title">Feedback</h2></div>
-            {request.feedback ? <div className="feedback-result"><strong>{request.feedback.rating} out of 5</strong><p>{request.feedback.comments}</p><small>Received {formatDate(request.feedback.createdAt)}</small></div> : releasedProduct ? <><p>Rate the service and tell the production team how well the product met your need.</p>{feedback.isError ? <p className="form-banner form-banner--error" role="alert">{feedback.error instanceof ApiError ? feedback.error.message : "Feedback could not be sent."}</p> : null}<FeedbackForm disabled={feedback.isPending} onSubmit={(input) => feedback.mutate(input)} /></> : <p className="inline-empty">Feedback opens after dissemination is complete.</p>}
+            {request.feedback ? <div className="feedback-result"><strong>{request.feedback.rating} out of 5</strong><p>{request.feedback.comments}</p><small>Received {formatDate(request.feedback.createdAt)}</small></div> : request.productAvailable || releasedProduct ? <><p>Rate the service and tell the production team how well the product met your need.</p>{feedback.isError ? <p className="form-banner form-banner--error" role="alert">{feedback.error instanceof ApiError ? feedback.error.message : "Feedback could not be sent."}</p> : null}<FeedbackForm disabled={feedback.isPending} onSubmit={(input) => feedback.mutate(input)} /></> : <p className="inline-empty">Feedback opens after dissemination is complete.</p>}
           </section>
         </aside>
       </div>

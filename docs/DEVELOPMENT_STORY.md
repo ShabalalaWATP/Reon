@@ -312,3 +312,39 @@ gates remain above 95 per cent for both lines and branches.
   configuration, planning enhancements and further scoped statistics. The plan
   keeps human routing, immutable in-flight versions and the completed MVP
   evidence intact.
+- Implemented that expansion as a local release candidate behind independent
+  production-off feature flags. The application now provides a role-scoped
+  personal action workspace, durable notifications, private managed PDF, DOCX
+  and PPTX dissemination or safe approved HTTPS links, effective-dated
+  configuration, a richer planning cockpit and exact-grant scoped statistics.
+- Hardened managed-product delivery through bounded upload intents, signature
+  and Office-package validation, defence-in-depth ClamAV scanning, private
+  storage, immutable review evidence, authenticated Customer downloads and
+  audited redirects. End-to-end HTTP tests found and fixed an ASGI replay defect
+  that could cancel streamed downloads.
+- Pinned both the Camunda process identifier and exact approved process version
+  at direct and draft request submission. Review also added request-row
+  serialisation for concurrent pins, rejected unavailable workflow definitions
+  and enforced Draft immutability at the repository boundary.
+- Independent review then found six cross-slice blockers that focused tests had
+  missed: unavailable baseline pinning, split dissemination state, invalid retry
+  upload grants, frontend flag drift, metadata-only configuration and empty
+  production statistics. The fixes now preserve legacy mode, fail readiness
+  closed when configuration is enabled, bind workflow starts and routing to
+  immutable pins, materialise new stable teams, use exact dissemination evidence,
+  gate the React app by authenticated capabilities and project content-free facts.
+- Closed the corrected local release-candidate gates at 775 backend tests with
+  98.92 per cent line and 95.04 per cent branch coverage, and 243 frontend tests
+  with 99.54 per cent line and 95.05 per cent branch coverage. Ruff, MyPy, ESLint,
+  TypeScript, production build, Bandit, dependency, licence, terminology,
+  line-limit, Compose configuration and SQLite migration rehearsal also pass.
+- Final independent review fixed optimistic-version hand-off across managed-file
+  upload stages, enforced QC authorisation before dissemination replay, retained
+  completed legacy product downloads alongside managed releases, made stable
+  team identity authoritative after configured renames, and bound workflow starts
+  to attested immutable process identity. Both the code-quality and defensive
+  security rechecks reported no remaining P0, P1 or P2 blockers.
+- Kept production and acceptance claims separate. Live PostgreSQL concurrency,
+  deployed Camunda sibling routing, target object-store/scanner operation,
+  multi-browser, load, recovery and named product, security, operational and UAT
+  acceptance remain open in the product-evolution Definition of Done matrix.

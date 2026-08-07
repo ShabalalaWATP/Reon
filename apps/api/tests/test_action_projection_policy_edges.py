@@ -1,0 +1,106 @@
+"""Pure role and request-status action projection policy coverage."""
+
+from datetime import UTC, datetime, timedelta
+from typing import Any, cast
+from unittest.mock import AsyncMock
+from uuid import UUID, uuid4
+
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from conftest import ApiHarness
+from istari_service.action_notification_models import ActionSection, ActionSourceType
+from istari_service.models import RequestStatus, ServiceRequest, UserRole
+from istari_service.request_action_projection import (
+    _action_type,
+    _section,
+    _source_type,
+    action_audiences,
+    as_utc,
+    waiting_analyst,
+)
+
+
+def _request(status: RequestStatus, *, assigned: UUID | None = None) -> ServiceRequest:
+    return ServiceRequest(
+        id=uuid4(),
+        requester_id=uuid4(),
+        reference="SR-POLICY",
+        title="Synthetic policy case",
+        status=status,
+        current_owner="Synthetic owner",
+        required_by=datetime.now(UTC).date() + timedelta(days=10),
+        assigned_specialist_id=assigned,
+        awaiting_team_staffing=False,
+    )
+
+
+@pytest.mark.asyncio
+async def test_request_action_policy_status_branches(api_harness: ApiHarness) -> None:
+    specialist_id = await api_harness.user_id("admin11")
+    async with api_harness.sessions() as session:
+        customer = _request(RequestStatus.INFORMATION_REQUIRED)
+        assert (await action_audiences(session, customer))[0].recipient_user_id
+        assigned = _request(RequestStatus.IN_PROGRESS, assigned=specialist_id)
+        assert (await action_audiences(session, assigned))[0].recipient_user_id
+        assert (
+            await action_audiences(session, _request(RequestStatus.IN_PROGRESS)) == []
+        )
+        quality = await action_audiences(
+            session, _request(RequestStatus.QUALITY_REVIEW)
+        )
+        assert quality[0].candidate_role is UserRole.QUALITY_RELEASE
+        assert (
+            await action_audiences(session, _request(RequestStatus.ROUTING_PENDING))
+            == []
+        )
+        corrupt = _request(RequestStatus.ROUTING_PENDING)
+        corrupt.status = cast(Any, "UNKNOWN")
+        assert await action_audiences(session, corrupt) == []
+
+    fake_session = cast(AsyncSession, AsyncMock())
+    fake_session.scalar = AsyncMock(side_effect=[None, uuid4()])  # type: ignore[method-assign]
+    statuses = {
+        RequestStatus.INFORMATION_REQUIRED: "PROVIDE_INFORMATION",
+        RequestStatus.CUSTOMER_INFORMATION_REQUIRED: "PROVIDE_CLARIFICATION",
+        RequestStatus.IN_PROGRESS: "DEVELOP_PRODUCT",
+        RequestStatus.QUALITY_REVIEW: "QC_REVIEW",
+        RequestStatus.READY_FOR_RELEASE: "DISSEMINATE_PRODUCT",
+        RequestStatus.CLOSED_NOT_PROGRESSED: "RECENTLY_COMPLETED",
+        RequestStatus.COMPLETED: "FEEDBACK_DUE",
+    }
+    for status, expected in statuses.items():
+        assert await _action_type(fake_session, _request(status)) == expected
+    assert (
+        await _action_type(fake_session, _request(RequestStatus.COMPLETED))
+        == "RECENTLY_COMPLETED"
+    )
+
+    now = datetime.now(UTC)
+    assert (
+        _section(_request(RequestStatus.COMPLETED), now)
+        is ActionSection.NEEDS_MY_ACTION
+    )
+    assert (
+        _section(_request(RequestStatus.CANCELLED), now)
+        is ActionSection.RECENTLY_COMPLETED
+    )
+    assert _section(_request(RequestStatus.ON_HOLD), now) is ActionSection.WAITING
+    due = _request(RequestStatus.IN_PROGRESS)
+    due.required_by = now.date()
+    assert _section(due, now) is ActionSection.DUE_SOON
+    assert (
+        _section(_request(RequestStatus.IN_PROGRESS), now)
+        is ActionSection.NEEDS_MY_ACTION
+    )
+    assert (
+        _source_type(RequestStatus.CUSTOMER_INFORMATION_REQUIRED)
+        is ActionSourceType.CLARIFICATION
+    )
+    assert _source_type(RequestStatus.COMPLETED) is ActionSourceType.FEEDBACK
+    assert _source_type(RequestStatus.IN_PROGRESS) is ActionSourceType.WORKFLOW_TASK
+    assert (
+        waiting_analyst(_request(RequestStatus.IN_PROGRESS, assigned=specialist_id))
+        is None
+    )
+    assert as_utc(now.replace(tzinfo=None)).tzinfo is UTC

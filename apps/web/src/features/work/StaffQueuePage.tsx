@@ -10,6 +10,7 @@ import type { ListResponse, WorkAction, WorkItem } from "../../lib/api/types";
 import { useAuth } from "../../lib/auth/AuthProvider";
 import { formatDate, statusLabels } from "../../lib/status";
 import { RequestOverview } from "../requests/RequestOverview";
+import { StaffProductAction } from "../products/StaffProductAction";
 import type { SpecialistOptions } from "./EligibleSpecialistField";
 import type { RoutingOptions } from "./RoutingDestinationField";
 import { RelatedRecordPanel } from "./RelatedRecordPanel";
@@ -257,6 +258,7 @@ export function StaffQueuePage({
                     <RequestOverview request={detailQuery.data} />
                   )}
                   <div className="queue-detail__decision">
+                    {canLoadDetail ? <StaffProductAction requestId={selected.requestId} requestVersion={selected.requestVersion} stage={selected.stage} /> : null}
                     {canLoadDetail && selected.stage === "TRIAGE_REVIEW" ? (
                       <RelatedRecordPanel
                         csrfToken={session.csrfToken}

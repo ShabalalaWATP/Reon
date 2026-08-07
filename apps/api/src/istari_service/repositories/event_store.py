@@ -18,6 +18,7 @@ from istari_service.audit import (
     verify_event_chain,
 )
 from istari_service.models import RequestEvent, RequestStatus, ServiceRequest
+from istari_service.request_event_projection import project_request_event
 
 
 async def append_request_event(
@@ -77,6 +78,7 @@ async def append_request_event(
     )
     await session.flush()
     await project_request_analytics(session, request_id)
+    await project_request_event(session, event, request)
     return event
 
 

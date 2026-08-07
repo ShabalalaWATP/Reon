@@ -7,6 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query
 
 from istari_service.dependencies import (
+    AppSettings,
     CurrentActor,
     DatabaseSession,
     MutationActor,
@@ -45,10 +46,17 @@ def _service(
     session: DatabaseSession,
     engine: WorkflowDependency,
     sessions: SessionFactoryDependency,
+    settings: AppSettings,
 ) -> WorkService:
     return WorkService(
-        SqlAlchemyWorkRepository(session),
-        WorkflowCommandDispatcher(sessions, engine),
+        SqlAlchemyWorkRepository(
+            session, managed_products_enabled=settings.managed_products_enabled
+        ),
+        WorkflowCommandDispatcher(
+            sessions,
+            engine,
+            managed_products_enabled=settings.managed_products_enabled,
+        ),
     )
 
 
@@ -58,8 +66,9 @@ async def list_work_items(
     session: DatabaseSession,
     engine: WorkflowDependency,
     sessions: SessionFactoryDependency,
+    settings: AppSettings,
 ) -> WorkItemList:
-    items = await _service(session, engine, sessions).list_items(actor)
+    items = await _service(session, engine, sessions, settings).list_items(actor)
     return WorkItemList(items=items)
 
 
@@ -73,8 +82,9 @@ async def list_eligible_specialists(
     session: DatabaseSession,
     engine: WorkflowDependency,
     sessions: SessionFactoryDependency,
+    settings: AppSettings,
 ) -> EligibleSpecialistList:
-    items = await _service(session, engine, sessions).eligible_specialists(
+    items = await _service(session, engine, sessions, settings).eligible_specialists(
         actor, work_id
     )
     return EligibleSpecialistList(items=items)
@@ -87,8 +97,11 @@ async def list_routing_options(
     session: DatabaseSession,
     engine: WorkflowDependency,
     sessions: SessionFactoryDependency,
+    settings: AppSettings,
 ) -> OrganisationUnitList:
-    items = await _service(session, engine, sessions).routing_options(actor, work_id)
+    items = await _service(session, engine, sessions, settings).routing_options(
+        actor, work_id
+    )
     return OrganisationUnitList(items=items)
 
 
@@ -133,8 +146,9 @@ async def claim_work_item(
     session: DatabaseSession,
     engine: WorkflowDependency,
     sessions: SessionFactoryDependency,
+    settings: AppSettings,
 ) -> WorkItem:
-    return await _service(session, engine, sessions).claim(actor, work_id)
+    return await _service(session, engine, sessions, settings).claim(actor, work_id)
 
 
 @router.post("/{work_id}/complete", response_model=RequestDetail)
@@ -145,5 +159,8 @@ async def complete_work_item(
     session: DatabaseSession,
     engine: WorkflowDependency,
     sessions: SessionFactoryDependency,
+    settings: AppSettings,
 ) -> RequestDetail:
-    return await _service(session, engine, sessions).complete(actor, work_id, command)
+    return await _service(session, engine, sessions, settings).complete(
+        actor, work_id, command
+    )

@@ -16,6 +16,10 @@ from istari_service.retention import (
     RetentionService,
     SqlAlchemyRetentionRepository,
 )
+from istari_service.workflow_attestation import (
+    WorkflowAttestation,
+    attest_workflow_availability,
+)
 from istari_service.workflow_recovery import recover_failed_workflow
 
 
@@ -37,6 +41,16 @@ def parser() -> argparse.ArgumentParser:
     recovery.add_argument("--request-id", type=UUID, required=True)
     recovery.add_argument("--apply", action="store_true")
     recovery.add_argument("--confirm")
+    attestation = subcommands.add_parser("attest-workflow")
+    attestation.add_argument("--process-id", required=True)
+    attestation.add_argument("--process-version", type=int, required=True)
+    attestation.add_argument("--process-definition-key", required=True)
+    attestation.add_argument("--deployment-key", required=True)
+    attestation.add_argument("--compatibility-key", required=True)
+    attestation.add_argument("--checksum", required=True)
+    attestation.add_argument("--operator-subject", required=True)
+    attestation.add_argument("--apply", action="store_true")
+    attestation.add_argument("--confirm")
     return command
 
 
@@ -89,6 +103,24 @@ async def async_main(arguments: argparse.Namespace) -> int:
                     confirmation=arguments.confirm,
                 )
                 result = asdict(recovery_report)
+                exit_code = 0
+        elif arguments.job == "attest-workflow":
+            async with SessionFactory() as session, session.begin():
+                valid = await attest_workflow_availability(
+                    session,
+                    WorkflowAttestation(
+                        process_id=arguments.process_id,
+                        process_version=arguments.process_version,
+                        process_definition_key=arguments.process_definition_key,
+                        deployment_key=arguments.deployment_key,
+                        compatibility_key=arguments.compatibility_key,
+                        checksum=arguments.checksum,
+                        operator_subject=arguments.operator_subject,
+                    ),
+                    apply=arguments.apply,
+                    confirmation=arguments.confirm,
+                )
+                result = {"valid": valid, "applied": arguments.apply}
                 exit_code = 0
         else:
             raise ValueError("unsupported maintenance job")

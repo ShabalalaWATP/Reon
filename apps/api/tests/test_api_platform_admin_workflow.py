@@ -97,6 +97,7 @@ async def test_team_rename_preserves_stable_route_and_manager_access(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
+    harness.settings.configuration_admin_enabled = False
     request_id = await _submit(harness)
     await _complete(
         harness,
@@ -172,6 +173,7 @@ async def test_rename_conflict_stale_noop_and_csrf_safely(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
+    harness.settings.configuration_admin_enabled = False
     await harness.login("admin1")
     await harness.elevate()
     response = await harness.client.get("/api/v1/organisation/units")

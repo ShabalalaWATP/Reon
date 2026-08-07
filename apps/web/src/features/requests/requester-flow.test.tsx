@@ -3,8 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { describe, expect, it } from "vitest";
 
-import { json, mockFetch, renderApp } from "../../test/render";
-import { requestDetail, requestSummary, requesterSession, workItem } from "../../test/fixtures";
+import { json, mockFeatureFetch, renderApp } from "../../test/render";
+import { enabledCapabilities, requestDetail, requestSummary, requesterSession, workItem } from "../../test/fixtures";
 
 describe("requester experience", () => {
   it("shows current requests, action-needed work and completed history", async () => {
@@ -13,7 +13,12 @@ describe("requester experience", () => {
       requestSummary,
       { ...requestSummary, id: "done", reference: "ISR-2026-0002", status: "COMPLETED", title: "Completed request", productAvailable: true },
     ];
-    mockFetch((url) => url.pathname.endsWith("/auth/me") ? json(requesterSession) : json({ items }));
+    mockFeatureFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
+      if (url.pathname.endsWith("/releases/requests/done")) return json(releasedPackage("done"));
+      return json({ items });
+    });
     const view = renderApp("/requests");
     expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
     expect(screen.getAllByText("Needs your input")[0].closest("div")).toHaveTextContent("1");
@@ -21,15 +26,16 @@ describe("requester experience", () => {
     expect(screen.getByText("Awaiting assignment")).toBeInTheDocument();
     const history = screen.getByText("Completed history").closest("details")!;
     expect(within(history).getByText("Completed request")).toBeInTheDocument();
-    expect(within(history).getByRole("link", { name: "Download product" })).toHaveAttribute("href", "/api/v1/requests/done/product");
+    expect(await within(history).findByRole("link", { name: "Download" })).toHaveAttribute("href", "/api/v1/releases/artefacts/released-file/download");
     expect(within(history).getByText("Feedback requested")).toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
   });
 
   it("shows empty and recoverable error states", async () => {
     let fail = true;
-    mockFetch((url) => {
+    mockFeatureFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       if (url.pathname.endsWith("/requests")) return fail ? json({ detail: "Unavailable" }, 503) : json({ items: [] });
       throw new Error(url.pathname);
     });
@@ -44,8 +50,9 @@ describe("requester experience", () => {
 
   it("validates and submits the complete structured request contract", async () => {
     let submitted: Record<string, unknown> | undefined;
-    mockFetch((url, init) => {
+    mockFeatureFetch((url, init) => {
       if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       if (url.pathname.endsWith("/requests") && init.method === "POST") {
         submitted = JSON.parse(String(init.body)) as Record<string, unknown>;
         expect(new Headers(init.headers).get("X-CSRF-Token")).toBe("csrf-token");
@@ -73,8 +80,9 @@ describe("requester experience", () => {
   });
 
   it("reports request submission failures", async () => {
-    mockFetch((url, init) => {
+    mockFeatureFetch((url, init) => {
       if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       if (init.method === "POST") return json({ detail: { message: "Request data was rejected." } }, 422);
       throw new Error(url.pathname);
     });
@@ -90,14 +98,17 @@ describe("requester experience", () => {
     let detail = {
       ...requestDetail,
       status: "COMPLETED" as const,
+      productAvailable: true,
       deliverable: { id: "deliverable", title: "Readiness summary", text: "All measures are on track.", releasedAt: "2026-08-06T11:00:00Z" },
     };
-    mockFetch((url, init) => {
+    mockFeatureFetch((url, init) => {
       if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       if (url.pathname.endsWith("/feedback") && init.method === "POST") {
         detail = { ...detail, feedback: { id: "feedback", rating: 4, comments: "Clear and useful.", createdAt: "2026-08-06T12:00:00Z" } };
         return json(detail.feedback);
       }
+      if (url.pathname.endsWith(`/releases/requests/${requestDetail.id}`)) return json(releasedPackage(requestDetail.id));
       if (url.pathname.includes("/requests/")) return json(detail);
       throw new Error(url.pathname);
     });
@@ -106,10 +117,10 @@ describe("requester experience", () => {
     expect(await screen.findByRole("heading", { name: requestDetail.title })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
     expect(screen.getByText("Request submitted")).toBeInTheDocument();
-    expect(screen.getByText("All measures are on track.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Download product" })).toHaveAttribute(
+    expect(await screen.findByText("Readiness summary")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Download" })).toHaveAttribute(
       "href",
-      `/api/v1/requests/${requestDetail.id}/product`,
+      "/api/v1/releases/artefacts/released-file/download",
     );
     await user.selectOptions(screen.getByLabelText(/Rating/), "4");
     await user.type(screen.getByLabelText(/Service comments/), "Clear and useful.");
@@ -117,6 +128,27 @@ describe("requester experience", () => {
     expect(await screen.findByText("4 out of 5")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Send feedback" })).not.toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
+  });
+
+  it("keeps a released legacy product downloadable when no managed package exists", async () => {
+    const legacy = {
+      ...requestDetail,
+      status: "COMPLETED" as const,
+      productAvailable: true,
+      deliverable: { id: "legacy", title: "Legacy result", text: "Released text", releasedAt: "2026-08-06T11:00:00Z" },
+    };
+    mockFeatureFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
+      if (url.pathname.endsWith(`/releases/requests/${legacy.id}`)) return json({ detail: "Not found" }, 404);
+      if (url.pathname.endsWith(`/requests/${legacy.id}`)) return json(legacy);
+      throw new Error(url.pathname);
+    });
+    renderApp(`/requests/${legacy.id}`);
+    expect(await screen.findByRole("link", { name: "Download product" })).toHaveAttribute(
+      "href",
+      `/api/v1/requests/${legacy.id}/product`,
+    );
   });
 
   it.each([
@@ -128,7 +160,7 @@ describe("requester experience", () => {
       status,
       deliverable: { id: "product", title: "Withheld product", text: "Withheld text", releasedAt },
     };
-    mockFetch((url) => url.pathname.endsWith("/auth/me") ? json(requesterSession) : json(detail));
+    mockFeatureFetch((url) => url.pathname.endsWith("/auth/me") ? json(requesterSession) : url.pathname.endsWith("/me/capabilities") ? json(enabledCapabilities) : json(detail));
     renderApp(`/requests/${detail.id}`);
     expect(await screen.findByRole("heading", { name: detail.title })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Download product" })).not.toBeInTheDocument();
@@ -140,8 +172,9 @@ describe("requester experience", () => {
     const infoRequest = { ...requestDetail, status: "INFORMATION_REQUIRED" as const, needsRequesterInput: true, workflowError: "sync delayed", events: [] };
     const item = { ...workItem, stage: "INFORMATION_REQUIRED" as const, assigneeId: requesterSession.user.id, assigneeDisplayName: requesterSession.user.displayName, availableActions: ["provide_information", "withdraw"] as const };
     let completedBody: unknown;
-    mockFetch((url, init) => {
+    mockFeatureFetch((url, init) => {
       if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       if (url.pathname.endsWith("/work-items")) return json({ items: [item] });
       if (url.pathname.endsWith("/complete")) { completedBody = JSON.parse(String(init.body)); return json(requestDetail); }
       if (url.pathname.includes("/requests/")) return json(infoRequest);
@@ -175,8 +208,9 @@ describe("requester experience", () => {
     const detail = { ...requestDetail, status: "CUSTOMER_INFORMATION_REQUIRED" as const, needsRequesterInput: true, clarifications: [clarification] };
     const item = { ...workItem, stage: "CUSTOMER_INFORMATION_REQUIRED" as const, assigneeId: requesterSession.user.id, assigneeDisplayName: requesterSession.user.displayName, availableActions: ["provide_clarification", "withdraw"] as const };
     let completedBody: unknown;
-    mockFetch((url, init) => {
+    mockFeatureFetch((url, init) => {
       if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       if (url.pathname.endsWith("/work-items")) return json({ items: [item] });
       if (url.pathname.endsWith("/complete")) { completedBody = JSON.parse(String(init.body)); return json(requestDetail); }
       if (url.pathname.includes("/requests/")) return json(detail);
@@ -197,8 +231,9 @@ describe("requester experience", () => {
   it("handles unavailable details and feedback errors", async () => {
     let failFeedback = false;
     const complete = { ...requestDetail, status: "COMPLETED" as const, deliverable: { id: "d", title: "Result", text: "Text", releasedAt: requestDetail.updatedAt } };
-    mockFetch((url) => {
+    mockFeatureFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       if (url.pathname.endsWith("/missing")) return json({ detail: "Not found" }, 404);
       if (url.pathname.endsWith("/feedback")) return failFeedback ? json({ detail: "Feedback already submitted" }, 409) : json({});
       return json(complete);
@@ -208,6 +243,20 @@ describe("requester experience", () => {
     failFeedback = true;
   });
 });
+
+function releasedPackage(requestId: string) {
+  return {
+    packageId: "released-package", requestId, packageVersion: 1, status: "DISSEMINATED",
+    releasedAt: "2026-08-06T11:00:00Z", releasedBy: "QC Manager",
+    artefacts: [{
+      id: "released-file", packageId: "released-package", position: 1, kind: "MANAGED_FILE",
+      lifecycle: "RELEASED", label: "Readiness summary", filename: "readiness.pdf",
+      mediaType: "application/pdf", sizeBytes: 2048, sha256: "a".repeat(64), version: 1,
+      destinationDomain: null, expiresAt: null, scanResult: "CLEAN", scanReason: null,
+      releasedAt: "2026-08-06T11:00:00Z",
+    }],
+  };
+}
 
 async function fillRequestForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/Request title/), "Quarterly service readiness summary");

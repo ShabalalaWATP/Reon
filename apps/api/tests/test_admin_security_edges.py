@@ -170,12 +170,12 @@ async def test_sequence_reconciles_upward_and_is_monotonic(
         assert sequence is not None
         sequence.next_value = 1
         await initialise_admin_identity_sequence(session)
-        assert sequence.next_value == 73
+        assert sequence.next_value == 74
         repository = SqlAlchemyAdminRepository(session)
-        assert await repository.next_username() == "admin73"
         assert await repository.next_username() == "admin74"
+        assert await repository.next_username() == "admin75"
         await initialise_admin_identity_sequence(session)
-        assert sequence.next_value == 75
+        assert sequence.next_value == 76
 
 
 async def test_initialisers_create_absent_rows(api_harness: ApiHarness) -> None:
@@ -194,7 +194,10 @@ async def test_last_admin_guard_with_distinct_actor(api_harness: ApiHarness) -> 
     harness = api_harness
     async with harness.sessions() as session:
         target = await session.scalar(select(User).where(User.username == "admin1"))
-        assert target is not None
+        approver = await session.scalar(select(User).where(User.username == "admin73"))
+        assert target is not None and approver is not None
+        approver.is_active = False
+        await session.flush()
         repository = SqlAlchemyAdminRepository(session)
         service = AdminService(
             repository,
@@ -220,6 +223,7 @@ async def test_command_rename_does_not_rewrite_shared_user_scope_or_session(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
+    harness.settings.configuration_admin_enabled = False
     await harness.login("admin5")
     shared_cookie = harness.client.cookies.get(harness.settings.session_cookie_name)
     assert shared_cookie is not None

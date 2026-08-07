@@ -8,6 +8,10 @@ from sqlalchemy import event, inspect
 
 import istari_service.board_models as _board_models  # noqa: F401
 import istari_service.calendar_models as _calendar_models  # noqa: F401
+from istari_service.analytics_evolution_models import (
+    AnalyticsExportAuditEvent,
+    OperationalAnalyticsFact,
+)
 from istari_service.board_models import WorkPackageActivity
 from istari_service.models import Feedback, RequestEvent, ServiceRequest
 from istari_service.operations_models import OperationalRun
@@ -36,6 +40,8 @@ for audit_type in (
     TeamActivityEvent,
     WorkPackageActivity,
     OperationalRun,
+    OperationalAnalyticsFact,
+    AnalyticsExportAuditEvent,
 ):
     event.listen(audit_type, "before_update", _reject_audit_mutation)
     event.listen(audit_type, "before_delete", _reject_audit_mutation)

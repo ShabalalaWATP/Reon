@@ -9,6 +9,7 @@ import type {
   SummaryMetric,
 } from "../../lib/api/statisticsTypes";
 import { useAuth } from "../../lib/auth/AuthProvider";
+import { StatisticsEvolutionContainer } from "./StatisticsEvolutionContainer";
 import {
   CategoryPanel,
   ChildrenPanel,
@@ -80,6 +81,12 @@ export function StatisticsPage() {
       {dashboard.isPending ? <PageState kind="loading" title="Calculating operational statistics" /> : null}
       {dashboard.isError ? <RetryState onRetry={() => void dashboard.refetch()} /> : null}
       {dashboard.data ? <Dashboard data={dashboard.data} /> : null}
+      {dashboard.data && session ? (
+        <StatisticsEvolutionContainer
+          filters={{ scopeId, from, to, timeZone }}
+          session={session}
+        />
+      ) : null}
     </main>
   );
 }

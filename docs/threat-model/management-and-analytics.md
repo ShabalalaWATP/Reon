@@ -33,6 +33,8 @@ analytics repository.
 | Feedback identifies a small group | Suppress rating aggregates and child comparisons below a cohort of five |
 | Timing or filters reveal a single Customer | Bound dimensions, avoid free-text grouping and apply cohort suppression to sensitive measures |
 | Projection duplicates inflate metrics | Use unique event keys, projection versions and idempotent upserts; reconcile against source counts |
+| Workflow completion and QC dissemination double-count one managed release | Treat `PRODUCT_DISSEMINATED` as the sole managed-release analytics boundary; exclude `WORKFLOW_RELEASE` from live projection and repair replay |
+| Duplicate or out-of-order repair replay changes historical facts | Derive opaque source keys from the authoritative event and fact type, insert with a unique conflict guard, keep facts immutable and bound replay by aware dates and source count; repair never deletes or rewrites facts |
 | Stale projection misleads a manager | Return freshness and degraded state; alert on lag instead of presenting it as current |
 | Large ranges cause denial of service | Limit date range, dimensions and page size; use statement timeout and indexed closure joins |
 | CSV or table export bypasses scope | Use the same scoped query and suppression service; no separate unrestricted export path |
@@ -57,6 +59,9 @@ analytics repository.
   narrative, product, Customer identity or feedback comment.
 - Cohort suppression tests at zero, one, four, five and combined child totals.
 - Projection duplicate, out-of-order, rebuild and lag tests.
+- Real authoritative release, access, notification, iteration and capacity events
+  produce content-free facts; bounded replay is idempotent and exact sibling scope
+  remains empty.
 - Historical configuration-version and retired-unit attribution tests.
 - Notification, dissemination, replacement, withdrawal, release-cycle, planning
   and capacity formula oracles using content-free facts.

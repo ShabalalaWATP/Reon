@@ -24,6 +24,13 @@ separate redirect and recipient-authorisation boundary.
   bytes, Office package structure, encryption, archive expansion and active
   content, then require a current clean malware result. Failed, unknown, stale or
   timed-out results cannot enter review or dissemination.
+- Treat the bundled deterministic document inspector and ClamAV composition as
+  local heuristic and malware controls, not semantic content assurance. A
+  production runtime may expose managed-file upload capability only when its
+  injected scanner explicitly provides approved semantic/CDR assurance.
+- Keep external-link capability separate. An environment without approved CDR
+  may retain bounded allow-listed links, while every managed-file upload stage
+  remains unavailable at both capability and service boundaries.
 - Make release-package versions immutable. Team Manager review and independent QC
   dissemination bind to the exact package version and checksum. Any artefact
   change creates a new version and invalidates earlier approval.

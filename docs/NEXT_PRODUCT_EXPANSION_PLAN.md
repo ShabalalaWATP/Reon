@@ -2,9 +2,10 @@
 
 ## Status and interpretation
 
-Active implementation plan, accepted on 7 August 2026. No item in this plan is
-implemented merely because it appears here. Completion requires the evidence
-gates below.
+Implemented local release candidate, accepted for implementation on 7 August
+2026. The code and automated local gates are complete, but the expansion is not
+an accepted production capability until the evidence and owner gates below are
+closed.
 
 The requested priority items are interpreted as:
 
@@ -29,6 +30,27 @@ workflow-derived Kanban, work packages and content-free statistics.
 
 This plan extends those foundations. It does not rebuild them or relabel existing
 evidence as evidence for the new capabilities.
+
+## Release-candidate implementation status
+
+The local release candidate now implements all six vertical slices behind
+independent, disabled-by-default production flags:
+
+| Slice | Implemented evidence | Acceptance still required |
+| --- | --- | --- |
+| My work | Role-scoped actions, filters, saved views, freshness and safe deep links | Supported-browser and representative-role UAT |
+| Notifications | Durable recipients, preferences, unread/archive state and repair reconciliation | Pilot-load visibility and operational alert ownership |
+| Products | Private PDF, DOCX and PPTX upload/scan/review/release/download plus allow-listed HTTPS redirects | Target object-store, scanner, retention and three-browser evidence |
+| Configuration | Effective-dated draft/validate/independent-approve/activate lifecycle and per-request process ID/version pinning | Live PostgreSQL lock race and newly deployed Camunda sibling-route rehearsal |
+| Planning | Cockpit, templates, checklists, blockers, dependencies and advisory capacity scenarios | Agreed-scale performance and human usability acceptance |
+| Statistics | Exact-grant scoped comparisons, bottlenecks, capacity and release measures with suppression | Environment-owner export decision and report-parity acceptance |
+
+Local automated evidence is 775 backend tests at 98.92 per cent line and 95.04
+per cent branch coverage, and 243 frontend tests at 99.54 per cent line and 95.05
+per cent branch coverage. Both retain independent 95 per cent line and branch
+gates. Migrations 0012 to 0017 pass empty SQLite upgrade,
+drift, downgrade and re-upgrade. PostgreSQL migration/concurrency, live Camunda,
+browser, load, recovery and named acceptance evidence remain deliberately open.
 
 | Capability | Current state | Planned change |
 | --- | --- | --- |

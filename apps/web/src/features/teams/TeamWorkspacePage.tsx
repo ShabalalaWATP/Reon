@@ -8,6 +8,7 @@ import { TeamPlanningPage } from "../board/TeamPlanningPage";
 import { api } from "../../lib/api/client";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import { useAuth } from "../../lib/auth/AuthProvider";
+import { useCapabilities } from "../../lib/capabilities/useCapabilities";
 import { TeamActivityPanel } from "./TeamActivityPanel";
 import { TeamPeoplePanel } from "./TeamPeoplePanel";
 
@@ -22,6 +23,7 @@ const views = [
 
 export function TeamWorkspacePage() {
   const { session } = useAuth();
+  const { capabilities, isPending: capabilitiesPending } = useCapabilities();
   const navigate = useNavigate();
   const { teamId, view = "overview" } = useParams();
   const userId = session?.user.id ?? "anonymous";
@@ -30,7 +32,7 @@ export function TeamWorkspacePage() {
     queryFn: api.teamWorkspaces,
     enabled: Boolean(session),
   });
-  if (workspaces.isPending) {
+  if (capabilitiesPending || workspaces.isPending) {
     return <PageState kind="loading" title="Opening team workspace" />;
   }
   if (workspaces.isError) {
@@ -43,7 +45,8 @@ export function TeamWorkspacePage() {
   if (!selected) {
     return <PageState kind="empty" title="Team workspace unavailable">This team is outside your current workspace access.</PageState>;
   }
-  if (!views.some(([key]) => key === view)) {
+  const availableViews = capabilities.planning ? views : views.filter(([key]) => key !== "planning");
+  if (!availableViews.some(([key]) => key === view)) {
     return <Navigate replace to={`/teams/${selected.teamId}/overview`} />;
   }
   return (
@@ -59,14 +62,14 @@ export function TeamWorkspacePage() {
         ) : null}
       </header>
       <nav aria-label="Team workspace views" className="team-tabs">
-        {views.map(([key, label]) => <NavLink className={({ isActive }) => isActive ? "team-tab team-tab--active" : "team-tab"} key={key} to={`/teams/${selected.teamId}/${key}`}>{label}</NavLink>)}
+        {availableViews.map(([key, label]) => <NavLink className={({ isActive }) => isActive ? "team-tab team-tab--active" : "team-tab"} key={key} to={`/teams/${selected.teamId}/${key}`}>{label}</NavLink>)}
       </nav>
       {view === "overview" ? <TeamOverview teamId={selected.teamId} userId={userId} /> : null}
       {view === "people" ? <TeamPeoplePanel access={selected} userId={userId} /> : null}
       {view === "activity" ? <TeamActivityPanel teamId={selected.teamId} userId={userId} /> : null}
       {view === "board" ? <TeamBoardPage access={selected} /> : null}
       {view === "calendar" ? <CalendarPage access={selected} /> : null}
-      {view === "planning" ? <TeamPlanningPage access={selected} /> : null}
+      {view === "planning" && capabilities.planning ? <TeamPlanningPage access={selected} /> : null}
     </main>
   );
 }

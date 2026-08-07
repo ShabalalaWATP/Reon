@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import re
-from collections import defaultdict
 from dataclasses import dataclass
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, delete, exists, select
+from sqlalchemy import ColumnElement, and_, delete, exists, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from istari_service.configuration_request_policy import (
+    load_request_configuration_policy,
+)
 from istari_service.domain import Actor
 from istari_service.errors import InvalidAction
 from istari_service.models import RequestStatus, ServiceRequest, UserRole
@@ -20,10 +22,10 @@ from istari_service.organisation_models import (
     StaffingStatus,
     UserOrganisationMembership,
 )
+from istari_service.repositories.organisation_tracking import tracked_requests
 from istari_service.schemas.organisation import (
     OrganisationUnitView,
     TrackedRequest,
-    TrackedRouteUnit,
 )
 from istari_service.schemas.work import (
     AllocateRequest,
@@ -81,6 +83,9 @@ class SqlAlchemyOrganisationRepository:
         )
         if parent_id is None:
             return []
+        policy = await load_request_configuration_policy(self._session, request_id)
+        if policy is not None:
+            return policy.routing_options(parent_id, expected_kind)
         units = (
             await self._session.scalars(
                 select(OrganisationUnit)
@@ -98,73 +103,7 @@ class SqlAlchemyOrganisationRepository:
         membership = route_membership_condition(actor)
         if membership is None:
             return []
-        request_rows = (
-            await self._session.execute(
-                select(
-                    ServiceRequest.id,
-                    ServiceRequest.reference,
-                    ServiceRequest.status,
-                    ServiceRequest.current_owner,
-                    ServiceRequest.required_by,
-                    ServiceRequest.updated_at,
-                    ServiceRequest.awaiting_team_staffing,
-                )
-                .where(membership)
-                .order_by(ServiceRequest.updated_at.desc(), ServiceRequest.id)
-            )
-        ).all()
-        visible_ids = {row.id for row in request_rows}
-        if not visible_ids:
-            return []
-        route_rows = (
-            await self._session.execute(
-                select(
-                    RequestRouteSelection.request_id,
-                    RequestRouteSelection.position,
-                    OrganisationUnit.id,
-                    OrganisationUnit.name,
-                    OrganisationUnit.kind,
-                )
-                .join(
-                    OrganisationUnit,
-                    OrganisationUnit.id == RequestRouteSelection.unit_id,
-                )
-                .where(RequestRouteSelection.request_id.in_(visible_ids))
-                .order_by(RequestRouteSelection.position)
-            )
-        ).all()
-        routes: dict[UUID, list[TrackedRouteUnit]] = defaultdict(list)
-        for request_id, _position, unit_id, name, kind in route_rows:
-            routes[request_id].append(
-                TrackedRouteUnit(id=unit_id, name=name, kind=kind)
-            )
-        return [
-            TrackedRequest(
-                id=row.id,
-                reference=row.reference,
-                status=row.status,
-                current_owner=row.current_owner,
-                required_by=row.required_by,
-                updated_at=row.updated_at,
-                route=routes[row.id],
-                awaiting_team_staffing=row.awaiting_team_staffing,
-            )
-            for row in request_rows
-        ]
-
-
-async def initialise_request_route(session: AsyncSession, request_id: UUID) -> None:
-    root_id = await session.scalar(
-        select(OrganisationUnit.id).where(
-            OrganisationUnit.kind == OrganisationKind.ROOT,
-            OrganisationUnit.is_configured.is_(True),
-        )
-    )
-    if root_id is None:
-        raise RuntimeError("the organisation root is not configured")
-    session.add(
-        RequestRouteSelection(request_id=request_id, unit_id=root_id, position=0)
-    )
+        return await tracked_requests(self._session, membership)
 
 
 async def resolve_routing_selection(
@@ -185,6 +124,14 @@ async def resolve_routing_selection(
     )
     if parent_id is None:
         raise InvalidAction("The request route is incomplete.")
+    policy = await load_request_configuration_policy(session, request.id)
+    if policy is not None:
+        return policy.routing_selection(
+            parent_id=parent_id,
+            destination_id=spec.destination_id,
+            expected_kind=spec.expected_kind,
+            selected_position=spec.selected_position,
+        )
     query = select(OrganisationUnit).where(
         OrganisationUnit.id == spec.destination_id,
         OrganisationUnit.parent_id == parent_id,
@@ -239,6 +186,7 @@ async def apply_routing_selection(
             routing.candidate_groups
         )
         request.assigned_delivery_team = routing.unit_name
+        request.assigned_delivery_team_id = routing.unit_id
         request.assigned_specialist_id = None
         request.awaiting_team_staffing = not routing.staffed
 
@@ -266,6 +214,31 @@ def route_membership_condition(actor: Actor) -> ColumnElement[bool] | None:
     position = ROUTE_POSITION_BY_ROLE.get(actor.role)
     if position is None:
         return None
+    if position == 3:
+        stable_membership = exists().where(
+            UserOrganisationMembership.user_id == actor.id,
+            UserOrganisationMembership.unit_id
+            == ServiceRequest.assigned_delivery_team_id,
+            RequestRouteSelection.request_id == ServiceRequest.id,
+            RequestRouteSelection.position == position,
+            RequestRouteSelection.unit_id == ServiceRequest.assigned_delivery_team_id,
+        )
+        routed_membership = exists().where(
+            UserOrganisationMembership.user_id == actor.id,
+            UserOrganisationMembership.unit_id == RequestRouteSelection.unit_id,
+            RequestRouteSelection.request_id == ServiceRequest.id,
+            RequestRouteSelection.position == position,
+        )
+        return or_(
+            and_(
+                ServiceRequest.assigned_delivery_team_id.is_not(None),
+                stable_membership,
+            ),
+            and_(
+                ServiceRequest.assigned_delivery_team_id.is_(None),
+                routed_membership,
+            ),
+        )
     return exists().where(
         UserOrganisationMembership.user_id == actor.id,
         UserOrganisationMembership.unit_id == RequestRouteSelection.unit_id,
@@ -284,6 +257,29 @@ async def has_route_membership(
     position = ROUTE_POSITION_BY_ROLE.get(actor.role)
     if position is None:
         return True
+    if position == 3:
+        team_id = await session.scalar(
+            select(ServiceRequest.assigned_delivery_team_id).where(
+                ServiceRequest.id == request_id
+            )
+        )
+        if team_id is not None:
+            query = (
+                select(UserOrganisationMembership.id)
+                .join(
+                    RequestRouteSelection,
+                    RequestRouteSelection.unit_id == UserOrganisationMembership.unit_id,
+                )
+                .where(
+                    UserOrganisationMembership.user_id == actor.id,
+                    UserOrganisationMembership.unit_id == team_id,
+                    RequestRouteSelection.request_id == request_id,
+                    RequestRouteSelection.position == position,
+                )
+            )
+            if lock:
+                query = query.with_for_update()
+            return await session.scalar(query) is not None
     query = (
         select(UserOrganisationMembership.id)
         .join(
@@ -345,5 +341,6 @@ def _clear_team(request: ServiceRequest) -> None:
     request.team_manager_group = None
     request.team_analyst_group = None
     request.assigned_delivery_team = None
+    request.assigned_delivery_team_id = None
     request.assigned_specialist_id = None
     request.awaiting_team_staffing = False

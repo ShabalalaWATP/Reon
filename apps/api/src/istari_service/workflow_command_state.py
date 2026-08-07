@@ -18,7 +18,7 @@ from istari_service.models import (
 )
 from istari_service.models import WorkflowTask as StoredWorkflowTask
 from istari_service.policies import can_access_work, may_complete
-from istari_service.repositories.auth import actor_from_user
+from istari_service.repositories.auth import actor_from_user_with_memberships
 from istari_service.repositories.organisation import (
     has_route_membership,
     resolve_routing_selection,
@@ -38,6 +38,8 @@ async def validated_command_state(
     session: AsyncSession,
     command: PendingWorkCommand,
     request_id: UUID,
+    *,
+    managed_products_enabled: bool = False,
 ) -> tuple[Actor, WorkRecord]:
     """Lock and reauthorise the exact actor, object, version and assignment."""
 
@@ -79,7 +81,7 @@ async def validated_command_state(
         or instance.process_instance_key != command.process_instance_key
     ):
         raise InvalidAction()
-    actor = actor_from_user(user)
+    actor = await actor_from_user_with_memberships(session, user)
     if not can_access_work(actor, request) or not await has_route_membership(
         session, actor, request.id, lock=True
     ):
@@ -107,7 +109,13 @@ async def validated_command_state(
         )
         if resolved_routing != command.routing:
             raise InvalidAction()
-        await validate_work_effect(session, request, actor, command.completion)
+        await validate_work_effect(
+            session,
+            request,
+            actor,
+            command.completion,
+            managed_products_enabled=managed_products_enabled,
+        )
     return actor, work
 
 
@@ -120,12 +128,19 @@ async def _validate_assignment(
     if not isinstance(payload, AssignSpecialist):
         return
     specialist = await session.get(User, payload.specialist_id)
-    specialist_actor = actor_from_user(specialist) if specialist is not None else None
+    specialist_actor = (
+        await actor_from_user_with_memberships(session, specialist)
+        if specialist is not None
+        else None
+    )
     if (
         specialist is None
         or not specialist.is_active
         or specialist.role is not UserRole.DELIVERY_SPECIALIST
-        or specialist.scope != request.assigned_delivery_team
+        or (
+            request.assigned_delivery_team_id is None
+            and specialist.scope != request.assigned_delivery_team
+        )
         or specialist_actor is None
         or not await has_route_membership(
             session, specialist_actor, request.id, lock=True

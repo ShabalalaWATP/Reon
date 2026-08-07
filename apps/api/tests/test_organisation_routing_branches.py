@@ -101,7 +101,7 @@ async def test_resolve_routing_selection_maps_each_valid_stage(
     destination_id = uuid4()
     unit = _unit(destination_id, kind)
     session = AsyncMock(spec=AsyncSession)
-    session.scalar.side_effect = [uuid4(), unit]
+    session.scalar.side_effect = [uuid4(), None, unit]
 
     routing = await resolve_routing_selection(
         session,
@@ -146,7 +146,7 @@ async def test_resolve_routing_selection_handles_non_routing_and_denial_paths() 
         )
 
     session.reset_mock()
-    session.scalar.side_effect = [uuid4(), None]
+    session.scalar.side_effect = [uuid4(), None, None]
     with pytest.raises(InvalidAction, match="direct child"):
         await resolve_routing_selection(
             session,
@@ -158,7 +158,7 @@ async def test_resolve_routing_selection_handles_non_routing_and_denial_paths() 
     unsafe_unit = _unit(destination_id, OrganisationKind.COMMAND)
     unsafe_unit.routing_candidate_group = "Unsafe Group"
     session.reset_mock()
-    session.scalar.side_effect = [uuid4(), unsafe_unit]
+    session.scalar.side_effect = [uuid4(), None, unsafe_unit]
     with pytest.raises(InvalidAction, match="configured safely"):
         await resolve_routing_selection(
             session,

@@ -48,9 +48,19 @@ class WorkRepository(Protocol):
         actor: Actor | None = None,
     ) -> WorkBundle | None: ...
 
-    async def find_specialist(self, user_id: UUID) -> Actor | None: ...
+    async def find_specialist(
+        self,
+        user_id: UUID,
+        *,
+        delivery_team_id: UUID | None = None,
+    ) -> Actor | None: ...
 
-    async def list_active_specialists(self, delivery_team: str) -> list[Actor]: ...
+    async def list_active_specialists(
+        self,
+        delivery_team: str,
+        *,
+        delivery_team_id: UUID | None = None,
+    ) -> list[Actor]: ...
 
     async def routing_options(
         self,
@@ -112,8 +122,15 @@ class WorkService:
             or bundle.record.request.assigned_delivery_team is None
         ):
             raise ObjectNotFound()
-        specialists = await self._repository.list_active_specialists(
-            bundle.record.request.assigned_delivery_team
+        team_name = bundle.record.request.assigned_delivery_team
+        team_id = bundle.record.request.assigned_delivery_team_id
+        specialists = (
+            await self._repository.list_active_specialists(team_name)
+            if team_id is None
+            else await self._repository.list_active_specialists(
+                team_name,
+                delivery_team_id=team_id,
+            )
         )
         return [
             EligibleSpecialist(id=specialist.id, display_name=specialist.display_name)
@@ -233,11 +250,22 @@ class WorkService:
     ) -> None:
         if not isinstance(payload, AssignSpecialist):
             return
-        specialist = await self._repository.find_specialist(payload.specialist_id)
+        team_id = work.request.assigned_delivery_team_id
+        specialist = (
+            await self._repository.find_specialist(payload.specialist_id)
+            if team_id is None
+            else await self._repository.find_specialist(
+                payload.specialist_id,
+                delivery_team_id=team_id,
+            )
+        )
         if (
             specialist is None
             or specialist.role != UserRole.DELIVERY_SPECIALIST
-            or specialist.scope != work.request.assigned_delivery_team
+            or (
+                team_id is None
+                and specialist.scope != work.request.assigned_delivery_team
+            )
         ):
             raise InvalidAction(
                 "The selected specialist is outside this delivery team."

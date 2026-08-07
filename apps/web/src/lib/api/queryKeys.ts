@@ -1,4 +1,8 @@
 export const protectedQueryKeys = {
+  actions: (userId: string, filtersKey: string) =>
+    ["protected", userId, "my-actions", filtersKey] as const,
+  capabilities: (userId: string) =>
+    ["protected", userId, "capabilities"] as const,
   adminUser: (userId: string, managedUserId: string | undefined) =>
     ["protected", userId, "admin-user", managedUserId] as const,
   adminUsers: (userId: string, query: string) =>
@@ -10,6 +14,12 @@ export const protectedQueryKeys = {
     ["protected", userId, "eligible-specialists", workItemId] as const,
   organisationUnits: (userId: string) =>
     ["protected", userId, "organisation-units"] as const,
+  notificationCount: (userId: string) =>
+    ["protected", userId, "notification-count"] as const,
+  notificationPreferences: (userId: string) =>
+    ["protected", userId, "notification-preferences"] as const,
+  notifications: (userId: string, filtersKey: string) =>
+    ["protected", userId, "notifications", filtersKey] as const,
   personalCalendar: (userId: string, start: string, end: string) =>
     ["protected", userId, "personal-calendar", start, end] as const,
   request: (userId: string, requestId: string | undefined) =>
@@ -38,6 +48,21 @@ export const protectedQueryKeys = {
   ] as const,
   statisticsScopes: (userId: string) =>
     ["protected", userId, "statistics-scopes"] as const,
+  statisticsEvolution: (
+    userId: string,
+    scopeId: string,
+    from: string,
+    to: string,
+    timeZone: string,
+  ) => [
+    "protected",
+    userId,
+    "statistics-evolution",
+    scopeId,
+    from,
+    to,
+    timeZone,
+  ] as const,
   teamActivity: (userId: string, teamId: string | undefined) =>
     ["protected", userId, "team-activity", teamId] as const,
   teamBoard: (userId: string, teamId: string, filtersKey: string) =>
@@ -52,6 +77,12 @@ export const protectedQueryKeys = {
     ["protected", userId, "team-packages", teamId] as const,
   teamIterations: (userId: string, teamId: string) =>
     ["protected", userId, "team-iterations", teamId] as const,
+  teamPlanningCockpit: (userId: string, teamId: string) =>
+    ["protected", userId, "team-planning-cockpit", teamId] as const,
+  teamPlanningScenarios: (userId: string, teamId: string) =>
+    ["protected", userId, "team-planning-scenarios", teamId] as const,
+  teamPlanningTemplates: (userId: string, teamId: string) =>
+    ["protected", userId, "team-planning-templates", teamId] as const,
   teamWorkspace: (userId: string, teamId: string | undefined) =>
     ["protected", userId, "team-workspace", teamId] as const,
   teamWorkspaces: (userId: string) =>

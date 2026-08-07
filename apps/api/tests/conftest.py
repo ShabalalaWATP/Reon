@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from istari_service.auth_service import PasswordHasher
 from istari_service.config import Environment, Settings
+from istari_service.configuration_models import ApprovedWorkflowDefinition
 from istari_service.database import (
     create_database_engine,
     create_schema,
@@ -162,6 +163,12 @@ async def api_harness() -> ApiHarness:
         session_cookie_secure=False,
         session_ttl_seconds=3600,
         session_idle_seconds=900,
+        action_workspace_enabled=True,
+        notifications_enabled=True,
+        managed_products_enabled=True,
+        configuration_admin_enabled=True,
+        planning_evolution_enabled=True,
+        statistics_evolution_enabled=True,
     )
     database_engine = create_database_engine(settings)
     await create_schema(database_engine)
@@ -179,6 +186,17 @@ async def api_harness() -> ApiHarness:
         start_background_worker=False,
     )
     async with app.router.lifespan_context(app):
+        async with sessions() as session, session.begin():
+            approved_workflow = await session.scalar(
+                select(ApprovedWorkflowDefinition).where(
+                    ApprovedWorkflowDefinition.process_id
+                    == settings.camunda_process_id,
+                    ApprovedWorkflowDefinition.process_version == 1,
+                )
+            )
+            assert approved_workflow is not None
+            # The fake engine is the approved deployment for isolated API tests.
+            approved_workflow.is_available = True
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(
             transport=transport,

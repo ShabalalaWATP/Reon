@@ -4,7 +4,8 @@ import { describe, expect, it } from "vitest";
 import { PageState } from "../components/PageState";
 import { StatusJourney } from "../components/StatusJourney";
 import { StatusPill } from "../components/StatusPill";
-import { navigationForRole, roleLabels, roleRoutes } from "./routes";
+import { homeRouteForRole, navigationForRole, roleLabels, roleRoutes } from "./routes";
+import { disabledCapabilities } from "./api/capabilityClient";
 import { formatDate, isComplete, requesterGroup, statusLabels, statusTone, trackingStatusLabel } from "./status";
 import { protectedQueryKeys } from "./api/queryKeys";
 
@@ -23,13 +24,21 @@ describe("presentation helpers", () => {
       QUALITY_RELEASE: "QC Manager",
     });
     expect(navigationForRole("REQUESTER")).toHaveLength(3);
-    expect(navigationForRole("PLATFORM_ADMIN")).toEqual([{ label: "User accounts", path: "/admin/users" }, { label: "Organisation", path: "/organisation" }]);
+    expect(navigationForRole("PLATFORM_ADMIN")).toEqual([
+      { label: "User accounts", path: "/admin/users" },
+      { label: "Organisation", path: "/organisation" },
+    ]);
     expect(navigationForRole("INTAKE_TRIAGE")).toEqual([
       { label: "Work queue", path: "/triage" },
       { label: "Tracking", path: "/tracking" },
       { label: "Organisation", path: "/organisation" },
     ]);
     expect(navigationForRole("DELIVERY_TEAM_LEAD")).not.toContainEqual({ label: "Tracking", path: "/tracking" });
+    const enabled = { ...disabledCapabilities, myWork: true, configuration: true, products: true };
+    expect(homeRouteForRole("REQUESTER", disabledCapabilities)).toBe("/requests");
+    expect(homeRouteForRole("REQUESTER", enabled)).toBe("/my-work");
+    expect(navigationForRole("PLATFORM_ADMIN", enabled)).toContainEqual({ label: "Configuration", path: "/admin/configuration" });
+    expect(navigationForRole("DELIVERY_SPECIALIST", enabled)).toContainEqual({ label: "Product package", path: "/product-packages/new" });
   });
 
   it("groups and labels statuses without exposing raw values", () => {

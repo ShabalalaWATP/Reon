@@ -267,3 +267,8 @@ async def close_iteration(
 ) -> IterationResult:
     _, service = _services(session)
     return await service.close_iteration(actor, team_id, iteration_id, command)
+
+
+from istari_service.routers import planning as _planning  # noqa: E402
+
+router.include_router(_planning.router)

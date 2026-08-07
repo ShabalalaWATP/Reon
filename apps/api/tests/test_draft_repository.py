@@ -25,6 +25,7 @@ from istari_service.schemas.drafts import (
     RequestDraftSubmit,
     RequestDraftUpdate,
 )
+from pin_test_support import StaticConfigurationPins
 
 
 @pytest.fixture
@@ -80,7 +81,11 @@ async def test_repository_covers_draft_lock_and_submission_branches(
         session.add(user)
         await session.flush()
         actor = Actor(user.id, user.username, user.display_name, user.role, user.scope)
-        repository = SqlAlchemyDraftRepository(session, process_id="service-request")
+        repository = SqlAlchemyDraftRepository(
+            session,
+            process_id="service-request",
+            configuration_pins=StaticConfigurationPins(),  # type: ignore[arg-type]
+        )
 
         first = await repository.create(
             actor,

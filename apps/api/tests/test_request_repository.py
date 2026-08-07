@@ -17,7 +17,6 @@ from istari_service.database import (
     create_schema,
     create_session_factory,
 )
-from istari_service.domain import Actor
 from istari_service.errors import FeedbackUnavailable
 from istari_service.models import (
     Deliverable,
@@ -39,6 +38,8 @@ from istari_service.repositories.event_store import (
 from istari_service.repositories.request_views import build_request_detail
 from istari_service.repositories.requests import SqlAlchemyRequestRepository
 from istari_service.schemas.requests import FeedbackCreate, RequestCreate, Sensitivity
+from pin_test_support import StaticConfigurationPins
+from synthetic_user_support import actor_from, make_user
 
 
 @pytest.fixture
@@ -77,26 +78,15 @@ def request_command() -> RequestCreate:
     )
 
 
-def make_user(role: UserRole, *, scope: str = "Area A") -> User:
-    suffix = uuid4().hex
-    return User(
-        username=f"user.{suffix}@example.test",
-        display_name=f"Synthetic {role.value.title()}",
-        password_hash="$argon2id$synthetic",
-        role=role,
-        scope=scope,
-    )
-
-
-def actor_from(user: User) -> Actor:
-    return Actor(user.id, user.username, user.display_name, user.role, user.scope)
-
-
 async def create_request(
     session: AsyncSession,
     requester: User,
 ) -> tuple[SqlAlchemyRequestRepository, UUID]:
-    repository = SqlAlchemyRequestRepository(session, process_id="service-request-v1")
+    repository = SqlAlchemyRequestRepository(
+        session,
+        process_id="service-request-v1",
+        configuration_pins=StaticConfigurationPins(),  # type: ignore[arg-type]
+    )
     detail = await repository.create(actor_from(requester), request_command())
     return repository, detail.id
 
@@ -139,8 +129,13 @@ async def test_create_list_get_and_hash_linked_events(
         assert outbox.payload == {
             "requestId": str(request_id),
             "requesterId": str(requester.id),
+            "processId": "service-request-v1",
+            "processVersion": 1,
+            "processChecksum": "a" * 64,
         }
         assert instance is not None and instance.process_id == "service-request-v1"
+        assert instance.process_version == 1
+        assert instance.process_checksum == "a" * 64
 
         second = await append_request_event(
             session,
@@ -280,6 +275,7 @@ async def test_request_detail_controls_deliverable_visibility(
             comments="Useful synthetic response.",
         )
         session.add_all([released, feedback])
+        request.status = RequestStatus.COMPLETED
         await append_request_event(
             session,
             request_id=request_id,
@@ -300,8 +296,10 @@ async def test_request_detail_controls_deliverable_visibility(
         assert detail.assigned_specialist.id == specialist.id
         assert detail.events[-1].actor_display_name is None
         assert detail.workflow_error is not None
+        assert detail.product_available
         summaries = await repository.list_for_requester(requester.id)
-        assert summaries[0].needs_requester_input
+        assert summaries[0].product_available
+        assert not summaries[0].needs_requester_input
 
 
 @pytest.mark.asyncio

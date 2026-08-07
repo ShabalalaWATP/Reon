@@ -61,6 +61,9 @@ class ResultSession:
             return self.user
         return uuid4() if self.membership else None
 
+    async def scalars(self, _statement: object) -> list[object]:
+        return []
+
 
 def _outbox(*, attempts: int = 1) -> WorkflowOutbox:
     return WorkflowOutbox(

@@ -83,6 +83,7 @@ async def test_capacity_preview_commit_and_all_rejection_branches() -> None:
 
     session.add.side_effect = add
     session.flush = AsyncMock()
+    session.get = AsyncMock(return_value=None)
     session.scalar = AsyncMock()
     session.scalars = AsyncMock(return_value=[])
     calendar = MagicMock()

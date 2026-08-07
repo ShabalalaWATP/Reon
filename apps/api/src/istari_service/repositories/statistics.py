@@ -127,6 +127,22 @@ class SqlAlchemyStatisticsRepository:
         )
         return StatisticsDataset(scope, facts, intervals, children, freshness)
 
+    async def authorised_scope(
+        self,
+        actor: Actor,
+        *,
+        scope_id: str,
+        at: datetime | None = None,
+    ) -> tuple[StatisticsScope, OrganisationUnit]:
+        """Resolve the same active scope used by screen and export queries."""
+
+        await self._apply_statement_timeout()
+        return await self._resolve_scope(
+            actor,
+            scope_id=scope_id,
+            at=at or datetime.now(UTC),
+        )
+
     async def _resolve_scope(
         self,
         actor: Actor,

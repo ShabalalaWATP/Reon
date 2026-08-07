@@ -11,6 +11,7 @@ from sqlalchemy.orm import selectinload
 
 from istari_service.domain import AccountRecord, Actor, SessionRecord
 from istari_service.models import Session, User
+from istari_service.organisation_models import UserOrganisationMembership
 
 
 def _as_utc(value: datetime) -> datetime:
@@ -19,24 +20,45 @@ def _as_utc(value: datetime) -> datetime:
     return value.astimezone(UTC)
 
 
-def actor_from_user(user: User) -> Actor:
+def actor_from_user(
+    user: User,
+    organisation_unit_ids: frozenset[UUID] = frozenset(),
+) -> Actor:
     return Actor(
         id=user.id,
         username=user.username,
         display_name=user.display_name,
         role=user.role,
         scope=user.scope,
+        organisation_unit_ids=organisation_unit_ids,
     )
 
 
-def account_from_user(user: User) -> AccountRecord:
+def account_from_user(
+    user: User,
+    organisation_unit_ids: frozenset[UUID] = frozenset(),
+) -> AccountRecord:
     return AccountRecord(
-        actor=actor_from_user(user),
+        actor=actor_from_user(user, organisation_unit_ids),
         password_hash=user.password_hash,
         is_active=user.is_active,
         failed_login_count=user.failed_login_count,
         locked_until=_as_utc(user.locked_until) if user.locked_until else None,
     )
+
+
+async def actor_from_user_with_memberships(
+    session: AsyncSession,
+    user: User,
+) -> Actor:
+    unit_ids = frozenset(
+        await session.scalars(
+            select(UserOrganisationMembership.unit_id).where(
+                UserOrganisationMembership.user_id == user.id
+            )
+        )
+    )
+    return actor_from_user(user, unit_ids)
 
 
 class SqlAlchemyAuthRepository:
@@ -45,7 +67,15 @@ class SqlAlchemyAuthRepository:
 
     async def find_account(self, username: str) -> AccountRecord | None:
         user = await self._session.scalar(select(User).where(User.username == username))
-        return account_from_user(user) if user else None
+        if user is None:
+            return None
+        return AccountRecord(
+            actor=await actor_from_user_with_memberships(self._session, user),
+            password_hash=user.password_hash,
+            is_active=user.is_active,
+            failed_login_count=user.failed_login_count,
+            locked_until=_as_utc(user.locked_until) if user.locked_until else None,
+        )
 
     async def record_failure(
         self,
@@ -155,7 +185,10 @@ class SqlAlchemyAuthRepository:
             stored.last_seen_at = now
         return SessionRecord(
             id=stored.id,
-            actor=actor_from_user(stored.user),
+            actor=await actor_from_user_with_memberships(
+                self._session,
+                stored.user,
+            ),
             csrf_token_hash=stored.csrf_token_hash,
             expires_at=_as_utc(stored.expires_at),
             elevated_until=(

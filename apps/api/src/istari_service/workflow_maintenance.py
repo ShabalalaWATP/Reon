@@ -17,6 +17,7 @@ from istari_service.models import (
     WorkflowInstanceStatus,
 )
 from istari_service.ownership import OWNER_BY_STATUS
+from istari_service.request_event_projection import NotificationProjectionReconciler
 from istari_service.workflow.engine import WorkflowEngine
 from istari_service.workflow.errors import WorkflowError
 from istari_service.workflow.projection import (
@@ -147,6 +148,7 @@ async def run_workflow_maintenance(
     stop: asyncio.Event,
     *,
     command_dispatcher: WorkflowCommandDispatcher | None = None,
+    notification_reconciler: NotificationProjectionReconciler | None = None,
     interval_seconds: float = 0.5,
 ) -> None:
     """Run bounded maintenance without delaying API liveness."""
@@ -159,7 +161,12 @@ async def run_workflow_maintenance(
             else False
         )
         reconciled = await reconciler.reconcile_once()
-        if worked or command_worked or reconciled:
+        notifications_reconciled = (
+            await notification_reconciler.reconcile_once()
+            if notification_reconciler is not None
+            else False
+        )
+        if worked or command_worked or reconciled or notifications_reconciled:
             continue
         try:
             await asyncio.wait_for(stop.wait(), timeout=interval_seconds)

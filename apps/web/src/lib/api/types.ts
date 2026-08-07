@@ -179,6 +179,7 @@ export type WorkItem = {
   id: string;
   requestId: string;
   requestReference: string;
+  requestVersion: number;
   title: string;
   stage: WorkStage;
   status: string;

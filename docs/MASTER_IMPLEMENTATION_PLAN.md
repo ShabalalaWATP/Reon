@@ -500,10 +500,19 @@ team-planning enhancements and further scoped operational statistics.
 This work is specified in
 [Operational Product Evolution](specs/operational-product-evolution.md) and
 sequenced in the
-[Next Product Expansion Plan](NEXT_PRODUCT_EXPANSION_PLAN.md). It is active work,
-not part of the implemented MVP baseline until accepted. No phase is complete until its own
+[Next Product Expansion Plan](NEXT_PRODUCT_EXPANSION_PLAN.md). A local release
+candidate is implemented behind disabled-by-default production flags, but it is
+not part of the accepted MVP baseline. No phase is accepted until its own
 migrations, permission matrix, security, accessibility, browser, recovery,
 performance and named-acceptance evidence passes.
+
+Current local evidence is 775 backend tests at 98.92 per cent line and 95.04 per
+cent branch coverage, plus 243 frontend tests at 99.54 per cent line and 95.05
+per cent branch coverage. Migrations 0012 to 0017 pass empty SQLite upgrade,
+schema drift, downgrade and re-upgrade. Independent final code-quality and
+security reviews found no remaining P0, P1 or P2 blocker. Live PostgreSQL,
+Camunda, approved semantic/CDR scanner, private object storage, browser, load,
+recovery and named acceptance gates remain open.
 
 ## Production readiness, intentionally separate
 
@@ -526,9 +535,9 @@ The local MVP is not a production deployment. Production remains blocked until:
 
 ## Capabilities outside the implemented baseline
 
-- role-specific personal inboxes, in-application notifications, managed product
-  files and versioned configuration are governed by the proposed next expansion
-  plan and remain unimplemented;
+- production release of the implemented personal inboxes, notifications,
+  managed-product files and versioned configuration remains governed by the
+  product-evolution evidence and owner-acceptance gates;
 - external messaging and external calendar synchronisation remain deferred until
   separate connector specifications and threat models are approved;
 - automated classification, matching, prioritisation, routing or recommendations;

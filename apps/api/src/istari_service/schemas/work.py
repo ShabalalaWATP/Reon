@@ -162,6 +162,7 @@ class WorkItem(ApiModel):
     id: UUID
     request_id: UUID
     request_reference: str
+    request_version: int
     title: str
     stage: RequestStatus
     status: str

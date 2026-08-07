@@ -18,7 +18,7 @@ from istari_service.models import (
 )
 from istari_service.models import WorkflowTask as StoredWorkflowTask
 from istari_service.policies import can_access_work
-from istari_service.repositories.auth import actor_from_user
+from istari_service.repositories.auth import actor_from_user_with_memberships
 from istari_service.repositories.event_store import append_request_event
 from istari_service.repositories.organisation import has_route_membership
 from istari_service.workflow.types import WorkflowTask
@@ -88,7 +88,11 @@ async def project_competing_claim(
     )
     task = await session.get(StoredWorkflowTask, work.id)
     request = await session.get(ServiceRequest, work.request.id)
-    actor = actor_from_user(user) if user is not None else None
+    actor = (
+        await actor_from_user_with_memberships(session, user)
+        if user is not None
+        else None
+    )
     if (
         user is None
         or task is None

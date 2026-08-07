@@ -13,6 +13,9 @@ from istari_service.dependencies import (
     DatabaseSession,
     MutationActor,
 )
+from istari_service.repositories.configuration_pins import (
+    SqlAlchemyConfigurationPinRepository,
+)
 from istari_service.repositories.drafts import SqlAlchemyDraftRepository
 from istari_service.schemas.drafts import (
     RequestDraftCreate,
@@ -29,7 +32,11 @@ router = APIRouter(prefix="/request-drafts", tags=["request drafts"])
 
 def _service(session: DatabaseSession, settings: AppSettings) -> DraftService:
     return DraftService(
-        SqlAlchemyDraftRepository(session, process_id=settings.camunda_process_id)
+        SqlAlchemyDraftRepository(
+            session,
+            process_id=settings.camunda_process_id,
+            configuration_pins=SqlAlchemyConfigurationPinRepository(session),
+        )
     )
 
 

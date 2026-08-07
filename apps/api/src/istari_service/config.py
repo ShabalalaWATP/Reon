@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from functools import lru_cache
+from pathlib import Path
 from typing import Annotated, Any, Self
 from urllib.parse import parse_qs, urlsplit
 
@@ -68,6 +69,24 @@ class Settings(BaseSettings):
         ge=1_024,
         le=10_485_760,
     )
+    product_storage_path: Path = Path(".local/product-storage")
+    product_allowed_external_domains: Annotated[frozenset[str], NoDecode] = Field(
+        default_factory=frozenset
+    )
+    product_upload_ttl_seconds: int = Field(default=600, ge=60, le=3_600)
+    product_clamav_host: str = "clamav"
+    product_clamav_port: int = Field(default=3_310, ge=1, le=65_535)
+    product_clamav_timeout_seconds: float = Field(default=30.0, gt=0, le=120)
+    product_max_file_bytes: int = Field(
+        default=25 * 1024 * 1024,
+        ge=1_024,
+        le=25 * 1024 * 1024,
+    )
+    product_max_package_bytes: int = Field(
+        default=100 * 1024 * 1024,
+        ge=1_024,
+        le=100 * 1024 * 1024,
+    )
     audit_hmac_key: SecretStr | None = None
 
     camunda_rest_address: str = Field(
@@ -81,6 +100,13 @@ class Settings(BaseSettings):
 
     allow_demo_users: bool = True
     demo_user_password: SecretStr | None = None
+    action_workspace_enabled: bool = False
+    notifications_enabled: bool = False
+    managed_products_enabled: bool = False
+    managed_file_uploads_enabled: bool = True
+    configuration_admin_enabled: bool = False
+    planning_evolution_enabled: bool = False
+    statistics_evolution_enabled: bool = False
 
     @field_validator("trusted_origins", mode="before")
     @classmethod
@@ -97,6 +123,17 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return frozenset(
                 item.strip().lower() for item in value.split(",") if item.strip()
+            )
+        return value
+
+    @field_validator("product_allowed_external_domains", mode="before")
+    @classmethod
+    def parse_product_domains(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            return frozenset(
+                item.strip().lower().rstrip(".")
+                for item in value.split(",")
+                if item.strip()
             )
         return value
 
@@ -140,6 +177,12 @@ class Settings(BaseSettings):
             )
             | derived_hosts
         )
+        if self.product_max_package_bytes < self.product_max_file_bytes:
+            raise ValueError(
+                "the product package limit must be at least the per-file limit"
+            )
+        if not self.product_clamav_host.strip():
+            raise ValueError("the ClamAV host must be non-empty")
         if self.environment is Environment.PROD:
             if self.allow_demo_users:
                 raise ValueError("demo users must be disabled in production")
@@ -171,6 +214,10 @@ class Settings(BaseSettings):
                 raise ValueError("production allowed hosts must be explicit hostnames")
             if self.audit_hmac_key is None:
                 raise ValueError("an audit HMAC key is required in production")
+            if not self.product_storage_path.is_absolute():
+                raise ValueError(
+                    "production product storage must use an absolute private path"
+                )
         return self
 
     @property

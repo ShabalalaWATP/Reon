@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from uuid import UUID
 
 from istari_service.board_models import TeamIteration
@@ -12,6 +13,9 @@ from istari_service.board_policy import (
 )
 from istari_service.domain import Actor
 from istari_service.errors import BoardItemNotFound
+from istari_service.operational_analytics_projection import (
+    project_closed_iteration_facts,
+)
 from istari_service.repositories.board import SqlAlchemyBoardRepository
 from istari_service.repositories.board_planning_commands import (
     SqlAlchemyBoardPlanningCommandRepository,
@@ -93,9 +97,12 @@ class BoardPlanningService:
         command: IterationCloseCommand,
     ) -> IterationResult:
         await authorise_board_manager(self._board, actor, team_id, command.grant_id)
-        return _iteration(
-            await self._commands.close_iteration(team_id, iteration_id, command)
+        closed_at = datetime.now(UTC)
+        iteration = await self._commands.close_iteration(team_id, iteration_id, command)
+        await project_closed_iteration_facts(
+            self._board.session, iteration, occurred_at=closed_at
         )
+        return _iteration(iteration)
 
 
 def _iteration(item: TeamIteration) -> IterationResult:

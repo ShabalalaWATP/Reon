@@ -67,6 +67,8 @@ async def prepare_completion_intent(
     work: WorkRecord,
     actor: Actor,
     payload: CompletionPayload,
+    *,
+    managed_products_enabled: bool = False,
 ) -> UUID:
     task, request = await _locked_state(session, work)
     action = WorkflowAction(payload.action)
@@ -77,7 +79,13 @@ async def prepare_completion_intent(
         or not await has_route_membership(session, actor, request.id)
     ):
         raise InvalidAction()
-    await validate_work_effect(session, request, actor, payload)
+    await validate_work_effect(
+        session,
+        request,
+        actor,
+        payload,
+        managed_products_enabled=managed_products_enabled,
+    )
     routing = await resolve_routing_selection(
         session,
         request,

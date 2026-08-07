@@ -10,6 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from istari_service.domain import Actor
 from istari_service.errors import ObjectNotFound, StaleVersion
 from istari_service.models import ServiceRequest
+from istari_service.repositories.configuration_pins import (
+    SqlAlchemyConfigurationPinRepository,
+)
 from istari_service.repositories.requests import SqlAlchemyRequestRepository
 from istari_service.request_draft_models import RequestDraft
 from istari_service.schemas.drafts import (
@@ -26,9 +29,19 @@ def _view(draft: RequestDraft) -> RequestDraftView:
 
 
 class SqlAlchemyDraftRepository:
-    def __init__(self, session: AsyncSession, *, process_id: str) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        *,
+        process_id: str,
+        configuration_pins: SqlAlchemyConfigurationPinRepository | None = None,
+    ) -> None:
         self._session = session
-        self._requests = SqlAlchemyRequestRepository(session, process_id=process_id)
+        self._requests = SqlAlchemyRequestRepository(
+            session,
+            process_id=process_id,
+            configuration_pins=configuration_pins,
+        )
 
     async def list_for_requester(self, requester_id: UUID) -> list[RequestDraftView]:
         drafts = (

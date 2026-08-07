@@ -1,10 +1,10 @@
-import { ArrowDownToLine, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router";
 
 import { StatusPill } from "../../components/StatusPill";
-import { productDownloadUrl } from "../../lib/api/client";
 import type { RequestSummary } from "../../lib/api/types";
 import { formatDate } from "../../lib/status";
+import { CustomerProductPanel } from "../products/CustomerProductPanel";
 
 export function RequestRegister({ items }: { items: RequestSummary[] }) {
   return (
@@ -18,7 +18,7 @@ export function RequestRegister({ items }: { items: RequestSummary[] }) {
           <span className="request-row__owner">{request.currentOwner ?? "Awaiting assignment"}</span>
           <time dateTime={request.requiredBy}>Needed {formatDate(request.requiredBy)}</time>
           <span className="request-row__actions">
-            {request.productAvailable ? <a className="request-row__download" href={productDownloadUrl(request.id)}><ArrowDownToLine aria-hidden="true" size={15} />Download product</a> : null}
+            {request.productAvailable ? <CustomerProductPanel compact requestId={request.id} /> : null}
             {request.productAvailable ? <small>{request.feedbackSubmitted ? "Feedback received" : "Feedback requested"}</small> : null}
             <Link className="request-row__open" to={`/requests/${request.id}`}>Open <ArrowUpRight aria-hidden="true" size={15} /></Link>
           </span>

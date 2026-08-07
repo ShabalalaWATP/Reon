@@ -13,6 +13,9 @@ from istari_service.dependencies import (
     DatabaseSession,
     MutationActor,
 )
+from istari_service.repositories.configuration_pins import (
+    SqlAlchemyConfigurationPinRepository,
+)
 from istari_service.repositories.requests import SqlAlchemyRequestRepository
 from istari_service.schemas.requests import (
     FeedbackCreate,
@@ -34,6 +37,7 @@ def _service(
         SqlAlchemyRequestRepository(
             session,
             process_id=settings.camunda_process_id,
+            configuration_pins=SqlAlchemyConfigurationPinRepository(session),
         )
     )
 

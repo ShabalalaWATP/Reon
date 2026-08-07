@@ -12,8 +12,14 @@ from sqlalchemy.ext.asyncio import create_async_engine
 ROLE_PATTERN = re.compile(r"^[a-z][a-z0-9_]{0,62}$")
 IMMUTABLE_TABLES = (
     "admin_audit_events",
+    "analytics_export_audit_events",
+    "configuration_activations",
+    "configuration_approvals",
     "feedback",
+    "operational_analytics_facts",
     "operational_runs",
+    "product_access_events",
+    "request_configuration_pins",
     "request_events",
     "team_activity_events",
     "work_package_activity",
