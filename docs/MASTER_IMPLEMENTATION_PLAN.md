@@ -113,6 +113,8 @@ The hierarchy, post-delivery assurance path and safe activation rules are define
 - [ ] Record sponsor confirmation or an explicit exception for each baseline
   decision above.
 - [ ] Select the private GitHub repository or approve continued local-only work.
+- [x] Create and secret-scan the reviewed local root commit before any remote
+  publication.
 
 Exit: vocabulary, scope, authorities, risks and product decisions are traceable.
 
@@ -482,7 +484,8 @@ images pass at high and critical severity. Captured live logs were also checked
 for known request, clarification, product, feedback and authentication values,
 with no prohibited value found.
 
-The first reviewed Git baseline and named stakeholder sign-off remain open.
+The reviewed local Git baseline is committed. A private remote or signed
+local-only exception and named stakeholder sign-off remain open.
 These are not inferred from technical evidence.
 
 ## Production readiness, intentionally separate

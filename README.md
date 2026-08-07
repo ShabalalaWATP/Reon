@@ -82,5 +82,6 @@ evidence and the remaining human decisions are recorded in:
 - `docs/assurance/DEFINITION_OF_DONE_MATRIX.md`;
 - `docs/assurance/FINAL_COMPLETION_AUDIT.md`;
 - `docs/assurance/BROWSER_AND_WORKFLOW_EVIDENCE.md`;
+- `docs/assurance/SOURCE_CONTROL_BASELINE.md`;
 - `docs/decisions/PILOT_BASELINE_DECISIONS.md`;
 - `docs/assurance/PILOT_ACCEPTANCE_RECORD.md`.

@@ -22,6 +22,7 @@ backup storage and restore targets are separate trust boundaries.
 | Backup credentials or content leak | No credential logging, restrictive directory ACL, controlled storage and deletion | Script review and operator evidence |
 | Audit evidence is altered | ORM guards where applicable, database-role restrictions and independent chain verification | Tamper and privilege tests |
 | A shared Docker ignore policy hides source from secret scanning or includes generated browser state | Dedicated secret-scan ignore policy includes documentation and tests while excluding credentials, caches, generated evidence and browser profiles | Fresh digest-pinned Gitleaks build and source-inventory review |
+| A removed credential remains reachable in Git history | Digest-pinned history scan checks verified and unknown findings and fails on any result | TruffleHog gate against the root commit and later reachable history |
 
 ## Residual risks
 

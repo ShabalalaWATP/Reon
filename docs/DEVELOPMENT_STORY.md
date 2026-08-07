@@ -291,4 +291,10 @@ gates remain above 95 per cent for both lines and branches.
   generic Docker build context and that the application-image ignore policy was
   too broad for assurance scanning. Added a dedicated secret-scan inventory that
   includes documentation and tests while excluding generated state, then reran
-  digest-pinned Gitleaks across 2.70 MB of source with no finding.
+  digest-pinned Gitleaks across 2.71 MB of source with no finding.
+- Created the local root commit only after staged-file and generated-artifact
+  review. The first TruffleHog history scan identified six verified Lob-detector
+  false positives caused by test names that were exactly 40 characters long.
+  Renamed the tests, reran all 550 backend tests and amended the unpublished root
+  commit. Digest-pinned TruffleHog then scanned 513 chunks and 2,828,642 bytes of
+  reachable history with zero verified or unknown finding.
