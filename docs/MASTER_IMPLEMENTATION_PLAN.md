@@ -16,6 +16,8 @@
   secret-scan evidence.
 - [x] Put Actionlint under Docker dependency automation and protect the split
   container workflow with a semantic image, migration, SBOM and teardown contract.
+- [x] Exclude locally built Compose output tags from registry lookups while
+  retaining update coverage for the external Compose bootstrap image.
 - [x] Extend source line enforcement to custom Dockerfiles and the workspace
   manifest, and audit locked development/test tooling as well as runtime packages.
 - [ ] Confirm the repaired workflow and all Dependabot update jobs on GitHub

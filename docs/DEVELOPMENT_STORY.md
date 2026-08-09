@@ -26,6 +26,10 @@
 - Moved Actionlint into a Dependabot-managed Dockerfile. The split container
   workflow now has a conservative cold-run deadline, bounded Docker operations
   and a contract protecting every deployed-image scan/SBOM plus teardown.
+- A live root-Compose update found that Dependabot treated locally built image
+  tags as private registry dependencies. Those output tags are now explicitly
+  ignored while the external Python image remains updateable. A repository
+  contract protects that distinction.
 
 ## 9 August 2026: security remediation and final assurance
 

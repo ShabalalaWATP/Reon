@@ -11,7 +11,7 @@
     "line-limit": "node scripts/check-file-lines.mjs",
     "licence-check": "pwsh -File scripts/check-licences.ps1",
     "operations-contract": "pwsh -File scripts/test-operations-scripts.ps1",
-    "quality-gate-tests": "node scripts/test-quality-gates.mjs && node scripts/test-container-workflow.mjs && node scripts/test-tracked-source-stage.mjs && node scripts/test-trufflehog-gate.mjs",
+    "quality-gate-tests": "node scripts/test-quality-gates.mjs && node scripts/test-container-workflow.mjs && node scripts/test-dependabot-config.mjs && node scripts/test-tracked-source-stage.mjs && node scripts/test-trufflehog-gate.mjs",
     "smoke-contract": "node scripts/test-smoke-camunda.mjs",
     "terminology": "node scripts/check-terminology.mjs",
     "test": "pnpm --filter @istari-service/web test"

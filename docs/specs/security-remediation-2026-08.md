@@ -37,6 +37,9 @@ Existing production validation must continue to reject them.
 - uv, pnpm and Dependabot defer ordinary newly published versions for seven days.
   Dependabot uses its native `uv` ecosystem, a supported pnpm 10 lockfile, and
   covers root Compose references plus every deployed and security-tool Dockerfile.
+  Root Compose ignores only locally built output tags whose upstream inputs are
+  already managed through their Dockerfiles; external image references remain
+  updateable.
   Exact bootstrap exceptions can cover only versions already locked, audited and
   scanned; they do not bypass security updates or authorise later versions.
 - pnpm rejects transitive exotic sources and package trust downgrades, apart from
