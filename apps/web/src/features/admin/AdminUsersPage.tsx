@@ -10,6 +10,7 @@ import { flattenUniquePages } from "../../lib/api/pagination";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import { useAuth } from "../../lib/auth/AuthProvider";
 import { AdminUserRegister } from "./AdminUserRegister";
+import { AccountRequestRegister } from "./AccountRequestRegister";
 import { StepUpPanel } from "./StepUpPanel";
 
 export function AdminUsersPage() {
@@ -37,6 +38,7 @@ export function AdminUsersPage() {
     <main className="page-stack admin-users-page">
       <header className="page-heading"><div><span>Platform administration</span><h1>User accounts</h1><p>Maintain synthetic account metadata and organisation access. Request content is not available here.</p></div><Link className="button button--primary" to="/admin/users/new"><Plus aria-hidden="true" size={16} />Create user</Link></header>
       <StepUpPanel />
+      <AccountRequestRegister />
       <dl className="admin-summary" aria-label="Account summary"><div><dt>Active loaded</dt><dd>{active}</dd></div><div><dt>Inactive loaded</dt><dd>{items.length - active}</dd></div><div><dt>Total loaded</dt><dd>{items.length}</dd></div></dl>
       <section aria-labelledby="account-register-title">
         <div className="admin-register-heading"><div className="section-heading"><span>Identity metadata</span><h2 id="account-register-title">Account register</h2></div><form className="admin-search" onSubmit={submitSearch} role="search"><label className="form-field"><span>Search accounts</span><input onChange={(event) => setDraft(event.target.value)} placeholder="Name, account, role or scope" value={draft} /></label><button className="button" type="submit">Search</button>{query ? <button className="button button--quiet" onClick={() => { setDraft(""); setQuery(""); }} type="button">Clear</button> : null}</form></div>

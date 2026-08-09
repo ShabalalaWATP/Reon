@@ -16,9 +16,9 @@ RUN sed -i '/^user[[:space:]]/d; s#pid[[:space:]]\+/var/run/nginx.pid;#pid /tmp/
     && sed -i 's#pid[[:space:]]\+/run/nginx.pid;#pid /tmp/nginx.pid;#' /etc/nginx/nginx.conf \
     && grep -qx 'pid /tmp/nginx.pid;' /etc/nginx/nginx.conf \
     && sed -i 's#/var/cache/nginx/#/tmp/nginx/#g' /etc/nginx/nginx.conf \
-    && mkdir -p /tmp/nginx/client_temp /tmp/nginx/proxy_temp \
+    && mkdir -p /tmp/nginx-client-temp /tmp/nginx-proxy-temp \
         /tmp/nginx/fastcgi_temp /tmp/nginx/uwsgi_temp /tmp/nginx/scgi_temp \
-    && chown -R 101:101 /tmp/nginx \
+    && chown -R 101:101 /tmp/nginx /tmp/nginx-client-temp /tmp/nginx-proxy-temp \
     && cp /etc/nginx/conf.d/default.conf /tmp/default.conf \
     && sed -i 's/http:\/\/api:8000/http:\/\/127.0.0.1:8000/' /etc/nginx/conf.d/default.conf \
     && nginx -t \

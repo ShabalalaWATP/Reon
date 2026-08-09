@@ -112,14 +112,19 @@ Every displayed business field is mandatory at final submission:
 - title;
 - service category;
 - description of the need;
+- specific question to answer;
 - desired outcome;
 - background and known context;
+- subject area or location;
+- relevant period start and end;
+- Customer urgency;
+- activity, project or decision supported;
 - required-by date;
 - reason for the required date;
 - preferred product type;
 - success criteria;
-- requesting business area;
-- intended recipients; and
+- constraints or caveats;
+- supporting information available; and
 - sensitivity and handling instructions.
 
 Client validation provides immediate help, but matching Pydantic validation is

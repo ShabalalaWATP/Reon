@@ -23,14 +23,20 @@ def _request_create(**overrides: object) -> RequestCreate:
         "title": "Synthetic request",
         "service_category": "Research",
         "description": "A synthetic description long enough for validation.",
+        "question_to_answer": "What does the synthetic evidence show?",
         "desired_outcome": "A synthetic outcome for validation.",
         "background_context": "Synthetic context",
+        "subject_area_or_location": "Synthetic subject area",
+        "coverage_start": datetime.now(UTC).date(),
+        "coverage_end": datetime.now(UTC).date() + timedelta(days=1),
+        "customer_urgency": "ROUTINE",
+        "supported_activity_or_decision": "A fictional planning decision.",
         "required_by": datetime.now(UTC).date() + timedelta(days=7),
         "required_by_reason": "Synthetic deadline",
         "preferred_deliverable_type": "Brief",
         "success_criteria": "Synthetic success criteria",
-        "requesting_business_area": "Synthetic area",
-        "intended_recipients": ["Synthetic recipient"],
+        "constraints_or_caveats": "No known constraints.",
+        "supporting_information": "No supporting material is available.",
         "sensitivity": Sensitivity.STANDARD,
         "handling_instructions": "Synthetic handling",
     }
@@ -63,10 +69,11 @@ def test_whitespace_only_required_text_is_rejected(
     assert field in str(error.value)
 
 
-def test_request_recipient_uniqueness_is_checked_after_trimming() -> None:
-    with pytest.raises(ValidationError, match="must be unique"):
+def test_request_coverage_period_must_be_ordered() -> None:
+    with pytest.raises(ValidationError, match="must not be before"):
         _request_create(
-            intended_recipients=["Synthetic recipient", " Synthetic recipient "],
+            coverage_start=datetime.now(UTC).date() + timedelta(days=2),
+            coverage_end=datetime.now(UTC).date(),
         )
 
 

@@ -1,6 +1,7 @@
 """Register persistence modules with the shared SQLAlchemy metadata."""
 
 from istari_service import (
+    account_request_models,
     action_notification_models,
     admin_models,
     analytics_evolution_models,
@@ -29,6 +30,7 @@ from istari_service import (
 # intentional registration from accidental unused imports.
 REGISTERED_MODEL_MODULES = (
     action_notification_models,
+    account_request_models,
     admin_models,
     analytics_evolution_models,
     analytics_models,

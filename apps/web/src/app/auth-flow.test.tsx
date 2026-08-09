@@ -56,6 +56,34 @@ describe("authentication and route policy", () => {
     expect(screen.getByRole("button", { name: "Use light theme" })).toBeInTheDocument();
   });
 
+  it("submits a complete account request from the login panel", async () => {
+    let submitted: Record<string, string> | undefined;
+    mockFetch((url, init) => {
+      if (url.pathname.endsWith("/auth/me")) return json({ detail: "Signed out" }, 401);
+      if (url.pathname.endsWith("/auth/account-requests") && init.method === "POST") {
+        submitted = JSON.parse(String(init.body));
+        return json({ status: "pending" }, 202);
+      }
+      throw new Error(url.pathname);
+    });
+    const user = userEvent.setup();
+    renderApp("/login");
+    await user.click(await screen.findByRole("button", { name: "Request account" }));
+    const submit = screen.getByRole("button", { name: "Submit account request" });
+    expect(submit).toBeDisabled();
+    await user.type(screen.getByLabelText(/Display name/), "Synthetic Customer");
+    await user.type(screen.getByLabelText(/Work email/), "customer@example.test");
+    await user.type(screen.getByLabelText(/Reason for access/), "I need access for a fictional request.");
+    expect(submit).toBeEnabled();
+    await user.click(submit);
+    expect(await screen.findByRole("status")).toHaveTextContent("Request submitted");
+    expect(submitted).toEqual({
+      contactEmail: "customer@example.test",
+      displayName: "Synthetic Customer",
+      reason: "I need access for a fictional request.",
+    });
+  });
+
   it("isolates platform administration from request content", async () => {
     mockFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(adminSession);

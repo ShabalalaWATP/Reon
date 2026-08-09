@@ -9,7 +9,7 @@ import { ConfigurationBreadcrumbs } from "./ConfigurationBreadcrumbs";
 import { ConfigurationTree } from "./ConfigurationTree";
 import { ConfigurationUnitForm } from "./ConfigurationUnitForm";
 import { WorkflowTemplateForm } from "./WorkflowTemplateForm";
-import { commaSeparatedNumbers, configurationPath, configurationRows, draftFrom, filterConfigurationRows, lines, localDateTimeValue, unitState, validParentUnits } from "./configurationModel";
+import { commaSeparatedNumbers, configurationPath, configurationRows, currentCoreRequestFields, draftFrom, filterConfigurationRows, lines, localDateTimeValue, unitState, validParentUnits } from "./configurationModel";
 
 describe("configuration draft editors", () => {
   it("creates a team with bounded staffing and a stable parent edge", async () => {
@@ -242,6 +242,20 @@ describe("configuration presentation model", () => {
     const localDate = new Date("2026-08-07T12:34:56Z");
     vi.spyOn(localDate, "getTimezoneOffset").mockReturnValue(-60);
     expect(localDateTimeValue(localDate)).toBe("2026-08-07T13:34");
+  });
+
+  it("upgrades historical fixed intake fields when preparing a successor", () => {
+    const historical = {
+      ...configurationVersion,
+      workflowTemplate: {
+        ...configurationVersion.workflowTemplate,
+        coreFields: ["title", "requesting_business_area", "intended_recipients"],
+      },
+    };
+
+    expect(draftFrom(historical).workflowTemplate.coreFields).toEqual(
+      currentCoreRequestFields,
+    );
   });
 
   it("filters the hierarchy with ancestor context and builds cycle-safe breadcrumbs", () => {

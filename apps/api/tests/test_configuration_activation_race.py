@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, Mock
+from uuid import uuid4
 
 import pytest
 
@@ -114,3 +117,39 @@ async def _approved_draft(
 
 def _reason(version: int, reason: str) -> ConfigurationReasonCommand:
     return ConfigurationReasonCommand(expected_version=version, reason=reason)
+
+
+@pytest.mark.asyncio
+async def test_activation_state_is_flushed_before_evidence_is_inserted() -> None:
+    events: list[str] = []
+    session = SimpleNamespace(
+        flush=AsyncMock(side_effect=lambda: events.append("flush")),
+        add=Mock(side_effect=lambda _record: events.append("add activation")),
+    )
+    repository = SqlAlchemyConfigurationRepository(session)  # type: ignore[arg-type]
+    active_id = uuid4()
+    registry = SimpleNamespace(active_version_id=active_id, version=1)
+    active = SimpleNamespace(
+        status=ConfigurationStatus.ACTIVE,
+        version=3,
+    )
+    candidate = SimpleNamespace(
+        id=uuid4(),
+        based_on_version_id=active_id,
+        status=ConfigurationStatus.AWAITING_APPROVAL,
+        activated_at=None,
+        version=4,
+    )
+    approval = SimpleNamespace(id=uuid4(), snapshot_digest="a" * 64)
+    repository.lock_registry = AsyncMock(return_value=registry)  # type: ignore[method-assign]
+    repository.get_version = AsyncMock(return_value=active)  # type: ignore[method-assign]
+
+    await repository.activate(
+        candidate,
+        approval,
+        actor_id=uuid4(),
+        reason="Activate the independently approved configuration.",
+        now=datetime(2026, 8, 9, 17, 30, tzinfo=UTC),
+    )
+
+    assert events == ["flush", "flush", "add activation", "flush"]

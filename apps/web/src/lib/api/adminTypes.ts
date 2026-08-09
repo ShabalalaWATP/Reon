@@ -33,3 +33,17 @@ export type OrganisationUnitRenameInput = {
   name: string;
   expectedVersion: number;
 };
+
+export type AccountRequest = {
+  id: string;
+  displayName: string;
+  contactEmail: string;
+  reason: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  decisionNote: string | null;
+  createdUserId: string | null;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+  reviewedAt: string | null;
+};

@@ -26,6 +26,7 @@ export function mockFetch(
   useEmptyActionWorkspace = true,
   useEmptyNotificationWorkspace = true,
   useDisabledCapabilities = true,
+  useEmptyAccountRequests = true,
 ) {
   const mock = vi.fn((input: RequestInfo | URL, init: RequestInit = {}) => {
     const value = typeof input === "string" ? input : input.toString();
@@ -38,6 +39,9 @@ export function mockFetch(
       && url.pathname.endsWith("/request-drafts")
       && (!init.method || init.method === "GET")
     ) return Promise.resolve(json({ items: [] }));
+    if (useEmptyAccountRequests && url.pathname.endsWith("/admin/account-requests") && (!init.method || init.method === "GET")) {
+      return Promise.resolve(json({ items: [] }));
+    }
     if (
       useEmptyTeamWorkspaces
       && url.pathname.endsWith("/team-workspaces")

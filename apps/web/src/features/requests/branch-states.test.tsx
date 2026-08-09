@@ -47,7 +47,7 @@ describe("request branch states", () => {
   });
 
   it("renders a disabled request submission control", () => {
-    render(<RequestForm businessArea="Requesting Area A" disabled onSubmit={vi.fn()} />);
+    render(<RequestForm disabled onSubmit={vi.fn()} />);
     expect(screen.getByRole("button", { name: "Submitting…" })).toBeDisabled();
   });
 

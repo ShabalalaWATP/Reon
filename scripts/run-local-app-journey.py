@@ -110,20 +110,26 @@ async def exercise(args: argparse.Namespace) -> dict[str, object]:
                 "Produce a synthetic service summary for the alternative route "
                 "assurance exercise."
             ),
+            "questionToAnswer": "What does the synthetic route assurance show?",
             "desiredOutcome": (
                 "A reviewed product delivered through the configured Beacon Team route."
             ),
             "backgroundContext": (
                 "All information is synthetic and suitable for local assurance."
             ),
+            "subjectAreaOrLocation": "Synthetic route assurance",
+            "coverageStart": required_by,
+            "coverageEnd": required_by,
+            "customerUrgency": "ROUTINE",
+            "supportedActivityOrDecision": "A local route assurance decision.",
             "requiredBy": required_by,
             "requiredByReason": "The local assurance review follows this date.",
             "preferredDeliverableType": "Written response",
             "successCriteria": (
                 "The complete non-OSG route is recorded without fallback."
             ),
-            "requestingBusinessArea": "Requesting Area B",
-            "intendedRecipients": ["Pilot Customer"],
+            "constraintsOrCaveats": "No known constraints.",
+            "supportingInformation": "No supporting material is available.",
             "sensitivity": "STANDARD",
             "handlingInstructions": "Standard synthetic-data handling applies.",
         },

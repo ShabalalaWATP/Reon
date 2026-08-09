@@ -46,7 +46,7 @@ export const configurationVersion: ConfigurationVersion = {
     notificationPolicyVersion: "notice.v1",
     organisationRootId: "unit-root",
     routeDepth: 3,
-    coreFields: ["title", "service_category", "description", "desired_outcome", "background_context", "required_by", "required_by_reason", "preferred_deliverable_type", "success_criteria", "requesting_business_area", "intended_recipients", "sensitivity", "handling_instructions"],
+    coreFields: ["title", "service_category", "description", "question_to_answer", "desired_outcome", "background_context", "subject_area_or_location", "coverage_start", "coverage_end", "customer_urgency", "supported_activity_or_decision", "required_by", "required_by_reason", "preferred_deliverable_type", "success_criteria", "constraints_or_caveats", "supporting_information", "sensitivity", "handling_instructions"],
     serviceCategories: ["Advisory support"],
     productTypes: ["Briefing note"],
     taskLabels: {

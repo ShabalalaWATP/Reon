@@ -14,6 +14,28 @@ export const configurationStatusLabels = {
   VALIDATED: "Ready for review",
 } as const;
 
+export const currentCoreRequestFields = [
+  "title",
+  "service_category",
+  "description",
+  "question_to_answer",
+  "desired_outcome",
+  "background_context",
+  "subject_area_or_location",
+  "coverage_start",
+  "coverage_end",
+  "customer_urgency",
+  "supported_activity_or_decision",
+  "required_by",
+  "required_by_reason",
+  "preferred_deliverable_type",
+  "success_criteria",
+  "constraints_or_caveats",
+  "supporting_information",
+  "sensitivity",
+  "handling_instructions",
+] as const;
+
 export type ConfigurationTreeRow = ConfigurationUnitDraft & { depth: number };
 
 export function draftFrom(version: ConfigurationVersion): ConfigurationDraftInput {
@@ -31,7 +53,7 @@ export function draftFrom(version: ConfigurationVersion): ConfigurationDraftInpu
       ),
       approvedLinkDomains: [...version.workflowTemplate.approvedLinkDomains],
       artefactTypes: [...version.workflowTemplate.artefactTypes],
-      coreFields: [...version.workflowTemplate.coreFields],
+      coreFields: [...currentCoreRequestFields],
       productTypes: [...version.workflowTemplate.productTypes],
       reminderDays: [...version.workflowTemplate.reminderDays],
       serviceCategories: [...version.workflowTemplate.serviceCategories],

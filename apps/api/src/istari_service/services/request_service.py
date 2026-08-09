@@ -76,10 +76,7 @@ class RequestService:
         self._repository = repository
 
     async def create(self, actor: Actor, command: RequestCreate) -> RequestDetail:
-        if (
-            actor.role != UserRole.REQUESTER
-            or command.requesting_business_area != actor.scope
-        ):
+        if actor.role != UserRole.REQUESTER:
             raise ObjectNotFound()
         return await self._repository.create(actor, command)
 
