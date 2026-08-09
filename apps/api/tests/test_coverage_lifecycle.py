@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any, cast
 
 import pytest
@@ -129,7 +130,7 @@ def test_create_app_uses_default_composition_dependencies(
     assert application.state.dummy_password_hash.startswith("test-hash:")
 
 
-def test_production_disables_interactive_api_schema_surfaces() -> None:
+def test_production_disables_interactive_api_schema_surfaces(tmp_path: Path) -> None:
     application = create_app(
         settings=Settings(
             environment=Environment.PROD,
@@ -144,7 +145,7 @@ def test_production_disables_interactive_api_schema_surfaces() -> None:
             camunda_username="synthetic-client",
             camunda_password=SecretStr("synthetic-secret"),
             audit_hmac_key=SecretStr("a" * 32),
-            product_storage_path="C:/private/istari-products",
+            product_storage_path=str(tmp_path / "istari-products"),
             worker_health_required=True,
         ),
         workflow_engine=FakeWorkflowEngine(),

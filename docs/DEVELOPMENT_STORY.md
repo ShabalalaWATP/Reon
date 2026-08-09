@@ -6,6 +6,9 @@
   hosted Linux result. The three hosted backend failures shared one cause: a
   Windows-only absolute product-path fixture. It now derives a portable absolute
   temporary path and the focused production configuration suite passes.
+- The first repaired Linux run found one final duplicate of that fixture in the
+  production API-surface test. It now receives pytest's platform-native absolute
+  temporary path as well.
 - Aligned dependency automation with GitHub's supported ecosystems by moving the
   backend updater from `pip` to native `uv`, retaining the newest supported pnpm
   major, and adding root Compose and security-tool Dockerfile coverage.
