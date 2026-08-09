@@ -4,20 +4,21 @@
   "private": true,
   "scripts": {
     "build": "pnpm --filter @istari-service/web build",
-    "check": "pnpm quality-gate-tests && pnpm dead-code && pnpm line-limit && pnpm terminology && pnpm documentation && pnpm operations-contract && pnpm licence-check && pnpm --filter @istari-service/web typecheck && pnpm --filter @istari-service/web lint",
+    "check": "pnpm quality-gate-tests && pnpm dead-code && pnpm line-limit && pnpm terminology && pnpm documentation && pnpm operations-contract && pnpm licence-check && pnpm contract:openapi && pnpm --filter @istari-service/web typecheck && pnpm --filter @istari-service/web lint",
+    "contract:openapi": "pnpm --filter @istari-service/web contract:openapi",
     "dead-code": "pnpm --filter @istari-service/web dead-code && uv run --directory apps/api vulture src --min-confidence 80",
     "documentation": "node scripts/check-documentation-duplication.mjs && node scripts/check-documentation-links.mjs",
     "line-limit": "node scripts/check-file-lines.mjs",
     "licence-check": "pwsh -File scripts/check-licences.ps1",
     "operations-contract": "pwsh -File scripts/test-operations-scripts.ps1",
-    "quality-gate-tests": "node scripts/test-quality-gates.mjs && node scripts/test-trufflehog-gate.mjs",
+    "quality-gate-tests": "node scripts/test-quality-gates.mjs && node scripts/test-container-workflow.mjs && node scripts/test-tracked-source-stage.mjs && node scripts/test-trufflehog-gate.mjs",
     "smoke-contract": "node scripts/test-smoke-camunda.mjs",
     "terminology": "node scripts/check-terminology.mjs",
     "test": "pnpm --filter @istari-service/web test"
   },
   "engines": {
     "node": ">=22",
-    "pnpm": ">=11"
+    "pnpm": ">=10 <11"
   },
-  "packageManager": "pnpm@11.16.0"
+  "packageManager": "pnpm@10.34.5"
 }

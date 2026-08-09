@@ -1,5 +1,26 @@
 # ISTARI Service Master Implementation Plan
 
+## GitHub quality and dependency automation, 9 August 2026
+
+- [x] Replace the Windows-only secure-production test path with a portable
+  absolute temporary path so the Linux backend gate exercises the intended rules.
+- [x] Align the repository with Dependabot's native `uv` ecosystem and supported
+  pnpm 10 lockfile processing.
+- [x] Add Dependabot coverage for security-tool Dockerfiles and root Compose
+  references.
+- [x] Run Actionlint, the OpenAPI consumer contract, current-source Gitleaks and
+  gated reachable-history scanning in GitHub Actions.
+- [x] Stage Gitleaks input from the exact tracked-file inventory so force-added
+  files cannot be hidden by Docker ignore rules.
+- [x] Add weekly execution, explicit job deadlines and retained coverage and
+  secret-scan evidence.
+- [x] Put Actionlint under Docker dependency automation and protect the split
+  container workflow with a semantic image, migration, SBOM and teardown contract.
+- [x] Extend source line enforcement to custom Dockerfiles and the workspace
+  manifest, and audit locked development/test tooling as well as runtime packages.
+- [ ] Confirm the repaired workflow and all Dependabot update jobs on GitHub
+  after the change reaches `main`.
+
 ## Operational assurance and documentation maintenance, 8 August 2026
 
 - [x] Exercise all privileged maintenance command dispatch branches.

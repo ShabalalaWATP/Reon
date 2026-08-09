@@ -1,5 +1,29 @@
 # Development Story
 
+## 9 August 2026: GitHub quality and Dependabot repair
+
+- Reproduced every repository quality gate locally and compared it with the
+  hosted Linux result. The three hosted backend failures shared one cause: a
+  Windows-only absolute product-path fixture. It now derives a portable absolute
+  temporary path and the focused production configuration suite passes.
+- Aligned dependency automation with GitHub's supported ecosystems by moving the
+  backend updater from `pip` to native `uv`, retaining the newest supported pnpm
+  major, and adding root Compose and security-tool Dockerfile coverage.
+- Added weekly CI, explicit job deadlines, Actionlint, the OpenAPI consumer
+  contract and current-source Gitleaks. Coverage and scan evidence are retained.
+  The TruffleHog evidence stage now depends on the policy gate, closing a BuildKit
+  graph path that could otherwise export raw findings without evaluating them.
+- Changed Gitleaks input to an exact tracked-file staging directory. A regression
+  proves that even a force-added environment file excluded by both Docker ignore
+  policies remains in the scan context, while untracked local files remain absent.
+- Extended line enforcement to custom Dockerfiles and the workspace manifest.
+  Migration revisions retain their documented line-limit exception. Dependency
+  audits now cover locked development and test tooling as well as deployed
+  packages; both complete ecosystems reported no known vulnerability.
+- Moved Actionlint into a Dependabot-managed Dockerfile. The split container
+  workflow now has a conservative cold-run deadline, bounded Docker operations
+  and a contract protecting every deployed-image scan/SBOM plus teardown.
+
 ## 9 August 2026: security remediation and final assurance
 
 - Replaced process-local login throttling with atomic PostgreSQL source and

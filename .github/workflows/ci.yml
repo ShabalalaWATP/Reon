@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: "30 5 * * 1"
 
 permissions:
   contents: read
@@ -16,6 +18,7 @@ jobs:
   root-static:
     name: Root static gates
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@ff378ebe6b225b0680b81c1ad4498ae0d1d3a5e3 # v6.0.10
@@ -33,10 +36,15 @@ jobs:
       - run: pnpm smoke-contract
       - run: pwsh -File workflow/validate-bpmn.ps1
       - run: pwsh -File workflow/test-validator.ps1
+      - name: Validate GitHub Actions workflows
+        run: |
+          docker build --file scripts/actionlint.Dockerfile --tag istari-actionlint:ci .
+          docker run --rm -v "$PWD:/repo" istari-actionlint:ci
 
   frontend:
     name: Frontend tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@ff378ebe6b225b0680b81c1ad4498ae0d1d3a5e3 # v6.0.10
@@ -46,10 +54,19 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @istari-service/web test
+      - name: Retain frontend coverage
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: frontend-coverage
+          path: apps/web/coverage
+          if-no-files-found: warn
+          retention-days: 14
 
   backend:
     name: Backend static checks and tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -62,10 +79,21 @@ jobs:
       - run: uv run --directory apps/api mypy
       - run: uv run --directory apps/api bandit -c pyproject.toml -r src alembic
       - run: uv run --directory apps/api pytest
+      - name: Retain backend coverage
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: backend-coverage
+          path: |
+            apps/api/coverage.json
+            apps/api/coverage.xml
+          if-no-files-found: warn
+          retention-days: 14
 
   dependency-audit:
     name: Dependency audit
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@ff378ebe6b225b0680b81c1ad4498ae0d1d3a5e3 # v6.0.10
@@ -74,7 +102,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm audit --audit-level=high --prod
+      - run: pnpm audit --audit-level=high
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           enable-cache: true
@@ -83,7 +111,7 @@ jobs:
       - run: pnpm licence-check
       - name: Export locked runtime dependencies
         run: >-
-          uv export --project apps/api --locked --no-default-groups
+          uv export --project apps/api --locked --all-groups
           --no-emit-project --format requirements-txt --quiet
           --output-file "${RUNNER_TEMP}/api-requirements.txt"
       - run: >-
@@ -93,19 +121,43 @@ jobs:
   secret-scan:
     name: Secret scan
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+      - name: Stage the exact tracked-source inventory
+        run: node scripts/stage-tracked-source.mjs "${RUNNER_TEMP}/tracked-source"
+      - name: Scan current source with Gitleaks
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build \
+            --file "${RUNNER_TEMP}/tracked-source/scripts/secret-scan.Dockerfile" \
+            --target evidence --output type=local,dest=secret-scan-evidence \
+            "${RUNNER_TEMP}/tracked-source"
+          cp "${RUNNER_TEMP}/tracked-source/tracked-source-inventory.txt" \
+            secret-scan-evidence/tracked-source-inventory.txt
       - name: Scan reachable history with exact expiring exceptions
         run: >-
           docker build --file scripts/trufflehog-scan.Dockerfile
-          --target gate .
+          --target evidence --output type=local,dest=history-scan-evidence .
+      - name: Retain secret-scan evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: secret-scan-evidence
+          path: |
+            secret-scan-evidence
+            history-scan-evidence
+          if-no-files-found: warn
+          retention-days: 14
 
   dependency-review:
     name: Pull request dependency review
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: read
       pull-requests: read
@@ -118,6 +170,7 @@ jobs:
   codeql:
     name: CodeQL (${{ matrix.language }})
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       security-events: write
@@ -136,6 +189,7 @@ jobs:
   postgres-component:
     name: PostgreSQL bootstrap component
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: shellcheck infra/postgres/*.sh
@@ -215,101 +269,6 @@ jobs:
           timeout --signal=TERM --kill-after=10s 90s docker compose
           -f docker-compose.yml -f .github/compose.camunda-smoke.yml
           down --volumes --remove-orphans --timeout 20
-
-  container-config:
-    name: Container and Compose validation
-    runs-on: ubuntu-latest
-    env:
-      POSTGRES_ADMIN_PASSWORD: ci-admin-validation-only
-      APP_DATABASE_NAME: app_validation
-      APP_DATABASE_USER: app_validation_owner
-      APP_DATABASE_PASSWORD: ci-app-validation-only
-      APP_RUNTIME_DATABASE_USER: app_validation
-      APP_RUNTIME_DATABASE_PASSWORD: ci-runtime-validation-only
-      APP_BACKUP_DATABASE_USER: app_validation_backup
-      APP_BACKUP_DATABASE_PASSWORD: ci-backup-validation-only
-      MIGRATION_DATABASE_URL: postgresql+asyncpg://app_validation_owner:ci-app-validation-only@postgres:5432/app_validation
-      DATABASE_URL: postgresql+asyncpg://app_validation:ci-runtime-validation-only@postgres:5432/app_validation
-      CAMUNDA_DATABASE_NAME: camunda_validation
-      CAMUNDA_DATABASE_USER: camunda_validation
-      CAMUNDA_DATABASE_PASSWORD: ci-camunda-validation-only
-      ENVIRONMENT: local
-      SESSION_COOKIE_SECURE: "false"
-      WEB_ORIGIN: http://127.0.0.1:5173
-      ALLOW_DEMO_USERS: "true"
-      DEMO_USER_PASSWORD: ci-demo-validation-only
-      AUDIT_HMAC_KEY: ci-audit-validation-only-at-least-32-bytes
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - run: docker compose config --quiet
-      - run: docker compose build api web postgres orchestration clamav
-      - name: Validate signed ClamAV definition age
-        shell: bash
-        run: |
-          set -euo pipefail
-          test "$(docker image inspect istari/clamav-local:1.5.3 --format '{{.Config.User}}')" = "100:101"
-          docker run --rm --network none \
-            --entrypoint sh \
-            --env CLAMAV_HEALTH_CHECK_DAEMON=false \
-            --env CLAMAV_SIGNATURE_MAX_AGE_HOURS=48 \
-            istari/clamav-local:1.5.3 \
-            -c 'touch /var/lib/clamav/daily.cvd; if output="$(istari-clamav-healthcheck 4102444800 2>&1)"; then exit 1; fi; printf "%s\n" "$output" | grep -Fq "signatures exceed the permitted age"'
-      - name: Validate migration reversibility and metadata
-        run: |
-          set -euo pipefail
-          docker compose up --detach --wait postgres
-          docker compose run --rm --no-deps migrator
-          docker compose run --rm --no-deps migrator alembic downgrade -1
-          docker compose run --rm --no-deps migrator alembic upgrade head
-          docker compose run --rm --no-deps api alembic check
-      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
-        with:
-          image-ref: istari-service-local-api
-          severity: HIGH,CRITICAL
-          exit-code: "1"
-      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
-        with:
-          image-ref: istari-service-local-web
-          severity: HIGH,CRITICAL
-          exit-code: "1"
-      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
-        with:
-          image-ref: istari/postgres-local:17.10-alpine3.23
-          severity: HIGH,CRITICAL
-          exit-code: "1"
-      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
-        with:
-          image-ref: istari/camunda-local:8.9.14
-          severity: HIGH,CRITICAL
-          exit-code: "1"
-      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
-        with:
-          image-ref: istari/clamav-local:1.5.3
-          severity: HIGH,CRITICAL
-          exit-code: "1"
-      - name: Generate CycloneDX image SBOMs
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p sbom
-          while IFS='=' read -r name image; do
-            trivy image --format cyclonedx --output "sbom/${name}.cdx.json" "$image"
-          done <<'IMAGES'
-          api=istari-service-local-api
-          web=istari-service-local-web
-          postgres=istari/postgres-local:17.10-alpine3.23
-          camunda=istari/camunda-local:8.9.14
-          clamav=istari/clamav-local:1.5.3
-          IMAGES
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: container-sboms
-          path: sbom/*.cdx.json
-          if-no-files-found: error
-          retention-days: 30
-      - name: Tear down validation services
-        if: always()
-        run: docker compose down --volumes --remove-orphans --timeout 20
 
 # The bounded smoke job starts the data and workflow services only. Full product
 # topology and browser journeys remain separate verification stages.

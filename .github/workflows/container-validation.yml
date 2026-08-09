@@ -1,0 +1,118 @@
+name: Container validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: container-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  container-config:
+    name: Container and Compose validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      POSTGRES_ADMIN_PASSWORD: ci-admin-validation-only
+      APP_DATABASE_NAME: app_validation
+      APP_DATABASE_USER: app_validation_owner
+      APP_DATABASE_PASSWORD: ci-app-validation-only
+      APP_RUNTIME_DATABASE_USER: app_validation
+      APP_RUNTIME_DATABASE_PASSWORD: ci-runtime-validation-only
+      APP_BACKUP_DATABASE_USER: app_validation_backup
+      APP_BACKUP_DATABASE_PASSWORD: ci-backup-validation-only
+      MIGRATION_DATABASE_URL: postgresql+asyncpg://app_validation_owner:ci-app-validation-only@postgres:5432/app_validation
+      DATABASE_URL: postgresql+asyncpg://app_validation:ci-runtime-validation-only@postgres:5432/app_validation
+      CAMUNDA_DATABASE_NAME: camunda_validation
+      CAMUNDA_DATABASE_USER: camunda_validation
+      CAMUNDA_DATABASE_PASSWORD: ci-camunda-validation-only
+      ENVIRONMENT: local
+      SESSION_COOKIE_SECURE: "false"
+      WEB_ORIGIN: http://127.0.0.1:5173
+      ALLOW_DEMO_USERS: "true"
+      DEMO_USER_PASSWORD: ci-demo-validation-only
+      AUDIT_HMAC_KEY: ci-audit-validation-only-at-least-32-bytes
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: timeout --signal=TERM --kill-after=10s 2m docker compose config --quiet
+      - run: >-
+          timeout --signal=TERM --kill-after=30s 15m docker compose
+          build api web postgres orchestration clamav
+      - name: Validate signed ClamAV definition age
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(docker image inspect istari/clamav-local:1.5.3 --format '{{.Config.User}}')" = "100:101"
+          # The inner container shell expands output.
+          # shellcheck disable=SC2016
+          timeout --signal=TERM --kill-after=10s 2m docker run --rm --network none \
+            --entrypoint sh \
+            --env CLAMAV_HEALTH_CHECK_DAEMON=false \
+            --env CLAMAV_SIGNATURE_MAX_AGE_HOURS=48 \
+            istari/clamav-local:1.5.3 \
+            -c 'touch /var/lib/clamav/daily.cvd; if output="$(istari-clamav-healthcheck 4102444800 2>&1)"; then exit 1; fi; printf "%s\n" "$output" | grep -Fq "signatures exceed the permitted age"'
+      - name: Validate migration reversibility and metadata
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=10s 3m docker compose up --detach --wait postgres
+          timeout --signal=TERM --kill-after=10s 3m docker compose run --rm --no-deps migrator
+          timeout --signal=TERM --kill-after=10s 3m docker compose run --rm --no-deps migrator alembic downgrade -1
+          timeout --signal=TERM --kill-after=10s 3m docker compose run --rm --no-deps migrator alembic upgrade head
+          timeout --signal=TERM --kill-after=10s 3m docker compose run --rm --no-deps api alembic check
+      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: istari-service-local-api
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: istari-service-local-web
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: istari/postgres-local:17.10-alpine3.23
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: istari/camunda-local:8.9.14
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: istari/clamav-local:1.5.3
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - name: Generate CycloneDX image SBOMs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p sbom
+          while IFS='=' read -r name image; do
+            trivy image --format cyclonedx --output "sbom/${name}.cdx.json" "$image"
+          done <<'IMAGES'
+          api=istari-service-local-api
+          web=istari-service-local-web
+          postgres=istari/postgres-local:17.10-alpine3.23
+          camunda=istari/camunda-local:8.9.14
+          clamav=istari/clamav-local:1.5.3
+          IMAGES
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: container-sboms
+          path: sbom/*.cdx.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Tear down validation services
+        if: always()
+        run: >-
+          timeout --signal=TERM --kill-after=10s 2m docker compose down
+          --volumes --remove-orphans --timeout 20

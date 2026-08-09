@@ -16,4 +16,4 @@ COPY --from=scan /tmp/trufflehog-git.json ./trufflehog-git.json
 RUN node check-trufflehog-findings.mjs trufflehog-git.json trufflehog-allowlist.json
 
 FROM scratch AS evidence
-COPY --from=scan /tmp/trufflehog-git.json /trufflehog-git.json
+COPY --from=gate /gate/trufflehog-git.json /trufflehog-git.json

@@ -14,6 +14,7 @@ const roots = [
 ];
 const targets = [
   "package.json",
+  "pnpm-workspace.yaml",
   "docker-compose.yml",
   "apps/api/Dockerfile",
   "apps/api/alembic.ini",
@@ -30,6 +31,7 @@ const targets = [
 const checked = new Set([
   ".bpmn",
   ".css",
+  ".Dockerfile",
   ".js",
   ".mjs",
   ".ps1",

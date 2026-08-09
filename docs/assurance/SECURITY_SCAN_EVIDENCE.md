@@ -14,13 +14,13 @@ branch protection. Neither exclusion was changed or counted as remediated.
 | Ruff and MyPy | Ruff format/check passed 421 Python files; MyPy passed 250 source files |
 | Bandit | 38,945 lines across API source and migrations, zero low, medium or high finding and zero `nosec` line |
 | Semgrep | Digest-pinned scanner ran 533 applicable default and security-audit rules across 631 current-source targets with zero finding. The broader ruleset initially exposed 12 package-manager cooldown and trust-policy gaps; those controls are now enforced. One inline suppression remains limited to a SHA-256 database lookup key that Semgrep's Flask rule incorrectly treats as an HTTP response; the preceding comment states the boundary |
-| Python dependency audit | Locked runtime export passed strict `pip-audit` with no known vulnerability |
-| Node dependency audit | Production `pnpm audit` passed at high severity with no known vulnerability |
-| Package resolution policy | Frozen pnpm installation verified 461 entries against seven-day age, trust-downgrade and transitive-source controls. uv locks with a seven-day cutoff; Dependabot applies the same cooldown to all eight configured ecosystems without delaying security updates |
-| Current-source secret scan | Digest-pinned Gitleaks 8.30.0 scanned 4,966,078 bytes with no leak |
+| Python dependency audit | Locked all-group export, including runtime, development and test tools, passed strict `pip-audit` with no known vulnerability |
+| Node dependency audit | Full `pnpm audit`, including build and test tooling, passed at high severity with no known vulnerability |
+| Package resolution policy | A frozen pnpm 10.34.5 installation verified the existing lock against seven-day age, trust-downgrade and transitive-source controls. uv locks with a seven-day cutoff; Dependabot applies the same cooldown to all ten configured ecosystems without delaying security updates |
+| Current-source secret scan | Digest-pinned Gitleaks 8.30.0 scanned the exact staged tracked-file inventory with no leak; the inventory is retained beside the redacted report |
 | Reachable-history secret scan | Digest-pinned TruffleHog 3.96.0 reported one unknown synthetic historical URI fixture. The gate accepted only its stable SHA-256 fingerprint, reason and 9 February 2027 expiry; verified findings can never be excepted and stale exceptions fail |
-| Repository automation | Dependabot alerts, automated security updates, secret scanning, push protection and private vulnerability reporting are enabled. Scheduled npm, Python, GitHub Actions and five-Dockerfile updates are source controlled |
-| Workflow validation | Actionlint passed the pinned GitHub workflow; Compose resolution and repository quality gates passed |
+| Repository automation | Dependabot alerts, automated security updates, secret scanning, push protection and private vulnerability reporting are enabled. Scheduled npm, native uv, GitHub Actions, eight-Dockerfile and root-Compose updates are source controlled |
+| Workflow validation | Digest-pinned Actionlint passed the GitHub workflows. Weekly execution, explicit deadlines, OpenAPI contract validation, current-source and reachable-history secret gates, and bounded evidence uploads are source controlled |
 
 ### Application quality gates
 

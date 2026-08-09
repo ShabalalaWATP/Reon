@@ -50,6 +50,7 @@ async function createFixture(root) {
   await writeFile(join(root, "apps/web/package.json"), "{}\n");
   await writeFile(join(root, "apps/web/vite.config.ts"), "export default {};\n");
   await writeFile(join(root, "package.json"), "{}\n");
+  await writeFile(join(root, "pnpm-workspace.yaml"), "packages: []\n");
 }
 
 function run(script, root) {
