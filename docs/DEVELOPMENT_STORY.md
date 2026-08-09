@@ -30,6 +30,9 @@
   tags as private registry dependencies. Those output tags are now explicitly
   ignored while the external Python image remains updateable. A repository
   contract protects that distinction.
+- Re-ran the complete hosted suite after the repair. CI, container validation
+  and all 13 native Dependabot update jobs passed. The root-Compose log confirms
+  it now resolves only the external Python image and no local output tag.
 
 ## 9 August 2026: security remediation and final assurance
 

@@ -20,7 +20,7 @@
   retaining update coverage for the external Compose bootstrap image.
 - [x] Extend source line enforcement to custom Dockerfiles and the workspace
   manifest, and audit locked development/test tooling as well as runtime packages.
-- [ ] Confirm the repaired workflow and all Dependabot update jobs on GitHub
+- [x] Confirm the repaired workflow and all Dependabot update jobs on GitHub
   after the change reaches `main`.
 
 ## Operational assurance and documentation maintenance, 8 August 2026

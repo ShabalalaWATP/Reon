@@ -2,10 +2,14 @@
 
 ## Current remediation candidate, 9 August 2026
 
-This section applies to the current `codex/product-evolution` working tree. It is
-local evidence, not an immutable hosted-CI or production assessment. The product
-owner excluded replacement of the synthetic MVP authentication model and GitHub
-branch protection. Neither exclusion was changed or counted as remediated.
+This section applies to the current `codex/product-evolution` and `main` source.
+Local evidence is supplemented by the successful hosted
+[CI run](https://github.com/ShabalalaWATP/Reon/actions/runs/31320684197),
+[container-validation run](https://github.com/ShabalalaWATP/Reon/actions/runs/31320684213)
+and [root-Compose Dependabot run](https://github.com/ShabalalaWATP/Reon/actions/runs/31320687116).
+It is not a production assessment. The product owner excluded replacement of the
+synthetic MVP authentication model and GitHub branch protection. Neither
+exclusion was changed or counted as remediated.
 
 ### Source, dependency and secret controls
 
