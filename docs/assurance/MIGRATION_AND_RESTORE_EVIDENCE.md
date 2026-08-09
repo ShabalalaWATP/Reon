@@ -4,7 +4,7 @@
 
 Current-head record reviewed on 9 August 2026.
 
-The current migration head is `0021_schema_metadata`. The application,
+The current migration head is `0022_customer_intake`. The application,
 restore script and restore verifier use that same default rather than a stale
 embedded revision. Empty-database upgrade, metadata drift and downgrade/re-upgrade
 checks run through the isolated compatibility harness as release gates. The
@@ -15,8 +15,12 @@ Revision 0019 adds durable worker state, due-membership projection markers,
 fenced product-operation leases and the composite feed indexes used by keyset
 pagination. Revision 0020 adds shared login-attempt windows. Revision 0021 gives
 long check constraints stable readable names and represents migration-owned
-performance indexes in ORM metadata. `scripts/restore-postgres.ps1` and the
-maintenance verifier now default to the exact `0021_schema_metadata` revision.
+performance indexes in ORM metadata. Revision 0022 replaces internal routing
+questions on Customer requests with the richer Customer-owned requirement set
+and adds reviewed account-request records. It preserves sealed configuration
+snapshots rather than rewriting their historical field lists.
+`scripts/restore-postgres.ps1` and the maintenance verifier now default to the
+exact `0022_customer_intake` revision.
 
 The PostgreSQL backup and restore controls are implemented in:
 
@@ -35,7 +39,20 @@ Static PowerShell parsing and control-contract checks pass.
 
 ## Current-head PostgreSQL migration and guard evidence
 
-On 9 August 2026 the fresh synthetic QA PostgreSQL 17.10 database migrated from
+On 9 August 2026 the retained synthetic local PostgreSQL 17.10 database migrated
+from `0011_operational_evidence` through `0022_customer_intake`. The first
+pre-release rehearsal correctly rejected an attempted update to a sealed
+configuration snapshot, rolled the transaction back and exposed that the data
+rewrite was unnecessary. Revision 0022 was corrected to leave sealed history
+unchanged, then upgraded successfully. The rebuilt API image reported the new
+head and `alembic check` reported no new upgrade operations. The same revision
+also passed the isolated SQLite empty upgrade, drift, downgrade and re-upgrade
+compatibility checks. The retained local database's imported baseline workflow
+is not operationally attested, so this check does not claim full application
+readiness or replace a fresh current-head PostgreSQL downgrade/re-upgrade and
+backup/restore rehearsal.
+
+Earlier on 9 August 2026 the fresh synthetic QA PostgreSQL 17.10 database migrated from
 no application schema to `0021_schema_metadata`. The current API image reported
 that exact head and `alembic check` reported no new upgrade operations. With the
 application stopped, revision 0021 downgraded to `0020_login_rate_limits` and
@@ -106,6 +123,7 @@ The rehearsal used the same PostgreSQL native operations and verification comman
 as the operator scripts. It is pilot evidence, not proof of enterprise backup
 storage, encryption, key escrow or a hosted disaster-recovery service.
 
-The fresh 0021 migration and metadata rehearsal is not a complete current-head
-backup and restore rehearsal. A current-head, multi-store rehearsal remains an
-open Product Evolution recovery gate.
+The retained-data 0022 upgrade and clean metadata check are not a complete
+current-head backup and restore rehearsal. A fresh current-head PostgreSQL
+downgrade/re-upgrade and multi-store recovery rehearsal remain open Product
+Evolution gates.

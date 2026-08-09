@@ -1,5 +1,13 @@
 # Service Request Workflow Threat Model
 
+## Customer intake and account-request boundary
+
+The Customer request contract excludes internal business areas, routing destinations and intended recipients. This reduces topology disclosure and prevents a requester from influencing authorisation or routing through untrusted form values. The authenticated requester identity is bound server-side and is the eventual dissemination recipient.
+
+Every workflow-submitted field is mandatory and bounded at both the React and FastAPI boundaries. Cross-field date rules execute server-side. Private drafts may be incomplete but receive the same length and type limits, and draft submission is revalidated as a complete request.
+
+Unauthenticated account requests accept only a display name, normalised work email and access reason. They do not accept credentials, role, scope or memberships. Duplicate pending emails receive the same accepted response to limit account enumeration. The endpoint is restricted to environments where synthetic demo identities are enabled. Administrative approval requires an authenticated Platform Administrator, CSRF validation, recent password step-up and optimistic version matching. Approval can create only a Customer role through this path and is written to the administration audit chain.
+
 ## Scope and assets
 
 Assets include synthetic user accounts, server-side sessions, submitted request

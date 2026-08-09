@@ -7,6 +7,8 @@ export const protectedQueryKeys = {
     ["protected", userId, "admin-user", managedUserId] as const,
   adminUsers: (userId: string, query: string) =>
     ["protected", userId, "admin-users", query] as const,
+  accountRequests: (userId: string) =>
+    ["protected", userId, "account-requests"] as const,
   draft: (userId: string, draftId: string | undefined) =>
     ["protected", userId, "request-draft", draftId] as const,
   drafts: (userId: string) => ["protected", userId, "request-drafts"] as const,

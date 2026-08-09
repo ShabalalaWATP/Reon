@@ -34,19 +34,25 @@ def actor(
     )
 
 
-def command(*, area: str = "Area A") -> RequestCreate:
+def command() -> RequestCreate:
     return RequestCreate(
         title="Synthetic service request",
         service_category="Research",
         description="A sufficiently detailed synthetic request description.",
+        question_to_answer="What does the synthetic evidence show?",
         desired_outcome="A useful fictional written response.",
         background_context="Synthetic context only.",
+        subject_area_or_location="Synthetic subject area",
+        coverage_start=datetime.now(UTC).date(),
+        coverage_end=datetime.now(UTC).date() + timedelta(days=1),
+        customer_urgency="ROUTINE",
+        supported_activity_or_decision="A fictional planning decision.",
         required_by=datetime.now(UTC).date() + timedelta(days=7),
         required_by_reason="Needed for a fictional planning exercise.",
         preferred_deliverable_type="Plain text",
         success_criteria="The synthetic question is answered clearly.",
-        requesting_business_area=area,
-        intended_recipients=["Synthetic recipient"],
+        constraints_or_caveats="No known constraints.",
+        supporting_information="No supporting material is available.",
         sensitivity=Sensitivity.STANDARD,
         handling_instructions="Retain synthetic content only.",
     )
@@ -122,15 +128,13 @@ class FakeRequestRepository:
 
 
 @pytest.mark.asyncio
-async def test_create_and_list_enforce_requester_scope() -> None:
+async def test_create_and_list_enforce_requester_role() -> None:
     repository = FakeRequestRepository()
     service = RequestService(repository)
     requester = actor(UserRole.REQUESTER)
     staff = actor(UserRole.INTAKE_TRIAGE)
     with pytest.raises(ObjectNotFound):
         await service.create(staff, command())
-    with pytest.raises(ObjectNotFound):
-        await service.create(requester, command(area="Area B"))
     assert await service.create(requester, command()) is repository.created
     assert repository.created_for == requester
 

@@ -67,7 +67,6 @@ export function NewRequestPage() {
       {error ? <p className="form-banner form-banner--error" role="alert">{error instanceof ApiError ? error.message : "The request could not be saved. Try again."}</p> : null}
       {save.isSuccess && !save.isPending ? <p className="form-banner form-banner--success" role="status">Draft saved privately.</p> : null}
       <RequestForm
-        businessArea={session.user.scope}
         disabled={submit.isPending}
         draftDisabled={busyWithDraft}
         hasDraft={Boolean(draftId)}

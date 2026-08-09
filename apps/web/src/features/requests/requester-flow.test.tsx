@@ -67,16 +67,14 @@ describe("requester experience", () => {
     const user = userEvent.setup();
     renderApp("/requests/new");
     await screen.findByRole("heading", { name: "New service request" });
-    await user.click(screen.getByRole("button", { name: "Submit request" }));
-    expect(await screen.findByText("Enter a clear request title.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Submit request" })).toBeDisabled();
     await fillRequestForm(user);
     await user.click(screen.getByRole("button", { name: "Submit request" }));
     expect(await screen.findByRole("heading", { name: requestDetail.title })).toBeInTheDocument();
     expect(submitted).toMatchObject({
       title: "Quarterly service readiness summary",
-      requestingBusinessArea: "Requesting Area A",
       sensitivity: "STANDARD",
-      intendedRecipients: ["Service leadership", "Operations lead"],
+      customerUrgency: "ROUTINE",
     });
     expect(submitted).not.toHaveProperty("assignedDeliveryTeam");
     expect(submitted).not.toHaveProperty("assignedSpecialist");
@@ -265,12 +263,18 @@ async function fillRequestForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/Request title/), "Quarterly service readiness summary");
   await user.selectOptions(screen.getByLabelText(/Service category/), "Advisory support");
   await user.type(screen.getByLabelText(/Description of the need/), "Provide a clear summary of current service readiness.");
+  await user.type(screen.getByLabelText(/Specific question to answer/), "What does the evidence show about readiness?");
   await user.type(screen.getByLabelText(/Desired outcome/), "Leaders can make the next quarterly decision.");
   await user.type(screen.getByLabelText(/Background and known context/), "Quarterly review context.");
-  await user.type(screen.getByLabelText(/Required-by date/), "2026-09-10");
+  await user.type(screen.getByLabelText(/Subject area or location/), "Synthetic service area");
+  await user.type(screen.getByLabelText(/Relevant period starts/), "2026-09-01");
+  await user.type(screen.getByLabelText(/Relevant period ends/), "2026-09-05");
+  await user.type(screen.getByLabelText(/Activity, project or decision supported/), "The quarterly planning decision.");
+  await user.type(screen.getByLabelText(/Latest useful delivery date/), "2026-09-10");
   await user.selectOptions(screen.getByLabelText(/Preferred product type/), "Briefing note");
-  await user.type(screen.getByLabelText(/Why the date matters/), "The review is scheduled the following day.");
+  await user.type(screen.getByLabelText(/Why this date matters/), "The review is scheduled the following day.");
   await user.type(screen.getByLabelText(/Success criteria/), "All agreed measures and next steps are covered.");
-  await user.type(screen.getByLabelText(/Intended recipients/), "Service leadership\nOperations lead");
+  await user.type(screen.getByLabelText(/Constraints or caveats/), "No known constraints.");
+  await user.type(screen.getByLabelText(/Supporting information available/), "No supporting material is available.");
   await user.type(screen.getByLabelText(/Handling instructions/), "Standard handling applies.");
 }

@@ -21,6 +21,9 @@
 .login-panel { width: 100%; }
 .access-notice { display: flex; align-items: center; gap: 9px; min-height: 42px; margin-bottom: 13px; border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border)); border-radius: var(--radius-md); padding: 0 12px; background: color-mix(in srgb, var(--surface) 72%, transparent); color: var(--muted); font-size: .85rem; }
 .access-notice svg { color: var(--accent); }
+.login-mode { display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 13px; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 3px; background: color-mix(in srgb, var(--surface) 72%, transparent); }
+.login-mode button { min-height: 38px; border: 0; border-radius: calc(var(--radius-md) - 3px); background: transparent; color: var(--muted); font-weight: 700; }
+.login-mode button[aria-pressed="true"] { background: var(--surface-strong); color: var(--text); box-shadow: 0 1px 5px rgb(0 0 0 / 14%); }
 .login-panel form { display: grid; gap: 17px; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; background: color-mix(in srgb, var(--surface) 92%, transparent); box-shadow: var(--shadow); backdrop-filter: blur(12px); }
 .login-panel header { margin-bottom: 4px; }
 .login-panel h2 { margin: 0; font-size: 1.7rem; }

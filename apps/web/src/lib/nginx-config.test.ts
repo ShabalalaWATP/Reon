@@ -40,11 +40,25 @@ describe("local web container boundary", () => {
     expect(config).toContain("expires -1;");
   });
 
+  it("re-resolves the fixed API service after a Compose container replacement", () => {
+    expect(config).toContain("resolver 127.0.0.11 valid=10s ipv6=off;");
+    expect(config).toContain("set $api_upstream api:8000;");
+    expect(config).toContain("proxy_pass http://$api_upstream;");
+  });
+
   it("uses the patched non-root runtime and handles both nginx pid paths", () => {
     expect(dockerfile).toContain("FROM nginx:1.31.3-alpine@sha256:");
     expect(dockerfile).toContain("/var/run/nginx.pid");
     expect(dockerfile).toContain("/run/nginx.pid");
     expect(dockerfile).toContain("grep -qx 'pid /tmp/nginx.pid;'");
     expect(dockerfile).toContain("USER 101:101");
+  });
+
+  it("buffers larger request and proxy bodies on the writable temporary filesystem", () => {
+    expect(config).toContain(
+      "client_body_temp_path /tmp/nginx-client-temp;",
+    );
+    expect(config).toContain("proxy_temp_path /tmp/nginx-proxy-temp;");
+    expect(dockerfile).toContain("mkdir -p /tmp/nginx-client-temp");
   });
 });

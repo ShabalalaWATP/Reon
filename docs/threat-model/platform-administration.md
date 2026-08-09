@@ -32,6 +32,7 @@ administration dependencies.
 | A non-administrator calls an admin endpoint | Require an active `PLATFORM_ADMIN` at the route and final service boundary; return a non-disclosing denial |
 | An administrator uses the role to read request content | Use dedicated metadata schemas, repositories and navigation; retain explicit denial in every request, tracking, task and product policy |
 | Cross-site request forgery changes an account | Require the session-bound CSRF header and trusted origin on every mutation |
+| A bounded but large configuration request either fails or writes into the read-only web image | Keep the container read-only and direct Nginx client/proxy buffering to its isolated, non-executable `/tmp` tmpfs; retain request-size limits and a configuration-body regression test |
 | A crafted role or membership bypasses scope | Accept enum roles and UUIDs only; validate role-to-unit-kind compatibility and exact membership cardinality in FastAPI |
 | Concurrent edits silently overwrite one another | Require `expectedVersion`, lock the target and return `409` for stale mutations |
 | An administrator locks out all administration | Reject self-deactivation and removal of the last active Platform Administrator |
@@ -96,6 +97,8 @@ administration dependencies.
   absent from administrative events.
 - Production-mode denial and local-only password handling tests.
 - Frontend route, loading, empty, error, keyboard and WCAG checks.
+- Non-root, read-only Nginx configuration tests and a live large configuration
+  POST proving request buffering uses the isolated writable tmpfs.
 - Literal name, code and kind search; ancestor-context breadcrumb; no-result;
   narrow-width; and filtered-parent component and browser tests.
 - Forged parent, stale result, scheduled retirement, closure rebuild and former

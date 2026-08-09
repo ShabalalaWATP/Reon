@@ -1,5 +1,49 @@
 # Development Story
 
+## 9 August 2026: Customer-owned intake and reviewed account requests
+
+- Replaced Customer-facing business-area and recipient-routing questions with a
+  comprehensive mandatory requirements form covering the question, outcome,
+  context, coverage, urgency, supported activity, required date, delivery form,
+  quality criteria, constraints, supporting information and handling needs.
+  Internal route selection remains a staff responsibility.
+- Added a public, deliberately minimal account-request mode to the login page.
+  Customers provide only a display name, work email and access reason. Platform
+  Administrators review the request and create the bounded Requester account;
+  the public form cannot choose a role, team, scope, username or password.
+- Added immutable reviewed-account-request persistence, generic duplicate-safe
+  public responses, administrator step-up checks, optimistic concurrency and
+  audit records. The service is restricted to local and test environments while
+  MVP shared credentials remain an explicitly accepted limitation.
+- Added migration 0022 without rewriting sealed configuration history. A real
+  retained PostgreSQL 17.10 upgrade and metadata drift check passed after the
+  migration correctly preserved that boundary.
+- Repaired the retained local environment without bypassing fail-closed
+  configuration controls. The guarded start now has complete documented
+  settings, least-privilege database identities, enabled local features,
+  ClamAV and worker health. Nginx now buffers larger bounded administration
+  requests on its isolated writable tmpfs instead of the read-only image.
+- Successor proposals derived from historical configurations now replace the
+  obsolete fixed intake-field list with the current mandatory Customer contract.
+  Historical sealed snapshots remain unchanged and server validation remains
+  authoritative.
+- Nginx now re-resolves the API service through Docker DNS, so an unchanged web
+  container continues proxying correctly after an API recreation. Configuration
+  activation also flushes the approved candidate and registry state before its
+  immutable evidence row, satisfying the PostgreSQL integrity trigger reliably.
+- The independently reviewed successor configuration was activated through the
+  browser without editing retained history. John McGinn then submitted a fully
+  populated synthetic request, `SR-2026-1C930860`; its outbox event was sent and
+  Camunda started the pinned `service-request-v1` revision 1 instance at JIOC
+  routing.
+- Closed the change with 885 backend tests at 98.82 per cent line and 95.03 per
+  cent branch coverage, and the frontend suite at 99.47 per cent lines and
+  95.03 per cent branches. Ruff,
+  MyPy, TypeScript, ESLint, OpenAPI, policy, documentation, dead-code, licence,
+  terminology and line-limit gates passed. The live browser confirmed John
+  McGinn's request form blocks incomplete submission and the login page exposes
+  the reviewed account-request path.
+
 ## 9 August 2026: GitHub quality and Dependabot repair
 
 - Reproduced every repository quality gate locally and compared it with the

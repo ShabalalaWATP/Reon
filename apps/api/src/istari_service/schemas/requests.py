@@ -6,7 +6,7 @@ from datetime import UTC, date, datetime
 from enum import StrEnum
 from uuid import UUID, uuid4
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from istari_service.models import RequestStatus
 from istari_service.schemas.common import ApiModel, StrictApiModel
@@ -18,19 +18,31 @@ class Sensitivity(StrEnum):
     RESTRICTED = "RESTRICTED"
 
 
+class CustomerUrgency(StrEnum):
+    ROUTINE = "ROUTINE"
+    TIME_SENSITIVE = "TIME_SENSITIVE"
+    IMMEDIATE = "IMMEDIATE"
+
+
 class RequestCreate(StrictApiModel):
     submission_key: UUID = Field(default_factory=uuid4)
     title: str = Field(min_length=3, max_length=160)
     service_category: str = Field(min_length=2, max_length=80)
     description: str = Field(min_length=20, max_length=5000)
+    question_to_answer: str = Field(min_length=10, max_length=2000)
     desired_outcome: str = Field(min_length=10, max_length=2000)
     background_context: str = Field(min_length=1, max_length=5000)
+    subject_area_or_location: str = Field(min_length=2, max_length=1000)
+    coverage_start: date
+    coverage_end: date
+    customer_urgency: CustomerUrgency
+    supported_activity_or_decision: str = Field(min_length=5, max_length=2000)
     required_by: date
     required_by_reason: str = Field(min_length=5, max_length=1000)
     preferred_deliverable_type: str = Field(min_length=2, max_length=80)
     success_criteria: str = Field(min_length=5, max_length=2000)
-    requesting_business_area: str = Field(min_length=2, max_length=120)
-    intended_recipients: list[str] = Field(min_length=1, max_length=20)
+    constraints_or_caveats: str = Field(min_length=1, max_length=2000)
+    supporting_information: str = Field(min_length=1, max_length=2000)
     sensitivity: Sensitivity
     handling_instructions: str = Field(min_length=1, max_length=2000)
 
@@ -41,15 +53,11 @@ class RequestCreate(StrictApiModel):
             raise ValueError("requiredBy must not be in the past")
         return value
 
-    @field_validator("intended_recipients")
-    @classmethod
-    def recipients_are_bounded(cls, value: list[str]) -> list[str]:
-        cleaned = [recipient.strip() for recipient in value]
-        if any(not recipient or len(recipient) > 120 for recipient in cleaned):
-            raise ValueError("each intended recipient must contain 1 to 120 characters")
-        if len(set(cleaned)) != len(cleaned):
-            raise ValueError("intended recipients must be unique")
-        return cleaned
+    @model_validator(mode="after")
+    def coverage_period_is_ordered(self) -> RequestCreate:
+        if self.coverage_end < self.coverage_start:
+            raise ValueError("coverageEnd must not be before coverageStart")
+        return self
 
 
 class RequesterView(ApiModel):
@@ -124,13 +132,19 @@ class RequestSummary(ApiModel):
 class RequestDetail(RequestSummary):
     service_category: str
     description: str
+    question_to_answer: str
     desired_outcome: str
     background_context: str
+    subject_area_or_location: str
+    coverage_start: date
+    coverage_end: date
+    customer_urgency: CustomerUrgency
+    supported_activity_or_decision: str
     required_by_reason: str
     preferred_deliverable_type: str
     success_criteria: str
-    requesting_business_area: str
-    intended_recipients: list[str]
+    constraints_or_caveats: str
+    supporting_information: str
     sensitivity: Sensitivity
     handling_instructions: str
     requester: RequesterView

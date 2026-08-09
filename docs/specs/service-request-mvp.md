@@ -78,17 +78,23 @@ Required fields:
 - request title;
 - service category;
 - description of the need;
+- specific question to answer;
 - desired outcome;
 - background and known context;
+- subject area or location;
+- relevant period start and end;
+- Customer urgency;
+- activity, project or decision supported;
 - required-by date and why it matters;
 - preferred deliverable type;
 - success criteria;
-- requesting business area;
-- intended recipients;
+- constraints or caveats;
+- supporting information available;
 - sensitivity and handling instructions.
 
-The Customer does not select a delivery team or Analyst. Client validation is
-advisory. Matching Pydantic validation is authoritative. Submitted revisions are
+The Customer does not select an internal business area, recipient, delivery team
+or Analyst. The submit control remains disabled until client validation succeeds.
+Matching Pydantic validation is authoritative. Submitted revisions are
 immutable and all later information is appended to the activity history. Before
 submission, only the originating Customer may update or delete a draft. Drafts do
 not start a workflow instance.

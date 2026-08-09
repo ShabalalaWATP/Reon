@@ -10,9 +10,17 @@ from istari_service.dependencies import (
     AppSettings,
     AuthDependency,
     CurrentSession,
+    DatabaseSession,
     MutationSession,
 )
 from istari_service.login_rate_limiter import login_source_key
+from istari_service.repositories.account_requests import (
+    SqlAlchemyAccountRequestRepository,
+)
+from istari_service.schemas.account_requests import (
+    AccountRequestAccepted,
+    AccountRequestCreate,
+)
 from istari_service.schemas.auth import (
     CurrentUser,
     ElevationResponse,
@@ -20,8 +28,26 @@ from istari_service.schemas.auth import (
     PasswordConfirmation,
     SessionResponse,
 )
+from istari_service.services.account_request_service import AccountRequestService
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
+
+
+@router.post(
+    "/account-requests",
+    response_model=AccountRequestAccepted,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def request_account(
+    command: AccountRequestCreate,
+    session: DatabaseSession,
+    settings: AppSettings,
+) -> AccountRequestAccepted:
+    service = AccountRequestService(
+        SqlAlchemyAccountRequestRepository(session), settings
+    )
+    await service.submit(command)
+    return AccountRequestAccepted()
 
 
 def _session_response(
