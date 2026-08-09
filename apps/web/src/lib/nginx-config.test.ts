@@ -4,10 +4,14 @@ import process from "node:process";
 import { describe, expect, it } from "vitest";
 
 const config = readFileSync(path.resolve(process.cwd(), "nginx.conf"), "utf8");
+const dockerfile = readFileSync(
+  path.resolve(process.cwd(), "Dockerfile"),
+  "utf8",
+);
 
 describe("local web container boundary", () => {
   it("rejects unrecognised hosts and hides the nginx version", () => {
-    expect(config).toContain("listen 80 default_server;");
+    expect(config).toContain("listen 8080 default_server;");
     expect(config).toContain("server_name localhost 127.0.0.1;");
     expect(config).toContain("return 444;");
     expect(config.match(/server_tokens off;/g)).toHaveLength(2);
@@ -20,6 +24,9 @@ describe("local web container boundary", () => {
     "X-Content-Type-Options",
     "Referrer-Policy",
     "Permissions-Policy",
+    "Cross-Origin-Opener-Policy",
+    "Cross-Origin-Embedder-Policy",
+    "Cross-Origin-Resource-Policy",
   ])("sets the %s response protection", (protection) => {
     expect(config).toContain(protection);
   });
@@ -29,5 +36,15 @@ describe("local web container boundary", () => {
     expect(config).toContain("proxy_set_header X-Forwarded-For $remote_addr;");
     expect(config).not.toContain("$proxy_add_x_forwarded_for");
     expect(config).toContain("try_files $uri $uri/ /index.html;");
+    expect(config).toContain("location = /index.html");
+    expect(config).toContain("expires -1;");
+  });
+
+  it("uses the patched non-root runtime and handles both nginx pid paths", () => {
+    expect(dockerfile).toContain("FROM nginx:1.31.3-alpine@sha256:");
+    expect(dockerfile).toContain("/var/run/nginx.pid");
+    expect(dockerfile).toContain("/run/nginx.pid");
+    expect(dockerfile).toContain("grep -qx 'pid /tmp/nginx.pid;'");
+    expect(dockerfile).toContain("USER 101:101");
   });
 });

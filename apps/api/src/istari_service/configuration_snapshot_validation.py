@@ -80,9 +80,31 @@ def _validate_snapshot(
     parents = {edge.child_unit_id: edge.parent_unit_id for edge in edges}
     enabled = {unit_id: unit for unit_id, unit in units.items() if unit.routing_enabled}
     findings = _snapshot_shape(units, enabled, parents, edges)
+    findings.extend(_sibling_name_findings(enabled, parents))
     findings.extend(_snapshot_cycles(enabled, parents))
     findings.extend(_snapshot_route(specification, enabled, parents))
     findings.extend(_staffing_warnings(enabled, staffing))
+    return findings
+
+
+def _sibling_name_findings(
+    enabled: Mapping[UUID, UnitRevisionSpec], parents: Mapping[UUID, UUID]
+) -> list[ValidationFinding]:
+    owners: dict[tuple[UUID | None, str], UUID] = {}
+    findings: list[ValidationFinding] = []
+    for unit_id, unit in enabled.items():
+        key = (parents.get(unit_id), unit.name.casefold())
+        if key in owners and owners[key] != unit_id:
+            findings.append(
+                _finding(
+                    FindingSeverity.ERROR,
+                    "DUPLICATE_SIBLING_NAME",
+                    "Sibling organisation units must have distinct display names.",
+                    "units",
+                    unit_id,
+                )
+            )
+        owners[key] = unit_id
     return findings
 
 

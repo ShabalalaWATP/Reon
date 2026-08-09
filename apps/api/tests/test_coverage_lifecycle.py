@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 from typing import Any, cast
 
@@ -12,12 +11,14 @@ from pydantic import SecretStr
 from sqlalchemy.exc import SQLAlchemyError
 
 import istari_service.main as main_module
+import istari_service.routers.health as health_module
 from istari_service.auth_service import PasswordHasher
 from istari_service.config import Environment, Settings
 from istari_service.errors import AuthenticationFailed, ServiceError
-from istari_service.main import _client_configuration, create_app
+from istari_service.main import create_app
 from istari_service.routers.health import health, readiness
 from istari_service.workflow.fake import FakeWorkflowEngine
+from istari_service.workflow_client import camunda_client_configuration
 
 
 class FastHasher(PasswordHasher):
@@ -77,7 +78,7 @@ class SessionFactoryDouble:
 
 
 def test_client_configuration_handles_paths_basic_auth_and_rejects_unknown() -> None:
-    none_configuration = _client_configuration(
+    none_configuration = camunda_client_configuration(
         make_settings(camunda_rest_address="http://workflow.local/")
     )
     assert none_configuration == {
@@ -92,7 +93,7 @@ def test_client_configuration_handles_paths_basic_auth_and_rejects_unknown() -> 
         camunda_username="synthetic-client",
         camunda_password=SecretStr("synthetic-secret"),
     )
-    assert _client_configuration(basic) == {
+    assert camunda_client_configuration(basic) == {
         "CAMUNDA_REST_ADDRESS": "https://workflow.example.test/v2",
         "CAMUNDA_AUTH_STRATEGY": "BASIC",
         "CAMUNDA_SDK_LOG_LEVEL": "warn",
@@ -101,13 +102,13 @@ def test_client_configuration_handles_paths_basic_auth_and_rejects_unknown() -> 
     }
 
     missing_credentials = make_settings(camunda_auth_mode="BASIC")
-    configuration = _client_configuration(missing_credentials)
+    configuration = camunda_client_configuration(missing_credentials)
     assert configuration["CAMUNDA_BASIC_AUTH_USERNAME"] == ""
     assert configuration["CAMUNDA_BASIC_AUTH_PASSWORD"] == ""
 
     invalid = basic.model_copy(update={"camunda_auth_mode": "oauth"})
     with pytest.raises(ValueError, match="only NONE or BASIC"):
-        _client_configuration(invalid)
+        camunda_client_configuration(invalid)
 
 
 def test_create_app_uses_default_composition_dependencies(
@@ -120,12 +121,50 @@ def test_create_app_uses_default_composition_dependencies(
     monkeypatch.setattr(main_module, "SessionFactory", sessions)
     monkeypatch.setattr(main_module, "PasswordHasher", lambda: hasher)
 
-    application = create_app(start_background_worker=False)
+    application = create_app()
 
     assert application.state.settings is configured
     assert application.state.session_factory is sessions
     assert application.state.password_hasher is hasher
     assert application.state.dummy_password_hash.startswith("test-hash:")
+
+
+def test_production_disables_interactive_api_schema_surfaces() -> None:
+    application = create_app(
+        settings=Settings(
+            environment=Environment.PROD,
+            database_url=("postgresql+asyncpg://service@db/istari?ssl=verify-full"),
+            allow_demo_users=False,
+            session_cookie_secure=True,
+            web_origin="https://staff.example.test",
+            trusted_origins=frozenset({"https://staff.example.test"}),
+            allowed_hosts=frozenset({"api.example.test"}),
+            camunda_rest_address="https://workflow.example.test",
+            camunda_auth_mode="BASIC",
+            camunda_username="synthetic-client",
+            camunda_password=SecretStr("synthetic-secret"),
+            audit_hmac_key=SecretStr("a" * 32),
+            product_storage_path="C:/private/istari-products",
+            worker_health_required=True,
+        ),
+        workflow_engine=FakeWorkflowEngine(),
+    )
+
+    assert application.openapi_url is None
+    assert application.docs_url is None
+    assert application.redoc_url is None
+    route_paths = {getattr(route, "path", None) for route in application.routes}
+    assert not {"/openapi.json", "/docs", "/redoc"} & route_paths
+
+
+def test_health_routes_are_not_published_in_local_openapi() -> None:
+    application = create_app(
+        settings=make_settings(),
+        workflow_engine=FakeWorkflowEngine(),
+    )
+    paths = application.openapi()["paths"]
+    assert "/health" not in paths
+    assert "/ready" not in paths
 
 
 @pytest.mark.asyncio
@@ -151,7 +190,6 @@ async def test_lifespan_passes_optional_demo_password_to_seeder(
         session_factory=cast(Any, sessions),
         workflow_engine=FakeWorkflowEngine(),
         password_hasher=FastHasher(),
-        start_background_worker=False,
     )
 
     async with application.router.lifespan_context(application):
@@ -197,7 +235,6 @@ async def test_lifespan_creates_and_closes_camunda_client(
         settings=make_settings(),
         session_factory=cast(Any, SessionFactoryDouble()),
         password_hasher=FastHasher(),
-        start_background_worker=False,
     )
 
     async with application.router.lifespan_context(application):
@@ -209,61 +246,19 @@ async def test_lifespan_creates_and_closes_camunda_client(
 
 
 @pytest.mark.asyncio
-async def test_lifespan_starts_and_stops_maintenance(
+async def test_lifespan_never_hosts_the_independent_worker(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     disable_organisation_seed(monkeypatch)
-    lifecycle: list[str] = []
-    dispatcher = object()
-    expected_command_dispatcher = object()
-    reconciler = object()
-    monkeypatch.setattr(
-        main_module,
-        "WorkflowOutboxDispatcher",
-        lambda *_args, **_kwargs: dispatcher,
-    )
-    monkeypatch.setattr(
-        main_module,
-        "WorkflowReconciler",
-        lambda *_args, **_kwargs: reconciler,
-    )
-    monkeypatch.setattr(
-        main_module,
-        "WorkflowCommandDispatcher",
-        lambda *_args, **_kwargs: expected_command_dispatcher,
-    )
-
-    async def fake_maintenance(
-        actual_dispatcher: object,
-        actual_reconciler: object,
-        stop: asyncio.Event,
-        *,
-        command_dispatcher: object,
-        notification_reconciler: object | None,
-        health: object,
-    ) -> None:
-        assert actual_dispatcher is dispatcher
-        assert actual_reconciler is reconciler
-        assert command_dispatcher is expected_command_dispatcher
-        assert notification_reconciler is None
-        assert health is application.state.workflow_maintenance_health
-        lifecycle.append("started")
-        await stop.wait()
-        lifecycle.append("stopped")
-
-    monkeypatch.setattr(main_module, "run_workflow_maintenance", fake_maintenance)
     application = create_app(
         settings=make_settings(),
         session_factory=cast(Any, SessionFactoryDouble()),
         workflow_engine=FakeWorkflowEngine(),
         password_hasher=FastHasher(),
-        start_background_worker=True,
     )
 
     async with application.router.lifespan_context(application):
-        await asyncio.sleep(0)
-        assert lifecycle == ["started"]
-    assert lifecycle == ["started", "stopped"]
+        assert not hasattr(application.state, "workflow_maintenance_health")
 
 
 @pytest.mark.asyncio
@@ -272,7 +267,6 @@ async def test_registered_service_error_handler_uses_stable_envelope() -> None:
         settings=make_settings(),
         workflow_engine=FakeWorkflowEngine(),
         password_hasher=FastHasher(),
-        start_background_worker=False,
     )
     handler = application.exception_handlers[ServiceError]
     response = await handler(cast(Any, None), AuthenticationFailed())
@@ -316,15 +310,23 @@ async def test_health_and_readiness_cover_dependency_combinations(
     database_ok: bool,
     workflow_ok: bool,
     expected_status: int,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    async def configuration_ready(_session: object) -> bool:
+        return True
+
+    monkeypatch.setattr(
+        health_module,
+        "configuration_runtime_is_ready",
+        configuration_ready,
+    )
     response = Response()
     session = HealthSessionDouble(database_ok)
     result = await readiness(
         response,
         cast(Any, session),
         cast(Any, HealthEngineDouble(workflow_ok)),
-        make_settings(),
-        None,
+        make_settings(worker_health_required=False),
     )
 
     assert await health() == {"status": "ok"}
@@ -332,6 +334,6 @@ async def test_health_and_readiness_cover_dependency_combinations(
     assert result.status == ("ready" if expected_status == 200 else "not_ready")
     assert result.checks.database == ("ok" if database_ok else "unavailable")
     assert result.checks.workflow == ("ok" if workflow_ok else "unavailable")
-    assert result.checks.configuration == "disabled"
+    assert result.checks.configuration == ("ok" if database_ok else "unavailable")
     assert result.checks.maintenance == "disabled"
     assert session.rollbacks == (0 if database_ok else 1)

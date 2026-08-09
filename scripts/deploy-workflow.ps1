@@ -6,10 +6,12 @@ param(
     [string]$TenantId,
     [string]$ExpectedProcessId = "service-request-v1",
     [string]$OperatorSubject,
+    [switch]$AttestWithCompose,
     [switch]$SkipAvailabilityAttestation
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "workflow-attestation.ps1")
 
 $parsedAddress = $null
 $isLoopback = $BaseUri.DnsSafeHost -ieq "localhost"
@@ -57,21 +59,16 @@ if (-not $response.deploymentKey -or -not $process.processDefinitionKey) {
 $checksum = (Get-FileHash -LiteralPath $resolvedBpmnPath -Algorithm SHA256).Hash.ToLowerInvariant()
 $availabilityAttested = $false
 if (-not $SkipAvailabilityAttestation) {
-    $apiDirectory = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\apps\api")).Path
-    & uv run --directory $apiDirectory python -m istari_service.maintenance `
-        attest-workflow `
-        --process-id $process.processDefinitionId `
-        --process-version $process.processDefinitionVersion `
-        --process-definition-key $process.processDefinitionKey `
-        --deployment-key $response.deploymentKey `
-        --compatibility-key "istari-human-route-v1" `
-        --checksum $checksum `
-        --operator-subject $OperatorSubject `
-        --apply `
-        --confirm "ATTEST_WORKFLOW_AVAILABILITY"
-    if ($LASTEXITCODE -ne 0) {
-        throw "Camunda deployed the workflow, but database attestation failed."
-    }
+    $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
+    Invoke-WorkflowAvailabilityAttestation `
+        -ProcessId $process.processDefinitionId `
+        -ProcessVersion $process.processDefinitionVersion `
+        -ProcessDefinitionKey $process.processDefinitionKey `
+        -DeploymentKey $response.deploymentKey `
+        -Checksum $checksum `
+        -OperatorSubject $OperatorSubject `
+        -RepositoryRoot $repositoryRoot `
+        -AttestWithCompose:$AttestWithCompose
     $availabilityAttested = $true
 }
 

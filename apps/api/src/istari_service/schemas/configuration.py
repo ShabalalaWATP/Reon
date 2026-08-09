@@ -22,6 +22,7 @@ from istari_service.configuration_types import (
 )
 from istari_service.organisation_models import OrganisationKind
 from istari_service.schemas.common import ApiModel, StrictApiModel
+from istari_service.text_safety import normalise_display_name
 
 
 def _utc(value: datetime) -> datetime:
@@ -46,6 +47,11 @@ class UnitRevisionInput(StrictApiModel):
     routing_enabled: bool = True
     minimum_managers: int = Field(default=0, ge=0, le=100)
     minimum_analysts: int = Field(default=0, ge=0, le=500)
+
+    @field_validator("name")
+    @classmethod
+    def safe_display_name(cls, value: str) -> str:
+        return normalise_display_name(value)
 
     @field_validator("effective_from", "effective_until")
     @classmethod
@@ -251,12 +257,14 @@ class PreviewChangeView(ApiModel):
     unit_id: UUID
     code: str
     message: str
+    effective_at: datetime
 
 
 class ConfigurationApprovalView(ApiModel):
     actor_user_id: UUID
     decision: ApprovalDecision
     reviewed_version: int
+    snapshot_digest: str
     reason: str
     created_at: datetime
 
@@ -295,6 +303,7 @@ class ConfigurationVersionDetail(ConfigurationVersionSummary):
 class ConfigurationPreview(ApiModel):
     version_id: UUID
     compared_with_version_id: UUID | None
+    snapshot_digest: str
     changes: list[PreviewChangeView]
 
 

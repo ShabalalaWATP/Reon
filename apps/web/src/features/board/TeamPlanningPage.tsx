@@ -10,7 +10,7 @@ import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import type { TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import type { Session } from "../../lib/api/types";
 import { useAuth } from "../../lib/auth/AuthProvider";
-import { localInput } from "../calendar/calendarDates";
+import { localDateTimeInputValue } from "../../lib/dateInputs";
 import { WorkPackageEditForm } from "./WorkPackageEditForm";
 import { PlanningEnhancements } from "./PlanningEnhancements";
 
@@ -73,7 +73,7 @@ function PackageDetail({ item }: { item: WorkPackage }) {
 }
 
 function ReservationForm({ access, item, members, onChanged, session }: { access: TeamWorkspaceAccess; item: WorkPackage; members: Array<{ accountId: string; displayName: string }>; onChanged: () => Promise<unknown>; session: Session }) {
-  const [userId, setUserId] = useState(""); const [start, setStart] = useState(() => localInput(new Date(Date.now() + 86_400_000))); const [end, setEnd] = useState(() => localInput(new Date(Date.now() + 90_000_000))); const [reason, setReason] = useState("");
+  const [userId, setUserId] = useState(""); const [start, setStart] = useState(() => localDateTimeInputValue(new Date(Date.now() + 86_400_000))); const [end, setEnd] = useState(() => localDateTimeInputValue(new Date(Date.now() + 90_000_000))); const [reason, setReason] = useState("");
   const create = useMutation({ mutationFn: () => {
     return boardApi.reserve(access.teamId, item.id, item.version, { grantId: access.grantId, userId, startsAt: new Date(start).toISOString(), endsAt: new Date(end).toISOString(), reason }, session.csrfToken);
   }, onSuccess: () => { setReason(""); void onChanged(); } });

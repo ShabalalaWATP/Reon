@@ -24,6 +24,10 @@ IMMUTABLE_TABLES = (
     "team_activity_events",
     "work_package_activity",
 )
+NON_DELETABLE_TABLES = (
+    "approved_workflow_definitions",
+    "configuration_versions",
+)
 
 
 def _role(name: str, value: str | None) -> str:
@@ -38,6 +42,7 @@ def permission_statements(runtime_role: str, backup_role: str) -> tuple[str, ...
     runtime = _role("APP_RUNTIME_DATABASE_USER", runtime_role)
     backup = _role("APP_BACKUP_DATABASE_USER", backup_role)
     immutable = ", ".join(f'public."{table}"' for table in IMMUTABLE_TABLES)
+    non_deletable = ", ".join(f'public."{table}"' for table in NON_DELETABLE_TABLES)
     return (
         "REVOKE CREATE ON SCHEMA public FROM PUBLIC",
         f"GRANT USAGE ON SCHEMA public TO {runtime}, {backup}",
@@ -47,6 +52,7 @@ def permission_statements(runtime_role: str, backup_role: str) -> tuple[str, ...
         f"GRANT SELECT ON ALL TABLES IN SCHEMA public TO {backup}",
         f"GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO {backup}",
         f"REVOKE UPDATE, DELETE, TRUNCATE ON TABLE {immutable} FROM {runtime}",
+        f"REVOKE DELETE, TRUNCATE ON TABLE {non_deletable} FROM {runtime}",
     )
 
 

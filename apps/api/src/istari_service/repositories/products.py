@@ -29,6 +29,9 @@ from istari_service.repositories.product_configuration import (
     ProductConfigurationRepositoryMixin,
 )
 from istari_service.repositories.product_lifecycle import ProductLifecycleMixin
+from istari_service.repositories.product_operation_leases import (
+    ProductOperationLeaseRepositoryMixin,
+)
 from istari_service.repositories.product_records import (
     artefact_record,
     intent_record,
@@ -46,6 +49,7 @@ from istari_service.schemas.products import (
 
 class SqlAlchemyProductRepository(
     ProductConfigurationRepositoryMixin,
+    ProductOperationLeaseRepositoryMixin,
     ProductUploadRetryRepositoryMixin,
     ProductLifecycleMixin,
     ProductRequestRepositoryMixin,

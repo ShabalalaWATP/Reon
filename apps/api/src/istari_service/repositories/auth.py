@@ -10,8 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from istari_service.domain import AccountRecord, Actor, SessionRecord
-from istari_service.models import Session, User
+from istari_service.models import Session, User, UserRole
 from istari_service.organisation_models import UserOrganisationMembership
+from istari_service.team_models import TeamMembership
 
 
 def _as_utc(value: datetime) -> datetime:
@@ -51,6 +52,21 @@ async def actor_from_user_with_memberships(
     session: AsyncSession,
     user: User,
 ) -> Actor:
+    if user.role in {UserRole.DELIVERY_TEAM_LEAD, UserRole.DELIVERY_SPECIALIST}:
+        now = datetime.now(UTC)
+        unit_ids = frozenset(
+            await session.scalars(
+                select(TeamMembership.team_id).where(
+                    TeamMembership.user_id == user.id,
+                    TeamMembership.effective_from <= now,
+                    or_(
+                        TeamMembership.effective_until.is_(None),
+                        TeamMembership.effective_until > now,
+                    ),
+                )
+            )
+        )
+        return actor_from_user(user, unit_ids)
     unit_ids = frozenset(
         await session.scalars(
             select(UserOrganisationMembership.unit_id).where(

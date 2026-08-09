@@ -5,7 +5,9 @@
 .queue-layout { display: grid; grid-template-columns: minmax(280px, .4fr) minmax(0, 1fr); min-height: 620px; border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: color-mix(in srgb, var(--surface) 74%, transparent); box-shadow: var(--shadow-soft); }
 .queue-list { border-right: 1px solid var(--border); background: var(--surface-muted); }
 .queue-row { position: relative; display: grid; gap: 6px; width: 100%; min-height: 122px; border: 0; border-bottom: 1px solid var(--border); padding: 15px 16px; background: transparent; color: var(--text); text-align: left; transition: background var(--speed-fast), padding-left var(--speed-fast); }
-.queue-row:hover, .queue-row:focus-visible, .queue-row--selected { padding-left: 20px; background: color-mix(in srgb, var(--accent) 9%, var(--surface)); outline-offset: -2px; }
+.queue-row:hover { padding-left: 20px; background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+.queue-row:focus-visible { padding-left: 20px; background: color-mix(in srgb, var(--accent) 9%, var(--surface)); outline-offset: -3px; }
+.queue-row--selected { padding-left: 20px; background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
 .queue-row__indicator { position: absolute; inset: 14px auto 14px 0; width: 2px; border-radius: 9px; background: transparent; transform: scaleY(.4); transition: background var(--speed-fast), transform var(--speed-fast); }
 .queue-row:hover .queue-row__indicator, .queue-row--selected .queue-row__indicator { background: var(--accent); transform: scaleY(1); }
 .queue-row strong { font-size: .88rem; line-height: 1.35; }

@@ -1,5 +1,12 @@
 .git
 .github
+.local
+.mypy_cache
+.playwright-cli
+.pytest_cache
+.ruff_cache
+.tmp
+.coverage
 .env
 .env.*
 !.env.example
@@ -13,6 +20,10 @@ infra/postgres/*
 !infra/camunda/
 infra/camunda/*
 !infra/camunda/application-postgresql.yaml
+!infra/clamav/
+infra/clamav/*
+!infra/clamav/Dockerfile
+!infra/clamav/healthcheck.sh
 workflow
 output
 **/.venv

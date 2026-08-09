@@ -23,7 +23,7 @@ async def test_customer_draft_lifecycle_scope_and_idempotent_submission(
     await harness.login("admin2")
     empty = await harness.client.get("/api/v1/request-drafts")
     assert empty.status_code == 200
-    assert empty.json() == {"items": []}
+    assert empty.json() == {"items": [], "nextCursor": None}
 
     mismatch = await harness.client.post(
         "/api/v1/request-drafts",
@@ -135,7 +135,10 @@ async def test_customer_draft_lifecycle_scope_and_idempotent_submission(
     )
     assert repeated.status_code == 200
     assert repeated.json()["id"] == request_id
-    assert (await harness.client.get("/api/v1/request-drafts")).json() == {"items": []}
+    assert (await harness.client.get("/api/v1/request-drafts")).json() == {
+        "items": [],
+        "nextCursor": None,
+    }
     requests = (await harness.client.get("/api/v1/requests")).json()["items"]
     assert [item["id"] for item in requests] == [request_id]
 

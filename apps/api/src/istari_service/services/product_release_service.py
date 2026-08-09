@@ -107,6 +107,15 @@ class ProductReleaseOperations(ProductServiceSupport):
     async def download(
         self, actor: Actor, artefact_id: UUID, correlation_id: str | None
     ) -> DownloadStream:
+        access = await self.authorise_download(actor, artefact_id, correlation_id)
+        return await self.download_authorised(actor, access, correlation_id)
+
+    async def authorise_download(
+        self,
+        actor: Actor,
+        artefact_id: UUID,
+        correlation_id: str | None,
+    ) -> ReleaseAccessRecord:
         access = await self._customer_access(
             actor, artefact_id, AccessKind.DOWNLOAD, correlation_id
         )
@@ -126,6 +135,22 @@ class ProductReleaseOperations(ProductServiceSupport):
                 correlation_id,
                 access,
             )
+            raise ProductNotFound()
+        return access
+
+    async def download_authorised(
+        self,
+        actor: Actor,
+        access: ReleaseAccessRecord,
+        correlation_id: str | None,
+    ) -> DownloadStream:
+        artefact_id = access.artefact.id
+        artefact = access.artefact
+        if (
+            not artefact.released_key
+            or not artefact.filename
+            or not artefact.media_type
+        ):
             raise ProductNotFound()
         try:
             result = await self._storage.download(

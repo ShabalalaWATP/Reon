@@ -32,8 +32,10 @@ class SecurityHeadersMiddleware:
                 headers["Permissions-Policy"] = (
                     "camera=(), microphone=(), geolocation=()"
                 )
-                if str(scope.get("path", "")).startswith("/api/"):
-                    headers["Cache-Control"] = "no-store"
+                headers["Cross-Origin-Opener-Policy"] = "same-origin"
+                headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+                headers["Cross-Origin-Resource-Policy"] = "same-origin"
+                headers["Cache-Control"] = "no-store"
             await send(message)
 
         await self._app(scope, receive, hardened_send)

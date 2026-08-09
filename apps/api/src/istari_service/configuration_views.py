@@ -59,6 +59,7 @@ def version_detail(bundle: ConfigurationBundle) -> ConfigurationVersionDetail:
             actor_user_id=bundle.approval.actor_user_id,
             decision=bundle.approval.decision,
             reviewed_version=bundle.approval.reviewed_version,
+            snapshot_digest=bundle.approval.snapshot_digest,
             reason=bundle.approval.reason,
             created_at=stored_utc(bundle.approval.created_at),
         )

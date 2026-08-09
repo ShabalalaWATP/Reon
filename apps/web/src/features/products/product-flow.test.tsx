@@ -131,6 +131,7 @@ describe("managed product package journey", () => {
       throw new Error(url.pathname);
     });
     renderApp("/requests");
+    await userEvent.setup().click(await screen.findByText("Completed history"));
     expect(await screen.findByRole("link", { name: "Download product" })).toHaveAttribute(
       "href",
       `/api/v1/requests/${requestSummary.id}/product`,
@@ -194,6 +195,7 @@ describe("managed product package journey", () => {
       throw new Error(url.pathname);
     });
     const register = renderApp("/requests");
+    await userEvent.setup().click(await screen.findByText("Completed history"));
     expect(await screen.findByText("Product available")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Download" })).toHaveAttribute("href", "/api/v1/releases/artefacts/art-file/download");
     expect(screen.getByRole("link", { name: "Open product" })).toHaveAttribute("target", "_blank");

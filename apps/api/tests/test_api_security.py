@@ -32,6 +32,37 @@ async def test_generic_login_failure_for_unknown_disabled_and_wrong_password(
     assert bodies[0]["detail"]["code"] == "AUTHENTICATION_FAILED"
 
 
+async def test_login_rate_limit_is_account_neutral_and_advertises_retry(
+    api_harness: ApiHarness,
+) -> None:
+    harness = api_harness
+    harness.settings.login_rate_limit_per_source = 2
+    harness.settings.login_rate_limit_global = 20
+    bodies = []
+    for suffix in range(2):
+        response = await harness.client.post(
+            "/api/v1/auth/login",
+            json={
+                "username": f"missing-{suffix}@example.test",
+                "password": "not-the-password",
+            },
+        )
+        assert response.status_code == 401
+        bodies.append(response.json())
+
+    limited = await harness.client.post(
+        "/api/v1/auth/login",
+        json={"username": "admin2", "password": "not-the-password"},
+    )
+    assert limited.status_code == 429
+    assert limited.json()["detail"] == {
+        "code": "AUTHENTICATION_RATE_LIMITED",
+        "message": "Sign-in is temporarily unavailable. Try again shortly.",
+    }
+    assert 1 <= int(limited.headers["Retry-After"]) <= 60
+    assert bodies[0] == bodies[1]
+
+
 async def test_csrf_requires_current_token_and_trusted_origin(
     api_harness: ApiHarness,
 ) -> None:
@@ -217,7 +248,7 @@ async def test_platform_support_has_no_request_or_work_access(
     assert listing.status_code == 404
     work = await harness.client.get("/api/v1/work-items")
     assert work.status_code == 200
-    assert work.json() == {"items": []}
+    assert work.json() == {"items": [], "nextCursor": None}
 
 
 async def test_direct_api_host_and_response_headers_are_hardened(
@@ -240,9 +271,12 @@ async def test_direct_api_host_and_response_headers_are_hardened(
     assert api_response.headers["Permissions-Policy"] == (
         "camera=(), microphone=(), geolocation=()"
     )
+    assert api_response.headers["Cross-Origin-Opener-Policy"] == "same-origin"
+    assert api_response.headers["Cross-Origin-Embedder-Policy"] == "require-corp"
+    assert api_response.headers["Cross-Origin-Resource-Policy"] == "same-origin"
 
     health = await harness.client.get("/health")
-    assert "Cache-Control" not in health.headers
+    assert health.headers["Cache-Control"] == "no-store"
 
 
 async def test_inaccessible_claim_is_concealed(api_harness: ApiHarness) -> None:
@@ -269,7 +303,10 @@ async def test_request_detail_is_visible_only_to_the_active_assignee(
     assert owner_detail.status_code == 200
 
     await harness.login("admin7")
-    assert (await harness.client.get("/api/v1/work-items")).json() == {"items": []}
+    assert (await harness.client.get("/api/v1/work-items")).json() == {
+        "items": [],
+        "nextCursor": None,
+    }
     colleague_detail = await harness.client.get(f"/api/v1/requests/{request_id}")
     assert colleague_detail.status_code == 404
 

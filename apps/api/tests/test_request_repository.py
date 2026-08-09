@@ -314,7 +314,6 @@ async def test_feedback_gates_and_missing_detail(
         repository, request_id = await create_request(session, requester)
         actor = actor_from(requester)
         command = FeedbackCreate(rating=4, comments="Synthetic feedback.")
-        assert not await repository.feedback_exists(request_id)
         with pytest.raises(FeedbackUnavailable):
             await repository.add_feedback(uuid4(), actor, command)
         with pytest.raises(FeedbackUnavailable):
@@ -324,7 +323,6 @@ async def test_feedback_gates_and_missing_detail(
         request.status = RequestStatus.COMPLETED
         view = await repository.add_feedback(request_id, actor, command)
         assert view.rating == 4
-        assert await repository.feedback_exists(request_id)
         repeated = await repository.add_feedback(request_id, actor, command)
         assert repeated.id == view.id
         with pytest.raises(FeedbackUnavailable):

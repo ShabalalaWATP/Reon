@@ -55,6 +55,20 @@ class AdminService:
         self.authorise(actor)
         return await self._repository.views(await self._repository.list_users(query))
 
+    async def list_user_page(
+        self,
+        actor: Actor,
+        query: str | None,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> tuple[list[AdminUser], str | None]:
+        self.authorise(actor)
+        users, next_cursor = await self._repository.page_users(
+            query, limit=limit, cursor=cursor
+        )
+        return await self._repository.views(users), next_cursor
+
     async def get_user(self, actor: Actor, user_id: UUID) -> AdminUser:
         self.authorise(actor)
         return (

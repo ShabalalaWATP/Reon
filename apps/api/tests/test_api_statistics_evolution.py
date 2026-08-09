@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import pytest
 from sqlalchemy import select
@@ -18,7 +19,7 @@ from statistics_evolution_data import seed_evolution_statistics
 
 
 def _params(scope_id: str) -> dict[str, str]:
-    today = datetime.now(UTC).date()
+    today = datetime.now(ZoneInfo("Europe/London")).date()
     return {
         "scopeId": scope_id,
         "from": (today - timedelta(days=9)).isoformat(),

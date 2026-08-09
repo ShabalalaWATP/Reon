@@ -1,3 +1,8 @@
+import {
+  addLocalDays,
+  localDateTimeInputValue,
+} from "../../lib/dateInputs";
+
 export type CalendarView = "month" | "week" | "agenda";
 
 export function calendarRange(anchor: Date, view: CalendarView) {
@@ -14,24 +19,22 @@ export function moveAnchor(anchor: Date, view: CalendarView, direction: -1 | 1) 
   return result;
 }
 
-export function startOfWeek(value: Date) {
+function startOfWeek(value: Date) {
   const result = startOfDay(value);
   const day = result.getDay() || 7;
   result.setDate(result.getDate() - day + 1);
   return result;
 }
 
-export function monthGridStart(value: Date) {
+function monthGridStart(value: Date) {
   return startOfWeek(new Date(value.getFullYear(), value.getMonth(), 1));
 }
 
 export function addDays(value: Date, count: number) {
-  const result = new Date(value);
-  result.setDate(result.getDate() + count);
-  return result;
+  return addLocalDays(value, count);
 }
 
-export function startOfDay(value: Date) {
+function startOfDay(value: Date) {
   return new Date(value.getFullYear(), value.getMonth(), value.getDate());
 }
 
@@ -42,8 +45,7 @@ export function sameDay(left: Date, right: Date) {
 }
 
 export function localInput(value: Date) {
-  return new Date(value.getTime() - value.getTimezoneOffset() * 60_000)
-    .toISOString().slice(0, 16);
+  return localDateTimeInputValue(value);
 }
 
 export function calendarTitle(anchor: Date, view: CalendarView) {

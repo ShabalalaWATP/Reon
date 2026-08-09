@@ -35,8 +35,14 @@
 .routing-state { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: -4px 0 0; color: var(--muted); font-size: .76rem; line-height: 1.45; }
 .routing-state--error { color: var(--critical); font-weight: 650; }
 .routing-state .button { min-height: 34px; padding: 6px 10px; white-space: nowrap; }
+.routing-search small { color: var(--muted); font-size: .7rem; font-weight: 500; }
+.routing-breadcrumbs { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px; border-left: 2px solid var(--accent); padding: 8px 11px; background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.routing-breadcrumbs > span { color: var(--muted); font-size: .68rem; font-weight: 700; text-transform: uppercase; }
+.routing-breadcrumbs ol { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.routing-breadcrumbs li { color: var(--text); font-size: .74rem; font-weight: 700; }
+.routing-breadcrumbs li:not(:last-child)::after { content: "›"; margin-left: 6px; color: var(--accent); }
+.routing-selection-summary { margin: 0; border-top: 1px solid var(--border); padding-top: 9px; color: var(--text); font-size: .74rem; font-weight: 650; line-height: 1.5; }
 .staffing-warning { margin: 0; border-left: 2px solid var(--warning); padding: 8px 11px; background: color-mix(in srgb, var(--warning) 7%, transparent); color: var(--warning); font-size: .76rem; font-weight: 680; line-height: 1.45; }
-.product-download { width: max-content; margin-top: 14px; }
 
 @media (max-width: 680px) {
   .organisation-summary { grid-template-columns: 1fr; }

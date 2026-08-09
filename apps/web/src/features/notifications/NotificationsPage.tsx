@@ -1,9 +1,9 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { PageState } from "../../components/PageState";
 import { actionNotificationApi } from "../../lib/api/actionNotificationClient";
-import type { NotificationPreference, NotificationQuery, NotificationStateAction, NotificationStateFilter, PersonalNotification } from "../../lib/api/actionNotificationTypes";
+import type { NotificationCount, NotificationPreference, NotificationQuery, NotificationStateAction, NotificationStateFilter, PersonalNotification } from "../../lib/api/actionNotificationTypes";
 import { ApiError } from "../../lib/api/client";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import { useAuth } from "../../lib/auth/AuthProvider";
@@ -25,6 +25,17 @@ export function NotificationsPage() {
   const state = useMutation({ mutationFn: ({ action, items }: { action: NotificationStateAction; items: PersonalNotification[] }) => actionNotificationApi.updateNotificationState(action, items, session!.csrfToken), onSuccess: () => { setSelected(new Set()); void refresh(); } });
   const preference = useMutation({ mutationFn: ({ current, enabled, days }: { current: NotificationPreference; enabled: boolean; days: number[] }) => actionNotificationApi.updateNotificationPreference(current, enabled, days, session!.csrfToken), onSuccess: () => void queryClient.invalidateQueries({ queryKey: protectedQueryKeys.notificationPreferences(userId) }) });
   const refresh = () => Promise.all([queryClient.invalidateQueries({ queryKey: ["protected", userId, "notifications"] }), queryClient.invalidateQueries({ queryKey: protectedQueryKeys.notificationCount(userId) })]);
+  const firstPage = list.data?.pages[0];
+  useEffect(() => {
+    if (!firstPage) return;
+    queryClient.setQueryData<NotificationCount>(
+      protectedQueryKeys.notificationCount(userId),
+      {
+        unreadCount: firstPage.unreadCount,
+        projectedAt: firstPage.freshness.projectedAt,
+      },
+    );
+  }, [firstPage, queryClient, userId]);
   if (list.isPending || preferences.isPending) return <PageState kind="loading" title="Loading notifications" />;
   if (list.isError || preferences.isError) return <NotificationError error={(list.error ?? preferences.error)!} retry={() => { void list.refetch(); void preferences.refetch(); }} />;
   const first = list.data.pages[0];

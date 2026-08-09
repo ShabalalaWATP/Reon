@@ -1,5 +1,5 @@
 import { ShieldCheck } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 
 import { ApiError } from "../../lib/api/client";
 import { isSessionElevated, useAuth } from "../../lib/auth/AuthProvider";
@@ -11,6 +11,12 @@ export function StepUpPanel() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const elevated = isSessionElevated(session);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const wasElevated = useRef(elevated);
+  useEffect(() => {
+    if (wasElevated.current && !elevated) passwordRef.current?.focus();
+    wasElevated.current = elevated;
+  }, [elevated]);
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!password) return;
@@ -38,7 +44,8 @@ export function StepUpPanel() {
       <ShieldCheck aria-hidden="true" size={18} />
       <div><strong id="step-up-title">Confirm sensitive changes</strong><p>Enter your current password to enable administration changes for five minutes.</p></div>
       <form onSubmit={(event) => void submit(event)}>
-        <label className="form-field"><span>Current password <strong aria-hidden="true">*</strong></span><input autoComplete="current-password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
+        <label className="sr-only">Account ID<input autoComplete="username" readOnly tabIndex={-1} type="text" value={session?.user.username ?? ""} /></label>
+        <label className="form-field"><span>Current password <strong aria-hidden="true">*</strong></span><input autoComplete="current-password" onChange={(event) => setPassword(event.target.value)} ref={passwordRef} required type="password" value={password} /></label>
         <button className="button button--primary" disabled={pending || !password} type="submit">{pending ? "Confirming…" : "Confirm password"}</button>
         {error ? <p className="field-error" role="alert">{error}</p> : null}
       </form>

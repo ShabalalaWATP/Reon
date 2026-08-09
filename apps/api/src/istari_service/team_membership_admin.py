@@ -60,6 +60,7 @@ async def align_admin_team_membership(
         current.effective_until = effective_at
         current.ended_by_user_id = actor_id
         current.end_reason = reason
+        current.end_projected_at = effective_at
         current.version += 1
         repository._activity(
             current,
@@ -75,6 +76,7 @@ async def align_admin_team_membership(
         effective_from=effective_at,
         started_by_user_id=actor_id,
         start_reason=reason,
+        start_projected_at=effective_at,
     )
     session.add(next_membership)
     await session.flush()

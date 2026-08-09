@@ -38,10 +38,24 @@ visibility after routing. They do not approve the service product. The Team
 Manager checks the analyst's work, and the QC Manager performs final quality
 control and dissemination to the customer.
 
-The secure initial download is an authenticated link to the disseminated plain-text
-product. The application never fetches an arbitrary analyst-supplied URL. Binary
-files remain out of scope until upload quarantine, malware scanning and
-controlled object storage are specified.
+The Customer dashboard exposes an authenticated download for a released PDF,
+DOCX or PPTX file, or an authenticated redirect to a normalised allow-listed
+HTTPS product. Files pass quarantine, structural validation and malware scanning
+before they can enter review. The backend never fetches an analyst-supplied URL,
+and withdrawal prevents legacy download fallback.
+
+At each routing stage, the application presents only effective direct children
+of the current route. The current small hierarchy uses explicit select controls;
+the enterprise-scale experience is specified to add literal name/code search
+without ranking or recommendation. Staffing state is factual guidance and does
+not disable a valid choice or trigger automatic fallback.
+
+Platform Administrators see a guided **Current configuration** and **Proposed
+changes** workspace. Search retains ancestor context, the selected unit shows a
+root-to-unit breadcrumb, and create/move forms list only effective parents of the
+correct kind. Complete FastAPI validation remains authoritative. Immutable
+revisions, independent approval and request pins remain internal controls even
+though the page does not require operators to understand version or draft terms.
 
 ## Organisation tree
 

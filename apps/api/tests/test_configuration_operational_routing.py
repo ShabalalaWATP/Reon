@@ -104,9 +104,7 @@ async def test_activation_materialises_staffs_and_routes_new_team_from_pin(
                 )
             )
         )
-        assert any(
-            row.ancestor_id == new_team_id and row.depth == 0 for row in closure
-        )
+        assert any(row.ancestor_id == new_team_id and row.depth == 0 for row in closure)
         assert any(
             row.ancestor_id == organisation_id("NIMBUS_OPS") and row.depth == 1
             for row in closure
@@ -187,6 +185,11 @@ async def test_activation_materialises_staffs_and_routes_new_team_from_pin(
         f"/api/v1/work-items/{allocation['id']}/routing-options"
     )
     assert options.status_code == 200
+    assert [item["name"] for item in options.json()["route"]] == [
+        "JIOC",
+        "SYGOC",
+        "Nimbus Ops",
+    ]
     option = next(
         item for item in options.json()["items"] if item["id"] == str(new_team_id)
     )

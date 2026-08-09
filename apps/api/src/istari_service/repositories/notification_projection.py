@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import cast
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -108,6 +107,7 @@ class SqlAlchemyNotificationProjectionRepository:
         recipients: list[RecipientRule],
         *,
         projected_at: datetime,
+        update_checkpoint: bool = True,
     ) -> list[NotificationRecipient]:
         event = await self.session.scalar(
             select(NotificationEvent)
@@ -120,14 +120,20 @@ class SqlAlchemyNotificationProjectionRepository:
             return await self._event_recipients(event.id)
         event.attempts += 1
         created: list[NotificationRecipient] = []
-        seen: set[UUID] = set()
-        for rule in recipients:
-            if rule.user_id in seen or not await self._recipient_is_current(rule):
+        current_rules = await self._current_recipient_rules(recipients)
+        disabled = await self._disabled_recipients(
+            {rule.user_id for rule in current_rules},
+            event.event_group,
+        )
+        existing = await self._recipients_by_user(
+            event.id,
+            {rule.user_id for rule in current_rules},
+        )
+        added = False
+        for rule in current_rules:
+            if rule.user_id in disabled:
                 continue
-            seen.add(rule.user_id)
-            if not await self._enabled(rule.user_id, event.event_group):
-                continue
-            recipient = await self._find_recipient(event.id, rule.user_id)
+            recipient = existing.get(rule.user_id)
             if recipient is None:
                 recipient = NotificationRecipient(
                     notification_event_id=event.id,
@@ -140,8 +146,10 @@ class SqlAlchemyNotificationProjectionRepository:
                     version=1,
                 )
                 self.session.add(recipient)
-                await self.session.flush()
+                added = True
             created.append(recipient)
+        if added:
+            await self.session.flush()
         event.status = NotificationProjectionStatus.PROJECTED
         event.projected_at = projected_at
         event.last_error = None
@@ -154,8 +162,19 @@ class SqlAlchemyNotificationProjectionRepository:
             None,
         )
         await project_notification_sent_fact(self.session, event, unit_id=unit_id)
-        await self._set_checkpoint(event, projected_at, failed=False)
+        if update_checkpoint:
+            await self._set_checkpoint(event, projected_at, failed=False)
         return created
+
+    async def update_projection_checkpoint(
+        self,
+        event: NotificationEvent,
+        *,
+        projected_at: datetime,
+    ) -> None:
+        """Refresh batch health once after all selected events are projected."""
+
+        await self._set_checkpoint(event, projected_at, failed=False)
 
     async def mark_projection_failed(
         self, event_id: UUID, *, error_code: str, attempted_at: datetime
@@ -184,44 +203,107 @@ class SqlAlchemyNotificationProjectionRepository:
             ).all()
         )
 
-    async def _recipient_is_current(self, rule: RecipientRule) -> bool:
-        query = select(User.id).where(
-            User.id == rule.user_id,
-            User.is_active.is_(True),
-            User.role == rule.required_role,
-        )
-        if rule.organisation_unit_id is not None:
-            query = query.join(
-                UserOrganisationMembership,
-                UserOrganisationMembership.user_id == User.id,
-            ).where(UserOrganisationMembership.unit_id == rule.organisation_unit_id)
-        elif rule.required_scope is not None:
-            query = query.where(User.scope == rule.required_scope)
-        return await self.session.scalar(query) is not None
+    async def _current_recipient_rules(
+        self, recipients: list[RecipientRule]
+    ) -> list[RecipientRule]:
+        unique_by_user: dict[UUID, RecipientRule] = {}
+        for rule in recipients:
+            unique_by_user.setdefault(rule.user_id, rule)
+        unique = list(unique_by_user.values())
+        if not unique:
+            return []
+        user_ids = {rule.user_id for rule in unique}
+        users = {
+            user_id: (role, scope)
+            for user_id, role, scope in (
+                (
+                    await self.session.execute(
+                        select(User.id, User.role, User.scope).where(
+                            User.id.in_(user_ids),
+                            User.is_active.is_(True),
+                        )
+                    )
+                )
+                .tuples()
+                .all()
+            )
+        }
+        required_memberships = {
+            (rule.user_id, rule.organisation_unit_id)
+            for rule in unique
+            if rule.organisation_unit_id is not None
+        }
+        current_memberships: set[tuple[UUID, UUID]] = set()
+        if required_memberships:
+            membership_users = {user_id for user_id, _unit_id in required_memberships}
+            membership_units = {unit_id for _user_id, unit_id in required_memberships}
+            current_memberships = set(
+                (
+                    await self.session.execute(
+                        select(
+                            UserOrganisationMembership.user_id,
+                            UserOrganisationMembership.unit_id,
+                        ).where(
+                            UserOrganisationMembership.user_id.in_(membership_users),
+                            UserOrganisationMembership.unit_id.in_(membership_units),
+                        )
+                    )
+                )
+                .tuples()
+                .all()
+            )
+        return [
+            rule
+            for rule in unique
+            if self._rule_is_current(rule, users, current_memberships)
+        ]
 
-    async def _enabled(self, user_id: UUID, group: NotificationEventGroup) -> bool:
-        if group in MANDATORY_GROUPS:
-            return True
-        enabled = await self.session.scalar(
-            select(NotificationPreference.enabled).where(
-                NotificationPreference.user_id == user_id,
-                NotificationPreference.event_group == group,
+    @staticmethod
+    def _rule_is_current(
+        rule: RecipientRule,
+        users: dict[UUID, tuple[UserRole, str]],
+        memberships: set[tuple[UUID, UUID]],
+    ) -> bool:
+        user = users.get(rule.user_id)
+        if user is None or user[0] is not rule.required_role:
+            return False
+        if rule.organisation_unit_id is not None:
+            return (rule.user_id, rule.organisation_unit_id) in memberships
+        return rule.required_scope is None or user[1] == rule.required_scope
+
+    async def _disabled_recipients(
+        self,
+        user_ids: set[UUID],
+        group: NotificationEventGroup,
+    ) -> set[UUID]:
+        if not user_ids or group in MANDATORY_GROUPS:
+            return set()
+        return set(
+            await self.session.scalars(
+                select(NotificationPreference.user_id).where(
+                    NotificationPreference.user_id.in_(user_ids),
+                    NotificationPreference.event_group == group,
+                    NotificationPreference.enabled.is_(False),
+                )
             )
         )
-        return enabled is not False
 
-    async def _find_recipient(
-        self, event_id: UUID, user_id: UUID
-    ) -> NotificationRecipient | None:
-        return cast(
-            NotificationRecipient | None,
-            await self.session.scalar(
+    async def _recipients_by_user(
+        self,
+        event_id: UUID,
+        user_ids: set[UUID],
+    ) -> dict[UUID, NotificationRecipient]:
+        if not user_ids:
+            return {}
+        return {
+            recipient.recipient_user_id: recipient
+            for recipient in await self.session.scalars(
                 select(NotificationRecipient).where(
                     NotificationRecipient.notification_event_id == event_id,
-                    NotificationRecipient.recipient_user_id == user_id,
+                    NotificationRecipient.recipient_user_id.in_(user_ids),
                 )
-            ),
-        )
+            )
+        }
 
     async def _set_checkpoint(
         self, event: NotificationEvent, projected_at: datetime, *, failed: bool

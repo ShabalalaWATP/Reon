@@ -1,4 +1,4 @@
-"""Fail-closed readiness for the enabled configuration runtime."""
+"""Fail-closed readiness for the request-routing configuration runtime."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from istari_service.configuration_integrity import snapshot_evidence_is_valid
 from istari_service.configuration_models import (
     ApprovedWorkflowDefinition,
     ConfigurationRegistry,
@@ -15,6 +16,7 @@ from istari_service.configuration_models import (
 )
 from istari_service.configuration_policy import WORKFLOW_COMPATIBILITY_KEY
 from istari_service.configuration_types import ConfigurationStatus
+from istari_service.repositories.configuration import SqlAlchemyConfigurationRepository
 from istari_service.repositories.configuration_records import stored_utc
 
 
@@ -40,6 +42,13 @@ async def configuration_runtime_is_ready(
         )
     )
     if template is None:
+        return False
+    specification = (
+        await SqlAlchemyConfigurationRepository(session).bundle(
+            version.id, version=version
+        )
+    ).specification()
+    if not await snapshot_evidence_is_valid(session, version.id, specification):
         return False
     workflow = await session.get(
         ApprovedWorkflowDefinition,

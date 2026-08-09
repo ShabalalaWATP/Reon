@@ -19,7 +19,7 @@ export function RequesterAction({
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: protectedQueryKeys.workItems(userId),
-    queryFn: api.workItems,
+    queryFn: () => api.workItems(),
     enabled: Boolean(session),
     refetchInterval: (currentQuery) =>
       clarificationTaskPollInterval(currentQuery.state.data, requestId),

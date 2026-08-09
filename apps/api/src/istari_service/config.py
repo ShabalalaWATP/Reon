@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from functools import lru_cache
+from ipaddress import IPv4Network, IPv6Network, ip_network
 from pathlib import Path
 from typing import Annotated, Any, Self
 from urllib.parse import parse_qs, urlsplit
@@ -23,14 +24,13 @@ def _is_https_url(value: str) -> bool:
     return parsed.scheme.lower() == "https" and bool(parsed.netloc)
 
 
-def _postgres_url_requires_tls(value: str) -> bool:
+def _postgres_url_verifies_tls(value: str) -> bool:
     parameters = {
         key.lower(): item.lower()
         for key, values in parse_qs(urlsplit(value).query).items()
         for item in values
     }
-    accepted = {"1", "true", "require", "verify-ca", "verify-full"}
-    return parameters.get("ssl") in accepted or parameters.get("sslmode") in accepted
+    return parameters.get("ssl") == "verify-full"
 
 
 class Settings(BaseSettings):
@@ -64,6 +64,14 @@ class Settings(BaseSettings):
     session_ttl_seconds: int = Field(default=28_800, ge=300, le=86_400)
     session_idle_seconds: int = Field(default=3_600, ge=60, le=86_400)
     admin_elevation_seconds: int = Field(default=300, ge=60, le=900)
+    login_rate_limit_window_seconds: int = Field(default=60, ge=10, le=3_600)
+    login_rate_limit_per_source: int = Field(default=30, ge=1, le=1_000)
+    login_rate_limit_global: int = Field(default=300, ge=1, le=10_000)
+    login_rate_limit_timeout_seconds: float = Field(default=3.0, ge=0.25, le=10)
+    login_hash_concurrency: int = Field(default=2, ge=1, le=16)
+    trusted_proxy_cidrs: Annotated[frozenset[str], NoDecode] = Field(
+        default_factory=frozenset
+    )
     max_request_body_bytes: int = Field(
         default=1_048_576,
         ge=1_024,
@@ -107,6 +115,10 @@ class Settings(BaseSettings):
     configuration_admin_enabled: bool = False
     planning_evolution_enabled: bool = False
     statistics_evolution_enabled: bool = False
+    worker_health_required: bool = False
+    worker_interval_seconds: float = Field(default=0.5, ge=0.05, le=30)
+    worker_lease_seconds: float = Field(default=30, ge=5, le=300)
+    worker_heartbeat_stale_seconds: float = Field(default=10, ge=2, le=600)
 
     @field_validator("trusted_origins", mode="before")
     @classmethod
@@ -125,6 +137,21 @@ class Settings(BaseSettings):
                 item.strip().lower() for item in value.split(",") if item.strip()
             )
         return value
+
+    @field_validator("trusted_proxy_cidrs", mode="before")
+    @classmethod
+    def parse_trusted_proxy_cidrs(cls, value: Any) -> Any:
+        values = value.split(",") if isinstance(value, str) else value
+        if values is None:
+            return frozenset()
+        try:
+            return frozenset(
+                str(ip_network(str(item).strip(), strict=False))
+                for item in values
+                if str(item).strip()
+            )
+        except ValueError as error:
+            raise ValueError("trusted proxy CIDRs must be valid IP networks") from error
 
     @field_validator("product_allowed_external_domains", mode="before")
     @classmethod
@@ -181,9 +208,15 @@ class Settings(BaseSettings):
             raise ValueError(
                 "the product package limit must be at least the per-file limit"
             )
+        if self.login_rate_limit_global < self.login_rate_limit_per_source:
+            raise ValueError(
+                "the global login rate limit must cover the per-source limit"
+            )
         if not self.product_clamav_host.strip():
             raise ValueError("the ClamAV host must be non-empty")
         if self.environment is Environment.PROD:
+            if not self.worker_health_required:
+                raise ValueError("the independent worker is required in production")
             if self.allow_demo_users:
                 raise ValueError("demo users must be disabled in production")
             if not self.session_cookie_secure:
@@ -192,8 +225,8 @@ class Settings(BaseSettings):
                 raise ValueError(
                     "production persistence must use PostgreSQL with asyncpg"
                 )
-            if not _postgres_url_requires_tls(self.database_url):
-                raise ValueError("production PostgreSQL must require TLS")
+            if not _postgres_url_verifies_tls(self.database_url):
+                raise ValueError("production PostgreSQL must use ssl=verify-full")
             if not _is_https_url(self.camunda_rest_address):
                 raise ValueError("production Camunda endpoint must use HTTPS")
             if self.camunda_auth_mode == "NONE":
@@ -229,6 +262,13 @@ class Settings(BaseSettings):
     @property
     def camunda_base_url(self) -> str:
         return self.camunda_rest_address.rstrip("/")
+
+    @property
+    def trusted_proxy_networks(self) -> tuple[IPv4Network | IPv6Network, ...]:
+        return tuple(
+            ip_network(value, strict=False)
+            for value in sorted(self.trusted_proxy_cidrs)
+        )
 
 
 @lru_cache(maxsize=1)

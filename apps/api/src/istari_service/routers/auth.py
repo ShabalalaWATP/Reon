@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal, cast
 
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Request, Response, status
 
 from istari_service.dependencies import (
     AppSettings,
@@ -12,6 +12,7 @@ from istari_service.dependencies import (
     CurrentSession,
     MutationSession,
 )
+from istari_service.login_rate_limiter import login_source_key
 from istari_service.schemas.auth import (
     CurrentUser,
     ElevationResponse,
@@ -44,11 +45,16 @@ def _session_response(
 @router.post("/login", response_model=SessionResponse)
 async def login(
     command: LoginRequest,
+    request: Request,
     response: Response,
     service: AuthDependency,
     settings: AppSettings,
 ) -> SessionResponse:
-    result = await service.login(command.username, command.password)
+    result = await service.login(
+        command.username,
+        command.password,
+        source_key=login_source_key(request, settings.trusted_proxy_networks),
+    )
     response.set_cookie(
         key=settings.session_cookie_name,
         value=result.session_token,

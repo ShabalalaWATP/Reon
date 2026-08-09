@@ -22,10 +22,7 @@ from istari_service.models import ServiceRequest, User, WorkflowTask
 from istari_service.operational_analytics_projection import (
     project_notification_response_fact,
 )
-from istari_service.organisation_models import (
-    RequestRouteSelection,
-    UserOrganisationMembership,
-)
+from istari_service.organisation_models import RequestRouteSelection
 from istari_service.repositories.projection_pagination import (
     decode_cursor,
     encode_cursor,
@@ -119,20 +116,20 @@ class SqlAlchemyNotificationRepository:
         changed_at: datetime,
     ) -> list[tuple[NotificationRecipient, NotificationEvent]]:
         await self._require_current_actor(actor)
-        found: list[tuple[NotificationRecipient, NotificationEvent]] = []
-        for target in targets:
-            row = await self.session.execute(
+        rows = (
+            await self.session.execute(
                 self._visible_query(actor)
-                .where(NotificationRecipient.id == target.id)
+                .where(NotificationRecipient.id.in_({target.id for target in targets}))
                 .with_for_update()
             )
-            item = row.one_or_none()
-            if item is None:
-                raise ObjectNotFound()
-            recipient, event = item
+        ).all()
+        by_id = {recipient.id: (recipient, event) for recipient, event in rows}
+        if len(by_id) != len(targets):
+            raise ObjectNotFound()
+        found = [by_id[target.id] for target in targets]
+        for target, (recipient, _event) in zip(targets, found, strict=True):
             if recipient.version != target.expected_version:
                 raise StaleVersion()
-            found.append((recipient, event))
         for recipient, _event in found:
             if _apply_state(recipient, action, changed_at):
                 recipient.version += 1
@@ -256,11 +253,7 @@ def _access_condition(actor: Actor) -> ColumnElement[bool]:
     )
     route_member = and_(
         NotificationRecipient.access_kind == NotificationAccessKind.ROUTE_MEMBER,
-        exists().where(
-            UserOrganisationMembership.user_id == actor.id,
-            UserOrganisationMembership.unit_id
-            == NotificationRecipient.organisation_unit_id,
-        ),
+        NotificationRecipient.organisation_unit_id.in_(actor.organisation_unit_ids),
         or_(
             NotificationEvent.request_id.is_(None),
             exists().where(

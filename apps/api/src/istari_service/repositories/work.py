@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -14,7 +14,6 @@ from istari_service.errors import InvalidAction
 from istari_service.models import (
     RequestStatus,
     ServiceRequest,
-    User,
     UserRole,
     WorkflowInstance,
     WorkflowInstanceStatus,
@@ -23,15 +22,14 @@ from istari_service.models import (
 from istari_service.models import (
     WorkflowTask as StoredWorkflowTask,
 )
-from istari_service.organisation_models import (
-    OrganisationUnit,
-    UserOrganisationMembership,
-)
 from istari_service.ownership import OWNER_BY_STATUS
-from istari_service.repositories.auth import actor_from_user
 from istari_service.repositories.event_store import append_request_event
 from istari_service.repositories.organisation import SqlAlchemyOrganisationRepository
 from istari_service.repositories.product_workflow import product_workflow_details
+from istari_service.repositories.projection_pagination import (
+    decode_cursor,
+    encode_cursor,
+)
 from istari_service.repositories.request_views import build_request_detail
 from istari_service.repositories.task_projection import next_task_projection
 from istari_service.repositories.work_actions import (
@@ -46,8 +44,9 @@ from istari_service.repositories.work_intents import (
     prepare_completion_intent,
 )
 from istari_service.repositories.work_scope import work_scope_conditions
+from istari_service.repositories.work_staffing import WorkStaffingRepositoryMixin
 from istari_service.repositories.work_views import build_work_bundle
-from istari_service.schemas.organisation import OrganisationUnitView
+from istari_service.schemas.organisation import RoutingOptionsWorkspace
 from istari_service.schemas.requests import RequestDetail
 from istari_service.schemas.work import CompletionPayload, WorkItem
 from istari_service.services.work_service import WorkBundle
@@ -59,7 +58,7 @@ from istari_service.workflow.projection import (
 from istari_service.workflow.types import WorkflowAction, WorkflowTask
 
 
-class SqlAlchemyWorkRepository:
+class SqlAlchemyWorkRepository(WorkStaffingRepositoryMixin):
     def __init__(
         self, session: AsyncSession, *, managed_products_enabled: bool = False
     ) -> None:
@@ -67,29 +66,61 @@ class SqlAlchemyWorkRepository:
         self._managed_products_enabled = managed_products_enabled
 
     async def list_for_actor(self, actor: Actor) -> list[WorkBundle]:
+        items, _cursor = await self.page_for_actor(actor, limit=100, cursor=None)
+        return items
+
+    async def page_for_actor(
+        self,
+        actor: Actor,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> tuple[list[WorkBundle], str | None]:
+        statement = (
+            select(StoredWorkflowTask, ServiceRequest, WorkflowInstance)
+            .options(selectinload(StoredWorkflowTask.assignee))
+            .join(
+                ServiceRequest,
+                ServiceRequest.id == StoredWorkflowTask.request_id,
+            )
+            .join(
+                WorkflowInstance,
+                WorkflowInstance.id == StoredWorkflowTask.workflow_instance_id,
+            )
+            .where(*work_scope_conditions(actor))
+        )
+        if cursor is not None:
+            changed_at, work_id = decode_cursor(
+                cursor, message="The work-item filters are invalid."
+            )
+            statement = statement.where(
+                or_(
+                    StoredWorkflowTask.updated_at < changed_at,
+                    and_(
+                        StoredWorkflowTask.updated_at == changed_at,
+                        StoredWorkflowTask.id < work_id,
+                    ),
+                )
+            )
         rows = (
             await self._session.execute(
-                select(StoredWorkflowTask, ServiceRequest, WorkflowInstance)
-                .options(selectinload(StoredWorkflowTask.assignee))
-                .join(
-                    ServiceRequest,
-                    ServiceRequest.id == StoredWorkflowTask.request_id,
-                )
-                .join(
-                    WorkflowInstance,
-                    WorkflowInstance.id == StoredWorkflowTask.workflow_instance_id,
-                )
-                .where(
-                    *work_scope_conditions(actor),
-                )
-                .order_by(StoredWorkflowTask.created_at, StoredWorkflowTask.id)
+                statement.order_by(
+                    StoredWorkflowTask.updated_at.desc(),
+                    StoredWorkflowTask.id.desc(),
+                ).limit(limit + 1)
             )
         ).all()
-        return [
+        page = rows[:limit]
+        items = [
             build_work_bundle(task, request, instance)
-            for task, request, instance in rows
+            for task, request, instance in page
             if instance.process_instance_key is not None
         ]
+        next_cursor = None
+        if len(rows) > limit and page:
+            last = page[-1][0]
+            next_cursor = encode_cursor(last.updated_at, last.id)
+        return items, next_cursor
 
     async def get(
         self,
@@ -116,87 +147,13 @@ class SqlAlchemyWorkRepository:
             return None
         return build_work_bundle(*row)
 
-    async def find_specialist(
-        self, user_id: UUID, *, delivery_team_id: UUID | None = None
-    ) -> Actor | None:
-        query = select(User).where(User.id == user_id)
-        if delivery_team_id is not None:
-            query = query.join(
-                UserOrganisationMembership,
-                UserOrganisationMembership.user_id == User.id,
-            ).where(UserOrganisationMembership.unit_id == delivery_team_id)
-        user = await self._session.scalar(query)
-        if user is None or not user.is_active:
-            return None
-        return actor_from_user(
-            user,
-            frozenset({delivery_team_id})
-            if delivery_team_id is not None
-            else frozenset(),
-        )
-
-    async def list_active_specialists(
-        self, delivery_team: str, *, delivery_team_id: UUID | None = None
-    ) -> list[Actor]:
-        filters = (
-            (UserOrganisationMembership.unit_id == delivery_team_id,)
-            if delivery_team_id is not None
-            else (
-                User.scope == delivery_team,
-                OrganisationUnit.name == delivery_team,
-                OrganisationUnit.is_configured.is_(True),
-            )
-        )
-        users = (
-            await self._session.scalars(
-                select(User)
-                .join(
-                    UserOrganisationMembership,
-                    UserOrganisationMembership.user_id == User.id,
-                )
-                .join(
-                    OrganisationUnit,
-                    OrganisationUnit.id == UserOrganisationMembership.unit_id,
-                )
-                .where(
-                    User.role == UserRole.DELIVERY_SPECIALIST,
-                    User.is_active.is_(True),
-                    *filters,
-                )
-                .order_by(User.display_name, User.id)
-            )
-        ).all()
-        memberships = (
-            frozenset({delivery_team_id})
-            if delivery_team_id is not None
-            else frozenset()
-        )
-        return [actor_from_user(user, memberships) for user in users]
-
     async def routing_options(
         self,
         work: WorkRecord,
-    ) -> list[OrganisationUnitView]:
-        return await SqlAlchemyOrganisationRepository(self._session).routing_options(
+    ) -> RoutingOptionsWorkspace:
+        return await SqlAlchemyOrganisationRepository(self._session).routing_workspace(
             work.request.id,
             work.request.status,
-        )
-
-    async def validate_completion(
-        self,
-        work: WorkRecord,
-        actor: Actor,
-        payload: CompletionPayload,
-    ) -> None:
-        request = await self._session.get(ServiceRequest, work.request.id)
-        if request is None:
-            raise InvalidAction()
-        await validate_work_effect(
-            self._session,
-            request,
-            actor,
-            payload,
-            managed_products_enabled=self._managed_products_enabled,
         )
 
     async def prepare_claim(self, work: WorkRecord, actor: Actor) -> UUID:

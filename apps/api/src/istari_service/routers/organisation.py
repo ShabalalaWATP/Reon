@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from istari_service.dependencies import CurrentActor, DatabaseSession
 from istari_service.repositories.organisation import SqlAlchemyOrganisationRepository
@@ -31,7 +31,13 @@ async def list_organisation_units(
 async def list_tracked_requests(
     actor: CurrentActor,
     session: DatabaseSession,
+    limit: int = Query(default=50, ge=1, le=100),
+    cursor: str | None = Query(default=None, max_length=500),
 ) -> TrackedRequestList:
+    items, next_cursor = await _service(session).page_tracked_requests(
+        actor, limit=limit, cursor=cursor
+    )
     return TrackedRequestList(
-        items=await _service(session).list_tracked_requests(actor)
+        items=items,
+        next_cursor=next_cursor,
     )

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { describe, expect, it, vi } from "vitest";
@@ -24,12 +24,40 @@ describe("platform administrator workspace", () => {
     const view = renderApp("/admin/users/new");
     const create = await screen.findByText("Create user", { selector: "button" });
     expect(create).toBeDisabled();
+    expect(view.container.querySelector('input[autocomplete="username"]')).toHaveAttribute("tabindex", "-1");
     await user.type(screen.getByLabelText(/^Current password/), "admin");
     await user.click(screen.getByRole("button", { name: "Confirm password" }));
     expect(await screen.findByText("Sensitive changes enabled")).toBeInTheDocument();
     expect(create).toBeEnabled();
     expect(confirmedPassword).toBe("admin");
     expect(await axe(view.container)).toHaveNoViolations();
+  });
+
+  it("relocks idle sensitive controls when step-up expires", async () => {
+    const expiring = { ...adminSession, elevatedUntil: new Date(Date.now() + 5_000).toISOString() };
+    const nativeSetTimeout = window.setTimeout.bind(window);
+    let expire: (() => void) | undefined;
+    vi.spyOn(window, "setTimeout").mockImplementation((handler, timeout, ...arguments_): ReturnType<typeof setTimeout> => {
+      if (
+        typeof handler === "function"
+        && Number(timeout) >= 4_000
+        && Number(timeout) <= 6_000
+      ) expire = handler;
+      return nativeSetTimeout(handler, timeout, ...arguments_) as unknown as ReturnType<typeof setTimeout>;
+    });
+    mockFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(expiring);
+      if (url.pathname.endsWith("/organisation/units")) return json({ items: organisationUnits });
+      throw new Error(url.pathname);
+    });
+    renderApp("/admin/users/new");
+    const create = await screen.findByText("Create user", { selector: "button" });
+    expect(await screen.findByText("Sensitive changes enabled")).toBeInTheDocument();
+    expect(create).toBeEnabled();
+    expect(expire).toBeTypeOf("function");
+    act(() => expire?.());
+    expect(await screen.findByLabelText(/^Current password/)).toHaveFocus();
+    expect(create).toBeDisabled();
   });
 
   it("keeps sensitive controls locked when password confirmation fails", async () => {

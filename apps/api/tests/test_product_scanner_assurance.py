@@ -48,7 +48,7 @@ class ApprovedCdrScanner:
 def production_settings(private_root: Path, **overrides: Any) -> Settings:
     values: dict[str, Any] = {
         "environment": Environment.PROD,
-        "database_url": "postgresql+asyncpg://service@db/istari?ssl=require",
+        "database_url": "postgresql+asyncpg://service@db/istari?ssl=verify-full",
         "allow_demo_users": False,
         "session_cookie_secure": True,
         "camunda_auth_mode": "BASIC",
@@ -61,6 +61,7 @@ def production_settings(private_root: Path, **overrides: Any) -> Settings:
         "product_storage_path": private_root.resolve(),
         "product_allowed_external_domains": frozenset({"products.example.test"}),
         "managed_products_enabled": True,
+        "worker_health_required": True,
     }
     values.update(overrides)
     return Settings(**values)
@@ -76,7 +77,6 @@ def test_production_rejects_local_inspector_for_managed_uploads(tmp_path: Path) 
         create_app(
             settings=production_settings(tmp_path),
             product_runtime=runtime,
-            start_background_worker=False,
         )
 
 
@@ -88,7 +88,7 @@ async def test_local_composition_keeps_managed_upload_capability(
         managed_products_enabled=True,
         product_storage_path=tmp_path / "products",
     )
-    app = create_app(settings=configured, start_background_worker=False)
+    app = create_app(settings=configured)
     selected: ProductRuntime = app.state.product_runtime
     assert selected.scanner_assurance is ScannerAssurance.LOCAL_HEURISTIC_AND_MALWARE
     assert selected.managed_file_uploads_enabled is True
@@ -111,7 +111,6 @@ async def test_external_link_only_mode_conceals_managed_upload_capability(
     app = create_app(
         settings=configured,
         product_runtime=runtime,
-        start_background_worker=False,
     )
     selected: ProductRuntime = app.state.product_runtime
     assert selected.managed_file_uploads_enabled is False
@@ -127,7 +126,6 @@ def test_production_accepts_an_explicit_approved_cdr_runtime(tmp_path: Path) -> 
     app = create_app(
         settings=production_settings(tmp_path),
         product_runtime=approved,
-        start_background_worker=False,
     )
     selected: ProductRuntime = app.state.product_runtime
     assert selected.approved_semantic_cdr is True

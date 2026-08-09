@@ -8,6 +8,8 @@ import pytest
 from pydantic import SecretStr, ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.dialects import postgresql, sqlite
+from sqlalchemy.dialects.postgresql.asyncpg import PGDialect_asyncpg
+from sqlalchemy.engine import make_url
 from sqlalchemy.schema import CreateTable
 
 import istari_service.database as database_module
@@ -17,9 +19,6 @@ from istari_service.database import (
     create_schema,
     create_session_factory,
     dispose_database,
-    get_db_session,
-    get_session,
-    session_scope,
 )
 from istari_service.models import Base, User, UserRole
 
@@ -45,7 +44,7 @@ def make_user(username: str) -> User:
 def production_settings(**overrides: Any) -> Settings:
     values: dict[str, Any] = {
         "environment": Environment.PROD,
-        "database_url": "postgresql+asyncpg://service@db/istari?ssl=require",
+        "database_url": "postgresql+asyncpg://service@db/istari?ssl=verify-full",
         "allow_demo_users": False,
         "session_cookie_secure": True,
         "camunda_auth_mode": "BASIC",
@@ -56,6 +55,7 @@ def production_settings(**overrides: Any) -> Settings:
         "trusted_origins": frozenset({"https://staff.example.test"}),
         "audit_hmac_key": SecretStr("a" * 32),
         "product_storage_path": "C:/private/istari-products",
+        "worker_health_required": True,
     }
     values.update(overrides)
     return Settings(**values)
@@ -76,6 +76,7 @@ def test_settings_normalise_origins_modes_and_aliases() -> None:
         product_allowed_external_domains=(
             " Products.Example.Test., files.example.test "
         ),
+        trusted_proxy_cidrs="10.20.1.4/16,2001:db8::1/64",
     )
     assert settings.trusted_origins == frozenset(
         {
@@ -90,6 +91,7 @@ def test_settings_normalise_origins_modes_and_aliases() -> None:
     assert settings.product_allowed_external_domains == frozenset(
         {"products.example.test", "files.example.test"}
     )
+    assert settings.trusted_proxy_cidrs == frozenset({"10.20.0.0/16", "2001:db8::/64"})
 
     from_collection = Settings(
         environment=Environment.TEST,
@@ -97,7 +99,9 @@ def test_settings_normalise_origins_modes_and_aliases() -> None:
         allow_demo_users=False,
         trusted_origins=frozenset({"http://one.example.test/"}),
     )
-    assert "http://one.example.test" in from_collection.trusted_origins
+    assert from_collection.trusted_origins == frozenset(
+        {"http://one.example.test", "http://localhost:5173"}
+    )
 
 
 @pytest.mark.parametrize(
@@ -108,15 +112,15 @@ def test_settings_normalise_origins_modes_and_aliases() -> None:
         ({"database_url": "sqlite+aiosqlite:///:memory:"}, "PostgreSQL"),
         (
             {"database_url": "postgresql+asyncpg://service@db/istari"},
-            "PostgreSQL must require TLS",
+            "ssl=verify-full",
         ),
         (
-            {
-                "database_url": (
-                    "postgresql+asyncpg://service@db/istari?sslmode=disable"
-                )
-            },
-            "PostgreSQL must require TLS",
+            {"database_url": ("postgresql+asyncpg://service@db/istari?ssl=disable")},
+            "ssl=verify-full",
+        ),
+        (
+            {"database_url": ("postgresql+asyncpg://service@db/istari?ssl=require")},
+            "ssl=verify-full",
         ),
         ({"camunda_rest_address": "http://workflow.local"}, "must use HTTPS"),
         (
@@ -166,6 +170,16 @@ def test_settings_reject_invalid_enumerated_text_and_accept_secure_prod() -> Non
     assert production_settings().environment is Environment.PROD
 
 
+def test_production_database_tls_parameter_reaches_asyncpg() -> None:
+    settings = production_settings()
+    _, connect_args = PGDialect_asyncpg().create_connect_args(
+        make_url(settings.database_url)
+    )
+
+    assert connect_args["ssl"] == "verify-full"
+    assert "sslmode" not in connect_args
+
+
 def test_settings_reject_product_package_limit_below_file_limit() -> None:
     with pytest.raises(ValidationError, match="package limit"):
         Settings(
@@ -174,6 +188,16 @@ def test_settings_reject_product_package_limit_below_file_limit() -> None:
             allow_demo_users=False,
             product_max_file_bytes=2_048,
             product_max_package_bytes=1_024,
+        )
+
+
+def test_settings_reject_invalid_login_security_configuration() -> None:
+    with pytest.raises(ValidationError, match="trusted proxy CIDRs"):
+        Settings(trusted_proxy_cidrs="not-a-network")
+    with pytest.raises(ValidationError, match="global login rate limit"):
+        Settings(
+            login_rate_limit_per_source=20,
+            login_rate_limit_global=10,
         )
     with pytest.raises(ValidationError, match="ClamAV host"):
         Settings(
@@ -233,43 +257,14 @@ def test_engine_builder_selects_pool_options_correctly(
 
 
 @pytest.mark.asyncio
-async def test_schema_session_scope_and_disposal() -> None:
+async def test_schema_creation_and_disposal() -> None:
     engine = create_database_engine(sqlite_settings())
     await create_schema(engine)
     factory = create_session_factory(engine)
-    async with session_scope(factory) as session:
+    async with factory() as session, session.begin():
         session.add(make_user("scoped@example.test"))
     async with factory() as session:
         assert await session.scalar(select(func.count(User.id))) == 1
-    await dispose_database(engine)
-
-
-@pytest.mark.asyncio
-async def test_get_session_commits_and_rolls_back(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    engine = create_database_engine(sqlite_settings())
-    await create_schema(engine)
-    factory = create_session_factory(engine)
-    monkeypatch.setattr(database_module, "SessionFactory", factory)
-    assert get_db_session is get_session
-
-    dependency = get_session()
-    session = await anext(dependency)
-    session.add(make_user("committed@example.test"))
-    with pytest.raises(StopAsyncIteration):
-        await anext(dependency)
-
-    failed_dependency = get_session()
-    failed_session = await anext(failed_dependency)
-    failed_session.add(make_user("rolled-back@example.test"))
-    await failed_session.flush()
-    with pytest.raises(RuntimeError, match="synthetic failure"):
-        await failed_dependency.athrow(RuntimeError("synthetic failure"))
-
-    async with factory() as verification:
-        usernames = set(await verification.scalars(select(User.username)))
-        assert usernames == {"committed@example.test"}
     await dispose_database(engine)
 
 

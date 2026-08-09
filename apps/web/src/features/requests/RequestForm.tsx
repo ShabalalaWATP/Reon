@@ -4,8 +4,9 @@ import { useForm, type FieldErrors } from "react-hook-form";
 import { z } from "zod";
 
 import type { RequestCreateInput, RequestDraftInput } from "../../lib/api/types";
+import { localDateInputValue } from "../../lib/dateInputs";
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localDateInputValue(new Date());
 const requiredText = (minimum: number, message: string, maximum: number) =>
   z.string().trim().min(minimum, message).max(maximum);
 

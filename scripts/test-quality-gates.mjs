@@ -24,6 +24,7 @@ async function createFixture(root) {
   for (const path of requiredDirectories) {
     await mkdir(join(root, path), { recursive: true });
   }
+  await mkdir(join(root, "docs"), { recursive: true });
   await writeFile(join(root, ".github/ci.yml"), "name: fixture\n");
   await writeFile(join(root, "apps/api/src/app.py"), "value = 'safe'\n");
   await writeFile(join(root, "apps/api/tests/test_app.py"), "def test_safe():\n    pass\n");
@@ -76,6 +77,10 @@ try {
   await writeFile(limitFixture, "safe\n".repeat(351));
   expectFailure(run(lineGate, fixtureRoot), /scripts\/limit\.mjs: 351 lines/u);
   await rm(limitFixture);
+
+  // Documentation is an evidence artefact, not hand-written application source.
+  await writeFile(join(fixtureRoot, "docs/long-evidence.md"), "evidence\n".repeat(500));
+  assert.equal(run(lineGate, fixtureRoot).status, 0);
 
   await writeFile(
     join(fixtureRoot, "apps/web/src/legacy.ts"),

@@ -16,7 +16,7 @@ from istari_service.errors import (
 )
 from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
 from istari_service.policies import allowed_actions, can_access_work, may_complete
-from istari_service.schemas.organisation import OrganisationUnitView
+from istari_service.schemas.organisation import RoutingOptionsWorkspace
 from istari_service.schemas.requests import RequestDetail
 from istari_service.schemas.work import (
     AssignSpecialist,
@@ -42,6 +42,14 @@ class WorkBundle:
 class WorkRepository(Protocol):
     async def list_for_actor(self, actor: Actor) -> list[WorkBundle]: ...
 
+    async def page_for_actor(
+        self,
+        actor: Actor,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> tuple[list[WorkBundle], str | None]: ...
+
     async def get(
         self,
         work_id: UUID,
@@ -65,14 +73,7 @@ class WorkRepository(Protocol):
     async def routing_options(
         self,
         work: WorkRecord,
-    ) -> list[OrganisationUnitView]: ...
-
-    async def validate_completion(
-        self,
-        work: WorkRecord,
-        actor: Actor,
-        payload: CompletionPayload,
-    ) -> None: ...
+    ) -> RoutingOptionsWorkspace: ...
 
     async def prepare_claim(self, work: WorkRecord, actor: Actor) -> UUID: ...
 
@@ -108,6 +109,19 @@ class WorkService:
         visible = [bundle for bundle in bundles if self._visible(actor, bundle)]
         return [self._with_actions(actor, bundle) for bundle in visible]
 
+    async def list_page(
+        self,
+        actor: Actor,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> tuple[list[WorkItem], str | None]:
+        bundles, next_cursor = await self._repository.page_for_actor(
+            actor, limit=limit, cursor=cursor
+        )
+        visible = [bundle for bundle in bundles if self._visible(actor, bundle)]
+        return [self._with_actions(actor, bundle) for bundle in visible], next_cursor
+
     async def eligible_specialists(
         self,
         actor: Actor,
@@ -141,7 +155,7 @@ class WorkService:
         self,
         actor: Actor,
         work_id: UUID,
-    ) -> list[OrganisationUnitView]:
+    ) -> RoutingOptionsWorkspace:
         bundle = await self._repository.get(work_id, actor)
         if (
             bundle is None
@@ -225,7 +239,6 @@ class WorkService:
         ):
             raise InvalidAction()
         await self._validate_assignment(bundle.record, payload)
-        await self._repository.validate_completion(bundle.record, actor, payload)
         outbox_id = await self._repository.prepare_completion(
             bundle.record, actor, payload
         )

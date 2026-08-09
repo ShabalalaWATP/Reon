@@ -30,7 +30,9 @@ These instructions supplement Alex Orr's global Codex instructions.
   not under test.
 - Maintain at least 95 per cent line and branch coverage independently for
   backend and frontend application code.
-- Keep hand-written source files at or below 350 lines.
+- Keep hand-written source files at or below 350 lines. Markdown documentation is
+  exempt and may exceed 400 lines when required for traceability; organise long
+  documents with clear headings instead of splitting one authority into copies.
 - Every feature begins with a spec. Material decisions require an ADR, and
   security-sensitive work requires a threat-model update.
 - Meet WCAG 2.2 AA for pilot journeys and target a p95 below two seconds for

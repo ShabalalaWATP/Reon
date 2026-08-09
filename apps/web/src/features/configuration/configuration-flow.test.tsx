@@ -32,7 +32,7 @@ describe("configuration administration journey", () => {
     const user = userEvent.setup();
     const view = renderApp("/admin/configuration/cfg-2");
     expect(await screen.findByRole("heading", { name: "Organisation and workflow configuration" })).toBeInTheDocument();
-    expect(screen.getByText("Draft", { selector: ".configuration-state" })).toBeInTheDocument();
+    expect(screen.getByText("Proposed changes", { selector: ".configuration-state" })).toBeInTheDocument();
     const rows = screen.getAllByRole("treeitem");
     expect(rows).toHaveLength(4);
     rows[0].focus();
@@ -44,8 +44,13 @@ describe("configuration administration journey", () => {
     expect(rows[1]).toHaveFocus();
     await user.keyboard("{ArrowUp}");
     expect(rows[0]).toHaveFocus();
-    await user.click(screen.getByRole("treeitem", { name: /Pine Team/ }));
+    await user.type(screen.getByLabelText("Search organisation"), "Northern Command");
+    expect(screen.queryByRole("treeitem", { name: /Pine Team/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Show in tree" }));
+    expect(screen.getByLabelText("Search organisation")).toHaveValue("");
     expect(screen.getByRole("heading", { name: "Pine Team" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Selected organisation path" })).toHaveTextContent("ISTARI · ISTARINorthern Command · NORTHNorthern Ops Group · NORTH_OPSPine Team · PINE_TEAM");
+    expect(screen.getByText("Snapshot reference").parentElement).toHaveTextContent("b".repeat(64));
     expect(screen.getAllByText(/Outcomes fixed: approve, changes_required/)).toHaveLength(2);
     expect(await axe(view.container)).toHaveNoViolations();
   });
@@ -66,13 +71,13 @@ describe("configuration administration journey", () => {
     await user.click(await screen.findByRole("treeitem", { name: /Pine Team/ }));
     await user.clear(screen.getByLabelText("New display name"));
     await user.type(screen.getByLabelText("New display name"), "Pine Delivery Team");
-    await user.click(screen.getByRole("button", { name: "Save draft change" }));
+    await user.click(screen.getByRole("button", { name: "Save proposed change" }));
     await waitFor(() => expect(saved).toBeDefined());
     expect(saved).toMatchObject({ expectedVersion: 1, units: expect.arrayContaining([expect.objectContaining({ unitId: "unit-team", name: "Pine Delivery Team" })]) });
     expect(saved?.candidateGroups).toEqual(configurationVersion.candidateGroups);
   });
 
-  it("validates, submits, independently approves and activates one exact version", async () => {
+  it("validates, submits, independently approves and activates one exact proposal", async () => {
     let current: ConfigurationVersion = configurationVersion;
     const actions: Array<{ action: string; body: Record<string, unknown> }> = [];
     mockFeatureFetch((url, init) => {
@@ -89,7 +94,7 @@ describe("configuration administration journey", () => {
           actions.push({ action, body });
           if (action === "validate") current = { ...current, status: "VALIDATED", validatedAt: "2026-08-07T10:00:00Z", version: 2, findings: [{ severity: "WARNING", code: "TEAM_UNSTAFFED", message: "Work will await staffing.", path: "units.3", unitId: "unit-team" }] };
           if (action === "submit") current = { ...current, status: "AWAITING_APPROVAL", submittedAt: "2026-08-07T10:01:00Z", reason: body.reason as string, version: 3 };
-          if (action === "approve") current = { ...current, approval: { actorUserId: adminSession.user.id, decision: "APPROVED", reviewedVersion: 3, reason: body.reason as string, createdAt: "2026-08-07T10:02:00Z" }, version: 4 };
+          if (action === "approve") current = { ...current, approval: { actorUserId: adminSession.user.id, decision: "APPROVED", reviewedVersion: 3, snapshotDigest: "a".repeat(64), reason: body.reason as string, createdAt: "2026-08-07T10:02:00Z" }, version: 4 };
           if (action === "activate") current = { ...current, status: "ACTIVE", activatedAt: "2026-08-07T10:03:00Z", reason: body.reason as string, version: 5 };
           return json(current);
         }
@@ -103,19 +108,19 @@ describe("configuration administration journey", () => {
     await screen.findByRole("button", { name: "Submit for independent approval" });
     await user.type(screen.getByRole("textbox", { name: /Decision reason/ }), "New branch is ready for controlled review.");
     await user.click(screen.getByRole("button", { name: "Submit for independent approval" }));
-    await screen.findByRole("button", { name: "Approve exact version" });
-    await user.type(screen.getByRole("textbox", { name: /Decision reason/ }), "Independent review confirms the exact version.");
-    await user.click(screen.getByRole("button", { name: "Approve exact version" }));
-    await screen.findByRole("button", { name: "Activate approved version" });
+    await screen.findByRole("button", { name: "Approve proposed changes" });
+    await user.type(screen.getByRole("textbox", { name: /Decision reason/ }), "Independent review confirms the proposed changes.");
+    await user.click(screen.getByRole("button", { name: "Approve proposed changes" }));
+    await screen.findByRole("button", { name: "Activate approved changes" });
     await user.type(screen.getByRole("textbox", { name: /Decision reason/ }), "Activate for new requests from the effective date.");
-    await user.click(screen.getByRole("button", { name: "Activate approved version" }));
-    expect(await screen.findByText("Active", { selector: ".configuration-state" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Activate approved changes" }));
+    expect(await screen.findByText("Current", { selector: ".configuration-state" })).toBeInTheDocument();
     expect(actions.map((item) => item.action)).toEqual(["validate", "submit", "approve", "activate"]);
     expect(actions[0].body).toEqual({ expectedVersion: 1 });
     expect(actions[3].body).toMatchObject({ expectedVersion: 4, reason: expect.stringContaining("Activate") });
   });
 
-  it("creates a future draft from an immutable active version", async () => {
+  it("creates and immediately selects future proposed changes", async () => {
     let current: ConfigurationVersion = { ...configurationVersion, id: "cfg-1", sequence: 1, status: "ACTIVE" };
     let createdBody: Record<string, unknown> | undefined;
     mockFeatureFetch((url, init) => {
@@ -131,11 +136,12 @@ describe("configuration administration journey", () => {
     });
     const user = userEvent.setup();
     renderApp("/admin/configuration/cfg-1");
-    await user.click(await screen.findByText("Create draft from version 1"));
-    await user.type(screen.getByLabelText("Draft label"), "Autumn branch configuration");
+    await user.click(await screen.findByText("Propose changes from Northern branch changes"));
+    await user.type(screen.getByLabelText("Change title"), "Autumn branch configuration");
     await user.type(screen.getByLabelText("Effective from"), "2026-10-01T09:30");
-    await user.click(screen.getByRole("button", { name: "Create immutable draft" }));
-    expect(await screen.findByText("Draft", { selector: ".configuration-state" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Create proposed changes" }));
+    expect(await screen.findByText("Proposed changes", { selector: ".configuration-state" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Configuration history")).toHaveValue("cfg-3");
     expect(createdBody).toMatchObject({ basedOnVersionId: "cfg-1", label: "Autumn branch configuration", effectiveFrom: new Date("2026-10-01T09:30").toISOString() });
   });
 

@@ -44,6 +44,7 @@ describe("Notifications", () => {
 
     expect(await screen.findByRole("heading", { name: "Notifications" })).toBeInTheDocument();
     expect(screen.getAllByLabelText("1 unread notifications")).toHaveLength(2);
+    expect(calls.some(({ path }) => path.endsWith("/me/notifications/count"))).toBe(false);
     expect(screen.getByText(/Live updates are unavailable/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Open Request assigned/ })).toHaveAttribute("href", "/requests/request-1");
     expect(screen.getByText("Access ended")).toBeInTheDocument();

@@ -1,13 +1,66 @@
 # LOCAL DEVELOPMENT ONLY. This topology exposes an unauthenticated Camunda API
 # on host loopback and is not a production deployment template.
 name: istari-service-local
-
+x-runtime-security: &runtime-security
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+x-api-image: &api-image
+  build: {context: ., dockerfile: apps/api/Dockerfile}
+  image: istari-service-local-api
+x-runtime-environment: &runtime-environment
+  ENVIRONMENT: ${ENVIRONMENT:?Set ENVIRONMENT in .env}
+  DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+  CAMUNDA_REST_ADDRESS: http://orchestration:8080
+  CAMUNDA_AUTH_MODE: NONE
+  CAMUNDA_PROCESS_ID: ${CAMUNDA_PROCESS_ID:-service-request-v1}
+  SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:?Set SESSION_COOKIE_SECURE in .env}
+  WEB_ORIGIN: ${WEB_ORIGIN:?Set WEB_ORIGIN in .env}
+  TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+  NOTIFICATIONS_ENABLED: ${NOTIFICATIONS_ENABLED:-false}
+  MANAGED_PRODUCTS_ENABLED: ${MANAGED_PRODUCTS_ENABLED:-false}
+  WORKER_HEALTH_REQUIRED: ${WORKER_HEALTH_REQUIRED:-true}
+  WORKER_HEARTBEAT_STALE_SECONDS: ${WORKER_HEARTBEAT_STALE_SECONDS:-10}
+  ALLOW_DEMO_USERS: ${ALLOW_DEMO_USERS:?Set ALLOW_DEMO_USERS in .env}
+  AUDIT_HMAC_KEY: ${AUDIT_HMAC_KEY:?Set AUDIT_HMAC_KEY in .env}
+x-clamav-runtime: &clamav-runtime
+  build:
+    context: .
+    dockerfile: infra/clamav/Dockerfile
+  image: istari/clamav-local:1.5.3
+  user: "100:101"
+  restart: unless-stopped
+  read_only: true
+  tmpfs:
+    - /tmp:uid=100,gid=101,mode=1777
 services:
+  postgres-data-init:
+    <<: *runtime-security
+    image: istari/postgres-local:17.10-alpine3.23
+    pull_policy: never
+    user: "0:0"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        mkdir -p /var/lib/postgresql/data &&
+        chown -R 70:70 /var/lib/postgresql/data &&
+        chmod 0700 /var/lib/postgresql/data
+    network_mode: none
+    read_only: true
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: "no"
+
   postgres:
+    <<: *runtime-security
     build:
       context: .
       dockerfile: infra/postgres/Dockerfile
-    image: istari/postgres-local:17.9
+    image: istari/postgres-local:17.10-alpine3.23
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Set POSTGRES_ADMIN_PASSWORD in .env}
@@ -26,6 +79,10 @@ services:
       - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777
+      - /var/run/postgresql:uid=70,gid=70,mode=3775
     healthcheck:
       test:
         - CMD-SHELL
@@ -35,11 +92,16 @@ services:
       retries: 20
       start_period: 10s
     restart: unless-stopped
+    depends_on:
+      postgres-data-init:
+        condition: service_completed_successfully
     networks:
       - data
 
   camunda-data-init:
-    image: camunda/camunda:8.9.14@sha256:0a3b161ddf9018d052f1e20bda0696cdf4667e8c749f6ac86f6586fb14598f58
+    <<: *runtime-security
+    image: istari/camunda-local:8.9.14
+    pull_policy: never
     user: "0:0"
     entrypoint:
       - /bin/sh
@@ -52,9 +114,14 @@ services:
     volumes:
       - camunda-primary-data:/usr/local/camunda/data
       - camunda-runtime-data:/usr/local/camunda/camunda-data
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
     restart: "no"
 
   orchestration:
+    <<: *runtime-security
     build:
       context: .
       dockerfile: infra/camunda/Dockerfile
@@ -92,6 +159,7 @@ services:
       - service
 
   product-storage-init:
+    <<: *runtime-security
     image: python:3.12-alpine3.23@sha256:601d3d3797e90e2534782e69c85fafb7971b43f24c7b1b079b7e48dd435e458d
     user: "0:0"
     entrypoint:
@@ -103,30 +171,30 @@ services:
         chown -R 10001:10001 /var/lib/istari-products
     network_mode: none
     read_only: true
-    cap_drop:
-      - ALL
     cap_add:
       - CHOWN
       - DAC_OVERRIDE
       - FOWNER
-    security_opt:
-      - no-new-privileges:true
     volumes:
       - product-storage:/var/lib/istari-products
     restart: "no"
-
   api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    <<: [*runtime-security, *api-image]
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:?Set ENVIRONMENT in .env}
-      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
-      CAMUNDA_REST_ADDRESS: http://orchestration:8080
-      CAMUNDA_AUTH_MODE: NONE
-      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:?Set SESSION_COOKIE_SECURE in .env}
-      WEB_ORIGIN: ${WEB_ORIGIN:?Set WEB_ORIGIN in .env}
-      TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      <<: *runtime-environment
+      DATABASE_POOL_SIZE: ${DATABASE_POOL_SIZE:-20}
+      DATABASE_MAX_OVERFLOW: ${DATABASE_MAX_OVERFLOW:-30}
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-istari_session}
+      SESSION_COOKIE_SAMESITE: ${SESSION_COOKIE_SAMESITE:-lax}
+      SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-28800}
+      SESSION_IDLE_SECONDS: ${SESSION_IDLE_SECONDS:-3600}
+      ADMIN_ELEVATION_SECONDS: ${ADMIN_ELEVATION_SECONDS:-300}
+      LOGIN_RATE_LIMIT_WINDOW_SECONDS: ${LOGIN_RATE_LIMIT_WINDOW_SECONDS:-60}
+      LOGIN_RATE_LIMIT_PER_SOURCE: ${LOGIN_RATE_LIMIT_PER_SOURCE:-30}
+      LOGIN_RATE_LIMIT_GLOBAL: ${LOGIN_RATE_LIMIT_GLOBAL:-300}
+      LOGIN_RATE_LIMIT_TIMEOUT_SECONDS: ${LOGIN_RATE_LIMIT_TIMEOUT_SECONDS:-3}
+      LOGIN_HASH_CONCURRENCY: ${LOGIN_HASH_CONCURRENCY:-2}
+      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,api}
       MAX_REQUEST_BODY_BYTES: ${MAX_REQUEST_BODY_BYTES:-1048576}
       PRODUCT_STORAGE_PATH: ${PRODUCT_STORAGE_PATH:-/var/lib/istari-products}
@@ -138,15 +206,11 @@ services:
       PRODUCT_CLAMAV_PORT: ${PRODUCT_CLAMAV_PORT:-3310}
       PRODUCT_CLAMAV_TIMEOUT_SECONDS: ${PRODUCT_CLAMAV_TIMEOUT_SECONDS:-30}
       ACTION_WORKSPACE_ENABLED: ${ACTION_WORKSPACE_ENABLED:-false}
-      NOTIFICATIONS_ENABLED: ${NOTIFICATIONS_ENABLED:-false}
-      MANAGED_PRODUCTS_ENABLED: ${MANAGED_PRODUCTS_ENABLED:-false}
       MANAGED_FILE_UPLOADS_ENABLED: ${MANAGED_FILE_UPLOADS_ENABLED:-true}
       CONFIGURATION_ADMIN_ENABLED: ${CONFIGURATION_ADMIN_ENABLED:-false}
       PLANNING_EVOLUTION_ENABLED: ${PLANNING_EVOLUTION_ENABLED:-false}
       STATISTICS_EVOLUTION_ENABLED: ${STATISTICS_EVOLUTION_ENABLED:-false}
-      ALLOW_DEMO_USERS: ${ALLOW_DEMO_USERS:?Set ALLOW_DEMO_USERS in .env}
       DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:?Set DEMO_USER_PASSWORD in .env}
-      AUDIT_HMAC_KEY: ${AUDIT_HMAC_KEY:?Set AUDIT_HMAC_KEY in .env}
     ports:
       - "127.0.0.1:8000:8000"
     healthcheck:
@@ -173,25 +237,63 @@ services:
     restart: unless-stopped
     volumes:
       - product-storage:/var/lib/istari-products
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777
     networks:
       - data
       - scanner
       - service
-
-  clamav:
-    image: clamav/clamav:1.5.3@sha256:d06c1d6a451d616e1dd79b42f44c8c8c291bba9cf4e75ebc4d0e43c1c6dd87bb
+  worker:
+    <<: [*runtime-security, *api-image]
+    command: ["istari-worker"]
     environment:
+      <<: *runtime-environment
+      DATABASE_POOL_SIZE: ${WORKER_DATABASE_POOL_SIZE:-5}
+      DATABASE_MAX_OVERFLOW: ${WORKER_DATABASE_MAX_OVERFLOW:-5}
+      WORKER_INTERVAL_SECONDS: ${WORKER_INTERVAL_SECONDS:-0.5}
+      WORKER_LEASE_SECONDS: ${WORKER_LEASE_SECONDS:-30}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,worker}
+    depends_on:
+      orchestration:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777
+    networks:
+      - data
+      - service
+
+  clamav-updater:
+    <<: [*runtime-security, *clamav-runtime]
+    environment:
+      CLAMAV_NO_CLAMD: "true"
       CLAMAV_NO_MILTERD: "true"
+      CLAMAV_HEALTH_CHECK_DAEMON: "false"
+      CLAMAV_SIGNATURE_MAX_AGE_HOURS: ${CLAMAV_SIGNATURE_MAX_AGE_HOURS:-48}
     volumes:
       - clamav-data:/var/lib/clamav
-    restart: unless-stopped
+    networks:
+      - signature-updates
+
+  clamav:
+    <<: [*runtime-security, *clamav-runtime]
+    environment:
+      CLAMAV_NO_FRESHCLAMD: "true"
+      CLAMAV_NO_MILTERD: "true"
+      CLAMAV_SIGNATURE_MAX_AGE_HOURS: ${CLAMAV_SIGNATURE_MAX_AGE_HOURS:-48}
+    volumes:
+      - clamav-data:/var/lib/clamav:ro
+    depends_on:
+      clamav-updater:
+        condition: service_healthy
     networks:
       - scanner
-
   migrator:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    <<: [*runtime-security, *api-image]
     command:
       - sh
       - -c
@@ -204,17 +306,21 @@ services:
       postgres:
         condition: service_healthy
     restart: "no"
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777
     networks:
       - data
-
   web:
+    <<: *runtime-security
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+    image: istari-service-local-web
     ports:
-      - "127.0.0.1:5173:80"
+      - "127.0.0.1:5173:8080"
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --spider http://127.0.0.1/"]
+      test: ["CMD-SHELL", "wget --quiet --spider http://127.0.0.1:8080/"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -223,9 +329,11 @@ services:
       api:
         condition: service_healthy
     restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:uid=101,gid=101,mode=1777
     networks:
       - service
-
 volumes:
   postgres-data:
   camunda-primary-data:
@@ -238,4 +346,5 @@ networks:
     internal: true
   scanner:
     internal: true
+  signature-updates:
   service:

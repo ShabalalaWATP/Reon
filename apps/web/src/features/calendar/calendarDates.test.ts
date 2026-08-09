@@ -5,23 +5,20 @@ import {
   calendarRange,
   calendarTitle,
   localInput,
-  monthGridStart,
   moveAnchor,
   sameDay,
-  startOfDay,
-  startOfWeek,
 } from "./calendarDates";
 
 describe("calendar date boundaries", () => {
   const wednesday = new Date(2026, 7, 5, 14, 30);
 
   it("uses Monday-first bounded ranges for each calendar view", () => {
-    expect(startOfWeek(wednesday).getDay()).toBe(1);
-    expect(startOfDay(wednesday).getHours()).toBe(0);
+    expect(calendarRange(wednesday, "week").start.getDay()).toBe(1);
+    expect(calendarRange(wednesday, "week").start.getHours()).toBe(0);
     expect(calendarRange(wednesday, "month").end.getTime() - calendarRange(wednesday, "month").start.getTime()).toBe(42 * 86_400_000);
     expect(calendarRange(wednesday, "week").end.getTime() - calendarRange(wednesday, "week").start.getTime()).toBe(7 * 86_400_000);
     expect(calendarRange(wednesday, "agenda").end.getTime() - calendarRange(wednesday, "agenda").start.getTime()).toBe(30 * 86_400_000);
-    expect(monthGridStart(wednesday).getDay()).toBe(1);
+    expect(calendarRange(wednesday, "month").start.getDay()).toBe(1);
   });
 
   it("moves each view by its natural period without changing the input", () => {

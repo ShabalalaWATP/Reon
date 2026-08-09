@@ -12,6 +12,8 @@ from fastapi.responses import RedirectResponse, StreamingResponse
 from istari_service.dependencies import (
     CurrentActor,
     DatabaseSession,
+    DetachedCurrentActor,
+    DetachedMutationActor,
     MutationActor,
     SessionFactoryDependency,
 )
@@ -31,7 +33,9 @@ from istari_service.schemas.products import (
     VersionCommand,
     WithdrawalCommand,
 )
+from istari_service.services.product_download_service import ProductDownloadService
 from istari_service.services.product_service import ProductService
+from istari_service.services.product_transfer_service import ProductTransferService
 
 router = APIRouter(prefix="/product-packages", tags=["product packages"])
 release_router = APIRouter(prefix="/releases", tags=["product releases"])
@@ -52,6 +56,17 @@ def _service(
         maximum_file_bytes=runtime.maximum_file_bytes,
         maximum_package_bytes=runtime.maximum_package_bytes,
         managed_file_uploads_enabled=runtime.managed_file_uploads_enabled,
+    )
+
+
+def _transfer_service(
+    sessions: SessionFactoryDependency,
+    runtime: ProductRuntimeDependency,
+) -> ProductTransferService:
+    return ProductTransferService(
+        sessions,
+        runtime,
+        SqlAlchemyProductAccessAudit(sessions),
     )
 
 
@@ -94,12 +109,11 @@ async def get_package(
 async def add_managed_artefact(
     package_id: UUID,
     command: ManagedArtefactCreate,
-    actor: MutationActor,
-    session: DatabaseSession,
+    actor: DetachedMutationActor,
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> ManagedArtefactIntent:
-    return await _service(session, sessions, runtime).add_managed(
+    return await _transfer_service(sessions, runtime).add_managed(
         actor, package_id, command
     )
 
@@ -126,14 +140,13 @@ async def upload_content(
     package_id: UUID,
     intent_id: UUID,
     request: Request,
-    actor: MutationActor,
-    session: DatabaseSession,
+    actor: DetachedMutationActor,
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
     expected_version: int = Query(alias="expectedVersion", ge=1),
     upload_token: str = Header(alias="X-Upload-Token", min_length=32, max_length=200),
 ) -> UploadContentReceipt:
-    return await _service(session, sessions, runtime).upload_content(
+    return await _transfer_service(sessions, runtime).upload_content(
         actor,
         package_id,
         intent_id,
@@ -148,12 +161,11 @@ async def complete_upload(
     package_id: UUID,
     intent_id: UUID,
     command: VersionCommand,
-    actor: MutationActor,
-    session: DatabaseSession,
+    actor: DetachedMutationActor,
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> PackageView:
-    return await _service(session, sessions, runtime).complete_upload(
+    return await _transfer_service(sessions, runtime).complete_upload(
         actor, package_id, intent_id, command
     )
 
@@ -229,12 +241,11 @@ async def customer_release(
 async def download(
     artefact_id: UUID,
     request: Request,
-    actor: CurrentActor,
-    session: DatabaseSession,
+    actor: DetachedCurrentActor,
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> StreamingResponse:
-    result = await _service(session, sessions, runtime).download(
+    result = await ProductDownloadService(sessions, runtime).download(
         actor, artefact_id, getattr(request.state, "correlation_id", None)
     )
     fallback = re.sub(r"[^A-Za-z0-9._-]", "_", result.filename).strip("._")

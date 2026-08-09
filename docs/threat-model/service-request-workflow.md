@@ -46,6 +46,10 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | Repeated step-up guesses bypass login controls | Use the same Argon2 verifier, generic failure and bounded account lock policy; invalidate locked-account sessions |
 | An Analyst self-approves or disseminates work | Separate Manager and QC roles, immutable author ID and final-boundary checks |
 | A routing user submits a fabricated, skipped or unrelated unit ID | Load valid direct children server-side and recheck stage, parent, actor role, request version and selected path before deriving the Camunda candidate group |
+| A route breadcrumb or destination search leaks sibling or ancestor data | Build both only from the server-authorised selected request path and direct-child destination response; never join to global organisation or request-content data in the browser |
+| Broad route search creates enumeration or denial of service | Return only direct children, cap local input at 120 characters, use literal case-insensitive matching and avoid logging search text |
+| Configuration changes between destination display and submission | Pin each request, require expected request/task state and revalidate the selected effective child in the locked human-outcome use case |
+| Staffing or workload indicators become automated routing | Present factual bounded state without ranking, recommendation, default selection or automatic fallback; the named user remains accountable |
 | A browser supplies a candidate-group name | Ignore browser group values; derive candidate groups from governed organisation records in FastAPI |
 | An alternative team silently receives OSG staff | Scope Team Manager and Analyst tasks to the selected team; represent missing membership as `Awaiting team staffing` |
 | Administrative account changes remove the last Manager or Analyst | Recalculate staffing from active role-qualified memberships after every relevant change; keep the team selectable and surface `Awaiting team staffing` rather than falling back |
@@ -53,8 +57,10 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | Cross-site request forgery | HttpOnly SameSite session cookie plus per-session CSRF header token and trusted-origin checks |
 | High-frequency reads contend on session activity writes | Validate expiry, idle state, account state and credential version on every request, but persist `last_seen_at` only after half of the configured idle window has elapsed |
 | Session theft or replay | Random opaque token, hash at rest, expiry, rotation on login and invalidation on logout |
-| Password guessing | Argon2id, bounded failures, temporary lockout and generic authentication errors |
-| Stored script injection | Pydantic length constraints, React escaping and plain-text product rendering |
+| Password guessing or unknown-account hash exhaustion | Durably consume shared PostgreSQL global and source budgets in a cancellation-shielded short transaction before account lookup or Argon2; bound acquisition, statement, row-lock and cancellation time; release the shared lock before bounded hash work; retain Argon2id, temporary account lockout and generic errors |
+| Database contention turns cancellation shielding into task or pool exhaustion | Apply one end-to-end limiter deadline and shorter transaction-local PostgreSQL statement/lock deadlines; fail unavailable before account lookup or hashing and ensure the operation terminates after caller cancellation |
+| A client evades source throttling with a forged forwarding header | Trust one forwarded address only from an explicitly configured proxy CIDR, canonicalise it and store only a one-way source digest |
+| Stored script injection | Pydantic constraints, React escaping, strict managed-file validation, attachment-only authenticated downloads, safe external-link redirects and restrictive response headers |
 | SQL injection | SQLAlchemy bound parameters and constrained sort/filter fields |
 | Duplicate process starts | Transactional outbox, request UUID business ID, Camunda business-ID uniqueness and idempotent dispatch |
 | An expired dispatcher lease lets a stale worker overwrite success | Random lease generation token and conditional state update; stale success or retry results are ignored |
@@ -63,7 +69,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | Workflow and projection drift | Recoverable command leases, expected task-element checks, bounded retry, and version/process-key-fenced reconciliation with a visible support-owned error state |
 | Recovery replays a permanent or malformed workflow failure | Requeue only exact retry-exhaustion markers for claim or completion and the exact transient start failure; preserve every other failure for support review |
 | A workflow engine returns an unexpected process after start | Compare the returned process ID and version with the immutable pending-start identity before projecting success |
-| The workflow maintenance loop dies silently | Supervise each iteration, record consecutive failures, retry transient faults and fail readiness closed after the configured threshold |
+| The maintenance worker dies silently | Persist a content-free heartbeat from the separately supervised worker and fail API readiness after the configured stale threshold |
 | A terminated process is treated as a successful dissemination | Only `COMPLETED` proves a terminal human action; `TERMINATED` follows a separate support path and cannot release a product |
 | Audit history is altered | Canonical event hashes, prior-hash chaining and tested integrity verification; database-level append-only grants remain a production gate |
 | Direct Camunda access | Bind local ports to loopback; production uses private networking, OIDC and explicit client authorisation |
@@ -72,9 +78,9 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | A forged upload intent writes an arbitrary object | Issue a short-lived single-purpose intent with a server-chosen key, size and media type; quarantine identity cannot write released storage |
 | A malicious or disguised file reaches review | Check extension, media type, magic bytes, Office structure, encryption, archive expansion and active content, then require a current clean malware result before promotion |
 | A local heuristic result is mistaken for production semantic assurance | Give every scanner runtime an explicit assurance class; advertise and permit managed-file uploads in production only for an injected `APPROVED_SEMANTIC_CDR` runtime. Local heuristic and ClamAV composition never self-identify as CDR |
-| Scanner failure or stale result is treated as success | Fail closed for unknown, failed, timed-out or superseded scans; bind promotion to object checksum and scan-policy version |
+| Scanner failure or stale result is treated as success | Fail closed for unknown, failed, timed-out or superseded scans; bind promotion to object checksum and scan-policy version; derive daily-definition age from signed build metadata and require equality between on-disk and loaded versions |
 | A scanner protocol or archive parser is abused | Run strict PDF/Office structure checks before a bounded ClamAV `INSTREAM` scan; cap object bytes, archive entries, expanded bytes, compression ratio, scanner time and scanner response length |
-| The malware service becomes a network pivot | Keep clamd on a dedicated internal network with no published port; send bytes through `INSTREAM` only and never pass an application-controlled filesystem path |
+| The malware service becomes a network pivot | Keep the untrusted-content clamd process non-root on a dedicated internal network, read-only signature mount and no published port or egress; give only a separate non-scanning updater outbound mirror access; use `INSTREAM` and never pass an application-controlled filesystem path |
 | Quarantined or released objects become public | Deny public bucket access, separate storage privileges and test unauthenticated object retrieval before release |
 | An artefact changes after approval | Bind Manager review and QC dissemination to the immutable package version and checksum; any change creates a new version and invalidates approval |
 | A guessed or shared product object is retrieved | Authorise the active Customer, dissemination and artefact lifecycle on every download before issuing a short-lived grant or stream |
@@ -90,6 +96,10 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | Clarification response loses the delivery assignment | Persist the team and Analyst on the thread, validate them on response and route the versioned workflow loop back to that Analyst |
 | Two open clarification requests race | Lock the request, require expected state and version, and enforce one open thread per request while permitting sequential closed threads |
 | A retry creates duplicate Customer or Analyst tasks | Use stable clarification command keys and outbox uniqueness; prove repeated dispatch and reconciliation are idempotent |
+| A slow or failed Camunda call holds database locks and exhausts the pool | Commit a fenced outbox lease before Camunda I/O, then reauthorise and compare owner/generation in a new finalisation transaction |
+| A timed-out workflow worker projects a stale result after lease takeover | Increment lease generation on every claim and reject finalisation unless owner and generation still match |
+| A slow product upload, scan or download holds a metadata transaction | Split metadata validation, external I/O and fenced finalisation; close authorisation sessions before response streaming |
+| A malformed or replayed page cursor widens visibility | Treat cursors only as bounded ordering keys and reapply full requester, role, route and team policy to every page |
 | An older process instance receives the new loop | Deploy a new BPMN version, record process-definition version per request and leave existing instances pinned |
 
 ## Residual risks and go-live gates
@@ -98,9 +108,11 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 - Production identity and per-user Camunda audit require shared OIDC or an approved
   token-exchange design.
 - Camunda Self-Managed production licensing must be confirmed before go-live.
-- The MVP account lockout is not a durable, multi-replica source-rate limiter.
-  Production requires an approved edge limiter or a dedicated shared throttle
-  store, with safe proxy-address handling and operational monitoring.
+- The application now has a durable PostgreSQL-backed global and source login
+  limiter with explicit proxy trust and bounded Argon2 concurrency. Production
+  still requires an approved edge WAF or limiter for broad volumetric defence,
+  plus monitoring and capacity values validated against the deployed replica and
+  ingress topology.
 - A production candidate needs dependency, secret, container and DAST scans plus
   an authorised staging test. Local MVP evidence does not authorise production.
 - Application runtime bases are digest-pinned and must pass the high and critical
@@ -114,10 +126,11 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 - Managed artefacts cannot be enabled until file and package limits, production
   storage region, encryption-key ownership, scanner operation, quarantine
   response and retention have named owners and tested runbooks.
-- The bundled private filesystem adapter and ClamAV container are local-pilot
-  foundations. Production enabling requires an explicitly injected private
-  object-storage runtime, approved encryption and retention controls, and an
-  internally reachable ClamAV service with current signatures.
+- The bundled private filesystem adapter and split ClamAV containers are local-pilot
+  foundations. Local health now proves current loaded signatures. Production
+  enabling still requires an explicitly injected private object-storage runtime,
+  approved encryption and retention controls, and an internally reachable,
+  monitored scanner service with an owned update and incident path.
 - The local deterministic inspector rejects encoded PDF action names, object
   streams, incremental updates, embedded/active parts, OOXML external
   relationships, DDE, OLE and bounded archive abuse. It is not a semantic
@@ -142,6 +155,9 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 - Invalid, skipped, duplicate and stale workflow-transition tests.
 - Complete alternative-branch candidate-group tests with distinct Manager and
   Analyst identities, plus dynamic unstaffed-team tests with no OSG fallback.
+- Direct-child search and route-breadcrumb tests, plus stale-destination,
+  competing-claim and crafted-parent tests, including confirmation that no
+  ranking or fallback occurs.
 - Metadata-only tracker tests and pre-dissemination, cross-Customer and malformed
   product-download denials.
 - Expired, replayed, disabled-account, login-throttling, origin and CSRF tests.

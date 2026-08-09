@@ -1,12 +1,14 @@
 import { QueryClient } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
+import { useState } from "react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
 import { AppShell } from "../components/AppShell";
+import { SESSION_EXPIRED_EVENT } from "../lib/api/client";
 import { useAuth, AuthProvider } from "../lib/auth/AuthProvider";
 import { useTheme } from "../lib/theme/ThemeProvider";
 import { json, mockFetch, renderApp, TestProviders } from "../test/render";
@@ -59,7 +61,7 @@ describe("authentication and route policy", () => {
       if (url.pathname.endsWith("/auth/me")) return json(adminSession);
       if (url.pathname.endsWith("/admin/users")) return json({ items: [] });
       throw new Error("Request content must not be fetched");
-    });
+    }, true, true, false);
     renderApp("/");
     expect(await screen.findByRole("heading", { name: "User accounts" })).toBeInTheDocument();
     expect(screen.queryByText("My requests")).not.toBeInTheDocument();
@@ -88,9 +90,19 @@ describe("authentication and route policy", () => {
     renderApp("/requests");
     await user.click(await screen.findByRole("button", { name: "Use light theme" }));
     expect(screen.getByRole("button", { name: "Use dark theme" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "My requests" })).toHaveAttribute("aria-current", "page");
+    await user.click(screen.getByRole("button", { name: /Open account menu/ }));
+    expect(screen.getByRole("dialog", { name: "Account details" })).toHaveTextContent(
+      requesterSession.user.username,
+    );
+    expect(screen.getByRole("dialog", { name: "Account details" })).toHaveTextContent("Customer");
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Account details" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Open account menu/ }));
     await user.click(screen.getByRole("button", { name: "Sign out" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Sign out failed");
     failLogout = false;
+    await user.click(screen.getByRole("button", { name: /Open account menu/ }));
     await user.click(screen.getByRole("button", { name: "Sign out" }));
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
   });
@@ -156,6 +168,7 @@ describe("authentication and route policy", () => {
     renderApp("/requests", queryClient);
     expect(await screen.findByText("User A private request")).toBeInTheDocument();
     expect(queryClient.getQueryCache().getAll()).not.toHaveLength(0);
+    await user.click(screen.getByRole("button", { name: /Open account menu/ }));
     await user.click(screen.getByRole("button", { name: "Sign out" }));
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
     expect(identity).toBe("anonymous");
@@ -193,6 +206,63 @@ describe("authentication and route policy", () => {
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
   });
 
+  it("refuses step-up when no authenticated session exists", async () => {
+    mockFetch(() => json({ detail: "Signed out" }, 401));
+    const user = userEvent.setup();
+    render(
+      <TestProviders>
+        <AuthProvider><AnonymousElevateProbe /></AuthProvider>
+      </TestProviders>,
+    );
+    await user.click(await screen.findByRole("button", { name: "Attempt step-up" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Sign in is required.");
+  });
+
+  it("reports an unexpected session bootstrap failure before showing sign in", async () => {
+    const report = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    mockFetch(() => {
+      throw new Error("Synthetic session dependency failure");
+    });
+    renderApp("/requests");
+    expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+    expect(report).toHaveBeenCalledWith(
+      expect.objectContaining({ message: "Synthetic session dependency failure" }),
+    );
+  });
+
+  it("keeps an expired session anonymous when a captured step-up timer fires", async () => {
+    const elevated = {
+      ...requesterSession,
+      elevatedUntil: new Date(Date.now() + 5_000).toISOString(),
+    };
+    const nativeSetTimeout = window.setTimeout.bind(window);
+    let expire: (() => void) | undefined;
+    vi.spyOn(window, "setTimeout").mockImplementation(
+      (handler, timeout, ...arguments_): ReturnType<typeof setTimeout> => {
+        if (
+          typeof handler === "function"
+          && Number(timeout) >= 4_000
+          && Number(timeout) <= 6_000
+        ) expire = handler;
+        return nativeSetTimeout(
+          handler,
+          timeout,
+          ...arguments_,
+        ) as unknown as ReturnType<typeof setTimeout>;
+      },
+    );
+    mockFetch((url) => url.pathname.endsWith("/auth/me")
+      ? json(elevated)
+      : json({ items: [] }));
+    renderApp("/requests");
+    expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
+    expect(expire).toBeTypeOf("function");
+    act(() => window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT)));
+    expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+    act(() => expire?.());
+    expect(screen.getByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+  });
+
   it("covers provider guardrails, anonymous shell and the production composition", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     expect(() => render(<ThemeHookProbe />)).toThrow("useTheme must be used");
@@ -208,3 +278,11 @@ describe("authentication and route policy", () => {
 
 function ThemeHookProbe() { useTheme(); return null; }
 function AuthHookProbe() { useAuth(); return null; }
+function AnonymousElevateProbe() {
+  const { elevate } = useAuth();
+  const [message, setMessage] = useState("");
+  return <>
+    <button type="button" onClick={() => void elevate("admin").catch((error: Error) => setMessage(error.message))}>Attempt step-up</button>
+    {message ? <p role="alert">{message}</p> : null}
+  </>;
+}

@@ -150,6 +150,24 @@ describe("team workflow board", () => {
     await user.click(screen.getByRole("button", { name: "Move to In Progress" }));
     expect((await screen.findAllByRole("alert")).some((alert) => alert.textContent?.includes("Planning conflict"))).toBe(true);
   });
+
+  it("fails closed and recovers all required queries after an outage", async () => {
+    const attempts = { board: 0, people: 0, iterations: 0 };
+    mockFetch(async (url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(managerSession);
+      if (url.pathname.endsWith("/team-workspaces")) return json({ items: [managerAccess] });
+      if (url.pathname.endsWith("/board")) { attempts.board += 1; return attempts.board === 1 ? json({ detail: "Unavailable" }, 503) : json(board); }
+      if (url.pathname.endsWith("/iterations")) { attempts.iterations += 1; return attempts.iterations === 1 ? json({ detail: "Unavailable" }, 503) : json({ items: iterations }); }
+      if (url.pathname.endsWith("/people")) { attempts.people += 1; return attempts.people === 1 ? json({ detail: "Unavailable" }, 503) : json({ items: people }); }
+      throw new Error(`Unexpected ${url.pathname}`);
+    }, true, true, false);
+    const user = userEvent.setup();
+    renderApp("/teams/team-osg/board");
+    expect(await screen.findByRole("heading", { name: "Workflow board could not be loaded" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("heading", { name: "Workflow board" })).toBeInTheDocument();
+    expect(attempts).toEqual({ board: 2, people: 2, iterations: 2 });
+  });
 });
 
 function mockBoard(session: Session, access: TeamWorkspaceAccess, calls: Array<{ path: string; method: string; body: Record<string, unknown> }>, value: BoardResult = board, failMutations = false) {

@@ -53,7 +53,7 @@ export function CalendarPage({ access }: { access?: TeamWorkspaceAccess }) {
         <CalendarEventForm access={access} members={people.data?.items} range={range} />
         {access ? <CapacityPanel access={access} /> : <CalendarPrivacy />}
       </div>
-      {selected ? <CalendarOccurrencePanel canManage={canManage} item={selected} onClose={() => setSelected(null)} queryKey={queryKey} /> : null}
+      {selected ? <CalendarOccurrencePanel canManage={canManage} item={selected} key={`${selected.eventId}:${selected.occurrenceStart}`} onClose={() => setSelected(null)} queryKey={queryKey} /> : null}
     </div>
   );
 }

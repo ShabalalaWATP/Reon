@@ -25,7 +25,9 @@ describe("requester experience", () => {
     expect(screen.getByRole("heading", { name: "In progress" })).toBeInTheDocument();
     expect(screen.getByText("Awaiting assignment")).toBeInTheDocument();
     const history = screen.getByText("Completed history").closest("details")!;
-    expect(within(history).getByText("Completed request")).toBeInTheDocument();
+    expect(within(history).queryByText("Completed request")).not.toBeInTheDocument();
+    await userEvent.setup().click(within(history).getByText("Completed history"));
+    expect(await within(history).findByText("Completed request")).toBeInTheDocument();
     expect(await within(history).findByRole("link", { name: "Download" })).toHaveAttribute("href", "/api/v1/releases/artefacts/released-file/download");
     expect(within(history).getByText("Feedback requested")).toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
@@ -36,9 +38,10 @@ describe("requester experience", () => {
     mockFeatureFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
       if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
-      if (url.pathname.endsWith("/requests")) return fail ? json({ detail: "Unavailable" }, 503) : json({ items: [] });
+      if (url.pathname.endsWith("/request-drafts")) return fail ? json({ detail: "Unavailable" }, 503) : json({ items: [] });
+      if (url.pathname.endsWith("/requests")) return json({ items: [] });
       throw new Error(url.pathname);
-    });
+    }, false);
     const user = userEvent.setup();
     renderApp("/requests");
     expect(await screen.findByRole("heading", { name: "Requests could not be loaded" })).toBeInTheDocument();

@@ -55,6 +55,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, expireSession);
   }, [queryClient]);
 
+  useEffect(() => {
+    if (!session?.elevatedUntil) return;
+    const remaining = Date.parse(session.elevatedUntil) - Date.now();
+    if (remaining > 2_147_483_647) return;
+    const expiry = window.setTimeout(() => {
+      setSession((current) => current ? { ...current, elevatedUntil: null } : current);
+    }, Math.max(remaining, 0));
+    return () => window.clearTimeout(expiry);
+  }, [session?.elevatedUntil]);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       session,

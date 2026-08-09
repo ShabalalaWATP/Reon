@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import JSON, DateTime, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from istari_service.models import Base, OutboxStatus, TimestampMixin, _enum
@@ -16,6 +16,15 @@ OUTBOX_UTC_TS = DateTime(timezone=True)
 
 class WorkflowOutbox(TimestampMixin, Base):
     __tablename__ = "workflow_outbox"
+    __table_args__ = (
+        Index(
+            "ix_workflow_outbox_dispatch",
+            "status",
+            "available_at",
+            "created_at",
+            "id",
+        ),
+    )
 
     request_id: Mapped[UUID] = mapped_column(
         ForeignKey("service_requests.id"), index=True

@@ -11,6 +11,7 @@ import pytest
 
 import istari_service.product_clamav as clamav_module
 import istari_service.product_security as security_module
+from in_memory_product_storage import InMemoryPrivateObjectStorage
 from istari_service.product_clamav import (
     ClamAvInstreamScanner,
     CompositeDocumentScanner,
@@ -26,7 +27,6 @@ from istari_service.product_security import (
     AllowedHttpsLinkPolicy,
     SafeDocumentScanner,
 )
-from istari_service.product_storage import InMemoryPrivateObjectStorage
 from istari_service.product_types import ScanResult
 from product_test_support import PDF_MEDIA, chunks
 

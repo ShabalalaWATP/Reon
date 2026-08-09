@@ -6,7 +6,7 @@ param(
     [string]$EvidenceDirectory,
     [Parameter(Mandatory = $true)]
     [string]$Confirmation,
-    [string]$ExpectedRevision = '0017_legacy_workflow_identity'
+    [string]$ExpectedRevision = '0021_schema_metadata'
 )
 
 Set-StrictMode -Version Latest

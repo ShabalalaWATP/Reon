@@ -35,6 +35,7 @@ async def seed_team_membership_history(
             user_id=user_id,
             team_id=team_id,
             effective_from=now,
+            start_projected_at=now,
             start_reason="Established synthetic team baseline.",
         )
         for user_id, team_id in desired

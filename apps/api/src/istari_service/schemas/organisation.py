@@ -24,6 +24,18 @@ class OrganisationUnitList(ApiModel):
     items: list[OrganisationUnitView]
 
 
+class RoutingPathUnit(ApiModel):
+    id: UUID
+    code: str
+    name: str
+    kind: OrganisationKind
+
+
+class RoutingOptionsWorkspace(ApiModel):
+    route: list[RoutingPathUnit]
+    items: list[OrganisationUnitView]
+
+
 class TrackedRouteUnit(ApiModel):
     id: UUID
     name: str
@@ -43,3 +55,4 @@ class TrackedRequest(ApiModel):
 
 class TrackedRequestList(ApiModel):
     items: list[TrackedRequest]
+    next_cursor: str | None = None

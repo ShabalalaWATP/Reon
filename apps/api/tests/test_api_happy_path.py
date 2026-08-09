@@ -6,12 +6,10 @@ from dataclasses import replace
 from typing import Any
 from uuid import uuid4
 
-from sqlalchemy import select
-
 from conftest import ApiHarness, request_payload
-from istari_service.configuration_models import ConfigurationWorkflowTemplate
 from istari_service.product_runtime import ProductRuntime
 from istari_service.product_security import AllowedHttpsLinkPolicy
+from product_test_support import set_synthetic_active_link_domains
 
 
 async def _claim_current(harness: ApiHarness) -> dict[str, Any]:
@@ -60,9 +58,7 @@ async def test_complete_representative_workflow_and_feedback(
 ) -> None:
     harness = api_harness
     async with harness.sessions() as database, database.begin():
-        template = await database.scalar(select(ConfigurationWorkflowTemplate))
-        assert template is not None
-        template.approved_link_domains = ["products.example.test"]
+        await set_synthetic_active_link_domains(database, ("products.example.test",))
     session = await harness.login("admin2")
     assert session["user"]["role"] == "REQUESTER"
     me = await harness.client.get("/api/v1/auth/me")

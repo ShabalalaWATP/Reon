@@ -9,8 +9,11 @@ RUN /usr/bin/trufflehog git file:///repo \
     --json \
     > /tmp/trufflehog-git.json
 
-FROM scan AS gate
-RUN test ! -s /tmp/trufflehog-git.json
+FROM node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32 AS gate
+WORKDIR /gate
+COPY scripts/check-trufflehog-findings.mjs scripts/trufflehog-allowlist.json ./
+COPY --from=scan /tmp/trufflehog-git.json ./trufflehog-git.json
+RUN node check-trufflehog-findings.mjs trufflehog-git.json trufflehog-allowlist.json
 
 FROM scratch AS evidence
 COPY --from=scan /tmp/trufflehog-git.json /trufflehog-git.json

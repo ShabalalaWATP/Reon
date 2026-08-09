@@ -1,6 +1,11 @@
 import type { CalendarOccurrence } from "../../lib/api/calendarTypes";
 import { addDays, calendarRange, sameDay, type CalendarView } from "./calendarDates";
 
+const shortWeekday = new Intl.DateTimeFormat("en-GB", { weekday: "short" });
+const longWeekday = new Intl.DateTimeFormat("en-GB", { weekday: "long" });
+const longDate = new Intl.DateTimeFormat("en-GB", { dateStyle: "long" });
+const clockTime = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" });
+
 export function CalendarViews({
   anchor,
   items,
@@ -16,13 +21,14 @@ export function CalendarViews({
   const { start } = calendarRange(anchor, view);
   const count = view === "month" ? 42 : 7;
   const days = Array.from({ length: count }, (_, index) => addDays(start, index));
+  const itemsByDay = groupItemsByLocalDay(items);
   return (
     <section aria-label={`${view} calendar`} className={`calendar-grid calendar-grid--${view}`}>
       {days.map((day) => (
         <Day
           anchor={anchor}
           day={day}
-          items={items.filter((item) => sameDay(new Date(item.startsAt), day))}
+          items={itemsByDay.get(localDayKey(day)) ?? []}
           key={day.toISOString()}
           onSelect={onSelect}
           view={view}
@@ -49,7 +55,7 @@ function Day({
   const today = sameDay(day, new Date());
   return (
     <article className={`calendar-day${outside ? " calendar-day--outside" : ""}${today ? " calendar-day--today" : ""}`}>
-      <header><span>{new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(day)}</span><strong>{day.getDate()}</strong></header>
+      <header><span>{shortWeekday.format(day)}</span><strong>{day.getDate()}</strong></header>
       {items.length === 0 ? <span className="calendar-day__empty">Available</span> : (
         <ol>{items.map((item) => <li key={`${item.eventId}-${item.occurrenceStart}`}><OccurrenceButton item={item} onSelect={onSelect} /></li>)}</ol>
       )}
@@ -64,7 +70,7 @@ function Agenda({ items, onSelect }: { items: CalendarOccurrence[]; onSelect: (i
     <section aria-label="Agenda" className="calendar-agenda">
       {days.map(([day, occurrences]) => (
         <article key={day}>
-          <header><span>{new Intl.DateTimeFormat("en-GB", { weekday: "long" }).format(new Date(day))}</span><h2>{new Intl.DateTimeFormat("en-GB", { dateStyle: "long" }).format(new Date(day))}</h2></header>
+          <header><span>{longWeekday.format(new Date(day))}</span><h2>{longDate.format(new Date(day))}</h2></header>
           <ol>{occurrences.map((item) => <li key={`${item.eventId}-${item.occurrenceStart}`}><OccurrenceButton item={item} onSelect={onSelect} /></li>)}</ol>
         </article>
       ))}
@@ -73,7 +79,7 @@ function Agenda({ items, onSelect }: { items: CalendarOccurrence[]; onSelect: (i
 }
 
 function OccurrenceButton({ item, onSelect }: { item: CalendarOccurrence; onSelect: (item: CalendarOccurrence) => void }) {
-  const time = item.allDay ? "All day" : new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" }).format(new Date(item.startsAt));
+  const time = item.allDay ? "All day" : clockTime.format(new Date(item.startsAt));
   return (
     <button className={`calendar-event calendar-event--${item.category.toLowerCase()}`} onClick={() => onSelect(item)} type="button">
       <span>{time}</span><strong>{item.title}</strong><small>{item.subjectDisplayName}</small>
@@ -89,4 +95,17 @@ function groupByDay(items: CalendarOccurrence[]): Array<[string, CalendarOccurre
     grouped.set(key, [...(grouped.get(key) ?? []), item]);
   });
   return [...grouped.entries()].sort(([left], [right]) => left.localeCompare(right));
+}
+
+function groupItemsByLocalDay(items: CalendarOccurrence[]) {
+  const grouped = new Map<string, CalendarOccurrence[]>();
+  for (const item of items) {
+    const key = localDayKey(new Date(item.startsAt));
+    grouped.set(key, [...(grouped.get(key) ?? []), item]);
+  }
+  return grouped;
+}
+
+function localDayKey(value: Date) {
+  return `${value.getFullYear()}-${value.getMonth()}-${value.getDate()}`;
 }

@@ -1,6 +1,84 @@
 # Browser and workflow evidence
 
-## Environment
+This file contains current visual orientation and dated assurance records. The
+source-controlled screenshots below were captured from the internally matched,
+running synthetic QA Compose application on 9 August 2026. The web, API,
+PostgreSQL and Camunda containers were healthy, and the authenticated captures
+produced no unexpected browser console error. Playwright CLI used Chromium with
+a 1,440 by 1,000 CSS-pixel viewport. The images prove that the
+documented screens rendered, but are not a source-to-image attestation,
+accessibility acceptance or evidence that every Product Evolution gate is
+closed.
+
+The workflow and cross-browser records after the screenshots are historical MVP
+evidence. They do not prove the later managed-product or guided-configuration
+capabilities and must not be used to close Product Evolution browser or
+acceptance gates.
+
+## Current application screenshots
+
+The images deliberately contain only synthetic fixtures. Four representative
+screens are retained in source control. Replace an image when its corresponding
+surface changes materially instead of accumulating a screenshot for every test
+state.
+
+### Login
+
+Blank login form in the graphite ISTARI visual system. No credential is shown.
+
+![ISTARI login screen](../assets/screenshots/login.png)
+
+### Structured request form
+
+Customer `admin2` on the blank service-request form. The visible required
+markers and explanatory text show that every submission field is mandatory,
+while private incomplete drafts remain possible.
+
+![New service request form](../assets/screenshots/new-service-request-form.png)
+
+### Customer request tracking
+
+Customer `admin2` on `My requests`. The synthetic in-progress row shows current
+stage, owner role, service age, required-date proximity and a direct request
+link. Authenticated product download and feedback appear here after
+dissemination; the historical completed-journey evidence below proves that
+separate state-changing path.
+
+![Customer request tracking dashboard](../assets/screenshots/customer-request-dashboard.png)
+
+### Team workflow board
+
+OSG Team Manager `admin8` on the Team workspace Board. The view identifies the
+cards as Camunda-derived projections and exposes filtering, saved-view and
+Kanban controls without allowing drag-and-drop to bypass named workflow actions.
+
+![OSG Team workflow board](../assets/screenshots/team-workflow-board.png)
+
+## Automated workspace-state coverage
+
+The following is the historical candidate index recorded on 7 August 2026. The
+then-current 188-test frontend suite covered loading, empty, success and
+recoverable-error presentation throughout the critical workspaces. Conflict,
+stale-version and permission outcomes were also exercised at API and form
+boundaries.
+
+| Workspace | Principal evidence |
+| --- | --- |
+| Authentication and route policy | `app/auth-flow.test.tsx` |
+| Customer register and request detail | `requester-flow.test.tsx`, `branch-states.test.tsx` |
+| Drafts and mandatory form | `draft-flow.test.tsx`, `requester-flow.test.tsx` |
+| Staff queues and routing | `staff-flow.test.tsx`, `routing-options-flow.test.tsx` |
+| Product review | `staff-deliverable-flow.test.tsx` |
+| Metadata tracking | `tracking-flow.test.tsx` |
+| Statistics | `StatisticsPage.test.tsx` |
+| Team overview and People | `TeamWorkspacePage.test.tsx` |
+| Calendar and capacity | `CalendarPage.test.tsx` |
+| Board and packages | `TeamBoardPage.test.tsx` |
+| Planning and iterations | `TeamPlanningPage.test.tsx` |
+| Platform administration | `admin-flow.test.tsx` |
+| Organisation | `organisation-flow.test.tsx` |
+
+## Historical MVP environment
 
 Recorded on 7 August 2026 against the production React image, FastAPI,
 PostgreSQL 17.9 and Camunda 8.9.14. Installed browser versions were Chrome
@@ -64,8 +142,8 @@ browsers and are retained as Playwright CLI traces:
 
 Additional Chrome traces cover the Team Manager queue, roster, calendar, board
 and exact-team statistics; JIOC metadata tracking and JIOC-only statistics; and
-the 72-account Administrator register, step-up and create-user form. Trace names,
-browser versions, scenarios and SHA-256 values are recorded in
+the then-current 72-account Administrator register, step-up and create-user
+form. Trace names, browser versions, scenarios and SHA-256 values are recorded in
 `output/playwright/browser-acceptance.json`.
 
 The complete end-to-end state-changing delivery journey was repeated in Edge
@@ -96,3 +174,55 @@ Run `uv run --directory apps/api python
 ../../scripts/render-browser-acceptance.py` to verify every evidence hash and
 regenerate both reports. DOD-31 and DOD-44 are evidence-ready. Product-owner and
 representative-user acceptance remain separate human decisions.
+
+## Operator-orientation browser check
+
+On 8 August 2026, the current React source was served locally and inspected in
+Chromium against the existing synthetic local API. The Customer workspace showed
+exactly one `aria-current="page"` item on both `/requests` and `/requests/new`.
+The account dialog exposed `admin2`, Customer role, Requesting Area A scope and
+session expiry, closed on Escape and route change, and remained within a
+640-pixel viewport. Keyboard focus produced a visible two-pixel outline.
+
+This focused check covers the changed shell at desktop and narrow width. It does
+not replace the recorded three-browser baseline or constitute representative
+accessibility acceptance. Routing breadcrumb behaviour is covered by component
+accessibility tests. The rebuilt target API subsequently returned `JIOC [JIOC]`
+and exactly the three configured Command children from PostgreSQL. A complete
+current-source target journey also passed through SYGOC, Nimbus Ops and Beacon
+Team. Representative routing and accessibility acceptance remain required.
+
+## Target-scale cursor browser check
+
+On 8 August 2026, Chromium controlled through the Playwright CLI exercised the
+production-built React and FastAPI images against the clean 2,500-row PostgreSQL
+17.9 fixture at migration `0019_runtime_scaling`.
+
+- Customer `admin2` rendered 50 requests and 50 private drafts, then loaded a
+  cursor page. One hundred drafts remained visible and both older-request and
+  older-draft responses returned successfully.
+- JIOC user `admin4` rendered and retained 100 staff-work items, then retained
+  100 metadata-only tracked requests after loading another page.
+- OSG Manager `admin8` opened the OSG Board and moved from 25 cards on page one
+  to 25 cards on page two using the opaque Board cursor.
+- Platform Administrator `admin1` retained 100 user-register rows after loading
+  another page.
+
+Cursor responses took 31.6 to 51.7 ms in this local topology. The only console
+error was the expected anonymous `/auth/me` HTTP 401 probe before each login;
+authenticated pages produced no unexpected console error. The target-scale
+check is Chromium-only and read-oriented. It supplements, rather than replaces,
+the historical three-browser state-changing workflow acceptance above.
+
+The content-free traces and screenshots are under
+`output/playwright/runtime-scale`. Trace SHA-256 values are:
+
+- Customer pagination: `5DBD5F150B75C2F63A352247755AAC81293063F64A65D10574FDC140F5C54F63`;
+- routing pagination: `DAD29C589AF9C67BDCA11D77B1CE25750064DE462D793655167AA960536F781D`;
+- Board pagination: `274F2475D4BD82657C9D374552AE3B8A052FB1BCA5692E862E8F3327E05B450C`;
+- administration pagination: `CD089B2BC70E76DBFD6E154B49497CD8FEA6CC998755C9A381185EFBB0464F2E`.
+
+`output/load/runtime-scale-manifest.json` binds every trace, network log,
+screenshot, fixture, plan result and HTTP result to a content hash. These local
+generated files must be copied to the approved immutable evidence store when a
+candidate release is qualified.

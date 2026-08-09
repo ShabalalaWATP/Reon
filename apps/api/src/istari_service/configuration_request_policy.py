@@ -13,10 +13,6 @@ from types import MappingProxyType
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from istari_service.configuration_models import RequestConfigurationPin
 from istari_service.configuration_projection import (
     active_parents,
     active_units,
@@ -208,28 +204,6 @@ def build_request_policy_snapshot(
         "approvedLinkDomains": list(domains),
         "approvedLinkDomainsDigest": domains_digest,
     }
-
-
-async def load_request_configuration_policy(
-    session: AsyncSession,
-    request_id: UUID,
-) -> RequestConfigurationPolicy | None:
-    pin = await session.scalar(
-        select(RequestConfigurationPin).where(
-            RequestConfigurationPin.request_id == request_id
-        )
-    )
-    if pin is None or "requestPolicySchema" not in pin.snapshot:
-        return None
-    return parse_request_configuration_policy(pin.snapshot)
-
-
-async def load_request_product_policy(
-    session: AsyncSession,
-    request_id: UUID,
-) -> PinnedProductPolicy | None:
-    policy = await load_request_configuration_policy(session, request_id)
-    return policy.product if policy is not None else None
 
 
 def parse_request_configuration_policy(

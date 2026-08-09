@@ -9,7 +9,7 @@ const effectiveFrom = "2026-09-01T09:00:00Z";
 export const configurationVersion: ConfigurationVersion = {
   id: "cfg-2",
   sequence: 2,
-  label: "Northern branch draft",
+  label: "Northern branch changes",
   status: "DRAFT",
   effectiveFrom,
   createdByUserId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
@@ -73,5 +73,6 @@ export const workflowDefinition: WorkflowDefinition = {
 export const configurationPreview: ConfigurationPreview = {
   versionId: "cfg-2",
   comparedWithVersionId: "cfg-1",
-  changes: [{ type: "ADDED", unitId: "unit-team", code: "PINE_TEAM", message: "Pine Team will be added beneath Northern Ops Group." }],
+  snapshotDigest: "b".repeat(64),
+  changes: [{ type: "ADDED", unitId: "unit-team", code: "PINE_TEAM", message: "Pine Team will be added beneath Northern Ops Group.", effectiveAt: configurationVersion.effectiveFrom }],
 };

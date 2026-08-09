@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from istari_service.configuration_digest import configuration_digest
 from istari_service.configuration_events import ConfigurationEventType
 from istari_service.configuration_policy import actor_is_independent, may_review
 from istari_service.configuration_types import ApprovalDecision, ConfigurationStatus
@@ -60,6 +61,7 @@ class ConfigurationReviewOperations(ConfigurationServiceBase):
             actor_id=actor.id,
             decision=decision,
             reason=payload.reason,
+            snapshot_digest=configuration_digest(bundle.specification()),
         )
         now = self._clock()
         if decision is ApprovalDecision.REJECTED:

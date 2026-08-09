@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
@@ -18,7 +19,14 @@ from istari_service.domain import AccountRecord, SessionRecord
 from istari_service.errors import (
     AdministrationAccessDenied,
     AuthenticationFailed,
+    AuthenticationRateLimited,
+    AuthenticationUnavailable,
     SessionRequired,
+)
+from istari_service.login_rate_limiter import (
+    LoginAttemptLimiter,
+    LoginRateLimitPolicy,
+    LoginRateLimitUnavailable,
 )
 from istari_service.models import UserRole
 
@@ -119,6 +127,9 @@ class AuthService:
         lockout_seconds: int = 900,
         admin_elevation_seconds: int = 300,
         dummy_hash: str | None = None,
+        login_limiter: LoginAttemptLimiter | None = None,
+        login_rate_limit_policy: LoginRateLimitPolicy | None = None,
+        password_semaphore: asyncio.Semaphore | None = None,
     ) -> None:
         self._repository = repository
         self._hasher = password_hasher
@@ -128,17 +139,34 @@ class AuthService:
         self._lockout_seconds = lockout_seconds
         self._admin_elevation_seconds = admin_elevation_seconds
         self._dummy_hash = dummy_hash or password_hasher.hash(DUMMY_HASH_INPUT)
+        self._login_limiter = login_limiter
+        self._login_rate_limit_policy = login_rate_limit_policy
+        self._password_semaphore = password_semaphore
 
-    async def login(self, username: str, password: str) -> LoginResult:
+    async def login(
+        self,
+        username: str,
+        password: str,
+        *,
+        source_key: str = "source:unit-test",
+    ) -> LoginResult:
         now = datetime.now(UTC)
+        if self._login_limiter is not None:
+            if self._login_rate_limit_policy is None:
+                raise RuntimeError("login rate-limit policy is required")
+            try:
+                decision = await self._login_limiter.consume(
+                    source_key,
+                    self._login_rate_limit_policy,
+                )
+            except LoginRateLimitUnavailable as error:
+                raise AuthenticationUnavailable() from error
+            if not decision.allowed:
+                raise AuthenticationRateLimited(decision.retry_after_seconds)
         normalised = username.strip().lower()
         account = await self._repository.find_account(normalised)
         stored_hash = account.password_hash if account else self._dummy_hash
-        password_valid = await to_thread.run_sync(
-            self._hasher.verify,
-            stored_hash,
-            password,
-        )
+        password_valid = await self._verify_password(stored_hash, password)
         locked = (
             account is not None
             and account.locked_until is not None
@@ -192,11 +220,7 @@ class AuthService:
         account = await self._repository.find_account(session.actor.username)
         if account is None or not account.is_active:
             raise AuthenticationFailed()
-        valid = await to_thread.run_sync(
-            self._hasher.verify,
-            account.password_hash,
-            password,
-        )
+        valid = await self._verify_password(account.password_hash, password)
         locked = account.locked_until is not None and account.locked_until > now
         if not valid or locked:
             if not locked:
@@ -215,3 +239,9 @@ class AuthService:
             lockout_seconds=self._lockout_seconds,
         )
         await self._repository.commit_security_state()
+
+    async def _verify_password(self, stored_hash: str, password: str) -> bool:
+        if self._password_semaphore is None:
+            return await to_thread.run_sync(self._hasher.verify, stored_hash, password)
+        async with self._password_semaphore:
+            return await to_thread.run_sync(self._hasher.verify, stored_hash, password)

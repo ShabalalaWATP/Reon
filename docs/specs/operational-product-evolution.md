@@ -221,6 +221,13 @@ contain enough administrators to prove separation of duties. The evolution adds
 `admin73`, Jim Leighton, as a second synthetic Platform Administrator without
 changing the original `admin1` to `admin72` mappings.
 
+The administrator interface presents the **Current configuration** and
+**Proposed changes**, not internal draft/version terminology. Search by display
+name, stable code or unit kind retains ancestor context; a keyboard breadcrumb
+identifies the selected path; and create/move operations list only effective
+parents of the immediately preceding kind. Immutable revisions, expected-revision
+checks and request pinning remain API, persistence, audit and support controls.
+
 ### Workflow configuration
 
 The application exposes bounded workflow templates rather than arbitrary BPMN
@@ -242,6 +249,10 @@ New requests use the active configuration snapshot. Existing requests stay
 pinned to their organisation, form, workflow and notification-policy versions.
 A separate, explicitly designed migration is required if a future owner chooses
 to move in-flight work.
+
+Semantically unordered template fields are canonicalised before comparison.
+Normalisation-only changes and unchanged existing staffing shortfalls must not be
+presented as newly introduced change impact.
 
 ## Team planning enhancements
 
@@ -338,8 +349,9 @@ The capability is complete only when:
    approved HTTPS product link from both dashboard and request detail;
 4. malicious, mismatched, oversized, unscanned, unreleased, replaced and
    cross-Customer artefacts are denied;
-5. an administrator can draft and validate a new branch, a separate approver can
-   activate it, and a new request completes through its own Camunda groups;
+5. an administrator can prepare and validate proposed changes, a separate
+   approver can activate them, and a new request completes through its own
+   Camunda groups;
 6. in-flight requests continue under their pinned versions after a configuration
    activation;
 7. planning enhancements preserve calendar, board, package and workflow truth

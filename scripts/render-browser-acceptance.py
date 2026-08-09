@@ -9,7 +9,8 @@ import html
 import json
 from pathlib import Path
 from typing import Any
-from xml.etree import ElementTree
+# This module creates JUnit XML and never parses input XML.
+from xml.etree import ElementTree  # nosemgrep
 
 ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE = ROOT / "output" / "playwright"

@@ -50,6 +50,24 @@ class TeamMembership(TimestampMixin, Base):
             "effective_from",
             "effective_until",
         ),
+        Index(
+            "ix_team_memberships_due_start",
+            "effective_from",
+            "user_id",
+            sqlite_where=text("start_projected_at IS NULL"),
+            postgresql_where=text("start_projected_at IS NULL"),
+        ),
+        Index(
+            "ix_team_memberships_due_end",
+            "effective_until",
+            "user_id",
+            sqlite_where=text(
+                "end_projected_at IS NULL AND effective_until IS NOT NULL"
+            ),
+            postgresql_where=text(
+                "end_projected_at IS NULL AND effective_until IS NOT NULL"
+            ),
+        ),
     )
 
     user_id: Mapped[UUID] = mapped_column(
@@ -60,6 +78,8 @@ class TeamMembership(TimestampMixin, Base):
     )
     effective_from: Mapped[datetime] = mapped_column(UTC_TS)
     effective_until: Mapped[datetime | None] = mapped_column(UTC_TS)
+    start_projected_at: Mapped[datetime | None] = mapped_column(UTC_TS)
+    end_projected_at: Mapped[datetime | None] = mapped_column(UTC_TS)
     started_by_user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="RESTRICT")
     )

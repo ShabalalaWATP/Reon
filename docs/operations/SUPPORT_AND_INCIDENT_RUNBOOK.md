@@ -25,6 +25,7 @@ out-of-hours escalation channel once named in the pilot record.
 | --- | --- | ---: | ---: |
 | P1 | Suspected data exposure, unrecoverable loss, broad authentication failure | 15 min | 30 min |
 | P2 | Workflow stopped, database unavailable, release path unavailable | 30 min | 60 min |
+| P2 | Active configuration has no complete route, wrong branch is broadly selectable, or hierarchy reconciliation fails | 30 min | 60 min |
 | P3 | One role or non-critical workspace impaired | 4 supported hours | 1 supported day |
 | P4 | Cosmetic issue or low-impact request | 1 supported day | Planned backlog |
 
@@ -54,6 +55,12 @@ monitor must call equivalent controls from a private monitoring plane.
 5. Recover using the narrowest reversible action. Reconcile before retrying.
 6. Validate representative Customer and staff journeys, then close or downgrade.
 7. Record root cause, timeline, evidence, residual risk and prevention action.
+
+Configuration and routing incidents use
+[`CONFIGURATION_AND_ROUTING_RUNBOOK.md`](CONFIGURATION_AND_ROUTING_RUNBOOK.md).
+Do not directly repair the active hierarchy in PostgreSQL or Camunda. Contain
+risk, preserve in-flight pins and apply an independently approved superseding
+change.
 
 ## Recovery and rollback
 

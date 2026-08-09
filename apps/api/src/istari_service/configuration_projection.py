@@ -74,6 +74,7 @@ def preview_configuration(
                 PreviewChangeType.WORKFLOW_AFFECTED,
                 root,
                 "Bounded workflow, form or catalogue configuration changed.",
+                at,
             )
         )
 
@@ -81,7 +82,7 @@ def preview_configuration(
         previous = previous_units.get(unit_id)
         if previous is None:
             changes.append(
-                _change(PreviewChangeType.ADDED, unit, "Organisation unit added.")
+                _change(PreviewChangeType.ADDED, unit, "Organisation unit added.", at)
             )
         else:
             if previous.name != unit.name:
@@ -90,6 +91,7 @@ def preview_configuration(
                         PreviewChangeType.RENAMED,
                         unit,
                         f"Renamed from {previous.name} to {unit.name}.",
+                        at,
                     )
                 )
             if previous_parents.get(unit_id) != next_parents.get(unit_id):
@@ -97,7 +99,13 @@ def preview_configuration(
                     _change(
                         PreviewChangeType.MOVED,
                         unit,
-                        "Organisation parent changed.",
+                        _parent_change_message(
+                            previous_units,
+                            next_units,
+                            previous_parents.get(unit_id),
+                            next_parents.get(unit_id),
+                        ),
+                        at,
                     )
                 )
             if previous.routing_enabled and not unit.routing_enabled:
@@ -106,6 +114,7 @@ def preview_configuration(
                         PreviewChangeType.RETIRED,
                         unit,
                         "Unit retired from new routing.",
+                        at,
                     )
                 )
             if previous_groups.get(unit_id) != next_groups.get(unit_id):
@@ -114,18 +123,29 @@ def preview_configuration(
                         PreviewChangeType.PERMISSION_AFFECTED,
                         unit,
                         "Candidate-group access mapping changed.",
+                        at,
                     )
                 )
         count = staffing.get(unit_id, StaffingCount())
-        if unit.routing_enabled and (
-            count.managers < unit.minimum_managers
-            or count.analysts < unit.minimum_analysts
+        staffing_requirement_changed = previous is None or (
+            not previous.routing_enabled
+            or previous.minimum_managers != unit.minimum_managers
+            or previous.minimum_analysts != unit.minimum_analysts
+        )
+        if (
+            unit.routing_enabled
+            and staffing_requirement_changed
+            and (
+                count.managers < unit.minimum_managers
+                or count.analysts < unit.minimum_analysts
+            )
         ):
             changes.append(
                 _change(
                     PreviewChangeType.UNSTAFFED,
                     unit,
                     "Selectable team is below its configured staffing requirement.",
+                    at,
                 )
             )
 
@@ -136,11 +156,76 @@ def preview_configuration(
                     PreviewChangeType.RETIRED,
                     previous,
                     "Unit no longer has an effective revision for new routing.",
+                    at,
                 )
             )
     return sorted(
         changes, key=lambda item: (item.type.value, item.code, str(item.unit_id))
     )
+
+
+def preview_configuration_schedule(
+    current: ConfigurationDraftSpec | None,
+    candidate: ConfigurationDraftSpec,
+    *,
+    starts_at: datetime,
+    staffing: Mapping[UUID, StaffingCount],
+) -> list[PreviewChange]:
+    checkpoints = {starts_at}
+    for specification in (current, candidate):
+        if specification is None:
+            continue
+        for unit in specification.units:
+            if unit.effective_from >= starts_at:
+                checkpoints.add(unit.effective_from)
+            if unit.effective_until is not None and unit.effective_until >= starts_at:
+                checkpoints.add(unit.effective_until)
+        for edge in specification.edges:
+            if edge.effective_from >= starts_at:
+                checkpoints.add(edge.effective_from)
+            if edge.effective_until is not None and edge.effective_until >= starts_at:
+                checkpoints.add(edge.effective_until)
+    changes: list[PreviewChange] = []
+    previous: dict[tuple[PreviewChangeType, UUID], PreviewChange] = {}
+    for checkpoint in sorted(checkpoints):
+        current_changes = {
+            (change.type, change.unit_id): change
+            for change in preview_configuration(
+                current,
+                candidate,
+                at=checkpoint,
+                staffing=staffing,
+            )
+        }
+        for key, change in current_changes.items():
+            earlier = previous.get(key)
+            if earlier is None or (earlier.code, earlier.message) != (
+                change.code,
+                change.message,
+            ):
+                changes.append(change)
+        for key, earlier in previous.items():
+            if key not in current_changes:
+                change_name = earlier.type.value.lower().replace("_", " ")
+                unit_has_other_change = any(
+                    unit_id == earlier.unit_id for _, unit_id in current_changes
+                )
+                outcome = (
+                    "another scheduled difference now applies."
+                    if unit_has_other_change
+                    else "candidate matches the current configuration again."
+                )
+                changes.append(
+                    PreviewChange(
+                        PreviewChangeType.RESTORED,
+                        earlier.unit_id,
+                        earlier.code,
+                        f"Earlier {change_name} change ends; {outcome}",
+                        checkpoint,
+                    )
+                )
+        previous = current_changes
+    return changes
 
 
 def _active(item: UnitRevisionSpec | HierarchyEdgeSpec, at: datetime) -> bool:
@@ -153,8 +238,23 @@ def _change(
     change_type: PreviewChangeType,
     unit: UnitRevisionSpec,
     message: str,
+    effective_at: datetime,
 ) -> PreviewChange:
-    return PreviewChange(change_type, unit.unit_id, unit.code, message)
+    return PreviewChange(change_type, unit.unit_id, unit.code, message, effective_at)
+
+
+def _parent_change_message(
+    previous_units: Mapping[UUID, UnitRevisionSpec],
+    next_units: Mapping[UUID, UnitRevisionSpec],
+    previous_parent_id: UUID | None,
+    next_parent_id: UUID | None,
+) -> str:
+    previous = previous_units.get(previous_parent_id) if previous_parent_id else None
+    following = next_units.get(next_parent_id) if next_parent_id else None
+    return (
+        f"Parent changed from {previous.code if previous else 'no parent'} "
+        f"to {following.code if following else 'no parent'}."
+    )
 
 
 def mappings_for_unit(

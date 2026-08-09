@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from typing import Annotated, cast
@@ -13,12 +14,14 @@ from istari_service.auth_service import AuthService, PasswordHasher
 from istari_service.config import Settings
 from istari_service.domain import Actor, SessionRecord
 from istari_service.errors import AdministrationAccessDenied, StepUpRequired
+from istari_service.login_rate_limiter import LoginRateLimitPolicy
 from istari_service.models import UserRole
 from istari_service.repositories.auth import SqlAlchemyAuthRepository
+from istari_service.repositories.login_rate_limits import (
+    SqlAlchemyLoginAttemptLimiter,
+)
 from istari_service.security import require_csrf
-from istari_service.team_membership_sync import synchronise_due_team_memberships
 from istari_service.workflow.engine import WorkflowEngine
-from istari_service.workflow_maintenance import WorkflowMaintenanceHealth
 
 
 def settings_from_request(request: Request) -> Settings:
@@ -29,15 +32,6 @@ def workflow_from_request(request: Request) -> WorkflowEngine:
     return cast(WorkflowEngine, request.app.state.workflow_engine)
 
 
-def workflow_maintenance_from_request(
-    request: Request,
-) -> WorkflowMaintenanceHealth | None:
-    return cast(
-        WorkflowMaintenanceHealth | None,
-        getattr(request.app.state, "workflow_maintenance_health", None),
-    )
-
-
 async def database_session(request: Request) -> AsyncIterator[AsyncSession]:
     factory = cast(
         async_sessionmaker[AsyncSession],
@@ -45,8 +39,6 @@ async def database_session(request: Request) -> AsyncIterator[AsyncSession]:
     )
     async with factory() as session:
         try:
-            if await synchronise_due_team_memberships(session):
-                await session.commit()
             yield session
             await session.commit()
         except BaseException:
@@ -74,10 +66,6 @@ ReadinessDatabaseSession = Annotated[
 ]
 AppSettings = Annotated[Settings, Depends(settings_from_request)]
 WorkflowDependency = Annotated[WorkflowEngine, Depends(workflow_from_request)]
-WorkflowMaintenanceDependency = Annotated[
-    WorkflowMaintenanceHealth | None,
-    Depends(workflow_maintenance_from_request),
-]
 
 
 def session_factory_from_request(
@@ -95,10 +83,14 @@ SessionFactoryDependency = Annotated[
 ]
 
 
-def auth_service(request: Request, session: DatabaseSession) -> AuthService:
+def _auth_service_for_session(request: Request, session: AsyncSession) -> AuthService:
     hasher = cast(PasswordHasher, request.app.state.password_hasher)
     dummy_hash = cast(str, request.app.state.dummy_password_hash)
     settings = settings_from_request(request)
+    password_semaphore = cast(
+        asyncio.Semaphore,
+        request.app.state.login_password_semaphore,
+    )
     return AuthService(
         SqlAlchemyAuthRepository(session),
         hasher,
@@ -106,7 +98,21 @@ def auth_service(request: Request, session: DatabaseSession) -> AuthService:
         session_idle_seconds=settings.session_idle_seconds,
         admin_elevation_seconds=settings.admin_elevation_seconds,
         dummy_hash=dummy_hash,
+        login_limiter=SqlAlchemyLoginAttemptLimiter(
+            session_factory_from_request(request),
+            timeout_seconds=settings.login_rate_limit_timeout_seconds,
+        ),
+        login_rate_limit_policy=LoginRateLimitPolicy(
+            window_seconds=settings.login_rate_limit_window_seconds,
+            per_source=settings.login_rate_limit_per_source,
+            global_limit=settings.login_rate_limit_global,
+        ),
+        password_semaphore=password_semaphore,
     )
+
+
+def auth_service(request: Request, session: DatabaseSession) -> AuthService:
+    return _auth_service_for_session(request, session)
 
 
 AuthDependency = Annotated[AuthService, Depends(auth_service)]
@@ -150,6 +156,60 @@ def mutation_actor(session: MutationSession) -> Actor:
 
 CurrentActor = Annotated[Actor, Depends(actor_from_session)]
 MutationActor = Annotated[Actor, Depends(mutation_actor)]
+
+
+async def detached_current_session(request: Request) -> SessionRecord:
+    """Authenticate and close the database session before response streaming."""
+
+    factory = session_factory_from_request(request)
+    async with factory() as session:
+        try:
+            service = _auth_service_for_session(request, session)
+            settings = settings_from_request(request)
+            record = await service.authenticate(
+                request.cookies.get(settings.session_cookie_name)
+            )
+            await session.commit()
+            return record
+        except BaseException:
+            await session.rollback()
+            raise
+
+
+DetachedCurrentSession = Annotated[
+    SessionRecord,
+    Depends(detached_current_session),
+]
+
+
+def detached_actor_from_session(session: DetachedCurrentSession) -> Actor:
+    return session.actor
+
+
+DetachedCurrentActor = Annotated[
+    Actor,
+    Depends(detached_actor_from_session),
+]
+
+
+def detached_mutation_actor(
+    request: Request,
+    session: DetachedCurrentSession,
+) -> Actor:
+    settings = settings_from_request(request)
+    require_csrf(
+        session,
+        request.headers.get("X-CSRF-Token"),
+        request.headers.get("Origin"),
+        settings.trusted_origins,
+    )
+    return session.actor
+
+
+DetachedMutationActor = Annotated[
+    Actor,
+    Depends(detached_mutation_actor),
+]
 
 
 def elevated_mutation_actor(session: MutationSession) -> Actor:

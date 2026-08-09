@@ -277,12 +277,14 @@ class SqlAlchemyConfigurationRepository:
         actor_id: UUID,
         decision: ApprovalDecision,
         reason: str,
+        snapshot_digest: str,
     ) -> ConfigurationApproval:
         approval = ConfigurationApproval(
             configuration_version_id=version.id,
             actor_user_id=actor_id,
             decision=decision,
             reviewed_version=version.version,
+            snapshot_digest=snapshot_digest,
             reason=reason,
         )
         self.session.add(approval)
@@ -320,6 +322,7 @@ class SqlAlchemyConfigurationRepository:
                 activated_by_user_id=actor_id,
                 superseded_version_id=active_id,
                 reason=reason,
+                snapshot_digest=approval.snapshot_digest,
                 activated_at=now,
             )
         )

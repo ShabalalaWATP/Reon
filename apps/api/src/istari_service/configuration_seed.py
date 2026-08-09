@@ -8,9 +8,12 @@ from uuid import UUID, uuid5
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from istari_service.configuration_digest import configuration_digest
 from istari_service.configuration_materialisation import materialise_configuration_units
 from istari_service.configuration_models import (
     ApprovedWorkflowDefinition,
+    ConfigurationActivation,
+    ConfigurationApproval,
     ConfigurationCandidateGroup,
     ConfigurationHierarchyEdge,
     ConfigurationRegistry,
@@ -26,6 +29,7 @@ from istari_service.configuration_policy import (
     WORKFLOW_SCHEMA_ID,
 )
 from istari_service.configuration_types import (
+    ApprovalDecision,
     CandidateGroupPurpose,
     ConfigurationStatus,
 )
@@ -54,13 +58,16 @@ async def seed_baseline_configuration(session: AsyncSession) -> bool:
     existing = await session.scalar(select(ConfigurationVersion.id).limit(1))
     if registry.active_version_id is not None or existing is not None:
         return False
-    creator = await session.scalar(
-        select(User)
-        .where(
-            User.role == UserRole.PLATFORM_ADMIN,
-            User.is_active.is_(True),
+    administrators = list(
+        await session.scalars(
+            select(User)
+            .where(
+                User.role == UserRole.PLATFORM_ADMIN,
+                User.is_active.is_(True),
+            )
+            .order_by(User.username)
+            .limit(2)
         )
-        .order_by(User.username)
     )
     units = list(
         await session.scalars(
@@ -70,8 +77,9 @@ async def seed_baseline_configuration(session: AsyncSession) -> bool:
         )
     )
     roots = [unit for unit in units if unit.kind is OrganisationKind.ROOT]
-    if creator is None or not units or len(roots) != 1:
+    if len(administrators) < 2 or not units or len(roots) != 1:
         return False
+    creator, reviewer = administrators
     now = datetime.now(UTC)
     effective_from = min(_aware(unit.created_at) for unit in units)
     workflow = ApprovedWorkflowDefinition(
@@ -90,12 +98,12 @@ async def seed_baseline_configuration(session: AsyncSession) -> bool:
         id=configuration_seed_id("legacy-configuration-v1"),
         sequence=1,
         label="Imported baseline configuration",
-        status=ConfigurationStatus.ACTIVE,
+        status=ConfigurationStatus.DRAFT,
         effective_from=effective_from,
         created_by_user_id=creator.id,
         based_on_version_id=None,
         reason=None,
-        activated_at=now,
+        activated_at=None,
     )
     session.add_all([workflow, version])
     await session.flush()
@@ -125,6 +133,48 @@ async def seed_baseline_configuration(session: AsyncSession) -> bool:
             artefact_types=["LEGACY_TEXT"],
             approved_link_domains=[],
             workflow_definition_id=workflow.id,
+        )
+    )
+    await session.flush()
+    version.status = ConfigurationStatus.VALIDATED
+    version.validated_at = now
+    version.version += 1
+    await session.flush()
+    version.status = ConfigurationStatus.AWAITING_APPROVAL
+    version.submitted_at = now
+    version.reason = "Adopt the synthetic imported baseline configuration."
+    version.version += 1
+    await session.flush()
+    digest = configuration_digest(
+        (
+            await SqlAlchemyConfigurationRepository(session).bundle(version.id)
+        ).specification()
+    )
+    approval = ConfigurationApproval(
+        configuration_version_id=version.id,
+        actor_user_id=reviewer.id,
+        decision=ApprovalDecision.APPROVED,
+        reviewed_version=version.version,
+        snapshot_digest=digest,
+        reason="Independently adopt the synthetic imported baseline.",
+    )
+    session.add(approval)
+    await session.flush()
+    activation_at = max(now, _aware(approval.created_at))
+    version.version += 1
+    version.status = ConfigurationStatus.ACTIVE
+    version.activated_at = activation_at
+    version.version += 1
+    await session.flush()
+    session.add(
+        ConfigurationActivation(
+            configuration_version_id=version.id,
+            approval_id=approval.id,
+            activated_by_user_id=reviewer.id,
+            superseded_version_id=None,
+            reason="Activate the independently reviewed synthetic baseline.",
+            snapshot_digest=digest,
+            activated_at=activation_at,
         )
     )
     registry.active_version_id = version.id

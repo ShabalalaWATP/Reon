@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -27,7 +27,7 @@ export function AdminUserForm({ disabled, onSubmit, pending = false, units, user
   useEffect(() => reset(valuesFor(user)), [reset, user]);
   const role = watch("role");
   const selected = watch("organisationUnitIds");
-  const options = membershipOptions(role, units);
+  const options = useMemo(() => membershipOptions(role, units), [role, units]);
   useEffect(() => {
     const compatible = new Set(options.map((unit) => unit.id));
     const next = selected.filter((id) => compatible.has(id));

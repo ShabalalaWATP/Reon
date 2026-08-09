@@ -5,6 +5,11 @@
 Accepted for implementation on 7 August 2026. Approver membership and emergency
 rollback authority remain named-owner decisions.
 
+The storage, concurrency, approval and request-pinning decision remains current.
+ADR 0018 supersedes only the administrator-facing `version` and `draft`
+terminology. Operators work with the current configuration and proposed changes;
+immutable revisions remain an internal assurance mechanism.
+
 ## Context
 
 The organisation must add, rename, move and retire valid units without code
@@ -18,6 +23,10 @@ Activating configuration must not silently change in-flight requests.
   `Draft`, `Validated`, `Awaiting approval`, `Active`, `Superseded` and `Rejected`
   states. Retain stable unit identifiers, effective-dated names and hierarchy
   edges.
+- Canonicalise semantically unordered values before deterministic comparison.
+  In particular, reminder schedules compare in chronological order, and an
+  unchanged existing staffing shortfall is a validation concern rather than a
+  newly introduced preview change.
 - Validate type and level order, cycles, duplicate identifiers, orphaned units,
   complete Customer-to-team routes, candidate groups, staffing requirements and
   management grants before approval.

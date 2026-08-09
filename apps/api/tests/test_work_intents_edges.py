@@ -42,6 +42,7 @@ def _state() -> tuple[Actor, WorkRecord, Any, Any]:
         display_name="Synthetic Triage",
         role=UserRole.INTAKE_TRIAGE,
         scope="Shared queue",
+        organisation_unit_ids=frozenset({uuid4()}),
     )
     request = SimpleNamespace(
         id=uuid4(),

@@ -42,9 +42,16 @@ def _service(session: DatabaseSession, settings: AppSettings) -> DraftService:
 
 @router.get("", response_model=RequestDraftList)
 async def list_drafts(
-    actor: CurrentActor, session: DatabaseSession, settings: AppSettings
+    actor: CurrentActor,
+    session: DatabaseSession,
+    settings: AppSettings,
+    limit: int = Query(default=50, ge=1, le=100),
+    cursor: str | None = Query(default=None, max_length=500),
 ) -> RequestDraftList:
-    return RequestDraftList(items=await _service(session, settings).list(actor))
+    items, next_cursor = await _service(session, settings).list_page(
+        actor, limit=limit, cursor=cursor
+    )
+    return RequestDraftList(items=items, next_cursor=next_cursor)
 
 
 @router.post("", response_model=RequestDraftView, status_code=status.HTTP_201_CREATED)

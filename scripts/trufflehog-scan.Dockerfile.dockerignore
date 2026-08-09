@@ -1,3 +1,7 @@
 *
 !.git
 !.git/**
+!scripts/
+scripts/*
+!scripts/check-trufflehog-findings.mjs
+!scripts/trufflehog-allowlist.json

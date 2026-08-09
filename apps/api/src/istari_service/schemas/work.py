@@ -176,6 +176,7 @@ class WorkItem(ApiModel):
 
 class WorkItemList(ApiModel):
     items: list[WorkItem]
+    next_cursor: str | None = None
 
 
 class EligibleSpecialist(ApiModel):

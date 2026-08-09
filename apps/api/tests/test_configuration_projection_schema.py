@@ -171,7 +171,9 @@ def test_preview_reports_every_bounded_change_in_stable_order() -> None:
     )
 
     changes = projection.preview_configuration(current, candidate, at=NOW, staffing={})
-    assert {item.type for item in changes} == set(PreviewChangeType)
+    assert {item.type for item in changes} == set(PreviewChangeType) - {
+        PreviewChangeType.RESTORED
+    }
     assert changes == sorted(
         changes, key=lambda item: (item.type.value, item.code, str(item.unit_id))
     )
@@ -237,6 +239,8 @@ NAIVE = NOW.replace(tzinfo=None)
         {"effective_from": datetime(2026, 1, 1, tzinfo=_MissingOffset())},
         {"effective_until": NOW},
         {"code": "lower-case"},
+        {"name": "  x  "},
+        {"name": "Safe\u202eName"},
         {"minimum_managers": -1},
     ],
 )

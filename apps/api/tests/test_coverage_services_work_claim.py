@@ -99,7 +99,6 @@ class FakeWorkRepository:
         self.specialists: list[Actor] = []
         self.found_specialist: Actor | None = None
         self.applied = object()
-        self.validations = 0
         self.pending_type: str | None = None
         self.pending_actor: Actor | None = None
         self.commits = 0
@@ -121,15 +120,6 @@ class FakeWorkRepository:
     async def list_active_specialists(self, delivery_team: str) -> list[Actor]:
         assert delivery_team
         return self.specialists
-
-    async def validate_completion(
-        self,
-        work: WorkRecord,
-        user: Actor,
-        payload: CompletionPayload,
-    ) -> None:
-        del work, user, payload
-        self.validations += 1
 
     async def prepare_claim(self, work: WorkRecord, user: Actor) -> UUID:
         self.pending_type = "claim"

@@ -6,7 +6,9 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from istari_service.configuration_request_policy import load_request_product_policy
+from istari_service.repositories.configuration_policies import (
+    load_request_product_policy,
+)
 
 
 class ProductConfigurationRepositoryMixin:

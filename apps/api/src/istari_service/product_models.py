@@ -109,6 +109,15 @@ class ProductUploadIntent(CreatedMixin, Base):
     __table_args__ = (
         UniqueConstraint("artefact_id", "idempotency_key"),
         UniqueConstraint("object_key"),
+        CheckConstraint(
+            "operation_lease_generation >= 0",
+            name="lease_generation_nonnegative",
+        ),
+        Index(
+            "ix_product_upload_intents_operation_lease",
+            "operation_lease_expires_at",
+            "id",
+        ),
     )
 
     artefact_id: Mapped[UUID] = mapped_column(
@@ -123,6 +132,11 @@ class ProductUploadIntent(CreatedMixin, Base):
     expires_at: Mapped[datetime] = mapped_column(UTC_TS, index=True)
     uploaded_at: Mapped[datetime | None] = mapped_column(UTC_TS)
     consumed_at: Mapped[datetime | None] = mapped_column(UTC_TS)
+    operation_lease_owner: Mapped[str | None] = mapped_column(String(64))
+    operation_lease_generation: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0"
+    )
+    operation_lease_expires_at: Mapped[datetime | None] = mapped_column(UTC_TS)
 
 
 class ProductScan(CreatedMixin, Base):

@@ -9,9 +9,6 @@ from uuid import UUID
 from sqlalchemy import ColumnElement, and_, delete, exists, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from istari_service.configuration_request_policy import (
-    load_request_configuration_policy,
-)
 from istari_service.domain import Actor
 from istari_service.errors import InvalidAction
 from istari_service.models import RequestStatus, ServiceRequest, UserRole
@@ -20,11 +17,15 @@ from istari_service.organisation_models import (
     OrganisationUnit,
     RequestRouteSelection,
     StaffingStatus,
-    UserOrganisationMembership,
+)
+from istari_service.repositories.configuration_policies import (
+    load_request_configuration_policy,
 )
 from istari_service.repositories.organisation_tracking import tracked_requests
+from istari_service.repositories.routing_options import routing_workspace
 from istari_service.schemas.organisation import (
     OrganisationUnitView,
+    RoutingOptionsWorkspace,
     TrackedRequest,
 )
 from istari_service.schemas.work import (
@@ -72,38 +73,32 @@ class SqlAlchemyOrganisationRepository:
         request_id: UUID,
         status: RequestStatus,
     ) -> list[OrganisationUnitView]:
-        parent_position, expected_kind = _option_spec(status)
-        if parent_position is None or expected_kind is None:
-            return []
-        parent_id = await self._session.scalar(
-            select(RequestRouteSelection.unit_id).where(
-                RequestRouteSelection.request_id == request_id,
-                RequestRouteSelection.position == parent_position,
-            )
-        )
-        if parent_id is None:
-            return []
-        policy = await load_request_configuration_policy(self._session, request_id)
-        if policy is not None:
-            return policy.routing_options(parent_id, expected_kind)
-        units = (
-            await self._session.scalars(
-                select(OrganisationUnit)
-                .where(
-                    OrganisationUnit.parent_id == parent_id,
-                    OrganisationUnit.kind == expected_kind,
-                    OrganisationUnit.is_configured.is_(True),
-                )
-                .order_by(OrganisationUnit.sort_order, OrganisationUnit.id)
-            )
-        ).all()
-        return [OrganisationUnitView.model_validate(unit) for unit in units]
+        return (await self.routing_workspace(request_id, status)).items
+
+    async def routing_workspace(
+        self,
+        request_id: UUID,
+        status: RequestStatus,
+    ) -> RoutingOptionsWorkspace:
+        return await routing_workspace(self._session, request_id, status)
 
     async def list_tracked_requests(self, actor: Actor) -> list[TrackedRequest]:
+        items, _cursor = await self.page_tracked_requests(actor, limit=100, cursor=None)
+        return items
+
+    async def page_tracked_requests(
+        self,
+        actor: Actor,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> tuple[list[TrackedRequest], str | None]:
         membership = route_membership_condition(actor)
         if membership is None:
-            return []
-        return await tracked_requests(self._session, membership)
+            return [], None
+        return await tracked_requests(
+            self._session, membership, limit=limit, cursor=cursor
+        )
 
 
 async def resolve_routing_selection(
@@ -214,18 +209,18 @@ def route_membership_condition(actor: Actor) -> ColumnElement[bool] | None:
     position = ROUTE_POSITION_BY_ROLE.get(actor.role)
     if position is None:
         return None
+    unit_ids = actor.organisation_unit_ids
+    if not unit_ids:
+        return ServiceRequest.id.is_(None)
     if position == 3:
         stable_membership = exists().where(
-            UserOrganisationMembership.user_id == actor.id,
-            UserOrganisationMembership.unit_id
-            == ServiceRequest.assigned_delivery_team_id,
+            ServiceRequest.assigned_delivery_team_id.in_(unit_ids),
             RequestRouteSelection.request_id == ServiceRequest.id,
             RequestRouteSelection.position == position,
             RequestRouteSelection.unit_id == ServiceRequest.assigned_delivery_team_id,
         )
         routed_membership = exists().where(
-            UserOrganisationMembership.user_id == actor.id,
-            UserOrganisationMembership.unit_id == RequestRouteSelection.unit_id,
+            RequestRouteSelection.unit_id.in_(unit_ids),
             RequestRouteSelection.request_id == ServiceRequest.id,
             RequestRouteSelection.position == position,
         )
@@ -240,8 +235,7 @@ def route_membership_condition(actor: Actor) -> ColumnElement[bool] | None:
             ),
         )
     return exists().where(
-        UserOrganisationMembership.user_id == actor.id,
-        UserOrganisationMembership.unit_id == RequestRouteSelection.unit_id,
+        RequestRouteSelection.unit_id.in_(unit_ids),
         RequestRouteSelection.request_id == ServiceRequest.id,
         RequestRouteSelection.position == position,
     )
@@ -257,54 +251,31 @@ async def has_route_membership(
     position = ROUTE_POSITION_BY_ROLE.get(actor.role)
     if position is None:
         return True
+    if not actor.organisation_unit_ids:
+        return False
     if position == 3:
         team_id = await session.scalar(
             select(ServiceRequest.assigned_delivery_team_id).where(
                 ServiceRequest.id == request_id
             )
         )
-        if team_id is not None:
-            query = (
-                select(UserOrganisationMembership.id)
-                .join(
-                    RequestRouteSelection,
-                    RequestRouteSelection.unit_id == UserOrganisationMembership.unit_id,
-                )
-                .where(
-                    UserOrganisationMembership.user_id == actor.id,
-                    UserOrganisationMembership.unit_id == team_id,
-                    RequestRouteSelection.request_id == request_id,
-                    RequestRouteSelection.position == position,
-                )
+        if team_id is not None and team_id in actor.organisation_unit_ids:
+            query = select(RequestRouteSelection.id).where(
+                RequestRouteSelection.unit_id == team_id,
+                RequestRouteSelection.request_id == request_id,
+                RequestRouteSelection.position == position,
             )
             if lock:
                 query = query.with_for_update()
             return await session.scalar(query) is not None
-    query = (
-        select(UserOrganisationMembership.id)
-        .join(
-            RequestRouteSelection,
-            RequestRouteSelection.unit_id == UserOrganisationMembership.unit_id,
-        )
-        .where(
-            UserOrganisationMembership.user_id == actor.id,
-            RequestRouteSelection.request_id == request_id,
-            RequestRouteSelection.position == position,
-        )
+    query = select(RequestRouteSelection.id).where(
+        RequestRouteSelection.request_id == request_id,
+        RequestRouteSelection.position == position,
+        RequestRouteSelection.unit_id.in_(actor.organisation_unit_ids),
     )
     if lock:
         query = query.with_for_update()
     return await session.scalar(query) is not None
-
-
-def _option_spec(
-    status: RequestStatus,
-) -> tuple[int | None, OrganisationKind | None]:
-    return {
-        RequestStatus.TRIAGE_REVIEW: (0, OrganisationKind.COMMAND),
-        RequestStatus.COORDINATION_REVIEW: (1, OrganisationKind.OPS_GROUP),
-        RequestStatus.ALLOCATION_REVIEW: (2, OrganisationKind.TEAM),
-    }.get(status, (None, None))
 
 
 def _routing_spec(

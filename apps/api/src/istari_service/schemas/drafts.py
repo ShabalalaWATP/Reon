@@ -76,3 +76,4 @@ class RequestDraftView(ApiModel):
 
 class RequestDraftList(ApiModel):
     items: list[RequestDraftView]
+    next_cursor: str | None = None

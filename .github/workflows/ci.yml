@@ -97,10 +97,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: trufflesecurity/trufflehog@6f3c981e7b77f235fd2702dd74af25fc4b72bf11 # v3.96.0
-        with:
-          version: 3.96.0
-          extra_args: --results=verified,unknown
+      - name: Scan reachable history with exact expiring exceptions
+        run: >-
+          docker build --file scripts/trufflehog-scan.Dockerfile
+          --target gate .
 
   dependency-review:
     name: Pull request dependency review
@@ -242,19 +242,74 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: docker compose config --quiet
-      - run: docker compose build api web
+      - run: docker compose build api web postgres orchestration clamav
+      - name: Validate signed ClamAV definition age
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(docker image inspect istari/clamav-local:1.5.3 --format '{{.Config.User}}')" = "100:101"
+          docker run --rm --network none \
+            --entrypoint sh \
+            --env CLAMAV_HEALTH_CHECK_DAEMON=false \
+            --env CLAMAV_SIGNATURE_MAX_AGE_HOURS=48 \
+            istari/clamav-local:1.5.3 \
+            -c 'touch /var/lib/clamav/daily.cvd; if output="$(istari-clamav-healthcheck 4102444800 2>&1)"; then exit 1; fi; printf "%s\n" "$output" | grep -Fq "signatures exceed the permitted age"'
+      - name: Validate migration reversibility and metadata
+        run: |
+          set -euo pipefail
+          docker compose up --detach --wait postgres
+          docker compose run --rm --no-deps migrator
+          docker compose run --rm --no-deps migrator alembic downgrade -1
+          docker compose run --rm --no-deps migrator alembic upgrade head
+          docker compose run --rm --no-deps api alembic check
       - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
         with:
           image-ref: istari-service-local-api
           severity: HIGH,CRITICAL
-          ignore-unfixed: true
           exit-code: "1"
       - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
         with:
           image-ref: istari-service-local-web
           severity: HIGH,CRITICAL
-          ignore-unfixed: true
           exit-code: "1"
+      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: istari/postgres-local:17.10-alpine3.23
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: istari/camunda-local:8.9.14
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: istari/clamav-local:1.5.3
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - name: Generate CycloneDX image SBOMs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p sbom
+          while IFS='=' read -r name image; do
+            trivy image --format cyclonedx --output "sbom/${name}.cdx.json" "$image"
+          done <<'IMAGES'
+          api=istari-service-local-api
+          web=istari-service-local-web
+          postgres=istari/postgres-local:17.10-alpine3.23
+          camunda=istari/camunda-local:8.9.14
+          clamav=istari/clamav-local:1.5.3
+          IMAGES
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: container-sboms
+          path: sbom/*.cdx.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Tear down validation services
+        if: always()
+        run: docker compose down --volumes --remove-orphans --timeout 20
 
 # The bounded smoke job starts the data and workflow services only. Full product
 # topology and browser journeys remain separate verification stages.

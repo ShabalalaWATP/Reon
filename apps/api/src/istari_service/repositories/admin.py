@@ -6,7 +6,7 @@ import re
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import delete, func, or_, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.admin_models import AdminIdentitySequence
@@ -30,7 +30,7 @@ from istari_service.organisation_models import (
     StaffingStatus,
     UserOrganisationMembership,
 )
-from istari_service.schemas.admin import AdminMembership, AdminUser
+from istari_service.repositories.admin_reads import AdminReadRepositoryMixin
 
 ADMIN_USERNAME = re.compile(r"admin([1-9][0-9]*)")
 ACTIVE_WORK_STATUSES = {
@@ -41,32 +41,9 @@ ACTIVE_WORK_STATUSES = {
 }
 
 
-class SqlAlchemyAdminRepository:
+class SqlAlchemyAdminRepository(AdminReadRepositoryMixin):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
-
-    async def list_users(self, query: str | None) -> list[User]:
-        statement = select(User)
-        normalised = (query or "").strip().lower()
-        if normalised:
-            statement = statement.where(
-                or_(
-                    func.lower(User.username).contains(normalised, autoescape=True),
-                    func.lower(User.display_name).contains(normalised, autoescape=True),
-                )
-            )
-        return list(
-            await self.session.scalars(statement.order_by(User.username, User.id))
-        )
-
-    async def get_user(self, user_id: UUID, *, lock: bool = False) -> User:
-        query = select(User).where(User.id == user_id)
-        if lock:
-            query = query.with_for_update()
-        user = await self.session.scalar(query)
-        if user is None:
-            raise ObjectNotFound()
-        return user
 
     async def locked_user(self, user_id: UUID, version: int) -> User:
         user = await self.get_user(user_id, lock=True)
@@ -297,47 +274,3 @@ class SqlAlchemyAdminRepository:
                 )
                 .values(assigned_delivery_team=new_name)
             )
-
-    async def views(self, users: list[User]) -> list[AdminUser]:
-        if not users:
-            return []
-        rows = (
-            await self.session.execute(
-                select(
-                    UserOrganisationMembership.user_id,
-                    OrganisationUnit.id,
-                    OrganisationUnit.name,
-                    OrganisationUnit.kind,
-                )
-                .join(
-                    OrganisationUnit,
-                    OrganisationUnit.id == UserOrganisationMembership.unit_id,
-                )
-                .where(UserOrganisationMembership.user_id.in_({u.id for u in users}))
-                .order_by(OrganisationUnit.sort_order, OrganisationUnit.id)
-            )
-        ).all()
-        memberships: dict[UUID, list[AdminMembership]] = {u.id: [] for u in users}
-        for user_id, unit_id, name, kind in rows:
-            memberships[user_id].append(
-                AdminMembership(
-                    organisation_unit_id=unit_id,
-                    organisation_unit_name=name,
-                    organisation_unit_kind=kind,
-                )
-            )
-        return [
-            AdminUser(
-                id=user.id,
-                username=user.username,
-                display_name=user.display_name,
-                role=user.role,
-                scope=user.scope,
-                is_active=user.is_active,
-                version=user.version,
-                created_at=user.created_at,
-                updated_at=user.updated_at,
-                memberships=memberships[user.id],
-            )
-            for user in users
-        ]

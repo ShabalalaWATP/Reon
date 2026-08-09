@@ -54,6 +54,7 @@ class RequestAnalyticsFact(Base):
         Index("ix_request_facts_command_received", "command_unit_id", "received_at"),
         Index("ix_request_facts_ops_received", "ops_unit_id", "received_at"),
         Index("ix_request_facts_team_received", "team_unit_id", "received_at"),
+        Index("ix_analytics_team_request", "team_unit_id", "request_id"),
     )
 
     request_id: Mapped[UUID] = mapped_column(

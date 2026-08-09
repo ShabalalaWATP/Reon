@@ -13,7 +13,7 @@ export const roleRoutes: Record<UserRole, string> = {
   QUALITY_RELEASE: "/quality-release",
 };
 
-export const queueRoutes: Partial<Record<UserRole, string>> = {
+const queueRoutes: Partial<Record<UserRole, string>> = {
   INTAKE_TRIAGE: "/triage",
   SERVICE_COORDINATION: "/coordination",
   OPERATIONS_ALLOCATION: "/allocation",
@@ -34,6 +34,13 @@ export const roleLabels: Record<UserRole, string> = {
 };
 
 export type NavigationItem = { label: string; path: string };
+
+export function isNavigationItemActive(pathname: string, path: string) {
+  if (path === "/requests") {
+    return pathname === path || /^\/requests\/(?!new(?:\/|$))/u.test(pathname);
+  }
+  return pathname === path || pathname.startsWith(`${path}/`);
+}
 export const trackingRoles: UserRole[] = [
   "INTAKE_TRIAGE",
   "SERVICE_COORDINATION",

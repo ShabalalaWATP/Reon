@@ -1,4 +1,4 @@
-"""Safe process-local private object storage for development and tests."""
+"""In-memory managed-product storage used only by tests."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from istari_service.product_types import DownloadStream, StoredObject, UploadGra
 
 
 class InMemoryPrivateObjectStorage:
-    """Bounded private storage with no URL or filesystem exposure."""
+    """Bounded fake storage with no URL or filesystem exposure."""
 
     def __init__(self) -> None:
         self._quarantine: dict[str, tuple[StoredObject, bytes]] = {}
@@ -69,7 +69,7 @@ class InMemoryPrivateObjectStorage:
 
     async def promote(self, quarantine_key: str, released_key: str) -> None:
         try:
-            self._released[released_key] = self._quarantine.pop(quarantine_key)
+            self._released[released_key] = self._quarantine[quarantine_key]
         except KeyError as exc:
             raise ProductDependencyUnavailable() from exc
 

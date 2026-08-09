@@ -137,6 +137,7 @@ class RequestDetail(RequestSummary):
     assigned_delivery_team: str | None
     assigned_specialist: RequesterView | None
     events: list[RequestEventView]
+    events_next_cursor: str | None = None
     deliverable: DeliverableView | None
     feedback: FeedbackView | None
     clarifications: list[ClarificationThreadView]
@@ -145,3 +146,4 @@ class RequestDetail(RequestSummary):
 
 class RequestList(ApiModel):
     items: list[RequestSummary]
+    next_cursor: str | None = None

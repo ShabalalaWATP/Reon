@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import Select, or_, select, text
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
@@ -227,7 +227,13 @@ class SqlAlchemyStatisticsRepository:
         bind = self._session.get_bind()
         if bind.dialect.name == "postgresql":
             await self._session.execute(
-                text(f"SET LOCAL statement_timeout = {STATEMENT_TIMEOUT_MS}")
+                select(
+                    func.set_config(
+                        "statement_timeout",
+                        str(STATEMENT_TIMEOUT_MS),
+                        True,
+                    )
+                )
             )
 
     @staticmethod

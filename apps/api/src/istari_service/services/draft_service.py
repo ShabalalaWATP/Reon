@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 from typing import Protocol
 from uuid import UUID
 
@@ -21,6 +22,13 @@ class DraftRepository(Protocol):
     async def list_for_requester(
         self, requester_id: UUID
     ) -> list[RequestDraftView]: ...
+    async def page_for_requester(
+        self,
+        requester_id: UUID,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> tuple[list[RequestDraftView], str | None]: ...
     async def get(
         self, draft_id: UUID, requester_id: UUID
     ) -> RequestDraftView | None: ...
@@ -70,6 +78,18 @@ class DraftService:
     async def list(self, actor: Actor) -> list[RequestDraftView]:
         self._require_customer(actor)
         return await self._repository.list_for_requester(actor.id)
+
+    async def list_page(
+        self,
+        actor: Actor,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> tuple[builtins.list[RequestDraftView], str | None]:
+        self._require_customer(actor)
+        return await self._repository.page_for_requester(
+            actor.id, limit=limit, cursor=cursor
+        )
 
     async def get(self, actor: Actor, draft_id: UUID) -> RequestDraftView:
         self._require_customer(actor)

@@ -1,5 +1,9 @@
 # Pilot baseline decisions
 
+> Historical MVP baseline. Rows describing 72 users or plain-text products are
+> retained as the decision made at that time. They do not describe the current
+> Product Evolution release candidate.
+
 ## Purpose
 
 This register fixes the implemented local test-MVP baseline and makes the
@@ -15,7 +19,7 @@ Recorded on 7 August 2026.
 | --- | --- | --- | --- | --- | --- |
 | BL-01 | The pilot contains synthetic, public-safe information only. Real operational, personal, sensitive or classified content is prohibited | Allows representative workflow testing without creating an information-handling system by implication | Product and security owners | PENDING NOMINATION | Implemented, acceptance required |
 | BL-02 | The pilot uses the 72 documented Scottish-football identities and local-only `admin` passwords. The credentials must never leave local/test | Meets the requested test-account model while clearly excluding it from production identity | Product and security owners | PENDING NOMINATION | Implemented, acceptance required |
-| BL-03 | PostgreSQL 17.9 is the system of record and Camunda 8.9.14 coordinates human tasks. Camunda does not choose routes or approve work | Keeps business state durable and human routing explicit | Technical and workflow owners | PENDING NOMINATION | Implemented, acceptance required |
+| BL-03 | PostgreSQL 17.10 is the system of record and Camunda 8.9.14 coordinates human tasks. Camunda does not choose routes or approve work | Keeps business state durable and human routing explicit | Technical and workflow owners | PENDING NOMINATION | Implemented, acceptance required |
 | BL-04 | The initial primary route is JIOC, DIGOC, NCGI-A Ops and OSG Team. Every configured sibling route remains selectable and separately staffed | Proves the organisation model can expand without embedding an OSG fallback | Product owner | PENDING NOMINATION | Implemented, acceptance required |
 | BL-05 | Products are UTF-8 plain-text downloads generated and stored by the service. Binary attachments and arbitrary external product links are excluded | Avoids unapproved upload, malware, active-content and external-fetch risks | Product and security owners | PENDING NOMINATION | Implemented, acceptance required |
 | BL-06 | Customer submission fields, feedback rating and feedback comments are mandatory. Drafts may remain incomplete until submission | Protects submitted-data quality while preserving private work in progress | Product owner | PENDING NOMINATION | Implemented, acceptance required |

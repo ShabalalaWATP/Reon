@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
-from dataclasses import replace
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
@@ -15,12 +15,12 @@ from istari_service.database import (
     create_schema,
     create_session_factory,
 )
-from istari_service.errors import InvalidAction
 from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
 from istari_service.organisation_models import UserOrganisationMembership
 from istari_service.organisation_seed import organisation_id, seed_organisation_units
 from istari_service.repositories.work import SqlAlchemyWorkRepository
 from istari_service.schemas.work import ProgressRequest
+from istari_service.team_models import TeamMembership
 from test_work_repository import (
     actor_from,
     make_user,
@@ -71,6 +71,21 @@ async def test_specialist_listing_is_active_team_scoped_and_ordered(
                 for user in [second, first, inactive, another_team, wrong_role]
             ]
         )
+        now = datetime.now(UTC)
+        session.add_all(
+            [
+                TeamMembership(
+                    user_id=user.id,
+                    team_id=organisation_id(
+                        "CEDAR_TEAM" if user is another_team else "OSG_TEAM"
+                    ),
+                    effective_from=now,
+                    start_projected_at=now,
+                    start_reason="Synthetic test membership.",
+                )
+                for user in [second, first, inactive, another_team, wrong_role]
+            ]
+        )
         await session.flush()
 
         actors = await SqlAlchemyWorkRepository(session).list_active_specialists(
@@ -80,40 +95,6 @@ async def test_specialist_listing_is_active_team_scoped_and_ordered(
             "Synthetic Alpha",
             "Synthetic Bravo",
         ]
-
-
-@pytest.mark.asyncio
-async def test_validate_completion_handles_present_and_missing_request(
-    work_database: tuple[AsyncEngine, async_sessionmaker[AsyncSession]],
-) -> None:
-    _, factory = work_database
-    async with factory() as session:
-        worker, _, _, task = await seed_work(
-            session,
-            RequestStatus.TRIAGE_REVIEW,
-            UserRole.INTAKE_TRIAGE,
-            claimed=True,
-        )
-        repository = SqlAlchemyWorkRepository(session)
-        bundle = await repository.get(task.id)
-        assert bundle is not None
-        payload = ProgressRequest(
-            action="progress",
-            category="Research",
-            priority="LOW",
-            destination_unit_id=uuid4(),
-        )
-        await repository.validate_completion(bundle.record, actor_from(worker), payload)
-        missing_request = replace(
-            bundle.record.request,
-            id=uuid4(),
-        )
-        with pytest.raises(InvalidAction):
-            await repository.validate_completion(
-                replace(bundle.record, request=missing_request),
-                actor_from(worker),
-                payload,
-            )
 
 
 @pytest.mark.asyncio
@@ -134,7 +115,7 @@ async def test_nonterminal_completion_can_wait_for_reconciliation(
         assert bundle is not None
         detail = await repository.apply_completion(
             bundle.record,
-            actor_from(worker),
+            actor_from(worker, organisation_id("JIOC")),
             ProgressRequest(
                 action="progress",
                 category="Research",

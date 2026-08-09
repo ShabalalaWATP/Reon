@@ -1,16 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
+import { lazy, Suspense } from "react";
 import { NavLink, Navigate, useNavigate, useParams } from "react-router";
 
 import { PageState } from "../../components/PageState";
-import { CalendarPage } from "../calendar/CalendarPage";
-import { TeamBoardPage } from "../board/TeamBoardPage";
-import { TeamPlanningPage } from "../board/TeamPlanningPage";
 import { api } from "../../lib/api/client";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import { useAuth } from "../../lib/auth/AuthProvider";
 import { useCapabilities } from "../../lib/capabilities/useCapabilities";
 import { TeamActivityPanel } from "./TeamActivityPanel";
 import { TeamPeoplePanel } from "./TeamPeoplePanel";
+
+const CalendarPage = lazy(() => import("../calendar/CalendarPage")
+  .then(({ CalendarPage: page }) => ({ default: page })));
+const TeamBoardPage = lazy(() => import("../board/TeamBoardPage")
+  .then(({ TeamBoardPage: page }) => ({ default: page })));
+const TeamPlanningPage = lazy(() => import("../board/TeamPlanningPage")
+  .then(({ TeamPlanningPage: page }) => ({ default: page })));
 
 const views = [
   ["overview", "Overview"],
@@ -64,12 +69,14 @@ export function TeamWorkspacePage() {
       <nav aria-label="Team workspace views" className="team-tabs">
         {availableViews.map(([key, label]) => <NavLink className={({ isActive }) => isActive ? "team-tab team-tab--active" : "team-tab"} key={key} to={`/teams/${selected.teamId}/${key}`}>{label}</NavLink>)}
       </nav>
-      {view === "overview" ? <TeamOverview teamId={selected.teamId} userId={userId} /> : null}
-      {view === "people" ? <TeamPeoplePanel access={selected} userId={userId} /> : null}
-      {view === "activity" ? <TeamActivityPanel teamId={selected.teamId} userId={userId} /> : null}
-      {view === "board" ? <TeamBoardPage access={selected} /> : null}
-      {view === "calendar" ? <CalendarPage access={selected} /> : null}
-      {view === "planning" && capabilities.planning ? <TeamPlanningPage access={selected} /> : null}
+      <Suspense fallback={<PageState kind="loading" title="Opening team workspace view" />}>
+        {view === "overview" ? <TeamOverview teamId={selected.teamId} userId={userId} /> : null}
+        {view === "people" ? <TeamPeoplePanel access={selected} userId={userId} /> : null}
+        {view === "activity" ? <TeamActivityPanel teamId={selected.teamId} userId={userId} /> : null}
+        {view === "board" ? <TeamBoardPage access={selected} /> : null}
+        {view === "calendar" ? <CalendarPage access={selected} /> : null}
+        {view === "planning" && capabilities.planning ? <TeamPlanningPage access={selected} /> : null}
+      </Suspense>
     </main>
   );
 }

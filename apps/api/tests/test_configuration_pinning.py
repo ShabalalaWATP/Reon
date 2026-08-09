@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import event, func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from configuration_support import (
@@ -22,6 +22,7 @@ from istari_service.configuration_models import (
     ConfigurationRegistry,
     RequestConfigurationPin,
 )
+from istari_service.configuration_readiness import configuration_runtime_is_ready
 from istari_service.configuration_request_policy import (
     REQUEST_POLICY_SCHEMA,
     canonical_link_domains,
@@ -39,10 +40,10 @@ from istari_service.repositories.configuration import (
 from istari_service.repositories.configuration_pins import (
     SqlAlchemyConfigurationPinRepository,
 )
-from istari_service.schemas.configuration import ConfigurationReasonCommand
-from istari_service.services.configuration_pinning_service import (
-    ConfigurationPinningService,
+from istari_service.repositories.configuration_policies import (
+    load_request_configuration_policies,
 )
+from istari_service.schemas.configuration import ConfigurationReasonCommand
 
 
 @pytest.fixture
@@ -72,12 +73,10 @@ async def test_new_requests_pin_once_across_configuration_supersession(
         first_request = make_request(actors.requester_id)
         session.add(first_request)
         await session.flush()
-        pins = ConfigurationPinningService(
-            SqlAlchemyConfigurationPinRepository(session)
-        )
-        first_pin = await pins.pin_new_request(first_request.id, now=actors.now)
-        repeated = await pins.pin_new_request(first_request.id, now=actors.now)
-        assert repeated == first_pin
+        pins = SqlAlchemyConfigurationPinRepository(session)
+        first_pin = await pins.pin_request(first_request.id, now=actors.now)
+        repeated = await pins.pin_request(first_request.id, now=actors.now)
+        assert repeated.id == first_pin.id
         stored_first = await session.scalar(
             select(RequestConfigurationPin).where(
                 RequestConfigurationPin.request_id == first_request.id
@@ -104,14 +103,14 @@ async def test_new_requests_pin_once_across_configuration_supersession(
         activated = await activate_second_configuration(session, settings, actors)
 
         assert (
-            await pins.pin_new_request(
+            await pins.pin_request(
                 first_request.id, now=actors.now + timedelta(minutes=1)
             )
         ).configuration_version_id == first_pin.configuration_version_id
         second_request = make_request(actors.requester_id)
         session.add(second_request)
         await session.flush()
-        second_pin = await pins.pin_new_request(
+        second_pin = await pins.pin_request(
             second_request.id, now=actors.now + timedelta(minutes=1)
         )
         assert second_pin.configuration_version_id == activated.id
@@ -163,6 +162,50 @@ async def test_pinning_requires_an_effective_active_configuration(
 
 
 @pytest.mark.asyncio
+async def test_request_policies_are_loaded_in_one_statement(
+    pinning_database: tuple[AsyncEngine, async_sessionmaker[AsyncSession], Settings],
+) -> None:
+    engine, sessions, _ = pinning_database
+    async with sessions() as session, session.begin():
+        actors = await seed_configuration_context(session)
+        await _set_active_workflow_availability(session, available=True)
+        requests = [make_request(actors.requester_id) for _ in range(3)]
+        session.add_all(requests)
+        await session.flush()
+        repository = SqlAlchemyConfigurationPinRepository(session)
+        for request in requests:
+            await repository.pin_request(request.id, now=actors.now)
+
+        statements: list[str] = []
+
+        def capture_statement(
+            _connection: object,
+            _cursor: object,
+            statement: str,
+            _parameters: object,
+            _context: object,
+            _executemany: bool,
+        ) -> None:
+            if "request_configuration_pins" in statement:
+                statements.append(statement)
+
+        event.listen(engine.sync_engine, "before_cursor_execute", capture_statement)
+        try:
+            policies = await load_request_configuration_policies(
+                session, {request.id for request in requests} | {uuid4()}
+            )
+        finally:
+            event.remove(
+                engine.sync_engine,
+                "before_cursor_execute",
+                capture_statement,
+            )
+
+        assert set(policies) == {request.id for request in requests}
+        assert len(statements) == 1
+
+
+@pytest.mark.asyncio
 async def test_pin_rechecks_after_a_prior_transaction_and_requires_request_row(
     pinning_database: tuple[AsyncEngine, async_sessionmaker[AsyncSession], Settings],
 ) -> None:
@@ -210,6 +253,33 @@ async def test_pin_rejects_an_unavailable_active_workflow(
         ):
             await repository.pin_request(request.id, now=actors.now)
         assert await session.scalar(select(RequestConfigurationPin.id)) is None
+
+
+@pytest.mark.asyncio
+async def test_runtime_and_new_pins_reject_mismatched_snapshot_evidence(
+    pinning_database: tuple[AsyncEngine, async_sessionmaker[AsyncSession], Settings],
+) -> None:
+    _, sessions, _ = pinning_database
+    async with sessions() as session, session.begin():
+        actors = await seed_configuration_context(session)
+        await _set_active_workflow_availability(session, available=True)
+        approval = await session.scalar(select(ConfigurationApproval))
+        assert approval is not None
+        await session.execute(
+            update(ConfigurationApproval)
+            .where(ConfigurationApproval.id == approval.id)
+            .values(snapshot_digest="0" * 64)
+        )
+        request = make_request(actors.requester_id)
+        session.add(request)
+        await session.flush()
+
+        assert not await configuration_runtime_is_ready(session, now=actors.now)
+        with pytest.raises(RuntimeError, match="approval evidence is invalid"):
+            await SqlAlchemyConfigurationPinRepository(session).pin_request(
+                request.id,
+                now=actors.now,
+            )
 
 
 @pytest.mark.asyncio

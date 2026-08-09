@@ -116,6 +116,33 @@ describe("canonical workforce calendar", () => {
     expect(screen.queryByRole("button", { name: "Edit occurrence" })).not.toBeInTheDocument();
   });
 
+  it("resets editable values when a different occurrence is selected", async () => {
+    const first = occurrence({ eventId: "event-first", title: "First planning block" });
+    const secondStart = tomorrow(14);
+    const second = occurrence({
+      eventId: "event-second",
+      occurrenceStart: secondStart,
+      startsAt: secondStart,
+      endsAt: tomorrow(16),
+      title: "Second planning block",
+    });
+    mockCalendar(analystSession, analystAccess, [first, second], []);
+    const user = userEvent.setup();
+    renderApp("/calendar/agenda");
+
+    await user.click(await screen.findByRole("button", { name: /First planning block/ }));
+    await user.click(screen.getByRole("button", { name: "Edit occurrence" }));
+    const firstDetail = screen.getByRole("complementary", { name: "First planning block" });
+    const firstTitle = within(firstDetail).getByLabelText(/^Title/);
+    await user.clear(firstTitle);
+    await user.type(firstTitle, "Unsaved first occurrence value");
+
+    await user.click(screen.getByRole("button", { name: /Second planning block/ }));
+    await user.click(screen.getByRole("button", { name: "Edit occurrence" }));
+    const secondDetail = screen.getByRole("complementary", { name: "Second planning block" });
+    expect(within(secondDetail).getByLabelText(/^Title/)).toHaveValue("Second planning block");
+  });
+
   it("recovers from a failed load and supports bounded navigation and recurring personal events", async () => {
     const calls: Array<{ path: string; body: Record<string, unknown> }> = [];
     mockCalendar(analystSession, analystAccess, [], calls, { calendarFailures: 1 });
@@ -141,6 +168,8 @@ describe("canonical workforce calendar", () => {
     await user.selectOptions(screen.getByLabelText(/^Category/), "TRAINING");
     await user.selectOptions(screen.getByLabelText(/^Privacy/), "AVAILABILITY_ONLY");
     await user.selectOptions(screen.getByLabelText(/^Time zone/), "Europe/Paris");
+    fireEvent.change(screen.getByLabelText(/^Starts/), { target: { value: localTomorrow(12) } });
+    fireEvent.change(screen.getByLabelText(/^Ends/), { target: { value: localTomorrow(14) } });
     await user.selectOptions(screen.getByLabelText(/^Repeats/), "WEEKLY");
     fireEvent.change(screen.getByLabelText(/^Repeat interval/), { target: { value: "2" } });
     fireEvent.change(screen.getByLabelText(/^Repeat until/), { target: { value: localTomorrow(18) } });

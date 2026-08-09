@@ -21,9 +21,9 @@ from istari_service.errors import InvalidAction, ObjectNotFound, StaleVersion
 from istari_service.models import User, UserRole
 from istari_service.organisation_models import (
     OrganisationUnit,
-    UserOrganisationMembership,
 )
 from istari_service.repositories.actions import SqlAlchemyActionRepository
+from istari_service.repositories.auth import actor_from_user_with_memberships
 from istari_service.repositories.projection_pagination import InvalidProjectionQuery
 from istari_service.routers.actions import (
     create_action_view,
@@ -41,13 +41,14 @@ from istari_service.services.action_service import (
     ActionProjectionCommand,
     ActionService,
 )
+from istari_service.team_models import TeamMembership
 
 
 async def _actor(harness: ApiHarness, username: str) -> Actor:
     async with harness.sessions() as session:
         user = await session.scalar(select(User).where(User.username == username))
         assert user is not None
-        return Actor(user.id, user.username, user.display_name, user.role, user.scope)
+        return await actor_from_user_with_memberships(session, user)
 
 
 def _command(
@@ -196,22 +197,23 @@ async def test_action_role_membership_and_account_are_rechecked(
         assert sibling_items == []
 
         await session.execute(
-            delete(UserOrganisationMembership).where(
-                UserOrganisationMembership.user_id == manager.id,
-                UserOrganisationMembership.unit_id == team_id,
+            delete(TeamMembership).where(
+                TeamMembership.user_id == manager.id,
+                TeamMembership.team_id == team_id,
             )
         )
-        removed_items, _ = await repository.list_actions(
-            manager, ActionFilters(), limit=10, cursor=None
-        )
-        assert removed_items == []
         user = await session.get(User, manager.id)
         assert user is not None
+        removed_manager = await actor_from_user_with_memberships(session, user)
+        removed_items, _ = await repository.list_actions(
+            removed_manager, ActionFilters(), limit=10, cursor=None
+        )
+        assert removed_items == []
         user.is_active = False
         await session.flush()
         with pytest.raises(ObjectNotFound):
             await repository.list_actions(
-                manager, ActionFilters(), limit=10, cursor=None
+                removed_manager, ActionFilters(), limit=10, cursor=None
             )
 
 

@@ -17,7 +17,7 @@ from istari_service.models import (
     UserRole,
     WorkflowTaskStatus,
 )
-from istari_service.schemas.organisation import OrganisationUnitView
+from istari_service.schemas.organisation import RoutingOptionsWorkspace
 from istari_service.schemas.work import (
     CloseRequest,
     CompletionPayload,
@@ -254,9 +254,9 @@ class RoutingRepository(FakeWorkRepository):
     async def routing_options(
         self,
         work: WorkRecord,
-    ) -> list[OrganisationUnitView]:
+    ) -> RoutingOptionsWorkspace:
         self.routed_work = work
-        return []
+        return RoutingOptionsWorkspace(route=[], items=[])
 
 
 async def test_work_service_routing_options_are_concealed_until_valid() -> None:
@@ -280,7 +280,9 @@ async def test_work_service_routing_options_are_concealed_until_valid() -> None:
         await service.routing_options(requester, repository.value.record.id)
 
     repository.value = bundle(triage)
-    assert await service.routing_options(triage, repository.value.record.id) == []
+    assert await service.routing_options(
+        triage, repository.value.record.id
+    ) == RoutingOptionsWorkspace(route=[], items=[])
     assert repository.routed_work is repository.value.record
 
 

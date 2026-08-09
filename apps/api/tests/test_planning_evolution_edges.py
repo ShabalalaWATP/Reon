@@ -1,4 +1,4 @@
-"""Policy, event-port and pure projection boundary coverage."""
+"""Policy and pure planning-projection boundary coverage."""
 
 from __future__ import annotations
 
@@ -17,12 +17,6 @@ from istari_service.planning_analytics_models import PackageBlocker
 from istari_service.planning_capacity import (
     PlanningCapacityDay,
     PlanningCapacityProjection,
-)
-from istari_service.planning_events import (
-    NullPlanningEventPublisher,
-    PlanningDomainEvent,
-    PlanningEventType,
-    PlanningSubjectKind,
 )
 from istari_service.planning_policy import (
     authorise_planning_preview,
@@ -82,21 +76,6 @@ async def test_exact_grant_read_and_preview_requires_both_actions(
     )
     with pytest.raises(TeamWorkspaceNotFound):
         await authorise_planning_preview(session, actor, team_id, uuid4())
-
-
-async def test_content_minimised_event_publisher_port() -> None:
-    event = PlanningDomainEvent(
-        type=PlanningEventType.BLOCKER_OPENED,
-        subject_kind=PlanningSubjectKind.PACKAGE,
-        subject_id=uuid4(),
-        team_id=uuid4(),
-        actor_user_id=uuid4(),
-        occurred_at=datetime.now(UTC),
-        source_version=2,
-    )
-    await NullPlanningEventPublisher().publish(event)
-    assert event.target_user_id is None
-    assert not hasattr(event, "title")
 
 
 async def test_empty_template_and_checklist_repository_paths() -> None:

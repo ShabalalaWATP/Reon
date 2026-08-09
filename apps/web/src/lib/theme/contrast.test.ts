@@ -16,9 +16,16 @@ const [darkTokens, lightTokens = ""] = tokens.split(
 );
 
 function token(block: string, name: string) {
-  const match = block.match(new RegExp(`--${name}:\\s*(#[0-9a-f]{6})`, "i"));
-  if (!match) throw new Error(`Missing colour token --${name}.`);
-  return match[1];
+  const prefix = `--${name}:`;
+  const declaration = block
+    .split(";")
+    .map((value) => value.trim())
+    .find((value) => value.startsWith(prefix));
+  const value = declaration?.slice(prefix.length).trim();
+  if (!value || !/^#[0-9a-f]{6}$/iu.test(value)) {
+    throw new Error(`Missing colour token --${name}.`);
+  }
+  return value;
 }
 
 function relativeLuminance(hex: string) {

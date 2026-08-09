@@ -9,7 +9,8 @@ import { configurationApi } from "../../lib/api/configurationClient";
 import type { ConfigurationDraftInput, ConfigurationVersion } from "../../lib/api/configurationTypes";
 import { isSessionElevated, useAuth } from "../../lib/auth/AuthProvider";
 import { formatDate } from "../../lib/status";
-import { configurationStatusLabels, draftFrom } from "./configurationModel";
+import { configurationStatusLabels, draftFrom, localDateTimeValue } from "./configurationModel";
+import { ConfigurationBreadcrumbs } from "./ConfigurationBreadcrumbs";
 import { ConfigurationReviewPanel } from "./ConfigurationReviewPanel";
 import { ConfigurationTree } from "./ConfigurationTree";
 import { ConfigurationUnitForm } from "./ConfigurationUnitForm";
@@ -20,6 +21,7 @@ export function ConfigurationPage() {
   const navigate = useNavigate();
   const { session } = useAuth();
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
+  const [treeSearch, setTreeSearch] = useState("");
   const versions = useQuery({ queryFn: configurationApi.versions, queryKey: ["protected", session!.user.id, "configuration-versions"] });
   const selectedId = configurationId ?? versions.data?.items[0]?.id;
   const version = useQuery({ enabled: Boolean(selectedId), queryFn: () => configurationApi.version(selectedId!), queryKey: ["protected", session!.user.id, "configuration-version", selectedId] });
@@ -31,31 +33,33 @@ export function ConfigurationPage() {
   });
   const refresh = () => Promise.all([version.refetch(), versions.refetch(), preview.refetch()]);
 
-  if (versions.isPending || (selectedId && version.isPending)) return <PageState kind="loading" title="Loading configuration registry" />;
-  if (versions.isError || version.isError) return <PageState action={<button className="button" onClick={() => void Promise.all([versions.refetch(), version.refetch()])}>Try again</button>} kind="error" title="Configuration registry could not be loaded" />;
-  if (!selectedId || !version.data) return <PageState kind="empty" title="No configuration versions">An initial configuration must be provisioned before drafts can be created.</PageState>;
+  if (versions.isPending || (selectedId && version.isPending)) return <PageState kind="loading" title="Loading configuration" />;
+  if (versions.isError || version.isError) return <PageState action={<button className="button" onClick={() => void Promise.all([versions.refetch(), version.refetch()])}>Try again</button>} kind="error" title="Configuration could not be loaded" />;
+  if (!selectedId || !version.data) return <PageState kind="empty" title="No configuration available">An initial configuration must be provisioned before changes can be proposed.</PageState>;
   const current = version.data;
   const elevated = isSessionElevated(session);
   const editable = elevated && current.status === "DRAFT";
   const focusUnit = (unitId: string) => {
+    setTreeSearch("");
     setSelectedUnitId(unitId);
     requestAnimationFrame(() => document.getElementById(`configuration-unit-${unitId}`)?.focus());
   };
   return (
     <main className="page-stack configuration-page">
       <header className="detail-heading configuration-heading">
-        <div><span>Platform administration</span><h1>Organisation and workflow configuration</h1><p>Draft, compare and activate immutable configuration versions without editing executable workflow.</p></div>
-        <label className="form-field configuration-version-picker"><span>Version</span><select onChange={(event) => void navigate(`/admin/configuration/${event.target.value}`)} value={current.id}>{versions.data.items.map((item) => <option key={item.id} value={item.id}>v{item.sequence} · {item.label} · {configurationStatusLabels[item.status]}</option>)}</select></label>
+        <div><span>Platform administration</span><h1>Organisation and workflow configuration</h1><p>Prepare, compare and approve controlled changes without editing executable workflow.</p></div>
+        <label className="form-field configuration-version-picker"><span>Configuration history</span><select onChange={(event) => void navigate(`/admin/configuration/${event.target.value}`)} value={current.id}>{versions.data.items.map((item) => <option key={item.id} value={item.id}>{item.label} · Ref {item.id.slice(0, 8)} · {configurationStatusLabels[item.status]}</option>)}</select></label>
       </header>
-      <section className="configuration-version-bar" aria-label="Selected configuration version"><div><span className={`configuration-state configuration-state--${current.status.toLowerCase()}`}>{configurationStatusLabels[current.status]}</span><strong>Version {current.sequence}, record {current.version}</strong></div><dl><div><dt>Effective</dt><dd>{formatDate(current.effectiveFrom, true)}</dd></div><div><dt>Created</dt><dd>{formatDate(current.createdAt, true)}</dd></div></dl></section>
+      <section className="configuration-version-bar" aria-label="Selected configuration"><div><span className={`configuration-state configuration-state--${current.status.toLowerCase()}`}>{configurationStatusLabels[current.status]}</span><strong>{current.label} · Ref {current.id.slice(0, 8)}</strong></div><dl><div><dt>Effective</dt><dd>{formatDate(current.effectiveFrom, true)}</dd></div><div><dt>Created</dt><dd>{formatDate(current.createdAt, true)}</dd></div></dl></section>
       <StepUpPanel />
-      {current.status !== "DRAFT" ? <CreateDraftPanel disabled={!elevated} onCreated={(id) => void navigate(`/admin/configuration/${id}`)} source={current} /> : null}
-      {current.status !== "DRAFT" ? <p className="configuration-lock-note"><LockKeyhole aria-hidden="true" size={16} />This version is immutable. Create a draft to propose another change.</p> : null}
+      {current.status !== "DRAFT" ? <CreateProposalPanel disabled={!elevated} onCreated={async (id) => { await versions.refetch(); navigate(`/admin/configuration/${id}`); }} source={current} /> : null}
+      {current.status !== "DRAFT" ? <p className="configuration-lock-note"><LockKeyhole aria-hidden="true" size={16} />This configuration is immutable. Create proposed changes to prepare an attributable update.</p> : null}
       <div className="configuration-workspace">
-        <section className="configuration-editor" aria-labelledby="organisation-draft-title">
-          <header className="product-section-heading"><div><span>Effective-dated structure</span><h2 id="organisation-draft-title">Organisation draft</h2></div><p><GitCompareArrows aria-hidden="true" size={16} />Select a unit to change it</p></header>
+        <section className="configuration-editor" aria-labelledby="organisation-structure-title">
+          <header className="product-section-heading"><div><span>Effective-dated structure</span><h2 id="organisation-structure-title">Organisation structure</h2></div><p><GitCompareArrows aria-hidden="true" size={16} />Select a unit to inspect or change it</p></header>
+          <ConfigurationBreadcrumbs edges={current.edges} effectiveAt={current.effectiveFrom} onSelect={focusUnit} selectedId={selectedUnitId} units={current.units} />
           <div className="configuration-organisation-grid">
-            <ConfigurationTree edges={current.edges} onSelect={setSelectedUnitId} selectedId={selectedUnitId} units={current.units} />
+            <ConfigurationTree edges={current.edges} effectiveAt={current.effectiveFrom} onSearchChange={setTreeSearch} onSelect={setSelectedUnitId} search={treeSearch} selectedId={selectedUnitId} units={current.units} />
             <ConfigurationUnitForm disabled={!editable || replace.isPending} onSave={replace.mutate} selectedId={selectedUnitId} version={current} />
           </div>
           {replace.isError ? <p className="form-banner form-banner--error" role="alert">{replace.error.message}</p> : null}
@@ -68,7 +72,7 @@ export function ConfigurationPage() {
   );
 }
 
-function CreateDraftPanel({ disabled, onCreated, source }: { disabled: boolean; onCreated: (id: string) => void; source: ConfigurationVersion }) {
+function CreateProposalPanel({ disabled, onCreated, source }: { disabled: boolean; onCreated: (id: string) => Promise<void>; source: ConfigurationVersion }) {
   const { session } = useAuth();
   const create = useMutation({
     mutationFn: ({ effectiveFrom, label }: { effectiveFrom: string; label: string }) => {
@@ -78,12 +82,13 @@ function CreateDraftPanel({ disabled, onCreated, source }: { disabled: boolean; 
       draft.label = label;
       return configurationApi.create(draft, session!.csrfToken);
     },
-    onSuccess: (created) => onCreated(created.id),
+    onSuccess: async (created) => { await onCreated(created.id); },
   });
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     create.mutate({ effectiveFrom: String(data.get("effectiveFrom")), label: String(data.get("label")).trim() });
   }
-  return <details className="configuration-create"><summary><Plus aria-hidden="true" size={16} />Create draft from version {source.sequence}</summary><form onSubmit={submit}><label className="form-field"><span>Draft label</span><input maxLength={120} minLength={3} name="label" required /></label><label className="form-field"><span>Effective from</span><input min={new Date().toISOString().slice(0, 16)} name="effectiveFrom" required type="datetime-local" /></label><button className="button button--primary" disabled={disabled || create.isPending} type="submit">{create.isPending ? "Creating draft…" : "Create immutable draft"}</button>{create.isError ? <p className="form-banner form-banner--error" role="alert">{create.error.message}</p> : null}</form></details>;
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return <details className="configuration-create"><summary><Plus aria-hidden="true" size={16} />Propose changes from {source.label}</summary><form onSubmit={submit}><label className="form-field"><span>Change title</span><input maxLength={120} minLength={3} name="label" required /></label><label className="form-field"><span>Effective from</span><input aria-label="Effective from" min={localDateTimeValue(new Date())} name="effectiveFrom" required type="datetime-local" /><small>Entered in {timeZone}; stored as an absolute time.</small></label><button className="button button--primary" disabled={disabled || create.isPending} type="submit">{create.isPending ? "Preparing changes…" : "Create proposed changes"}</button>{create.isError ? <p className="form-banner form-banner--error" role="alert">{create.error.message}</p> : null}</form></details>;
 }

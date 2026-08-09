@@ -7,7 +7,9 @@ from typing import Any
 
 from alembic import context
 from sqlalchemy import Connection, Enum, pool
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.sql.elements import conv
 
 from istari_service.models import Base
 
@@ -18,13 +20,20 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-enum_check_names = frozenset(
+enum_check_logical_names = frozenset(
     f"ck_{table.name}_{column.type.name}"
     for table in target_metadata.tables.values()
     for column in table.columns
     if isinstance(column.type, Enum)
     and column.type.create_constraint
     and column.type.name is not None
+)
+postgres_identifier_preparer = postgresql.dialect().identifier_preparer
+enum_check_names = enum_check_logical_names | frozenset(
+    postgres_identifier_preparer.truncate_and_render_constraint_name(
+        conv(name), _alembic_quote=False
+    )
+    for name in enum_check_logical_names
 )
 
 

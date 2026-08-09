@@ -5,7 +5,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID
 
-from istari_service.configuration_projection import preview_configuration
+from istari_service.configuration_digest import configuration_digest
+from istari_service.configuration_projection import preview_configuration_schedule
 from istari_service.configuration_views import (
     organisation_snapshot,
     preview_views,
@@ -78,15 +79,16 @@ class ConfigurationQueryService(ConfigurationServiceBase):
         if comparison is not None:
             unit_ids.update(item.unit_id for item in comparison.units)
         staffing = await load_staffing_counts(self._repository.session, unit_ids)
-        changes = preview_configuration(
+        changes = preview_configuration_schedule(
             comparison,
             specification,
-            at=at or stored_utc(candidate.version.effective_from),
+            starts_at=at or stored_utc(candidate.version.effective_from),
             staffing=staffing,
         )
         return ConfigurationPreview(
             version_id=version_id,
             compared_with_version_id=base.version.id if base else None,
+            snapshot_digest=configuration_digest(specification),
             changes=preview_views(changes),
         )
 

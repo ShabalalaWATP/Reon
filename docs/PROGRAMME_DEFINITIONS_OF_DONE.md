@@ -152,8 +152,9 @@ the MVP pilot uses these thresholds:
 
 Done when:
 
-- the current 72-account, fully staffed organisation baseline replaces stale
-  sixteen-user and OSG-only statements;
+- the current 73-account, fully staffed organisation baseline replaces stale
+  sixteen-user and OSG-only statements and includes an independent configuration
+  approver;
 - the expansion specification, management-grant ADR, analytics ADR, calendar ADR
   and updated threat models are accepted;
 - every new permission and visibility scope is defined independently from role

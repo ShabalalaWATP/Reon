@@ -9,7 +9,7 @@ import pytest
 
 from conftest import ApiHarness
 from istari_service.product_errors import ProductConflict, ProductNotFound
-from istari_service.product_models import ProductPackage
+from istari_service.product_models import ProductPackage, ProductUploadIntent
 from istari_service.product_types import ScanDecision, ScanResult
 from istari_service.repositories.products import SqlAlchemyProductRepository
 from product_test_support import create_product_request, product_actors
@@ -96,6 +96,31 @@ async def test_repository_artefact_idempotency_limits_and_scan_edges(
         )
         assert repeated.id == artefact.id
         assert repeated_intent.id == intent.id
+
+        intent_row = await session.get(ProductUploadIntent, intent.id)
+        assert intent_row is not None
+        intent_row.operation_lease_owner = "existing-owner"
+        intent_row.operation_lease_expires_at = (
+            datetime.now(UTC) + timedelta(minutes=1)
+        ).replace(tzinfo=None)
+        await session.flush()
+        with pytest.raises(ProductConflict, match="already being processed"):
+            await repository.claim_intent_operation(
+                intent.id,
+                owner="new-owner",
+                now=datetime.now(UTC),
+                expires_at=datetime.now(UTC) + timedelta(minutes=2),
+            )
+        intent_row.operation_lease_expires_at = (
+            datetime.now(UTC) - timedelta(minutes=1)
+        ).replace(tzinfo=None)
+        generation = await repository.claim_intent_operation(
+            intent.id,
+            owner="new-owner",
+            now=datetime.now(UTC),
+            expires_at=datetime.now(UTC) + timedelta(minutes=2),
+        )
+        assert generation == 1
         with pytest.raises(ProductNotFound):
             await repository.create_managed(
                 other_package.id,

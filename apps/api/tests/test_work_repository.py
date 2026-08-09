@@ -43,6 +43,7 @@ from istari_service.schemas.work import (
     ProgressRequest,
     WithdrawRequest,
 )
+from istari_service.team_models import TeamMembership
 from istari_service.workflow.types import WorkflowTask, WorkflowTaskState
 
 
@@ -72,8 +73,15 @@ def make_user(role: UserRole, scope: str = "Shared queue") -> User:
     )
 
 
-def actor_from(user: User) -> Actor:
-    return Actor(user.id, user.username, user.display_name, user.role, user.scope)
+def actor_from(user: User, *organisation_unit_ids: UUID) -> Actor:
+    return Actor(
+        user.id,
+        user.username,
+        user.display_name,
+        user.role,
+        user.scope,
+        frozenset(organisation_unit_ids),
+    )
 
 
 def make_request(requester_id: UUID, status: RequestStatus) -> ServiceRequest:
@@ -114,9 +122,13 @@ async def seed_work(
         session.add(worker)
     await session.flush()
     request = make_request(requester.id, status)
+    delivery_team_id = organisation_id("OSG_TEAM")
     if role is UserRole.DELIVERY_TEAM_LEAD:
         request.assigned_delivery_team = worker.scope
+        request.assigned_delivery_team_id = delivery_team_id
     if role is UserRole.DELIVERY_SPECIALIST:
+        request.assigned_delivery_team = worker.scope
+        request.assigned_delivery_team_id = delivery_team_id
         request.assigned_specialist_id = worker.id
     session.add(request)
     await session.flush()
@@ -138,7 +150,18 @@ async def seed_work(
         UserRole.DELIVERY_TEAM_LEAD: 3,
         UserRole.DELIVERY_SPECIALIST: 3,
     }.get(role)
-    if membership_position is not None:
+    if role in {UserRole.DELIVERY_TEAM_LEAD, UserRole.DELIVERY_SPECIALIST}:
+        now = datetime.now(UTC)
+        session.add(
+            TeamMembership(
+                user_id=worker.id,
+                team_id=delivery_team_id,
+                effective_from=now,
+                start_projected_at=now,
+                start_reason="Synthetic test membership.",
+            )
+        )
+    elif membership_position is not None:
         session.add(
             UserOrganisationMembership(
                 user_id=worker.id,
@@ -192,7 +215,7 @@ async def test_queue_get_claim_and_specialist_lookup(
         )
         completed.status = WorkflowTaskStatus.COMPLETED
         repository = SqlAlchemyWorkRepository(session)
-        actor = actor_from(worker)
+        actor = actor_from(worker, organisation_id("JIOC"))
         bundles = await repository.list_for_actor(actor)
         assert [bundle.record.id for bundle in bundles] == [task.id]
         assert await repository.get(uuid4()) is None
@@ -246,7 +269,7 @@ async def test_apply_completion_projects_next_and_terminal_stages(
         )
         detail = await repository.apply_completion(
             bundle.record,
-            actor_from(worker),
+            actor_from(worker, organisation_id("JIOC")),
             ProgressRequest(
                 action="progress",
                 category="Research",
@@ -266,7 +289,7 @@ async def test_apply_completion_projects_next_and_terminal_stages(
         with pytest.raises(InvalidAction):
             await repository.apply_completion(
                 bundle.record,
-                actor_from(worker),
+                actor_from(worker, organisation_id("JIOC")),
                 ProgressRequest(
                     action="progress",
                     category="Research",

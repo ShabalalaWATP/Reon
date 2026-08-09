@@ -149,7 +149,7 @@ async def test_disabled_admin_surface_still_pins_workflow_identity(
     assert command.process_definition_version == 1
     ready = await harness.client.get("/ready")
     assert ready.status_code == 200
-    assert ready.json()["checks"]["configuration"] == "disabled"
+    assert ready.json()["checks"]["configuration"] == "ok"
 
 
 async def test_enabled_configuration_readiness_fails_when_workflow_is_unavailable(

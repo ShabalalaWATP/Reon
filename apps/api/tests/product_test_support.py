@@ -6,20 +6,24 @@ from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from conftest import ApiHarness
+from in_memory_product_storage import InMemoryPrivateObjectStorage
+from istari_service.configuration_digest import configuration_digest
 from istari_service.configuration_models import (
+    ConfigurationActivation,
+    ConfigurationApproval,
     ConfigurationRegistry,
     ConfigurationWorkflowTemplate,
 )
 from istari_service.domain import Actor
 from istari_service.models import RequestStatus, ServiceRequest, User
 from istari_service.product_security import AllowedHttpsLinkPolicy, SafeDocumentScanner
-from istari_service.product_storage import InMemoryPrivateObjectStorage
 from istari_service.product_types import AccessAuditRecord
 from istari_service.repositories.auth import actor_from_user
+from istari_service.repositories.configuration import SqlAlchemyConfigurationRepository
 from istari_service.repositories.configuration_pins import (
     SqlAlchemyConfigurationPinRepository,
 )
@@ -104,19 +108,51 @@ async def create_product_request(
         )
         await session.flush()
         await initialise_request_route(session, request_id)
-        template = await session.scalar(
-            select(ConfigurationWorkflowTemplate).where(
-                ConfigurationWorkflowTemplate.configuration_version_id
-                == select(ConfigurationRegistry.active_version_id)
-                .where(ConfigurationRegistry.id == 1)
-                .scalar_subquery()
-            )
-        )
-        assert template is not None
-        template.approved_link_domains = list(approved_link_domains)
-        await session.flush()
+        await set_synthetic_active_link_domains(session, approved_link_domains)
         await SqlAlchemyConfigurationPinRepository(session).pin_request(request_id)
     return request_id
+
+
+async def set_synthetic_active_link_domains(
+    session: AsyncSession,
+    domains: tuple[str, ...],
+) -> None:
+    """Reseal the isolated SQLite fixture after a product-policy variation."""
+
+    registry = await session.get(ConfigurationRegistry, 1)
+    assert registry is not None and registry.active_version_id is not None
+    template = await session.scalar(
+        select(ConfigurationWorkflowTemplate).where(
+            ConfigurationWorkflowTemplate.configuration_version_id
+            == registry.active_version_id
+        )
+    )
+    assert template is not None
+    template.approved_link_domains = list(domains)
+    await session.flush()
+    bundle = await SqlAlchemyConfigurationRepository(session).bundle(
+        registry.active_version_id
+    )
+    digest = configuration_digest(bundle.specification())
+    # Tests need independently pinned domain policies without constructing an
+    # entire administrator journey. Core updates deliberately bypass the ORM's
+    # append-only fixture guard; PostgreSQL sealing still denies this in runtime.
+    await session.execute(
+        update(ConfigurationApproval)
+        .where(
+            ConfigurationApproval.configuration_version_id == registry.active_version_id
+        )
+        .values(snapshot_digest=digest)
+    )
+    await session.execute(
+        update(ConfigurationActivation)
+        .where(
+            ConfigurationActivation.configuration_version_id
+            == registry.active_version_id
+        )
+        .values(snapshot_digest=digest)
+    )
+    await session.flush()
 
 
 def product_service(

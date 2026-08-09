@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -18,6 +18,10 @@ from istari_service.models import (
 )
 from istari_service.repositories.clarification_views import clarification_views
 from istari_service.repositories.product_availability import has_available_product
+from istari_service.repositories.projection_pagination import (
+    decode_cursor,
+    encode_cursor,
+)
 from istari_service.schemas.requests import (
     DeliverableView,
     FeedbackView,
@@ -60,6 +64,8 @@ async def build_request_detail(
     *,
     reveal_unreleased_deliverable: bool,
     include_clarifications: bool = False,
+    event_limit: int = 50,
+    event_cursor: str | None = None,
 ) -> RequestDetail:
     request = await session.scalar(
         select(ServiceRequest)
@@ -71,14 +77,39 @@ async def build_request_detail(
     )
     if request is None:
         raise LookupError("request no longer exists")
-    events = (
-        await session.scalars(
-            select(RequestEvent)
-            .options(selectinload(RequestEvent.actor))
-            .where(RequestEvent.request_id == request_id)
-            .order_by(RequestEvent.created_at, RequestEvent.id)
+    event_statement = (
+        select(RequestEvent)
+        .options(selectinload(RequestEvent.actor))
+        .where(RequestEvent.request_id == request_id)
+    )
+    if event_cursor is not None:
+        changed_at, event_id = decode_cursor(
+            event_cursor, message="The request-history filters are invalid."
         )
-    ).all()
+        event_statement = event_statement.where(
+            or_(
+                RequestEvent.created_at < changed_at,
+                and_(
+                    RequestEvent.created_at == changed_at,
+                    RequestEvent.id < event_id,
+                ),
+            )
+        )
+    event_rows = list(
+        await session.scalars(
+            event_statement.order_by(
+                RequestEvent.created_at.desc(), RequestEvent.id.desc()
+            ).limit(event_limit + 1)
+        )
+    )
+    has_more_events = len(event_rows) > event_limit
+    event_page = event_rows[:event_limit]
+    events = list(reversed(event_page))
+    events_next_cursor = (
+        encode_cursor(event_page[-1].created_at, event_page[-1].id)
+        if has_more_events and event_page
+        else None
+    )
     deliverable_query = (
         select(Deliverable)
         .where(Deliverable.request_id == request_id)
@@ -135,6 +166,7 @@ async def build_request_detail(
             )
             for event in events
         ],
+        events_next_cursor=events_next_cursor,
         deliverable=(
             DeliverableView(
                 id=deliverable.id,

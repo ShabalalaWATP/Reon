@@ -18,7 +18,6 @@ import istari_service.model_guards as _model_guards  # noqa: F401
 from istari_service.audit import AUDIT_KEY_INFO
 from istari_service.config import Settings, get_settings
 from istari_service.models import Base
-from istari_service.team_membership_sync import synchronise_due_team_memberships
 
 
 def create_database_engine(settings: Settings | None = None) -> AsyncEngine:
@@ -59,27 +58,12 @@ SessionFactory = create_session_factory(
 )
 
 
-async def get_session() -> AsyncIterator[AsyncSession]:
-    """FastAPI dependency that commits successful requests atomically."""
-
-    async with SessionFactory() as session:
-        try:
-            if await synchronise_due_team_memberships(session):
-                await session.commit()
-            yield session
-            await session.commit()
-        except BaseException:
-            await session.rollback()
-            raise
-
-
-get_db_session = get_session
-
-
 @asynccontextmanager
 async def session_scope(
     factory: async_sessionmaker[AsyncSession] = SessionFactory,
 ) -> AsyncIterator[AsyncSession]:
+    """Provide an explicit transaction for scripts and background tasks."""
+
     async with factory() as session, session.begin():
         yield session
 

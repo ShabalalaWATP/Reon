@@ -4,8 +4,8 @@
 
 This register covers only the operational product evolution defined by
 [`operational-product-evolution.md`](../specs/operational-product-evolution.md)
-and planned in
-[`NEXT_PRODUCT_EXPANSION_PLAN.md`](../NEXT_PRODUCT_EXPANSION_PLAN.md). It does not
+and tracked in the
+[`MASTER_IMPLEMENTATION_PLAN.md`](../MASTER_IMPLEMENTATION_PLAN.md). It does not
 replace or revise the accepted MVP
 [`DEFINITION_OF_DONE_MATRIX.md`](DEFINITION_OF_DONE_MATRIX.md).
 
@@ -19,11 +19,11 @@ implementation or acceptance is implied by this document.
 
 | Gate | Objective completion condition | Required evidence | Status |
 | --- | --- | --- | --- |
-| PE-DOD-00 | The evolution specification, ADRs 0015–0017, permission matrix, recipient matrix and all named operational decisions are accepted by their owners | Dated approvals; decision register has no unresolved file, scanner, link-domain, approver, reminder, retention or export row | OPEN |
-| PE-DOD-01 | Migrations 0012–0017 preserve existing identifiers and history, stable team assignment and the bounded legacy workflow identity | PostgreSQL empty/previous upgrade, drift, safe downgrade, re-upgrade, backfill-oracle and rollback reports; local SQLite rehearsal is complete | IN PROGRESS |
+| PE-DOD-00 | The evolution specification, applicable ADRs 0015–0021, permission matrix, recipient matrix and all named operational decisions are accepted by their owners | Dated approvals; decision register has no unresolved file, scanner, link-domain, approver, reminder, retention or export row | OPEN |
+| PE-DOD-01 | Migrations 0012–0021 preserve identifiers and history, stable team assignment, bounded workflow identity, configuration evidence, durable worker state and metadata alignment | PostgreSQL empty/previous upgrade, drift, safe downgrade, re-upgrade, backfill-oracle and rollback reports; fresh current-head PostgreSQL migration is complete, current-head multi-store restore remains open | IN PROGRESS |
 | PE-DOD-02 | New records remain inaccessible while their release flags are disabled and projections rebuild idempotently | API denial matrix plus duplicate-free projection rebuild and checkpoint evidence | IN PROGRESS |
-| PE-DOD-03 | Every changed hand-written source file stays within 350 lines and the full repository passes format, lint, type, build, terminology, OpenAPI and BPMN checks | Hosted CI logs and exact local command transcript from the release candidate | EVIDENCE READY |
-| PE-DOD-04 | Backend and frontend independently retain at least 95 per cent line and branch coverage | Release-candidate pytest and Vitest coverage reports with thresholds unchanged | EVIDENCE READY |
+| PE-DOD-03 | Every changed hand-written source file stays within 350 lines and the full repository passes format, lint, type, build, terminology, OpenAPI and BPMN checks | Local checks pass; an immutable commit and hosted CI logs are still required | IN PROGRESS |
+| PE-DOD-04 | Backend and frontend independently retain at least 95 per cent line and branch coverage | Local thresholds pass; immutable commit and hosted release-candidate reports remain required | IN PROGRESS |
 
 ## Action workspace gates
 
@@ -59,11 +59,12 @@ implementation or acceptance is implied by this document.
 
 | Gate | Objective completion condition | Required evidence | Status |
 | --- | --- | --- | --- |
-| PE-DOD-40 | A valid sibling branch can be drafted, validated, independently approved and activated without application code changes | Configuration history, different-actor step-up evidence and live PostgreSQL/Camunda route journey with distinct Manager and Analyst groups | IN PROGRESS |
+| PE-DOD-40 | A valid sibling branch can be proposed, validated, independently approved and activated without application code changes | Configuration history, different-actor step-up evidence and live PostgreSQL/Camunda route journey with distinct Manager and Analyst groups | IN PROGRESS |
 | PE-DOD-41 | Validation rejects cycles, orphans, skipped levels, duplicate identifiers, invalid candidate groups and loss of every complete Customer-to-team route | Deterministic validation corpus and UI finding-to-unit links | OPEN |
 | PE-DOD-42 | Concurrent edit or activation has one winner, and rollback uses a validated superseding version without rewriting history | Concurrency tests, immutable version audit and rollback rehearsal | OPEN |
 | PE-DOD-43 | Declarative templates cannot add code, scripts, expressions or arbitrary BPMN, weaken mandatory fields, bypass a human stage or grant content access | Signed-schema negative corpus, incompatible BPMN denial and permission tests | OPEN |
 | PE-DOD-44 | New requests use the activated snapshot while an existing request completes on its pinned organisation, form, workflow and notification-policy versions | Side-by-side live Camunda journeys and current-versus-as-of data oracle | OPEN |
+| PE-DOD-45 | Administrators can find a unit by name, code or kind, retain ancestor context, follow a keyboard breadcrumb and select only effective structurally valid parents without relying on the browser for security | Component, axe, forged-parent, stale-edit, 2,000-unit performance, 390-pixel and three-browser evidence | IN PROGRESS |
 
 ## Planning and statistics gates
 

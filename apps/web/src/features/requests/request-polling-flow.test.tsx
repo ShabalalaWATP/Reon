@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { requestDetail, requestSummary, requesterSession, workItem } from "../../test/fixtures";
 import { json, mockFetch, renderApp } from "../../test/render";
-import { REQUESTER_POLL_INTERVAL_MS } from "./requestPolling";
+const EXPECTED_POLL_INTERVAL_MS = 5_000;
 
 afterEach(() => {
   vi.useRealTimers();
@@ -31,11 +31,11 @@ describe("requester projection refresh", () => {
 
     renderApp("/requests");
     await vi.waitFor(() => expect(requestCalls).toBe(1));
-    await act(() => vi.advanceTimersByTimeAsync(REQUESTER_POLL_INTERVAL_MS));
+    await act(() => vi.advanceTimersByTimeAsync(EXPECTED_POLL_INTERVAL_MS));
     await vi.waitFor(() => expect(requestCalls).toBe(2));
     expect(screen.getByText("Completed history")).toBeInTheDocument();
 
-    await act(() => vi.advanceTimersByTimeAsync(REQUESTER_POLL_INTERVAL_MS * 3));
+    await act(() => vi.advanceTimersByTimeAsync(EXPECTED_POLL_INTERVAL_MS * 3));
     expect(requestCalls).toBe(2);
   });
 
@@ -56,11 +56,11 @@ describe("requester projection refresh", () => {
 
     renderApp(`/requests/${requestDetail.id}`);
     await vi.waitFor(() => expect(detailCalls).toBe(1));
-    await act(() => vi.advanceTimersByTimeAsync(REQUESTER_POLL_INTERVAL_MS));
+    await act(() => vi.advanceTimersByTimeAsync(EXPECTED_POLL_INTERVAL_MS));
     await vi.waitFor(() => expect(detailCalls).toBe(2));
     expect(screen.getByText("Completed")).toBeInTheDocument();
 
-    await act(() => vi.advanceTimersByTimeAsync(REQUESTER_POLL_INTERVAL_MS * 3));
+    await act(() => vi.advanceTimersByTimeAsync(EXPECTED_POLL_INTERVAL_MS * 3));
     expect(detailCalls).toBe(2);
   });
 
@@ -99,13 +99,13 @@ describe("requester projection refresh", () => {
     expect(
       screen.getByText("No response task is currently available."),
     ).toBeInTheDocument();
-    await act(() => vi.advanceTimersByTimeAsync(REQUESTER_POLL_INTERVAL_MS));
+    await act(() => vi.advanceTimersByTimeAsync(EXPECTED_POLL_INTERVAL_MS));
     await vi.waitFor(() => expect(workItemCalls).toBe(2));
     expect(
       screen.getByRole("heading", { name: "Record outcome" }),
     ).toBeInTheDocument();
 
-    await act(() => vi.advanceTimersByTimeAsync(REQUESTER_POLL_INTERVAL_MS * 3));
+    await act(() => vi.advanceTimersByTimeAsync(EXPECTED_POLL_INTERVAL_MS * 3));
     expect(workItemCalls).toBe(2);
   });
 });

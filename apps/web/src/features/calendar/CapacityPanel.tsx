@@ -5,11 +5,13 @@ import { api, ApiError } from "../../lib/api/client";
 import type { CapacityPreview } from "../../lib/api/calendarTypes";
 import type { TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import { useAuth } from "../../lib/auth/AuthProvider";
+import { addLocalDays, localDateInputValue } from "../../lib/dateInputs";
 
 export function CapacityPanel({ access }: { access: TeamWorkspaceAccess }) {
   const { session } = useAuth();
-  const today = new Date().toISOString().slice(0, 10);
-  const later = new Date(Date.now() + 6 * 86_400_000).toISOString().slice(0, 10);
+  const now = new Date();
+  const today = localDateInputValue(now);
+  const later = localDateInputValue(addLocalDays(now, 6));
   const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(later);
   const [timeZone, setTimeZone] = useState("Europe/London");

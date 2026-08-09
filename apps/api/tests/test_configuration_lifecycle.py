@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from datetime import timedelta
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
 
 import pytest
 from sqlalchemy import select
@@ -15,10 +17,12 @@ from configuration_support import (
     seed_configuration_context,
 )
 from istari_service.config import Environment, Settings
+from istari_service.configuration_digest import configuration_digest
 from istari_service.configuration_events import ConfigurationEventType
 from istari_service.configuration_models import (
     ConfigurationActivation,
     ConfigurationApproval,
+    ConfigurationUnitRevision,
     ConfigurationValidationFinding,
 )
 from istari_service.configuration_types import ConfigurationStatus, FindingSeverity
@@ -39,7 +43,6 @@ from istari_service.repositories.configuration import (
     SqlAlchemyConfigurationRepository,
 )
 from istari_service.schemas.configuration import (
-    ConfigurationDraftReplace,
     ConfigurationReasonCommand,
     ConfigurationVersionCommand,
 )
@@ -140,6 +143,19 @@ async def test_configuration_approval_activation_and_queries(
         )
         assert approved.approval is not None
         assert approved.approval.reviewed_version == submitted.version
+        assert len(approved.approval.snapshot_digest) == 64
+        migration = _sealing_migration()
+        migrated_digest = await session.run_sync(
+            lambda sync_session: migration._stored_snapshot_digest(
+                sync_session.connection(),
+                created.id
+                if sync_session.bind.dialect.name != "sqlite"
+                else created.id.hex,
+            )
+        )
+        assert migrated_digest == configuration_digest(
+            (await repository.bundle(created.id)).specification()
+        )
         with pytest.raises(InvalidAdministrationChange, match="already has a decision"):
             await lifecycle.approve(
                 actors.reviewer,
@@ -154,6 +170,24 @@ async def test_configuration_approval_activation_and_queries(
                     approved.version, "Creator cannot activate their own snapshot."
                 ),
             )
+
+        unit = await session.scalar(
+            select(ConfigurationUnitRevision).where(
+                ConfigurationUnitRevision.configuration_version_id == created.id
+            )
+        )
+        assert unit is not None
+        original_name = unit.name
+        unit.name = "Tampered outside the configuration service"
+        await session.flush()
+        with pytest.raises(InvalidAdministrationChange, match="no longer matches"):
+            await lifecycle.activate(
+                actors.reviewer,
+                created.id,
+                _reason(approved.version, "Reject changed approval evidence."),
+            )
+        unit.name = original_name
+        await session.flush()
 
         activated = await lifecycle.activate(
             actors.reviewer,
@@ -184,8 +218,13 @@ async def test_configuration_approval_activation_and_queries(
             ConfigurationEventType.ACTIVATED,
             ConfigurationEventType.SUPERSEDED,
         ]
-        activation = await session.scalar(select(ConfigurationActivation))
+        activation = await session.scalar(
+            select(ConfigurationActivation).where(
+                ConfigurationActivation.configuration_version_id == created.id
+            )
+        )
         assert activation is not None and activation.superseded_version_id is not None
+        assert activation.snapshot_digest == approved.approval.snapshot_digest
 
 
 @pytest.mark.asyncio
@@ -272,78 +311,27 @@ async def test_rejection_invalid_validation_and_access_boundaries(
         assert await session.scalar(select(ConfigurationApproval.id))
 
 
-@pytest.mark.asyncio
-async def test_drafts_are_mutable_only_before_validation_and_activation_time(
-    configuration_database: tuple[
-        AsyncEngine, async_sessionmaker[AsyncSession], Settings
-    ],
-) -> None:
-    _, sessions, settings = configuration_database
-    async with sessions() as session, session.begin():
-        actors = await seed_configuration_context(session)
-        lifecycle = ConfigurationLifecycleService(
-            SqlAlchemyConfigurationRepository(session),
-            settings,
-            clock=lambda: actors.now - timedelta(seconds=1),
-        )
-        payload = await draft_from_active(session, actors, label="Editable draft")
-        draft = await lifecycle.create(actors.creator, payload)
-
-        replacement = ConfigurationDraftReplace(
-            **payload.model_dump(),
-            expected_version=draft.version,
-        )
-        replacement.label = "Replaced editable draft"
-        replaced = await lifecycle.replace(actors.creator, draft.id, replacement)
-        assert replaced.label == "Replaced editable draft"
-        assert replaced.version == draft.version + 1
-
-        self_based = replacement.model_copy(
-            update={
-                "based_on_version_id": draft.id,
-                "expected_version": replaced.version,
-            }
-        )
-        with pytest.raises(InvalidAdministrationChange, match="itself"):
-            await lifecycle.replace(actors.creator, draft.id, self_based)
-
-        other_payload = await draft_from_active(session, actors, label="Other draft")
-        other_payload.based_on_version_id = draft.id
-        with pytest.raises(InvalidAdministrationChange, match="immutable"):
-            await lifecycle.create(actors.creator, other_payload)
-
-        validated = await lifecycle.validate(
-            actors.creator,
-            draft.id,
-            ConfigurationVersionCommand(expected_version=replaced.version),
-        )
-        with pytest.raises(InvalidAdministrationChange, match="Draft"):
-            await lifecycle.replace(
-                actors.creator,
-                draft.id,
-                replacement.model_copy(update={"expected_version": validated.version}),
-            )
-        submitted = await lifecycle.submit(
-            actors.creator,
-            draft.id,
-            _reason(validated.version, "Submit after the exact draft has validated."),
-        )
-        approved = await lifecycle.approve(
-            actors.reviewer,
-            draft.id,
-            _reason(
-                submitted.version, "Independently approve this future configuration."
-            ),
-        )
-        with pytest.raises(InvalidAdministrationChange, match="effective time"):
-            await lifecycle.activate(
-                actors.reviewer,
-                draft.id,
-                _reason(
-                    approved.version, "Activation must wait for its effective time."
-                ),
-            )
-
-
 def _reason(version: int, reason: str) -> ConfigurationReasonCommand:
     return ConfigurationReasonCommand(expected_version=version, reason=reason)
+
+
+def test_sealing_migration_only_decodes_declared_json_columns() -> None:
+    migration = _sealing_migration()
+
+    assert migration._normalise_field("name", "[1]") == "[1]"
+    assert migration._normalise_field("label", '{"team":"OSG"}') == ('{"team":"OSG"}')
+    assert migration._normalise_field("service_categories", '["Research"]') == [
+        "Research"
+    ]
+
+
+def _sealing_migration():
+    path = (
+        Path(__file__).parents[1]
+        / "alembic/versions/0018_configuration_snapshot_sealing.py"
+    )
+    specification = spec_from_file_location("configuration_sealing_migration", path)
+    assert specification is not None and specification.loader is not None
+    module = module_from_spec(specification)
+    specification.loader.exec_module(module)
+    return module

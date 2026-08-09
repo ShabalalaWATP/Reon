@@ -9,6 +9,7 @@ import type {
 } from "../../lib/api/planningEvolutionTypes";
 import type { TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import type { Session } from "../../lib/api/types";
+import { addLocalDays, localDateInputValue } from "../../lib/dateInputs";
 
 export function CapacityScenarioPanel({
   access,
@@ -21,8 +22,9 @@ export function CapacityScenarioPanel({
   session: Session;
   sourceVersion: number;
 }) {
-  const today = new Date().toISOString().slice(0, 10);
-  const week = new Date(Date.now() + (6 * 86_400_000)).toISOString().slice(0, 10);
+  const now = new Date();
+  const today = localDateInputValue(now);
+  const week = localDateInputValue(addLocalDays(now, 6));
   const [name, setName] = useState("");
   const [startsOn, setStartsOn] = useState(today);
   const [endsOn, setEndsOn] = useState(week);

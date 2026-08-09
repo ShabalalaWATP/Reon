@@ -1,9 +1,12 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
+const apiProxy = process.env.ISTARI_API_PROXY ?? "http://localhost:8000";
+
 export default defineConfig({
   plugins: [react()],
   build: {
+    manifest: true,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -17,7 +20,7 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/api": "http://localhost:8000",
+      "/api": apiProxy,
     },
   },
   test: {

@@ -6,12 +6,12 @@ import type {
 } from "../../lib/api/configurationTypes";
 
 export const configurationStatusLabels = {
-  ACTIVE: "Active",
+  ACTIVE: "Current",
   AWAITING_APPROVAL: "Awaiting approval",
-  DRAFT: "Draft",
-  REJECTED: "Rejected",
-  SUPERSEDED: "Superseded",
-  VALIDATED: "Validated",
+  DRAFT: "Proposed changes",
+  REJECTED: "Rejected changes",
+  SUPERSEDED: "Previous",
+  VALIDATED: "Ready for review",
 } as const;
 
 export type ConfigurationTreeRow = ConfigurationUnitDraft & { depth: number };
@@ -43,12 +43,15 @@ export function draftFrom(version: ConfigurationVersion): ConfigurationDraftInpu
 export function configurationRows(
   units: ConfigurationUnitDraft[],
   edges: ConfigurationEdgeDraft[],
+  effectiveAt?: string,
 ) {
+  const visibleUnits = effectiveAt ? units.filter((unit) => activeAt(unit, effectiveAt)) : units;
+  const visibleEdges = effectiveAt ? edges.filter((edge) => activeAt(edge, effectiveAt)) : edges.filter((edge) => !edge.effectiveUntil);
   const children = new Map<string | null, ConfigurationUnitDraft[]>();
   const parentByChild = new Map(
-    edges.filter((edge) => !edge.effectiveUntil).map((edge) => [edge.childUnitId, edge.parentUnitId]),
+    visibleEdges.map((edge) => [edge.childUnitId, edge.parentUnitId]),
   );
-  for (const unit of units) {
+  for (const unit of visibleUnits) {
     const parent = parentByChild.get(unit.unitId) ?? null;
     children.set(parent, [...(children.get(parent) ?? []), unit]);
   }
@@ -62,8 +65,108 @@ export function configurationRows(
     for (const child of children.get(unit.unitId) ?? []) visit(child, depth + 1);
   };
   for (const root of children.get(null) ?? []) visit(root, 0);
-  for (const unit of units) visit(unit, 0);
+  for (const unit of visibleUnits) visit(unit, 0);
   return rows;
+}
+
+export function matchesConfigurationRow(row: ConfigurationTreeRow, search: string) {
+  const query = search.trim().toLocaleLowerCase();
+  if (!query) return true;
+  return `${row.name} ${row.code} ${row.kind.replace("_", " ")}`.toLocaleLowerCase().includes(query);
+}
+
+export function filterConfigurationRows(
+  rows: ConfigurationTreeRow[],
+  search: string,
+) {
+  const query = search.trim().toLocaleLowerCase();
+  if (!query) return rows;
+  const visible = new Set<string>();
+  rows.forEach((row, index) => {
+    if (!matchesConfigurationRow(row, query)) return;
+    visible.add(row.unitId);
+    let expectedDepth = row.depth - 1;
+    for (let cursor = index - 1; cursor >= 0 && expectedDepth >= 0; cursor -= 1) {
+      if (rows[cursor].depth !== expectedDepth) continue;
+      visible.add(rows[cursor].unitId);
+      expectedDepth -= 1;
+    }
+  });
+  return rows.filter((row) => visible.has(row.unitId));
+}
+
+export function configurationPath(
+  units: ConfigurationUnitDraft[],
+  edges: ConfigurationEdgeDraft[],
+  selectedId: string | null,
+  effectiveAt?: string,
+) {
+  if (!selectedId) return [];
+  const visibleUnits = effectiveAt ? units.filter((unit) => activeAt(unit, effectiveAt)) : units;
+  const visibleEdges = effectiveAt ? edges.filter((edge) => activeAt(edge, effectiveAt)) : edges.filter((edge) => !edge.effectiveUntil);
+  const byId = new Map(visibleUnits.map((unit) => [unit.unitId, unit]));
+  const parentByChild = new Map(
+    visibleEdges.map((edge) => [edge.childUnitId, edge.parentUnitId]),
+  );
+  const path: ConfigurationUnitDraft[] = [];
+  const seen = new Set<string>();
+  let currentId: string | undefined = selectedId;
+  while (currentId && !seen.has(currentId)) {
+    seen.add(currentId);
+    const unit = byId.get(currentId);
+    if (!unit) break;
+    path.unshift(unit);
+    currentId = parentByChild.get(currentId);
+  }
+  return path;
+}
+
+export function configurationUnitAt(
+  units: ConfigurationUnitDraft[],
+  unitId: string | null,
+  effectiveAt: string,
+) {
+  if (!unitId) return null;
+  return units
+    .filter((unit) => unit.unitId === unitId && activeAt(unit, effectiveAt))
+    .sort((left, right) => Date.parse(right.effectiveFrom) - Date.parse(left.effectiveFrom))[0] ?? null;
+}
+
+const parentKind = {
+  COMMAND: "ROOT",
+  OPS_GROUP: "COMMAND",
+  TEAM: "OPS_GROUP",
+} as const;
+
+export function validParentUnits(
+  units: ConfigurationUnitDraft[],
+  edges: ConfigurationEdgeDraft[],
+  childKind: ConfigurationUnitDraft["kind"],
+  effectiveAt: string,
+  currentId?: string,
+) {
+  if (childKind === "ROOT") return [];
+  const requiredKind = parentKind[childKind];
+  const currentParent = currentId
+    ? edges.find((edge) => edge.childUnitId === currentId && activeAt(edge, effectiveAt))?.parentUnitId
+    : undefined;
+  return units
+    .filter((unit) => {
+      return unit.unitId !== currentId && unit.unitId !== currentParent && unit.kind === requiredKind && unit.routingEnabled && activeAt(unit, effectiveAt);
+    })
+    .sort((left, right) => left.name.localeCompare(right.name));
+}
+
+export function activeAt(item: { effectiveFrom: string; effectiveUntil: string | null }, effectiveAt: string) {
+  const at = Date.parse(effectiveAt);
+  const starts = Date.parse(item.effectiveFrom);
+  const ends = item.effectiveUntil ? Date.parse(item.effectiveUntil) : Number.POSITIVE_INFINITY;
+  return starts <= at && at < ends;
+}
+
+export function localDateTimeValue(date: Date) {
+  const localTime = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return localTime.toISOString().slice(0, 16);
 }
 
 export function lines(value: FormDataEntryValue | null) {

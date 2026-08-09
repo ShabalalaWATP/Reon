@@ -31,7 +31,7 @@ class StateSession:
         return self._rows.pop(0) if self._rows else True
 
     async def scalars(self, _statement: object) -> list[object]:
-        return []
+        return [uuid4()]
 
     async def get(self, _model: type[object], _identity: object) -> object | None:
         return self._specialist

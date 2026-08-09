@@ -62,6 +62,7 @@ export interface ConfigurationApproval {
   actorUserId: string;
   decision: "APPROVED" | "REJECTED";
   reviewedVersion: number;
+  snapshotDigest: string;
   reason: string;
   createdAt: string;
 }
@@ -101,15 +102,18 @@ export interface ConfigurationPreviewChange {
     | "RETIRED"
     | "UNSTAFFED"
     | "PERMISSION_AFFECTED"
-    | "WORKFLOW_AFFECTED";
+    | "WORKFLOW_AFFECTED"
+    | "RESTORED";
   unitId: string;
   code: string;
   message: string;
+  effectiveAt: string;
 }
 
 export interface ConfigurationPreview {
   versionId: string;
   comparedWithVersionId: string | null;
+  snapshotDigest: string;
   changes: ConfigurationPreviewChange[];
 }
 

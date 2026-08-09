@@ -62,7 +62,6 @@ def record(
 class FakeRequestRepository:
     def __init__(self) -> None:
         self.records: dict[UUID, RequestRecord] = {}
-        self.feedback_present = False
         self.reveal: bool | None = None
         self.includes_clarifications: list[bool] = []
         self.created = cast(RequestDetail, object())
@@ -109,10 +108,6 @@ class FakeRequestRepository:
         self.reveal = reveal_unreleased_deliverable
         self.includes_clarifications.append(include_clarifications)
         return self.detail
-
-    async def feedback_exists(self, request_id: UUID) -> bool:
-        assert request_id in self.records
-        return self.feedback_present
 
     async def add_feedback(
         self,
@@ -200,11 +195,7 @@ async def test_feedback_requires_owner_completion_and_single_submission() -> Non
     with pytest.raises(FeedbackUnavailable):
         await service.add_feedback(requester, request_id, command_value)
     repository.records[request_id] = record(requester.id, RequestStatus.COMPLETED)
-    repository.feedback_present = True
     assert (
         await service.add_feedback(requester, request_id, command_value)
         is repository.feedback
     )
-    repository.feedback_present = False
-    result = await service.add_feedback(requester, request_id, command_value)
-    assert result is repository.feedback

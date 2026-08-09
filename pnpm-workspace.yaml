@@ -1,5 +1,37 @@
 packages:
   - apps/*
 
+minimumReleaseAge: 10080
+minimumReleaseAgeIgnoreMissingTime: false
+minimumReleaseAgeStrict: true
+minimumReleaseAgeExclude:
+  # Exact bootstrap versions already locked, audited and container-scanned when
+  # the seven-day policy was introduced. Later versions remain protected.
+  - "@testing-library/user-event@14.6.3"
+  - "@typescript-eslint/eslint-plugin@8.66.0"
+  - "@typescript-eslint/parser@8.66.0"
+  - "@typescript-eslint/project-service@8.66.0"
+  - "@typescript-eslint/scope-manager@8.66.0"
+  - "@typescript-eslint/tsconfig-utils@8.66.0"
+  - "@typescript-eslint/type-utils@8.66.0"
+  - "@typescript-eslint/types@8.66.0"
+  - "@typescript-eslint/typescript-estree@8.66.0"
+  - "@typescript-eslint/utils@8.66.0"
+  - "@typescript-eslint/visitor-keys@8.66.0"
+  - "baseline-browser-mapping@2.11.12"
+  - "electron-to-chromium@1.5.401"
+  - "knip@6.32.0"
+  - "nanoid@3.3.17"
+  - "node-releases@2.0.52"
+  - "typescript-eslint@8.66.0"
+  - "unbash@4.0.7"
+  - "ws@8.21.2"
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  # Legacy transitive release reviewed in the locked dependency graph. The
+  # exception cannot apply to another semver version.
+  - "semver@6.3.1"
+blockExoticSubdeps: true
+
 allowBuilds:
   esbuild: true

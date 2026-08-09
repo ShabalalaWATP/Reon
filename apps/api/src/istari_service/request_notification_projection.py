@@ -28,6 +28,72 @@ from istari_service.repositories.notification_projection import (
 )
 from istari_service.request_action_projection import action_audiences, as_utc
 
+NotificationSpec = tuple[str, NotificationEventGroup]
+
+_DIRECT_NOTIFICATION_SPECS: dict[str, NotificationSpec] = {
+    "request_submitted": (
+        "REQUEST_SUBMITTED",
+        NotificationEventGroup.REQUEST_LIFECYCLE,
+    ),
+    "workflow_withdraw": (
+        "REQUEST_WITHDRAWN",
+        NotificationEventGroup.REQUEST_LIFECYCLE,
+    ),
+    "product_withdrawn": ("PRODUCT_WITHDRAWN", NotificationEventGroup.RELEASE),
+    "workflow_close": (
+        "REQUEST_CLOSED",
+        NotificationEventGroup.REQUEST_LIFECYCLE,
+    ),
+    "workflow_hold": (
+        "REQUEST_HELD",
+        NotificationEventGroup.REQUEST_LIFECYCLE,
+    ),
+    "workflow_request_information": (
+        "CLARIFICATION_REQUESTED",
+        NotificationEventGroup.CLARIFICATION,
+    ),
+    "workflow_request_clarification": (
+        "CLARIFICATION_REQUESTED",
+        NotificationEventGroup.CLARIFICATION,
+    ),
+    "workflow_provide_information": (
+        "CLARIFICATION_ANSWERED",
+        NotificationEventGroup.CLARIFICATION,
+    ),
+    "workflow_provide_clarification": (
+        "CLARIFICATION_ANSWERED",
+        NotificationEventGroup.CLARIFICATION,
+    ),
+    "workflow_submit": (
+        "MANAGER_REVIEW_REQUESTED",
+        NotificationEventGroup.REVIEW,
+    ),
+    "product_package_submitted": (
+        "MANAGER_REVIEW_REQUESTED",
+        NotificationEventGroup.REVIEW,
+    ),
+    "workflow_release": (
+        "PRODUCT_DISSEMINATED",
+        NotificationEventGroup.RELEASE,
+    ),
+    "product_disseminated": (
+        "PRODUCT_DISSEMINATED",
+        NotificationEventGroup.RELEASE,
+    ),
+    "feedback_submitted": (
+        "FEEDBACK_RECEIVED",
+        NotificationEventGroup.FEEDBACK,
+    ),
+}
+
+_REVIEW_NOTIFICATION_SPECS: dict[str, tuple[str, str]] = {
+    "workflow_approve": ("MANAGER_REVIEW_APPROVED", "QC_REVIEW_APPROVED"),
+    "workflow_changes_required": (
+        "MANAGER_REVIEW_RETURNED",
+        "QC_REVIEW_RETURNED",
+    ),
+}
+
 
 async def publish_request_notification(
     session: AsyncSession, event: RequestEvent, request: ServiceRequest
@@ -62,7 +128,17 @@ async def reconcile_pending_notifications(
     events = await projection.pending_events(limit=limit, available_at=current)
     for event in events:
         rules = [deserialise_rule(rule) for rule in event.audience]
-        await projection.project_event(event.id, rules, projected_at=current)
+        await projection.project_event(
+            event.id,
+            rules,
+            projected_at=current,
+            update_checkpoint=False,
+        )
+    if events:
+        await projection.update_projection_checkpoint(
+            events[-1],
+            projected_at=current,
+        )
     return len(events)
 
 
@@ -224,42 +300,17 @@ def _direct_rule(request: ServiceRequest, user_id: UUID) -> RecipientRule:
 
 def notification_spec(
     event: RequestEvent,
-) -> tuple[str, NotificationEventGroup] | None:
+) -> NotificationSpec | None:
     raw = event.type.lower()
-    if raw == "request_submitted":
-        return "REQUEST_SUBMITTED", NotificationEventGroup.REQUEST_LIFECYCLE
-    if raw in {"workflow_withdraw", "product_withdrawn"}:
-        return (
-            ("PRODUCT_WITHDRAWN", NotificationEventGroup.RELEASE)
-            if raw.startswith("product")
-            else ("REQUEST_WITHDRAWN", NotificationEventGroup.REQUEST_LIFECYCLE)
+    direct = _DIRECT_NOTIFICATION_SPECS.get(raw)
+    if direct is not None:
+        return direct
+    review = _REVIEW_NOTIFICATION_SPECS.get(raw)
+    if review is not None:
+        event_type = (
+            review[0] if event.prior_status is RequestStatus.LEAD_REVIEW else review[1]
         )
-    if raw == "workflow_close":
-        return "REQUEST_CLOSED", NotificationEventGroup.REQUEST_LIFECYCLE
-    if raw == "workflow_hold":
-        return "REQUEST_HELD", NotificationEventGroup.REQUEST_LIFECYCLE
-    if raw in {"workflow_request_information", "workflow_request_clarification"}:
-        return "CLARIFICATION_REQUESTED", NotificationEventGroup.CLARIFICATION
-    if raw in {"workflow_provide_information", "workflow_provide_clarification"}:
-        return "CLARIFICATION_ANSWERED", NotificationEventGroup.CLARIFICATION
-    if raw in {"workflow_submit", "product_package_submitted"}:
-        return "MANAGER_REVIEW_REQUESTED", NotificationEventGroup.REVIEW
-    if raw == "workflow_approve":
-        return (
-            ("MANAGER_REVIEW_APPROVED", NotificationEventGroup.REVIEW)
-            if event.prior_status is RequestStatus.LEAD_REVIEW
-            else ("QC_REVIEW_APPROVED", NotificationEventGroup.REVIEW)
-        )
-    if raw == "workflow_changes_required":
-        return (
-            ("MANAGER_REVIEW_RETURNED", NotificationEventGroup.REVIEW)
-            if event.prior_status is RequestStatus.LEAD_REVIEW
-            else ("QC_REVIEW_RETURNED", NotificationEventGroup.REVIEW)
-        )
-    if raw in {"workflow_release", "product_disseminated"}:
-        return "PRODUCT_DISSEMINATED", NotificationEventGroup.RELEASE
-    if raw == "feedback_submitted":
-        return "FEEDBACK_RECEIVED", NotificationEventGroup.FEEDBACK
+        return event_type, NotificationEventGroup.REVIEW
     if raw.startswith("workflow_"):
         return "TASK_ASSIGNED", NotificationEventGroup.ASSIGNMENT
     return None

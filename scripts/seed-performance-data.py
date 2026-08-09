@@ -10,6 +10,7 @@ from pathlib import Path
 from secrets import token_urlsafe
 from uuid import NAMESPACE_URL, UUID, uuid5
 
+from performance_request_fixture import seed_request_feeds
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -225,6 +226,7 @@ async def run(args: argparse.Namespace) -> dict[str, bool | int | str]:
             manager_id=manager_id,
             analysts=analysts,
         )
+        request_feeds = await seed_request_feeds(session, args.request_feed_rows)
         active_user_count = int(
             await session.scalar(
                 select(func.count()).select_from(User).where(User.is_active.is_(True))
@@ -253,6 +255,7 @@ async def run(args: argparse.Namespace) -> dict[str, bool | int | str]:
         active_user_count >= args.active_users
         and package_fixture_count >= args.packages
         and calendar_fixture_count >= args.calendar_occurrences
+        and request_feeds["passed"]
     )
     return {
         "active_user_count": active_user_count,
@@ -266,6 +269,7 @@ async def run(args: argparse.Namespace) -> dict[str, bool | int | str]:
         "package_target": args.packages,
         "users_added": users_added,
         "calendar_events_added": calendar_added,
+        "request_feeds": request_feeds,
     }
 
 
@@ -274,9 +278,18 @@ def main() -> int:
     parser.add_argument("--active-users", type=int, default=250)
     parser.add_argument("--packages", type=int, default=2_500)
     parser.add_argument("--calendar-occurrences", type=int, default=5_000)
+    parser.add_argument("--request-feed-rows", type=int, default=2_500)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    if min(args.active_users, args.packages, args.calendar_occurrences) < 1:
+    if (
+        min(
+            args.active_users,
+            args.packages,
+            args.calendar_occurrences,
+            args.request_feed_rows,
+        )
+        < 1
+    ):
         parser.error("all target counts must be positive")
     result = asyncio.run(run(args))
     rendered = json.dumps(result, indent=2, sort_keys=True)

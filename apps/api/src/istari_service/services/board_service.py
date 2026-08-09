@@ -11,7 +11,7 @@ from istari_service.board_policy import (
     authorise_package_change,
     require,
 )
-from istari_service.board_projection import PACKAGE_TRANSITIONS, apply_filters, paginate
+from istari_service.board_projection import PACKAGE_TRANSITIONS
 from istari_service.domain import Actor
 from istari_service.errors import (
     BoardItemNotFound,
@@ -76,10 +76,8 @@ class BoardService:
     ) -> BoardResult:
         await self._workspaces.require_read(actor.id, team_id)
         try:
-            items, next_cursor = paginate(
-                apply_filters(await self._board.projected_items(team_id), filters),
-                cursor,
-                limit,
+            items, next_cursor = await self._board.board_page(
+                team_id, filters, cursor, limit
             )
         except (ValueError, UnicodeError) as error:
             raise InvalidBoardChange("The board cursor is invalid.") from error
@@ -281,9 +279,10 @@ class BoardService:
         limit = config.wip_limits.get(target_column.value) if config else None
         if limit is None:
             return
-        count = sum(
-            item.item.column is target_column and item.item.id != package.id
-            for item in await self._board.projected_items(team_id)
+        count = await self._board.column_count(
+            team_id,
+            target_column,
+            exclude_package_id=package.id,
         )
         require(count < limit, InvalidBoardChange("The team WIP limit is reached."))
 

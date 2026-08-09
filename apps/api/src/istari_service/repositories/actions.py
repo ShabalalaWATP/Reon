@@ -25,10 +25,7 @@ from istari_service.models import (
     WorkflowTask,
     WorkflowTaskStatus,
 )
-from istari_service.organisation_models import (
-    RequestRouteSelection,
-    UserOrganisationMembership,
-)
+from istari_service.organisation_models import RequestRouteSelection
 from istari_service.repositories.projection_pagination import (
     decode_cursor,
     encode_cursor,
@@ -315,8 +312,7 @@ def _candidate_access(actor: Actor) -> ColumnElement[bool]:
         else false()
     )
     membership = exists().where(
-        UserOrganisationMembership.user_id == actor.id,
-        UserOrganisationMembership.unit_id == ActionProjection.organisation_unit_id,
+        ActionProjection.organisation_unit_id.in_(actor.organisation_unit_ids),
     )
     routed = or_(
         ActionProjection.request_id.is_(None),

@@ -9,6 +9,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     ForeignKey,
+    Index,
     Integer,
     String,
     UniqueConstraint,
@@ -82,6 +83,12 @@ class RequestRouteSelection(CreatedMixin, Base):
     __table_args__ = (
         UniqueConstraint("request_id", "position"),
         CheckConstraint("position BETWEEN 0 AND 3", name="route_position_range"),
+        Index(
+            "ix_request_routes_unit_position_request",
+            "unit_id",
+            "position",
+            "request_id",
+        ),
     )
 
     request_id: Mapped[UUID] = mapped_column(

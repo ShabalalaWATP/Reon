@@ -1,26 +1,35 @@
-import { Bell, LogOut, Moon, Sun } from "lucide-react";
+import { Bell, Moon, ShieldCheck, Sun } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 
+import { AccountMenu } from "./AccountMenu";
 import { useAuth } from "../lib/auth/AuthProvider";
 import { useCapabilities } from "../lib/capabilities/useCapabilities";
 import { api } from "../lib/api/client";
 import { actionNotificationApi } from "../lib/api/actionNotificationClient";
 import { protectedQueryKeys } from "../lib/api/queryKeys";
-import { navigationForRole, roleLabels } from "../lib/routes";
+import { isNavigationItemActive, navigationForRole } from "../lib/routes";
+import type { NavigationItem } from "../lib/routes";
 import { useTheme } from "../lib/theme/ThemeProvider";
 
 export function AppShell() {
   const { logout, session } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const [logoutError, setLogoutError] = useState(false);
   const { capabilities } = useCapabilities();
+  const hasTeamWorkspace = session?.user.role === "DELIVERY_TEAM_LEAD"
+    || session?.user.role === "DELIVERY_SPECIALIST";
   const notificationCount = useQuery({
     queryKey: protectedQueryKeys.notificationCount(session?.user.id ?? "anonymous"),
     queryFn: actionNotificationApi.notificationCount,
-    enabled: Boolean(session && capabilities.notifications),
+    enabled: Boolean(
+      session
+      && capabilities.notifications
+      && location.pathname !== "/notifications",
+    ),
     refetchInterval: 30_000,
   });
   const statisticsScopes = useQuery({
@@ -32,7 +41,7 @@ export function AppShell() {
   const teamWorkspaces = useQuery({
     queryKey: protectedQueryKeys.teamWorkspaces(session?.user.id ?? "anonymous"),
     queryFn: api.teamWorkspaces,
-    enabled: Boolean(session),
+    enabled: Boolean(session && hasTeamWorkspace),
     staleTime: 60_000,
   });
   if (!session) return null;
@@ -72,19 +81,12 @@ export function AppShell() {
         </NavLink>
         <nav aria-label="Primary navigation">
           {navigation.map((item) => (
-            <NavLink
-              className={({ isActive }) => `nav-link${isActive ? " nav-link--active" : ""}`}
-              key={item.path}
-              to={item.path}
-            >
-              {item.label}
-            </NavLink>
+            <PrimaryNavigationLink item={item} key={item.path} pathname={location.pathname} />
           ))}
         </nav>
-        <div className="nav-profile">
-          <strong>{session.user.displayName}</strong>
-          <small>{roleLabels[session.user.role]}</small>
-          <span>{session.user.scope}</span>
+        <div className="nav-session-status">
+          <ShieldCheck aria-hidden="true" size={15} />
+          <span><strong>Authenticated</strong><small>Protected workspace</small></span>
         </div>
       </aside>
       <div className="workspace">
@@ -100,14 +102,32 @@ export function AppShell() {
             >
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-            <button className="button button--quiet" onClick={() => void signOut()} type="button">
-              <LogOut aria-hidden="true" size={16} />Sign out
-            </button>
+            <AccountMenu onSignOut={signOut} pathname={location.pathname} session={session} />
           </div>
           {logoutError ? <p className="top-bar__error" role="alert">Sign out failed. Please try again.</p> : null}
         </header>
         <div className="workspace__main"><Outlet /></div>
       </div>
     </div>
+  );
+}
+
+function PrimaryNavigationLink({
+  item,
+  pathname,
+}: {
+  item: NavigationItem;
+  pathname: string;
+}) {
+  const active = isNavigationItemActive(pathname, item.path);
+  return (
+    <NavLink
+      aria-current={active ? "page" : undefined}
+      className={`nav-link${active ? " nav-link--active" : ""}`}
+      end={item.path === "/requests"}
+      to={item.path}
+    >
+      <span>{item.label}</span><i aria-hidden="true" />
+    </NavLink>
   );
 }

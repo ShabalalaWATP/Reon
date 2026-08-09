@@ -21,6 +21,14 @@ class OrganisationRepository(Protocol):
 
     async def list_tracked_requests(self, actor: Actor) -> list[TrackedRequest]: ...
 
+    async def page_tracked_requests(
+        self,
+        actor: Actor,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> tuple[list[TrackedRequest], str | None]: ...
+
 
 class OrganisationService:
     def __init__(self, repository: OrganisationRepository) -> None:
@@ -33,3 +41,16 @@ class OrganisationService:
         if actor.role not in TRACKING_ROLES:
             raise ObjectNotFound()
         return await self._repository.list_tracked_requests(actor)
+
+    async def page_tracked_requests(
+        self,
+        actor: Actor,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> tuple[list[TrackedRequest], str | None]:
+        if actor.role not in TRACKING_ROLES:
+            raise ObjectNotFound()
+        return await self._repository.page_tracked_requests(
+            actor, limit=limit, cursor=cursor
+        )

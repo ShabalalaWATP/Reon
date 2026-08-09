@@ -18,7 +18,7 @@ from istari_service.repositories.related_records import (
     SqlAlchemyRelatedRecordRepository,
 )
 from istari_service.repositories.work import SqlAlchemyWorkRepository
-from istari_service.schemas.organisation import OrganisationUnitList
+from istari_service.schemas.organisation import RoutingOptionsWorkspace
 from istari_service.schemas.related_records import (
     RelatedRecordCandidateList,
     RequestLinkCreate,
@@ -67,9 +67,13 @@ async def list_work_items(
     engine: WorkflowDependency,
     sessions: SessionFactoryDependency,
     settings: AppSettings,
+    limit: int = Query(default=50, ge=1, le=100),
+    cursor: str | None = Query(default=None, max_length=500),
 ) -> WorkItemList:
-    items = await _service(session, engine, sessions, settings).list_items(actor)
-    return WorkItemList(items=items)
+    items, next_cursor = await _service(session, engine, sessions, settings).list_page(
+        actor, limit=limit, cursor=cursor
+    )
+    return WorkItemList(items=items, next_cursor=next_cursor)
 
 
 @router.get(
@@ -90,7 +94,7 @@ async def list_eligible_specialists(
     return EligibleSpecialistList(items=items)
 
 
-@router.get("/{work_id}/routing-options", response_model=OrganisationUnitList)
+@router.get("/{work_id}/routing-options", response_model=RoutingOptionsWorkspace)
 async def list_routing_options(
     work_id: UUID,
     actor: CurrentActor,
@@ -98,11 +102,10 @@ async def list_routing_options(
     engine: WorkflowDependency,
     sessions: SessionFactoryDependency,
     settings: AppSettings,
-) -> OrganisationUnitList:
-    items = await _service(session, engine, sessions, settings).routing_options(
+) -> RoutingOptionsWorkspace:
+    return await _service(session, engine, sessions, settings).routing_options(
         actor, work_id
     )
-    return OrganisationUnitList(items=items)
 
 
 @router.get(

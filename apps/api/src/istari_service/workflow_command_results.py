@@ -37,6 +37,7 @@ async def schedule_retry(
 ) -> None:
     exhausted = outbox.attempts >= max_attempts
     outbox.status = OutboxStatus.FAILED if exhausted else OutboxStatus.PENDING
+    outbox.lease_owner = None
     outbox.available_at = datetime.now(UTC) + timedelta(
         seconds=min(2**outbox.attempts, 30)
     )
@@ -55,6 +56,7 @@ async def mark_support_failure(
     work_id: UUID | None,
 ) -> None:
     outbox.status = OutboxStatus.FAILED
+    outbox.lease_owner = None
     outbox.last_error = SUPPORT_MESSAGE
     request = await session.get(ServiceRequest, outbox.request_id)
     if request is not None:
@@ -67,6 +69,7 @@ async def mark_support_failure(
 
 def mark_sent(outbox: WorkflowOutbox) -> None:
     outbox.status = OutboxStatus.SENT
+    outbox.lease_owner = None
     outbox.sent_at = datetime.now(UTC)
     outbox.last_error = None
 
@@ -111,6 +114,7 @@ async def project_competing_claim(
     task.claimed_at = datetime.now(UTC)
     request.workflow_error = None
     outbox.status = OutboxStatus.FAILED
+    outbox.lease_owner = None
     outbox.last_error = "The engine task was claimed by another user."
     await append_request_event(
         session,

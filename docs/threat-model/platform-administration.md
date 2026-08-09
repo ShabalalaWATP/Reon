@@ -41,10 +41,20 @@ administration dependencies.
 | Organisation rename breaks routing | Change display name only; keep UUID, code, parent and Camunda candidate groups immutable; update denormalised display projections transactionally |
 | Duplicate or misleading organisation names | Trim and length-limit names and require uniqueness amongst direct siblings |
 | A hierarchy edit creates a cycle, orphan or skipped level | Validate the complete immutable candidate version, route closure and unit kinds before it can await approval |
+| A crafted request bypasses the filtered parent selector | Treat compatible-parent filtering as guidance only; validate the complete proposed hierarchy, effective windows and immediate parent kind on the server |
+| Search or breadcrumbs disclose unrelated application content | Build them only from the administrator-authorised configuration response; keep request, product, Customer and task repositories outside the administration path |
+| Search permits enumeration or denial of service | Enforce the bounded configuration size at the API, use local literal case-insensitive matching without regular expressions, and avoid logging search text |
+| HTML or Unicode content makes a unit appear to be another unit | Render labels through React escaping, retain the stable code beside the display name, constrain and normalise input, and require sibling uniqueness; confusable-name policy remains an enterprise decision |
+| A stale search result or parent option is applied after another change | Require `expectedVersion`, lock the proposed configuration and revalidate the complete snapshot; return a conflict without partial mutation |
+| A scheduled move or retirement is hidden from the approver | Compare every future effective checkpoint, show each distinct transition time and bind approval and activation to the canonical snapshot digest |
+| A false preview hides or invents workflow impact | Canonicalise unordered template values and distinguish existing validation findings from newly introduced change impact; approval binds to the immutable exact snapshot |
+| A move silently broadens management or tracking scope | Preview permission impact, rebuild organisation closure atomically on activation, and test removal of former-ancestor access as well as addition of the new path |
 | Candidate-group injection redirects work | Select only governed mappings that resolve to compatible operator-deployed groups; never accept an executable expression or browser-supplied group at activation |
 | Configuration removes every complete route | Require at least one valid Customer-to-team path; surface an unstaffed valid team as `Awaiting team staffing` without silent fallback |
 | One administrator authors and activates a high-impact change | Require reason, deterministic preview, unexpired session-bound step-up and approval by a different authorised configuration approver |
-| Approval applies to content changed afterwards | Approve the immutable version and digest only; any edit creates a new draft requiring validation and approval |
+| Approval applies to content changed afterwards | Approve the immutable revision and canonical digest only; reject digest mismatch at activation; PostgreSQL guards deny component changes once the proposal leaves Draft |
+| A direct database insert fabricates approval or activation evidence | PostgreSQL insert guards require the exact lifecycle revision, approved digest linkage, active Platform Administrator actors, creator separation, activation lineage and valid event order; runtime readiness independently rechecks the same structure |
+| An approved workflow record changes after the snapshot is reviewed | PostgreSQL seals process ID, process revision, compatibility key, checksum, approver and approval time; the snapshot digest binds its immutable identifier while availability and deployment key remain controlled operational state |
 | Arbitrary BPMN or code enters through administration | Accept only an allow-listed declarative template schema referencing a compatible BPMN version deployed through the operator path |
 | Activation changes an in-flight request | Pin organisation, form, workflow and notification-policy versions at submission and forbid implicit instance migration |
 | Concurrent activations create two active versions | Lock the activation boundary, require the expected version and make one transaction the winner |
@@ -72,6 +82,10 @@ administration dependencies.
   configuration validation tests.
 - Same-actor approval, expired step-up, changed-after-review, unauthorised
   approver and concurrent-activation tests.
+- Direct runtime-role evidence-insert denial for invalid actors, revision,
+  digest, lineage and event order, plus readiness rejection of forged structure.
+- Scheduled-transition preview, canonical-digest mismatch and PostgreSQL sealed
+  snapshot mutation tests.
 - Declarative-schema abuse and incompatible BPMN tests proving that scripts,
   expressions, arbitrary BPMN and weakened mandatory fields cannot be activated.
 - Historical rename, move, retirement, as-of query, superseding rollback and
@@ -82,6 +96,12 @@ administration dependencies.
   absent from administrative events.
 - Production-mode denial and local-only password handling tests.
 - Frontend route, loading, empty, error, keyboard and WCAG checks.
+- Literal name, code and kind search; ancestor-context breadcrumb; no-result;
+  narrow-width; and filtered-parent component and browser tests.
+- Forged parent, stale result, scheduled retirement, closure rebuild and former
+  ancestor denial tests proving that the UI filters are not security controls.
+- Canonical unchanged-comparison tests proving that value ordering and an
+  existing staffing warning do not invent a change.
 
 ## Residual risks and exit gates
 
@@ -91,8 +111,13 @@ administration dependencies.
 - Account-only lockout can be abused to deny a predictable user access. Before a
   connected pilot, add an approved trusted-edge source limiter or shared throttle
   with safe proxy handling, alerting and a documented unlock procedure.
-- Local database roles do not yet provide an independent append-only enforcement
-  layer for the admin audit table.
+- PostgreSQL now independently seals non-Draft configuration components, but the
+  administrative audit table still lacks an independent append-only storage
+  boundary and structured correlation/outcome fields.
+- The shared application database identity cannot itself prove which human
+  initiated a structurally valid privileged write. A connected production
+  design requires separately controlled evidence writing or identity-bound
+  signatures, with the audit copy exported to an independent security boundary.
 - Before any pilot or production use, replace demo authentication with approved
   identity, privileged-access, joiner/mover/leaver and recovery processes.
 - Production requires restricted database grants, audit monitoring, backup and

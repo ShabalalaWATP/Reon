@@ -151,7 +151,6 @@ async def test_complete_maps_dispatch_failures_after_committed_intent(
                 destination_unit_id=uuid4(),
             ),
         )
-    assert repository.validations == 1
     assert repository.commits == 1
 
 

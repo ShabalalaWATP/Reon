@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.domain import Actor
@@ -12,6 +12,10 @@ from istari_service.errors import ObjectNotFound, StaleVersion
 from istari_service.models import ServiceRequest
 from istari_service.repositories.configuration_pins import (
     SqlAlchemyConfigurationPinRepository,
+)
+from istari_service.repositories.projection_pagination import (
+    decode_cursor,
+    encode_cursor,
 )
 from istari_service.repositories.requests import SqlAlchemyRequestRepository
 from istari_service.request_draft_models import RequestDraft
@@ -44,14 +48,48 @@ class SqlAlchemyDraftRepository:
         )
 
     async def list_for_requester(self, requester_id: UUID) -> list[RequestDraftView]:
-        drafts = (
-            await self._session.scalars(
-                select(RequestDraft)
-                .where(RequestDraft.requester_id == requester_id)
-                .order_by(RequestDraft.updated_at.desc())
+        items, _cursor = await self.page_for_requester(
+            requester_id, limit=100, cursor=None
+        )
+        return items
+
+    async def page_for_requester(
+        self,
+        requester_id: UUID,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> tuple[list[RequestDraftView], str | None]:
+        statement = select(RequestDraft).where(
+            RequestDraft.requester_id == requester_id
+        )
+        if cursor is not None:
+            changed_at, draft_id = decode_cursor(
+                cursor, message="The draft filters are invalid."
             )
-        ).all()
-        return [_view(draft) for draft in drafts]
+            statement = statement.where(
+                or_(
+                    RequestDraft.updated_at < changed_at,
+                    and_(
+                        RequestDraft.updated_at == changed_at,
+                        RequestDraft.id < draft_id,
+                    ),
+                )
+            )
+        drafts = list(
+            await self._session.scalars(
+                statement.order_by(
+                    RequestDraft.updated_at.desc(), RequestDraft.id.desc()
+                ).limit(limit + 1)
+            )
+        )
+        page = drafts[:limit]
+        next_cursor = (
+            encode_cursor(page[-1].updated_at, page[-1].id)
+            if len(drafts) > limit and page
+            else None
+        )
+        return [_view(draft) for draft in page], next_cursor
 
     async def get(self, draft_id: UUID, requester_id: UUID) -> RequestDraftView | None:
         draft = await self._session.scalar(

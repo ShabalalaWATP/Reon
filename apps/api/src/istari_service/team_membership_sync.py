@@ -1,12 +1,12 @@
-"""Activation of scheduled team-membership projection changes."""
+"""Worker-owned activation of due team-membership projection changes."""
 
 from __future__ import annotations
 
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import ColumnElement, and_, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from istari_service.models import User, UserRole
 from istari_service.organisation_models import (
@@ -16,35 +16,61 @@ from istari_service.organisation_models import (
 from istari_service.repositories.team_memberships import (
     SqlAlchemyTeamMembershipRepository,
 )
-from istari_service.team_models import (
-    TeamActivityType,
-    TeamMembership,
-)
+from istari_service.team_models import TeamActivityType, TeamMembership
+
+DEFAULT_MEMBERSHIP_BATCH = 100
+
+
+class TeamMembershipProjector:
+    def __init__(
+        self,
+        sessions: async_sessionmaker[AsyncSession],
+        *,
+        batch_size: int = DEFAULT_MEMBERSHIP_BATCH,
+    ) -> None:
+        self._sessions = sessions
+        self._batch_size = batch_size
+
+    async def reconcile_once(self) -> bool:
+        async with self._sessions() as session, session.begin():
+            return bool(
+                await synchronise_due_team_memberships(session, limit=self._batch_size)
+            )
 
 
 async def synchronise_due_team_memberships(
-    session: AsyncSession, at: datetime | None = None
+    session: AsyncSession,
+    at: datetime | None = None,
+    *,
+    limit: int = DEFAULT_MEMBERSHIP_BATCH,
 ) -> int:
-    """Apply scheduled timeline changes to the compatibility projection."""
+    """Apply only due, unprojected timeline boundaries in a bounded batch."""
 
     effective_at = at or datetime.now(UTC)
-    users = list(
+    due_rows = list(
         await session.scalars(
-            select(User)
-            .join(TeamMembership, TeamMembership.user_id == User.id)
-            .where(
+            select(TeamMembership)
+            .where(_due_boundary(effective_at))
+            .order_by(TeamMembership.effective_from, TeamMembership.id)
+            .limit(limit)
+            .with_for_update(skip_locked=True)
+        )
+    )
+    if not due_rows:
+        return 0
+    user_ids = {row.user_id for row in due_rows}
+    users = {
+        user.id: user
+        for user in await session.scalars(
+            select(User).where(
+                User.id.in_(user_ids),
                 User.role.in_(
                     [UserRole.DELIVERY_TEAM_LEAD, UserRole.DELIVERY_SPECIALIST]
                 ),
-                TeamMembership.effective_from <= effective_at,
             )
-            .distinct()
         )
-    )
-    if not users:
-        return 0
-    user_ids = {user.id for user in users}
-    effective_memberships = list(
+    }
+    current_rows = list(
         await session.scalars(
             select(TeamMembership).where(
                 TeamMembership.user_id.in_(user_ids),
@@ -56,8 +82,13 @@ async def synchronise_due_team_memberships(
             )
         )
     )
-    effective_by_user = {
-        membership.user_id: membership for membership in effective_memberships
+    current_by_user = {row.user_id: row for row in current_rows}
+    team_ids = {row.team_id for row in current_rows}
+    teams = {
+        team.id: team
+        for team in await session.scalars(
+            select(OrganisationUnit).where(OrganisationUnit.id.in_(team_ids))
+        )
     }
     projected_rows = (
         await session.execute(
@@ -70,23 +101,60 @@ async def synchronise_due_team_memberships(
     projected_by_user: dict[UUID, set[UUID]] = {}
     for user_id, unit_id in projected_rows:
         projected_by_user.setdefault(user_id, set()).add(unit_id)
-    changed = 0
+
     repository = SqlAlchemyTeamMembershipRepository(session)
-    for user in users:
-        current = effective_by_user.get(user.id)
-        team_id = current.team_id if current else None
-        projected_ids = projected_by_user.get(user.id, set())
-        next_ids = {team_id} if team_id else set()
-        if projected_ids == next_ids:
-            continue
-        team = await session.get(OrganisationUnit, team_id) if team_id else None
-        await repository._set_projection(user, team, projected_ids | next_ids)
-        if current is not None:
-            repository._activity(
-                current,
-                None,
-                TeamActivityType.TRANSFER_ACTIVATED,
-                "A scheduled Analyst transfer became effective.",
-            )
-        changed += 1
-    return changed
+    due_by_user = _rows_by_user(due_rows)
+    for user_id, boundaries in due_by_user.items():
+        current = current_by_user.get(user_id)
+        next_ids = {current.team_id} if current is not None else set()
+        previous_ids = projected_by_user.get(user_id, set())
+        user = users.get(user_id)
+        if user is not None and previous_ids != next_ids:
+            team = teams.get(current.team_id) if current is not None else None
+            await repository._set_projection(user, team, previous_ids | next_ids)
+            if current is not None and current.start_projected_at is None:
+                repository._activity(
+                    current,
+                    None,
+                    TeamActivityType.TRANSFER_ACTIVATED,
+                    "A scheduled Analyst transfer became effective.",
+                )
+        _mark_projected(boundaries, effective_at)
+    return len(due_by_user)
+
+
+def _due_boundary(at: datetime) -> ColumnElement[bool]:
+    return or_(
+        and_(
+            TeamMembership.start_projected_at.is_(None),
+            TeamMembership.effective_from <= at,
+        ),
+        and_(
+            TeamMembership.end_projected_at.is_(None),
+            TeamMembership.effective_until.is_not(None),
+            TeamMembership.effective_until <= at,
+        ),
+    )
+
+
+def _rows_by_user(rows: list[TeamMembership]) -> dict[UUID, list[TeamMembership]]:
+    result: dict[UUID, list[TeamMembership]] = {}
+    for row in rows:
+        result.setdefault(row.user_id, []).append(row)
+    return result
+
+
+def _mark_projected(rows: list[TeamMembership], at: datetime) -> None:
+    for row in rows:
+        if row.start_projected_at is None and _aware(row.effective_from) <= at:
+            row.start_projected_at = at
+        if (
+            row.end_projected_at is None
+            and row.effective_until is not None
+            and _aware(row.effective_until) <= at
+        ):
+            row.end_projected_at = at
+
+
+def _aware(value: datetime) -> datetime:
+    return value if value.tzinfo else value.replace(tzinfo=UTC)

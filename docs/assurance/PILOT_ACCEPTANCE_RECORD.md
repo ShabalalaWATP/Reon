@@ -1,5 +1,8 @@
 # Pilot acceptance record
 
+> Historical MVP acceptance template. Product Evolution has a separate
+> acceptance record and remains unsigned.
+
 ## Status
 
 Prepared on 7 August 2026. This record is ready for named stakeholder review but

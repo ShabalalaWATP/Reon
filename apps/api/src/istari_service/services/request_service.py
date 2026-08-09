@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import re
 from typing import Protocol
 from uuid import UUID
@@ -28,6 +29,14 @@ class RequestRepository(Protocol):
 
     async def list_for_requester(self, requester_id: UUID) -> list[RequestSummary]: ...
 
+    async def page_for_requester(
+        self,
+        requester_id: UUID,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> tuple[list[RequestSummary], str | None]: ...
+
     async def get_record_for_actor(
         self,
         request_id: UUID,
@@ -42,9 +51,9 @@ class RequestRepository(Protocol):
         *,
         reveal_unreleased_deliverable: bool,
         include_clarifications: bool = False,
+        event_limit: int = 50,
+        event_cursor: str | None = None,
     ) -> RequestDetail: ...
-
-    async def feedback_exists(self, request_id: UUID) -> bool: ...
 
     async def get_released_product(
         self,
@@ -79,21 +88,68 @@ class RequestService:
             raise ObjectNotFound()
         return await self._repository.list_for_requester(actor.id)
 
+    async def list_page(
+        self,
+        actor: Actor,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> tuple[builtins.list[RequestSummary], str | None]:
+        if actor.role != UserRole.REQUESTER:
+            raise ObjectNotFound()
+        return await self._repository.page_for_requester(
+            actor.id, limit=limit, cursor=cursor
+        )
+
     async def get(self, actor: Actor, request_id: UUID) -> RequestDetail:
+        return await self._get(actor, request_id)
+
+    async def get_page(
+        self,
+        actor: Actor,
+        request_id: UUID,
+        *,
+        event_limit: int = 50,
+        event_cursor: str | None = None,
+    ) -> RequestDetail:
+        return await self._get(
+            actor,
+            request_id,
+            event_limit=event_limit,
+            event_cursor=event_cursor,
+        )
+
+    async def _get(
+        self,
+        actor: Actor,
+        request_id: UUID,
+        *,
+        event_limit: int | None = None,
+        event_cursor: str | None = None,
+    ) -> RequestDetail:
         record = await self._repository.get_record_for_actor(
             request_id, actor, lock=True
         )
         if record is None or not can_view_request(actor, record):
             raise ObjectNotFound()
+        reveal = actor.role != UserRole.REQUESTER
+        clarifications = actor.role in {
+            UserRole.REQUESTER,
+            UserRole.DELIVERY_SPECIALIST,
+            UserRole.DELIVERY_TEAM_LEAD,
+        }
+        if event_limit is None:
+            return await self._repository.get_detail(
+                request_id,
+                reveal_unreleased_deliverable=reveal,
+                include_clarifications=clarifications,
+            )
         return await self._repository.get_detail(
             request_id,
-            reveal_unreleased_deliverable=actor.role != UserRole.REQUESTER,
-            include_clarifications=actor.role
-            in {
-                UserRole.REQUESTER,
-                UserRole.DELIVERY_SPECIALIST,
-                UserRole.DELIVERY_TEAM_LEAD,
-            },
+            reveal_unreleased_deliverable=reveal,
+            include_clarifications=clarifications,
+            event_limit=event_limit,
+            event_cursor=event_cursor,
         )
 
     async def add_feedback(

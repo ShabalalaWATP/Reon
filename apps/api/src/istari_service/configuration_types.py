@@ -47,6 +47,7 @@ class PreviewChangeType(StrEnum):
     UNSTAFFED = "UNSTAFFED"
     PERMISSION_AFFECTED = "PERMISSION_AFFECTED"
     WORKFLOW_AFFECTED = "WORKFLOW_AFFECTED"
+    RESTORED = "RESTORED"
 
 
 @dataclass(frozen=True, slots=True)
@@ -95,6 +96,17 @@ class WorkflowTemplateSpec:
     workflow_definition_id: UUID
 
     def __post_init__(self) -> None:
+        for field_name in (
+            "core_fields",
+            "service_categories",
+            "product_types",
+            "reminder_days",
+            "artefact_types",
+            "approved_link_domains",
+        ):
+            object.__setattr__(
+                self, field_name, tuple(sorted(getattr(self, field_name)))
+            )
         object.__setattr__(
             self, "task_labels", MappingProxyType(dict(self.task_labels))
         )
@@ -102,7 +114,10 @@ class WorkflowTemplateSpec:
             self,
             "allowed_outcomes",
             MappingProxyType(
-                {key: tuple(values) for key, values in self.allowed_outcomes.items()}
+                {
+                    key: tuple(sorted(values))
+                    for key, values in self.allowed_outcomes.items()
+                }
             ),
         )
 
@@ -143,3 +158,4 @@ class PreviewChange:
     unit_id: UUID
     code: str
     message: str
+    effective_at: datetime

@@ -92,6 +92,17 @@ async def test_unit_listing_and_routing_options_include_empty_paths(
             request.id, RequestStatus.TRIAGE_REVIEW
         )
         assert [option.code for option in options] == ["DIGOC", "SYGOC", "MYGOC"]
+        workspace = await repository.routing_workspace(
+            request.id, RequestStatus.TRIAGE_REVIEW
+        )
+        assert [(unit.name, unit.code) for unit in workspace.route] == [
+            ("JIOC", "JIOC")
+        ]
+        assert [option.code for option in workspace.items] == [
+            "DIGOC",
+            "SYGOC",
+            "MYGOC",
+        ]
 
 
 @pytest.mark.asyncio
@@ -134,7 +145,9 @@ async def test_tracking_enforces_membership_and_maps_the_selected_route(
         )
         await session.flush()
 
-        tracked = await repository.list_tracked_requests(actor_from(triage_user))
+        tracked = await repository.list_tracked_requests(
+            actor_from(triage_user, organisation_id("JIOC"))
+        )
         assert len(tracked) == 1
         assert tracked[0].id == request.id
         assert tracked[0].awaiting_team_staffing is True
@@ -187,6 +200,7 @@ async def test_organisation_service_hides_tracking_from_non_routing_roles() -> N
         "Synthetic Triage User",
         UserRole.INTAKE_TRIAGE,
         "Shared queue",
+        frozenset({uuid4()}),
     )
     assert await service.list_tracked_requests(triage_user) == []
     repository.list_tracked_requests.assert_awaited_once_with(triage_user)
@@ -213,6 +227,7 @@ async def test_route_membership_handles_unscoped_roles_and_revocation() -> None:
         "Synthetic Triage User",
         UserRole.INTAKE_TRIAGE,
         "Shared queue",
+        frozenset({uuid4()}),
     )
     session.scalar.side_effect = [uuid4(), None, None]
     assert await has_route_membership(session, triage_user, request_id) is True

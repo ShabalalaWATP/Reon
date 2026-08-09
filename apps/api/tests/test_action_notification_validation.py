@@ -33,13 +33,17 @@ from istari_service.services.notification_service import _event_types, _validate
 @pytest.mark.parametrize(
     ("raw", "prior", "expected"),
     [
+        ("request_submitted", None, "REQUEST_SUBMITTED"),
         ("workflow_withdraw", None, "REQUEST_WITHDRAWN"),
         ("product_withdrawn", None, "PRODUCT_WITHDRAWN"),
         ("workflow_close", None, "REQUEST_CLOSED"),
         ("workflow_hold", None, "REQUEST_HELD"),
         ("workflow_request_information", None, "CLARIFICATION_REQUESTED"),
+        ("workflow_request_clarification", None, "CLARIFICATION_REQUESTED"),
         ("workflow_provide_information", None, "CLARIFICATION_ANSWERED"),
+        ("workflow_provide_clarification", None, "CLARIFICATION_ANSWERED"),
         ("workflow_submit", None, "MANAGER_REVIEW_REQUESTED"),
+        ("product_package_submitted", None, "MANAGER_REVIEW_REQUESTED"),
         ("workflow_approve", RequestStatus.LEAD_REVIEW, "MANAGER_REVIEW_APPROVED"),
         ("workflow_approve", RequestStatus.QUALITY_REVIEW, "QC_REVIEW_APPROVED"),
         (
@@ -53,6 +57,7 @@ from istari_service.services.notification_service import _event_types, _validate
             "QC_REVIEW_RETURNED",
         ),
         ("workflow_release", None, "PRODUCT_DISSEMINATED"),
+        ("product_disseminated", None, "PRODUCT_DISSEMINATED"),
         ("feedback_submitted", None, "FEEDBACK_RECEIVED"),
         ("workflow_allocate", None, "TASK_ASSIGNED"),
         ("unrelated_event", None, None),

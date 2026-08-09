@@ -5,8 +5,9 @@ import {
   clarificationTaskPollInterval,
   requestDetailPollInterval,
   requestListPollInterval,
-  REQUESTER_POLL_INTERVAL_MS,
 } from "./requestPolling";
+
+const EXPECTED_POLL_INTERVAL_MS = 5_000;
 
 describe("requester projection polling policy", () => {
   it("polls a register only while at least one request remains active", () => {
@@ -17,7 +18,7 @@ describe("requester projection polling policy", () => {
           { ...requestSummary, status: "IN_PROGRESS" },
         ],
       }),
-    ).toBe(REQUESTER_POLL_INTERVAL_MS);
+    ).toBe(EXPECTED_POLL_INTERVAL_MS);
     expect(
       requestListPollInterval({
         items: [
@@ -40,21 +41,21 @@ describe("requester projection polling policy", () => {
 
   it("polls an active detail and stops before its first response", () => {
     expect(requestDetailPollInterval(requestDetail)).toBe(
-      REQUESTER_POLL_INTERVAL_MS,
+      EXPECTED_POLL_INTERVAL_MS,
     );
     expect(requestDetailPollInterval(undefined)).toBe(false);
   });
 
   it("polls for clarification until the matching task appears", () => {
     expect(clarificationTaskPollInterval(undefined, requestDetail.id)).toBe(
-      REQUESTER_POLL_INTERVAL_MS,
+      EXPECTED_POLL_INTERVAL_MS,
     );
     expect(
       clarificationTaskPollInterval(
         { items: [{ ...workItem, requestId: "another-request" }] },
         requestDetail.id,
       ),
-    ).toBe(REQUESTER_POLL_INTERVAL_MS);
+    ).toBe(EXPECTED_POLL_INTERVAL_MS);
     expect(
       clarificationTaskPollInterval({ items: [workItem] }, requestDetail.id),
     ).toBe(false);

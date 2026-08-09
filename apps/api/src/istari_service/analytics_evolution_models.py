@@ -161,7 +161,7 @@ class AnalyticsExportAuditEvent(CreatedMixin, Base):
     __tablename__ = "analytics_export_audit_events"
     __table_args__ = (
         UniqueConstraint("export_id", "sequence"),
-        CheckConstraint("sequence > 0", name="analytics_export_event_sequence"),
+        CheckConstraint("sequence > 0", name="sequence_positive"),
     )
 
     export_id: Mapped[UUID] = mapped_column(

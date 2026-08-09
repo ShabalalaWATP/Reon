@@ -60,13 +60,6 @@ def available_product_exists() -> ColumnElement[bool]:
     )
 
 
-async def has_disseminated_product(session: AsyncSession, request_id: UUID) -> bool:
-    available = await session.scalar(
-        select(disseminated_product_exists()).where(ServiceRequest.id == request_id)
-    )
-    return bool(available)
-
-
 async def has_available_product(session: AsyncSession, request_id: UUID) -> bool:
     available = await session.scalar(
         select(available_product_exists()).where(ServiceRequest.id == request_id)

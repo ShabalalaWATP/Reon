@@ -16,7 +16,9 @@ from istari_service.product_types import ScanDecision, ScanResult
 class _BinaryReader(Protocol):
     def read(self, size: int = -1) -> bytes: ...
 
-    def seek(self, offset: int, whence: int = 0) -> int: ...
+    def seek(self, offset: int, whence: int = 0) -> int:
+        del offset, whence
+        raise NotImplementedError
 
 
 class ClamAvInstreamScanner:

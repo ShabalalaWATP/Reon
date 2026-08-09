@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from istari_service.errors import ServiceError
@@ -17,6 +17,8 @@ class InvalidProjectionQuery(ServiceError):
 
 
 def encode_cursor(changed_at: datetime, item_id: UUID) -> str:
+    if changed_at.tzinfo is None:
+        changed_at = changed_at.replace(tzinfo=UTC)
     payload = json.dumps([changed_at.isoformat(), str(item_id)], separators=(",", ":"))
     return base64.urlsafe_b64encode(payload.encode()).decode().rstrip("=")
 

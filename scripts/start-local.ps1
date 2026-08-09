@@ -140,7 +140,8 @@ try {
 
     if (-not $SkipWorkflowDeployment) {
         & (Join-Path $PSScriptRoot "deploy-workflow.ps1") `
-            -OperatorSubject ("local:{0}" -f [Environment]::UserName)
+            -OperatorSubject ("local:{0}" -f [Environment]::UserName) `
+            -AttestWithCompose
         if ($LASTEXITCODE -ne 0) {
             throw "Workflow deployment failed."
         }

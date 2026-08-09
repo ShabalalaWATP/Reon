@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "fingerprint": "acba305b4b1213d180f7c21caf1bd3ac5b2b4f6153a9aebf5ae3ea910c49d7e6",
+      "expiresOn": "2027-02-09",
+      "reason": "Synthetic negative URL-validation fixture in historical commit b655315; no real host or credential."
+    }
+  ]
+}

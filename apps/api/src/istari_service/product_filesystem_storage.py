@@ -6,6 +6,7 @@ import asyncio
 import contextlib
 import hashlib
 import os
+import shutil
 import tempfile
 from collections.abc import AsyncIterable, AsyncIterator
 from datetime import UTC, datetime
@@ -104,7 +105,17 @@ class PrivateFilesystemObjectStorage:
         destination = self._path(released_key, "released")
         destination.parent.mkdir(parents=True, exist_ok=True)
         self._restrict(destination.parent, 0o700)
-        await asyncio.to_thread(os.replace, source, destination)
+        descriptor, temporary_name = tempfile.mkstemp(
+            prefix=".release-", dir=destination.parent
+        )
+        os.close(descriptor)
+        temporary = Path(temporary_name)
+        try:
+            await asyncio.to_thread(shutil.copyfile, source, temporary)
+            await asyncio.to_thread(os.replace, temporary, destination)
+        except BaseException:
+            await asyncio.to_thread(temporary.unlink, missing_ok=True)
+            raise
         self._restrict(destination, 0o600)
 
     async def download(

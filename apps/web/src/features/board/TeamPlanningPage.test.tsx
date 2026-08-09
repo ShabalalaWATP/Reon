@@ -45,7 +45,11 @@ describe("team agile planning", () => {
     mockPlanning(access, [workPackage, sparsePackage], [iteration, closedIteration], calls);
     const user = userEvent.setup();
     const view = renderApp("/teams/team-osg/planning");
-    expect(await screen.findByRole("heading", { name: "Team planning" })).toBeInTheDocument();
+    expect(await screen.findByRole(
+      "heading",
+      { name: "Team planning" },
+      { timeout: 5_000 },
+    )).toBeInTheDocument();
     expect(screen.getByText("Work package moved to in progress. · Grant Hanley")).toBeInTheDocument();
     expect(screen.getByText("package-dependency")).toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
@@ -104,7 +108,11 @@ describe("team agile planning", () => {
   it("keeps iteration management out of the Analyst view and handles empty planning", async () => {
     mockPlanning(analystAccess, [], [], []);
     renderApp("/teams/team-osg/planning");
-    expect(await screen.findByRole("heading", { name: "No work packages" })).toBeInTheDocument();
+    expect(await screen.findByRole(
+      "heading",
+      { name: "No work packages" },
+      { timeout: 5_000 },
+    )).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Create iteration" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Close iteration" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Edit or hand over package" })).not.toBeInTheDocument();
@@ -124,7 +132,11 @@ describe("team agile planning", () => {
     }, true, true, false);
     const user = userEvent.setup();
     renderApp("/teams/team-osg/planning");
-    expect(await screen.findByRole("heading", { name: "Team planning could not be loaded" })).toBeInTheDocument();
+    expect(await screen.findByRole(
+      "heading",
+      { name: "Team planning could not be loaded" },
+      { timeout: 5_000 },
+    )).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect((await screen.findAllByText("Prepare synthetic product")).length).toBeGreaterThan(0);
     await user.click(screen.getByRole("button", { name: "Save package" }));

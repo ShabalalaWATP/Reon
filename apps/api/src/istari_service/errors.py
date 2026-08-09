@@ -19,6 +19,26 @@ class AuthenticationFailed(ServiceError):
     public_message = "Unable to sign in with those credentials."
 
 
+class AuthenticationRateLimited(ServiceError):
+    status_code = 429
+    code = "AUTHENTICATION_RATE_LIMITED"
+    public_message = "Sign-in is temporarily unavailable. Try again shortly."
+
+    def __init__(self, retry_after_seconds: int) -> None:
+        super().__init__()
+        self.retry_after_seconds = max(1, min(3_600, retry_after_seconds))
+
+    @property
+    def response_headers(self) -> dict[str, str]:
+        return {"Retry-After": str(self.retry_after_seconds)}
+
+
+class AuthenticationUnavailable(ServiceError):
+    status_code = 503
+    code = "AUTHENTICATION_UNAVAILABLE"
+    public_message = "Sign-in is temporarily unavailable. Try again shortly."
+
+
 class SessionRequired(ServiceError):
     status_code = 401
     code = "SESSION_REQUIRED"

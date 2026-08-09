@@ -6,7 +6,7 @@ from datetime import date
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import JSON, Date, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Date, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from istari_service.models import Base, TimestampMixin
@@ -17,6 +17,14 @@ if TYPE_CHECKING:
 
 class RequestDraft(TimestampMixin, Base):
     __tablename__ = "request_drafts"
+    __table_args__ = (
+        Index(
+            "ix_request_drafts_requester_updated_id",
+            "requester_id",
+            "updated_at",
+            "id",
+        ),
+    )
 
     requester_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id", ondelete="RESTRICT"), index=True

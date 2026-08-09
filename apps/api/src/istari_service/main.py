@@ -32,7 +32,6 @@ from istari_service.organisation_seed import seed_organisation_units
 from istari_service.product_filesystem_storage import PrivateFilesystemObjectStorage
 from istari_service.product_runtime import ProductRuntime, clamav_product_runtime
 from istari_service.product_security import AllowedHttpsLinkPolicy, SafeDocumentScanner
-from istari_service.request_event_projection import NotificationProjectionReconciler
 from istari_service.request_security import RequestBodyLimitMiddleware
 from istari_service.response_security import SecurityHeadersMiddleware
 from istari_service.routers import (
@@ -57,35 +56,7 @@ from istari_service.routers import (
 from istari_service.telemetry import OperationalTelemetryMiddleware
 from istari_service.workflow.camunda import CamundaWorkflowEngine
 from istari_service.workflow.engine import WorkflowEngine
-from istari_service.workflow_command_dispatch import WorkflowCommandDispatcher
-from istari_service.workflow_dispatch import WorkflowOutboxDispatcher
-from istari_service.workflow_maintenance import (
-    WorkflowMaintenanceHealth,
-    WorkflowReconciler,
-    run_workflow_maintenance,
-)
-
-
-def _client_configuration(settings: Settings) -> dict[str, str]:
-    address = settings.camunda_base_url
-    if not address.endswith("/v2"):
-        address = f"{address}/v2"
-    auth_strategy = settings.camunda_auth_mode.upper()
-    if auth_strategy not in {"NONE", "BASIC"}:
-        raise ValueError("only NONE or BASIC Camunda authentication is configured")
-    configuration = {
-        "CAMUNDA_REST_ADDRESS": address,
-        "CAMUNDA_AUTH_STRATEGY": auth_strategy,
-        "CAMUNDA_SDK_LOG_LEVEL": "warn",
-    }
-    if auth_strategy == "BASIC":
-        configuration["CAMUNDA_BASIC_AUTH_USERNAME"] = settings.camunda_username or ""
-        configuration["CAMUNDA_BASIC_AUTH_PASSWORD"] = (
-            settings.camunda_password.get_secret_value()
-            if settings.camunda_password
-            else ""
-        )
-    return configuration
+from istari_service.workflow_client import camunda_client_configuration
 
 
 def _product_runtime(settings: Settings) -> ProductRuntime:
@@ -143,7 +114,6 @@ def create_app(
     session_factory: async_sessionmaker[AsyncSession] | None = None,
     workflow_engine: WorkflowEngine | None = None,
     password_hasher: PasswordHasher | None = None,
-    start_background_worker: bool = True,
     product_runtime: ProductRuntime | None = None,
 ) -> FastAPI:
     configured = settings or get_settings()
@@ -157,7 +127,7 @@ def create_app(
         engine = workflow_engine
         if engine is None:
             client = CamundaAsyncClient(
-                configuration=cast(Any, _client_configuration(configured))
+                configuration=cast(Any, camunda_client_configuration(configured))
             )
             await client.__aenter__()
             engine = CamundaWorkflowEngine(client)
@@ -186,47 +156,14 @@ def create_app(
                 await initialise_admin_identity_sequence(session)
                 await initialise_admin_audit_anchor(session)
             if restored_configuration:
-                await restore_active_configuration_projection(session)
+                if configured.allow_demo_users:
+                    await restore_active_configuration_projection(session)
             else:
                 await seed_baseline_configuration(session)
 
-        stop = asyncio.Event()
-        maintenance: asyncio.Task[None] | None = None
-        if start_background_worker:
-            maintenance_health = WorkflowMaintenanceHealth()
-            application.state.workflow_maintenance_health = maintenance_health
-            dispatcher = WorkflowOutboxDispatcher(
-                sessions,
-                engine,
-                process_id=configured.camunda_process_id,
-            )
-            reconciler = WorkflowReconciler(sessions, engine)
-            command_dispatcher = WorkflowCommandDispatcher(
-                sessions,
-                engine,
-                managed_products_enabled=configured.managed_products_enabled,
-            )
-            maintenance = asyncio.create_task(
-                run_workflow_maintenance(
-                    dispatcher,
-                    reconciler,
-                    stop,
-                    command_dispatcher=command_dispatcher,
-                    notification_reconciler=(
-                        NotificationProjectionReconciler(sessions)
-                        if configured.notifications_enabled
-                        else None
-                    ),
-                    health=maintenance_health,
-                ),
-                name="workflow-maintenance",
-            )
         try:
             yield
         finally:
-            stop.set()
-            if maintenance is not None:
-                await maintenance
             if client is not None:
                 await client.__aexit__(None, None, None)
 
@@ -234,12 +171,19 @@ def create_app(
         title="ISTARI Service API",
         version="0.1.0",
         lifespan=lifespan,
+        openapi_url=(
+            None if configured.environment is Environment.PROD else "/openapi.json"
+        ),
+        docs_url=(None if configured.environment is Environment.PROD else "/docs"),
+        redoc_url=(None if configured.environment is Environment.PROD else "/redoc"),
     )
     application.state.settings = configured
     application.state.session_factory = sessions
     application.state.password_hasher = hasher
     application.state.dummy_password_hash = hasher.hash(DUMMY_HASH_INPUT)
-    application.state.workflow_maintenance_health = None
+    application.state.login_password_semaphore = asyncio.Semaphore(
+        configured.login_hash_concurrency
+    )
     if managed_products is not None:
         application.state.product_runtime = managed_products
     application.add_middleware(
@@ -274,6 +218,7 @@ def create_app(
     ) -> JSONResponse:
         return JSONResponse(
             status_code=error.status_code,
+            headers=getattr(error, "response_headers", None),
             content={
                 "detail": {
                     "code": error.code,

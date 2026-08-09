@@ -126,6 +126,7 @@ def _enum(enum_type: type[StrEnum], name: str) -> SqlEnum:
 
 class User(TimestampMixin, Base):
     __tablename__ = "users"
+    __table_args__ = (Index("ix_users_updated_id", "updated_at", "id"),)
 
     username: Mapped[str] = mapped_column(String(254), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(120))
@@ -172,6 +173,13 @@ class ServiceRequest(TimestampMixin, Base):
             "AND audit_anchor_mac IS NOT NULL)",
             name="audit_anchor_consistency",
         ),
+        Index(
+            "ix_service_requests_requester_updated_id",
+            "requester_id",
+            "updated_at",
+            "id",
+        ),
+        Index("ix_service_requests_updated_id", "updated_at", "id"),
     )
 
     reference: Mapped[str] = mapped_column(String(32), unique=True, index=True)
@@ -238,6 +246,12 @@ class RequestEvent(CreatedMixin, Base):
     __table_args__ = (
         UniqueConstraint("event_hash", name="uq_request_events_event_hash"),
         Index("ix_request_events_request_created", "request_id", "created_at"),
+        Index(
+            "ix_request_events_request_created_id",
+            "request_id",
+            "created_at",
+            "id",
+        ),
     )
 
     request_id: Mapped[UUID] = mapped_column(ForeignKey("service_requests.id"))
@@ -281,6 +295,15 @@ class WorkflowInstance(TimestampMixin, Base):
 
 class WorkflowTask(TimestampMixin, Base):
     __tablename__ = "workflow_tasks"
+    __table_args__ = (
+        Index(
+            "ix_workflow_tasks_role_status_updated_id",
+            "candidate_role",
+            "status",
+            "updated_at",
+            "id",
+        ),
+    )
 
     request_id: Mapped[UUID] = mapped_column(
         ForeignKey("service_requests.id"), index=True
@@ -308,43 +331,7 @@ class WorkflowTask(TimestampMixin, Base):
     assignee: Mapped[User | None] = rel(foreign_keys=[assignee_user_id])
 
 
-class Deliverable(CreatedMixin, Base):
-    __tablename__ = "deliverables"
-    __table_args__ = (UniqueConstraint("request_id", "version"),)
-
-    request_id: Mapped[UUID] = mapped_column(
-        ForeignKey("service_requests.id"), index=True
-    )
-    version: Mapped[int] = mapped_column(Integer)
-    title: Mapped[str] = mapped_column(String(160))
-    text: Mapped[str] = mapped_column(Text)
-    author_user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
-    status: Mapped[DeliverableStatus] = mapped_column(
-        _enum(DeliverableStatus, "deliverable_status"),
-        default=DeliverableStatus.SUBMITTED,
-    )
-    approved_by_user_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
-    released_by_user_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
-    release_recipients: Mapped[list[str] | None] = mapped_column(JSON)
-    approved_at: Mapped[datetime | None] = mapped_column(UTC_TS)
-    released_at: Mapped[datetime | None] = mapped_column(UTC_TS)
-
-
-import istari_service.action_notification_models as _action_models  # noqa: E402, F401
-import istari_service.admin_models as _admin_models  # noqa: E402, F401
-import istari_service.analytics_evolution_models as _evolution_models  # noqa: E402, F401
-import istari_service.analytics_models as _analytics_models  # noqa: E402, F401
-import istari_service.board_models as _board_models  # noqa: E402, F401
-import istari_service.calendar_models as _calendar_models  # noqa: E402, F401
-import istari_service.clarification_models as _clarification_models  # noqa: E402, F401
-import istari_service.configuration_models as _configuration_models  # noqa: E402, F401
-import istari_service.management_models as _management_models  # noqa: E402, F401
-import istari_service.operations_models as _operations_models  # noqa: E402, F401
-import istari_service.organisation_models as _organisation_models  # noqa: E402, F401
-import istari_service.planning_analytics_models as _planning_models  # noqa: E402, F401
-import istari_service.product_models as _product_models  # noqa: E402, F401
-import istari_service.related_record_models as _related_record_models  # noqa: E402, F401
-import istari_service.request_draft_models as _request_draft_models  # noqa: E402, F401
-import istari_service.team_models as _team_models  # noqa: E402, F401
+import istari_service.model_registry as _model_registry  # noqa: E402, F401
+from istari_service.deliverable_model import Deliverable as Deliverable  # noqa: E402
 from istari_service.feedback_model import Feedback as Feedback  # noqa: E402
 from istari_service.outbox_model import WorkflowOutbox as WorkflowOutbox  # noqa: E402

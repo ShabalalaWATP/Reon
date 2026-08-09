@@ -1,5 +1,9 @@
 # Final completion audit
 
+> Historical MVP record. This document proves the accepted local MVP baseline,
+> not the later Product Evolution release candidate. Current capability and open
+> gates are recorded in the Product Evolution Definition of Done matrix.
+
 ## Audit result
 
 Recorded on 7 August 2026. The requested MVP product capabilities are

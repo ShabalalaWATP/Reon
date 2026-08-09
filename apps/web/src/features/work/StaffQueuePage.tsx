@@ -1,21 +1,23 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  type InfiniteData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { ClipboardList } from "lucide-react";
 import { useState } from "react";
 
 import { PageState } from "../../components/PageState";
-import { StatusPill } from "../../components/StatusPill";
 import { api, ApiError } from "../../lib/api/client";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
+import { flattenUniquePages } from "../../lib/api/pagination";
 import type { ListResponse, WorkAction, WorkItem } from "../../lib/api/types";
 import { useAuth } from "../../lib/auth/AuthProvider";
-import { formatDate, statusLabels } from "../../lib/status";
-import { RequestOverview } from "../requests/RequestOverview";
-import { StaffProductAction } from "../products/StaffProductAction";
 import type { SpecialistOptions } from "./EligibleSpecialistField";
 import type { RoutingOptions } from "./RoutingDestinationField";
-import { RelatedRecordPanel } from "./RelatedRecordPanel";
-import { StaffDeliverableSection } from "./StaffDeliverableSection";
-import { WorkActionPanel } from "./WorkActionPanel";
+import { WorkQueueDetail } from "./WorkQueueDetail";
+import { WorkQueueList } from "./WorkQueueList";
 import {
   actionRequiresDestination,
   type WorkActionName,
@@ -40,13 +42,17 @@ export function StaffQueuePage({
     action: WorkActionName;
     workItemId: string;
   } | null>(null);
-  const listQuery = useQuery({
+  const listQuery = useInfiniteQuery({
     queryKey: protectedQueryKeys.workItems(userId),
-    queryFn: api.workItems,
+    queryFn: ({ pageParam }) => api.workItems(pageParam ?? undefined),
+    initialPageParam: null as string | null,
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
     enabled: Boolean(session),
     refetchInterval: 30_000,
   });
-  const items = listQuery.data?.items ?? [];
+  const items = listQuery.data
+    ? flattenUniquePages(listQuery.data.pages)
+    : [];
   const selected = items.find((item) => item.id === selectedId) ?? items[0];
   const activeAction =
     selected &&
@@ -107,13 +113,20 @@ export function StaffQueuePage({
     onSuccess: (_request, variables) => {
       setSelectedId(null);
       setSelectedAction(null);
-      queryClient.setQueryData<ListResponse<WorkItem>>(
-        protectedQueryKeys.workItems(userId),
-        (current) => ({
-          // Completion is only available after this queue has loaded, so the
-          // cached list is an invariant at this point in the interaction.
-          items: current!.items.filter((item) => item.id !== variables.item.id),
-        }),
+      queryClient.setQueryData<
+        InfiniteData<ListResponse<WorkItem>, string | null>
+      >(protectedQueryKeys.workItems(userId), (current) =>
+        current
+          ? {
+              ...current,
+              pages: current.pages.map((page) => ({
+                ...page,
+                items: page.items.filter(
+                  (item) => item.id !== variables.item.id,
+                ),
+              })),
+            }
+          : current,
       );
       queryClient.removeQueries({
         queryKey: protectedQueryKeys.request(userId, variables.item.requestId),
@@ -149,6 +162,7 @@ export function StaffQueuePage({
         : {
             items: routingOptionsQuery.data.items,
             onRetry: retryRoutingOptions,
+            route: routingOptionsQuery.data.route,
             status: "ready",
           };
   const detailState = detailQuery.isPending
@@ -205,133 +219,33 @@ export function StaffQueuePage({
         </PageState>
       ) : (
         <div className="queue-layout">
-          <aside className="queue-list" aria-label="Work items">
-            {items.map((item) => (
-              <QueueRow
-                currentUserId={session.user.id}
-                item={item}
-                key={item.id}
-                onSelect={() => setSelectedId(item.id)}
-                selected={item.id === selected?.id}
-              />
-            ))}
-          </aside>
-          <section className="queue-detail" aria-live="polite">
-            {selected ? (
-              <>
-                <header className="queue-detail__heading">
-                  <div>
-                    <span className="mono-ref">{selected.requestReference}</span>
-                    <h2>{selected.title}</h2>
-                    <p>
-                      {statusLabels[selected.stage]} · updated{" "}
-                      {formatDate(selected.updatedAt, true)}
-                    </p>
-                  </div>
-                  <StatusPill status={selected.stage} />
-                </header>
-                <div className="queue-detail__content">
-                  {!selected.assigneeId ? (
-                    <PageState kind="empty" title="Claim to view request context">
-                      Request details remain protected until you take ownership.
-                    </PageState>
-                  ) : selected.assigneeId !== session.user.id ? (
-                    <PageState kind="empty" title="Request context restricted">
-                      Only the current owner can view this request.
-                    </PageState>
-                  ) : detailQuery.isPending ? (
-                    <PageState kind="loading" title="Loading request context" />
-                  ) : detailQuery.isError ? (
-                    <PageState
-                      action={
-                        <button
-                          className="button"
-                          onClick={() => void detailQuery.refetch()}
-                        >
-                          Try again
-                        </button>
-                      }
-                      kind="error"
-                      title="Request context could not be loaded"
-                    />
-                  ) : (
-                    <RequestOverview request={detailQuery.data} />
-                  )}
-                  <div className="queue-detail__decision">
-                    {canLoadDetail ? <StaffProductAction requestId={selected.requestId} requestVersion={selected.requestVersion} stage={selected.stage} /> : null}
-                    {canLoadDetail && selected.stage === "TRIAGE_REVIEW" ? (
-                      <RelatedRecordPanel
-                        csrfToken={session.csrfToken}
-                        userId={session.user.id}
-                        workItemId={selected.id}
-                      />
-                    ) : null}
-                    {canLoadDetail ? (
-                      <StaffDeliverableSection
-                        deliverable={detailQuery.data?.deliverable}
-                        stage={selected.stage}
-                        state={detailState}
-                      />
-                    ) : null}
-                    {!canLoadDetail || detailQuery.data ? (
-                      <WorkActionPanel
-                        currentUserId={session.user.id}
-                        disabled={claim.isPending || complete.isPending}
-                        item={selected}
-                        onActionChange={(action) =>
-                          setSelectedAction({
-                            action,
-                            workItemId: selected.id,
-                          })
-                        }
-                        onClaim={() => claim.mutate(selected)}
-                        onComplete={(action) =>
-                          complete.mutate({ action, item: selected })
-                        }
-                        routingOptions={routingOptions}
-                        specialistOptions={specialistOptions}
-                      />
-                    ) : null}
-                  </div>
-                </div>
-              </>
-            ) : null}
-          </section>
+          <WorkQueueList
+            currentUserId={session.user.id}
+            hasMore={listQuery.hasNextPage}
+            items={items}
+            loadingMore={listQuery.isFetchingNextPage}
+            onLoadMore={() => void listQuery.fetchNextPage()}
+            onSelect={setSelectedId}
+            selectedId={selected?.id}
+          />
+          <WorkQueueDetail
+            canLoadDetail={canLoadDetail}
+            detail={detailQuery.data}
+            detailError={detailQuery.isError}
+            detailLoading={detailQuery.isPending}
+            detailState={detailState}
+            disabled={claim.isPending || complete.isPending}
+            item={selected}
+            onActionChange={(action) => selected && setSelectedAction({ action, workItemId: selected.id })}
+            onClaim={(item) => claim.mutate(item)}
+            onComplete={(action, item) => complete.mutate({ action, item })}
+            onRetryDetail={() => void detailQuery.refetch()}
+            routingOptions={routingOptions}
+            session={session}
+            specialistOptions={specialistOptions}
+          />
         </div>
       )}
     </main>
-  );
-}
-
-function QueueRow({
-  currentUserId,
-  item,
-  onSelect,
-  selected,
-}: {
-  currentUserId: string;
-  item: WorkItem;
-  onSelect: () => void;
-  selected: boolean;
-}) {
-  const ownership = !item.assigneeId
-    ? "Available"
-    : item.assigneeId === currentUserId
-      ? "Assigned to you"
-      : `Assigned to ${item.assigneeDisplayName ?? "team member"}`;
-  return (
-    <button
-      aria-current={selected ? "true" : undefined}
-      className={`queue-row${selected ? " queue-row--selected" : ""}`}
-      onClick={onSelect}
-      type="button"
-    >
-      <span className="queue-row__indicator" aria-hidden="true" />
-      <span className="mono-ref">{item.requestReference}</span>
-      <strong>{item.title}</strong>
-      <small>{statusLabels[item.stage]}</small>
-      <span>{ownership}</span>
-      <time dateTime={item.updatedAt}>{formatDate(item.updatedAt)}</time>
-    </button>
   );
 }

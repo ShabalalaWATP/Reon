@@ -11,6 +11,7 @@ import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import { useAuth } from "../../lib/auth/AuthProvider";
 import { formatDate } from "../../lib/status";
 import { FeedbackForm } from "./FeedbackForm";
+import { RequestActivity } from "./RequestActivity";
 import { RequesterAction } from "./RequesterAction";
 import { RequestOverview } from "./RequestOverview";
 import { requestDetailPollInterval } from "./requestPolling";
@@ -61,10 +62,12 @@ export function RequestDetailPage() {
       <div className="detail-layout">
         <RequestOverview request={request} />
         <aside aria-label="Activity, released product and feedback" className="detail-aside">
-          <section className="detail-section" aria-labelledby="activity-title">
-            <div className="section-heading"><span>Immutable history</span><h2 id="activity-title">Activity</h2></div>
-            {request.events.length === 0 ? <p className="inline-empty">No activity has been recorded yet.</p> : <ol className="activity-list">{request.events.map((event) => <li key={event.id}><span aria-hidden="true" /><div><strong>{event.message}</strong><small>{event.actorDisplayName ?? "ISTARI service"} · <time dateTime={event.createdAt}>{formatDate(event.createdAt, true)}</time></small></div></li>)}</ol>}
-          </section>
+          <RequestActivity
+            initialCursor={request.eventsNextCursor}
+            initialEvents={request.events}
+            key={request.updatedAt}
+            requestId={request.id}
+          />
           <section className="detail-section" aria-labelledby="deliverable-title">
             <div className="section-heading"><span>Disseminated result</span><h2 id="deliverable-title">Service product</h2></div>
             {request.productAvailable ? <CustomerProductPanel requestId={request.id} /> : <p className="inline-empty">The product will appear here after dissemination.</p>}

@@ -24,7 +24,6 @@ from istari_service.models import RequestStatus, ServiceRequest, User, UserRole
 from istari_service.organisation_models import (
     OrganisationKind,
     OrganisationUnit,
-    UserOrganisationMembership,
 )
 from istari_service.schemas.team_workspaces import (
     EligibleRosterAnalyst,
@@ -79,11 +78,16 @@ class SqlAlchemyTeamWorkspaceRepository:
             await self.session.scalars(
                 select(OrganisationUnit)
                 .join(
-                    UserOrganisationMembership,
-                    UserOrganisationMembership.unit_id == OrganisationUnit.id,
+                    TeamMembership,
+                    TeamMembership.team_id == OrganisationUnit.id,
                 )
                 .where(
-                    UserOrganisationMembership.user_id == actor_id,
+                    TeamMembership.user_id == actor_id,
+                    TeamMembership.effective_from <= effective_at,
+                    or_(
+                        TeamMembership.effective_until.is_(None),
+                        TeamMembership.effective_until > effective_at,
+                    ),
                     OrganisationUnit.kind == OrganisationKind.TEAM,
                     OrganisationUnit.is_configured.is_(True),
                 )

@@ -63,8 +63,8 @@ function AuthenticatedTeamBoard({ access, session }: { access: TeamWorkspaceAcce
     onSuccess: refresh,
   });
   const changeFilters = (next: BoardFilters) => { setFilters(next); setCursors([null]); };
-  if (board.isPending) return <PageState kind="loading" title="Loading workflow board" />;
-  if (board.isError) return <PageState action={<button className="button" onClick={() => void board.refetch()}>Try again</button>} kind="error" title="Workflow board could not be loaded" />;
+  if (board.isPending || people.isPending || iterations.isPending) return <PageState kind="loading" title="Loading workflow board" />;
+  if (board.isError || people.isError || iterations.isError) return <PageState action={<button className="button" onClick={() => void Promise.all([board.refetch(), people.refetch(), iterations.refetch()])}>Try again</button>} kind="error" title="Workflow board could not be loaded">Board, roster and iteration data must all be available before planning changes can be made.</PageState>;
   return (
     <div className="board-page page-stack">
       <section className="board-toolbar" aria-label="Board controls">

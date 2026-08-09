@@ -88,6 +88,31 @@ class ProductRepository(Protocol):
 
     async def mark_uploaded(self, intent_id: UUID, *, now: datetime) -> None: ...
 
+    async def claim_intent_operation(
+        self,
+        intent_id: UUID,
+        *,
+        owner: str,
+        now: datetime,
+        expires_at: datetime,
+    ) -> int: ...
+
+    async def require_intent_operation(
+        self,
+        intent_id: UUID,
+        *,
+        owner: str,
+        generation: int,
+    ) -> None: ...
+
+    async def release_intent_operation(
+        self,
+        intent_id: UUID,
+        *,
+        owner: str,
+        generation: int,
+    ) -> bool: ...
+
     async def record_scan(
         self,
         artefact_id: UUID,

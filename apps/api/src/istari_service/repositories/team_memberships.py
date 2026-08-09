@@ -61,6 +61,7 @@ class SqlAlchemyTeamMembershipRepository:
         self.session.add(membership)
         await self.session.flush()
         await self._set_projection(analyst, team, {team.id})
+        membership.start_projected_at = effective_at
         self._activity(
             membership,
             actor_id,
@@ -96,6 +97,7 @@ class SqlAlchemyTeamMembershipRepository:
         membership.version += 1
         await self.session.flush()
         await self._set_projection(analyst, None, {team_id})
+        membership.end_projected_at = effective_at
         self._activity(
             membership,
             actor_id,
@@ -159,6 +161,8 @@ class SqlAlchemyTeamMembershipRepository:
             await self._set_projection(
                 analyst, target_team, {current.team_id, target_team.id}
             )
+            current.end_projected_at = now
+            next_membership.start_projected_at = now
         self._activity(
             current,
             actor_id,

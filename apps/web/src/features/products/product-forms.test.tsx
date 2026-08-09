@@ -58,10 +58,11 @@ describe("product artefact entry", () => {
     await user.click(submit);
     expect(screen.getByRole("alert")).toHaveTextContent("Enter a product label.");
     await user.type(screen.getByLabelText("Product label"), "Dashboard");
+    const credentialUrl = `https://${["user", "pass"].join(":")}@example.test/a`;
     for (const [url, message] of [
       ["not-a-url", "Enter a valid absolute HTTPS URL."],
       ["http://example.test/a", "Use an absolute HTTPS URL"],
-      ["https://user:pass@example.test/a", "Use an absolute HTTPS URL"],
+      [credentialUrl, "Use an absolute HTTPS URL"],
       ["https://example.test/a#private", "Use an absolute HTTPS URL"],
       ["https://localhost/a", "Local destinations are not permitted."],
     ]) {

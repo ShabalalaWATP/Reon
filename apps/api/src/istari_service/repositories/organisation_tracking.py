@@ -5,39 +5,62 @@ from __future__ import annotations
 from collections import defaultdict
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, select
+from sqlalchemy import ColumnElement, and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from istari_service.configuration_request_policy import (
-    load_request_configuration_policy,
-)
 from istari_service.models import ServiceRequest
 from istari_service.organisation_models import OrganisationUnit, RequestRouteSelection
+from istari_service.repositories.configuration_policies import (
+    load_request_configuration_policies,
+)
+from istari_service.repositories.projection_pagination import (
+    decode_cursor,
+    encode_cursor,
+)
 from istari_service.schemas.organisation import TrackedRequest, TrackedRouteUnit
 
 
 async def tracked_requests(
     session: AsyncSession,
     membership: ColumnElement[bool],
-) -> list[TrackedRequest]:
+    *,
+    limit: int,
+    cursor: str | None,
+) -> tuple[list[TrackedRequest], str | None]:
+    statement = select(
+        ServiceRequest.id,
+        ServiceRequest.reference,
+        ServiceRequest.status,
+        ServiceRequest.current_owner,
+        ServiceRequest.required_by,
+        ServiceRequest.updated_at,
+        ServiceRequest.awaiting_team_staffing,
+    ).where(membership)
+    if cursor is not None:
+        changed_at, request_id = decode_cursor(
+            cursor, message="The tracking filters are invalid."
+        )
+        statement = statement.where(
+            or_(
+                ServiceRequest.updated_at < changed_at,
+                and_(
+                    ServiceRequest.updated_at == changed_at,
+                    ServiceRequest.id < request_id,
+                ),
+            )
+        )
     request_rows = (
         await session.execute(
-            select(
-                ServiceRequest.id,
-                ServiceRequest.reference,
-                ServiceRequest.status,
-                ServiceRequest.current_owner,
-                ServiceRequest.required_by,
-                ServiceRequest.updated_at,
-                ServiceRequest.awaiting_team_staffing,
-            )
-            .where(membership)
-            .order_by(ServiceRequest.updated_at.desc(), ServiceRequest.id)
+            statement.order_by(
+                ServiceRequest.updated_at.desc(), ServiceRequest.id.desc()
+            ).limit(limit + 1)
         )
     ).all()
+    has_more = len(request_rows) > limit
+    request_rows = request_rows[:limit]
     visible_ids = {row.id for row in request_rows}
     if not visible_ids:
-        return []
+        return [], None
     route_rows = (
         await session.execute(
             select(
@@ -49,20 +72,23 @@ async def tracked_requests(
             .order_by(RequestRouteSelection.request_id, RequestRouteSelection.position)
         )
     ).all()
-    unit_ids = {row.unit_id for row in route_rows}
-    legacy_units = {
-        unit.id: unit
-        for unit in await session.scalars(
-            select(OrganisationUnit).where(OrganisationUnit.id.in_(unit_ids))
-        )
+    policies = await load_request_configuration_policies(session, visible_ids)
+    legacy_unit_ids = {
+        row.unit_id for row in route_rows if row.request_id not in policies
     }
-    policies = {
-        request_id: await load_request_configuration_policy(session, request_id)
-        for request_id in visible_ids
-    }
+    legacy_units = (
+        {
+            unit.id: unit
+            for unit in await session.scalars(
+                select(OrganisationUnit).where(OrganisationUnit.id.in_(legacy_unit_ids))
+            )
+        }
+        if legacy_unit_ids
+        else {}
+    )
     routes: dict[UUID, list[TrackedRouteUnit]] = defaultdict(list)
     for row in route_rows:
-        policy = policies[row.request_id]
+        policy = policies.get(row.request_id)
         if policy is not None:
             unit = policy.units.get(row.unit_id)
             if unit is None:
@@ -76,7 +102,7 @@ async def tracked_requests(
         routes[row.request_id].append(
             TrackedRouteUnit(id=row.unit_id, name=name, kind=kind)
         )
-    return [
+    items = [
         TrackedRequest(
             id=row.id,
             reference=row.reference,
@@ -89,3 +115,9 @@ async def tracked_requests(
         )
         for row in request_rows
     ]
+    next_cursor = (
+        encode_cursor(request_rows[-1].updated_at, request_rows[-1].id)
+        if has_more and request_rows
+        else None
+    )
+    return items, next_cursor

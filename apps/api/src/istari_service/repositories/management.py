@@ -57,6 +57,22 @@ async def rebuild_organisation_closure(session: AsyncSession) -> int:
                 raise ValueError("The organisation hierarchy has a missing parent.")
             current = parent
             depth += 1
+    expected = {(row.ancestor_id, row.descendant_id, row.depth) for row in rows}
+    current_rows = set(
+        (
+            await session.execute(
+                select(
+                    OrganisationClosure.ancestor_id,
+                    OrganisationClosure.descendant_id,
+                    OrganisationClosure.depth,
+                )
+            )
+        )
+        .tuples()
+        .all()
+    )
+    if current_rows == expected:
+        return len(rows)
     await session.execute(delete(OrganisationClosure))
     session.add_all(rows)
     await session.flush()

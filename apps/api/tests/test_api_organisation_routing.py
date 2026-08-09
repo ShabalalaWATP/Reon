@@ -19,10 +19,14 @@ from istari_service.organisation_models import UserOrganisationMembership
 from istari_service.workflow.variables import completion_variables
 
 
-async def _options(harness: ApiHarness, work_id: str) -> list[dict[str, Any]]:
+async def _workspace(harness: ApiHarness, work_id: str) -> dict[str, Any]:
     response = await harness.client.get(f"/api/v1/work-items/{work_id}/routing-options")
     assert response.status_code == 200, response.text
-    return response.json()["items"]
+    return response.json()
+
+
+async def _options(harness: ApiHarness, work_id: str) -> list[dict[str, Any]]:
+    return (await _workspace(harness, work_id))["items"]
 
 
 async def _complete(
@@ -48,7 +52,11 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
 
     await harness.login("admin4")
     triage = await current_item(harness)
-    command_options = await _options(harness, triage["id"])
+    command_workspace = await _workspace(harness, triage["id"])
+    assert [(unit["name"], unit["code"]) for unit in command_workspace["route"]] == [
+        ("JIOC", "JIOC")
+    ]
+    command_options = command_workspace["items"]
     assert [option["code"] for option in command_options] == [
         "DIGOC",
         "SYGOC",
@@ -79,7 +87,9 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
 
     await harness.login("admin5")
     command = await current_item(harness)
-    ops_options = await _options(harness, command["id"])
+    ops_workspace = await _workspace(harness, command["id"])
+    assert [unit["code"] for unit in ops_workspace["route"]] == ["JIOC", "SYGOC"]
+    ops_options = ops_workspace["items"]
     assert [option["code"] for option in ops_options] == [
         "NIMBUS_OPS",
         "PARALLAX_OPS",
@@ -108,7 +118,13 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
 
     await harness.login("admin6")
     allocation = await current_item(harness)
-    team_options = await _options(harness, allocation["id"])
+    team_workspace = await _workspace(harness, allocation["id"])
+    assert [unit["code"] for unit in team_workspace["route"]] == [
+        "JIOC",
+        "SYGOC",
+        "NIMBUS_OPS",
+    ]
+    team_options = team_workspace["items"]
     assert [(item["code"], item["staffingStatus"]) for item in team_options] == [
         ("BEACON_TEAM", "STAFFED"),
         ("SLATE_TEAM", "STAFFED"),

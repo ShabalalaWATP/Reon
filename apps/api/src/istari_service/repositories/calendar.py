@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import Select, or_, select
@@ -27,13 +27,13 @@ from istari_service.errors import (
     StaleVersion,
 )
 from istari_service.models import User
-from istari_service.organisation_models import UserOrganisationMembership
 from istari_service.schemas.calendar import (
     CalendarEventCommand,
     CalendarOccurrence,
     OccurrenceCancelCommand,
     OccurrenceEditCommand,
 )
+from istari_service.team_models import TeamMembership
 
 
 class SqlAlchemyCalendarRepository:
@@ -41,19 +41,31 @@ class SqlAlchemyCalendarRepository:
         self.session = session
 
     async def current_team_ids(self, user_id: UUID) -> list[UUID]:
+        now = datetime.now(UTC)
         return list(
             await self.session.scalars(
-                select(UserOrganisationMembership.unit_id).where(
-                    UserOrganisationMembership.user_id == user_id
+                select(TeamMembership.team_id).where(
+                    TeamMembership.user_id == user_id,
+                    TeamMembership.effective_from <= now,
+                    or_(
+                        TeamMembership.effective_until.is_(None),
+                        TeamMembership.effective_until > now,
+                    ),
                 )
             )
         )
 
     async def current_team_members(self, team_id: UUID) -> set[UUID]:
+        now = datetime.now(UTC)
         return set(
             await self.session.scalars(
-                select(UserOrganisationMembership.user_id).where(
-                    UserOrganisationMembership.unit_id == team_id
+                select(TeamMembership.user_id).where(
+                    TeamMembership.team_id == team_id,
+                    TeamMembership.effective_from <= now,
+                    or_(
+                        TeamMembership.effective_until.is_(None),
+                        TeamMembership.effective_until > now,
+                    ),
                 )
             )
         )

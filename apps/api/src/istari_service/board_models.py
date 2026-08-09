@@ -114,6 +114,7 @@ class WorkPackage(TimestampMixin, Base):
         ),
         CheckConstraint("version > 0", name="package_version"),
         Index("ix_work_packages_team_status_due", "team_id", "status", "due_on"),
+        Index("ix_work_packages_team_updated_id", "team_id", "updated_at", "id"),
     )
 
     team_id: Mapped[UUID] = mapped_column(

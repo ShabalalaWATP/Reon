@@ -16,10 +16,7 @@ from istari_service.management_models import (
     ManagementGrantAction,
 )
 from istari_service.models import User, UserRole
-from istari_service.organisation_models import (
-    OrganisationUnit,
-    UserOrganisationMembership,
-)
+from istari_service.organisation_models import OrganisationUnit
 from istari_service.repositories.management import resolve_management_scope
 
 
@@ -31,19 +28,13 @@ async def authorise_planning_read(
 ) -> None:
     """Allow a team member or a current exact-team content grant."""
 
-    direct_member = await session.scalar(
-        select(UserOrganisationMembership.user_id)
-        .join(
-            OrganisationUnit,
-            OrganisationUnit.id == UserOrganisationMembership.unit_id,
-        )
-        .where(
-            UserOrganisationMembership.user_id == actor.id,
-            UserOrganisationMembership.unit_id == team_id,
+    configured_team = await session.scalar(
+        select(OrganisationUnit.id).where(
+            OrganisationUnit.id == team_id,
             OrganisationUnit.is_configured.is_(True),
         )
     )
-    if direct_member is not None:
+    if team_id in actor.organisation_unit_ids and configured_team is not None:
         return
     now = datetime.now(UTC)
     grant = await session.scalar(

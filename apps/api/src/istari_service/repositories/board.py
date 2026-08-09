@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import or_, select
@@ -10,31 +10,29 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.analytics_models import RequestAnalyticsFact
 from istari_service.board_models import (
-    CapacityReservation,
-    ReservationStatus,
+    BoardColumn,
     SavedBoardView,
     TeamBoardConfiguration,
     TeamIteration,
     WorkPackage,
     WorkPackageContributor,
 )
-from istari_service.board_projection import (
-    ProjectedBoardItem,
-    package_projection,
-    request_projection,
-)
+from istari_service.board_projection import ProjectedBoardItem
 from istari_service.errors import BoardItemNotFound, StaleVersion
-from istari_service.models import RequestStatus, ServiceRequest, User
-from istari_service.organisation_models import UserOrganisationMembership
+from istari_service.models import User
 from istari_service.repositories.board_package_reads import (
     SqlAlchemyPackageReadRepository,
 )
+from istari_service.repositories.board_page import SqlAlchemyBoardPageRepository
 from istari_service.schemas.board import (
+    BoardFilters,
+    BoardItem,
     IterationResult,
     SavedBoardViewResult,
     WorkPackageResult,
     normalise_filters,
 )
+from istari_service.team_models import TeamMembership
 
 BOARD_ROW_LIMIT = 500
 
@@ -43,44 +41,32 @@ class SqlAlchemyBoardRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self._package_reads = SqlAlchemyPackageReadRepository(session)
+        self._page_reads = SqlAlchemyBoardPageRepository(session)
 
     async def projected_items(self, team_id: UUID) -> list[ProjectedBoardItem]:
-        completed_cutoff = datetime.now(UTC) - timedelta(days=30)
-        request_rows = (
-            await self.session.execute(
-                select(ServiceRequest, User.display_name)
-                .join(
-                    RequestAnalyticsFact,
-                    RequestAnalyticsFact.request_id == ServiceRequest.id,
-                )
-                .outerjoin(User, User.id == ServiceRequest.assigned_specialist_id)
-                .where(
-                    RequestAnalyticsFact.team_unit_id == team_id,
-                    or_(
-                        ServiceRequest.status.not_in(
-                            {
-                                RequestStatus.COMPLETED,
-                                RequestStatus.CLOSED_NOT_PROGRESSED,
-                                RequestStatus.CANCELLED,
-                            }
-                        ),
-                        ServiceRequest.updated_at >= completed_cutoff,
-                    ),
-                )
-                .limit(BOARD_ROW_LIMIT)
-            )
-        ).all()
-        package_rows = (
-            await self.session.execute(
-                select(WorkPackage, User.display_name)
-                .join(User, User.id == WorkPackage.owner_user_id)
-                .where(WorkPackage.team_id == team_id)
-                .limit(BOARD_ROW_LIMIT)
-            )
-        ).all()
-        requests = [request_projection(row[0], row[1]) for row in request_rows]
-        packages = [package_projection(row[0], row[1]) for row in package_rows]
-        return [item for item in requests if item is not None] + packages
+        return await self._page_reads.projected(
+            team_id, BoardFilters(), None, BOARD_ROW_LIMIT
+        )
+
+    async def board_page(
+        self,
+        team_id: UUID,
+        filters: BoardFilters,
+        cursor: str | None,
+        limit: int,
+    ) -> tuple[list[BoardItem], str | None]:
+        return await self._page_reads.page(team_id, filters, cursor, limit)
+
+    async def column_count(
+        self,
+        team_id: UUID,
+        column: BoardColumn,
+        *,
+        exclude_package_id: UUID,
+    ) -> int:
+        return await self._page_reads.column_count(
+            team_id, column, exclude_package_id=exclude_package_id
+        )
 
     async def configuration(self, team_id: UUID) -> TeamBoardConfiguration | None:
         return await self.session.get(TeamBoardConfiguration, team_id)
@@ -129,12 +115,18 @@ class SqlAlchemyBoardRepository:
         return package
 
     async def current_member_ids(self, team_id: UUID) -> set[UUID]:
+        now = datetime.now(UTC)
         return set(
             await self.session.scalars(
-                select(UserOrganisationMembership.user_id)
-                .join(User, User.id == UserOrganisationMembership.user_id)
+                select(TeamMembership.user_id)
+                .join(User, User.id == TeamMembership.user_id)
                 .where(
-                    UserOrganisationMembership.unit_id == team_id,
+                    TeamMembership.team_id == team_id,
+                    TeamMembership.effective_from <= now,
+                    or_(
+                        TeamMembership.effective_until.is_(None),
+                        TeamMembership.effective_until > now,
+                    ),
                     User.is_active.is_(True),
                 )
             )
@@ -185,20 +177,6 @@ class SqlAlchemyBoardRepository:
                 )
             )
             is not None
-        )
-
-    async def active_reservations(
-        self, team_id: UUID, start: datetime, end: datetime
-    ) -> list[CapacityReservation]:
-        return list(
-            await self.session.scalars(
-                select(CapacityReservation).where(
-                    CapacityReservation.team_id == team_id,
-                    CapacityReservation.status == ReservationStatus.ACTIVE,
-                    CapacityReservation.starts_at < end,
-                    CapacityReservation.ends_at > start,
-                )
-            )
         )
 
     async def iterations(self, team_id: UUID) -> list[IterationResult]:

@@ -1,9 +1,10 @@
-"""Durable dispatch and recovery of human workflow commands."""
+"""Fenced dispatch and recovery of durable human workflow commands."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from pydantic import ValidationError
 from sqlalchemy import or_, select
@@ -20,25 +21,17 @@ from istari_service.work_command_types import (
 )
 from istari_service.workflow.engine import WorkflowEngine
 from istari_service.workflow.errors import (
-    WorkflowConflict,
-    WorkflowEngineUnavailable,
     WorkflowError,
     WorkflowRequestRejected,
-    WorkflowTaskNotFound,
-    WorkflowTaskNotVisible,
 )
-from istari_service.workflow.lookup import TaskLookupPolicy, wait_for_active_task
-from istari_service.workflow.projection import (
-    element_id_for_status,
-    status_after_action,
-)
-from istari_service.workflow.types import (
-    ActiveTaskQuery,
-    ClaimTaskCommand,
-    ProcessStateQuery,
-    WorkflowAction,
-    WorkflowProcessState,
-    WorkflowTask,
+from istari_service.workflow.lookup import TaskLookupPolicy
+from istari_service.workflow_command_execution import (
+    ClaimSucceeded,
+    CommandOutcome,
+    CommandRetry,
+    CompetingClaim,
+    CompletionSucceeded,
+    WorkflowCommandExecutor,
 )
 from istari_service.workflow_command_results import (
     mark_sent,
@@ -47,17 +40,24 @@ from istari_service.workflow_command_results import (
     schedule_retry,
     stored_work_id,
 )
-from istari_service.workflow_command_state import (
-    completion_engine_command,
-    validated_command_state,
-)
+from istari_service.workflow_command_state import validated_command_state
 
 DEFAULT_COMMAND_LOOKUP = TaskLookupPolicy()
 COMMAND_TYPES = tuple(command.value for command in WorkCommandType)
 
 
+@dataclass(frozen=True, slots=True)
+class LeasedCommand:
+    request_id: UUID
+    lease_owner: str
+    lease_generation: int
+    command: PendingWorkCommand
+    actor: Actor
+    work: WorkRecord
+
+
 class WorkflowCommandDispatcher:
-    """Execute one committed intent and atomically project the proven outcome."""
+    """Commit a lease, perform Camunda I/O, then fence the projection."""
 
     def __init__(
         self,
@@ -70,8 +70,7 @@ class WorkflowCommandDispatcher:
         managed_products_enabled: bool = False,
     ) -> None:
         self._sessions = session_factory
-        self._engine = engine
-        self._lookup_policy = lookup_policy
+        self._executor = WorkflowCommandExecutor(engine, lookup_policy)
         self._max_attempts = max_attempts
         self._lease_seconds = lease_seconds
         self._managed_products_enabled = managed_products_enabled
@@ -87,6 +86,22 @@ class WorkflowCommandDispatcher:
         return processed
 
     async def _run(self, outbox_id: UUID | None) -> tuple[bool, WorkflowError | None]:
+        lease, rejected = await self._claim(outbox_id)
+        if rejected is not None:
+            return True, rejected
+        if lease is None:
+            return False, None
+        try:
+            outcome = await self._executor.execute(lease.command, lease.actor)
+            return True, await self._finalise(lease, outcome)
+        except Exception:
+            await self._release_after_unexpected_failure(lease)
+            raise
+
+    async def _claim(
+        self,
+        outbox_id: UUID | None,
+    ) -> tuple[LeasedCommand | None, WorkflowError | None]:
         now = datetime.now(UTC)
         async with self._sessions() as session, session.begin():
             query = (
@@ -107,9 +122,12 @@ class WorkflowCommandDispatcher:
                 query = query.where(WorkflowOutbox.id == outbox_id)
             outbox = await session.scalar(query)
             if outbox is None:
-                return False, None
+                return None, None
+            owner = uuid4().hex
             outbox.status = OutboxStatus.PROCESSING
             outbox.attempts += 1
+            outbox.lease_owner = owner
+            outbox.lease_generation += 1
             outbox.available_at = now + timedelta(seconds=self._lease_seconds)
             try:
                 command = parse_command(
@@ -124,147 +142,119 @@ class WorkflowCommandDispatcher:
                     outbox.request_id,
                     managed_products_enabled=self._managed_products_enabled,
                 )
-                if command.command_type is WorkCommandType.CLAIM_TASK:
-                    error = await self._claim(session, outbox, command, actor, work)
-                else:
-                    error = await self._complete(session, outbox, command, actor, work)
             except (InvalidAction, KeyError, TypeError, ValueError, ValidationError):
                 await mark_support_failure(
-                    session, outbox, stored_work_id(outbox.payload)
+                    session,
+                    outbox,
+                    stored_work_id(outbox.payload),
                 )
-                error = WorkflowRequestRejected("dispatch_workflow_command", 409)
-            return True, error
+                return None, WorkflowRequestRejected("dispatch_workflow_command", 409)
+            return (
+                LeasedCommand(
+                    request_id=outbox.request_id,
+                    lease_owner=owner,
+                    lease_generation=outbox.lease_generation,
+                    command=command,
+                    actor=actor,
+                    work=work,
+                ),
+                None,
+            )
 
-    async def _claim(
+    async def _finalise(
         self,
-        session: AsyncSession,
-        outbox: WorkflowOutbox,
-        command: PendingWorkCommand,
-        actor: Actor,
-        work: WorkRecord,
+        lease: LeasedCommand,
+        outcome: CommandOutcome,
     ) -> WorkflowError | None:
-        try:
-            await self._engine.claim_task(ClaimTaskCommand(command.task_key, actor.id))
-        except (WorkflowConflict, WorkflowTaskNotFound) as error:
-            recovered = await self._recover_claim(session, outbox, command, actor, work)
-            if recovered:
+        async with self._sessions() as session, session.begin():
+            outbox = await self._lock_current_lease(session, lease)
+            if outbox is None:
                 return None
-            if outbox.status is OutboxStatus.PENDING:
-                return WorkflowEngineUnavailable("claim recovery is pending")
-            return error
-        except WorkflowError as error:
-            await schedule_retry(
-                session, outbox, work.id, max_attempts=self._max_attempts
-            )
-            return error
-        result = await SqlAlchemyWorkRepository(session).finalise_claim(work, actor)
-        if result is None:
-            await mark_support_failure(session, outbox, work.id)
-            return WorkflowRequestRejected("finalise_claim", 409)
-        mark_sent(outbox)
-        return None
-
-    async def _recover_claim(
-        self,
-        session: AsyncSession,
-        outbox: WorkflowOutbox,
-        command: PendingWorkCommand,
-        actor: Actor,
-        work: WorkRecord,
-    ) -> bool:
-        try:
-            task = await wait_for_active_task(
-                self._engine,
-                ActiveTaskQuery(command.process_instance_key, command.element_id),
-                policy=self._lookup_policy,
-            )
-        except WorkflowError:
-            await schedule_retry(
-                session, outbox, work.id, max_attempts=self._max_attempts
-            )
-            return False
-        if task.task_key != command.task_key or task.assignee is None:
-            await schedule_retry(
-                session, outbox, work.id, max_attempts=self._max_attempts
-            )
-            return False
-        if task.assignee == str(command.actor_id):
-            await SqlAlchemyWorkRepository(session).finalise_claim(work, actor)
-            mark_sent(outbox)
-            return True
-        await project_competing_claim(session, outbox, work, task)
-        return False
-
-    async def _complete(
-        self,
-        session: AsyncSession,
-        outbox: WorkflowOutbox,
-        command: PendingWorkCommand,
-        actor: Actor,
-        work: WorkRecord,
-    ) -> WorkflowError | None:
-        payload = command.completion
-        if payload is None:
-            raise InvalidAction()
-        action = WorkflowAction(payload.action)
-        next_status = status_after_action(work.request.status, action)
-        expected_element = element_id_for_status(next_status)
-        recovered = False
-        try:
-            await self._engine.complete_task(completion_engine_command(command))
-        except (WorkflowConflict, WorkflowTaskNotFound):
-            recovered = True
-        except WorkflowError as error:
-            await schedule_retry(
-                session, outbox, work.id, max_attempts=self._max_attempts
-            )
-            return error
-        try:
-            next_task = await self._completion_proof(
-                command, expected_element, recovered
-            )
-        except WorkflowError as error:
-            await schedule_retry(
-                session, outbox, work.id, max_attempts=self._max_attempts
-            )
-            return error
-        detail = await SqlAlchemyWorkRepository(
-            session,
-            managed_products_enabled=self._managed_products_enabled,
-        ).apply_completion(
-            work,
-            actor,
-            payload,
-            next_task=next_task,
-            reconciliation_needed=expected_element is not None and next_task is None,
-            routing=command.routing,
-        )
-        del detail
-        mark_sent(outbox)
-        return None
-
-    async def _completion_proof(
-        self,
-        command: PendingWorkCommand,
-        expected_element: str | None,
-        recovered: bool,
-    ) -> WorkflowTask | None:
-        if expected_element is not None:
             try:
-                return await wait_for_active_task(
-                    self._engine,
-                    ActiveTaskQuery(command.process_instance_key, expected_element),
-                    policy=self._lookup_policy,
+                actor, work = await validated_command_state(
+                    session,
+                    lease.command,
+                    lease.request_id,
+                    managed_products_enabled=self._managed_products_enabled,
                 )
-            except WorkflowTaskNotVisible:
-                if not recovered:
-                    return None
-                raise
-        if not recovered:
+            except InvalidAction:
+                await mark_support_failure(session, outbox, lease.work.id)
+                return WorkflowRequestRejected("finalise_workflow_command", 409)
+            if isinstance(outcome, CommandRetry):
+                await schedule_retry(
+                    session,
+                    outbox,
+                    work.id,
+                    max_attempts=self._max_attempts,
+                )
+                return outcome.error
+            if isinstance(outcome, CompetingClaim):
+                await project_competing_claim(
+                    session,
+                    outbox,
+                    work,
+                    outcome.task,
+                )
+                return outcome.error
+            repository = SqlAlchemyWorkRepository(
+                session,
+                managed_products_enabled=self._managed_products_enabled,
+            )
+            if isinstance(outcome, ClaimSucceeded):
+                if await repository.finalise_claim(work, actor) is None:
+                    await mark_support_failure(session, outbox, work.id)
+                    return WorkflowRequestRejected("finalise_claim", 409)
+            elif isinstance(outcome, CompletionSucceeded):
+                payload = lease.command.completion
+                if payload is None:
+                    await mark_support_failure(session, outbox, work.id)
+                    return WorkflowRequestRejected("finalise_completion", 409)
+                await repository.apply_completion(
+                    work,
+                    actor,
+                    payload,
+                    next_task=outcome.next_task,
+                    reconciliation_needed=outcome.reconciliation_needed,
+                    routing=lease.command.routing,
+                )
+            mark_sent(outbox)
             return None
-        process = await self._engine.find_process_state(
-            ProcessStateQuery(command.process_instance_key)
+
+    @staticmethod
+    async def _lock_current_lease(
+        session: AsyncSession,
+        lease: LeasedCommand,
+    ) -> WorkflowOutbox | None:
+        current: WorkflowOutbox | None = await session.scalar(
+            select(WorkflowOutbox)
+            .where(
+                WorkflowOutbox.id == lease.command.outbox_id,
+                WorkflowOutbox.status == OutboxStatus.PROCESSING,
+                WorkflowOutbox.lease_owner == lease.lease_owner,
+                WorkflowOutbox.lease_generation == lease.lease_generation,
+            )
+            .with_for_update()
         )
-        if process is None or process.state != WorkflowProcessState.COMPLETED:
-            raise WorkflowTaskNotVisible("terminal process state is not proven")
-        return None
+        return current
+
+    async def _release_after_unexpected_failure(
+        self,
+        lease: LeasedCommand,
+    ) -> None:
+        """Make a crashed local projection immediately recoverable."""
+
+        try:
+            async with self._sessions() as session, session.begin():
+                outbox = await self._lock_current_lease(session, lease)
+                if outbox is None:
+                    return
+                if outbox.attempts >= self._max_attempts:
+                    await mark_support_failure(session, outbox, lease.work.id)
+                    return
+                outbox.status = OutboxStatus.PENDING
+                outbox.lease_owner = None
+                outbox.available_at = datetime.now(UTC)
+        except Exception:
+            # The durable lease expiry remains the final recovery mechanism when
+            # the database itself is unavailable during crash cleanup.
+            return

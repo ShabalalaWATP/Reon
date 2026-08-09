@@ -33,6 +33,7 @@ class AdminUser(ApiModel):
 
 class AdminUserList(ApiModel):
     items: list[AdminUser]
+    next_cursor: str | None = None
 
 
 class AdminUserCreate(StrictApiModel):

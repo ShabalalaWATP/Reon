@@ -21,6 +21,11 @@ const teamOptions: RoutingOptions = {
   status: "ready",
 };
 
+const commandRoute = ["JIOC", "DIGOC"].map((code) => {
+  const { id, kind, name } = organisationUnit(code);
+  return { id, code, kind, name };
+});
+
 describe("dynamic routing destinations", () => {
   it.each([
     ["progress", "JIOC", ["DIGOC", "SYGOC", "MYGOC"]],
@@ -44,9 +49,11 @@ describe("dynamic routing destinations", () => {
       const displayedOptions = within(destination).getAllByRole("option").slice(1);
       expect(displayedOptions).toHaveLength(expectedNames.length);
       for (const name of expectedNames) {
-        expect(
-          within(destination).getByRole("option", { name: new RegExp(`^${name}`) }),
-        ).toBeEnabled();
+        const option = displayedOptions.find((candidate) =>
+          candidate.textContent?.startsWith(`${name} ·`),
+        );
+        expect(option).toBeDefined();
+        expect(option).toBeEnabled();
       }
     },
   );
@@ -84,6 +91,49 @@ describe("dynamic routing destinations", () => {
     await user.selectOptions(destination, organisationUnit("NCGI_A_OPS").id);
     expect(destination).toHaveAttribute("aria-invalid", "false");
     expect(destination).not.toHaveAttribute("aria-describedby");
+  });
+
+  it("shows route context and filters only the authorised direct children", async () => {
+    const submit = vi.fn<(action: WorkAction) => void>();
+    const user = userEvent.setup();
+    const view = render(
+      <WorkActionForm
+        actions={["send_to_allocation"]}
+        disabled={false}
+        onSubmit={submit}
+        routingOptions={{
+          items: organisationChildren("DIGOC"),
+          onRetry: vi.fn(),
+          route: commandRoute,
+          status: "ready",
+        }}
+      />,
+    );
+
+    const path = screen.getByRole("navigation", { name: "Current routing path" });
+    expect(path).toHaveTextContent("JIOC");
+    expect(path).toHaveTextContent("DIGOC");
+    const search = screen.getByRole("searchbox", { name: "Find destination" });
+    const destination = screen.getByLabelText("Destination unit");
+    await user.selectOptions(destination, organisationUnit("AURORA_OPS").id);
+    await user.type(search, "vertex_ops");
+    expect(screen.getByText("1 of 3 destinations shown")).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Vertex Ops/ })).toBeEnabled();
+    expect(screen.getByRole("group", { name: "Selected destination" })).toHaveTextContent("Aurora Ops");
+    expect(destination).toHaveValue(organisationUnit("AURORA_OPS").id);
+    await user.type(screen.getByLabelText("Routing note"), "Retain the selected route while searching.");
+    await user.click(screen.getByRole("button", { name: "Route to Ops group" }));
+    expect(submit).toHaveBeenCalledWith({
+      action: "send_to_allocation",
+      destinationUnitId: organisationUnit("AURORA_OPS").id,
+      note: "Retain the selected route while searching.",
+    });
+    await user.clear(search);
+    expect(screen.getByText("3 of 3 destinations shown")).toBeInTheDocument();
+    expect(screen.getByText(/Selected route:/)).toHaveTextContent(
+      "JIOC › DIGOC › Aurora Ops (AURORA_OPS)",
+    );
+    expect(await axe(view.container)).toHaveNoViolations();
   });
 
   it("keeps every valid team selectable and warns after choosing an unstaffed team", async () => {
@@ -175,7 +225,10 @@ describe("dynamic routing destinations", () => {
       }
       if (url.pathname.endsWith("/routing-options")) {
         routingCalls += 1;
-        return json({ items: organisationChildren("JIOC") });
+        return json({
+          items: organisationChildren("JIOC"),
+          route: [organisationUnit("JIOC")],
+        });
       }
       if (url.pathname.includes("/requests/")) return json(requestDetail);
       throw new Error(url.pathname);
@@ -189,6 +242,7 @@ describe("dynamic routing destinations", () => {
     expect(await screen.findByRole("option", { name: /DIGOC/ })).toBeEnabled();
     expect(screen.getByRole("option", { name: /SYGOC/ })).toBeEnabled();
     expect(screen.getByRole("option", { name: /MYGOC/ })).toBeEnabled();
+    expect(screen.getByRole("navigation", { name: "Current routing path" })).toHaveTextContent("JIOC");
     expect(routingCalls).toBe(1);
   });
 

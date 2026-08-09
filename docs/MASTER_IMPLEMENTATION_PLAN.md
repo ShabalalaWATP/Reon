@@ -1,5 +1,17 @@
 # ISTARI Service Master Implementation Plan
 
+## Operational assurance and documentation maintenance, 8 August 2026
+
+- [x] Exercise all privileged maintenance command dispatch branches.
+- [x] Exercise PostgreSQL role validation, reviewed grant execution, dialect
+  rejection and guaranteed engine disposal.
+- [x] Establish one authoritative complete mock-user directory and test it
+  against all 73 seeded identities.
+- [x] Remove the duplicate roster and add an automated long-form documentation
+  duplication gate.
+- [x] Prove that Markdown documentation is exempt from the hand-written source
+  line limit.
+
 ## Outcome
 
 Deliver a secure, deliberately limited service-request product outside Coeus. It
@@ -128,8 +140,9 @@ Exit: vocabulary, scope, authorities, risks and product decisions are traceable.
   owner and insert-only audit role remain a pilot-hardening item.
 - [x] Add Argon2id credentials, opaque server-side sessions, CSRF, trusted origins,
   expiry, logout, generic failures, disabled accounts and bounded login attempts.
-- [x] Seed all 72 Scottish-player identities, clearly marked as fictional, with
-  sequential `admin1` to `admin72` local logons.
+- [x] Preserve the original 72 Scottish-player identities and add the independent
+  configuration approver as `admin73`; all local logons remain sequential and
+  clearly marked as fictional.
 - [x] Add liveness, dependency-aware readiness and correlation identifiers without
   logging content.
 - [x] Prove migrations from empty and previous schema states.
@@ -317,8 +330,10 @@ not travel back through JIOC, command or Ops for approval.
 ### Expansion 0: Rebaseline and authority
 
 - [x] Define global and phase-specific completion gates.
-- [x] Correct the organisation baseline to 72 synthetic accounts and fully staffed
-  teams.
+- [x] Correct the original MVP baseline to 72 synthetic accounts and fully
+  staffed teams. Product Evolution subsequently added the independent
+  configuration approver `admin73`; the current directory is maintained in
+  [Organisation and Routing](architecture/ORGANISATION_AND_ROUTING.md).
 - [x] Accept the expansion product specification.
 - [x] Accept management-grant, analytics, calendar and workflow-derived board
   decisions.
@@ -498,21 +513,25 @@ product links, effective-dated organisation and bounded workflow configuration,
 team-planning enhancements and further scoped operational statistics.
 
 This work is specified in
-[Operational Product Evolution](specs/operational-product-evolution.md) and
-sequenced in the
-[Next Product Expansion Plan](NEXT_PRODUCT_EXPANSION_PLAN.md). A local release
-candidate is implemented behind disabled-by-default production flags, but it is
-not part of the accepted MVP baseline. No phase is accepted until its own
+[Operational Product Evolution](specs/operational-product-evolution.md) and its
+completion state is tracked in the
+[Product Evolution Definition of Done](assurance/PRODUCT_EVOLUTION_DEFINITION_OF_DONE_MATRIX.md).
+A local release candidate is implemented behind disabled-by-default production
+flags, but it is not part of the accepted MVP baseline. No phase is accepted
+until its own
 migrations, permission matrix, security, accessibility, browser, recovery,
 performance and named-acceptance evidence passes.
 
-Current local evidence is 775 backend tests at 98.92 per cent line and 95.04 per
-cent branch coverage, plus 243 frontend tests at 99.54 per cent line and 95.05
-per cent branch coverage. Migrations 0012 to 0017 pass empty SQLite upgrade,
-schema drift, downgrade and re-upgrade. Independent final code-quality and
-security reviews found no remaining P0, P1 or P2 blocker. Live PostgreSQL,
-Camunda, approved semantic/CDR scanner, private object storage, browser, load,
-recovery and named acceptance gates remain open.
+The latest complete local regression evidence is 880 backend tests at 98.84 per
+cent line and 95.19 per cent branch coverage, plus 288 frontend tests at 99.49
+per cent statements and 95.06 per cent branches. Migrations 0012 to 0021 pass
+the repository's empty SQLite upgrade, schema drift, downgrade and re-upgrade
+gates. Independent code-quality, workflow and security reviews produced findings
+that are addressed in the current working tree; immutable-candidate review and
+named acceptance remain open. Fresh PostgreSQL migration and runtime-denial
+evidence passes. One-winner activation, deployed Camunda sibling routing, target
+scanner/object storage, full supported-browser state-changing journeys,
+multi-store recovery and named acceptance gates remain open.
 
 ## Production readiness, intentionally separate
 
@@ -550,3 +569,175 @@ The local MVP is not a production deployment. Production remains blocked until:
 A phase is complete only when code, migrations, tests, security evidence, user
 documentation and operational notes agree. A manual walkthrough, passing unit tests or a
 working Camunda path alone is not sufficient.
+
+## Guided configuration and enterprise documentation milestone
+
+Status: local implementation evidence ready on 7 August 2026; live and named
+acceptance gates remain open.
+
+- [x] Replace configuration lifecycle jargon in the administrator interface with
+  current configuration, proposed changes, review and activation language while
+  retaining immutable revisions internally.
+- [x] Refresh configuration history before navigating to newly created proposed
+  changes so the selector and working record cannot disagree.
+- [x] Add literal name/code/kind hierarchy search, ancestor context, accessible
+  result feedback and filtered keyboard navigation.
+- [x] Add a keyboard-operable selected-unit breadcrumb.
+- [x] Filter create and move parents by effective time, routing state and exact
+  hierarchy kind, excluding self and the unchanged current parent.
+- [x] Remove provisional same-effective-time move edges instead of producing an
+  invalid zero-length interval.
+- [x] Canonicalise reminder schedules and report staffing preview impact only
+  when the proposal introduces or raises the shortfall.
+- [x] Add the complex configuration and human-routing user stories, ADR 0018,
+  role/permission matrix, threat controls, audit catalogue, operations runbook,
+  traceability update and enterprise gap register.
+- [x] Add focused frontend and backend regression coverage.
+- [x] Pass the full frontend/backend coverage, static, build, terminology,
+  OpenAPI, BPMN and line-limit gates on the final working tree.
+- [x] Bind approval and activation to a canonical snapshot digest, seal current
+  and historical components and approved workflow identity in PostgreSQL, and
+  fail new pins/readiness closed on evidence mismatch.
+- [x] Preview restoration after temporary scheduled changes, remove later
+  schedule entries on retirement, and compare semantically unordered template
+  values canonically.
+- [x] Prove an empty PostgreSQL 17 migration and first-start baseline at 0018,
+  plus runtime-role denials for sealed component reassignment and approved
+  workflow identity mutation.
+- [x] Add requirement traceability, enterprise documentation index, continuity
+  framework, detailed configuration permission matrix and unsigned Product
+  Evolution acceptance record.
+- [ ] Record live browser, narrow-width, 200% zoom, three-browser, large-tree
+  performance, forged-parent, PostgreSQL concurrency and Camunda route evidence.
+- [ ] Obtain named product, security, operational and representative-user
+  acceptance. Until then, this remains a non-production local release candidate.
+
+## Operator orientation and factual timing milestone
+
+Status: local implementation and focused browser evidence ready on 8 August
+2026; full gates and representative acceptance remain required.
+
+- [x] Return the selected request-pinned routing path with only the authorised
+  immediate-child destination options.
+- [x] Add literal, case-insensitive name/code filtering, visible result counts
+  and a selected-route summary without ranking or recommendation.
+- [x] Add a richer account menu with account ID, role, scope, session state and
+  sign-out, while keeping one correct active primary-navigation item.
+- [x] Differentiate active, hover and keyboard-focus states and strengthen
+  readable workflow status styling.
+- [x] Show factual service age, current-owner or task waiting time and required
+  date proximity without changing workflow state or priority.
+- [x] Add backend, frontend, accessibility and timing-boundary regression tests.
+- [x] Inspect desktop and 640-pixel layouts in the local Chromium browser,
+  including one-current-link behaviour, Escape close, route close, focus outline
+  and popover containment.
+- [x] Complete the full repository gates and target PostgreSQL/Camunda recovery
+  rehearsal, including a fresh-stack alternative route and breadcrumb payload.
+- [ ] Obtain representative JIOC, Command, Ops, Customer and accessibility
+  acceptance.
+
+## Maintainability and portable evaluation milestone
+
+Status: local implementation and documentation evidence ready on 8 August 2026;
+connected production remains blocked by the enterprise gap register.
+
+- [x] Add recurring frontend and backend dead-code gates, including a
+  production-only frontend export check.
+- [x] Remove confirmed dead service, database-helper and product-availability
+  paths without removing migration, decision or assurance history.
+- [x] Batch immutable request-policy projection, bound broad query parameter
+  sets and avoid mutable organisation lookups for fully pinned requests.
+- [x] Remove redundant completion validation while retaining checks at both
+  authoritative transaction boundaries.
+- [x] Avoid eager hidden completed-product panels, retry all request/draft and
+  team-planning dependencies coherently, and reduce calendar/date allocation.
+- [x] Correct local workflow attestation to run inside Compose and test its
+  argument, failure and working-directory behaviour.
+- [x] Forward documented database-pool, session, elevation and process settings
+  through Compose.
+- [x] Require asyncpg-compatible `ssl=verify-full` in production and prove the
+  resulting SQLAlchemy connect arguments.
+- [x] Require sealed runtime configuration readiness even when configuration
+  administration is disabled.
+- [x] Add a current architecture authority, documentation map, configuration
+  reference, release runbook and explicit production gates.
+- [x] Add stepwise Windows, macOS and Linux Docker/source guides and private
+  synthetic AWS, Google Cloud and Azure VM guides.
+- [x] Document the portable Kubernetes production target without claiming that
+  absent IaC, identity or product-runtime integrations exist.
+- [x] Add broken-link and long-form documentation-duplication gates, retaining
+  historical evidence with explicit dated labels.
+- [x] Add keyset pagination/index evidence, route-level web code splitting and
+  target-scale performance proof.
+- [ ] Batch expanded product-release metadata where a later measured release
+  workload proves that another projection is required.
+- [ ] Implement and validate OIDC, secure Camunda client auth, cloud product
+  storage/scanning, IaC and joined multi-store recovery before connected use.
+
+## Simplicity and runtime-efficiency deep dive
+
+Status: runtime hardening and target-scale evidence completed on 8 August 2026.
+Atomic concurrent Board WIP enforcement remains explicitly excluded at the
+product owner's direction.
+
+- [x] Lazy-load every top-level page and the heavy Team workspace views while
+  preserving the existing capability and role gates.
+- [x] Enforce Vite-manifest entry budgets after every production web build.
+- [x] Stop non-team roles loading team-workspace navigation data and stop the
+  notification-count poll competing with the active Notifications register.
+- [x] Batch notification eligibility, membership, preference, existing-row and
+  state-target reads, flush recipients once and refresh checkpoint counts once
+  per projection batch.
+- [x] Make unchanged configuration restoration stable for unit versions and
+  organisation-closure rows.
+- [x] Keep routing-filter selection, calendar occurrence editor identity and
+  local browser date values coherent.
+- [x] Remove the unused planning-event port, unused repository methods and the
+  production-packaged in-memory storage test adapter.
+- [x] Move scheduled membership compatibility projection out of every request,
+  with a due-transition index/checkpoint, worker health and fail-closed
+  authorisation tests.
+- [x] Redesign workflow-command and product upload/release processing so leases
+  bracket external Camunda, object-store and scanner calls without holding
+  database locks or transactions.
+- [x] Release database sessions before product response streaming and prove
+  cancellation and access-audit behaviour under a slow stream.
+- [x] Add keyset pagination and proven PostgreSQL indexes to work, request,
+  draft, tracking, administrator and older-history feeds.
+- [x] Move Board filtering and pagination into PostgreSQL.
+- [ ] Enforce Board WIP limits atomically under concurrent moves. This remains
+  explicitly excluded from the current milestone at product-owner direction.
+- [x] Separate maintenance workloads from API replica count, isolate failure
+  domains and introduce measured idle backoff and fairness budgets.
+- [x] Split the Work Package form core, API clients and dense React orchestration
+  modules by domain before adding an enforceable source-line-length gate.
+- [x] Run PostgreSQL statement-count and `EXPLAIN (ANALYSE, BUFFERS)` evidence,
+  multi-replica contention tests and browser traces at the agreed target scale.
+
+## August security-remediation milestone
+
+Status: implementation complete on 9 August 2026; final automated evidence is
+recorded. MVP identity replacement and GitHub branch protection are excluded by
+product-owner direction.
+
+- [x] Move PostgreSQL to 17.10 and remove `gosu` from its non-root runtime.
+- [x] Remove Python build tooling from the API runtime, run Nginx as non-root on
+  port 8080 and remove unused vulnerable packages from the Camunda image.
+- [x] Separate ClamAV update egress from the internal-only non-root daemon and
+  fail health from signed definition age or loaded/on-disk version mismatch.
+- [x] Add short-transaction atomic PostgreSQL global/source login budgets, safe
+  proxy handling, one-way source identifiers, cancellation durability, generic
+  throttling responses and bounded Argon2 concurrency.
+- [x] Disable production API documentation surfaces and add response isolation
+  plus no-store controls.
+- [x] Build and scan API, web, PostgreSQL, Camunda and ClamAV images in CI and
+  produce a CycloneDX SBOM for each.
+- [x] Add scheduled npm, Python, GitHub Actions and Docker dependency updates.
+- [x] Replace broad Git-history exceptions with one exact hashed, expiring
+  synthetic-fixture exception that can never cover a verified finding.
+- [x] Add the security specification, ADR 0021, threat-model changes, private
+  reporting policy and deployment guidance.
+- [x] Attach final current-candidate test, scan, image and fresh-readiness
+  results to the security evidence record.
+- [ ] Obtain security-owner acceptance and any independent penetration-test
+  evidence required by the target environment.

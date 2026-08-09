@@ -4,11 +4,13 @@
   "private": true,
   "scripts": {
     "build": "pnpm --filter @istari-service/web build",
-    "check": "pnpm quality-gate-tests && pnpm line-limit && pnpm terminology && pnpm operations-contract && pnpm licence-check && pnpm --filter @istari-service/web typecheck && pnpm --filter @istari-service/web lint",
+    "check": "pnpm quality-gate-tests && pnpm dead-code && pnpm line-limit && pnpm terminology && pnpm documentation && pnpm operations-contract && pnpm licence-check && pnpm --filter @istari-service/web typecheck && pnpm --filter @istari-service/web lint",
+    "dead-code": "pnpm --filter @istari-service/web dead-code && uv run --directory apps/api vulture src --min-confidence 80",
+    "documentation": "node scripts/check-documentation-duplication.mjs && node scripts/check-documentation-links.mjs",
     "line-limit": "node scripts/check-file-lines.mjs",
     "licence-check": "pwsh -File scripts/check-licences.ps1",
     "operations-contract": "pwsh -File scripts/test-operations-scripts.ps1",
-    "quality-gate-tests": "node scripts/test-quality-gates.mjs",
+    "quality-gate-tests": "node scripts/test-quality-gates.mjs && node scripts/test-trufflehog-gate.mjs",
     "smoke-contract": "node scripts/test-smoke-camunda.mjs",
     "terminology": "node scripts/check-terminology.mjs",
     "test": "pnpm --filter @istari-service/web test"

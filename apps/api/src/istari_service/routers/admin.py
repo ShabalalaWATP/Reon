@@ -48,9 +48,18 @@ async def list_users(
     session: DatabaseSession,
     settings: AppSettings,
     query: Annotated[str | None, Query(max_length=120)] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    cursor: Annotated[str | None, Query(max_length=500)] = None,
 ) -> AdminUserList:
+    items, next_cursor = await _service(request, session, settings).list_user_page(
+        actor,
+        query,
+        limit=limit,
+        cursor=cursor,
+    )
     return AdminUserList(
-        items=await _service(request, session, settings).list_users(actor, query)
+        items=items,
+        next_cursor=next_cursor,
     )
 
 

@@ -63,7 +63,9 @@ _ACTIVE_XML = (b"ddeauto", b"attachedtemplate", b"oleobject", b"externaldata")
 class _ReadableSeekable(Protocol):
     def read(self, size: int = -1) -> bytes: ...
 
-    def seek(self, offset: int, whence: int = 0) -> int: ...
+    def seek(self, offset: int, whence: int = 0) -> int:
+        del offset, whence
+        raise NotImplementedError
 
 
 def _decode_pdf_name(match: re.Match[bytes]) -> bytes:

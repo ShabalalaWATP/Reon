@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Query, status
 from fastapi.responses import PlainTextResponse
 
 from istari_service.dependencies import (
@@ -47,9 +47,13 @@ async def list_requests(
     actor: CurrentActor,
     session: DatabaseSession,
     settings: AppSettings,
+    limit: int = Query(default=50, ge=1, le=100),
+    cursor: str | None = Query(default=None, max_length=500),
 ) -> RequestList:
-    items = await _service(session, settings).list(actor)
-    return RequestList(items=items)
+    items, next_cursor = await _service(session, settings).list_page(
+        actor, limit=limit, cursor=cursor
+    )
+    return RequestList(items=items, next_cursor=next_cursor)
 
 
 @router.post("", response_model=RequestDetail, status_code=status.HTTP_201_CREATED)
@@ -68,8 +72,15 @@ async def get_request(
     actor: CurrentActor,
     session: DatabaseSession,
     settings: AppSettings,
+    event_limit: int = Query(default=50, alias="eventLimit", ge=1, le=100),
+    event_cursor: str | None = Query(default=None, alias="eventCursor", max_length=500),
 ) -> RequestDetail:
-    return await _service(session, settings).get(actor, request_id)
+    return await _service(session, settings).get_page(
+        actor,
+        request_id,
+        event_limit=event_limit,
+        event_cursor=event_cursor,
+    )
 
 
 @router.post("/{request_id}/feedback", response_model=FeedbackView)

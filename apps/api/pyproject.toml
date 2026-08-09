@@ -20,6 +20,7 @@ dependencies = [
 
 [project.scripts]
 istari-maintenance = "istari_service.maintenance:main"
+istari-worker = "istari_service.worker:main"
 
 [dependency-groups]
 dev = [
@@ -28,9 +29,11 @@ dev = [
   "pip-licenses>=5.5,<6",
   "pip-audit>=2.9,<3",
   "ruff>=0.12,<1",
+  "vulture>=2.16,<3",
 ]
 test = [
   "aiosqlite>=0.21,<1",
+  "pyyaml>=6.0.2,<7",
   "pytest>=9.0.3,<10",
   "pytest-asyncio>=1.1,<2",
   "pytest-cov>=6.2,<7",
@@ -44,6 +47,7 @@ build-backend = "hatchling.build"
 packages = ["src/istari_service"]
 
 [tool.uv]
+exclude-newer = "7 days"
 build-constraint-dependencies = ["hatchling==1.27.0"]
 default-groups = ["dev", "test"]
 

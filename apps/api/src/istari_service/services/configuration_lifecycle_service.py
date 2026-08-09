@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from istari_service.configuration_digest import configuration_digest
 from istari_service.configuration_events import ConfigurationEventType
 from istari_service.configuration_materialisation import (
     materialise_configuration_units,
@@ -185,6 +186,10 @@ class ConfigurationLifecycleService(ConfigurationReviewOperations):
         approval = bundle.approval
         if approval is None:
             raise InvalidAdministrationChange("Approval evidence is unavailable.")
+        if approval.snapshot_digest != configuration_digest(bundle.specification()):
+            raise InvalidAdministrationChange(
+                "The approved configuration snapshot no longer matches review evidence."
+            )
         superseded = await self._repository.activate(
             version,
             approval,

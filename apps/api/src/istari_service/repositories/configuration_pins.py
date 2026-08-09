@@ -8,6 +8,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from istari_service.configuration_integrity import snapshot_evidence_is_valid
 from istari_service.configuration_models import (
     ApprovedWorkflowDefinition,
     ConfigurationRegistry,
@@ -78,6 +79,10 @@ class SqlAlchemyConfigurationPinRepository:
         if workflow is None or not workflow.is_available:
             raise RuntimeError("the active workflow definition is unavailable")
         specification = bundle.specification()
+        if not await snapshot_evidence_is_valid(
+            self.session, version.id, specification
+        ):
+            raise RuntimeError("the active configuration approval evidence is invalid")
         unit_ids = set(active_units(specification, effective_at))
         staffing = await load_staffing_counts(self.session, unit_ids)
         sort_orders: dict[UUID, int] = {

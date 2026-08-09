@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 from conftest import ApiHarness, request_payload
 from istari_service.analytics_models import (
@@ -204,7 +205,7 @@ async def test_dashboards_show_only_the_authorised_operational_branch(
 ) -> None:
     harness = api_harness
     await _seed_statistics(harness)
-    today = datetime.now(UTC).date()
+    today = datetime.now(ZoneInfo("Europe/London")).date()
     date_params = {
         "from": (today - timedelta(days=30)).isoformat(),
         "to": today.isoformat(),

@@ -1,5 +1,18 @@
 import type { RequestStatus } from "./api/types";
 
+const dateFormatter = new Intl.DateTimeFormat("en-GB", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+});
+const dateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 export const statusLabels: Record<RequestStatus, string> = {
   ROUTING_PENDING: "Submitted",
   TRIAGE_REVIEW: "JIOC routing",
@@ -27,12 +40,7 @@ export function statusTone(status: RequestStatus) {
 }
 
 export function formatDate(value: string, includeTime = false) {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    ...(includeTime ? { hour: "2-digit", minute: "2-digit" } : {}),
-  }).format(new Date(value));
+  return (includeTime ? dateTimeFormatter : dateFormatter).format(new Date(value));
 }
 
 export function isComplete(status: RequestStatus) {

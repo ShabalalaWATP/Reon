@@ -51,11 +51,11 @@ export function WorkflowTemplateForm({
       <p className="configuration-form-note">The human route, mandatory core fields and allowed outcomes are fixed. Administrators can only select an approved compatible deployment.</p>
       <fieldset disabled={disabled}>
         <div className="configuration-inline-fields">
-          <label className="form-field"><span>Request form version</span><input defaultValue={template.formVersion} maxLength={80} name="formVersion" pattern="[a-z0-9][a-z0-9._-]*" required /></label>
-          <label className="form-field"><span>Notification policy version</span><input defaultValue={template.notificationPolicyVersion} maxLength={80} name="notificationPolicyVersion" pattern="[a-z0-9][a-z0-9._-]*" required /></label>
+          <label className="form-field"><span>Request form identifier</span><input defaultValue={template.formVersion} maxLength={80} name="formVersion" pattern="[a-z0-9][a-z0-9._-]*" required /></label>
+          <label className="form-field"><span>Notification policy identifier</span><input defaultValue={template.notificationPolicyVersion} maxLength={80} name="notificationPolicyVersion" pattern="[a-z0-9][a-z0-9._-]*" required /></label>
         </div>
         <label className="form-field"><span>Organisation root</span><select defaultValue={template.organisationRootId} name="organisationRootId" required>{version.units.filter((unit) => unit.kind === "ROOT" && !unit.effectiveUntil).map((unit) => <option key={unit.unitId} value={unit.unitId}>{unit.name}</option>)}</select></label>
-        <label className="form-field"><span>Approved workflow deployment</span><select defaultValue={template.workflowDefinitionId} name="workflowDefinitionId" required><option value="">Select an approved deployment</option>{definitions.map((definition) => <option key={definition.id} value={definition.id}>{definition.processId} v{definition.processVersion}</option>)}</select></label>
+        <label className="form-field"><span>Approved workflow deployment</span><select defaultValue={template.workflowDefinitionId} name="workflowDefinitionId" required><option value="">Select an approved deployment</option>{definitions.map((definition) => <option key={definition.id} value={definition.id}>{definition.processId} · revision {definition.processVersion}</option>)}</select></label>
         <div className="configuration-inline-fields">
           <LineField defaultValue={template.serviceCategories} label="Service categories" name="serviceCategories" />
           <LineField defaultValue={template.productTypes} label="Preferred product types" name="productTypes" />
@@ -67,7 +67,7 @@ export function WorkflowTemplateForm({
           {Object.entries(template.taskLabels).map(([key, label]) => <label className="form-field" key={key}><span>{humanise(key)}</span><input defaultValue={label} maxLength={120} name={`task:${key}`} required /><small>Outcomes fixed: {template.allowedOutcomes[key]?.join(", ")}</small></label>)}
         </div>
       </fieldset>
-      <button className="button button--primary" disabled={disabled || !definitions.length} type="submit">Save template draft</button>
+      <button className="button button--primary" disabled={disabled || !definitions.length} type="submit">Save proposed workflow settings</button>
       {!definitions.length ? <p className="form-banner form-banner--warning" role="status">No compatible deployed workflow is available.</p> : null}
     </form>
   );

@@ -93,15 +93,15 @@ class ConfigurationUnitRevision(CreatedMixin, Base):
         UniqueConstraint("configuration_version_id", "unit_id", "effective_from"),
         CheckConstraint(
             "effective_until IS NULL OR effective_until > effective_from",
-            name="configuration_unit_effective_window",
+            name="effective_window",
         ),
         CheckConstraint(
             "minimum_managers >= 0 AND minimum_analysts >= 0",
-            name="configuration_unit_staffing_nonnegative",
+            name="staffing_nonnegative",
         ),
         CheckConstraint(
             "kind = 'TEAM' OR (minimum_managers = 0 AND minimum_analysts = 0)",
-            name="configuration_unit_staffing_shape",
+            name="staffing_shape",
         ),
         Index(
             "ix_configuration_unit_revision_window",
@@ -140,11 +140,11 @@ class ConfigurationHierarchyEdge(CreatedMixin, Base):
         UniqueConstraint("configuration_version_id", "child_unit_id", "effective_from"),
         CheckConstraint(
             "parent_unit_id <> child_unit_id",
-            name="configuration_edge_distinct_units",
+            name="distinct_units",
         ),
         CheckConstraint(
             "effective_until IS NULL OR effective_until > effective_from",
-            name="configuration_edge_effective_window",
+            name="effective_window",
         ),
         Index(
             "ix_configuration_edge_window",
@@ -257,6 +257,7 @@ class ConfigurationApproval(CreatedMixin, Base):
         _enum(ApprovalDecision, "configuration_approval_decision")
     )
     reviewed_version: Mapped[int] = mapped_column(Integer)
+    snapshot_digest: Mapped[str] = mapped_column(String(64))
     reason: Mapped[str] = mapped_column(Text)
 
 
@@ -276,6 +277,7 @@ class ConfigurationActivation(CreatedMixin, Base):
         ForeignKey("configuration_versions.id", ondelete="RESTRICT")
     )
     reason: Mapped[str] = mapped_column(Text)
+    snapshot_digest: Mapped[str] = mapped_column(String(64))
     activated_at: Mapped[datetime] = mapped_column(UTC_TS)
 
 

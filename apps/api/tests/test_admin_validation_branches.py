@@ -94,7 +94,7 @@ async def test_empty_search_and_unknown_mutation_targets(
         "/api/v1/admin/users?query=no-such-synthetic-account"
     )
     assert empty.status_code == 200
-    assert empty.json() == {"items": []}
+    assert empty.json() == {"items": [], "nextCursor": None}
     missing_status = await harness.client.patch(
         f"/api/v1/admin/users/{uuid4()}/status",
         json={"isActive": False, "expectedVersion": 1},

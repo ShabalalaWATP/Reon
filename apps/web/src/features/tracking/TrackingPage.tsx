@@ -1,8 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
+import { LoadMoreButton } from "../../components/LoadMoreButton";
 import { PageState } from "../../components/PageState";
 import { StatusPill } from "../../components/StatusPill";
 import { api } from "../../lib/api/client";
+import { flattenUniquePages } from "../../lib/api/pagination";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import type { TrackedRequest } from "../../lib/api/types";
 import { useAuth } from "../../lib/auth/AuthProvider";
@@ -11,9 +13,11 @@ import { formatDate, trackingStatusLabel } from "../../lib/status";
 export function TrackingPage() {
   const { session } = useAuth();
   const userId = session?.user.id ?? "anonymous";
-  const query = useQuery({
+  const query = useInfiniteQuery({
     queryKey: protectedQueryKeys.trackedRequests(userId),
-    queryFn: api.trackedRequests,
+    queryFn: ({ pageParam }) => api.trackedRequests(pageParam ?? undefined),
+    initialPageParam: null as string | null,
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
     enabled: Boolean(session),
     refetchInterval: 30_000,
   });
@@ -37,7 +41,7 @@ export function TrackingPage() {
     );
   }
 
-  const requests = query.data.items;
+  const requests = flattenUniquePages(query.data.pages);
   return (
     <main className="page-stack tracking-page">
       <header className="page-heading">
@@ -59,6 +63,11 @@ export function TrackingPage() {
           {requests.map((request) => (
             <TrackedRequestRow key={request.id} request={request} />
           ))}
+          <LoadMoreButton
+            hasMore={query.hasNextPage}
+            loading={query.isFetchingNextPage}
+            onLoad={() => void query.fetchNextPage()}
+          />
         </section>
       )}
     </main>

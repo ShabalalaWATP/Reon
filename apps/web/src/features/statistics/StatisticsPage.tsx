@@ -9,6 +9,7 @@ import type {
   SummaryMetric,
 } from "../../lib/api/statisticsTypes";
 import { useAuth } from "../../lib/auth/AuthProvider";
+import { addLocalDays, localDateInputValue } from "../../lib/dateInputs";
 import { StatisticsEvolutionContainer } from "./StatisticsEvolutionContainer";
 import {
   CategoryPanel,
@@ -17,10 +18,8 @@ import {
   ThroughputPanel,
 } from "./StatisticsVisuals";
 
-const defaultTo = isoDate(new Date());
-const startDate = new Date();
-startDate.setUTCDate(startDate.getUTCDate() - 89);
-const defaultFrom = isoDate(startDate);
+const defaultTo = localDateInputValue(new Date());
+const defaultFrom = localDateInputValue(addLocalDays(new Date(), -89));
 
 export function StatisticsPage() {
   const { session } = useAuth();
@@ -138,7 +137,6 @@ function RetryState({ onRetry }: { onRetry: () => void }) {
   return <PageState action={<button className="button" onClick={onRetry}>Try again</button>} kind="error" title="Statistics could not be loaded">Check your connection and reporting access, then try again.</PageState>;
 }
 
-function isoDate(value: Date) { return value.toISOString().slice(0, 10); }
 function formatTimestamp(value: string | null) {
   return value ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "not yet projected";
 }

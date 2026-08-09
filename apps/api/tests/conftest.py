@@ -183,7 +183,6 @@ async def api_harness() -> ApiHarness:
             memory_cost=8_192,
             parallelism=1,
         ),
-        start_background_worker=False,
     )
     async with app.router.lifespan_context(app):
         async with sessions() as session, session.begin():

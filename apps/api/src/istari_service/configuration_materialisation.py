@@ -77,8 +77,9 @@ async def materialise_configuration_units(
             )
     configured_ids = set(configured)
     for unit_id, unit in existing.items():
-        if unit_id not in configured_ids:
+        if unit_id not in configured_ids and unit.is_configured:
             unit.is_configured = False
+            unit.version = (unit.version or 0) + 1
     await session.flush()
     await rebuild_organisation_closure(session)
 
@@ -110,25 +111,43 @@ def _apply_revision(
     parent_id: UUID | None,
     groups: dict[CandidateGroupPurpose, str],
     staffing: StaffingCount,
-) -> None:
-    unit.code = revision.code
-    unit.name = revision.name
-    unit.kind = revision.kind
-    unit.parent_id = parent_id
-    unit.is_configured = revision.routing_enabled
-    unit.version = (unit.version or 0) + 1
+) -> bool:
     if revision.kind is OrganisationKind.TEAM:
-        unit.staffing_status = (
+        staffing_status = (
             StaffingStatus.STAFFED
             if staffing.managers >= revision.minimum_managers
             and staffing.analysts >= revision.minimum_analysts
             else StaffingStatus.UNSTAFFED
         )
-        unit.routing_candidate_group = None
-        unit.manager_candidate_group = groups.get(CandidateGroupPurpose.MANAGER)
-        unit.analyst_candidate_group = groups.get(CandidateGroupPurpose.ANALYST)
+        routing_group = None
+        manager_group = groups.get(CandidateGroupPurpose.MANAGER)
+        analyst_group = groups.get(CandidateGroupPurpose.ANALYST)
     else:
-        unit.staffing_status = StaffingStatus.ROUTING_POOL
-        unit.routing_candidate_group = groups.get(CandidateGroupPurpose.ROUTING)
-        unit.manager_candidate_group = None
-        unit.analyst_candidate_group = None
+        staffing_status = StaffingStatus.ROUTING_POOL
+        routing_group = groups.get(CandidateGroupPurpose.ROUTING)
+        manager_group = None
+        analyst_group = None
+    changed = (
+        unit.code != revision.code
+        or unit.name != revision.name
+        or unit.kind is not revision.kind
+        or unit.parent_id != parent_id
+        or unit.is_configured is not revision.routing_enabled
+        or unit.staffing_status is not staffing_status
+        or unit.routing_candidate_group != routing_group
+        or unit.manager_candidate_group != manager_group
+        or unit.analyst_candidate_group != analyst_group
+    )
+    if not changed:
+        return False
+    unit.code = revision.code
+    unit.name = revision.name
+    unit.kind = revision.kind
+    unit.parent_id = parent_id
+    unit.is_configured = revision.routing_enabled
+    unit.staffing_status = staffing_status
+    unit.routing_candidate_group = routing_group
+    unit.manager_candidate_group = manager_group
+    unit.analyst_candidate_group = analyst_group
+    unit.version = (unit.version or 0) + 1
+    return True
