@@ -34,6 +34,7 @@ def settings(*, notifications_enabled: bool = False) -> Settings:
                 "workflow-command-dispatch",
                 "workflow-reconciliation",
                 "membership-projection",
+                "request-search-index",
             },
         ),
         (
@@ -45,6 +46,7 @@ def settings(*, notifications_enabled: bool = False) -> Settings:
                 "workflow-reconciliation",
                 "notification-projection",
                 "membership-projection",
+                "request-search-index",
             },
         ),
     ],

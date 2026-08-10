@@ -50,7 +50,7 @@ async def test_existing_workflow_events_drive_actions_and_notifications(
     await perform(
         api_harness,
         "admin4",
-        {"action": "progress", "category": "Research support", "priority": "MEDIUM"},
+        {"action": "progress", "priority": "MEDIUM"},
     )
     await api_harness.login("admin5")
     command_actions = await api_harness.client.get("/api/v1/me/actions")

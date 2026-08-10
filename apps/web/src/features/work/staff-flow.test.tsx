@@ -57,10 +57,9 @@ describe("staff work queue", () => {
     );
     await user.click(screen.getByRole("button", { name: "Route to command" }));
     expect(await screen.findByText("Choose a priority.")).toBeInTheDocument();
-    await user.type(screen.getByLabelText("Confirmed category"), "Advisory support");
     await user.selectOptions(screen.getByLabelText(/Priority/), "HIGH");
     await user.click(screen.getByRole("button", { name: "Route to command" }));
-    await waitFor(() => expect(completeBody).toEqual({ action: "progress", category: "Advisory support", destinationUnitId: "unit-digoc", priority: "HIGH" }));
+    await waitFor(() => expect(completeBody).toEqual({ action: "progress", destinationUnitId: "unit-digoc", priority: "HIGH" }));
     expect(await screen.findByRole("heading", { name: "No items waiting" })).toBeInTheDocument();
     expect(requestDetailCalls).toBe(1);
   });

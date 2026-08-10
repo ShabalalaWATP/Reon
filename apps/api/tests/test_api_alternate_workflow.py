@@ -96,7 +96,7 @@ async def test_coordination_hold_resume_return_and_close(
     await perform(
         harness,
         "admin4",
-        {"action": "progress", "category": "Research support", "priority": "LOW"},
+        {"action": "progress", "priority": "LOW"},
     )
     detail = await perform(
         harness,

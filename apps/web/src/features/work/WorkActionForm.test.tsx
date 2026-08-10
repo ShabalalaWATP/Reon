@@ -28,7 +28,7 @@ describe("work action controls", () => {
   it.each([
     ["request_information", "Reason"],
     ["send_to_allocation", "Routing note"],
-    ["progress", "Confirmed category"],
+    ["progress", "Priority"],
     ["allocate", "Destination unit"],
     ["assign", "Lead Analyst"],
     ["submit", "Product title"],

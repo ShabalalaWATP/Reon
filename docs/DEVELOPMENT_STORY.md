@@ -1,5 +1,38 @@
 # Development Story
 
+## 10 August 2026: explainable request matching and simpler JIOC routing
+
+- Replaced the misleading title/reference lookup with automatic, explainable
+  matching across every Customer-submitted field. PostgreSQL full-text,
+  `pg_trgm` and pgvector retrieval feed deterministic field, semantic and
+  structured scoring; the interface exposes bounded evidence and never treats
+  the score as a duplicate decision.
+- Added one transactionally created projection per submitted request and a
+  lease-fenced worker indexer. FastEmbed runs a revision and checksum-verified
+  `BAAI/bge-small-en-v1.5` model from an offline image cache, so indexing does
+  not send request content outside the application and cannot block submission.
+- Kept decisions human-led and append-only. JIOC can record possible duplicate,
+  related request, existing released product or not-relevant outcomes after
+  reviewing the comparison. Every query and save re-applies task ownership and
+  route scope.
+- Removed the uncontrolled Confirmed category input from the JIOC progress
+  contract and interface. Priority and the chosen direct-child route remain the
+  only progress values required at that stage; the nullable historical column
+  remains for compatibility.
+- Built PostgreSQL 17.10 with checksum-pinned pgvector 0.8.1, migrated the
+  retained synthetic database to revision 0029 and backfilled all ten requests.
+  The worker indexed every projection and a live JIOC API and browser journey
+  returned hybrid matches with field evidence. The browser showed no Confirmed
+  category field.
+- Passed all 936 backend tests at 98.85 per cent line and 95.03 per cent branch
+  coverage, plus 327 frontend tests at 99.41 per cent line and 95.03 per cent
+  branch coverage. Ruff, MyPy, Bandit, dependency audits and all repository
+  gates passed. Refreshed Trivy scans reported zero High or Critical finding in
+  each of the API, web, PostgreSQL, Camunda and ClamAV images without an ignore
+  file. The API now uses digest-pinned Ubuntu 24.04 with Python 3.12, while the
+  PostgreSQL image compiles checksum-pinned pgvector in a discarded build stage
+  and runs on Alpine 3.23 without the unused privilege helper.
+
 ## 9 August 2026: Customer-owned intake and reviewed account requests
 
 - Replaced Customer-facing business-area and recipient-routing questions with a

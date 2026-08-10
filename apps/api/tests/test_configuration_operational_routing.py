@@ -163,7 +163,6 @@ async def test_activation_materialises_staffs_and_routes_new_team_from_pin(
         triage["id"],
         {
             "action": "progress",
-            "category": "Research support",
             "priority": "HIGH",
             "destinationUnitId": str(organisation_id("SYGOC")),
         },

@@ -81,7 +81,11 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | Service number or profile narrative leaks through secondary systems | Exclude self-profile fields from sessions, notifications, analytics and logs; bound and render them as escaped plain text |
 | A staff member performs another role's action | Server-side role-to-stage policy and expected-status check before every mutation |
 | A user manipulates an object identifier | Recheck role, scope, ownership or assignment on the loaded object and return a non-disclosing denial |
-| Related-work search leaks records | Require the active claimed JIOC task and route membership in the candidate query; return bounded metadata only |
+| Related-request ranking leaks records or excerpts | Require the active claimed JIOC task and apply route membership independently to lexical, vector, comparison and save queries before returning bounded metadata, scores or excerpts |
+| Embedding generation exfiltrates submitted content | Bake the approved model into the backend image, load it offline only and prohibit runtime calls to external model providers |
+| A poisoned or malformed request exhausts the indexer | Reuse bounded validated request fields, cap projection bytes and worker batch size, fence the named job and keep submission and text search independent of embedding success |
+| A match score is treated as duplicate truth | Label it match strength, expose deterministic contributing fields, retain explicit human decisions and never change routing, priority or Camunda state from ranking |
+| Semantic indexing fails or becomes stale | Store model and projection versions, expose text-only fallback, reconcile pending rows and require controlled re-indexing for model upgrades |
 | A link target changes between search and save | Revalidate target scope and released-product state in the locked source transaction |
 | Duplicate or concurrent link submissions | Source optimistic version, row locks and unique source/target/type constraint produce one winner |
 | A possible duplicate is treated as workflow truth | Keep links informational and append-only; never change Camunda variables or request state from a link |

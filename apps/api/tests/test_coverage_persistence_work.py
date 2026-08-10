@@ -118,7 +118,6 @@ async def test_nonterminal_completion_can_wait_for_reconciliation(
             actor_from(worker, organisation_id("JIOC")),
             ProgressRequest(
                 action="progress",
-                category="Research",
                 priority="HIGH",
                 destination_unit_id=uuid4(),
             ),

@@ -70,7 +70,7 @@ export function WorkQueueDetail({
             />
             <div className="queue-detail__decision">
               {canLoadDetail ? <StaffProductAction requestId={item.requestId} requestVersion={item.requestVersion} stage={item.stage} /> : null}
-              {canLoadDetail && item.stage === "TRIAGE_REVIEW" ? (
+              {detail && item.stage === "TRIAGE_REVIEW" ? (
                 <RelatedRecordPanel csrfToken={session.csrfToken} userId={session.user.id} workItemId={item.id} />
               ) : null}
               {canLoadDetail ? <StaffDeliverableSection deliverable={detail?.deliverable} stage={item.stage} state={detailState} /> : null}

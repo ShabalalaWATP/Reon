@@ -78,7 +78,7 @@ jobs:
           exit-code: "1"
       - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
         with:
-          image-ref: istari/postgres-local:17.10-alpine3.23
+          image-ref: istari/postgres-local:17.10-pgvector0.8.1-alpine3.23
           severity: HIGH,CRITICAL
           exit-code: "1"
       - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
@@ -101,7 +101,7 @@ jobs:
           done <<'IMAGES'
           api=istari-service-local-api
           web=istari-service-local-web
-          postgres=istari/postgres-local:17.10-alpine3.23
+          postgres=istari/postgres-local:17.10-pgvector0.8.1-alpine3.23
           camunda=istari/camunda-local:8.9.14
           clamav=istari/clamav-local:1.5.3
           IMAGES

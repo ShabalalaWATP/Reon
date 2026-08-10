@@ -1,0 +1,23 @@
+.related-record-panel { display: grid; gap: 13px; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; background: var(--surface-raised); }
+.related-record-panel h2 { margin: 4px 0 0; font-size: 1.05rem; }
+.related-record-panel > p { margin: 0; color: var(--muted); font-size: .8rem; line-height: 1.5; }
+.related-record-search { display: grid; grid-template-columns: auto auto 1fr; gap: 8px; }
+.related-record-search .form-field { grid-column: 1 / -1; }
+.related-record-mode { color: var(--muted); font-size: .66rem !important; }
+.related-record-results, .related-record-links { margin: 0; padding: 0; list-style: none; }
+.related-record-results { border-block: 1px solid var(--border); }
+.related-record-results button { display: grid; grid-template-columns: 44px 1fr; gap: 10px; width: 100%; border: 0; border-bottom: 1px solid var(--border); padding: 10px 4px; background: transparent; color: var(--text); text-align: left; }
+.related-record-results button:hover, .related-record-results button[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.match-score { display: grid; border-left: 2px solid var(--border-strong); padding-left: 8px; font-family: var(--font-mono); }
+.match-score--strong { border-color: var(--teal); }
+.match-score--possible { border-color: var(--accent); }
+.match-copy { display: grid; gap: 3px; }
+.match-copy > span:first-child { display: flex; justify-content: space-between; }
+.match-copy em { color: var(--accent); font-size: .61rem; font-style: normal; text-transform: uppercase; }
+.match-copy > span:last-child, .related-record-results small, .related-record-links small { color: var(--muted); font-size: .7rem; }
+.related-record-review { border-left: 2px solid var(--accent); padding-left: 12px; }
+.related-record-review > ul { margin: 10px 0; padding: 0; list-style: none; }
+.related-record-review li { border-bottom: 1px solid var(--border); padding: 7px 0; font-size: .72rem; }
+.related-record-review li p, .related-record-form > p { margin: 3px 0; }
+.related-record-form, .related-record-links li { display: grid; gap: 8px; }
+.related-record-links li { border-left: 2px solid var(--accent); margin-top: 8px; padding: 7px 9px; }

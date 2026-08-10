@@ -116,11 +116,10 @@ async def search_related_records(
     work_id: UUID,
     actor: CurrentActor,
     session: DatabaseSession,
-    query: str = Query(min_length=2, max_length=120),
-    limit: int = Query(default=20, ge=1, le=20),
+    query: str | None = Query(default=None, min_length=2, max_length=240),
+    limit: int = Query(default=10, ge=1, le=20),
 ) -> RelatedRecordCandidateList:
-    items = await _related_service(session).search(actor, work_id, query, limit)
-    return RelatedRecordCandidateList(items=items)
+    return await _related_service(session).search(actor, work_id, query, limit)
 
 
 @router.get("/{work_id}/request-links", response_model=RequestLinkWorkspace)

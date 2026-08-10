@@ -1,6 +1,6 @@
 # Specification, decision and threat traceability
 
-Recorded on 7 August 2026 and updated on 8 August 2026. Each implemented capability is mapped to its accepted
+Recorded on 7 August 2026 and updated on 10 August 2026. Each implemented capability is mapped to its accepted
 Markdown specification, expensive-to-reverse decision record and current threat
 model. Shared foundation records apply where a feature uses an existing boundary
 rather than creating a new architectural decision.
@@ -15,7 +15,7 @@ rather than creating a new architectural decision.
 | Team roster lifecycle | `service-operations-expansion.md` | 0006, 0011 | `team-workspaces-and-calendars.md` |
 | Shared and personal calendars | `service-operations-expansion.md` | 0006, 0008 | `team-workspaces-and-calendars.md` |
 | Workflow board and agile planning | `service-operations-expansion.md` | 0006, 0009 | `team-workspaces-and-calendars.md` |
-| Manual related records | `manual-related-records.md` | 0012 | `service-request-workflow.md` |
+| Explainable related-request matching and human decisions | `manual-related-records.md` | 0012, 0027 | `service-request-workflow.md` |
 | Platform administration | `platform-administration-mvp.md` | 0005, 0013 | `platform-administration.md` |
 | Retention, telemetry, backup and recovery | `operational-readiness.md` | 0014 | `operations-and-recovery.md` |
 | Action and notification workspace | `operational-product-evolution.md` | 0015 | `service-request-workflow.md` |

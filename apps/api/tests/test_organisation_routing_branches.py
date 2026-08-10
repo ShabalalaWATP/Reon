@@ -47,7 +47,6 @@ def _payload(status: RequestStatus, destination_id: UUID) -> CompletionPayload:
     if status is RequestStatus.TRIAGE_REVIEW:
         return ProgressRequest(
             action="progress",
-            category="Research",
             priority="HIGH",
             destination_unit_id=destination_id,
         )

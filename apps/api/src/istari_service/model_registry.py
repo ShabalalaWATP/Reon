@@ -24,6 +24,7 @@ from istari_service import (
     related_record_models,
     request_draft_models,
     request_participant_models,
+    request_search_models,
     team_models,
     workspace_collaboration_models,
 )
@@ -55,6 +56,7 @@ REGISTERED_MODEL_MODULES = (
     related_record_models,
     request_draft_models,
     request_participant_models,
+    request_search_models,
     team_models,
     workspace_collaboration_models,
 )

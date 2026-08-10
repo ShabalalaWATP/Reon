@@ -48,6 +48,14 @@ def include_schema_object(
 
     Portable enum membership changes require an explicit migration.
     """
+    explicit_search_objects = {
+        "search_vector",
+        "ix_request_search_documents_search_vector",
+        "ix_request_search_documents_trigram",
+        "ix_request_search_documents_embedding_hnsw",
+    }
+    if reflected and compare_to is None and name in explicit_search_objects:
+        return False
     return not (
         type_ == "check_constraint"
         and reflected

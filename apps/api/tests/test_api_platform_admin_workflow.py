@@ -104,7 +104,6 @@ async def test_team_rename_preserves_stable_route_and_manager_access(
         "admin4",
         {
             "action": "progress",
-            "category": "Research support",
             "priority": "MEDIUM",
             "destinationUnitId": str(await harness.unit_id("DIGOC")),
         },

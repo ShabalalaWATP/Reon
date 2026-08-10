@@ -279,7 +279,6 @@ async def test_apply_completion_projects_next_and_terminal_stages(
             actor_from(worker, organisation_id("JIOC")),
             ProgressRequest(
                 action="progress",
-                category="Research",
                 priority="MEDIUM",
                 destination_unit_id=uuid4(),
             ),
@@ -299,7 +298,6 @@ async def test_apply_completion_projects_next_and_terminal_stages(
                 actor_from(worker, organisation_id("JIOC")),
                 ProgressRequest(
                     action="progress",
-                    category="Research",
                     priority="LOW",
                     destination_unit_id=uuid4(),
                 ),

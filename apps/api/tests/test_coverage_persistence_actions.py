@@ -124,7 +124,6 @@ async def test_validation_and_every_persisted_work_effect(
 
         progress = ProgressRequest(
             action="progress",
-            category="Research",
             priority="HIGH",
             destination_unit_id=uuid4(),
         )
@@ -154,7 +153,8 @@ async def test_validation_and_every_persisted_work_effect(
             )
 
         await apply_work_effect(session, request, reviewer_actor, progress)
-        assert (request.triage_category, request.priority) == ("Research", "HIGH")
+        assert request.triage_category is None
+        assert request.priority == "HIGH"
         allocation = AllocateRequest(
             action="allocate",
             destination_unit_id=uuid4(),

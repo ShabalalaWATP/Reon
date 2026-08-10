@@ -60,7 +60,6 @@ async def test_complete_conceals_missing_and_rejects_invalid_states() -> None:
     service = WorkService(repository, dispatcher)
     progress = ProgressRequest(
         action="progress",
-        category="Research",
         priority="LOW",
         destination_unit_id=uuid4(),
     )
@@ -101,7 +100,6 @@ async def test_assignment_validation_rejects_invalid_specialists() -> None:
         value.record,
         ProgressRequest(
             action="progress",
-            category="Research",
             priority="LOW",
             destination_unit_id=uuid4(),
         ),
@@ -150,7 +148,6 @@ async def test_complete_maps_dispatch_failures_after_committed_intent(
             repository.value.record.id,
             ProgressRequest(
                 action="progress",
-                category="Research",
                 priority="HIGH",
                 destination_unit_id=uuid4(),
             ),
@@ -167,7 +164,6 @@ async def test_complete_returns_projected_detail_and_handles_missing_dispatch() 
         repository.value.record.id,
         ProgressRequest(
             action="progress",
-            category="Research",
             priority="HIGH",
             destination_unit_id=uuid4(),
         ),

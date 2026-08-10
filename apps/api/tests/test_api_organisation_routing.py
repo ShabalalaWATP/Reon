@@ -67,7 +67,6 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
         triage["id"],
         {
             "action": "progress",
-            "category": "Research support",
             "priority": "HIGH",
             "destinationUnitId": str(await harness.unit_id("NIMBUS_OPS")),
         },
@@ -79,7 +78,6 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
         triage["id"],
         {
             "action": "progress",
-            "category": "Research support",
             "priority": "HIGH",
             "destinationUnitId": str(sygoc_id),
         },

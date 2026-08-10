@@ -120,7 +120,6 @@ async def apply_work_effect(
     elif isinstance(payload, ReturnForReallocation):
         await clear_route_from(session, request, 3)
     if isinstance(payload, ProgressRequest):
-        request.triage_category = payload.category
         request.priority = payload.priority
     elif isinstance(payload, AllocateRequest):
         request.required_capabilities = payload.required_capabilities

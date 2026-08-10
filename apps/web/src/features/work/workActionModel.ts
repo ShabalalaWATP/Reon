@@ -7,7 +7,6 @@ export type WorkActionValues = {
   action: WorkActionName;
   reason?: string;
   note?: string;
-  category?: string;
   priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
   destinationUnitId?: string;
   requiredCapabilities?: string;
@@ -58,7 +57,6 @@ export const workActionSchema = z.object({
   ]),
   reason: z.string().optional(),
   note: z.string().optional(),
-  category: z.string().optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"], { error: "Choose a priority." }).optional(),
   destinationUnitId: z.string().optional(),
   requiredCapabilities: z.string().optional(),
@@ -79,7 +77,6 @@ export const workActionSchema = z.object({
   const action = values.action as WorkActionName;
   if (reasonActions.includes(action)) required("reason", "Explain this decision.");
   if (action === "progress") {
-    required("category", "Enter the confirmed category.");
     required("destinationUnitId", "Choose a destination unit.");
     required("priority", "Choose a priority.");
   }
@@ -156,7 +153,7 @@ const lines = (value?: string) => value?.split("\n").map((item) => item.trim()).
 export function buildWorkAction(values: WorkActionValues): WorkAction {
   switch (values.action) {
     case "request_information": return { action: values.action, reason: values.reason! };
-    case "progress": return { action: values.action, category: values.category!, destinationUnitId: values.destinationUnitId!, priority: values.priority! };
+    case "progress": return { action: values.action, destinationUnitId: values.destinationUnitId!, priority: values.priority! };
     case "close": return { action: values.action, reason: values.reason! };
     case "provide_information": return { action: values.action, information: values.information! };
     case "withdraw": return { action: values.action, reason: values.reason! };

@@ -1,4 +1,4 @@
-"""Manual related-record use cases over a narrow persistence port."""
+"""Explainable related-request use cases over a narrow persistence port."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from istari_service.domain import Actor
 from istari_service.errors import ObjectNotFound
 from istari_service.models import UserRole
 from istari_service.schemas.related_records import (
-    RelatedRecordCandidate,
+    RelatedRecordCandidateList,
     RequestLinkCreate,
     RequestLinkView,
     RequestLinkWorkspace,
@@ -36,9 +36,9 @@ class RelatedRecordRepository(Protocol):
         self,
         source_id: UUID,
         actor: Actor,
-        query: str,
+        query: str | None,
         limit: int,
-    ) -> list[RelatedRecordCandidate]: ...
+    ) -> RelatedRecordCandidateList: ...
 
     async def links(self, source_id: UUID) -> list[RequestLinkView]: ...
 
@@ -58,14 +58,14 @@ class RelatedRecordService:
         self,
         actor: Actor,
         work_id: UUID,
-        query: str,
+        query: str | None,
         limit: int,
-    ) -> list[RelatedRecordCandidate]:
+    ) -> RelatedRecordCandidateList:
         source = await self._authorised_source(actor, work_id, lock=False)
         return await self._repository.search(
             source.request_id,
             actor,
-            query.strip(),
+            query.strip() if query else None,
             limit,
         )
 

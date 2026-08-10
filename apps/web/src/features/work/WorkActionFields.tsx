@@ -39,7 +39,6 @@ export function WorkActionFields({
     return (
       <>
         <RoutingDestinationField error={error("destinationUnitId")} options={routingOptions} register={register} selectedId={destinationUnitId} />
-        {field("category", "Confirmed category", <input {...register("category")} />)}
         <label className="form-field">
           <span>Priority</span>
           <select defaultValue="" {...register("priority")}>

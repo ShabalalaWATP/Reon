@@ -92,7 +92,7 @@ async def test_complete_representative_workflow_and_feedback(
     await _complete(
         harness,
         item,
-        {"action": "progress", "category": "Research support", "priority": "HIGH"},
+        {"action": "progress", "priority": "HIGH"},
     )
 
     await harness.login("admin5")

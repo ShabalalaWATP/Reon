@@ -38,18 +38,21 @@ up the routing chain for approval.
 The local MVP includes bounded identity administration for account provisioning,
 profile editing, reversible account deactivation and organisation display-name
 maintenance. Platform Administrators cannot inspect service-request content.
-It also includes recorded manual related-work checks, operational notes,
+It also includes automatic, explainable related-request matching with recorded
+human decisions, operational notes,
 effective-dated team membership, calendar-backed capacity and workload-aware
 reassignment. See the [implementation plan](docs/MASTER_IMPLEMENTATION_PLAN.md)
 for implementation and assurance status.
 
 ## Architecture and documentation
 
-React talks only to FastAPI. PostgreSQL 17.10 stores product data. Camunda 8.9.14
+React talks only to FastAPI. PostgreSQL 17.10 with pgvector stores product data
+and the authorised request-search projection. Camunda 8.9.14
 owns BPMN process position and user tasks. A separately deployable, fenced
-worker drains the outbox and reconciles projections without coupling maintenance
-pressure to API replica count. External Camunda, storage and scanner calls do
-not retain database lock transactions.
+worker drains the outbox, generates offline local request embeddings and
+reconciles projections without coupling maintenance pressure to API replica
+count. External Camunda, storage and scanner calls do not retain database lock
+transactions.
 
 The code is arranged as domain policy, application use cases, small ports and
 infrastructure adapters. FastAPI routes and React components remain delivery

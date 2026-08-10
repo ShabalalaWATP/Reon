@@ -16,7 +16,7 @@ const normalisedWorkflow = workflow.replace(/\s+/gu, " ");
 const expectedImages = [
   "istari-service-local-api",
   "istari-service-local-web",
-  "istari/postgres-local:17.10-alpine3.23",
+  "istari/postgres-local:17.10-pgvector0.8.1-alpine3.23",
   "istari/camunda-local:8.9.14",
   "istari/clamav-local:1.5.3",
 ];
@@ -33,7 +33,7 @@ for (const required of [
   "name: Generate CycloneDX image SBOMs",
   "api=istari-service-local-api",
   "web=istari-service-local-web",
-  "postgres=istari/postgres-local:17.10-alpine3.23",
+  "postgres=istari/postgres-local:17.10-pgvector0.8.1-alpine3.23",
   "camunda=istari/camunda-local:8.9.14",
   "clamav=istari/clamav-local:1.5.3",
   "if: always()",

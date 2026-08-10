@@ -6,7 +6,7 @@ param(
     [string]$EvidenceDirectory,
     [Parameter(Mandatory = $true)]
     [string]$Confirmation,
-    [string]$ExpectedRevision = '0028_access_classification'
+    [string]$ExpectedRevision = '0029_related_request_search'
 )
 
 Set-StrictMode -Version Latest

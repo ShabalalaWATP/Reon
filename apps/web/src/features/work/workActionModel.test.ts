@@ -9,7 +9,7 @@ import {
 
 const cases: Array<[WorkActionValues, unknown]> = [
   [{ action: "request_information", reason: "Need a clearer deadline." }, { action: "request_information", reason: "Need a clearer deadline." }],
-  [{ action: "progress", category: "Advisory", destinationUnitId: "command-id", priority: "HIGH" }, { action: "progress", category: "Advisory", destinationUnitId: "command-id", priority: "HIGH" }],
+  [{ action: "progress", destinationUnitId: "command-id", priority: "HIGH" }, { action: "progress", destinationUnitId: "command-id", priority: "HIGH" }],
   [{ action: "close", reason: "Outside scope." }, { action: "close", reason: "Outside scope." }],
   [{ action: "provide_information", information: "The meeting is on Friday." }, { action: "provide_information", information: "The meeting is on Friday." }],
   [{ action: "withdraw", reason: "No longer required." }, { action: "withdraw", reason: "No longer required." }],
@@ -42,7 +42,7 @@ describe("work action model", () => {
   });
 
   it.each([
-    [{ action: "progress" }, 3],
+    [{ action: "progress" }, 2],
     [{ action: "send_to_allocation" }, 2],
     [{ action: "allocate" }, 2],
     [{ action: "assign" }, 2],

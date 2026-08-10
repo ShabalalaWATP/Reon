@@ -192,9 +192,10 @@ mutation tests prove ownership and scope isolation.
 ## Phase 3: JIOC and command routing
 
 - [x] JIOC Routing Users claim and review submitted demand.
-- [x] Record category, priority, completeness outcome and reasons.
-- [x] Provide a manual search of authorised MVP records and record links to
-  duplicate, related request or existing output candidates.
+- [x] Record priority, completeness outcome, routing destination and reasons.
+- [x] Automatically compare all submitted request fields across the authorised
+  historical corpus, explain ranked matches and record duplicate, related
+  request, existing output or not-relevant decisions.
 - [x] Request clarification, close with reason or select any configured command.
 - [x] Command Routing Users return, hold, resume, close or select any direct Ops
   group with an append-only decision note.
@@ -840,3 +841,27 @@ rollout remains subject to the enterprise gap register.
   branch coverage.
 - [x] Complete full repository gates and live Chromium visual/accessibility
   evidence.
+
+## Explainable related-request matching milestone
+
+- [x] Remove the uncontrolled Confirmed category value from the JIOC progress
+  API, form model and interface while retaining historical nullable data.
+- [x] Create one all-field search projection atomically with every submitted
+  request and backfill the existing corpus through migration 0029.
+- [x] Add indexed PostgreSQL full-text, trigram and pgvector retrieval without a
+  second search datastore.
+- [x] Generate embeddings asynchronously with a fenced worker and an offline,
+  revision and checksum-verified FastEmbed model cache.
+- [x] Reapply claimed-task and route-membership authorisation to source,
+  candidates, explanations and recorded decisions.
+- [x] Show automatic top matches, match strength, contributing methods, bounded
+  field evidence and optional all-field search in the JIOC workspace.
+- [x] Keep matching advisory and store possible duplicate, related request,
+  existing released product and not-relevant human decisions without changing
+  workflow position.
+- [x] Prove the live PostgreSQL extensions, indexes, ten-record backfill and
+  complete semantic projection, plus hybrid API and browser behaviour.
+- [x] Complete the disposable PostgreSQL 0029 downgrade/re-upgrade and drift
+  rehearsal.
+- [ ] Complete a coordinated current-candidate backup/restore before release
+  acceptance.

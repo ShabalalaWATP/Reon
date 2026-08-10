@@ -1,7 +1,7 @@
 # ISTARI Service system architecture
 
 Status: current implementation architecture and unimplemented target boundaries
-Last reviewed: 9 August 2026
+Last reviewed: 10 August 2026
 
 ## 1. Purpose and scope
 
@@ -10,12 +10,12 @@ structured request, authorised routing users select each organisational
 destination, a Team Manager assigns one Lead Analyst and optional Contributors,
 and QC releases a product for
 authenticated download. Camunda coordinates human user tasks. It does not make
-priority, category, route, assignment, approval or release decisions.
+priority, route, assignment, approval or release decisions.
 
 This document describes the executable React, FastAPI, PostgreSQL and Camunda
 system. The organisation model is in
 [Organisation and routing](ORGANISATION_AND_ROUTING.md). Detailed decisions are
-in [ADRs 0001 to 0025](../adr/). Production gaps remain authoritative in the
+in [ADRs 0001 to 0027](../adr/). Production gaps remain authoritative in the
 [gap register](../ENTERPRISE_READINESS_GAP_REGISTER.md).
 
 ## 2. System context
@@ -77,6 +77,12 @@ fence singleton projection jobs, while existing row-level outbox leases permit
 bounded parallel dispatch. A durable content-free heartbeat makes missing or
 stale maintenance visible to API readiness.
 
+The same fenced worker enriches transactionally created request-search
+projections with 384-dimension FastEmbed vectors. The model is revision and
+checksum verified at image build and opens in offline-only mode at runtime.
+Embedding failure leaves full-text matching available and never blocks request
+submission or human routing.
+
 FastAPI applies body-size limits, trusted-host validation, restricted CORS,
 security headers and correlation-aware telemetry. Authorisation is evaluated on
 the server at role, operational-scope, object, assignment and transition levels.
@@ -88,7 +94,11 @@ PostgreSQL is authoritative for accounts, password/session state, request and
 form content, configuration revisions and pins, organisational projection,
 assignments, clarification messages, product metadata, feedback, notifications,
 planning, analytics facts, audit history and the requester-facing workflow
-projection. Alembic owns schema evolution.
+projection. It also owns the route-scoped related-request search projection:
+weighted generated `tsvector` data is indexed with GIN, bounded narrative
+similarity uses `pg_trgm`, and optional semantic retrieval uses an HNSW pgvector
+index. Candidate retrieval and comparison reapply object and route membership
+before bounded evidence is returned. Alembic owns schema evolution.
 
 Local Compose separates identities:
 

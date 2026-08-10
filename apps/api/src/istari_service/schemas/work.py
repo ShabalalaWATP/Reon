@@ -19,7 +19,6 @@ class RequestInformation(StrictApiModel):
 
 class ProgressRequest(StrictApiModel):
     action: Literal["progress"]
-    category: str = Field(min_length=2, max_length=80)
     priority: Literal["LOW", "MEDIUM", "HIGH", "URGENT"]
     destination_unit_id: UUID
 

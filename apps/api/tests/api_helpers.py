@@ -84,7 +84,7 @@ async def reach_coordination(harness: ApiHarness) -> str:
     await perform(
         harness,
         "admin4",
-        {"action": "progress", "category": "Research support", "priority": "MEDIUM"},
+        {"action": "progress", "priority": "MEDIUM"},
     )
     return request_id
 

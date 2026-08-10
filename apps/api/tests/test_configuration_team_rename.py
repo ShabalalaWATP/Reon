@@ -138,7 +138,7 @@ async def _route_and_assign(harness: ApiHarness) -> None:
     await perform(
         harness,
         "admin4",
-        {"action": "progress", "category": "Research support", "priority": "MEDIUM"},
+        {"action": "progress", "priority": "MEDIUM"},
     )
     await perform(
         harness,

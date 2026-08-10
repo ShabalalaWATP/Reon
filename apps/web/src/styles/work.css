@@ -29,16 +29,3 @@
 .specialist-state--error { color: var(--critical); font-weight: 650; }
 .specialist-state .button { min-height: 34px; padding: 6px 10px; white-space: nowrap; }
 .action-assurance { margin: -3px 0 0; color: var(--muted); font-size: .7rem; line-height: 1.45; }
-.related-record-panel { display: grid; gap: 13px; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; background: var(--surface-raised); }
-.related-record-panel h2 { margin: 4px 0 0; font-size: 1.05rem; }
-.related-record-panel > p { margin: 0; color: var(--muted); font-size: .8rem; line-height: 1.5; }
-.related-record-search { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 8px; }
-.related-record-results, .related-record-links { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.related-record-results button { display: grid; gap: 4px; width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; background: var(--surface-muted); color: var(--text); text-align: left; }
-.related-record-results button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
-.related-record-results small, .related-record-links small { color: var(--muted); font-size: .7rem; }
-.related-record-form { display: grid; gap: 12px; border-top: 1px solid var(--border); padding-top: 13px; }
-.related-record-form > p { margin: 0; font-size: .8rem; }
-.related-record-links li { display: grid; gap: 4px; border-left: 2px solid var(--accent); padding: 7px 9px; background: var(--surface-muted); }
-.related-record-links span { color: var(--accent); font-size: .66rem; font-weight: 750; text-transform: uppercase; }
-.related-record-links p { margin: 0; font-size: .75rem; line-height: 1.45; }
