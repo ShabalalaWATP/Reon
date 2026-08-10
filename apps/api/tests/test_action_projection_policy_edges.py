@@ -9,7 +9,12 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from conftest import ApiHarness
-from istari_service.action_notification_models import ActionSection, ActionSourceType
+from istari_service.action_notification_models import (
+    ActionProjection,
+    ActionSection,
+    ActionSourceType,
+)
+from istari_service.domain import Actor
 from istari_service.models import RequestStatus, ServiceRequest, UserRole
 from istari_service.request_action_projection import (
     ActionAudience,
@@ -21,6 +26,7 @@ from istari_service.request_action_projection import (
     as_utc,
     waiting_analyst,
 )
+from istari_service.services.action_service import _current_owner
 
 
 def _request(status: RequestStatus, *, assigned: UUID | None = None) -> ServiceRequest:
@@ -35,6 +41,22 @@ def _request(status: RequestStatus, *, assigned: UUID | None = None) -> ServiceR
         assigned_specialist_id=assigned,
         awaiting_team_staffing=False,
     )
+
+
+def test_action_owner_falls_back_if_a_unit_name_is_unavailable() -> None:
+    actor = Actor(
+        id=uuid4(),
+        username="fallback",
+        display_name="Fallback User",
+        role=UserRole.DELIVERY_TEAM_LEAD,
+        scope="Fallback scope",
+    )
+    action = ActionProjection(
+        recipient_user_id=None,
+        organisation_unit_id=uuid4(),
+        current_owner="Stored owner",
+    )
+    assert _current_owner(action, actor, {}) == "Stored owner"
 
 
 @pytest.mark.parametrize(

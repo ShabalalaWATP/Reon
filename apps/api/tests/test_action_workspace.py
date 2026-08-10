@@ -69,7 +69,7 @@ def _command(
         action_type="REVIEW_REQUEST",
         reference=f"SR-{version:04d}",
         safe_title="Synthetic planning summary",
-        current_owner=actor.display_name,
+        current_owner="Stored stage owner",
         required_by=now.date() + timedelta(days=3),
         last_changed_at=now - timedelta(days=2),
         deep_link=f"/requests/{uuid4()}?action=review",
@@ -124,6 +124,7 @@ async def test_action_projection_replay_pagination_counts_and_freshness(
         assert page.counts.waiting == 1
         assert page.freshness.status is ProjectionHealth.CURRENT
         assert page.items[0].age_days == 1
+        assert page.items[0].current_owner == actor.display_name
         next_page = await service.workspace(
             actor,
             ActionFilters(),
@@ -195,6 +196,10 @@ async def test_action_role_membership_and_account_are_rechecked(
         )
         assert len(manager_items) == 1
         assert sibling_items == []
+        manager_workspace = await ActionService(repository).workspace(
+            manager, ActionFilters(), limit=10, cursor=None, now=now
+        )
+        assert manager_workspace.items[0].current_owner == "OSG Team · Awaiting owner"
 
         await session.execute(
             delete(TeamMembership).where(

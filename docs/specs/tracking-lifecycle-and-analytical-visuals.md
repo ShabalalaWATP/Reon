@@ -14,7 +14,7 @@ data but relies heavily on small horizontal bars and tables.
 
 - JIOC routing users track requests whose pinned route contains their exact JIOC
   unit.
-- Command routing users track requests whose pinned route contains one of their
+- Request Coordination Users track requests whose pinned route contains one of their
   exact command memberships.
 - Operations routing users track requests whose pinned route contains one of
   their exact Ops memberships.

@@ -86,6 +86,9 @@ async def test_existing_workflow_events_drive_actions_and_notifications(
     command_actions = await api_harness.client.get("/api/v1/me/actions")
     assert command_actions.status_code == 200
     assert command_actions.json()["items"][0]["actionType"] == "CHOOSE_OPS_GROUP"
+    assert command_actions.json()["items"][0]["currentOwner"] == (
+        "DIGOC · Awaiting owner"
+    )
     assert command_actions.json()["items"][0]["deepLink"] == (
         f"/coordination?requestId={submitted.json()['id']}"
     )

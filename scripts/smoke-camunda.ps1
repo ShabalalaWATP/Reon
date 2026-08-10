@@ -42,7 +42,7 @@ $staffedRoute = @(
         }
     }
     @{
-        ElementId = "coordination_review"; Name = "Command Routing"; Group = "digoc-routing"
+        ElementId = "coordination_review"; Name = "Request Coordination"; Group = "digoc-routing"
         Actor = $commandActorId; Action = "send_to_allocation"; Claim = $true
         Variables = @{
             coordinationDecision = "send_to_allocation"; selectedOpsId = "NCGI_A_OPS"
@@ -133,7 +133,7 @@ $alternativeRoute = @(
         }
     }
     @{
-        ElementId = "coordination_review"; Name = "Command Routing"; Group = "sygoc-routing"
+        ElementId = "coordination_review"; Name = "Request Coordination"; Group = "sygoc-routing"
         Actor = $commandActorId; Action = "send_to_allocation"; Claim = $true
         Variables = @{
             coordinationDecision = "send_to_allocation"; selectedOpsId = "NIMBUS_OPS"

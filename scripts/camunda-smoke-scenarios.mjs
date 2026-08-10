@@ -26,7 +26,7 @@ export const staffedScenario = {
     {
       taskKey: "2251799813685252",
       elementId: "coordination_review",
-      name: "Command Routing",
+      name: "Request Coordination",
       candidateGroup: "digoc-routing",
       actorId: commandActorId,
       action: "send_to_allocation",
@@ -161,7 +161,7 @@ export const alternativeStaffedScenario = {
     {
       taskKey: "2251799813685262",
       elementId: "coordination_review",
-      name: "Command Routing",
+      name: "Request Coordination",
       candidateGroup: "sygoc-routing",
       actorId: commandActorId,
       action: "send_to_allocation",

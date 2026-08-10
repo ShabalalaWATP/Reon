@@ -957,3 +957,19 @@ gates remain above 95 per cent for both lines and branches.
   excludes the current Home destination and uses restrained entrance, hover and
   keyboard-focus treatment with a reduced-motion fallback. All 368 frontend
   tests passed at 99.52 per cent line and 95.06 per cent branch coverage.
+- Replaced the deprecated coordination vocabulary on 10 August 2026 with
+  `Incoming requests`, `Request coordination` and `Request Coordination User`
+  across React, FastAPI presentation defaults, Camunda task metadata, smoke
+  contracts and current documentation.
+- Made action ownership route-aware without changing access policy. Shared work
+  now resolves its already-authorised unit at read time and displays
+  `<unit> · Awaiting owner`; claimed work displays the claimant's name. The
+  action summary says `New request requires attention` while preserving stable
+  internal action codes.
+- Migrated existing scopes, request owners and projection snapshots to revision
+  `0032_coordination_language`. The rebuilt local stack retained its data and
+  PostgreSQL confirmed the new revision and values.
+- Verified 953 backend tests, then the additional defensive ownership branch,
+  at 98.87 per cent line and 95.02 per cent branch coverage. All 369 frontend
+  tests passed at 99.52 per cent line and 95.06 per cent branch coverage, and
+  every repository quality gate passed.

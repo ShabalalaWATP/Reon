@@ -206,7 +206,7 @@ gates pass; non-local insecure configuration fails closed.
 Exit: draft and submission journeys survive refresh and retry; list, detail and
 mutation tests prove ownership and scope isolation.
 
-## Phase 3: JIOC and command routing
+## Phase 3: JIOC and request coordination
 
 - [x] JIOC Routing Users claim and review submitted demand.
 - [x] Record priority, completeness outcome, routing destination and reasons.
@@ -214,7 +214,7 @@ mutation tests prove ownership and scope isolation.
   historical corpus, explain ranked matches and record duplicate, related
   request, existing output or not-relevant decisions.
 - [x] Request clarification, close with reason or select any configured command.
-- [x] Command Routing Users return, hold, resume, close or select any direct Ops
+- [x] Request Coordination Users return, hold, resume, close or select any direct Ops
   group with an append-only decision note.
 - [x] Show time-stamped notes and activity to authorised participants only.
 
@@ -1035,3 +1035,23 @@ acceptance remains required.
   cent branch coverage, including the unit-name failure path.
 - [ ] Obtain representative routing and delivery-user acceptance for the final
   checkbox wording and default audience.
+
+## Plain-language request coordination milestone
+
+Status: implemented and assured locally on 10 August 2026. Representative-user
+acceptance remains required.
+
+- [x] Rename the coordination queue to `Incoming requests` and explain the
+  required human action in plain language.
+- [x] Replace deprecated coordination wording across the UI, workflow task
+  metadata, smoke contracts and current reference documentation.
+- [x] Resolve shared action ownership from the pinned organisation route and
+  distinguish `<unit> · Awaiting owner` from personal assignment.
+- [x] Preserve stable internal role, status, action and BPMN element identifiers.
+- [x] Migrate existing presentation values without deleting or rebuilding local
+  request data.
+- [x] Pass 953 backend tests plus the defensive ownership regression at 98.87
+  per cent line and 95.02 per cent branch coverage, 369 frontend tests at 99.52
+  per cent line and 95.06 per cent branch coverage, and all repository checks.
+- [ ] Obtain representative DIGOC, SYGOC and MYGOC acceptance for the final
+  queue and ownership wording.

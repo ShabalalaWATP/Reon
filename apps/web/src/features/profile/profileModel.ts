@@ -5,7 +5,7 @@ const accessLabels: Record<User["role"], string> = {
   PLATFORM_ADMIN: "Platform administration",
   REQUESTER: "Own requests and released products",
   INTAKE_TRIAGE: "JIOC routing",
-  SERVICE_COORDINATION: "Command routing",
+  SERVICE_COORDINATION: "Request coordination",
   OPERATIONS_ALLOCATION: "Ops routing",
   DELIVERY_TEAM_LEAD: "Team management",
   DELIVERY_SPECIALIST: "Assigned product work",

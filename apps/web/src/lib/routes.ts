@@ -24,7 +24,7 @@ const queueRoutes: Partial<Record<UserRole, string>> = {
 
 const queueLabels: Partial<Record<UserRole, string>> = {
   INTAKE_TRIAGE: "JIOC routing queue",
-  SERVICE_COORDINATION: "Command routing queue",
+  SERVICE_COORDINATION: "Incoming requests",
   OPERATIONS_ALLOCATION: "Ops routing queue",
   DELIVERY_TEAM_LEAD: "Team work queue",
   DELIVERY_SPECIALIST: "Production queue",
@@ -35,7 +35,7 @@ export const roleLabels: Record<UserRole, string> = {
   PLATFORM_ADMIN: "Platform Administrator",
   REQUESTER: "Customer",
   INTAKE_TRIAGE: "JIOC Routing User",
-  SERVICE_COORDINATION: "Command Routing User",
+  SERVICE_COORDINATION: "Request Coordination User",
   OPERATIONS_ALLOCATION: "Ops Routing User",
   DELIVERY_TEAM_LEAD: "Team Manager",
   DELIVERY_SPECIALIST: "Team Analyst",

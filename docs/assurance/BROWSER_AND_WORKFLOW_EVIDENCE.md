@@ -349,3 +349,27 @@ worker, web tier and antivirus services.
 
 This focused current-candidate check is read-oriented and Chromium-only. It does
 not replace representative-user, cross-browser or accessibility acceptance.
+
+## Request coordination language and ownership, 10 August 2026
+
+The Compose candidate was rebuilt without resetting its volumes and migrated to
+`0032_coordination_language`. PostgreSQL confirmed that admin5's existing scope
+became `Shared request coordination` and the active SR-2026-1C930860 owner became
+`Request Coordination`.
+
+The in-app browser was reloaded and the following read-only presentation was
+verified as Callum McGregor (admin5):
+
+1. The account menu and profile displayed `Request Coordination User`, with the
+   assigned DIGOC, SYGOC and MYGOC workspaces unchanged.
+2. Primary navigation and the queue heading displayed `Incoming requests`.
+3. The queue explained that a new request required attention and must be claimed
+   before its details and onward organisation decision were available.
+4. My actions labelled the work `New request requires attention`, separated
+   `Available to DIGOC` from `DIGOC · Awaiting owner`, and retained the exact
+   deep link back to the request in the coordination queue.
+5. No browser warning or error was recorded.
+
+This check validates the local Chromium presentation and existing-data
+migration. Representative-user, cross-browser and formal accessibility
+acceptance remain separate release activities.

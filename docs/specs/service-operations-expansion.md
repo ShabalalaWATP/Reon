@@ -58,7 +58,7 @@ switched to a data table.
 | Service request | The structured record of need |
 | Product | The completed deliverable released to the Customer |
 | JIOC routing | Initial intake, categorisation and command selection |
-| Command routing | Selection of a direct Ops group |
+| Request coordination | Selection of a direct Ops group |
 | Ops routing | Selection of a direct delivery team |
 | Team Manager | Allocates and checks team delivery work |
 | Team Analyst | Produces the product and requests further information |

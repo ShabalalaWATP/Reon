@@ -53,7 +53,7 @@ language.
 | --- | --- | --- | --- |
 | Customer | Receive a timely response | Submit, track, download and give feedback | Complete requests and visible progress |
 | JIOC Routing User | Understand and direct incoming demand | Review, categorise, request information or select a command | One source of truth and less administration |
-| Command Routing User | Direct work to the appropriate Ops group | Hold, resume, track and select a direct Ops group | Visible demand, ownership and progress |
+| Request Coordination User | Direct work to the appropriate Ops group | Hold, resume, track and select a direct Ops group | Visible demand, ownership and progress |
 | Ops Routing User | Direct work to the appropriate team | Select any direct team and track progress | Clear demand and workload ownership |
 | Team Manager | Assign and oversee delivery | Assign Analysts and check their service product | One view of origin, ownership and delivery |
 | Team Analyst | Produce the service product | Manage assigned work and submit the product | Visible workload, status and history |
@@ -116,12 +116,12 @@ Submit request
      -> Information required -> Customer response -> JIOC routing
      -> Closed without delivery
      -> Select command
-        -> Command routing
-           -> On hold -> Command routing
+        -> Request coordination
+           -> On hold -> Request coordination
            -> Return to JIOC
            -> Select direct Ops group
               -> Ops routing
-                 -> Return to command routing
+                 -> Return to request coordination
                  -> Select direct team
                     -> Team Manager assignment
                        -> Return to Ops routing
@@ -147,7 +147,7 @@ task. Camunda must not infer or recommend a route.
 The Customer dashboard groups these into Needs your input, In progress and
 Completed without exposing engine terminology.
 
-JIOC, Command Routing and Ops Routing Users retain a separate route-scoped,
+JIOC, Request Coordination and Ops Routing Users retain a separate route-scoped,
 read-only tracker after their routing action. It shows title, reference,
 ownership and lifecycle and permits an exact-route member to reopen the original
 submitted request. It excludes actions, clarification, feedback and product

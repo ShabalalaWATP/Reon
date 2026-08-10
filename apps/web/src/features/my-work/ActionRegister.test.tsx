@@ -32,4 +32,16 @@ describe("ActionRegister", () => {
     expect(screen.queryByText("ISR-200")).not.toBeInTheDocument();
     expect(screen.queryByText("Waiting for response")).not.toBeInTheDocument();
   });
+
+  it("distinguishes shared unit responsibility from personal ownership", () => {
+    render(<MemoryRouter><ActionRegister columns={["TITLE", "CURRENT_OWNER"]} items={[{
+      ...action,
+      actionAccess: "SHARED",
+      actionType: "CHOOSE_OPS_GROUP",
+      currentOwner: "DIGOC · Awaiting owner",
+    }]} label="Incoming request register" /></MemoryRouter>);
+    expect(screen.getByText("New request requires attention")).toBeInTheDocument();
+    expect(screen.getByText("Available to DIGOC")).toBeInTheDocument();
+    expect(screen.getByText("DIGOC · Awaiting owner")).toBeInTheDocument();
+  });
 });

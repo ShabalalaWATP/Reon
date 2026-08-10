@@ -84,7 +84,7 @@ _BASE_IDENTITIES = (
     _identity(
         "Callum McGregor",
         UserRole.SERVICE_COORDINATION,
-        "Shared command routing",
+        "Shared request coordination",
         legacy="coordination.2@example.test",
         units=("DIGOC", "SYGOC", "MYGOC"),
         manager=True,

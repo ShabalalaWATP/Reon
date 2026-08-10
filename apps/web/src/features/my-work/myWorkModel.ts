@@ -37,6 +37,18 @@ export function humaniseCode(value: string) {
   return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
 }
 
+const actionTypeLabels: Partial<Record<string, string>> = {
+  CHOOSE_OPS_GROUP: "New request requires attention",
+};
+
+export function actionTypeLabel(value: string) {
+  return actionTypeLabels[value] ?? humaniseCode(value);
+}
+
+export function availableToLabel(value: string | null) {
+  return value?.replace(/ · Awaiting owner$/u, "") ?? "your unit";
+}
+
 export function formatActionDate(value: string | null) {
   return value ? new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(value)) : "Not set";
 }

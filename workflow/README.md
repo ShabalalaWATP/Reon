@@ -29,7 +29,7 @@ process contract.
 | --- | --- | --- | --- |
 | `intake_review` | JIOC Routing | None | `jioc-routing` |
 | `requester_response` | Provide requested information | `= requesterId` | None |
-| `coordination_review` | Command Routing | None | `= selectedCommandCandidateGroup` |
+| `coordination_review` | Request Coordination | None | `= selectedCommandCandidateGroup` |
 | `on_hold` | Resolve coordination hold | None | `= selectedCommandCandidateGroup` |
 | `allocation_review` | Ops Routing | None | `= selectedOpsCandidateGroup` |
 | `delivery_planning` | Team Assignment | None | `= selectedTeamManagerCandidateGroup` |

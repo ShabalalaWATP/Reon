@@ -17,7 +17,7 @@ export const statusLabels: Record<RequestStatus, string> = {
   ROUTING_PENDING: "Submitted",
   TRIAGE_REVIEW: "JIOC routing",
   INFORMATION_REQUIRED: "Information required",
-  COORDINATION_REVIEW: "Command routing",
+  COORDINATION_REVIEW: "Request coordination",
   ON_HOLD: "On hold",
   ALLOCATION_REVIEW: "Ops routing",
   DELIVERY_PLANNING: "Team assignment",

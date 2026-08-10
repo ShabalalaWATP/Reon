@@ -21,7 +21,7 @@
       <bpmn:incoming>flow_information_gateway</bpmn:incoming>
       <bpmn:outgoing>flow_information_resubmit</bpmn:outgoing><bpmn:outgoing>flow_information_withdraw</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:userTask id="coordination_review" name="Command Routing">
+    <bpmn:userTask id="coordination_review" name="Request Coordination">
       <bpmn:extensionElements><zeebe:assignmentDefinition candidateGroups="= selectedCommandCandidateGroup" /><zeebe:userTask /></bpmn:extensionElements>
       <bpmn:incoming>flow_intake_progress</bpmn:incoming><bpmn:incoming>flow_hold_resume</bpmn:incoming><bpmn:incoming>flow_allocation_return</bpmn:incoming><bpmn:outgoing>flow_coordination_gateway</bpmn:outgoing>
     </bpmn:userTask>

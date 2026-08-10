@@ -6,7 +6,7 @@ param(
     [string]$EvidenceDirectory,
     [Parameter(Mandatory = $true)]
     [string]$Confirmation,
-    [string]$ExpectedRevision = '0031_role_aware_action_links'
+    [string]$ExpectedRevision = '0032_coordination_language'
 )
 
 Set-StrictMode -Version Latest

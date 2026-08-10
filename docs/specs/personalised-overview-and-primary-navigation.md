@@ -39,7 +39,7 @@ Staff navigation follows the operating sequence:
 8. `Organisation directory`
 
 Role queue labels name their purpose, for example `JIOC routing queue`,
-`Command routing queue` and `Ops routing queue`. The labels do not alter route,
+`Incoming requests` and `Ops routing queue`. The labels do not alter route,
 role, object or action authorisation.
 
 ## Acceptance criteria

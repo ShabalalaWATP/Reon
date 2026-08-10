@@ -74,7 +74,7 @@ released-product and feedback actions stay attached to the relevant request.
 | Role | Action groups |
 | --- | --- |
 | JIOC Routing User | New submissions, claimed intake, held work and due-risk routing |
-| Command Routing User | Requests awaiting an Ops choice, held work and returns |
+| Request Coordination User | Requests awaiting an Ops choice, held work and returns |
 | Ops Routing User | Requests awaiting a team choice, staffing waits and returns |
 | Team Manager | Team intake, assignment, due risk, Manager review and rework |
 | Team Analyst | Assigned work, clarification replies, due risk and returned products |

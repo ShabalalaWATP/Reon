@@ -10,7 +10,7 @@ routing chain for approval.
 flowchart TD
   Customer["Customer"]
   JIOC["JIOC routing"]
-  Command["Selected command routing"]
+  Command["Selected request coordination unit"]
   Ops["Selected Ops routing"]
   Manager["Selected Team Manager"]
   Analysts["Lead Analyst and Contributors"]
@@ -168,7 +168,7 @@ visually downgrades them as routing choices.
 | --- | --- | --- |
 | Customer | Outside JIOC | Submit, track, respond, download and give feedback |
 | JIOC Routing User | JIOC | Intake, clarification, closure and command selection |
-| Command Routing User | Shared command routing | Select a direct Ops group for any configured command and track progress |
+| Request Coordination User | Shared request coordination | Select a direct Ops group for any configured command and track progress |
 | Ops Routing User | Shared Ops routing | Select a direct team for any configured Ops group and track progress |
 | Team Manager | One configured team | Assign one Lead and optional Contributors, maintain the team and check the submitted product |
 | Team Analyst | One configured team | Produce, collaborate on and resubmit the service product |
@@ -199,7 +199,7 @@ in every delivery team.
 | `admin2` | John McGinn | Customer | Customer | Active |
 | `admin3` | Billy Gilmour | Customer | Customer | Active |
 | `admin4` | Scott McTominay | JIOC Routing User, Manager | JIOC | Active |
-| `admin5` | Callum McGregor | Command Routing User, Manager | DIGOC, SYGOC and MYGOC | Active |
+| `admin5` | Callum McGregor | Request Coordination User, Manager | DIGOC, SYGOC and MYGOC | Active |
 | `admin6` | Kieran Tierney | Ops Routing User, Manager | NCGI-A Ops, Aurora Ops, Vertex Ops, Nimbus Ops and Parallax Ops | Active |
 | `admin7` | Ryan Christie | JIOC Routing User, Member | JIOC | Active |
 | `admin8` | Grant Hanley | Team Manager | OSG Team | Active |
@@ -270,12 +270,12 @@ in every delivery team.
 | `admin73` | Jim Leighton | Platform Administrator | Platform configuration approval | Active |
 | `admin74` | Alan Rough | JIOC Routing User, Manager | JIOC | Active |
 | `admin75` | Willie Ormond | JIOC Routing User, Member | JIOC | Active |
-| `admin76` | Craig Levein | Command Routing User, Manager | DIGOC | Active |
-| `admin77` | Walter Smith | Command Routing User, Member | DIGOC | Active |
-| `admin78` | Alex Ferguson | Command Routing User, Manager | SYGOC | Active |
-| `admin79` | Tommy Burns | Command Routing User, Member | SYGOC | Active |
-| `admin80` | Jock Stein | Command Routing User, Manager | MYGOC | Active |
-| `admin81` | Bill Shankly | Command Routing User, Member | MYGOC | Active |
+| `admin76` | Craig Levein | Request Coordination User, Manager | DIGOC | Active |
+| `admin77` | Walter Smith | Request Coordination User, Member | DIGOC | Active |
+| `admin78` | Alex Ferguson | Request Coordination User, Manager | SYGOC | Active |
+| `admin79` | Tommy Burns | Request Coordination User, Member | SYGOC | Active |
+| `admin80` | Jock Stein | Request Coordination User, Manager | MYGOC | Active |
+| `admin81` | Bill Shankly | Request Coordination User, Member | MYGOC | Active |
 | `admin82` | Willie Johnston | Ops Routing User, Manager | NCGI-A Ops | Active |
 | `admin83` | Asa Hartford | Ops Routing User, Member | NCGI-A Ops | Active |
 | `admin84` | Craig Burley | Ops Routing User, Manager | Aurora Ops | Active |

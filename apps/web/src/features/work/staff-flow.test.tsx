@@ -305,7 +305,7 @@ describe("staff work queue", () => {
   });
 
   it.each([
-    ["/coordination", "Command routing queue"],
+    ["/coordination", "Incoming requests"],
     ["/allocation", "Ops routing queue"],
     ["/delivery/team", "Team queue"],
     ["/delivery/my-work", "Production queue"],

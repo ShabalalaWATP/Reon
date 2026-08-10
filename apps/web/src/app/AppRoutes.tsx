@@ -119,7 +119,7 @@ export function AppRoutes() {
             <Route element={<RoleGate allowed={["SERVICE_COORDINATION"]} />}>
               <Route
                 path="coordination"
-                element={<StaffQueuePage description="Oversee command routing, holds and onward hand-offs to operations." eyebrow="Command routing" title="Command routing queue" />}
+                element={<StaffQueuePage description="A new request has been submitted and requires your attention. Claim it to review the details and choose the next organisation." eyebrow="Request coordination" title="Incoming requests" />}
               />
             </Route>
             <Route element={<RoleGate allowed={["OPERATIONS_ALLOCATION"]} />}>

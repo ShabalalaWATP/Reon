@@ -17,7 +17,7 @@ describe("presentation helpers", () => {
       PLATFORM_ADMIN: "Platform Administrator",
       REQUESTER: "Customer",
       INTAKE_TRIAGE: "JIOC Routing User",
-      SERVICE_COORDINATION: "Command Routing User",
+      SERVICE_COORDINATION: "Request Coordination User",
       OPERATIONS_ALLOCATION: "Ops Routing User",
       DELIVERY_TEAM_LEAD: "Team Manager",
       DELIVERY_SPECIALIST: "Team Analyst",
@@ -68,7 +68,7 @@ describe("presentation helpers", () => {
   it("groups and labels statuses without exposing raw values", () => {
     expect(statusLabels).toMatchObject({
       TRIAGE_REVIEW: "JIOC routing",
-      COORDINATION_REVIEW: "Command routing",
+      COORDINATION_REVIEW: "Request coordination",
       ALLOCATION_REVIEW: "Ops routing",
       DELIVERY_PLANNING: "Team assignment",
       IN_PROGRESS: "Product development",
