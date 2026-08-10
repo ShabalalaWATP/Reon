@@ -48,13 +48,13 @@ async def test_roster_rejects_wrong_accounts_teams_grants_and_versions(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    osg = await _access(harness, "admin8", "OSG_TEAM")
-    lewis = await _member(harness, osg["teamId"], "Lewis Ferguson")
+    ssg = await _access(harness, "admin8", "SSG_TEAM")
+    lewis = await _member(harness, ssg["teamId"], "Lewis Ferguson")
     manager_id = await harness.user_id("admin8")
     existing = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/memberships",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/memberships",
         json={
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
             "analystId": lewis["accountId"],
             "reason": "This deliberately attempts to add an existing member.",
         },
@@ -62,9 +62,9 @@ async def test_roster_rejects_wrong_accounts_teams_grants_and_versions(
     )
     assert existing.status_code == 409
     wrong_role = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/memberships",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/memberships",
         json={
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
             "analystId": str(manager_id),
             "reason": (
                 "A Team Manager cannot be added through the Analyst roster action."
@@ -74,9 +74,9 @@ async def test_roster_rejects_wrong_accounts_teams_grants_and_versions(
     )
     assert wrong_role.status_code == 409
     missing = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/memberships",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/memberships",
         json={
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
             "analystId": str(uuid4()),
             "reason": "An unknown account must not disclose any roster information.",
         },
@@ -84,9 +84,9 @@ async def test_roster_rejects_wrong_accounts_teams_grants_and_versions(
     )
     assert missing.status_code == 404
     stale = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/memberships/{lewis['membershipId']}/end",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/memberships/{lewis['membershipId']}/end",
         json={
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
             "expectedVersion": lewis["version"] + 1,
             "reason": "A stale membership version must lose the concurrent update.",
         },
@@ -95,15 +95,15 @@ async def test_roster_rejects_wrong_accounts_teams_grants_and_versions(
     assert stale.status_code == 409
     assert stale.json()["detail"]["code"] == "STALE_VERSION"
     wrong_grant = await harness.client.get(
-        f"/api/v1/team-workspaces/{osg['teamId']}/eligible-analysts",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/eligible-analysts",
         params={"grantId": str(uuid4())},
     )
     assert wrong_grant.status_code == 404
 
     await harness.login("admin11")
     analyst_denied = await harness.client.get(
-        f"/api/v1/team-workspaces/{osg['teamId']}/eligible-analysts",
-        params={"grantId": osg["grantId"]},
+        f"/api/v1/team-workspaces/{ssg['teamId']}/eligible-analysts",
+        params={"grantId": ssg["grantId"]},
     )
     assert analyst_denied.status_code == 404
 
@@ -112,17 +112,17 @@ async def test_transfer_validation_and_immediate_projection_change(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    osg = await _access(harness, "admin8", "OSG_TEAM")
-    lewis = await _member(harness, osg["teamId"], "Lewis Ferguson")
+    ssg = await _access(harness, "admin8", "SSG_TEAM")
+    lewis = await _member(harness, ssg["teamId"], "Lewis Ferguson")
     base = {
-        "grantId": osg["grantId"],
+        "grantId": ssg["grantId"],
         "analystId": lewis["accountId"],
         "currentMembershipId": lewis["membershipId"],
         "expectedVersion": lewis["version"],
         "reason": "A valid-length synthetic transfer reason for boundary testing.",
     }
     same_team = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/transfers",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/transfers",
         json={
             **base,
             "effectiveFrom": (datetime.now(UTC) + timedelta(days=1)).isoformat(),

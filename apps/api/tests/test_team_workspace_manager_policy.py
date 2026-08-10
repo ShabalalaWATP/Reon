@@ -19,11 +19,11 @@ async def test_member_cannot_use_a_misconfigured_roster_grant(
     harness = api_harness
     member_id = await harness.user_id("admin75")
     administrator_id = await harness.user_id("admin1")
-    jioc_id = await harness.unit_id("JIOC")
+    crioc_id = await harness.unit_id("CRIOC")
     async with harness.sessions() as session, session.begin():
         grant = ManagementGrant(
             subject_user_id=member_id,
-            root_unit_id=jioc_id,
+            root_unit_id=crioc_id,
             include_descendants=False,
             effective_from=datetime.now(UTC) - timedelta(minutes=1),
             effective_until=None,
@@ -45,16 +45,16 @@ async def test_member_cannot_use_a_misconfigured_roster_grant(
         )
     await harness.login("admin75")
     workspace = (await harness.client.get("/api/v1/team-workspaces")).json()["items"]
-    jioc = next(item for item in workspace if item["teamId"] == str(jioc_id))
-    assert jioc["workspacePosition"] == "MEMBER"
-    assert jioc["permissions"] == ["ROSTER"]
-    people = await harness.client.get(f"/api/v1/team-workspaces/{jioc_id}/people")
+    crioc = next(item for item in workspace if item["teamId"] == str(crioc_id))
+    assert crioc["workspacePosition"] == "MEMBER"
+    assert crioc["permissions"] == ["ROSTER"]
+    people = await harness.client.get(f"/api/v1/team-workspaces/{crioc_id}/people")
     assert people.status_code == 200
     assert all(item["startReason"] is None for item in people.json()["items"])
     async with harness.sessions() as session:
         target = await session.scalar(
             select(TeamMembership).where(
-                TeamMembership.team_id == jioc_id,
+                TeamMembership.team_id == crioc_id,
                 TeamMembership.user_id != member_id,
                 TeamMembership.workspace_position == WorkspacePosition.MEMBER,
                 TeamMembership.effective_until.is_(None),
@@ -62,7 +62,7 @@ async def test_member_cannot_use_a_misconfigured_roster_grant(
         )
     assert target is not None
     response = await harness.client.post(
-        f"/api/v1/team-workspaces/{jioc_id}/memberships/{target.id}/end",
+        f"/api/v1/team-workspaces/{crioc_id}/memberships/{target.id}/end",
         json={
             "grantId": str(grant.id),
             "expectedVersion": target.version,

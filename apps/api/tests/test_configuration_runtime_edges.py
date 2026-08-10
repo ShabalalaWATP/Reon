@@ -34,8 +34,8 @@ def _snapshot() -> dict[str, object]:
             "units": [
                 {
                     "unitId": str(root_id),
-                    "code": "JIOC",
-                    "name": "JIOC",
+                    "code": "CRIOC",
+                    "name": "CRIOC",
                     "kind": "ROOT",
                     "routingEnabled": True,
                     "staffingStatus": "ROUTING_POOL",

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">ISTARI organisation routing hierarchy</title>
+  <desc id="desc">A focused organisation tree showing CRIOC, command organisations, Ops groups and delivery teams, with the SSG operational route highlighted.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071018"/><stop offset="1" stop-color="#0c1923"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#000" flood-opacity=".25"/></filter>
+    <style>.title{font:700 30px Inter,Segoe UI,sans-serif;fill:#f4f8fb}.subtitle{font:400 15px Inter,Segoe UI,sans-serif;fill:#91a9b8}.eyebrow{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:2px;fill:#36c7ff}.level{font:700 11px ui-monospace,Consolas,monospace;letter-spacing:1.2px;fill:#7dd7ff}.name{font:700 16px Inter,Segoe UI,sans-serif;fill:#f4f8fb}.copy{font:400 12px Inter,Segoe UI,sans-serif;fill:#aebfca}.node{fill:#101e28;stroke:#34566a;stroke-width:1.5}.selected{fill:#102d3c;stroke:#36c7ff;stroke-width:2}.sibling{fill:#131a20;stroke:#41505a;stroke-width:1.3}.line{fill:none;stroke:#466b80;stroke-width:2}.active{stroke:#36c7ff;stroke-width:3}.rule{font:600 12px Inter,Segoe UI,sans-serif;fill:#8bc9df}.muted{font:600 11px Inter,Segoe UI,sans-serif;fill:#778b98}</style>
+  </defs>
+  <rect width="1600" height="900" rx="24" fill="url(#bg)"/>
+  <text x="64" y="60" class="eyebrow">ORGANISATION VIEW</text><text x="64" y="101" class="title">One hierarchy, many valid routes</text>
+  <text x="64" y="132" class="subtitle">The cyan path is the initial SSG route. Grey siblings are also staffed, selectable destinations with their own teams and users.</text>
+
+  <path d="M800 244V300M380 300H1220M380 300V344M800 300V344M1220 300V344" class="line"/>
+  <path d="M800 244V344" class="line active"/>
+  <path d="M800 454V510M480 510H1120M480 510V554M800 510V554M1120 510V554" class="line"/>
+  <path d="M800 454V554" class="line active"/>
+  <path d="M800 664V720M520 720H1080M520 720V764M800 720V764M1080 720V764" class="line"/>
+  <path d="M800 664V764" class="line active"/>
+
+  <g filter="url(#shadow)">
+    <rect x="664" y="170" width="272" height="74" rx="16" class="selected"/>
+    <text x="690" y="198" class="level">ROOT ROUTING UNIT</text><text x="690" y="227" class="name">CRIOC</text>
+
+    <rect x="250" y="344" width="260" height="110" rx="16" class="sibling"/>
+    <text x="276" y="374" class="level">COMMAND</text><text x="276" y="404" class="name">SYGOC</text><text x="276" y="430" class="copy">Staffed routing workspace</text>
+    <rect x="670" y="344" width="260" height="110" rx="16" class="selected"/>
+    <text x="696" y="374" class="level">SELECTED COMMAND</text><text x="696" y="404" class="name">JOCK</text><text x="696" y="430" class="copy">Can see only its own branch</text>
+    <rect x="1090" y="344" width="260" height="110" rx="16" class="sibling"/>
+    <text x="1116" y="374" class="level">COMMAND</text><text x="1116" y="404" class="name">MYGOC</text><text x="1116" y="430" class="copy">Staffed routing workspace</text>
+
+    <rect x="350" y="554" width="260" height="110" rx="16" class="sibling"/>
+    <text x="376" y="584" class="level">OPS GROUP</text><text x="376" y="614" class="name">Aurora Ops</text><text x="376" y="640" class="copy">Multiple direct delivery teams</text>
+    <rect x="670" y="554" width="260" height="110" rx="16" class="selected"/>
+    <text x="696" y="584" class="level">SELECTED OPS GROUP</text><text x="696" y="614" class="name">ACSA-B Ops</text><text x="696" y="640" class="copy">Own demand and teams below</text>
+    <rect x="990" y="554" width="260" height="110" rx="16" class="sibling"/>
+    <text x="1016" y="584" class="level">OPS GROUP</text><text x="1016" y="614" class="name">Nimbus Ops</text><text x="1016" y="640" class="copy">Multiple direct delivery teams</text>
+
+    <rect x="390" y="764" width="260" height="94" rx="16" class="sibling"/>
+    <text x="416" y="794" class="level">DELIVERY TEAM</text><text x="416" y="824" class="name">Cedar Team</text><text x="416" y="846" class="copy">Manager and Analyst</text>
+    <rect x="670" y="764" width="260" height="94" rx="16" class="selected"/>
+    <text x="696" y="794" class="level">INITIAL DELIVERY TEAM</text><text x="696" y="824" class="name">SSG Team</text><text x="696" y="846" class="copy">Three Managers, seven Analysts</text>
+    <rect x="950" y="764" width="260" height="94" rx="16" class="sibling"/>
+    <text x="976" y="794" class="level">DELIVERY TEAM</text><text x="976" y="824" class="name">Quartz Team</text><text x="976" y="846" class="copy">Manager and Analyst</text>
+  </g>
+
+  <text x="64" y="228" class="rule">Visibility rule</text>
+  <text x="64" y="252" class="copy">A unit can see itself and descendants on its selected branch.</text>
+  <text x="64" y="276" class="copy">It cannot see a parent or sibling branch.</text>
+  <text x="1270" y="228" class="rule">Routing rule</text>
+  <text x="1270" y="252" class="copy">Choose one direct child.</text>
+  <text x="1270" y="276" class="copy">No skipping levels.</text>
+
+  <text x="64" y="884" class="muted">The complete configured tree and all 99 synthetic accounts are listed in Organisation and routing.</text>
+</svg>

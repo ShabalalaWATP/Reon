@@ -35,7 +35,7 @@ representative acceptance remains open.
 | OpenAPI contract | Passed | Administration, hierarchy, routing, tracking and product download |
 | BPMN and Camunda mock contract | Passed | 11 user tasks, 10 gateways, 35 flows, complete diagram data and alternative-team contract |
 | Component axe check | Passed in configuration journey | Full browser/manual accessibility remains open |
-| Rebuilt-stack Chromium journey | Passed | Current/proposed language, unchanged preview, OSG ancestor-preserving search, JIOC-to-OSG breadcrumb, exact-kind move-parent options and a clean post-login console |
+| Rebuilt-stack Chromium journey | Passed | Current/proposed language, unchanged preview, SSG ancestor-preserving search, CRIOC-to-SSG breadcrumb, exact-kind move-parent options and a clean post-login console |
 | Fresh PostgreSQL 17 migration and guard check | Passed | Empty-to-0018 startup, 73 users, equal non-zero approval/activation digest, sealed snapshot controls and denial of forged approval/activation inserts |
 
 ## Reproducibility record
@@ -56,8 +56,8 @@ Local SHA-256 evidence artefacts:
 
 The default-off local stack returned HTTP 200 for health/readiness and a final
 admin login had no console error. Its configuration route correctly redirected
-because Product Evolution was disabled. The earlier enabled rebuilt-stack
-journey above remains the current configuration-browser evidence. Evidence must
+because configuration administration was disabled. The enabled rebuilt-stack
+journey above is the applicable configuration-browser evidence. Evidence must
 be regenerated and attached to a commit before acceptance.
 
 ## Evidence still required
@@ -74,5 +74,5 @@ be regenerated and attached to a commit before acceptance.
 - Native routing breadcrumb and bounded direct-child destination search, with
   keyboard, non-enumeration and no-ranking evidence.
 
-Nothing in this record authorises production use or closes Product Evolution
+Nothing in this record authorises production use or closes expanded-capability
 Definition of Done gates without the missing evidence and named acceptance.

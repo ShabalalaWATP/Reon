@@ -9,7 +9,7 @@ Accepted, 9 August 2026.
 Management grants already record a root organisation unit and whether descendants
 are included. The statistics API nevertheless resolves only the grant root. The
 UI can compare direct children but cannot select an authorised lower node. This
-prevents JIOC and intermediate organisations from examining the detail beneath
+prevents CRIOC and intermediate organisations from examining the detail beneath
 their own branch. The existing generic statistics composition also appears on
 every management role, while My actions and My requests have deliberately narrower
 transactional purposes.

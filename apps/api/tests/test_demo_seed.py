@@ -159,11 +159,11 @@ async def test_seeded_memberships_staff_every_team_correctly(
     for team_code, role in rows:
         by_team.setdefault(team_code, Counter())[role] += 1
     assert len(by_team) == 27
-    assert by_team["OSG_TEAM"] == Counter(
+    assert by_team["SSG_TEAM"] == Counter(
         {UserRole.DELIVERY_TEAM_LEAD: 3, UserRole.DELIVERY_SPECIALIST: 7}
     )
     for team_code, role_counts in by_team.items():
-        if team_code != "OSG_TEAM":
+        if team_code != "SSG_TEAM":
             assert role_counts == Counter(
                 {UserRole.DELIVERY_TEAM_LEAD: 1, UserRole.DELIVERY_SPECIALIST: 1}
             )

@@ -29,7 +29,7 @@ export function CalendarEventForm({ access, initialDate, members, onCreated, ran
   const [timeZone, setTimeZone] = useState("Europe/London");
   const [allDay, setAllDay] = useState(false);
   const [category, setCategory] = useState<CalendarCategory>("OTHER");
-  const sharingAudience = access?.teamName ?? sharingUnitName ?? "your current unit";
+  const sharingAudience = access?.teamName ?? sharingUnitName;
   const [visibility, setVisibility] = useState<CalendarVisibility>("TEAM_DETAIL");
   const [recurrence, setRecurrence] = useState<RecurrenceFrequency>("NONE");
   const [interval, setInterval] = useState(1);
@@ -86,7 +86,7 @@ export function CalendarEventForm({ access, initialDate, members, onCreated, ran
   const analysts = (members ?? []).filter((item) => item.state === "CURRENT" && item.role === "DELIVERY_SPECIALIST");
   return (
     <section className="calendar-form-panel">
-      <header><span>Canonical event</span><h2>{access ? "Add calendar activity" : "Add personal event"}</h2><p>Every member can record their own leave, courses, training and availability. Manager controls appear only where they apply.</p></header>
+      <header><span>Canonical event</span><h2>{access ? "Add calendar activity" : "Add personal event"}</h2><p>Every account can record its own leave, courses, training and availability. Manager controls appear only where they apply.</p></header>
       {access ? <div className="calendar-mode"><button aria-pressed={mode === "personal"} onClick={() => { setMode("personal"); setVisibility("TEAM_DETAIL"); }} type="button">My event</button>{canManage ? <button aria-pressed={mode === "team"} onClick={() => { setMode("team"); setVisibility("TEAM_DETAIL"); }} type="button">Unit event</button> : null}{ticketCommitments ? <button aria-pressed={mode === "commitment"} onClick={() => { setMode("commitment"); setVisibility("TEAM_DETAIL"); }} type="button">Ticket commitment</button> : null}</div> : null}
       <form onSubmit={(event) => { event.preventDefault(); mutation.mutate(); }}>
         {mode === "commitment" ? <><label className="form-field">Service request<span className="field-hint">Required</span><select disabled={requests.isPending || requests.isError} onChange={(event) => setRequestId(event.target.value)} required value={requestId}><option value="">{requests.isPending ? "Loading current requests…" : requests.isError ? "Requests unavailable" : "Select a request"}</option>{requests.data?.items.filter((item) => item.itemType === "SERVICE_REQUEST").map((item) => <option key={item.id} value={item.id}>{item.reference} · {item.title}</option>)}</select></label><label className="form-field">Analyst<span className="field-hint">Required</span><select onChange={(event) => setSubjectId(event.target.value)} required value={subjectId}><option value="">Select an Analyst</option>{analysts.map((item) => <option key={item.accountId} value={item.accountId}>{item.displayName}</option>)}</select></label></> : null}
@@ -104,7 +104,7 @@ export function CalendarEventForm({ access, initialDate, members, onCreated, ran
               />
               <span>
                 <strong>Private appointment</strong>
-                <small>{visibility === "PRIVATE" ? "The title and notes will be hidden from colleagues. They will see Busy and the event time only." : `Title, category and notes are visible to other members of ${sharingAudience}.`}</small>
+                <small>{visibility === "PRIVATE" ? "The title and notes will be hidden from colleagues. They will see Busy and the event time only." : sharingAudience ? `Title, category and notes are visible to other members of ${sharingAudience}.` : "This event remains personal while you have no current workspace. If you join one, active event details will appear there unless marked private."}</small>
               </span>
             </label>
           ) : null}

@@ -21,10 +21,10 @@ async def seed_statistics(harness: ApiHarness) -> None:
     now = datetime.now(UTC)
     requester_id = await harness.user_id("admin2")
     unit_codes = (
-        "JIOC",
-        "DIGOC",
-        "NCGI_A_OPS",
-        "OSG_TEAM",
+        "CRIOC",
+        "JOCK",
+        "ACSA_B_OPS",
+        "SSG_TEAM",
         "AURORA_OPS",
         "LANTERN_TEAM",
         "SYGOC",
@@ -37,9 +37,9 @@ async def seed_statistics(harness: ApiHarness) -> None:
     unit_ids = {code: await harness.unit_id(code) for code in unit_codes}
     rows = [
         (
-            "DIGOC",
-            "NCGI_A_OPS",
-            "OSG_TEAM",
+            "JOCK",
+            "ACSA_B_OPS",
+            "SSG_TEAM",
             RequestStatus.COMPLETED,
             rating,
             8 - rating,
@@ -49,9 +49,9 @@ async def seed_statistics(harness: ApiHarness) -> None:
     ]
     rows.extend(
         (
-            ("DIGOC", "NCGI_A_OPS", "OSG_TEAM", RequestStatus.IN_PROGRESS, None, 1, -1),
+            ("JOCK", "ACSA_B_OPS", "SSG_TEAM", RequestStatus.IN_PROGRESS, None, 1, -1),
             (
-                "DIGOC",
+                "JOCK",
                 "AURORA_OPS",
                 "LANTERN_TEAM",
                 RequestStatus.IN_PROGRESS,
@@ -107,7 +107,7 @@ async def seed_statistics(harness: ApiHarness) -> None:
             session.add(
                 RequestAnalyticsFact(
                     request_id=request_id,
-                    root_unit_id=unit_ids["JIOC"],
+                    root_unit_id=unit_ids["CRIOC"],
                     command_unit_id=unit_ids[command],
                     ops_unit_id=unit_ids[ops],
                     team_unit_id=unit_ids[team],

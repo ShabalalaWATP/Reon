@@ -1,8 +1,8 @@
-# Product Evolution Definition of Done Matrix
+# Expanded-capability Definition of Done Matrix
 
 ## Purpose
 
-This register covers only the operational product evolution defined by
+This register covers the operational product capabilities defined by
 [`operational-product-evolution.md`](../specs/operational-product-evolution.md)
 and tracked in the
 [`MASTER_IMPLEMENTATION_PLAN.md`](../MASTER_IMPLEMENTATION_PLAN.md). It does not

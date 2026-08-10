@@ -30,6 +30,10 @@ cannot introduce a destination that the primary navigation has withheld. Child-
 organisation comparison and drill-down remain on Operational statistics rather
 than appearing directly on an individual's home page.
 
+Team Managers use this same personal Home. Home must not redirect to the shared
+team workspace: it separates the Manager's assigned actions from the authorised
+team workload, then links to the team workspace as a distinct destination.
+
 ## Primary navigation
 
 Staff navigation follows the operating sequence:
@@ -38,18 +42,20 @@ Staff navigation follows the operating sequence:
 2. `My assigned actions`
 3. the role-specific routing or delivery queue
 4. the named organisation workspace
-5. `My calendar` and product tools where applicable
+5. `Personal calendar` and product tools where applicable
 6. `Request tracking` where authorised
 7. `Operational statistics` where authorised
 8. `Organisation directory`
 
-Role queue labels name their purpose, for example `JIOC routing queue`,
+Role queue labels name their purpose, for example `CRIOC routing queue`,
 `Incoming requests` and `Ops routing queue`. The labels do not alter route,
 role, object or action authorisation.
 
 ## Acceptance criteria
 
 - A routing overview greets the user by first name.
+- A Team Manager's Home is a personal landing page and does not redirect to the
+  shared team workspace.
 - Personal and organisation metrics are in separately named regions with short
   scope explanations.
 - The organisation explanation states that it is not personal workload.

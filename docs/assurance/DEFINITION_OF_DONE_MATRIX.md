@@ -28,7 +28,7 @@ defined in `docs/PROGRAMME_DEFINITIONS_OF_DONE.md`.
 | DOD-10 | Customer drafts, mandatory submission, dashboard tracking, authenticated release link and one-time feedback pass | API matrix and cross-browser Customer Playwright journey | EVIDENCE READY |
 | DOD-11 | Analyst clarification is append-only, scoped, repeatable and returns to the same assignment through Camunda | API abuse matrix and live Camunda browser journey | EVIDENCE READY |
 | DOD-12 | Automatic all-field related-request matching returns authorised, explainable results and stores typed human decisions with actor, reason and history | Feature spec, migration, deterministic ranking, API/UI and scope-abuse tests | EVIDENCE READY |
-| DOD-13 | Every configured route is selectable, separately staffed and completes without OSG fallback | OSG and alternative-branch PostgreSQL/Camunda journeys | EVIDENCE READY |
+| DOD-13 | Every configured route is selectable, separately staffed and completes without SSG fallback | SSG and alternative-branch PostgreSQL/Camunda journeys | EVIDENCE READY |
 | DOD-14 | Analyst, Manager and QC production, rework, separation-of-duties and dissemination paths pass | Workflow/API tests and browser journeys | EVIDENCE READY |
 | DOD-15 | Statistics expose only exact authorised scope and content-free aggregates | Cross-branch API oracle and chart/table browser review | EVIDENCE READY |
 | DOD-16 | Team roster lifecycle preserves history and blocks unsafe removal or transfer | Concurrency, disposition, scope and Manager browser evidence | EVIDENCE READY |

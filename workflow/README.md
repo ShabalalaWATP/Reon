@@ -14,20 +14,20 @@ a list of strings. FastAPI derives that list from its server-owned hierarchy.
 
 The direct route is:
 
-1. JIOC Routing selects a command.
+1. CRIOC Routing selects a command.
 2. The selected command routes directly to one of its Ops functions.
 3. The selected Ops function routes directly to one of its teams.
 4. The team manager assigns an Analyst.
 5. The Analyst submits the work to the same team manager.
 6. The manager checks it, QC reviews it, and QC disseminates it to the customer.
 
-JIOC, command and Ops routing do not form an approval climb after delivery.
+CRIOC, command and Ops routing do not form an approval climb after delivery.
 Existing return, hold, close and rework decision values remain part of the MVP
 process contract.
 
 | Task ID | Label | Assignee | Candidate group |
 | --- | --- | --- | --- |
-| `intake_review` | JIOC Routing | None | `jioc-routing` |
+| `intake_review` | CRIOC Routing | None | `crioc-routing` |
 | `requester_response` | Provide requested information | `= requesterId` | None |
 | `coordination_review` | Request Coordination | None | `= selectedCommandCandidateGroup` |
 | `on_hold` | Resolve coordination hold | None | `= selectedCommandCandidateGroup` |
@@ -72,12 +72,12 @@ the application audit identifies each human action.
 
 The bounded Camunda smoke uses two independent process instances:
 
-1. DIGOC → NCGI-A Ops → OSG Team proves the initial operational route through
+1. JOCK → ACSA-B Ops → SSG Team proves the initial operational route through
    Team Manager assignment, directly assigned Analyst production, Manager
    review, QC review, dissemination and process completion.
 2. SYGOC → Nimbus Ops → Beacon Team completes through the distinct
    `beacon-team-managers` and `beacon-team-analysts` groups. This proves that a
-   selectable sibling team uses its own people and never falls back to OSG.
+   selectable sibling team uses its own people and never falls back to SSG.
 
 The first active instance is also started twice with the same business ID, and
 the smoke requires Camunda to reject the duplicate with HTTP 409.

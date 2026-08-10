@@ -1,4 +1,4 @@
-# Team Operations Workspace Evolution
+# Team Operations Workspace
 
 ## Purpose
 

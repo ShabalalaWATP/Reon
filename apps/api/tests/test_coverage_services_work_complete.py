@@ -104,6 +104,20 @@ async def test_assignment_validation_rejects_invalid_specialists() -> None:
             destination_unit_id=uuid4(),
         ),
     )
+    duplicate_assignment = uuid4()
+    with pytest.raises(
+        InvalidAction,
+        match="Lead Analyst cannot also be a Contributor",
+    ):
+        await service._validate_assignment(
+            value.record,
+            AssignSpecialist(
+                action="assign",
+                specialist_id=duplicate_assignment,
+                contributor_ids=[duplicate_assignment],
+                reason="The same person cannot hold both assignment positions.",
+            ),
+        )
     payload = AssignSpecialist(
         action="assign",
         specialist_id=uuid4(),

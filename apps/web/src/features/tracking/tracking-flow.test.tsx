@@ -28,12 +28,12 @@ describe("route-scoped request tracking", () => {
               reference: "ISR-2026-0013",
               title: "Completed route assurance",
               status: "COMPLETED",
-              currentOwner: "OSG Team",
+              currentOwner: "SSG Team",
               route: [
-                organisationUnit("JIOC"),
-                organisationUnit("DIGOC"),
-                organisationUnit("NCGI_A_OPS"),
-                organisationUnit("OSG_TEAM"),
+                organisationUnit("CRIOC"),
+                organisationUnit("JOCK"),
+                organisationUnit("ACSA_B_OPS"),
+                organisationUnit("SSG_TEAM"),
               ].map(({ id, kind, name }) => ({ id, kind, name })),
               awaitingTeamStaffing: false,
             },
@@ -55,7 +55,7 @@ describe("route-scoped request tracking", () => {
 
     const view = renderApp("/tracking");
     expect(await screen.findByRole("heading", { name: "Request tracking" })).toBeInTheDocument();
-    expect(screen.getByText("JIOC Routing User")).toBeInTheDocument();
+    expect(screen.getByText("CRIOC Routing User")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: trackedRequest.reference })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: trackedRequest.title })).toHaveAttribute(
       "href",
@@ -64,7 +64,7 @@ describe("route-scoped request tracking", () => {
     expect(screen.getAllByLabelText(/^Request lifecycle for /)).toHaveLength(3);
     expect(screen.getByText("Ops routing")).toBeInTheDocument();
     expect(screen.getByText("Disseminated")).toBeInTheDocument();
-    expect(screen.getAllByText("NCGI-A Ops")).not.toHaveLength(0);
+    expect(screen.getAllByText("ACSA-B Ops")).not.toHaveLength(0);
     const routedRow = screen
       .getByRole("heading", { name: trackedRequest.title })
       .closest("article")!;
@@ -73,7 +73,7 @@ describe("route-scoped request tracking", () => {
     const staffedRow = screen
       .getByRole("heading", { name: "Completed route assurance" })
       .closest("article")!;
-    expect(within(staffedRow).getAllByText("OSG Team")).not.toHaveLength(0);
+    expect(within(staffedRow).getAllByText("SSG Team")).not.toHaveLength(0);
     expect(within(staffedRow).queryByText("Awaiting team staffing")).not.toBeInTheDocument();
     expect(screen.getByText("Awaiting routing")).toBeInTheDocument();
     expect(screen.getByText("Waiting for the first routing decision.")).toBeInTheDocument();

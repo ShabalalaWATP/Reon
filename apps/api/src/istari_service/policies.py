@@ -80,6 +80,17 @@ ACTIONS_BY_STAGE: Mapping[RequestStatus, tuple[str, ...]] = {
 }
 
 
+CLAIMABLE_ROLES = frozenset(
+    {
+        UserRole.INTAKE_TRIAGE,
+        UserRole.SERVICE_COORDINATION,
+        UserRole.OPERATIONS_ALLOCATION,
+        UserRole.DELIVERY_TEAM_LEAD,
+        UserRole.QUALITY_RELEASE,
+    }
+)
+
+
 def has_stage_role(actor: ActorLike, request: RequestLike) -> bool:
     """Return whether the actor holds the exact role for the current stage."""
 
@@ -140,6 +151,12 @@ def allowed_actions(actor: ActorLike, request: RequestLike) -> tuple[str, ...]:
     if not can_access_work(actor, request):
         return ()
     return ACTIONS_BY_STAGE.get(request.status, ())
+
+
+def may_claim(actor: ActorLike, request: RequestLike) -> bool:
+    """Only shared decision roles claim work; Analysts receive named assignments."""
+
+    return actor.role in CLAIMABLE_ROLES and can_access_work(actor, request)
 
 
 def may_complete(

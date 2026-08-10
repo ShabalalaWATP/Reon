@@ -12,9 +12,9 @@ async def test_board_column_totals_are_independent_of_cursor_pages(
 ) -> None:
     harness = api_harness
     await harness.login("admin8")
-    team_id = str(await harness.unit_id("OSG_TEAM"))
+    team_id = str(await harness.unit_id("SSG_TEAM"))
     workspaces = await harness.client.get("/api/v1/team-workspaces")
-    osg = next(item for item in workspaces.json()["items"] if item["teamId"] == team_id)
+    ssg = next(item for item in workspaces.json()["items"] if item["teamId"] == team_id)
     owner_id = str(await harness.user_id("admin11"))
     contributor_id = str(await harness.user_id("admin12"))
     due_on = (datetime.now(UTC).date() + timedelta(days=14)).isoformat()
@@ -23,7 +23,7 @@ async def test_board_column_totals_are_independent_of_cursor_pages(
             f"/api/v1/team-workspaces/{team_id}/packages",
             headers=harness.mutation_headers(),
             json={
-                "grantId": osg["grantId"],
+                "grantId": ssg["grantId"],
                 "title": f"Bounded package {sequence + 1}",
                 "description": "Complete synthetic package context for pagination.",
                 "ownerUserId": owner_id,

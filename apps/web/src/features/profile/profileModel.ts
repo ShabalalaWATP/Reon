@@ -4,7 +4,7 @@ import type { TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 const accessLabels: Record<User["role"], string> = {
   PLATFORM_ADMIN: "Platform administration",
   REQUESTER: "Own requests and released products",
-  INTAKE_TRIAGE: "JIOC routing",
+  INTAKE_TRIAGE: "CRIOC routing",
   SERVICE_COORDINATION: "Request coordination",
   OPERATIONS_ALLOCATION: "Ops routing",
   DELIVERY_TEAM_LEAD: "Team management",
@@ -15,7 +15,7 @@ const accessLabels: Record<User["role"], string> = {
 const roleDescriptions: Record<User["role"], string> = {
   PLATFORM_ADMIN: "Maintains accounts and governed platform configuration.",
   REQUESTER: "Submits requests, tracks progress, responds when needed and receives released products.",
-  INTAKE_TRIAGE: "Routes new requests from JIOC to the appropriate command.",
+  INTAKE_TRIAGE: "Routes new requests from CRIOC to the appropriate command.",
   SERVICE_COORDINATION: "Coordinates requests within the selected command.",
   OPERATIONS_ALLOCATION: "Routes requests from an Ops group to a delivery team.",
   DELIVERY_TEAM_LEAD: "Plans team work, assigns Analysts and reviews products.",

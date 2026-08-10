@@ -84,9 +84,7 @@ export function AppRoutes() {
               <Route path="statistics" element={<StatisticsPage />} />
             </Route>
             <Route path="teams/:teamId/:view?" element={<TeamWorkspacePage />} />
-            <Route element={<RoleGate allowed={["DELIVERY_TEAM_LEAD", "DELIVERY_SPECIALIST"]} />}>
-              <Route path="calendar/:calendarView?" element={<CalendarPage />} />
-            </Route>
+            <Route path="calendar/:calendarView?" element={<CalendarPage />} />
             <Route element={<RoleGate allowed={["PLATFORM_ADMIN"]} />}>
               <Route path="admin/users" element={<AdminUsersPage />} />
               <Route path="admin/users/new" element={<AdminUserPage create />} />
@@ -113,7 +111,7 @@ export function AppRoutes() {
             <Route element={<RoleGate allowed={["INTAKE_TRIAGE"]} />}>
               <Route
                 path="triage"
-                element={<StaffQueuePage description="Review new Customer demand, request information or route it to the appropriate command." eyebrow="JIOC routing" title="JIOC routing queue" />}
+                element={<StaffQueuePage description="Review new Customer demand, request information or route it to the appropriate command." eyebrow="CRIOC routing" title="CRIOC routing queue" />}
               />
             </Route>
             <Route element={<RoleGate allowed={["SERVICE_COORDINATION"]} />}>

@@ -14,7 +14,7 @@ the routing decision themselves.
 
 | Unit kind | Required views | Manager-only controls |
 | --- | --- | --- |
-| JIOC root | Overview, Queue, Calendar, People, Statistics, Handover, Activity | Membership, team events, workspace metadata |
+| CRIOC root | Overview, Queue, Calendar, People, Statistics, Handover, Activity | Membership, team events, workspace metadata |
 | Command | Overview, Queue, Calendar, People, Statistics, Handover, Activity | Membership, team events, workspace metadata |
 | Ops group | Overview, Queue, Calendar, People, Statistics, Handover, Activity | Membership, team events, workspace metadata |
 | Delivery team | Overview, Board, Calendar, People, Planning, Statistics, Activity | Membership, request assignment, commitments, WIP and capacity |
@@ -24,8 +24,8 @@ authority from a role name, navigation item or organisation kind.
 
 The account menu and personal profile must present the representative workflow
 role and the effective workspace position as separate facts. For example, a
-JIOC Manager is a `JIOC Routing User` by representative role and a `Manager` in
-the JIOC workspace. The compact account identity combines both labels, while
+CRIOC Manager is a `CRIOC Routing User` by representative role and a `Manager` in
+the CRIOC workspace. The compact account identity combines both labels, while
 the expanded profile names the organisation attached to each position. Neither
 label is an authorisation source.
 
@@ -95,7 +95,7 @@ assignments are backfilled as Lead participation.
 
 ## Routing workspaces
 
-JIOC, Command and Ops work remains claim-based. A routing Manager has the same
+CRIOC, Command and Ops work remains claim-based. A routing Manager has the same
 routing action as a Member only after personally claiming the relevant task.
 Manager status adds staffing, calendar, metadata and oversight powers, not an
 approval gate or authority to allocate a routing decision to someone else.

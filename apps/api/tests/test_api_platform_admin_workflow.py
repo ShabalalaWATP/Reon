@@ -105,7 +105,7 @@ async def test_team_rename_preserves_stable_route_and_manager_access(
         {
             "action": "progress",
             "priority": "MEDIUM",
-            "destinationUnitId": str(await harness.unit_id("DIGOC")),
+            "destinationUnitId": str(await harness.unit_id("JOCK")),
         },
     )
     await _complete(
@@ -113,7 +113,7 @@ async def test_team_rename_preserves_stable_route_and_manager_access(
         "admin5",
         {
             "action": "send_to_allocation",
-            "destinationUnitId": str(await harness.unit_id("NCGI_A_OPS")),
+            "destinationUnitId": str(await harness.unit_id("ACSA_B_OPS")),
             "note": "Route confirmed.",
         },
     )
@@ -122,7 +122,7 @@ async def test_team_rename_preserves_stable_route_and_manager_access(
         "admin6",
         {
             "action": "allocate",
-            "destinationUnitId": str(await harness.unit_id("OSG_TEAM")),
+            "destinationUnitId": str(await harness.unit_id("SSG_TEAM")),
             "requiredCapabilities": ["Structured writing"],
         },
     )
@@ -130,7 +130,7 @@ async def test_team_rename_preserves_stable_route_and_manager_access(
     await harness.login("admin1")
     await harness.elevate()
     units = await harness.client.get("/api/v1/organisation/units")
-    before = next(item for item in units.json()["items"] if item["code"] == "OSG_TEAM")
+    before = next(item for item in units.json()["items"] if item["code"] == "SSG_TEAM")
     stable = {
         "id": before["id"],
         "code": before["code"],
@@ -140,27 +140,27 @@ async def test_team_rename_preserves_stable_route_and_manager_access(
     renamed = await harness.client.patch(
         f"/api/v1/admin/organisation/units/{before['id']}",
         json={
-            "name": "  OSG Service Team  ",
+            "name": "  SSG Service Team  ",
             "expectedVersion": before["version"],
         },
         headers=harness.mutation_headers(),
     )
     assert renamed.status_code == 200, renamed.text
-    assert renamed.json()["name"] == "OSG Service Team"
+    assert renamed.json()["name"] == "SSG Service Team"
     assert {key: renamed.json()[key] for key in stable} == stable
     assert renamed.json()["version"] == before["version"] + 1
 
     async with harness.sessions() as session:
         stored = await session.get(ServiceRequest, UUID(request_id))
         assert stored is not None
-        assert stored.assigned_delivery_team == "OSG Service Team"
+        assert stored.assigned_delivery_team == "SSG Service Team"
         unit = await session.get(OrganisationUnit, UUID(before["id"]))
         assert unit is not None
-        assert unit.manager_candidate_group == "osg-team-managers"
-        assert unit.analyst_candidate_group == "osg-team-analysts"
+        assert unit.manager_candidate_group == "ssg-team-managers"
+        assert unit.analyst_candidate_group == "ssg-team-analysts"
         manager = await session.scalar(select(User).where(User.username == "admin8"))
         assert manager is not None
-        assert manager.scope == "OSG Service Team"
+        assert manager.scope == "SSG Service Team"
 
     await harness.login("admin8")
     work = await harness.client.get("/api/v1/work-items")

@@ -68,6 +68,7 @@ export function AppShell() {
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">Skip to main content</a>
       <aside aria-label="Account and navigation" className="nav-rail">
         <NavLink aria-label="ISTARI home" className="shell-brand" to="/">
           <img alt="" height="42" src="/istari-logo-64.png" width="42" />
@@ -106,7 +107,7 @@ export function AppShell() {
           </div>
           {logoutError ? <p className="top-bar__error" role="alert">Sign out failed. Please try again.</p> : null}
         </header>
-        <div className="workspace__main"><Outlet /></div>
+        <div className="workspace__main" id="main-content" tabIndex={-1}><Outlet /></div>
       </div>
     </div>
   );

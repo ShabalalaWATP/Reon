@@ -5,8 +5,8 @@
     <bpmn:startEvent id="request_submitted" name="Request submitted">
       <bpmn:outgoing>flow_start_intake</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:userTask id="intake_review" name="JIOC Routing">
-      <bpmn:extensionElements><zeebe:assignmentDefinition candidateGroups="jioc-routing" /><zeebe:userTask /></bpmn:extensionElements>
+    <bpmn:userTask id="intake_review" name="CRIOC Routing">
+      <bpmn:extensionElements><zeebe:assignmentDefinition candidateGroups="crioc-routing" /><zeebe:userTask /></bpmn:extensionElements>
       <bpmn:incoming>flow_start_intake</bpmn:incoming><bpmn:outgoing>flow_intake_gateway</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="intake_outcome" name="Intake outcome">

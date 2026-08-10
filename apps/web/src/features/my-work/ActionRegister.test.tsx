@@ -38,10 +38,10 @@ describe("ActionRegister", () => {
       ...action,
       actionAccess: "SHARED",
       actionType: "CHOOSE_OPS_GROUP",
-      currentOwner: "DIGOC · Awaiting owner",
+      currentOwner: "JOCK · Awaiting owner",
     }]} label="Incoming request register" /></MemoryRouter>);
     expect(screen.getByText("New request requires attention")).toBeInTheDocument();
-    expect(screen.getByText("Available to DIGOC")).toBeInTheDocument();
-    expect(screen.getByText("DIGOC · Awaiting owner")).toBeInTheDocument();
+    expect(screen.getByText("Available to JOCK")).toBeInTheDocument();
+    expect(screen.getByText("JOCK · Awaiting owner")).toBeInTheDocument();
   });
 });

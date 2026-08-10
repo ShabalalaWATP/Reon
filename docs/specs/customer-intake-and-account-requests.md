@@ -9,6 +9,7 @@ Customers can request an ISTARI account from the sign-in page and submit a compl
 - The form captures the need, key question, desired outcome, context, scope, relevant period, urgency, supported activity or decision, delivery date, product type, success criteria, constraints, supporting information and handling requirements. It does not ask the Customer to classify the service category.
 - Requesting business area and intended recipient fields are absent from Customer input and read views.
 - Every displayed request field is mandatory. The submit control is disabled until client validation succeeds, the first invalid field receives focus after an attempted submission, and FastAPI independently rejects missing or invalid data.
+- Four linked form sections expose the remaining required-field count, completed sections and bounded narrative character allowances without hiding the full form or changing validation authority.
 - Period end cannot precede period start and the required-by date cannot be in the past.
 - The Customer is the release recipient. Internal routing and assignment are selected later by authorised people.
 - Incomplete private drafts remain permitted, but a draft cannot enter workflow until it satisfies the complete request contract.

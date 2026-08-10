@@ -185,7 +185,7 @@ async def test_activation_materialises_staffs_and_routes_new_team_from_pin(
     )
     assert options.status_code == 200
     assert [item["name"] for item in options.json()["route"]] == [
-        "JIOC",
+        "CRIOC",
         "SYGOC",
         "Nimbus Ops",
     ]

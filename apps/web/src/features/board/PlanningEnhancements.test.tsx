@@ -19,17 +19,17 @@ const session: Session = {
   ...requesterSession,
   user: {
     ...requesterSession.user,
-    id: "manager-osg",
+    id: "manager-ssg",
     displayName: "Grant Hanley",
     role: "DELIVERY_TEAM_LEAD",
-    scope: "OSG Team",
+    scope: "SSG Team",
   },
 };
 const access: TeamWorkspaceAccess = {
-  teamId: "team-osg",
-  teamCode: "OSG_TEAM",
-  teamName: "OSG Team",
-  grantId: "grant-osg",
+  teamId: "team-ssg",
+  teamCode: "SSG_TEAM",
+  teamName: "SSG Team",
+  grantId: "grant-ssg",
   permissions: ["BOARD", "CAPACITY"],
 };
 const cockpit: PlanningCockpit = {
@@ -151,7 +151,7 @@ describe("planning cockpit enhancements", () => {
     await user.type(screen.getByLabelText(/^Planned team hours/), "12");
     await user.click(screen.getByRole("button", { name: "Preview scenario" }));
     expect(await screen.findByText("RESERVATION")).toBeInTheDocument();
-    expect(previewBodies[0]).toMatchObject({ grantId: "grant-osg", expectedSourceVersion: 7, plannedMinutes: 720 });
+    expect(previewBodies[0]).toMatchObject({ grantId: "grant-ssg", expectedSourceVersion: 7, plannedMinutes: 720 });
 
     await user.clear(screen.getByLabelText(/^Planned team hours/));
     await user.type(screen.getByLabelText(/^Planned team hours/), "2");
@@ -197,7 +197,7 @@ describe("planning cockpit enhancements", () => {
     await user.type(screen.getByLabelText(/^Scenario name/), "Failed preview");
     await user.type(screen.getByLabelText(/^Planned team hours/), "4");
     await user.click(screen.getByRole("button", { name: "Preview scenario" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Unexpected /api/v1/team-workspaces/team-osg/planning/scenarios/preview");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Unexpected /api/v1/team-workspaces/team-ssg/planning/scenarios/preview");
   });
 });
 

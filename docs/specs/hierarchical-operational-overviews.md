@@ -42,7 +42,7 @@ orient and act, while detailed evidence remains in the Statistics workspace.
 | Customer | My requests | No organisation statistics |
 | Team Analyst | My actions | No management statistics without an explicit grant |
 | Team Manager | Team overview | Exact-team statistics |
-| JIOC, Command and Ops routing users | Operational overview | Granted root and descendants |
+| CRIOC, Command and Ops routing users | Operational overview | Granted root and descendants |
 | QC Manager | Quality and release overview | Explicitly granted quality scope |
 | Platform Administrator | Administration overview | Whole-platform aggregate and health |
 
@@ -63,11 +63,11 @@ grant root or sibling branches outside the root.
 
 Examples:
 
-- JIOC may select JIOC, any Command, any Ops group or any Team;
-- DIGOC may select DIGOC and its descendants, never JIOC, SYGOC or MYGOC;
-- NCGI-A Ops may select that Ops group and OSG, Cedar or Quartz, never an Ops
-  sibling or DIGOC aggregate; and
-- OSG Team may select only OSG Team.
+- CRIOC may select CRIOC, any Command, any Ops group or any Team;
+- JOCK may select JOCK and its descendants, never CRIOC, SYGOC or MYGOC;
+- ACSA-B Ops may select that Ops group and SSG, Cedar or Quartz, never an Ops
+  sibling or JOCK aggregate; and
+- SSG Team may select only SSG Team.
 
 An independently granted second root is presented as another scope. It does not
 turn the roots into siblings that can be traversed from one another.
@@ -115,7 +115,7 @@ not repeat the complete sidebar as a second destination list.
 
 ## Acceptance
 
-1. JIOC can select and report on every configured descendant.
+1. CRIOC can select and report on every configured descendant.
 2. Command and Ops users cannot read a parent or sibling by URL, API or export.
 3. A Team Manager sees only the exact granted team.
 4. Multiple independent grants remain separately bounded.

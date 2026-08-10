@@ -12,7 +12,7 @@ data but relies heavily on small horizontal bars and tables.
 
 ## Users and scope
 
-- JIOC routing users track requests whose pinned route contains their exact JIOC
+- CRIOC routing users track requests whose pinned route contains their exact CRIOC
   unit.
 - Request Coordination Users track requests whose pinned route contains one of their
   exact command memberships.
@@ -57,7 +57,7 @@ data but relies heavily on small horizontal bars and tables.
 ## Acceptance criteria
 
 - A routed request title is visible in Tracking without opening the record.
-- A JIOC user can open an authorised historical request after it has moved to a
+- A CRIOC user can open an authorised historical request after it has moved to a
   downstream unit and see the submitted request details read-only.
 - A sibling command user receives a concealed denial for the same detail.
 - Both register and detail show an understandable organisation route and

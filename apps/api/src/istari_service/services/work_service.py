@@ -15,7 +15,12 @@ from istari_service.errors import (
     WorkflowUnavailable,
 )
 from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
-from istari_service.policies import allowed_actions, can_access_work, may_complete
+from istari_service.policies import (
+    allowed_actions,
+    can_access_work,
+    may_claim,
+    may_complete,
+)
 from istari_service.schemas.organisation import RoutingOptionsWorkspace
 from istari_service.schemas.requests import RequestDetail
 from istari_service.schemas.work import (
@@ -180,7 +185,11 @@ class WorkService:
 
     async def claim(self, actor: Actor, work_id: UUID) -> WorkItem:
         bundle = await self._repository.get(work_id, actor)
-        if bundle is None or not self._visible(actor, bundle):
+        if (
+            bundle is None
+            or not self._visible(actor, bundle)
+            or not may_claim(actor, bundle.record.request)
+        ):
             raise ObjectNotFound()
         if bundle.record.task_status in {
             WorkflowTaskStatus.CLAIM_PENDING,
@@ -306,7 +315,10 @@ class WorkService:
         ):
             return False
         if bundle.record.task_status is WorkflowTaskStatus.OPEN:
-            return bundle.record.assignee_id is None
+            return (
+                bundle.record.assignee_id is None
+                and may_claim(actor, bundle.record.request)
+            )
         return bundle.record.assignee_id == actor.id
 
     @staticmethod

@@ -11,14 +11,14 @@ const rootId = "00000000-0000-4000-8000-000000000001";
 const childId = "00000000-0000-4000-8000-000000000002";
 const teamId = "00000000-0000-4000-8000-000000000003";
 const scope: StatisticsScope = {
-  id: "scope-jioc",
+  id: "scope-crioc",
   unitId: rootId,
-  name: "JIOC",
+  name: "CRIOC",
   kind: "ROOT",
   includeDescendants: true,
   units: [
-    { id: rootId, parentId: null, name: "JIOC", kind: "ROOT", depth: 0 },
-    { id: childId, parentId: rootId, name: "DIGOC", kind: "COMMAND", depth: 1 },
+    { id: rootId, parentId: null, name: "CRIOC", kind: "ROOT", depth: 0 },
+    { id: childId, parentId: rootId, name: "JOCK", kind: "COMMAND", depth: 1 },
   ],
 };
 const statistics: StatisticsDashboard = {
@@ -42,7 +42,7 @@ const statistics: StatisticsDashboard = {
   throughputResolution: "DAILY",
   throughput: [],
   stageDurations: [],
-  children: [{ unitId: childId, name: "DIGOC", kind: "COMMAND", received: 7, active: 5, completed: 2, overdue: 1, feedbackCount: 4, averageRating: 4.5, ratingSuppressed: false }],
+  children: [{ unitId: childId, name: "JOCK", kind: "COMMAND", received: 7, active: 5, completed: 2, overdue: 1, feedbackCount: 4, averageRating: 4.5, ratingSuppressed: false }],
 };
 const actions = {
   items: [],
@@ -60,16 +60,17 @@ describe("role-specific operational overview", () => {
     expect(await screen.findByRole("heading", { name: "Welcome, Scott" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Your workload" })).toHaveTextContent("Needs your action3");
     expect(screen.getByRole("region", { name: "Your workload" })).toHaveTextContent("Waiting on others2");
-    expect(screen.getByRole("region", { name: "JIOC organisation workload" })).toHaveTextContent("Active demand8");
-    expect(screen.getByRole("region", { name: "JIOC organisation workload" })).toHaveTextContent("not your personal workload");
+    expect(screen.getByRole("region", { name: "CRIOC organisation workload" })).toHaveTextContent("Active demand8");
+    expect(screen.getByRole("region", { name: "CRIOC organisation workload" })).toHaveTextContent("not your personal workload");
     const destinations = screen.getByRole("navigation", { name: "Home destinations" });
     expect(within(destinations).getByRole("heading", { name: "Continue working" })).toBeInTheDocument();
-    expect(within(destinations).getAllByRole("link")).toHaveLength(6);
+    expect(within(destinations).getAllByRole("link")).toHaveLength(7);
     expect(within(destinations).getByRole("link", { name: /My assigned actions/ })).toHaveAttribute("href", "/my-work");
-    expect(within(destinations).getByRole("link", { name: /JIOC routing queue/ })).toHaveAttribute("href", "/triage");
-    expect(within(destinations).getByRole("link", { name: /JIOC workspace/ })).toHaveAttribute("href", `/teams/${rootId}/overview`);
+    expect(within(destinations).getByRole("link", { name: /CRIOC routing queue/ })).toHaveAttribute("href", "/triage");
+    expect(within(destinations).getByRole("link", { name: /CRIOC workspace/ })).toHaveAttribute("href", `/teams/${rootId}/overview`);
+    expect(within(destinations).getByRole("link", { name: /Personal calendar/ })).toHaveAttribute("href", "/calendar/month");
     expect(within(destinations).getByRole("link", { name: /Operational statistics/ })).toHaveAttribute("href", "/statistics");
-    expect(screen.queryByText("DIGOC")).not.toBeInTheDocument();
+    expect(screen.queryByText("JOCK")).not.toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
   });
 
@@ -103,15 +104,19 @@ describe("role-specific operational overview", () => {
     renderApp("/overview");
 
     expect(await screen.findByRole("heading", { name: "Continue working" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "JIOC organisation workload" })).toHaveTextContent("Active demand0");
+    expect(screen.getByRole("region", { name: "CRIOC organisation workload" })).toHaveTextContent("Active demand0");
   });
 
-  it("redirects a Team Manager to their shared team overview", async () => {
+  it("gives a Team Manager a personal Home distinct from the shared workspace", async () => {
     mockOverview(asRole("DELIVERY_TEAM_LEAD", "Team Manager"), true);
     renderApp("/overview");
 
-    expect(await screen.findByRole("heading", { name: "OSG Team" })).toBeInTheDocument();
-    expect(await screen.findByRole("region", { name: "Workspace staffing" }, { timeout: 5_000 })).toHaveTextContent("Analysts4");
+    expect(await screen.findByRole("heading", { name: "Welcome, Scott" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Your workload" })).toHaveTextContent("Needs your action3");
+    expect(screen.getByRole("region", { name: "SSG Team organisation workload" })).toHaveTextContent("Active demand8");
+    const destinations = screen.getByRole("navigation", { name: "Home destinations" });
+    expect(within(destinations).getByRole("link", { name: /SSG Team workspace/ })).toHaveAttribute("href", `/teams/${teamId}/overview`);
+    expect(within(destinations).getByRole("link", { name: /Personal calendar/ })).toHaveAttribute("href", "/calendar/month");
   });
 
   it("keeps Customer and Analyst home destinations transactional", async () => {
@@ -130,9 +135,9 @@ describe("role-specific operational overview", () => {
     expect(await screen.findByRole("heading", { name: "Welcome, Scott" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Your workload" })).toHaveTextContent("Needs your action3");
     const destinations = screen.getByRole("navigation", { name: "Home destinations" });
-    expect(within(destinations).getByRole("link", { name: /JIOC workspace/ })).toHaveAttribute("href", `/teams/${rootId}/overview`);
+    expect(within(destinations).getByRole("link", { name: /CRIOC workspace/ })).toHaveAttribute("href", `/teams/${rootId}/overview`);
     expect(screen.queryByRole("link", { name: /Operational statistics/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "JIOC organisation workload" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "CRIOC organisation workload" })).not.toBeInTheDocument();
   });
 
   it("reports missing scope and team assignments without broadening access", async () => {
@@ -142,7 +147,7 @@ describe("role-specific operational overview", () => {
 
     mockOverview(asRole("DELIVERY_TEAM_LEAD", "Team Manager"), false, false, true);
     renderApp("/overview");
-    expect(await screen.findByRole("heading", { name: "No team overview assigned" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Your overview could not be loaded" })).toBeInTheDocument();
 
     mockOverview(asRole("QUALITY_RELEASE", "QC Manager"), false, true);
     renderApp("/overview");
@@ -170,18 +175,18 @@ function mockOverview(
     if (url.pathname.endsWith("/me/actions")) return json(actions);
     if (url.pathname.endsWith("/statistics/scopes")) {
       if (emptyScopes) return json({ items: [] });
-      if (withTeam) return json({ items: [{ ...scope, id: "scope-osg", unitId: teamId, name: "OSG Team", kind: "TEAM", units: [{ id: teamId, parentId: null, name: "OSG Team", kind: "TEAM", depth: 0 }] }] });
+      if (withTeam) return json({ items: [{ ...scope, id: "scope-ssg", unitId: teamId, name: "SSG Team", kind: "TEAM", units: [{ id: teamId, parentId: null, name: "SSG Team", kind: "TEAM", depth: 0 }] }] });
       return json({ items: [scope] });
     }
     if (url.pathname.endsWith("/statistics")) return json(dashboard);
     if (url.pathname.endsWith("/team-workspaces")) {
       const selectedWorkspace = withTeam
-        ? { teamId, teamCode: "OSG_TEAM", teamName: "OSG Team", workspacePosition: "MANAGER", grantId: "grant-osg", permissions: ["STATISTICS"] }
-        : { teamId: rootId, teamCode: "JIOC", teamName: "JIOC", workspacePosition: "MEMBER", grantId: null, permissions: [] };
+        ? { teamId, teamCode: "SSG_TEAM", teamName: "SSG Team", workspacePosition: "MANAGER", grantId: "grant-ssg", permissions: ["STATISTICS"] }
+        : { teamId: rootId, teamCode: "CRIOC", teamName: "CRIOC", workspacePosition: "MEMBER", grantId: null, permissions: [] };
       return json({ items: emptyTeams ? [] : [selectedWorkspace] });
     }
     if (url.pathname.endsWith(`/team-workspaces/${teamId}`)) {
-      return json({ access: { teamId, teamCode: "OSG_TEAM", teamName: "OSG Team", grantId: "grant-osg", permissions: ["STATISTICS"] }, managerCount: 2, analystCount: 4, activeWorkCount: 5, dueSoonCount: 2, overdueCount: 1 });
+      return json({ access: { teamId, teamCode: "SSG_TEAM", teamName: "SSG Team", grantId: "grant-ssg", permissions: ["STATISTICS"] }, managerCount: 2, analystCount: 4, activeWorkCount: 5, dueSoonCount: 2, overdueCount: 1 });
     }
     if (url.pathname.endsWith("/requests")) return json({ items: [] });
     throw new Error(`Unexpected ${url.pathname}`);

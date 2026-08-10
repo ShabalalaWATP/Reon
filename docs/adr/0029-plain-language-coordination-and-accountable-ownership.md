@@ -6,10 +6,9 @@ Accepted, 10 August 2026.
 
 ## Context
 
-The former coordination label described an implementation stage rather than a
-user's task. The personal action register also displayed the generic stage
-owner before a person claimed the work, obscuring which configured unit was
-responsible.
+Coordination work belongs to the selected organisation unit until a named person
+claims it. The interface must describe the required human task and distinguish
+unit responsibility from personal accountability.
 
 ## Decision
 
@@ -25,7 +24,7 @@ snapshot, while the response reflects current authorised organisation naming.
 ## Consequences
 
 - Staff see task-oriented language without a workflow-engine vocabulary.
-- Existing actions and renamed units are corrected without a data migration.
+- Current actions resolve the authorised unit name at read time.
 - The distinction between unit responsibility and individual accountability is
   explicit.
 - API consumers must treat `currentOwner` as presentation text, not as a stable

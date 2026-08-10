@@ -15,7 +15,7 @@ const dateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
 
 export const statusLabels: Record<RequestStatus, string> = {
   ROUTING_PENDING: "Submitted",
-  TRIAGE_REVIEW: "JIOC routing",
+  TRIAGE_REVIEW: "CRIOC routing",
   INFORMATION_REQUIRED: "Information required",
   COORDINATION_REVIEW: "Request coordination",
   ON_HOLD: "On hold",

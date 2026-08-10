@@ -39,22 +39,22 @@ def event_payload(
 
 async def workspace(harness: ApiHarness, username: str = "admin8") -> dict:
     await harness.login(username)
-    team_id = str(await harness.unit_id("OSG_TEAM"))
+    team_id = str(await harness.unit_id("SSG_TEAM"))
     response = await harness.client.get("/api/v1/team-workspaces")
     return next(item for item in response.json()["items"] if item["teamId"] == team_id)
 
 
-async def test_personal_calendar_hides_ownership_and_lifecycle_failures(
+async def test_personal_calendar_preserves_ownership_and_lifecycle_failures(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
     await harness.login("admin1")
-    denied = await harness.client.post(
+    administrator_event = await harness.client.post(
         "/api/v1/calendar/events",
         json=event_payload(),
         headers=harness.mutation_headers(),
     )
-    assert denied.status_code == 404
+    assert administrator_event.status_code == 200
 
     await harness.login("admin11")
     too_long = await harness.client.post(
@@ -116,12 +116,12 @@ async def test_team_calendar_enforces_exact_manager_and_subject_authority(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    osg = await workspace(harness)
+    ssg = await workspace(harness)
     team_event = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/calendar/events",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/calendar/events",
         json={
             **event_payload(visibility="TEAM_DETAIL"),
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
         },
         headers=harness.mutation_headers(),
     )
@@ -135,17 +135,17 @@ async def test_team_calendar_enforces_exact_manager_and_subject_authority(
     )
     assert denied_change.status_code == 404
 
-    osg = await workspace(harness)
+    ssg = await workspace(harness)
     requester_id = await harness.user_id("admin2")
-    osg_unit_id = await harness.unit_id("OSG_TEAM")
+    ssg_unit_id = await harness.unit_id("SSG_TEAM")
     async with harness.sessions() as session, session.begin():
         request = ServiceRequest(
             reference="SR-CALENDAR-AUTHORITY",
             requester_id=requester_id,
             status=RequestStatus.IN_PROGRESS,
-            current_owner="OSG Team",
-            assigned_delivery_team="OSG Team",
-            assigned_delivery_team_id=osg_unit_id,
+            current_owner="SSG Team",
+            assigned_delivery_team="SSG Team",
+            assigned_delivery_team_id=ssg_unit_id,
             **RequestCreate.model_validate(request_payload()).model_dump(),
         )
         session.add(request)
@@ -153,10 +153,10 @@ async def test_team_calendar_enforces_exact_manager_and_subject_authority(
         request_id = str(request.id)
     non_member = await harness.user_id("admin1")
     invalid_subject = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/calendar/commitments",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/calendar/commitments",
         json={
             **event_payload(visibility="TEAM_DETAIL"),
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
             "requestId": request_id,
             "subjectUserId": str(non_member),
         },
@@ -165,10 +165,10 @@ async def test_team_calendar_enforces_exact_manager_and_subject_authority(
     assert invalid_subject.status_code == 404
     analyst_id = await harness.user_id("admin11")
     commitment = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/calendar/commitments",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/calendar/commitments",
         json={
             **event_payload(visibility="TEAM_DETAIL"),
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
             "requestId": request_id,
             "subjectUserId": str(analyst_id),
         },
@@ -284,34 +284,34 @@ async def test_capacity_rejects_bad_ranges_tokens_and_expired_previews(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    osg = await workspace(harness)
+    ssg = await workspace(harness)
     base = {
-        "grantId": osg["grantId"],
+        "grantId": ssg["grantId"],
         "dateFrom": date(2026, 9, 4).isoformat(),
         "dateTo": date(2026, 9, 6).isoformat(),
         "timeZone": "Europe/London",
     }
     bad_zone = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/capacity/previews",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/capacity/previews",
         json={**base, "timeZone": "Not/AZone"},
         headers=harness.mutation_headers(),
     )
     assert bad_zone.status_code == 409
     bad_range = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/capacity/previews",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/capacity/previews",
         json={**base, "dateTo": date(2027, 1, 1).isoformat()},
         headers=harness.mutation_headers(),
     )
     assert bad_range.status_code == 409
     missing = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/capacity/commits",
-        json={"grantId": osg["grantId"], "token": "x" * 32},
+        f"/api/v1/team-workspaces/{ssg['teamId']}/capacity/commits",
+        json={"grantId": ssg["grantId"], "token": "x" * 32},
         headers=harness.mutation_headers(),
     )
     assert missing.status_code == 409
 
     preview = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/capacity/previews",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/capacity/previews",
         json=base,
         headers=harness.mutation_headers(),
     )
@@ -328,8 +328,8 @@ async def test_capacity_rejects_bad_ranges_tokens_and_expired_previews(
         stored.expires_at = datetime.now(UTC) - timedelta(minutes=1)
         await session.commit()
     expired = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/capacity/commits",
-        json={"grantId": osg["grantId"], "token": preview.json()["token"]},
+        f"/api/v1/team-workspaces/{ssg['teamId']}/capacity/commits",
+        json={"grantId": ssg["grantId"], "token": preview.json()["token"]},
         headers=harness.mutation_headers(),
     )
     assert expired.status_code == 409

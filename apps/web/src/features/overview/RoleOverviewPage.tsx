@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   BarChart3,
   Building2,
+  CalendarDays,
   ClipboardList,
   ListChecks,
   Network,
@@ -33,7 +34,6 @@ export function RoleOverviewPage() {
   const role = session!.user.role;
   if (role === "REQUESTER") return <Navigate replace to="/requests" />;
   if (role === "DELIVERY_SPECIALIST") return <Navigate replace to="/my-work" />;
-  if (role === "DELIVERY_TEAM_LEAD") return <TeamOverviewRedirect />;
   if (role === "QUALITY_RELEASE") return <QualityOverview />;
   return <ScopedOverview administrator={role === "PLATFORM_ADMIN"} />;
 }
@@ -86,6 +86,7 @@ function ScopedOverview({ administrator }: { administrator: boolean }) {
     || actions.isError
     || workspaces.isError
     || statistics.isError
+    || (!administrator && !workspace)
     || (!memberWithoutStatistics && (!scope?.unitId || !statistics.data))
   ) {
     return <PageState kind="error" title="Your overview could not be loaded">Refresh the page or ask an Administrator to review your reporting access.</PageState>;
@@ -198,6 +199,7 @@ function destinationIcon(path: string): LucideIcon {
   if (path === "/my-work") return ListChecks;
   if (path.startsWith("/teams/")) return Building2;
   if (path === "/tracking") return ClipboardList;
+  if (path.startsWith("/calendar/")) return CalendarDays;
   if (path === "/statistics") return BarChart3;
   if (path === "/organisation") return Network;
   if (path === "/admin/users") return Users;
@@ -209,6 +211,7 @@ function destinationDescription(item: NavigationItem) {
   if (item.path === "/my-work") return "Review actions assigned to you, including work that is waiting or due soon.";
   if (item.path.startsWith("/teams/")) return "Use the shared queue, calendar, people and handover tools available to your unit.";
   if (item.path === "/tracking") return "Follow previously routed requests through their full operational lifecycle.";
+  if (item.path.startsWith("/calendar/")) return "Manage your own availability and events, which also appear in your current team calendar.";
   if (item.path === "/statistics") return "Explore authorised workload, timeliness and delivery trends for your branch.";
   if (item.path === "/organisation") return "Browse staffed units, reporting relationships and the wider organisation structure.";
   if (item.path === "/admin/users") return "Create accounts and maintain user access, status and profile information.";
@@ -246,15 +249,7 @@ function QualityOverview() {
           values={[["Products released", metrics.get("released") ?? 0], ["Rework decisions", metrics.get("rework") ?? 0], ["Feedback received", metrics.get("feedback") ?? 0]]}
         />
       </div>
-      <nav aria-label="Quality workspace links" className="overview-links overview-links--wide"><span>Quality links</span><h2>Continue quality work</h2><Link to="/quality-release">Quality and release queue<ArrowUpRight size={15} /></Link><Link to="/my-work">My assigned actions<ArrowUpRight size={15} /></Link><Link to={`/statistics?scopeId=${encodeURIComponent(scope.id)}&unitId=${encodeURIComponent(scope.unitId)}`}>Quality statistics<ArrowUpRight size={15} /></Link><Link to="/organisation">Organisation directory<ArrowUpRight size={15} /></Link></nav>
+      <nav aria-label="Quality workspace links" className="overview-links overview-links--wide"><span>Quality links</span><h2>Continue quality work</h2><Link to="/quality-release">Quality and release queue<ArrowUpRight size={15} /></Link><Link to="/my-work">My assigned actions<ArrowUpRight size={15} /></Link><Link to={`/statistics?scopeId=${encodeURIComponent(scope.id)}&unitId=${encodeURIComponent(scope.unitId)}`}>Quality statistics<ArrowUpRight size={15} /></Link><Link to="/calendar/month">Personal calendar<ArrowUpRight size={15} /></Link><Link to="/organisation">Organisation directory<ArrowUpRight size={15} /></Link></nav>
     </main>
   );
-}
-
-function TeamOverviewRedirect() {
-  const { session } = useAuth();
-  const workspaces = useQuery({ queryKey: protectedQueryKeys.teamWorkspaces(session!.user.id), queryFn: api.teamWorkspaces });
-  if (workspaces.isPending) return <PageState kind="loading" title="Opening team overview" />;
-  const team = workspaces.data?.items[0];
-  return team ? <Navigate replace to={`/teams/${team.teamId}/overview`} /> : <PageState kind="empty" title="No team overview assigned" />;
 }

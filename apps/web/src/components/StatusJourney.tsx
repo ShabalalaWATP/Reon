@@ -4,7 +4,7 @@ import type { RequestStatus } from "../lib/api/types";
 
 const stages = [
   "Submitted",
-  "JIOC routing",
+  "CRIOC routing",
   "Request coordination",
   "Ops routing",
   "Product development",

@@ -9,22 +9,22 @@ import type { TeamMember, TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import { enabledCapabilities, requesterSession } from "../../test/fixtures";
 import { json, mockFeatureFetch, renderApp } from "../../test/render";
 
-const session: Session = { ...requesterSession, user: { ...requesterSession.user, id: "manager-osg", username: "admin8", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", scope: "OSG Team" } };
-const access: TeamWorkspaceAccess = { teamId: "team-osg", teamCode: "OSG_TEAM", teamName: "OSG Team", grantId: "grant-osg", permissions: ["BOARD", "CAPACITY"] };
+const session: Session = { ...requesterSession, user: { ...requesterSession.user, id: "manager-ssg", username: "admin8", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", scope: "SSG Team" } };
+const access: TeamWorkspaceAccess = { teamId: "team-ssg", teamCode: "SSG_TEAM", teamName: "SSG Team", grantId: "grant-ssg", permissions: ["BOARD", "CAPACITY"] };
 const analystAccess: TeamWorkspaceAccess = { ...access, grantId: null, permissions: [] };
 const members: TeamMember[] = [
-  { membershipId: "manager", accountId: "manager-osg", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, skills: ["Delivery leadership"], startReason: null, endReason: null },
-  { membershipId: "analyst", accountId: "analyst-osg", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 1, skills: ["Research"], startReason: null, endReason: null },
+  { membershipId: "manager", accountId: "manager-ssg", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, skills: ["Delivery leadership"], startReason: null, endReason: null },
+  { membershipId: "analyst", accountId: "analyst-ssg", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 1, skills: ["Research"], startReason: null, endReason: null },
 ];
 const iteration: Iteration = { id: "iteration-one", name: "Pilot iteration", goal: "Deliver a synthetic customer product.", startsOn: "2026-08-01", endsOn: "2026-08-14", status: "ACTIVE", completionSummary: null, version: 1 };
 const workPackage: WorkPackage = {
-  id: "package-one", teamId: "team-osg", linkedRequestId: "request-one", iterationId: iteration.id,
+  id: "package-one", teamId: "team-ssg", linkedRequestId: "request-one", iterationId: iteration.id,
   title: "Prepare synthetic product", description: "Complete the fictional customer-facing service product.",
-  ownerUserId: "analyst-osg", ownerDisplayName: "Lewis Ferguson", contributors: [{ userId: "manager-osg", displayName: "Grant Hanley" }],
+  ownerUserId: "analyst-ssg", ownerDisplayName: "Lewis Ferguson", contributors: [{ userId: "manager-ssg", displayName: "Grant Hanley" }],
   estimatePoints: 5, remainingEffortMinutes: 180, dueOn: "2026-08-20", priority: "HIGH", status: "IN_PROGRESS",
   blockers: "No known blockers.", acceptanceCriteria: "Customer outcomes are addressed.", dependencyIds: ["package-dependency"], version: 4,
   activities: [{ id: "activity", type: "MOVED", summary: "Work package moved to in progress.", actorDisplayName: "Grant Hanley", createdAt: "2026-08-07T11:00:00Z" }],
-  reservations: [{ id: "reservation-one", userId: "analyst-osg", userDisplayName: "Lewis Ferguson", startsAt: "2026-08-09T09:00:00Z", endsAt: "2026-08-09T11:00:00Z", minutes: 120, status: "ACTIVE", reason: "Protected focus time.", version: 1 }],
+  reservations: [{ id: "reservation-one", userId: "analyst-ssg", userDisplayName: "Lewis Ferguson", startsAt: "2026-08-09T09:00:00Z", endsAt: "2026-08-09T11:00:00Z", minutes: 120, status: "ACTIVE", reason: "Protected focus time.", version: 1 }],
 };
 const closedIteration: Iteration = { ...iteration, id: "iteration-closed", name: "Closed iteration", status: "CLOSED", completionSummary: "Complete.", version: 2 };
 const sparsePackage: WorkPackage = {
@@ -44,7 +44,7 @@ describe("team agile planning", () => {
     const calls: Array<{ path: string; body: Record<string, unknown> }> = [];
     mockPlanning(access, [workPackage, sparsePackage], [iteration, closedIteration], calls);
     const user = userEvent.setup();
-    const view = renderApp("/teams/team-osg/planning");
+    const view = renderApp("/teams/team-ssg/planning");
     expect(await screen.findByRole(
       "heading",
       { name: "Team planning" },
@@ -59,8 +59,8 @@ describe("team agile planning", () => {
     await user.type(within(edit as HTMLElement).getByLabelText(/^Edit title/), "Reassigned synthetic product");
     await user.clear(within(edit as HTMLElement).getByLabelText(/^Edit description/));
     await user.type(within(edit as HTMLElement).getByLabelText(/^Edit description/), "Replanned after a deliberate Manager handover.");
-    await user.selectOptions(within(edit as HTMLElement).getByLabelText(/^Edit owner/), "manager-osg");
-    await user.selectOptions(within(edit as HTMLElement).getByLabelText(/^Edit contributors/), "analyst-osg");
+    await user.selectOptions(within(edit as HTMLElement).getByLabelText(/^Edit owner/), "manager-ssg");
+    await user.selectOptions(within(edit as HTMLElement).getByLabelText(/^Edit contributors/), "analyst-ssg");
     await user.clear(within(edit as HTMLElement).getByLabelText(/^Edit estimate points/));
     await user.type(within(edit as HTMLElement).getByLabelText(/^Edit estimate points/), "8");
     await user.clear(within(edit as HTMLElement).getByLabelText(/^Edit remaining minutes/));
@@ -75,13 +75,13 @@ describe("team agile planning", () => {
     await user.selectOptions(within(edit as HTMLElement).getByLabelText(/^Edit iteration/), "");
     await user.selectOptions(within(edit as HTMLElement).getByLabelText(/^Edit dependencies/), sparsePackage.id);
     await user.click(within(edit as HTMLElement).getByRole("button", { name: "Save package" }));
-    await waitFor(() => expect(calls.some((call) => call.path.endsWith("/packages/package-one") && call.body.ownerUserId === "manager-osg")).toBe(true));
+    await waitFor(() => expect(calls.some((call) => call.path.endsWith("/packages/package-one") && call.body.ownerUserId === "manager-ssg")).toBe(true));
 
     const reservation = screen.getByRole("heading", { name: "Reserve effort" }).closest(".reservation-panel");
-    await user.selectOptions(within(reservation as HTMLElement).getByLabelText(/^Person/), "analyst-osg");
+    await user.selectOptions(within(reservation as HTMLElement).getByLabelText(/^Person/), "analyst-ssg");
     await user.type(within(reservation as HTMLElement).getByLabelText(/^Reason/), "Reserve focused time for the synthetic service product.");
     await user.click(within(reservation as HTMLElement).getByRole("button", { name: "Reserve capacity" }));
-    await waitFor(() => expect(calls.some((call) => call.path.endsWith("/reservations") && call.body.userId === "analyst-osg")).toBe(true));
+    await waitFor(() => expect(calls.some((call) => call.path.endsWith("/reservations") && call.body.userId === "analyst-ssg")).toBe(true));
 
     await user.click(await screen.findByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(calls.some((call) => call.path.endsWith("/cancel"))).toBe(true));
@@ -107,7 +107,7 @@ describe("team agile planning", () => {
 
   it("keeps iteration management out of the Analyst view and handles empty planning", async () => {
     mockPlanning(analystAccess, [], [], []);
-    renderApp("/teams/team-osg/planning");
+    renderApp("/teams/team-ssg/planning");
     expect(await screen.findByRole(
       "heading",
       { name: "No work packages" },
@@ -131,7 +131,7 @@ describe("team agile planning", () => {
       throw new Error(`Unexpected ${url.pathname}`);
     }, true, true, false);
     const user = userEvent.setup();
-    renderApp("/teams/team-osg/planning");
+    renderApp("/teams/team-ssg/planning");
     expect(await screen.findByRole(
       "heading",
       { name: "Team planning could not be loaded" },
@@ -144,7 +144,7 @@ describe("team agile planning", () => {
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect((await screen.findAllByRole("alert")).some((alert) => alert.textContent?.includes("Planning conflict"))).toBe(true);
     const reservation = screen.getByRole("heading", { name: "Reserve effort" }).closest(".reservation-panel");
-    await user.selectOptions(within(reservation as HTMLElement).getByLabelText(/^Person/), "analyst-osg");
+    await user.selectOptions(within(reservation as HTMLElement).getByLabelText(/^Person/), "analyst-ssg");
     await user.type(within(reservation as HTMLElement).getByLabelText(/^Reason/), "This reservation is expected to conflict.");
     await user.click(within(reservation as HTMLElement).getByRole("button", { name: "Reserve capacity" }));
     await waitFor(() => expect(screen.getAllByRole("alert").length).toBeGreaterThan(0));
@@ -166,7 +166,7 @@ function mockPlanning(workspace: TeamWorkspaceAccess, packages: WorkPackage[], i
   return mockFeatureFetch(async (url, init) => {
     const body = init.body ? JSON.parse(String(init.body)) as Record<string, unknown> : {};
     if (init.method) calls.push({ path: url.pathname, body });
-    if (url.pathname.endsWith("/auth/me")) return json(workspace.grantId ? session : { ...session, user: { ...session.user, id: "analyst-osg", role: "DELIVERY_SPECIALIST" } });
+    if (url.pathname.endsWith("/auth/me")) return json(workspace.grantId ? session : { ...session, user: { ...session.user, id: "analyst-ssg", role: "DELIVERY_SPECIALIST" } });
     if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
     if (url.pathname.endsWith("/team-workspaces")) return json({ items: [workspace] });
     if (url.pathname.endsWith("/people")) return json({ items: members });

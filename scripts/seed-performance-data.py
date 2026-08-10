@@ -37,7 +37,7 @@ from istari_service.organisation_models import OrganisationUnit
 from istari_service.team_models import TeamMembership
 
 FIXTURE_NAMESPACE = "https://istari.example/performance/"
-OSG_CODE = "OSG_TEAM"
+SSG_CODE = "SSG_TEAM"
 
 
 def fixture_id(kind: str, sequence: int) -> UUID:
@@ -68,14 +68,14 @@ async def seed_active_users(session: AsyncSession, target: int) -> int:
     return needed
 
 
-async def osg_staff(session: AsyncSession) -> tuple[UUID, UUID, list[UUID]]:
+async def ssg_staff(session: AsyncSession) -> tuple[UUID, UUID, list[UUID]]:
     rows = (
         await session.execute(
             select(OrganisationUnit.id, User.id, User.role)
             .join(TeamMembership, TeamMembership.team_id == OrganisationUnit.id)
             .join(User, User.id == TeamMembership.user_id)
             .where(
-                OrganisationUnit.code == OSG_CODE,
+                OrganisationUnit.code == SSG_CODE,
                 TeamMembership.effective_until.is_(None),
                 User.is_active.is_(True),
             )
@@ -89,7 +89,7 @@ async def osg_staff(session: AsyncSession) -> tuple[UUID, UUID, list[UUID]]:
         user_id for _, user_id, role in rows if role == UserRole.DELIVERY_SPECIALIST
     ]
     if not rows or not managers or not analysts:
-        raise RuntimeError("OSG Team requires at least one active Manager and Analyst")
+        raise RuntimeError("SSG Team requires at least one active Manager and Analyst")
     return rows[0][0], managers[0], analysts
 
 
@@ -210,7 +210,7 @@ async def seed_calendar(
 
 async def run(args: argparse.Namespace) -> dict[str, bool | int | str]:
     async with session_scope() as session:
-        team_id, manager_id, analysts = await osg_staff(session)
+        team_id, manager_id, analysts = await ssg_staff(session)
         users_added = await seed_active_users(session, args.active_users)
         packages_added = await seed_packages(
             session,
@@ -262,7 +262,7 @@ async def run(args: argparse.Namespace) -> dict[str, bool | int | str]:
         "active_user_target": args.active_users,
         "calendar_event_fixture_count": calendar_fixture_count,
         "calendar_occurrence_target": args.calendar_occurrences,
-        "fixture_team": OSG_CODE,
+        "fixture_team": SSG_CODE,
         "packages_added": packages_added,
         "package_fixture_count": package_fixture_count,
         "passed": passed,

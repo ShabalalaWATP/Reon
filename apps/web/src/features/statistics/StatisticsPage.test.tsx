@@ -18,18 +18,18 @@ const platformScope: StatisticsScope = {
   kind: "PLATFORM",
   includeDescendants: true,
   units: [
-    { id: "00000000-0000-4000-8000-000000000001", parentId: null, name: "JIOC", kind: "ROOT", depth: 0 },
-    { id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", parentId: "00000000-0000-4000-8000-000000000001", name: "DIGOC", kind: "COMMAND", depth: 1 },
+    { id: "00000000-0000-4000-8000-000000000001", parentId: null, name: "CRIOC", kind: "ROOT", depth: 0 },
+    { id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", parentId: "00000000-0000-4000-8000-000000000001", name: "JOCK", kind: "COMMAND", depth: 1 },
     { id: "ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee", parentId: "00000000-0000-4000-8000-000000000001", name: "SYGOC", kind: "COMMAND", depth: 1 },
   ],
 };
 const commandScope: StatisticsScope = {
-  id: "command-digoc",
+  id: "command-jock",
   unitId: "11111111-2222-4333-8444-555555555555",
-  name: "NCGI-A Ops",
+  name: "ACSA-B Ops",
   kind: "OPS_GROUP",
   includeDescendants: true,
-  units: [{ id: "11111111-2222-4333-8444-555555555555", parentId: null, name: "NCGI-A Ops", kind: "OPS_GROUP", depth: 0 }],
+  units: [{ id: "11111111-2222-4333-8444-555555555555", parentId: null, name: "ACSA-B Ops", kind: "OPS_GROUP", depth: 0 }],
 };
 
 const dashboard: StatisticsDashboard = {
@@ -82,7 +82,7 @@ const dashboard: StatisticsDashboard = {
   children: [
     {
       unitId: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
-      name: "DIGOC",
+      name: "JOCK",
       kind: "COMMAND",
       received: 6,
       active: 4,
@@ -157,13 +157,13 @@ describe("operational statistics", () => {
     expect(view.container.querySelector(".duration-range-chart")).toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
 
-    await user.click(screen.getByRole("button", { name: "View DIGOC statistics" }));
+    await user.click(screen.getByRole("button", { name: "View JOCK statistics" }));
     await waitFor(() => expect(requestedUnits).toContain("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"));
     expect(screen.getByLabelText("Organisation")).toHaveValue("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee");
 
     await user.selectOptions(screen.getByLabelText("Reporting root"), commandScope.id);
     await waitFor(() => expect(requestedScopes).toContain(commandScope.id));
-    expect(await screen.findByText("NCGI-A Ops", { selector: ".statistics-filters option" })).toBeInTheDocument();
+    expect(await screen.findByText("ACSA-B Ops", { selector: ".statistics-filters option" })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("From"), { target: { value: "2099-12-31" } });
     expect(screen.getByRole("alert")).toHaveTextContent("start date");

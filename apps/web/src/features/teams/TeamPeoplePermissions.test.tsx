@@ -9,11 +9,11 @@ import { json, mockFeatureFetch, renderApp } from "../../test/render";
 
 const session: Session = {
   ...requesterSession,
-  user: { ...requesterSession.user, id: "jioc-user", username: "admin75", displayName: "Willie Ormond", role: "INTAKE_TRIAGE", scope: "JIOC" },
+  user: { ...requesterSession.user, id: "crioc-user", username: "admin75", displayName: "Willie Ormond", role: "INTAKE_TRIAGE", scope: "CRIOC" },
 };
 const baseAccess: TeamWorkspaceAccess = {
-  teamId: "jioc", teamCode: "JIOC", teamName: "JIOC", unitKind: "ROOT",
-  workspacePosition: "MANAGER", grantId: "grant-jioc", permissions: ["ROSTER"],
+  teamId: "crioc", teamCode: "CRIOC", teamName: "CRIOC", unitKind: "ROOT",
+  workspacePosition: "MANAGER", grantId: "grant-crioc", permissions: ["ROSTER"],
   views: ["OVERVIEW", "QUEUE", "CALENDAR", "PEOPLE", "STATISTICS", "HANDOVER", "ACTIVITY"],
 };
 const people: TeamMember[] = [
@@ -25,7 +25,7 @@ describe("workspace People register", () => {
   it("sorts every column and puts Managers first initially", async () => {
     mockPeople(baseAccess);
     const user = userEvent.setup();
-    renderApp("/teams/jioc/people");
+    renderApp("/teams/crioc/people");
     const table = await screen.findByRole("table", { name: "Workspace membership history" });
     expect(within(table).getAllByRole("row")[1]).toHaveTextContent("Zara Manager");
     const labels = ["Position", "Person", "Skills", "State", "Effective", "Active work", "Action"];
@@ -41,7 +41,7 @@ describe("workspace People register", () => {
 
   it("keeps a Member read-only even if a stale roster grant is returned", async () => {
     mockPeople({ ...baseAccess, workspacePosition: "MEMBER" });
-    renderApp("/teams/jioc/people");
+    renderApp("/teams/crioc/people");
     expect(await screen.findByText("Aaron Member")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Change roster" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "End membership" })).not.toBeInTheDocument();

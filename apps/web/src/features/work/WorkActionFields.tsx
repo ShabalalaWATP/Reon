@@ -2,24 +2,29 @@ import type { ReactNode } from "react";
 import type { useForm } from "react-hook-form";
 
 import { localDateInputValue } from "../../lib/dateInputs";
+import { ContributorPicker } from "./ContributorPicker";
 import { EligibleSpecialistField, type SpecialistOptions } from "./EligibleSpecialistField";
 import { RoutingDestinationField, type RoutingOptions } from "./RoutingDestinationField";
 import type { WorkActionName, WorkActionValues } from "./workActionModel";
 
 type Props = Pick<ReturnType<typeof useForm<WorkActionValues>>, "register"> & {
   action: WorkActionName;
+  contributorIds: string[];
   destinationUnitId?: string;
   errors: ReturnType<typeof useForm<WorkActionValues>>["formState"]["errors"];
   routingOptions: RoutingOptions;
+  specialistId?: string;
   specialistOptions: SpecialistOptions;
 };
 
 export function WorkActionFields({
   action,
+  contributorIds,
   destinationUnitId,
   errors,
   register,
   routingOptions,
+  specialistId,
   specialistOptions,
 }: Props) {
   const error = (name: keyof WorkActionValues) => errors[name]?.message;
@@ -64,13 +69,13 @@ export function WorkActionFields({
   if (action === "assign") {
     return <>
       <EligibleSpecialistField error={error("specialistId")} options={specialistOptions} register={register} />
-      <label className="form-field">
-        <span>Contributors <small className="field-hint">Optional, choose up to 10</small></span>
-        <select aria-describedby={error("contributorIds") ? "contributors-error" : undefined} multiple size={Math.min(6, Math.max(3, specialistOptions.items.length))} {...register("contributorIds")}>
-          {specialistOptions.items.map((specialist) => <option key={specialist.id} value={specialist.id}>{specialist.displayName}</option>)}
-        </select>
-        {error("contributorIds") ? <small className="field-error" id="contributors-error" role="alert">{error("contributorIds")}</small> : null}
-      </label>
+      <ContributorPicker
+        error={error("contributorIds")}
+        items={specialistOptions.items}
+        leadAnalystId={specialistId}
+        register={register}
+        selectedIds={contributorIds}
+      />
       {field("reason", "Assignment reason", <textarea rows={3} {...register("reason")} />)}
     </>;
   }

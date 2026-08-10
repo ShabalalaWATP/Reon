@@ -1,5 +1,44 @@
 # Development Story
 
+## 10 August 2026: current-state documentation and architecture
+
+- Rebuilt the root README as the plain-English entry point for product users,
+  evaluators, engineers, security reviewers and operators. It now covers the
+  complete request lifecycle, local setup, cloud sandbox options, security,
+  quality gates and all 99 synthetic accounts.
+- Added a current user-story catalogue and a dedicated Camunda BPMN guide that
+  explain routing, clarification, Lead and Contributor assignment, rework,
+  quality review, release, feedback and cancellation without requiring readers
+  to understand internal workflow code.
+- Added six focused ISTARI-styled architecture views for system context,
+  containers, organisational routing, delivery, durable workflow commands and
+  the organisation hierarchy, plus an editable Structurizr DSL workspace.
+- Consolidated the documentation around one documentation home, one system
+  architecture authority and one complete account directory. Redundant index,
+  foundations, account-roster and service-expansion files were retired, with
+  links redirected to the current authorities.
+- Refreshed the Customer request, Customer dashboard, team Board, team calendar,
+  team People, CRIOC workspace and platform administration screenshots from the
+  running local application and visually reviewed each image against its current
+  documented surface.
+- Established the rule that current guides describe only the product a reader
+  can use now. Superseded interface and terminology history belongs here, while
+  architecture decisions retain only the rationale needed to understand durable
+  technical constraints.
+- Adopted the public-safe synthetic organisation names CRIOC, JOCK, ACSA-B Ops
+  and SSG Team across seed data, workflow labels, application presentation,
+  tests, current documentation and diagrams. The previous names remain only in
+  this chronological record where they are needed to explain older evidence.
+- Incorporated the current accessibility controls for bypass navigation,
+  320-pixel reflow, visible focus, target size and automated contrast, and the
+  Customer form's four-part progress navigation, completion signals, character
+  limits and strengthened validation presentation.
+- Passed all 955 backend tests at 98.874 per cent line and 95.016 per cent
+  branch coverage, plus all 378 frontend tests at 99.48 per cent line and 95.08
+  per cent branch coverage. The repository quality command, production build,
+  bundle budgets, documentation duplication and links, terminology, line
+  limits, dead-code checks, licences and OpenAPI contract all passed.
+
 ## 10 August 2026: sortable people and focused calendar creation
 
 - Turned every organisation People register into an accessible sortable ledger,

@@ -9,7 +9,7 @@ import { json, mockFetch, renderApp } from "../../test/render";
 
 const workspace: ActionWorkspace = {
   items: [
-    { id: "action-1", section: "NEEDS_MY_ACTION", actionAccess: "SHARED", actionType: "TRIAGE_REVIEW", sourceType: "REQUEST", reference: "ISR-101", title: "Review service request", currentOwner: "JIOC", requiredBy: "2026-08-09", ageDays: 1, lastChangedAt: "2026-08-07T09:00:00Z", deepLink: "/triage?requestId=request-1", sourceVersion: 3, isStale: false },
+    { id: "action-1", section: "NEEDS_MY_ACTION", actionAccess: "SHARED", actionType: "TRIAGE_REVIEW", sourceType: "REQUEST", reference: "ISR-101", title: "Review service request", currentOwner: "CRIOC", requiredBy: "2026-08-09", ageDays: 1, lastChangedAt: "2026-08-07T09:00:00Z", deepLink: "/triage?requestId=request-1", sourceVersion: 3, isStale: false },
     { id: "action-2", section: "WAITING", actionAccess: "PERSONAL", actionType: "CUSTOMER_INPUT", sourceType: "REQUEST", reference: "ISR-102", title: null, currentOwner: null, requiredBy: null, ageDays: 0, lastChangedAt: "2026-08-06T09:00:00Z", deepLink: "https://attacker.test/requests/2", sourceVersion: 1, isStale: false },
     { id: "action-3", section: "DUE_SOON", actionAccess: "PERSONAL", actionType: "QUALITY_REVIEW", sourceType: "PRODUCT", reference: "ISR-103", title: "Check deliverable", currentOwner: "QC", requiredBy: "2026-08-08", ageDays: 3, lastChangedAt: "2026-08-07T10:00:00Z", deepLink: "/quality-release?requestId=request-3", sourceVersion: 2, isStale: true },
   ],
@@ -35,9 +35,9 @@ describe("My actions", () => {
     const view = renderApp("/my-work");
 
     expect(await screen.findByRole("heading", { name: "My actions" })).toBeInTheDocument();
-    expect(screen.getAllByText("JIOC Routing User")).toHaveLength(2);
+    expect(screen.getAllByText("CRIOC Routing User")).toHaveLength(2);
     expect(screen.getByRole("button", { name: /Needs attention 1/ })).toBeInTheDocument();
-    expect(screen.getByText("Available to JIOC")).toBeInTheDocument();
+    expect(screen.getByText("Available to CRIOC")).toBeInTheDocument();
     expect(screen.getAllByText("Assigned to you")).toHaveLength(2);
     expect(screen.getByText("Restricted item")).toBeInTheDocument();
     expect(screen.getByText("Access ended")).toBeInTheDocument();

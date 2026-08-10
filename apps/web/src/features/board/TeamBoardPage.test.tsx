@@ -9,20 +9,20 @@ import type { TeamMember, TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import { requestDetail, requesterSession } from "../../test/fixtures";
 import { json, mockFetch, renderApp } from "../../test/render";
 
-const managerSession: Session = { ...requesterSession, user: { ...requesterSession.user, id: "manager-osg", username: "admin8", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", scope: "OSG Team" } };
-const analystSession: Session = { ...managerSession, user: { ...managerSession.user, id: "analyst-osg", username: "admin11", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST" } };
-const managerAccess: TeamWorkspaceAccess = { teamId: "team-osg", teamCode: "OSG_TEAM", teamName: "OSG Team", grantId: "grant-osg", permissions: ["BOARD", "CALENDAR", "CAPACITY", "ROSTER", "STATISTICS"] };
+const managerSession: Session = { ...requesterSession, user: { ...requesterSession.user, id: "manager-ssg", username: "admin8", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", scope: "SSG Team" } };
+const analystSession: Session = { ...managerSession, user: { ...managerSession.user, id: "analyst-ssg", username: "admin11", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST" } };
+const managerAccess: TeamWorkspaceAccess = { teamId: "team-ssg", teamCode: "SSG_TEAM", teamName: "SSG Team", grantId: "grant-ssg", permissions: ["BOARD", "CALENDAR", "CAPACITY", "ROSTER", "STATISTICS"] };
 const analystAccess: TeamWorkspaceAccess = { ...managerAccess, grantId: null, permissions: [] };
 const people: TeamMember[] = [
-  { membershipId: "manager-membership", accountId: "manager-osg", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, skills: ["Delivery leadership"], startReason: null, endReason: null },
-  { membershipId: "analyst-membership", accountId: "analyst-osg", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 1, skills: ["Research"], startReason: null, endReason: null },
+  { membershipId: "manager-membership", accountId: "manager-ssg", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, skills: ["Delivery leadership"], startReason: null, endReason: null },
+  { membershipId: "analyst-membership", accountId: "analyst-ssg", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 1, skills: ["Research"], startReason: null, endReason: null },
   { membershipId: "ended-membership", accountId: "former", displayName: "Former Analyst", role: "DELIVERY_SPECIALIST", state: "ENDED", effectiveFrom: "2025-01-01T09:00:00Z", effectiveUntil: "2026-01-01T09:00:00Z", version: 2, activeWorkCount: 0, skills: [], startReason: null, endReason: null },
 ];
 const packageItem: WorkPackage = {
-  id: "package-one", teamId: "team-osg", linkedRequestId: null, iterationId: null,
+  id: "package-one", teamId: "team-ssg", linkedRequestId: null, iterationId: null,
   title: "Prepare synthetic product", description: "Complete fictional planning detail.",
-  ownerUserId: "analyst-osg", ownerDisplayName: "Lewis Ferguson",
-  contributors: [{ userId: "analyst-osg", displayName: "Lewis Ferguson" }],
+  ownerUserId: "analyst-ssg", ownerDisplayName: "Lewis Ferguson",
+  contributors: [{ userId: "analyst-ssg", displayName: "Lewis Ferguson" }],
   estimatePoints: 5, remainingEffortMinutes: 120, dueOn: "2026-08-21", priority: "HIGH", status: "READY",
   blockers: "No known blockers.", acceptanceCriteria: "The fictional output is complete.", dependencyIds: [], version: 2,
   activities: [{ id: "activity-one", type: "CREATED", summary: "Work package created.", actorDisplayName: "Grant Hanley", createdAt: "2026-08-07T10:00:00Z" }], reservations: [],
@@ -34,10 +34,10 @@ const iterations = [
 const board: BoardResult = {
   items: [
     { id: "request-one", itemType: "SERVICE_REQUEST", reference: "SR-000001", title: "Customer request projection", column: "IN_PROGRESS", priority: "HIGH", dueOn: "2026-08-20", ownerUserId: null, ownerDisplayName: null, version: 3, linkedRequestId: "request-one", availableColumns: [], changedAt: "2026-08-07T10:00:00Z" },
-    { id: packageItem.id, itemType: "WORK_PACKAGE", reference: "WP-PACKAGE", title: packageItem.title, column: "READY", priority: "HIGH", dueOn: packageItem.dueOn, ownerUserId: "analyst-osg", ownerDisplayName: "Lewis Ferguson", version: 2, linkedRequestId: null, availableColumns: ["IN_PROGRESS", "BLOCKED"], changedAt: "2026-08-06T10:00:00Z" },
+    { id: packageItem.id, itemType: "WORK_PACKAGE", reference: "WP-PACKAGE", title: packageItem.title, column: "READY", priority: "HIGH", dueOn: packageItem.dueOn, ownerUserId: "analyst-ssg", ownerDisplayName: "Lewis Ferguson", version: 2, linkedRequestId: null, availableColumns: ["IN_PROGRESS", "BLOCKED"], changedAt: "2026-08-06T10:00:00Z" },
   ],
   nextCursor: "cursor-next", columnCounts: { AWAITING_ASSIGNMENT: 0, BACKLOG: 0, READY: 1, IN_PROGRESS: 1, BLOCKED: 0, MANAGER_REVIEW: 0, QUALITY_REVIEW: 0, REWORK: 0, ON_HOLD: 0, COMPLETED: 0, CANCELLED: 0 }, totalCount: 2, wipLimits: { READY: 4, IN_PROGRESS: 3 }, configurationVersion: 2,
-  savedViews: [{ id: "view-one", name: "My delivery", filters: { search: "product", columns: [], priorities: ["HIGH"], ownerUserId: "analyst-osg", itemTypes: ["WORK_PACKAGE"], dueBefore: null }, version: 1 }], generatedAt: "2026-08-07T12:00:00Z",
+  savedViews: [{ id: "view-one", name: "My delivery", filters: { search: "product", columns: [], priorities: ["HIGH"], ownerUserId: "analyst-ssg", itemTypes: ["WORK_PACKAGE"], dueBefore: null }, version: 1 }], generatedAt: "2026-08-07T12:00:00Z",
 };
 
 describe("team workflow board", () => {
@@ -45,7 +45,7 @@ describe("team workflow board", () => {
     const calls: Array<{ path: string; method: string; body: Record<string, unknown> }> = [];
     mockBoard(managerSession, managerAccess, calls);
     const user = userEvent.setup();
-    const view = renderApp("/teams/team-osg/board");
+    const view = renderApp("/teams/team-ssg/board");
     expect(await screen.findByRole("heading", { name: "Team delivery" })).toBeInTheDocument();
     expect(screen.getByText("Customer request projection")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Quality Review" })).not.toBeInTheDocument();
@@ -57,14 +57,14 @@ describe("team workflow board", () => {
     await user.click(screen.getByRole("button", { name: "Close Work item details" }));
     await user.click(screen.getByRole("button", { name: "New work package" }));
     const createPackage = await screen.findByRole("dialog", { name: "Create work package" });
-    await user.type(await screen.findByLabelText(/^Title/, { selector: "input" }), "New synthetic package");
-    await user.type(screen.getByLabelText(/^Description/), "Complete detail for a second synthetic package.");
-    await user.selectOptions(within(createPackage).getByLabelText(/^Owner/), "analyst-osg");
-    await user.selectOptions(screen.getByLabelText(/^Contributor/), "analyst-osg");
+    fireEvent.change(await screen.findByLabelText(/^Title/, { selector: "input" }), { target: { value: "New synthetic package" } });
+    fireEvent.change(screen.getByLabelText(/^Description/), { target: { value: "Complete detail for a second synthetic package." } });
+    await user.selectOptions(within(createPackage).getByLabelText(/^Owner/), "analyst-ssg");
+    await user.selectOptions(screen.getByLabelText(/^Contributor/), "analyst-ssg");
     fireEvent.change(screen.getByLabelText(/^Due date/), { target: { value: "2026-08-28" } });
-    await user.type(screen.getByLabelText(/^Blockers or none/), "No known blockers.");
-    await user.type(screen.getByLabelText(/^Acceptance criteria/), "The complete fictional product is delivered.");
-    await user.type(screen.getByLabelText(/^Linked request ID/), "request-two");
+    fireEvent.change(screen.getByLabelText(/^Blockers or none/), { target: { value: "No known blockers." } });
+    fireEvent.change(screen.getByLabelText(/^Acceptance criteria/), { target: { value: "The complete fictional product is delivered." } });
+    fireEvent.change(screen.getByLabelText(/^Linked request ID/), { target: { value: "request-two" } });
     await user.selectOptions(screen.getByLabelText(/^Iteration/), "iteration-active");
     await user.click(screen.getByRole("button", { name: "Create package" }));
     await waitFor(() => expect(calls.some((call) => call.path.endsWith("/packages") && call.method === "POST" && call.body.linkedRequestId === "request-two" && call.body.iterationId === "iteration-active")).toBe(true));
@@ -75,7 +75,7 @@ describe("team workflow board", () => {
     const calls: Array<{ path: string; method: string; body: Record<string, unknown> }> = [];
     mockBoard(managerSession, managerAccess, calls);
     const user = userEvent.setup();
-    renderApp("/teams/team-osg/board");
+    renderApp("/teams/team-ssg/board");
     expect(await screen.findByRole("heading", { name: "Team delivery" })).toBeInTheDocument();
     await user.click(screen.getByText(/Saved views/));
     await user.click(screen.getByRole("button", { name: "My delivery" }));
@@ -97,7 +97,7 @@ describe("team workflow board", () => {
     const calls: Array<{ path: string; method: string; body: Record<string, unknown> }> = [];
     mockBoard(managerSession, managerAccess, calls);
     const user = userEvent.setup();
-    renderApp("/teams/team-osg/board");
+    renderApp("/teams/team-ssg/board");
     expect(await screen.findByRole("heading", { name: "Team delivery" })).toBeInTheDocument();
 
     await user.click(await screen.findByRole("button", { name: "Table" }));
@@ -107,7 +107,7 @@ describe("team workflow board", () => {
     await user.selectOptions(screen.getByLabelText("Item type"), "WORK_PACKAGE");
     await user.selectOptions(screen.getByLabelText("Status"), "READY");
     await user.selectOptions(screen.getByLabelText("Priority"), "HIGH");
-    await user.selectOptions(screen.getByLabelText("Owner"), "analyst-osg");
+    await user.selectOptions(screen.getByLabelText("Owner"), "analyst-ssg");
     fireEvent.change(screen.getByLabelText("Due by"), { target: { value: "2026-08-31" } });
     expect(await screen.findByRole("table", { name: /Filtered team work/ })).toBeInTheDocument();
     expect(screen.getByText("Unassigned")).toBeInTheDocument();
@@ -139,13 +139,13 @@ describe("team workflow board", () => {
     const calls: Array<{ path: string; method: string; body: Record<string, unknown> }> = [];
     mockBoard(analystSession, analystAccess, calls, { ...board, items: [], columnCounts: { ...board.columnCounts, READY: 0, IN_PROGRESS: 0 }, totalCount: 0, nextCursor: null, savedViews: [], wipLimits: {}, configurationVersion: 0 });
     const user = userEvent.setup();
-    renderApp("/teams/team-osg/board");
+    renderApp("/teams/team-ssg/board");
     expect(await screen.findByRole("heading", { name: "No work matches this view" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Work in progress limits" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "New work package" }));
     await user.type(screen.getByLabelText(/^Title/, { selector: "input" }), "Analyst package");
     await user.type(screen.getByLabelText(/^Description/), "A complete package without optional links.");
-    await user.selectOptions(screen.getByLabelText(/^Contributor/), "analyst-osg");
+    await user.selectOptions(screen.getByLabelText(/^Contributor/), "analyst-ssg");
     fireEvent.change(screen.getByLabelText(/^Due date/), { target: { value: "2026-08-30" } });
     await user.type(screen.getByLabelText(/^Blockers or none/), "No known blockers.");
     await user.type(screen.getByLabelText(/^Acceptance criteria/), "The package is complete.");
@@ -162,7 +162,7 @@ describe("team workflow board", () => {
       if (url.pathname.endsWith("/packages")) return json({ items: [packageItem] });
       throw new Error(`Unexpected ${url.pathname}`);
     }, true, true, false);
-    renderApp("/teams/team-osg/board");
+    renderApp("/teams/team-ssg/board");
     expect(await screen.findByRole("heading", { name: "Team delivery could not be loaded" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("Customer request projection")).toBeInTheDocument();
@@ -171,7 +171,7 @@ describe("team workflow board", () => {
   it("surfaces mutation errors without disclosing inaccessible content", async () => {
     mockBoard(managerSession, managerAccess, [], board, true);
     const user = userEvent.setup();
-    renderApp("/teams/team-osg/board");
+    renderApp("/teams/team-ssg/board");
     expect(await screen.findByText("Prepare synthetic product")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Board settings" }));
     await user.click(screen.getByRole("button", { name: "Save limits" }));
@@ -197,7 +197,7 @@ describe("team workflow board", () => {
       throw new Error(`Unexpected ${url.pathname}`);
     }, true, true, false);
     const user = userEvent.setup();
-    renderApp("/teams/team-osg/board");
+    renderApp("/teams/team-ssg/board");
     expect(await screen.findByRole("heading", { name: "Team delivery could not be loaded" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("heading", { name: "Team delivery" })).toBeInTheDocument();

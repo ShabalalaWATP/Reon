@@ -50,7 +50,7 @@ export const configurationVersion: ConfigurationVersion = {
     serviceCategories: ["Advisory support"],
     productTypes: ["Briefing note"],
     taskLabels: {
-      intake_review: "JIOC review", requester_response: "Customer response", coordination_review: "Command review", on_hold: "On hold", allocation_review: "Ops allocation", delivery_planning: "Delivery planning", delivery_work: "Product development", lead_review: "Manager review", quality_review: "Quality review", release: "Release",
+      intake_review: "CRIOC review", requester_response: "Customer response", coordination_review: "Command review", on_hold: "On hold", allocation_review: "Ops allocation", delivery_planning: "Delivery planning", delivery_work: "Product development", lead_review: "Manager review", quality_review: "Quality review", release: "Release",
     },
     allowedOutcomes: {
       intake_review: ["request_information", "progress", "close"], requester_response: ["provide_information", "withdraw"], coordination_review: ["send_to_allocation", "return_to_triage", "hold", "close"], on_hold: ["resume", "close"], allocation_review: ["allocate", "return_to_coordination"], delivery_planning: ["assign", "return_for_reallocation"], delivery_work: ["submit"], lead_review: ["approve", "changes_required"], quality_review: ["approve", "changes_required"], release: ["release"],

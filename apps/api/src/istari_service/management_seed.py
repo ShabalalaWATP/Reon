@@ -26,10 +26,10 @@ SEED_EFFECTIVE_FROM = datetime(2026, 1, 1, tzinfo=UTC)
 ALL_TEAM_ACTIONS = tuple(ManagementAction)
 
 NAMED_STATISTICS_GRANTS = {
-    "admin4": ("JIOC",),
-    "admin5": ("DIGOC", "SYGOC", "MYGOC"),
+    "admin4": ("CRIOC",),
+    "admin5": ("JOCK", "SYGOC", "MYGOC"),
     "admin6": (
-        "NCGI_A_OPS",
+        "ACSA_B_OPS",
         "AURORA_OPS",
         "VERTEX_OPS",
         "NIMBUS_OPS",
@@ -41,7 +41,7 @@ NAMED_STATISTICS_GRANTS = {
         "SOLSTICE_OPS",
         "FRONTIER_OPS",
     ),
-    "admin15": ("JIOC",),
+    "admin15": ("CRIOC",),
 }
 
 

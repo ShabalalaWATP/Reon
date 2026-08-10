@@ -1,7 +1,7 @@
 # Pilot acceptance record
 
-> Historical MVP acceptance template. Product Evolution has a separate
-> acceptance record and remains unsigned.
+> Dated baseline acceptance template. The expanded-capability acceptance record
+> is the current unsigned release record.
 
 ## Status
 

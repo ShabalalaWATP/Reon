@@ -76,6 +76,16 @@ The platform stores exactly one versioned global marking:
 - Status changes use a short colour transition that is disabled when reduced
   motion is requested.
 - The new controls reuse ISTARI typography, spacing, focus and error patterns.
+- Every authenticated page provides a focus-revealed `Skip to main content`
+  link before repeated navigation. Its target is programmatically focusable.
+- At widths down to 320 CSS pixels, page content reflows without document-level
+  horizontal scrolling. Mobile primary navigation wraps into readable rows
+  instead of relying on a horizontally hidden strip.
+- Ordinary text and semantic status colours maintain at least 4.5:1 contrast
+  against every core light and dark surface. Strong form and control boundaries
+  maintain at least 3:1 non-text contrast.
+- Normal pointer targets are at least 24 by 24 CSS pixels. A smaller native
+  control must have an associated label that provides the compliant target.
 
 ## Acceptance criteria
 

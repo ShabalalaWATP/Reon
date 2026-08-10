@@ -12,30 +12,30 @@ const managerSession: Session = {
   ...requesterSession,
   user: {
     ...requesterSession.user,
-    id: "manager-osg",
+    id: "manager-ssg",
     username: "admin8",
     displayName: "Grant Hanley",
     role: "DELIVERY_TEAM_LEAD",
-    scope: "OSG Team",
+    scope: "SSG Team",
   },
 };
 const analystSession: Session = {
   ...managerSession,
   user: {
     ...managerSession.user,
-    id: "analyst-osg",
+    id: "analyst-ssg",
     username: "admin11",
     displayName: "Lewis Ferguson",
     role: "DELIVERY_SPECIALIST",
   },
 };
 const managerAccess: TeamWorkspaceAccess = {
-  teamId: "team-osg",
-  teamCode: "OSG_TEAM",
-  teamName: "OSG Team",
+  teamId: "team-ssg",
+  teamCode: "SSG_TEAM",
+  teamName: "SSG Team",
   unitKind: "TEAM",
   workspacePosition: "MANAGER",
-  grantId: "grant-osg",
+  grantId: "grant-ssg",
   permissions: ["BOARD", "CALENDAR", "CAPACITY", "ROSTER", "STATISTICS"],
   views: ["OVERVIEW", "BOARD", "CALENDAR", "PLANNING", "PEOPLE", "STATISTICS", "HANDOVER", "ACTIVITY"],
 };
@@ -47,7 +47,7 @@ const analystAccess: TeamWorkspaceAccess = {
 const people: TeamMember[] = [
   {
     membershipId: "membership-manager",
-    accountId: "manager-osg",
+    accountId: "manager-ssg",
     displayName: "Grant Hanley",
     role: "DELIVERY_TEAM_LEAD",
     state: "CURRENT",
@@ -61,7 +61,7 @@ const people: TeamMember[] = [
   },
   {
     membershipId: "membership-lewis",
-    accountId: "analyst-osg",
+    accountId: "analyst-ssg",
     displayName: "Lewis Ferguson",
     role: "DELIVERY_SPECIALIST",
     state: "CURRENT",
@@ -145,8 +145,8 @@ describe("team workspace", () => {
   it("provides an accessible overview, all workspace views and immutable activity", async () => {
     mockTeamApi(managerSession, managerAccess);
     const user = userEvent.setup();
-    const view = renderApp("/teams/team-osg/overview");
-    expect(await screen.findByRole("heading", { name: "OSG Team" })).toBeInTheDocument();
+    const view = renderApp("/teams/team-ssg/overview");
+    expect(await screen.findByRole("heading", { name: "SSG Team" })).toBeInTheDocument();
     const staffing = await screen.findByRole("region", { name: "Workspace staffing" });
     expect(within(staffing).getByText("Managers").closest("div")).toHaveTextContent("3");
     expect(screen.getByRole("heading", { name: "Team attention" })).toBeInTheDocument();
@@ -154,22 +154,22 @@ describe("team workspace", () => {
     expect(await screen.findByText("WP-001 blocked for 3 days")).toBeInTheDocument();
     expect(screen.getByText("Research, Data analysis", { exact: false })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Upcoming team calendar" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "OSG Team workspace" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "SSG Team workspace" })).toBeInTheDocument();
     expect(within(screen.getByRole("navigation", { name: "Organisation workspace views" })).getAllByRole("link")).toHaveLength(8);
     expect(await axe(view.container)).toHaveNoViolations();
 
     const tabs = screen.getByRole("navigation", { name: "Organisation workspace views" });
     expect(within(tabs).getByRole("link", { name: "Board" })).toHaveAttribute(
       "href",
-      "/teams/team-osg/board",
+      "/teams/team-ssg/board",
     );
     expect(within(tabs).getByRole("link", { name: "Calendar" })).toHaveAttribute(
       "href",
-      "/teams/team-osg/calendar",
+      "/teams/team-ssg/calendar",
     );
     expect(within(tabs).getByRole("link", { name: "Planning" })).toHaveAttribute(
       "href",
-      "/teams/team-osg/planning",
+      "/teams/team-ssg/planning",
     );
     await user.click(within(tabs).getByRole("link", { name: "Activity" }));
     expect(
@@ -186,7 +186,7 @@ describe("team workspace", () => {
     const bodies: Array<Record<string, unknown>> = [];
     mockTeamApi(managerSession, managerAccess, bodies);
     const user = userEvent.setup();
-    renderApp("/teams/team-osg/people");
+    renderApp("/teams/team-ssg/people");
     expect(await screen.findByRole("heading", { name: "People" })).toBeInTheDocument();
     expect(screen.getByText("The Analyst transferred to another team.")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "End membership" })[0]).toBeEnabled();
@@ -212,7 +212,7 @@ describe("team workspace", () => {
 
   it("keeps Analysts read-only and handles unavailable, missing and invalid workspace routes", async () => {
     mockTeamApi(analystSession, analystAccess);
-    renderApp("/teams/team-osg/people");
+    renderApp("/teams/team-ssg/people");
     expect(await screen.findByText("Lewis Ferguson")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Change roster" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "End membership" })).not.toBeInTheDocument();
@@ -222,7 +222,7 @@ describe("team workspace", () => {
     expect(await screen.findByRole("heading", { name: "Team workspace unavailable" })).toBeInTheDocument();
 
     mockTeamApi(analystSession, analystAccess);
-    renderApp("/teams/team-osg/not-a-view");
+    renderApp("/teams/team-ssg/not-a-view");
     expect(await screen.findByRole("heading", { name: "Team attention" })).toBeInTheDocument();
   });
 
@@ -232,7 +232,7 @@ describe("team workspace", () => {
       if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       throw new Error(`Unexpected ${url.pathname}`);
     });
-    renderApp("/teams/team-osg/overview");
+    renderApp("/teams/team-ssg/overview");
     expect(await screen.findByRole("heading", { name: "No team workspace assigned" })).toBeInTheDocument();
 
     let workspaceAttempts = 0;
@@ -245,7 +245,7 @@ describe("team workspace", () => {
         workspaceAttempts += 1;
         return workspaceAttempts === 1 ? json({ detail: "Unavailable" }, 503) : json({ items: [managerAccess, quartz] });
       }
-      if (url.pathname.endsWith("/team-workspaces/team-osg")) {
+      if (url.pathname.endsWith("/team-workspaces/team-ssg")) {
         overviewAttempts += 1;
         return overviewAttempts === 1 ? json({ detail: "Unavailable" }, 503) : json({ access: managerAccess, managerCount: 2, analystCount: 4, activeWorkCount: 1, dueSoonCount: 0, overdueCount: 0 });
       }
@@ -253,7 +253,7 @@ describe("team workspace", () => {
       throw new Error(`Unexpected ${url.pathname}`);
     }, true, true, false);
     const user = userEvent.setup();
-    renderApp("/teams/team-osg/overview");
+    renderApp("/teams/team-ssg/overview");
     expect(await screen.findByRole("heading", { name: "Team workspace could not be loaded" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(workspaceAttempts).toBe(2));
@@ -277,7 +277,7 @@ describe("team workspace", () => {
       throw new Error(`Unexpected ${url.pathname}`);
     }, true, true, false);
     const user = userEvent.setup();
-    renderApp("/teams/team-osg/activity");
+    renderApp("/teams/team-ssg/activity");
     expect(await screen.findByRole("heading", { name: "Team activity could not be loaded" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("heading", { name: "No team activity recorded" })).toBeInTheDocument();
@@ -300,7 +300,7 @@ describe("team workspace", () => {
       if (url.pathname.endsWith("/memberships")) return json({ detail: "Roster conflict" }, 409);
       throw new Error(`Unexpected ${url.pathname}`);
     }, true, true, false);
-    renderApp("/teams/team-osg/people");
+    renderApp("/teams/team-ssg/people");
     expect(await screen.findByRole("heading", { name: "Team people could not be loaded" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("Eligible Members could not be loaded.")).toBeInTheDocument();

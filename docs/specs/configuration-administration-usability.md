@@ -166,12 +166,12 @@ may help a person find a destination, but must never rank, recommend or select i
 
 ### HRU-01: Route through direct children only
 
-As a JIOC, Command or Ops Routing User, I need to see only the valid immediate
+As a CRIOC, Command or Ops Routing User, I need to see only the valid immediate
 children of the current route so that I cannot accidentally skip a level.
 
 Acceptance criteria:
 
-1. JIOC lists effective Commands, a Command lists its effective Ops groups, and
+1. CRIOC lists effective Commands, a Command lists its effective Ops groups, and
    an Ops group lists its effective teams.
 2. Every configured sibling remains selectable, including fictional seeded
    branches and an explicitly marked unstaffed team.
@@ -217,7 +217,7 @@ team so that I remain accountable for the routing decision.
 Acceptance criteria:
 
 1. Minimum Manager and Analyst shortfall is explicit before submission.
-2. The application does not fall back to OSG or another staffed team.
+2. The application does not fall back to SSG or another staffed team.
 3. The tracker shows `Awaiting team staffing` until exact-team staffing exists.
 4. Restoring membership progresses only through a named human action.
 
@@ -245,7 +245,7 @@ Acceptance criteria:
 
 ### HRU-07: Request more information without losing the route
 
-As a JIOC Routing User or assigned Analyst, I need a stored clarification thread
+As a CRIOC Routing User or assigned Analyst, I need a stored clarification thread
 so that the Customer can respond within the dashboard and routing context remains
 attributable.
 
@@ -258,7 +258,7 @@ Acceptance criteria:
 
 ### HRU-08: Track without approval authority
 
-As JIOC, selected Command or selected Ops staff, I need scoped progress visibility
+As CRIOC, selected Command or selected Ops staff, I need scoped progress visibility
 after routing so that I can coordinate work without approving the product.
 
 Acceptance criteria:

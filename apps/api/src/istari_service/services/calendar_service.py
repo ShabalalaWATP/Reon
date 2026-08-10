@@ -73,10 +73,6 @@ class CalendarService:
     async def create_personal(
         self, actor: Actor, command: PersonalEventCommand
     ) -> CalendarEventResult:
-        _require(
-            bool(actor.organisation_unit_ids),
-            CalendarItemNotFound(),
-        )
         _command(command)
         _require(
             command.visibility

@@ -31,7 +31,7 @@ describe("staff work queue", () => {
 
     renderApp("/triage?requestId=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
     expect(await screen.findByRole("heading", { name: "This action is no longer available" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open JIOC routing queue" })).toHaveAttribute("href", "/triage");
+    expect(screen.getByRole("link", { name: "Open CRIOC routing queue" })).toHaveAttribute("href", "/triage");
   });
 
   it("claims work and records a stage-specific human outcome", async () => {
@@ -46,7 +46,7 @@ describe("staff work queue", () => {
         return json(item);
       }
       if (url.pathname.endsWith("/routing-options")) {
-        return json({ items: organisationChildren("JIOC") });
+        return json({ items: organisationChildren("CRIOC") });
       }
       if (url.pathname.endsWith("/complete")) {
         completeBody = JSON.parse(String(init.body));
@@ -61,7 +61,7 @@ describe("staff work queue", () => {
     });
     const user = userEvent.setup();
     renderApp("/triage");
-    expect(await screen.findByRole("heading", { name: "JIOC routing queue" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "CRIOC routing queue" })).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: "Claim work item" })).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Claim to view request context" }),
@@ -71,16 +71,16 @@ describe("staff work queue", () => {
     expect(await screen.findByRole("heading", { name: "Record outcome" })).toBeInTheDocument();
     await waitFor(() => expect(requestDetailCalls).toBe(1));
     await user.selectOptions(screen.getByLabelText("Outcome"), "progress");
-    await screen.findByRole("option", { name: /DIGOC/ });
+    await screen.findByRole("option", { name: /JOCK/ });
     await user.selectOptions(
       screen.getByLabelText("Destination unit"),
-      organisationUnit("DIGOC").id,
+      organisationUnit("JOCK").id,
     );
     await user.click(screen.getByRole("button", { name: "Route to command" }));
     expect(await screen.findByText("Choose a priority.")).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText(/Priority/), "HIGH");
     await user.click(screen.getByRole("button", { name: "Route to command" }));
-    await waitFor(() => expect(completeBody).toEqual({ action: "progress", destinationUnitId: "unit-digoc", priority: "HIGH" }));
+    await waitFor(() => expect(completeBody).toEqual({ action: "progress", destinationUnitId: "unit-jock", priority: "HIGH" }));
     expect(await screen.findByRole("heading", { name: "No items waiting" })).toBeInTheDocument();
     expect(requestDetailCalls).toBe(1);
   });

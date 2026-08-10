@@ -1,8 +1,8 @@
-const jiocActorId = "00000000-0000-4000-8000-000000000101";
+const criocActorId = "00000000-0000-4000-8000-000000000101";
 const commandActorId = "00000000-0000-4000-8000-000000000102";
 const opsActorId = "00000000-0000-4000-8000-000000000103";
-const osgManagerActorId = "00000000-0000-4000-8000-000000000104";
-const osgAnalystActorId = "00000000-0000-4000-8000-000000000105";
+const ssgManagerActorId = "00000000-0000-4000-8000-000000000104";
+const ssgAnalystActorId = "00000000-0000-4000-8000-000000000105";
 const qcManagerActorId = "00000000-0000-4000-8000-000000000106";
 const beaconManagerActorId = "00000000-0000-4000-8000-000000000107";
 const beaconAnalystActorId = "00000000-0000-4000-8000-000000000108";
@@ -13,62 +13,62 @@ export const staffedScenario = {
     {
       taskKey: "2251799813685251",
       elementId: "intake_review",
-      name: "JIOC Routing",
-      candidateGroup: "jioc-routing",
-      actorId: jiocActorId,
+      name: "CRIOC Routing",
+      candidateGroup: "crioc-routing",
+      actorId: criocActorId,
       action: "progress",
       variables: {
         intakeDecision: "progress",
-        selectedCommandId: "DIGOC",
-        selectedCommandCandidateGroup: ["digoc-routing"],
+        selectedCommandId: "JOCK",
+        selectedCommandCandidateGroup: ["jock-routing"],
       },
     },
     {
       taskKey: "2251799813685252",
       elementId: "coordination_review",
       name: "Request Coordination",
-      candidateGroup: "digoc-routing",
+      candidateGroup: "jock-routing",
       actorId: commandActorId,
       action: "send_to_allocation",
       variables: {
         coordinationDecision: "send_to_allocation",
-        selectedOpsId: "NCGI_A_OPS",
-        selectedOpsCandidateGroup: ["ncgi-a-ops-routing"],
+        selectedOpsId: "ACSA_B_OPS",
+        selectedOpsCandidateGroup: ["acsa-b-ops-routing"],
       },
     },
     {
       taskKey: "2251799813685253",
       elementId: "allocation_review",
       name: "Ops Routing",
-      candidateGroup: "ncgi-a-ops-routing",
+      candidateGroup: "acsa-b-ops-routing",
       actorId: opsActorId,
       action: "allocate",
       variables: {
         allocationDecision: "allocate",
-        selectedTeamId: "OSG_TEAM",
-        selectedTeamManagerCandidateGroup: ["osg-team-managers"],
-        selectedTeamAnalystCandidateGroup: ["osg-team-analysts"],
+        selectedTeamId: "SSG_TEAM",
+        selectedTeamManagerCandidateGroup: ["ssg-team-managers"],
+        selectedTeamAnalystCandidateGroup: ["ssg-team-analysts"],
       },
     },
     {
       taskKey: "2251799813685254",
       elementId: "delivery_planning",
       name: "Team Assignment",
-      candidateGroup: "osg-team-managers",
-      actorId: osgManagerActorId,
+      candidateGroup: "ssg-team-managers",
+      actorId: ssgManagerActorId,
       action: "assign",
       variables: {
         planningDecision: "assign",
-        assignedSpecialistId: osgAnalystActorId,
+        assignedSpecialistId: ssgAnalystActorId,
       },
     },
     {
       taskKey: "2251799813685255",
       elementId: "delivery_work",
       name: "Product Production",
-      candidateGroup: "osg-team-analysts",
-      assignee: osgAnalystActorId,
-      actorId: osgAnalystActorId,
+      candidateGroup: "ssg-team-analysts",
+      assignee: ssgAnalystActorId,
+      actorId: ssgAnalystActorId,
       action: "request_clarification",
       variables: { deliveryDecision: "request_clarification" },
     },
@@ -86,9 +86,9 @@ export const staffedScenario = {
       taskKey: "2251799813685257",
       elementId: "delivery_work",
       name: "Product Production",
-      candidateGroup: "osg-team-analysts",
-      assignee: osgAnalystActorId,
-      actorId: osgAnalystActorId,
+      candidateGroup: "ssg-team-analysts",
+      assignee: ssgAnalystActorId,
+      actorId: ssgAnalystActorId,
       action: "request_clarification",
       variables: { deliveryDecision: "request_clarification" },
     },
@@ -106,9 +106,9 @@ export const staffedScenario = {
       taskKey: "2251799813685259",
       elementId: "delivery_work",
       name: "Product Production",
-      candidateGroup: "osg-team-analysts",
-      assignee: osgAnalystActorId,
-      actorId: osgAnalystActorId,
+      candidateGroup: "ssg-team-analysts",
+      assignee: ssgAnalystActorId,
+      actorId: ssgAnalystActorId,
       action: "submit",
       variables: { deliveryDecision: "submit" },
     },
@@ -116,8 +116,8 @@ export const staffedScenario = {
       taskKey: "2251799813685260",
       elementId: "lead_review",
       name: "Manager Review",
-      candidateGroup: "osg-team-managers",
-      actorId: osgManagerActorId,
+      candidateGroup: "ssg-team-managers",
+      actorId: ssgManagerActorId,
       action: "approve",
       variables: { leadReviewDecision: "approve" },
     },
@@ -148,9 +148,9 @@ export const alternativeStaffedScenario = {
     {
       taskKey: "2251799813685261",
       elementId: "intake_review",
-      name: "JIOC Routing",
-      candidateGroup: "jioc-routing",
-      actorId: jiocActorId,
+      name: "CRIOC Routing",
+      candidateGroup: "crioc-routing",
+      actorId: criocActorId,
       action: "progress",
       variables: {
         intakeDecision: "progress",

@@ -8,7 +8,7 @@ backup/restore and stakeholder sign-off remain programme-level gates.
 
 | Evidence | Record |
 | --- | --- |
-| Specification | `docs/specs/service-operations-expansion.md` |
+| Current contracts | `docs/specs/service-request-mvp.md`, `docs/specs/hierarchical-operational-overviews.md`, `docs/specs/team-operations-workspace-evolution.md` and `docs/specs/unified-organisation-workspaces.md` |
 | Decisions | ADRs 0006 to 0010, accepted locally |
 | Threat models | Management and analytics, team workspaces and calendars, and service-request workflow models |
 | Scoped statistics | Cross-branch API matrix, content-minimisation assertions, deterministic aggregate oracle, feedback cohort suppression, accessible chart/table parity and projection freshness states |
@@ -31,14 +31,14 @@ Recorded on 7 August 2026.
 
 | Evidence | Record |
 | --- | --- |
-| Specification | `docs/specs/service-operations-expansion.md`, Analyst clarification section |
+| Specification | `docs/specs/service-request-mvp.md`, Analyst clarification rules |
 | Decision | `docs/adr/0010-versioned-analyst-clarification-loop.md` |
 | Threat model | `docs/threat-model/service-request-workflow.md` |
 | Migration | `0004_production_clarifications.py`; empty upgrade, drift check, downgrade to `0003`, re-upgrade and second drift check passed |
 | Backend | `uv run --directory apps/api pytest -q`: 462 passed, 99.10% line and 96.22% branch coverage |
 | Frontend | `pnpm --filter @istari-service/web test`: 158 passed, 99.30% line and 95.31% branch coverage |
 | Workflow | BPMN validation: 11 user tasks, 10 gateways, 35 flows and complete diagram data; validator mutation suite and V2 mock contract passed |
-| Live engine | Camunda 8.9.14 with PostgreSQL secondary storage completed two clarification loops on DIGOC → NCGI-A Ops → OSG Team, retained the same Analyst and released the product |
+| Live engine | Camunda 8.9.14 with PostgreSQL secondary storage completed two clarification loops on JOCK → ACSA-B Ops → SSG Team, retained the same Analyst and released the product |
 | Alternative route | The same engine completed SYGOC → Nimbus Ops → Beacon Team with Beacon-specific Manager and Analyst groups |
 | Scope | Exact Customer, assigned Analyst and Team Manager content access; Platform Administrator denied; trackers receive metadata only |
 | Static checks | Ruff format/check, mypy, TypeScript, ESLint, line-limit, terminology and production build passed |
@@ -58,11 +58,11 @@ Recorded on 7 August 2026.
 
 | Evidence | Record |
 | --- | --- |
-| Specification | `docs/specs/service-operations-expansion.md`, organisation scope and statistics sections |
+| Specifications | `docs/specs/hierarchical-operational-overviews.md` and `docs/specs/tracking-lifecycle-and-analytical-visuals.md` |
 | Decisions | ADR 0006 explicit grants and ADR 0007 content-free analytics |
 | Threat model | `docs/threat-model/management-and-analytics.md` |
 | Migration | `0005_management_analytics_foundations.py`; empty upgrade, drift check, downgrade to `0004`, re-upgrade and second drift check passed |
-| Seed | 43 deterministic grants: named JIOC, command, Ops and shared QC statistics scopes plus exact-team grants for every active Team Manager |
+| Seed | 43 deterministic grants: named CRIOC, command, Ops and shared QC statistics scopes plus exact-team grants for every active Team Manager |
 | Scope | Exact, descendant, ancestor, sibling, wrong-action, inactive, expired and revoked cases passed; stale mutation versions denied |
 | Hierarchy | 40 self rows plus bounded ancestor paths; cycle and missing-parent rebuilds rejected |
 | Projection | Authoritative event append refreshes idempotent request facts and stage intervals; full rebuild produces a ready checkpoint |
@@ -76,7 +76,7 @@ Recorded on 7 August 2026.
 
 | Evidence | Record |
 | --- | --- |
-| Scope | JIOC, command, Ops and exact-team grants return only authorised organisational aggregates; Platform Administrator receives whole-platform metadata only |
+| Scope | CRIOC, command, Ops and exact-team grants return only authorised organisational aggregates; Platform Administrator receives whole-platform metadata only |
 | Measures | Traffic, work in progress, age, due risk, throughput, stage duration, clarification, rework, feedback and direct-child comparison |
 | Privacy | No request, product, clarification, reason or Customer content enters the facts; feedback cohorts below five are suppressed |
 | Frontend | Grant-aware navigation, bounded dates, time-zone control, projection freshness, accessible chart/table parity and empty/error states |

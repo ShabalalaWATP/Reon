@@ -2,9 +2,8 @@
 
 ## Purpose
 
-Replace the former internal coordination terminology with language that tells
-staff what needs attention, while preserving the existing Camunda stage and
-role identifiers.
+Use language that tells staff what needs attention while keeping stable Camunda
+stage and role identifiers inside the technical boundary.
 
 ## User outcomes
 
@@ -15,8 +14,8 @@ role identifiers.
   `<unit> · Awaiting owner`.
 - The same action is labelled with the claimant's name after an individual has
   accepted it.
-- Action summaries use `New request requires attention` instead of exposing the
-  technical `CHOOSE_OPS_GROUP` identifier.
+- Action summaries use `New request requires attention`. The technical
+  `CHOOSE_OPS_GROUP` identifier remains inside the API and workflow boundary.
 - Profiles, navigation, request status, lifecycle graphics, Camunda task names
   and current documentation use `Request coordination` consistently.
 
@@ -36,8 +35,8 @@ role identifiers.
 ## Acceptance criteria
 
 - No deprecated coordination terminology remains in user-facing text.
-- DIGOC, SYGOC, MYGOC and future configured units are shown by their actual
-  configured names, with no hard-coded DIGOC special case.
+- JOCK, SYGOC, MYGOC and future configured units are shown by their actual
+  configured names, with no hard-coded JOCK special case.
 - Existing and newly submitted requests use the same ownership presentation.
 - Backend and frontend tests cover shared and personal ownership, queue labels
   and friendly action labels.

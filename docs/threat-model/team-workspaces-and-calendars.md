@@ -36,6 +36,7 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 | Private event text appears in team view | Redact at repository projection before schema construction; privacy matrix tests every view and role |
 | A user unintentionally hides a routine personal event or misunderstands a technical visibility option | Default new personal activity to exact-unit detail, expose one unchecked plain-language `Private appointment` choice and reject availability-only personal creation at the server boundary; preserve existing records without silently changing their audience |
 | A team-visible personal event exposes detail beyond the intended colleagues | Derive shared calendar projections only from current exact-unit membership; ancestors and siblings receive aggregate statistics rather than calendar records |
+| A personal-calendar account without a workspace gains team visibility | Allow the account to read and change only events where it is the authenticated subject; project events into team calendars only through current exact-unit membership resolved at read time |
 | Recurrence expansion exhausts resources | Restrict recurrence forms and occurrence window; limit range and result count |
 | Daylight-saving conversion moves commitments | Store IANA zone and local intent; test gaps, overlaps, all-day boundaries and zone changes |
 | Manager commitment impersonates consent | Record creator separately and require subject acknowledgement or reasoned dispute |

@@ -152,14 +152,13 @@ the MVP pilot uses these thresholds:
 
 Done when:
 
-- the current 73-account, fully staffed organisation baseline replaces stale
-  sixteen-user and OSG-only statements and includes an independent configuration
-  approver;
-- the expansion specification, management-grant ADR, analytics ADR, calendar ADR
-  and updated threat models are accepted;
+- the current 99-account organisation baseline is fully staffed and includes an
+  independent configuration approver;
+- the current capability specifications, management-grant ADR, analytics ADR,
+  calendar ADR and threat models are accepted;
 - every new permission and visibility scope is defined independently from role
   labels and organisation parentage;
-- seeded management grants identify the JIOC, command, Ops and team managers used
+- seeded management grants identify the CRIOC, command, Ops and team managers used
   in tests; and
 - the master plan links each requirement to one phase and one evidence source.
 
@@ -192,7 +191,7 @@ Done when:
   stored as a structured, append-only clarification thread in PostgreSQL;
 - the Customer sees the full authorised thread under `Needs your input` and can
   submit a mandatory response or withdraw;
-- an answered clarification returns to the same team and Analyst without JIOC,
+- an answered clarification returns to the same team and Analyst without CRIOC,
   command or Ops approval;
 - tracking users see only the metadata state `Awaiting Customer information`;
 - a versioned BPMN definition and live Camunda smoke prove request, response,
@@ -219,7 +218,7 @@ Done when:
 
 Done when:
 
-- JIOC managers see JIOC and authorised descendants;
+- CRIOC managers see CRIOC and authorised descendants;
 - command managers see only their command and descendants;
 - Ops managers see only their Ops group and direct teams;
 - team managers see only their team;
@@ -229,8 +228,8 @@ Done when:
   feedback and child-unit comparisons are available for bounded date ranges;
 - small feedback cohorts are suppressed and every chart has a table equivalent;
   and
-- cross-branch API tests prove, for example, that NCGI-A Ops cannot retrieve JIOC,
-  SYGOC, Nimbus or unrelated DIGOC statistics.
+- cross-branch API tests prove, for example, that ACSA-B Ops cannot retrieve CRIOC,
+  SYGOC, Nimbus or unrelated JOCK statistics.
 
 ### Phase 5: Team workspace and roster lifecycle
 

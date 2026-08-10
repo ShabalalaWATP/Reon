@@ -1,39 +1,24 @@
 # Organisation and Routing Model
 
-## MVP workflow
+## Current workflow
 
-Customers submit into JIOC. Named routing users select each destination down the
+Customers submit into CRIOC. Named routing users select each destination down the
 hierarchy. Once a team receives the work, the product does not travel back up the
 routing chain for approval.
 
-```mermaid
-flowchart TD
-  Customer["Customer"]
-  JIOC["JIOC routing"]
-  Command["Selected request coordination unit"]
-  Ops["Selected Ops routing"]
-  Manager["Selected Team Manager"]
-  Analysts["Lead Analyst and Contributors"]
-  QC["QC Manager"]
-  Link["Authenticated product download"]
+![The service request route from the Customer through CRIOC, a selected command,
+an Ops group and a delivery team](../assets/architecture/03-routing-workflow.svg)
 
-  Customer -->|"submit"| JIOC
-  JIOC -->|"select command"| Command
-  Command -->|"select direct Ops group"| Ops
-  Ops -->|"select direct team"| Manager
-  Manager -->|"assign one Lead and optional Contributors"| Analysts
-  Analysts -->|"Lead submits service product"| Manager
-  Manager -->|"approve or return"| QC
-  QC -->|"QC, disseminate or return"| Link
-  Link --> Customer
-  Manager -->|"changes required"| Analysts
-  QC -->|"changes required"| Analysts
-```
+![The product route from Team Manager assignment through Analyst production,
+Manager review, QC and Customer release](../assets/architecture/04-delivery-workflow.svg)
+
+The detailed [workflow and BPMN guide](WORKFLOW_AND_BPMN.md) explains every
+human task, outcome, clarification loop and cancellation path.
 
 Every route and outcome is a human action. Camunda coordinates user tasks using
 stable organisation identifiers. It does not select, recommend or infer a route.
 
-JIOC, the selected command and the selected Ops group keep read-only tracking
+CRIOC, the selected command and the selected Ops group keep read-only tracking
 visibility after routing. The register identifies each request by title and
 reference, and renders both the selected organisation route and the delivery
 lifecycle. An exact-route member may reopen the Customer's submitted request in
@@ -49,7 +34,7 @@ The Customer dashboard exposes an authenticated download for a released PDF,
 DOCX or PPTX file, or an authenticated redirect to a normalised allow-listed
 HTTPS product. Files pass quarantine, structural validation and malware scanning
 before they can enter review. The backend never fetches an analyst-supplied URL,
-and withdrawal prevents legacy download fallback.
+and withdrawal disables every download route.
 
 At each routing stage, the application presents only effective direct children
 of the current route. The current small hierarchy uses explicit select controls;
@@ -72,18 +57,18 @@ grant root and a selected node. The selected node must be the root or one of its
 configured descendants. Parents and sibling branches are not returned.
 
 ```text
-JIOC grant       -> JIOC, DIGOC, SYGOC, MYGOC and everything below them
-DIGOC grant      -> DIGOC, its Ops groups and their teams only
-NCGI-A Ops grant -> NCGI-A Ops, OSG, Cedar and Quartz only
-OSG Team grant   -> OSG Team only
+CRIOC grant       -> CRIOC, JOCK, SYGOC, MYGOC and everything below them
+JOCK grant      -> JOCK, its Ops groups and their teams only
+ACSA-B Ops grant -> ACSA-B Ops, SSG, Cedar and Quartz only
+SSG Team grant   -> SSG Team only
 ```
 
 Users with several explicit grants see several separate reporting roots. For
-example, the shared command-routing fixture has independent DIGOC, SYGOC and
-MYGOC grants to exercise all branches. Selecting DIGOC never makes SYGOC or
-MYGOC traversable from that scope. Platform Administrators use the JIOC root and
+example, the shared command-routing fixture has independent JOCK, SYGOC and
+MYGOC grants to exercise all branches. Selecting JOCK never makes SYGOC or
+MYGOC traversable from that scope. Platform Administrators use the CRIOC root and
 can select any configured descendant for content-free service health. The QC
-Manager has an explicit JIOC statistics grant for the shared quality overview.
+Manager has an explicit CRIOC statistics grant for the shared quality overview.
 
 Landing pages show only a small operational summary. Detailed trends,
 definitions, date controls, hierarchy breadcrumbs and export policy remain in
@@ -99,7 +84,7 @@ server-selected scope.
 
 ## Organisation tree
 
-JIOC is the single root. Every unit below is seeded reference data, is staffed
+CRIOC is the single root. Every unit below is seeded reference data, is staffed
 and is a valid selectable routing destination where its parent owns the current
 route. Every unit is also a workspace with effective-dated Manager and Member
 positions. Routing workspaces use those positions for roster, calendar and
@@ -108,17 +93,20 @@ claiming the same Camunda task, so Manager status adds no approval or allocation
 stage. Delivery-team Managers additionally control Analyst assignment, team
 calendar commitments, board planning and capacity.
 
-The organisation page reports factual staffing for every unit, including JIOC,
+The organisation page reports factual staffing for every unit, including CRIOC,
 commands and Ops groups. A unit remains selectable if temporarily unstaffed, and
 the tracker reports that condition without silently routing elsewhere.
 
+![The selectable CRIOC organisation hierarchy and its command, Ops and delivery
+team levels](../assets/architecture/06-organisation-routing.svg)
+
 ```text
-JIOC [STAFFED WORKSPACE]
-├── DIGOC [STAFFED WORKSPACE]
-│   ├── NCGI-A Ops [STAFFED WORKSPACE]
-│   │   ├── OSG Team [STAFFED WORKSPACE]
-│   │   │   ├── OSG Manager
-│   │   │   └── OSG Analyst
+CRIOC [STAFFED WORKSPACE]
+├── JOCK [STAFFED WORKSPACE]
+│   ├── ACSA-B Ops [STAFFED WORKSPACE]
+│   │   ├── SSG Team [STAFFED WORKSPACE]
+│   │   │   ├── SSG Manager
+│   │   │   └── SSG Analyst
 │   │   ├── Cedar Team [STAFFED WORKSPACE]
 │   │   └── Quartz Team [STAFFED WORKSPACE]
 │   ├── Aurora Ops [STAFFED WORKSPACE]
@@ -157,7 +145,7 @@ JIOC [STAFFED WORKSPACE]
         └── Prism Team [STAFFED WORKSPACE]
 ```
 
-The names outside the user-specified JIOC, DIGOC, NCGI-A Ops and OSG Team route
+The names outside the user-specified CRIOC, JOCK, ACSA-B Ops and SSG Team route
 are fictional public-safe fixtures. They are first-class workflow configuration,
 not demonstration-only placeholders, and the application never disables or
 visually downgrades them as routing choices.
@@ -166,25 +154,23 @@ visually downgrades them as routing choices.
 
 | Product role | Initial scope | Responsibility |
 | --- | --- | --- |
-| Customer | Outside JIOC | Submit, track, respond, download and give feedback |
-| JIOC Routing User | JIOC | Intake, clarification, closure and command selection |
+| Customer | Outside CRIOC | Submit, track, respond, download and give feedback |
+| CRIOC Routing User | CRIOC | Intake, clarification, closure and command selection |
 | Request Coordination User | Shared request coordination | Select a direct Ops group for any configured command and track progress |
 | Ops Routing User | Shared Ops routing | Select a direct team for any configured Ops group and track progress |
 | Team Manager | One configured team | Assign one Lead and optional Contributors, maintain the team and check the submitted product |
 | Team Analyst | One configured team | Produce, collaborate on and resubmit the service product |
 | QC Manager | Shared QC function | Perform final QC and disseminate the download link |
 
-OSG is the initial operational delivery team and has additional staff. Every
+SSG is the initial operational delivery team and has additional staff. Every
 sibling team has a synthetic Manager and Analyst so a complete alternative route
-can be exercised. Teams never borrow OSG users.
+can be exercised. Teams never borrow SSG users.
 
 ## Complete synthetic user directory
 
-The local/test product contains the following 99 users. The original 73 accounts
-remain unchanged. Accounts `admin74` to `admin99` add one named Manager and one
-named Member to every routing workspace. Every account uses its sequential logon
-and the local-only password `admin`. All accounts start active except `admin16`,
-which is intentionally inactive for access-control testing.
+The local/test product contains the following 99 users. Every account uses its
+sequential logon and the local-only password `admin`. All accounts start active
+except `admin16`, which is intentionally inactive for access-control testing.
 Names are synthetic fixtures borrowed from Scottish football and do not describe
 the real people. The machine-readable source of truth is `DEMO_IDENTITIES` in
 `apps/api/src/istari_service/demo_seed.py`. The directory below deliberately
@@ -193,28 +179,44 @@ enumerates every account. Automated seed tests assert the count of 99, the exact
 Member coverage in every routing unit, and active Manager and Analyst coverage
 in every delivery team.
 
+### Local access summary
+
+- Usernames run sequentially from `admin1` through `admin99`.
+- Initial work emails use the synthetic-only `istari.example.test` domain, for
+  example `admin1@istari.example.test`. Administrators can maintain them in the
+  application.
+- `admin1` is the Platform Administrator and `admin73` is the independent
+  configuration-approval Administrator.
+- `admin4` exercises the CRIOC hierarchy view, `admin5` and `admin6` exercise
+  command and Ops routing, `admin8` exercises SSG Team management, and `admin15`
+  exercises QC.
+- `admin74` through `admin99` provide a named Manager and Member for every
+  routing workspace, including CRIOC, each command and each Ops group.
+- These credentials are local and test fixtures. Production identity must use
+  the approved OIDC, MFA and privileged-access design.
+
 | Logon | Display name | Representative role | Organisational assignment | Initial state |
 | --- | --- | --- | --- | --- |
 | `admin1` | Andy Robertson | Platform Administrator | Platform support | Active |
 | `admin2` | John McGinn | Customer | Customer | Active |
 | `admin3` | Billy Gilmour | Customer | Customer | Active |
-| `admin4` | Scott McTominay | JIOC Routing User, Manager | JIOC | Active |
-| `admin5` | Callum McGregor | Request Coordination User, Manager | DIGOC, SYGOC and MYGOC | Active |
-| `admin6` | Kieran Tierney | Ops Routing User, Manager | NCGI-A Ops, Aurora Ops, Vertex Ops, Nimbus Ops and Parallax Ops | Active |
-| `admin7` | Ryan Christie | JIOC Routing User, Member | JIOC | Active |
-| `admin8` | Grant Hanley | Team Manager | OSG Team | Active |
-| `admin9` | Kenny McLean | Team Manager | OSG Team | Active |
+| `admin4` | Scott McTominay | CRIOC Routing User, Manager | CRIOC | Active |
+| `admin5` | Callum McGregor | Request Coordination User, Manager | JOCK, SYGOC and MYGOC | Active |
+| `admin6` | Kieran Tierney | Ops Routing User, Manager | ACSA-B Ops, Aurora Ops, Vertex Ops, Nimbus Ops and Parallax Ops | Active |
+| `admin7` | Ryan Christie | CRIOC Routing User, Member | CRIOC | Active |
+| `admin8` | Grant Hanley | Team Manager | SSG Team | Active |
+| `admin9` | Kenny McLean | Team Manager | SSG Team | Active |
 | `admin10` | Craig Gordon | Ops Routing User, Member | Horizon Ops, Meridian Ops, Solstice Ops and Frontier Ops | Active |
-| `admin11` | Lewis Ferguson | Team Analyst | OSG Team | Active |
-| `admin12` | Nathan Patterson | Team Analyst | OSG Team | Active |
-| `admin13` | Ben Doak | Team Analyst | OSG Team | Active |
-| `admin14` | Che Adams | Team Analyst | OSG Team | Active |
+| `admin11` | Lewis Ferguson | Team Analyst | SSG Team | Active |
+| `admin12` | Nathan Patterson | Team Analyst | SSG Team | Active |
+| `admin13` | Ben Doak | Team Analyst | SSG Team | Active |
+| `admin14` | Che Adams | Team Analyst | SSG Team | Active |
 | `admin15` | Angus Gunn | QC Manager | Shared QC | Active |
 | `admin16` | James Forrest | Customer | Customer | Inactive |
-| `admin17` | Lawrence Shankland | Team Manager | OSG Team | Active |
-| `admin18` | Tommy Conway | Team Analyst | OSG Team | Active |
-| `admin19` | Steve Clarke | Team Analyst | OSG Team | Active |
-| `admin20` | Derek McInnes | Team Analyst | OSG Team | Active |
+| `admin17` | Lawrence Shankland | Team Manager | SSG Team | Active |
+| `admin18` | Tommy Conway | Team Analyst | SSG Team | Active |
+| `admin19` | Steve Clarke | Team Analyst | SSG Team | Active |
+| `admin20` | Derek McInnes | Team Analyst | SSG Team | Active |
 | `admin21` | Kenny Dalglish | Team Manager | Cedar Team | Active |
 | `admin22` | Denis Law | Team Analyst | Cedar Team | Active |
 | `admin23` | Graeme Souness | Team Manager | Quartz Team | Active |
@@ -268,16 +270,16 @@ in every delivery team.
 | `admin71` | Ryan Jack | Team Manager | Prism Team | Active |
 | `admin72` | Stuart Armstrong | Team Analyst | Prism Team | Active |
 | `admin73` | Jim Leighton | Platform Administrator | Platform configuration approval | Active |
-| `admin74` | Alan Rough | JIOC Routing User, Manager | JIOC | Active |
-| `admin75` | Willie Ormond | JIOC Routing User, Member | JIOC | Active |
-| `admin76` | Craig Levein | Request Coordination User, Manager | DIGOC | Active |
-| `admin77` | Walter Smith | Request Coordination User, Member | DIGOC | Active |
+| `admin74` | Alan Rough | CRIOC Routing User, Manager | CRIOC | Active |
+| `admin75` | Willie Ormond | CRIOC Routing User, Member | CRIOC | Active |
+| `admin76` | Craig Levein | Request Coordination User, Manager | JOCK | Active |
+| `admin77` | Walter Smith | Request Coordination User, Member | JOCK | Active |
 | `admin78` | Alex Ferguson | Request Coordination User, Manager | SYGOC | Active |
 | `admin79` | Tommy Burns | Request Coordination User, Member | SYGOC | Active |
 | `admin80` | Jock Stein | Request Coordination User, Manager | MYGOC | Active |
 | `admin81` | Bill Shankly | Request Coordination User, Member | MYGOC | Active |
-| `admin82` | Willie Johnston | Ops Routing User, Manager | NCGI-A Ops | Active |
-| `admin83` | Asa Hartford | Ops Routing User, Member | NCGI-A Ops | Active |
+| `admin82` | Willie Johnston | Ops Routing User, Manager | ACSA-B Ops | Active |
+| `admin83` | Asa Hartford | Ops Routing User, Member | ACSA-B Ops | Active |
 | `admin84` | Craig Burley | Ops Routing User, Manager | Aurora Ops | Active |
 | `admin85` | Kevin Thomson | Ops Routing User, Member | Aurora Ops | Active |
 | `admin86` | Scott Brown | Ops Routing User, Manager | Vertex Ops | Active |
@@ -313,13 +315,13 @@ instances retain the hierarchy and process versions with which they started.
 
 ## Required workflow proof
 
-- Route one request through DIGOC → NCGI-A Ops → OSG Team and complete the full
+- Route one request through JOCK → ACSA-B Ops → SSG Team and complete the full
   Analyst → Manager → QC Manager → Customer download journey.
 - Complete a request through SYGOC → Nimbus Ops → Beacon Team using Beacon's
-  distinct Manager and Analyst groups, with no OSG fallback.
+  distinct Manager and Analyst groups, with no SSG fallback.
 - If account maintenance makes a destination unstaffed, show `Awaiting staffing`,
-  not an error, completion or OSG work item.
+  not an error, completion or SSG work item.
 - Reject non-child unit IDs, skipped levels, stale selections and attempts by a
   role that does not own the current routing task.
-- Prove JIOC, command and Ops trackers can see progress metadata without gaining
+- Prove CRIOC, command and Ops trackers can see progress metadata without gaining
   approval controls or access to unreleased product content.

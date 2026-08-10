@@ -23,7 +23,7 @@ const queueRoutes: Partial<Record<UserRole, string>> = {
 };
 
 const queueLabels: Partial<Record<UserRole, string>> = {
-  INTAKE_TRIAGE: "JIOC routing queue",
+  INTAKE_TRIAGE: "CRIOC routing queue",
   SERVICE_COORDINATION: "Incoming requests",
   OPERATIONS_ALLOCATION: "Ops routing queue",
   DELIVERY_TEAM_LEAD: "Team work queue",
@@ -34,7 +34,7 @@ const queueLabels: Partial<Record<UserRole, string>> = {
 export const roleLabels: Record<UserRole, string> = {
   PLATFORM_ADMIN: "Platform Administrator",
   REQUESTER: "Customer",
-  INTAKE_TRIAGE: "JIOC Routing User",
+  INTAKE_TRIAGE: "CRIOC Routing User",
   SERVICE_COORDINATION: "Request Coordination User",
   OPERATIONS_ALLOCATION: "Ops Routing User",
   DELIVERY_TEAM_LEAD: "Team Manager",
@@ -66,6 +66,7 @@ export const trackingRoles: UserRole[] = [
 ];
 
 const organisationLink = { label: "Organisation directory", path: "/organisation" };
+const personalCalendarLink = { label: "Personal calendar", path: "/calendar/month" };
 
 export function homeRouteForRole(role: UserRole, capabilities: ServerCapabilities) {
   if (role === "REQUESTER") return roleRoutes.REQUESTER;
@@ -85,6 +86,7 @@ export function navigationForRole(
     return [
       { label: "My requests", path: "/requests" },
       { label: "New request", path: "/requests/new" },
+      personalCalendarLink,
       organisationLink,
     ];
   }
@@ -95,6 +97,7 @@ export function navigationForRole(
       { label: "User accounts", path: "/admin/users" },
       ...(capabilities.configuration ? [{ label: "Configuration", path: "/admin/configuration" }] : []),
       ...(context.statisticsAvailable ? [{ label: "Operational statistics", path: "/statistics" }] : []),
+      personalCalendarLink,
       organisationLink,
     ];
   }
@@ -107,9 +110,7 @@ export function navigationForRole(
       path: `/teams/${context.workspace.id}/overview`,
     }] : []),
   ];
-  if (["DELIVERY_TEAM_LEAD", "DELIVERY_SPECIALIST"].includes(role)) {
-    navigation.push({ label: "My calendar", path: "/calendar/month" });
-  }
+  navigation.push(personalCalendarLink);
   if (role === "DELIVERY_SPECIALIST" && capabilities.products) {
     navigation.push({ label: "Product package", path: "/product-packages/new" });
   }

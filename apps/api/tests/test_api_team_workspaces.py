@@ -36,17 +36,17 @@ async def test_workspace_access_overview_people_activity_and_scope_boundaries(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    osg = await _workspace(harness, "admin8", "OSG_TEAM")
-    assert osg["teamName"] == "OSG Team"
-    assert osg["grantId"]
-    assert set(osg["permissions"]) == {
+    ssg = await _workspace(harness, "admin8", "SSG_TEAM")
+    assert ssg["teamName"] == "SSG Team"
+    assert ssg["grantId"]
+    assert set(ssg["permissions"]) == {
         "STATISTICS",
         "ROSTER",
         "CALENDAR",
         "BOARD",
         "CAPACITY",
     }
-    overview = await harness.client.get(f"/api/v1/team-workspaces/{osg['teamId']}")
+    overview = await harness.client.get(f"/api/v1/team-workspaces/{ssg['teamId']}")
     assert overview.status_code == 200
     expected_measures = {
         "managerCount": 3,
@@ -56,17 +56,17 @@ async def test_workspace_access_overview_people_activity_and_scope_boundaries(
         "overdueCount": 0,
     }
     assert {key: overview.json()[key] for key in expected_measures} == expected_measures
-    manager_people = await _people(harness, osg["teamId"])
+    manager_people = await _people(harness, ssg["teamId"])
     assert len([item for item in manager_people if item["state"] == "CURRENT"]) == 10
     assert all(item["startReason"] for item in manager_people)
     activity = await harness.client.get(
-        f"/api/v1/team-workspaces/{osg['teamId']}/activity"
+        f"/api/v1/team-workspaces/{ssg['teamId']}/activity"
     )
     assert activity.status_code == 200
     assert activity.json() == {"items": []}
 
-    analyst_osg = await _workspace(harness, "admin11", "OSG_TEAM")
-    assert analyst_osg["permissions"] == []
+    analyst_ssg = await _workspace(harness, "admin11", "SSG_TEAM")
+    assert analyst_ssg["permissions"] == []
     profile = await harness.client.patch(
         "/api/v1/profile",
         json={
@@ -76,7 +76,7 @@ async def test_workspace_access_overview_people_activity_and_scope_boundaries(
         headers=harness.mutation_headers(),
     )
     assert profile.status_code == 200
-    analyst_people = await _people(harness, analyst_osg["teamId"])
+    analyst_people = await _people(harness, analyst_ssg["teamId"])
     assert all(item["startReason"] is None for item in analyst_people)
     lewis = next(
         item for item in analyst_people if item["displayName"] == "Lewis Ferguson"
@@ -90,7 +90,7 @@ async def test_workspace_access_overview_people_activity_and_scope_boundaries(
     routing_workspaces = await harness.client.get("/api/v1/team-workspaces")
     assert routing_workspaces.status_code == 200
     assert {item["teamCode"] for item in routing_workspaces.json()["items"]} == {
-        "DIGOC",
+        "JOCK",
         "SYGOC",
         "MYGOC",
     }
@@ -151,10 +151,10 @@ async def test_manager_can_end_and_add_existing_analyst_with_history(
         assert quartz_unit is not None
         assert quartz_unit.staffing_status is StaffingStatus.UNSTAFFED
 
-    osg = await _workspace(harness, "admin8", "OSG_TEAM")
+    ssg = await _workspace(harness, "admin8", "SSG_TEAM")
     eligible = await harness.client.get(
-        f"/api/v1/team-workspaces/{osg['teamId']}/eligible-analysts",
-        params={"grantId": osg["grantId"]},
+        f"/api/v1/team-workspaces/{ssg['teamId']}/eligible-analysts",
+        params={"grantId": ssg["grantId"]},
     )
     assert eligible.status_code == 200
     alan_option = next(
@@ -164,11 +164,11 @@ async def test_manager_can_end_and_add_existing_analyst_with_history(
     )
     assert alan_option["currentTeamId"] is None
     added = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/memberships",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/memberships",
         json={
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
             "analystId": alan_option["accountId"],
-            "reason": "The Analyst is joining OSG to balance delivery demand.",
+            "reason": "The Analyst is joining SSG to balance delivery demand.",
         },
         headers=harness.mutation_headers(),
     )
@@ -180,7 +180,7 @@ async def test_manager_can_end_and_add_existing_analyst_with_history(
     stale = await harness.client.post(
         f"/api/v1/team-workspaces/{quartz['teamId']}/memberships/{alan['membershipId']}/end",
         json={
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
             "expectedVersion": alan["version"],
             "reason": "A deliberately invalid cross-team roster operation.",
         },
@@ -191,7 +191,7 @@ async def test_manager_can_end_and_add_existing_analyst_with_history(
         "Alan Hansen"
         in (
             await harness.client.get(
-                f"/api/v1/team-workspaces/{osg['teamId']}/activity"
+                f"/api/v1/team-workspaces/{ssg['teamId']}/activity"
             )
         ).text
     )
@@ -242,7 +242,7 @@ async def test_scheduled_transfer_has_one_winner_and_activates_projection(
     assert losing.status_code == 409
     assert losing.json()["detail"]["code"] == "STALE_VERSION"
 
-    osg_id = await harness.unit_id("OSG_TEAM")
+    ssg_id = await harness.unit_id("SSG_TEAM")
     quartz_id = await harness.unit_id("QUARTZ_TEAM")
     analyst_id = await harness.user_id("admin11")
     async with harness.sessions() as session, session.begin():
@@ -253,7 +253,7 @@ async def test_scheduled_transfer_has_one_winner_and_activates_projection(
                 )
             )
         )
-        assert before == {osg_id}
+        assert before == {ssg_id}
         assert (
             await synchronise_due_team_memberships(
                 session, effective + timedelta(seconds=1)
@@ -292,22 +292,22 @@ async def test_active_service_work_blocks_roster_removal_and_transfer(
                 reference="SR-ROSTER-BLOCK-001",
                 requester_id=requester_id,
                 status=RequestStatus.IN_PROGRESS,
-                current_owner="OSG Team",
-                assigned_delivery_team="OSG Team",
+                current_owner="SSG Team",
+                assigned_delivery_team="SSG Team",
                 assigned_specialist_id=analyst_id,
                 **RequestCreate.model_validate(request_payload()).model_dump(),
             )
         )
-    osg = await _workspace(harness, "admin8", "OSG_TEAM")
+    ssg = await _workspace(harness, "admin8", "SSG_TEAM")
     lewis = next(
         item
-        for item in await _people(harness, osg["teamId"])
+        for item in await _people(harness, ssg["teamId"])
         if item["displayName"] == "Lewis Ferguson"
     )
     blocked_end = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/memberships/{lewis['membershipId']}/end",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/memberships/{lewis['membershipId']}/end",
         json={
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
             "expectedVersion": lewis["version"],
             "reason": "Attempting to move an Analyst who still owns active work.",
         },

@@ -81,7 +81,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | Service number or profile narrative leaks through secondary systems | Exclude self-profile fields from sessions, notifications, analytics and logs; bound and render them as escaped plain text |
 | A staff member performs another role's action | Server-side role-to-stage policy and expected-status check before every mutation |
 | A user manipulates an object identifier | Recheck role, scope, ownership or assignment on the loaded object and return a non-disclosing denial |
-| Related-request ranking leaks records or excerpts | Require the active claimed JIOC task and apply route membership independently to lexical, vector, comparison and save queries before returning bounded metadata, scores or excerpts |
+| Related-request ranking leaks records or excerpts | Require the active claimed CRIOC task and apply route membership independently to lexical, vector, comparison and save queries before returning bounded metadata, scores or excerpts |
 | Embedding generation exfiltrates submitted content | Bake the approved model into the backend image, load it offline only and prohibit runtime calls to external model providers |
 | A poisoned or malformed request exhausts the indexer | Reuse bounded validated request fields, cap projection bytes and worker batch size, fence the named job and keep submission and text search independent of embedding success |
 | A match score is treated as duplicate truth | Label it match strength, expose deterministic contributing fields, retain explicit human decisions and never change routing, priority or Camunda state from ranking |
@@ -108,7 +108,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | Configuration changes between destination display and submission | Pin each request, require expected request/task state and revalidate the selected effective child in the locked human-outcome use case |
 | Staffing or workload indicators become automated routing | Present factual bounded state without ranking, recommendation, default selection or automatic fallback; the named user remains accountable |
 | A browser supplies a candidate-group name | Ignore browser group values; derive candidate groups from governed organisation records in FastAPI |
-| An alternative team silently receives OSG staff | Scope Team Manager and Analyst tasks to the selected team; represent missing membership as `Awaiting team staffing` |
+| An alternative team silently receives SSG staff | Scope Team Manager and Analyst tasks to the selected team; represent missing membership as `Awaiting team staffing` |
 | Administrative account changes remove the last Manager or Analyst | Recalculate staffing from active role-qualified memberships after every relevant change; keep the team selectable and surface `Awaiting team staffing` rather than falling back |
 | Tracking access becomes cross-unit or operational access | Apply exact selected-route membership inside both list and direct-detail SQL queries; use a dedicated read-only detail schema limited to the original submission; exclude actions, clarifications, feedback, product metadata, files and links; return a non-disclosing not-found response outside scope |
 | A statistics user selects a parent or sibling unit | Resolve the active grant server-side, require the selected unit to be its root or an authorised configured descendant through the organisation closure, and return a non-disclosing not-found response otherwise |
@@ -171,6 +171,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | Private leave or appointment notes leak into a shared calendar | Repository views redact by visibility before returning data; the client never receives concealed fields. |
 | A routing Manager assigns or approves work outside the human-led route | Routing workspace capabilities exclude ticket assignment; the user must claim the Camunda task before recording a routing decision. |
 | A Delivery Manager assigns an outsider or expired member | Assignment locks the request and resolves every participant against current exact-team membership at the command time. |
+| An Analyst claims an unassigned production task instead of receiving a Manager assignment | Restrict claim commands to the explicit shared-decision role allowlist, exclude open Analyst tasks from projections and require Camunda production tasks to name the Manager-selected Lead Analyst. |
 | Several Analysts produce conflicting workflow outcomes | One Lead remains the Camunda assignee; Contributors cannot complete the parent workflow task. |
 | Concurrent handovers leave PostgreSQL and Camunda with different Leads | Optimistic request and participation versions select one winner; durable fenced commands reconcile Camunda and retain prior state. |
 | Removing membership leaves request or cache access behind | Active leadership, participation and reservations require handover; membership and assignment mutations invalidate user-scoped protected caches. |
@@ -229,7 +230,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 - Direct-identifier tests for requests, tasks, outputs, feedback and admin objects.
 - Invalid, skipped, duplicate and stale workflow-transition tests.
 - Complete alternative-branch candidate-group tests with distinct Manager and
-  Analyst identities, plus dynamic unstaffed-team tests with no OSG fallback.
+  Analyst identities, plus dynamic unstaffed-team tests with no SSG fallback.
 - Direct-child search and route-breadcrumb tests, plus stale-destination,
   competing-claim and crafted-parent tests, including confirmation that no
   ranking or fallback occurs.

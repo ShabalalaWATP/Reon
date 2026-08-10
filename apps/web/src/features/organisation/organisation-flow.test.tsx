@@ -23,7 +23,7 @@ describe("organisation hierarchy", () => {
     });
 
     const view = renderApp("/organisation");
-    expect(await screen.findByRole("heading", { name: "JIOC routing hierarchy" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "CRIOC routing hierarchy" })).toBeInTheDocument();
     expect(organisationUnits).toHaveLength(40);
     expect(organisationUnits.filter((unit) => unit.kind === "COMMAND")).toHaveLength(3);
     expect(organisationUnits.filter((unit) => unit.kind === "OPS_GROUP")).toHaveLength(9);
@@ -32,15 +32,15 @@ describe("organisation hierarchy", () => {
       organisationUnits.filter((unit) => unit.staffingStatus === "STAFFED"),
     ).toHaveLength(27);
     const hierarchy = screen.getByRole("list", { name: "Organisation hierarchy" });
-    expect(within(hierarchy).getAllByText("JIOC")).not.toHaveLength(0);
-    expect(within(hierarchy).getAllByText("DIGOC")).not.toHaveLength(0);
+    expect(within(hierarchy).getAllByText("CRIOC")).not.toHaveLength(0);
+    expect(within(hierarchy).getAllByText("JOCK")).not.toHaveLength(0);
     expect(within(hierarchy).getAllByText("SYGOC")).not.toHaveLength(0);
     expect(within(hierarchy).getAllByText("MYGOC")).not.toHaveLength(0);
-    expect(within(hierarchy).getByText("NCGI-A Ops")).toBeInTheDocument();
+    expect(within(hierarchy).getByText("ACSA-B Ops")).toBeInTheDocument();
     expect(within(hierarchy).getByText("Aurora Ops")).toBeInTheDocument();
     expect(within(hierarchy).getByText("Vertex Ops")).toBeInTheDocument();
-    const osg = within(hierarchy).getByText("OSG Team").closest("article")!;
-    expect(within(osg).getByText("Team staffed")).toBeInTheDocument();
+    const ssg = within(hierarchy).getByText("SSG Team").closest("article")!;
+    expect(within(ssg).getByText("Team staffed")).toBeInTheDocument();
     const alternative = within(hierarchy).getByText("Cedar Team").closest("article")!;
     expect(within(alternative).getByText("Team staffed")).toBeInTheDocument();
     expect(within(hierarchy).getAllByText("Routing function").length).toBeGreaterThan(0);
@@ -71,9 +71,9 @@ describe("organisation hierarchy", () => {
     mockFetch(async (url, init) => {
       if (url.pathname.endsWith("/auth/me")) return json(adminSession);
       if (url.pathname.endsWith("/organisation/units") && !url.pathname.includes("/admin/")) return json({ items: organisationUnits });
-      if (url.pathname.endsWith(`/admin/organisation/units/${organisationUnit("OSG_TEAM").id}`)) {
+      if (url.pathname.endsWith(`/admin/organisation/units/${organisationUnit("SSG_TEAM").id}`)) {
         body = JSON.parse(String(init.body));
-        return reject ? json({ detail: "Name already exists" }, 409) : json({ ...organisationUnit("OSG_TEAM"), name: "OSG Operations Team", version: 2 });
+        return reject ? json({ detail: "Name already exists" }, 409) : json({ ...organisationUnit("SSG_TEAM"), name: "SSG Operations Team", version: 2 });
       }
       throw new Error(`${init.method ?? "GET"} ${url.pathname}`);
     });
@@ -81,32 +81,32 @@ describe("organisation hierarchy", () => {
     const view = renderApp("/organisation");
     const hierarchy = await screen.findByRole("list", { name: "Organisation hierarchy" });
     expect(screen.getByRole("link", { name: "User accounts" })).toBeInTheDocument();
-    await user.click(within(hierarchy).getByRole("button", { name: "Rename OSG Team" }));
-    const input = within(hierarchy).getByLabelText("New name for OSG Team");
+    await user.click(within(hierarchy).getByRole("button", { name: "Rename SSG Team" }));
+    const input = within(hierarchy).getByLabelText("New name for SSG Team");
     await user.clear(input);
     expect(within(hierarchy).getByRole("alert")).toHaveTextContent("at least two");
-    await user.type(input, "OSG Operations Team");
+    await user.type(input, "SSG Operations Team");
     await user.click(within(hierarchy).getByRole("button", { name: "Save" }));
     expect(await within(hierarchy).findByRole("alert")).toHaveTextContent("Name already exists");
     reject = false;
     await user.click(within(hierarchy).getByRole("button", { name: "Save" }));
-    expect((await within(hierarchy).findAllByText("OSG Operations Team")).length).toBeGreaterThan(0);
-    expect(body).toEqual({ name: "OSG Operations Team", expectedVersion: 1 });
-    await user.click(within(hierarchy).getByRole("button", { name: "Rename OSG Operations Team" }));
+    expect((await within(hierarchy).findAllByText("SSG Operations Team")).length).toBeGreaterThan(0);
+    expect(body).toEqual({ name: "SSG Operations Team", expectedVersion: 1 });
+    await user.click(within(hierarchy).getByRole("button", { name: "Rename SSG Operations Team" }));
     await user.click(within(hierarchy).getByRole("button", { name: "Cancel" }));
-    expect(within(hierarchy).queryByLabelText("New name for OSG Operations Team")).not.toBeInTheDocument();
+    expect(within(hierarchy).queryByLabelText("New name for SSG Operations Team")).not.toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
   });
 
   it("keeps orphaned or self-parented units visible at the root", () => {
-    const command = organisationUnit("DIGOC");
+    const command = organisationUnit("JOCK");
     const orphan = { ...command, id: "orphan", parentId: "missing" };
     const selfParented = { ...command, id: "self", parentId: "self" };
     const tree = buildOrganisationTree([
-      organisationUnit("JIOC"),
+      organisationUnit("CRIOC"),
       orphan,
       selfParented,
     ]);
-    expect(tree.map((node) => node.id)).toEqual(["unit-jioc", "orphan", "self"]);
+    expect(tree.map((node) => node.id)).toEqual(["unit-crioc", "orphan", "self"]);
   });
 });

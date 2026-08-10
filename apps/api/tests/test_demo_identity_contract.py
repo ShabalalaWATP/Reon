@@ -45,8 +45,8 @@ def test_demo_identity_contract_covers_every_workspace() -> None:
             WorkspacePosition.MANAGER,
             WorkspacePosition.MEMBER,
         }
-    osg_staff = [item for item in DEMO_IDENTITIES if "OSG_TEAM" in item.unit_codes]
-    assert Counter(item.role for item in osg_staff) == {
+    ssg_staff = [item for item in DEMO_IDENTITIES if "SSG_TEAM" in item.unit_codes]
+    assert Counter(item.role for item in ssg_staff) == {
         UserRole.DELIVERY_TEAM_LEAD: 3,
         UserRole.DELIVERY_SPECIALIST: 7,
     }

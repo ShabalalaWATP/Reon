@@ -5,8 +5,8 @@ These instructions supplement Alex Orr's global Codex instructions.
 ## Product boundary
 
 - This is a synthetic, public-repository-safe service-request MVP.
-- Use the agreed representative language: Customer, JIOC Routing User, Command
-  Routing User, Ops Routing User, Team Manager, Team Analyst, QC Manager,
+- Use the agreed representative language: Customer, CRIOC Routing User, Request
+  Coordination User, Ops Routing User, Team Manager, Team Analyst, QC Manager,
   service product and dissemination. Keep technical enum values stable
   where changing them would add migration risk.
 - Do not introduce legacy RFI, RFA, CM, military, collection-management,
