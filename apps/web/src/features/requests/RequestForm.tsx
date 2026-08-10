@@ -12,7 +12,6 @@ const requiredText = (minimum: number, message: string, maximum: number) =>
 
 const schema = z.object({
   title: requiredText(3, "Enter a clear request title.", 160),
-  serviceCategory: requiredText(2, "Choose a service category.", 80),
   description: requiredText(20, "Describe the need in at least 20 characters.", 5000),
   questionToAnswer: requiredText(10, "State the specific question to answer.", 2000),
   desiredOutcome: requiredText(10, "Describe the desired outcome.", 2000),
@@ -51,7 +50,6 @@ type Props = {
 
 const fieldLabels: Record<keyof FormValues, string> = {
   title: "Request title",
-  serviceCategory: "Service category",
   description: "Description of the need",
   questionToAnswer: "Specific question to answer",
   desiredOutcome: "Desired outcome",
@@ -74,7 +72,6 @@ const fieldLabels: Record<keyof FormValues, string> = {
 function defaults(draft?: RequestDraftInput): FormValues {
   return {
     title: draft?.title ?? "",
-    serviceCategory: draft?.serviceCategory ?? "",
     description: draft?.description ?? "",
     questionToAnswer: draft?.questionToAnswer ?? "",
     desiredOutcome: draft?.desiredOutcome ?? "",
@@ -112,7 +109,6 @@ export function RequestForm(props: Props) {
       <FormErrorSummary errors={errors} />
       <FormSection description="Describe the need in plain language. Internal teams and routes are selected later." title="The need">
         {field("title", <input {...register("title")} />)}
-        {field("serviceCategory", <select defaultValue="" {...register("serviceCategory")}><option disabled value="">Select a category</option><option>Advisory support</option><option>Data and reporting</option><option>Operational support</option><option>Research support</option></select>)}
         {field("description", <textarea rows={5} {...register("description")} />)}
         {field("questionToAnswer", <textarea rows={3} {...register("questionToAnswer")} />)}
         {field("desiredOutcome", <textarea rows={3} {...register("desiredOutcome")} />)}

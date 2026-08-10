@@ -68,6 +68,7 @@ async def test_admin_access_search_shape_and_request_content_denial(
     assert set(body["items"][0]) == {
         "id",
         "username",
+        "email",
         "displayName",
         "role",
         "scope",
@@ -101,7 +102,8 @@ async def test_admin_crud_contract_version_validation_and_session_revocation(
     )
     assert created.status_code == 201, created.text
     account = created.json()
-    assert account["username"] == "admin74"
+    assert account["username"] == "admin100"
+    assert account["email"] == "admin100@istari.example.test"
     assert account["displayName"] == "Fictional New User"
     assert account["scope"] == "Requesting Area C"
     assert account["isActive"] is True

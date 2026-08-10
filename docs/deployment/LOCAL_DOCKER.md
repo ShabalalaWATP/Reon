@@ -137,7 +137,7 @@ must report `ready`, with database, workflow, configuration and maintenance all
 `ok` when their features are enabled.
 
 Open [http://localhost:5173](http://localhost:5173). Synthetic accounts are
-`admin1` to `admin73` with password `admin`; `admin16` is intentionally inactive.
+`admin1` to `admin99` with password `admin`; `admin16` is intentionally inactive.
 The complete mapping is in [Mock users](../reference/MOCK_USERS.md).
 
 Run a representative Camunda exercise after a fresh setup:

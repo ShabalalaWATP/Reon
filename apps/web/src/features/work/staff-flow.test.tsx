@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
@@ -125,14 +125,18 @@ describe("staff work queue", () => {
       }),
     );
 
-    await screen.findByRole("option", { name: "Euan Fraser" });
-    const specialistSelect = screen.getByLabelText("Team Analyst");
+    const specialistSelect = await screen.findByLabelText("Lead Analyst");
+    await waitFor(() => expect(specialistSelect).toBeEnabled());
+    expect(within(specialistSelect).getByRole("option", { name: "Euan Fraser" })).toBeInTheDocument();
     await user.selectOptions(specialistSelect, "specialist-b");
-    await user.click(screen.getByRole("button", { name: "Assign Analyst" }));
+    await user.type(screen.getByLabelText(/^Assignment reason/), "Euan will lead this delivery request.");
+    await user.click(screen.getByRole("button", { name: "Assign Analysts" }));
 
     await waitFor(() =>
       expect(completeBody).toEqual({
         action: "assign",
+        contributorIds: [],
+        reason: "Euan will lead this delivery request.",
         specialistId: "specialist-b",
       }),
     );
@@ -218,7 +222,7 @@ describe("staff work queue", () => {
 
     const user = userEvent.setup();
     renderApp("/delivery/team");
-    expect(await screen.findByLabelText("Team Analyst")).toBeDisabled();
+    expect(await screen.findByLabelText("Lead Analyst")).toBeDisabled();
     expect(eligibleCalls).toBe(0);
     items = [otherOwnerItem];
     await user.click(screen.getAllByRole("button", { name: /Quarterly service readiness summary/ })[1]);

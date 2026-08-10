@@ -24,6 +24,7 @@ export const protectedQueryKeys = {
     ["protected", userId, "notifications", filtersKey] as const,
   personalCalendar: (userId: string, start: string, end: string) =>
     ["protected", userId, "personal-calendar", start, end] as const,
+  profile: (userId: string) => ["protected", userId, "profile"] as const,
   request: (userId: string, requestId: string | undefined) =>
     ["protected", userId, "request", requestId] as const,
   relatedRecords: (userId: string, workItemId: string, query: string) =>
@@ -36,6 +37,7 @@ export const protectedQueryKeys = {
   statistics: (
     userId: string,
     scopeId: string,
+    unitId: string,
     from: string,
     to: string,
     timeZone: string,
@@ -44,6 +46,7 @@ export const protectedQueryKeys = {
     userId,
     "statistics",
     scopeId,
+    unitId,
     from,
     to,
     timeZone,
@@ -53,6 +56,7 @@ export const protectedQueryKeys = {
   statisticsEvolution: (
     userId: string,
     scopeId: string,
+    unitId: string,
     from: string,
     to: string,
     timeZone: string,
@@ -61,6 +65,7 @@ export const protectedQueryKeys = {
     userId,
     "statistics-evolution",
     scopeId,
+    unitId,
     from,
     to,
     timeZone,
@@ -89,6 +94,8 @@ export const protectedQueryKeys = {
     ["protected", userId, "team-workspace", teamId] as const,
   teamWorkspaces: (userId: string) =>
     ["protected", userId, "team-workspaces"] as const,
+  workspaceRecords: (userId: string, unitId: string) =>
+    ["protected", userId, "workspace-records", unitId] as const,
   trackedRequests: (userId: string) =>
     ["protected", userId, "tracked-requests"] as const,
   workItems: (userId: string) => ["protected", userId, "work-items"] as const,

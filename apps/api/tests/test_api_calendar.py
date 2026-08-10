@@ -1,10 +1,10 @@
-"""Canonical calendar API, privacy, commitments, recurrence and capacity."""
-
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, timedelta
 
-from conftest import ApiHarness
+from conftest import ApiHarness, request_payload
+from istari_service.models import RequestStatus, ServiceRequest
+from istari_service.schemas.requests import RequestCreate
 
 
 def _event(
@@ -90,6 +90,21 @@ async def test_manager_team_events_and_subject_commitment_decisions(
     harness = api_harness
     osg = await _workspace(harness, "admin8", "OSG_TEAM")
     lewis_id = str(await harness.user_id("admin11"))
+    requester_id = await harness.user_id("admin2")
+    osg_unit_id = await harness.unit_id("OSG_TEAM")
+    async with harness.sessions() as session, session.begin():
+        request = ServiceRequest(
+            reference="SR-CALENDAR-001",
+            requester_id=requester_id,
+            status=RequestStatus.IN_PROGRESS,
+            current_owner="OSG Team",
+            assigned_delivery_team="OSG Team",
+            assigned_delivery_team_id=osg_unit_id,
+            **RequestCreate.model_validate(request_payload()).model_dump(),
+        )
+        session.add(request)
+        await session.flush()
+        request_id = str(request.id)
     commitment_start = datetime(2026, 9, 1, 9, tzinfo=UTC)
     team_event = await harness.client.post(
         f"/api/v1/team-workspaces/{osg['teamId']}/calendar/events",
@@ -114,6 +129,7 @@ async def test_manager_team_events_and_subject_commitment_decisions(
             ),
             "grantId": osg["grantId"],
             "subjectUserId": lewis_id,
+            "requestId": request_id,
         },
         headers=harness.mutation_headers(),
     )

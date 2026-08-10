@@ -20,8 +20,13 @@ export function AppShell() {
   const location = useLocation();
   const [logoutError, setLogoutError] = useState(false);
   const { capabilities } = useCapabilities();
-  const hasTeamWorkspace = session?.user.role === "DELIVERY_TEAM_LEAD"
-    || session?.user.role === "DELIVERY_SPECIALIST";
+  const hasTeamWorkspace = Boolean(session && [
+    "INTAKE_TRIAGE",
+    "SERVICE_COORDINATION",
+    "OPERATIONS_ALLOCATION",
+    "DELIVERY_TEAM_LEAD",
+    "DELIVERY_SPECIALIST",
+  ].includes(session.user.role));
   const notificationCount = useQuery({
     queryKey: protectedQueryKeys.notificationCount(session?.user.id ?? "anonymous"),
     queryFn: actionNotificationApi.notificationCount,
@@ -57,7 +62,7 @@ export function AppShell() {
   }
   if (teamWorkspaces.data?.items[0]) {
     navigation.splice(navigation.length - 1, 0, {
-      label: "Team workspace",
+      label: "Workspace",
       path: `/teams/${teamWorkspaces.data.items[0].teamId}/overview`,
     });
   }

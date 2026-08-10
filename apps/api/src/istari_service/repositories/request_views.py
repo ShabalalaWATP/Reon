@@ -22,6 +22,7 @@ from istari_service.repositories.projection_pagination import (
     decode_cursor,
     encode_cursor,
 )
+from istari_service.repositories.request_participants import active_contributor_views
 from istari_service.schemas.requests import (
     DeliverableView,
     FeedbackView,
@@ -48,6 +49,7 @@ def summary_from_request(
         required_by=request.required_by,
         created_at=request.created_at,
         updated_at=request.updated_at,
+        version=request.version,
         needs_requester_input=request.status
         in {
             RequestStatus.INFORMATION_REQUIRED,
@@ -162,6 +164,7 @@ async def build_request_detail(
             if specialist
             else None
         ),
+        contributors=await active_contributor_views(session, request_id),
         events=[
             RequestEventView(
                 id=event.id,

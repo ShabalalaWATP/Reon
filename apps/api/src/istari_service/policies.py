@@ -118,6 +118,10 @@ def can_view_request(actor: ActorLike, request: RequestLike) -> bool:
 
     if actor.role == UserRole.REQUESTER:
         return request.requester_id == actor.id
+    if actor.role is UserRole.DELIVERY_SPECIALIST and actor.id in getattr(
+        request, "participant_ids", frozenset()
+    ):
+        return True
     if request.status is RequestStatus.CUSTOMER_INFORMATION_REQUIRED:
         if actor.role is UserRole.DELIVERY_SPECIALIST:
             return request.assigned_specialist_id == actor.id

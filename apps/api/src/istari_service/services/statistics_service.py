@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, time, timedelta
+from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from istari_service.domain import Actor
@@ -32,6 +33,7 @@ class StatisticsService:
         from_date: date,
         to_date: date,
         time_zone_name: str,
+        selected_unit_id: UUID | None = None,
         now: datetime | None = None,
     ) -> StatisticsDashboard:
         if to_date < from_date:
@@ -52,6 +54,7 @@ class StatisticsService:
         dataset = await self._repository.load_dataset(
             actor,
             scope_id=scope_id,
+            selected_unit_id=selected_unit_id,
             start=start,
             end=end,
             at=effective_now,

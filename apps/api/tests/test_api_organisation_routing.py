@@ -15,7 +15,7 @@ from istari_service.models import (
     WorkflowTaskStatus,
 )
 from istari_service.models import WorkflowTask as StoredWorkflowTask
-from istari_service.organisation_models import UserOrganisationMembership
+from istari_service.team_models import TeamMembership
 from istari_service.workflow.variables import completion_variables
 
 
@@ -214,9 +214,9 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
     command_user_id = await harness.user_id("admin5")
     async with harness.sessions() as session, session.begin():
         await session.execute(
-            delete(UserOrganisationMembership).where(
-                UserOrganisationMembership.user_id == command_user_id,
-                UserOrganisationMembership.unit_id == sygoc_id,
+            delete(TeamMembership).where(
+                TeamMembership.user_id == command_user_id,
+                TeamMembership.team_id == sygoc_id,
             )
         )
     assert (await harness.client.get("/api/v1/tracked-requests")).json()["items"] == []

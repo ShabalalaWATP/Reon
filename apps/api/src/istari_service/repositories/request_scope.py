@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+from typing import cast
 from uuid import UUID
 
 from sqlalchemy import Select, or_, select
@@ -22,6 +24,8 @@ from istari_service.repositories.organisation import (
     has_route_membership,
     route_membership_condition,
 )
+from istari_service.request_participant_models import RequestParticipant
+from istari_service.team_models import TeamMembership
 
 
 async def scoped_request(
@@ -37,6 +41,11 @@ async def scoped_request(
     if actor.role is UserRole.REQUESTER:
         query = query.where(ServiceRequest.requester_id == actor.id)
     else:
+        participant_request = await _participant_request(
+            session, request_id, actor, lock=lock
+        )
+        if participant_request is not None:
+            return participant_request
         waiting = await _waiting_clarification_request(
             session,
             request_id,
@@ -57,6 +66,42 @@ async def scoped_request(
     ):
         return None
     return request
+
+
+async def _participant_request(
+    session: AsyncSession,
+    request_id: UUID,
+    actor: Actor,
+    *,
+    lock: bool,
+) -> ServiceRequest | None:
+    if actor.role is not UserRole.DELIVERY_SPECIALIST:
+        return None
+    query = (
+        select(ServiceRequest)
+        .join(
+            RequestParticipant,
+            RequestParticipant.request_id == ServiceRequest.id,
+        )
+        .join(
+            TeamMembership,
+            TeamMembership.team_id == ServiceRequest.assigned_delivery_team_id,
+        )
+        .where(
+            ServiceRequest.id == request_id,
+            RequestParticipant.user_id == actor.id,
+            RequestParticipant.ended_at.is_(None),
+            TeamMembership.user_id == actor.id,
+            TeamMembership.effective_from <= datetime.now(UTC),
+            or_(
+                TeamMembership.effective_until.is_(None),
+                TeamMembership.effective_until > datetime.now(UTC),
+            ),
+        )
+    )
+    if lock:
+        query = query.with_for_update()
+    return cast(ServiceRequest | None, await session.scalar(query))
 
 
 async def _current_actor_is_valid(session: AsyncSession, actor: Actor) -> bool:

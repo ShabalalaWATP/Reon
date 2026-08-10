@@ -14,7 +14,10 @@
 .calendar-day > header strong { display: grid; width: 25px; height: 25px; place-items: center; color: var(--text); font-family: var(--font-mono); font-size: .7rem; }
 .calendar-day--today > header strong { border-radius: 50%; background: var(--accent); color: var(--bg); }
 .calendar-day--outside { background: var(--surface-muted); opacity: .63; }
-.calendar-day__empty { color: color-mix(in srgb, var(--muted) 58%, transparent); font-size: .65rem; }
+.calendar-day__empty { border: 0; padding: 4px 0; background: transparent; color: color-mix(in srgb, var(--muted) 58%, transparent); font-size: .65rem; text-align: left; }
+.calendar-day__empty:hover, .calendar-day__empty:focus-visible { color: var(--accent); }
+.calendar-day__add { float: right; width: 24px; height: 24px; border: 1px solid transparent; border-radius: 50%; background: transparent; color: var(--muted); }
+.calendar-day__add:hover, .calendar-day__add:focus-visible { border-color: var(--accent); color: var(--accent); }
 .calendar-day ol, .calendar-agenda ol { display: grid; gap: 5px; margin: 0; padding: 0; list-style: none; }
 .calendar-event { display: grid; width: 100%; min-width: 0; grid-template-columns: auto 1fr; gap: 3px 7px; border: 0; border-left: 2px solid var(--accent); padding: 7px; background: color-mix(in srgb, var(--accent) 9%, var(--surface-raised)); color: var(--text); text-align: left; }
 .calendar-event:hover { background: color-mix(in srgb, var(--accent) 17%, var(--surface-raised)); }

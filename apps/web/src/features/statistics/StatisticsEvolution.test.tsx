@@ -15,6 +15,7 @@ import { StatisticsExportPanel } from "./StatisticsExportPanel";
 
 const filters: StatisticsEvolutionFilters = {
   scopeId: "platform",
+  unitId: "00000000-0000-4000-8000-000000000001",
   from: "2026-08-01",
   to: "2026-08-07",
   timeZone: "Europe/London",
@@ -23,11 +24,14 @@ const filters: StatisticsEvolutionFilters = {
 const evolution: StatisticsEvolution = {
   scope: {
     id: "platform",
-    unitId: null,
+    unitId: filters.unitId,
     name: "Whole platform",
     kind: "PLATFORM",
     includeDescendants: true,
+    units: [{ id: filters.unitId, parentId: null, name: "JIOC", kind: "ROOT", depth: 0 }],
   },
+  selectedUnit: { id: filters.unitId, parentId: null, name: "JIOC", kind: "ROOT", depth: 0 },
+  breadcrumb: [{ id: filters.unitId, parentId: null, name: "JIOC", kind: "ROOT", depth: 0 }],
   range: {
     fromDate: filters.from,
     toDate: filters.to,
@@ -52,6 +56,7 @@ const evolution: StatisticsEvolution = {
     { key: "manager", label: "Manager review", activeCount: 4, medianAgeHours: 8, p90AgeHours: 26, overdueCount: 1, suppressed: false },
     { key: "quality", label: "Quality review", activeCount: 2, medianAgeHours: 4, p90AgeHours: 12, overdueCount: 0, suppressed: false },
     { key: "allocation", label: "Team allocation", activeCount: 3, medianAgeHours: 9, p90AgeHours: 30, overdueCount: 1, suppressed: false },
+    { key: "unavailable", label: "Unavailable stage", activeCount: null, medianAgeHours: null, p90AgeHours: null, overdueCount: null, suppressed: false },
   ],
   capacity: [
     { date: "2026-08-06", availableMinutes: 1_200, reservedMinutes: 240, activeWorkMinutes: 600, projectedDemandMinutes: 900, estimate: true },
@@ -60,14 +65,17 @@ const evolution: StatisticsEvolution = {
   releases: [
     { key: "released", label: "Products released", count: 5, medianHours: 18, suppressed: false },
     { key: "replaced", label: "Products replaced", count: 1, medianHours: null, suppressed: false },
+    { key: "unavailable", label: "Unavailable release", count: null, medianHours: null, suppressed: false },
   ],
   notifications: [
     { key: "routing", label: "Routing actions", count: 9, medianResponseHours: 2, unresolvedCount: 2, suppressed: false },
     { key: "release", label: "Release actions", count: 4, medianResponseHours: null, unresolvedCount: 1, suppressed: false },
+    { key: "unavailable", label: "Unavailable actions", count: null, medianResponseHours: null, unresolvedCount: null, suppressed: false },
   ],
   iterations: [
     { key: "pilot", label: "Pilot iteration", committedCount: 8, completedCount: 6, completionPercentage: 75, suppressed: false },
     { key: "new", label: "New iteration", committedCount: 0, completedCount: 0, completionPercentage: null, suppressed: false },
+    { key: "unavailable", label: "Unavailable iteration", committedCount: null, completedCount: null, completionPercentage: null, suppressed: false },
   ],
   projection: {
     label: "Deterministic estimate from authorised aggregate facts",
@@ -96,7 +104,8 @@ describe("enhanced scoped statistics", () => {
     const user = userEvent.setup();
     const view = render(<TestProviders><StatisticsEvolutionView data={evolution} filters={filters} session={adminSession} /></TestProviders>);
 
-    expect(screen.getByRole("table", { name: "Period comparison data" })).toHaveTextContent("Small cohortSuppressedSuppressedSuppressed");
+    expect(screen.getByText(/1 detailed measure is hidden/)).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "Period comparison data" })).not.toHaveTextContent("Small cohort");
     expect(screen.getByRole("table", { name: "Stage bottlenecks data" })).toHaveTextContent("Manager review");
     expect(screen.getByRole("table", { name: "Capacity and demand data" })).toHaveTextContent("Estimate");
     expect(screen.getByRole("table", { name: "Release cycle data" })).toHaveTextContent("Products replaced");
@@ -130,13 +139,35 @@ describe("enhanced scoped statistics", () => {
       exports: { csv: { state: "SUPPRESSED" as const, reason: "Small cohort." }, pdf: { state: "PENDING" as const, reason: "Policy refresh pending." } },
     };
     render(<TestProviders><StatisticsEvolutionView data={suppressed} filters={filters} session={adminSession} /></TestProviders>);
-    expect(screen.getAllByText(/No unsuppressed/)).toHaveLength(5);
-    expect(screen.getByText("No capacity trend is available.")).toBeInTheDocument();
-    expect(screen.getByText(/No projection periods are available/)).toBeInTheDocument();
-    expect(screen.getAllByText("No aggregate records in this period.")).toHaveLength(2);
-    expect(screen.getAllByText(/not yet projected/)).toHaveLength(8);
+    expect(screen.getByText(/5 detailed measures are hidden/)).toBeInTheDocument();
+    expect(screen.getByText("No detailed operational measures are available for this scope and period.")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Capacity and demand" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Demand projection" })).not.toBeInTheDocument();
     expect(screen.getByText("SUPPRESSED: Small cohort.")).toBeInTheDocument();
     expect(screen.getByText("PENDING: Policy refresh pending.")).toBeInTheDocument();
+  });
+
+  it("renders only populated evidence panels without a privacy notice", () => {
+    const capacityOnly = {
+      ...evolution,
+      comparison: [],
+      bottlenecks: [],
+      releases: [],
+      notifications: [],
+      iterations: [],
+      projection: { ...evolution.projection, periods: [] },
+    };
+
+    render(<TestProviders><StatisticsEvolutionView data={capacityOnly} filters={filters} session={adminSession} /></TestProviders>);
+
+    expect(screen.getByRole("heading", { name: "Capacity and demand" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Period comparison" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Stage bottlenecks" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Release cycle" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Notification response" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Iteration commitments" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Demand projection" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/detailed measure.*hidden/)).not.toBeInTheDocument();
   });
 
   it("retries projection reads and exposes pending, unsafe and failed export states", async () => {

@@ -40,9 +40,10 @@ describe("organisation hierarchy", () => {
     expect(within(hierarchy).getByText("Aurora Ops")).toBeInTheDocument();
     expect(within(hierarchy).getByText("Vertex Ops")).toBeInTheDocument();
     const osg = within(hierarchy).getByText("OSG Team").closest("article")!;
-    expect(within(osg).getByText("Staffed")).toBeInTheDocument();
+    expect(within(osg).getByText("Team staffed")).toBeInTheDocument();
     const alternative = within(hierarchy).getByText("Cedar Team").closest("article")!;
-    expect(within(alternative).getByText("Staffed")).toBeInTheDocument();
+    expect(within(alternative).getByText("Team staffed")).toBeInTheDocument();
+    expect(within(hierarchy).getAllByText("Routing function").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Organisation" })).toHaveClass("nav-link--active");
     expect(await axe(view.container)).toHaveNoViolations();
   });

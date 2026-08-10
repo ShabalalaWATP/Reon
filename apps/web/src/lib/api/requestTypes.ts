@@ -25,6 +25,7 @@ export type RequestSummary = {
   requiredBy: string;
   createdAt: string;
   updatedAt: string;
+  version: number;
   needsRequesterInput: boolean;
   productAvailable: boolean;
   feedbackSubmitted: boolean;
@@ -95,6 +96,7 @@ export type RequestDetail = RequestSummary & {
   requester: { id: string; displayName: string };
   assignedDeliveryTeam: string | null;
   assignedSpecialist: { id: string; displayName: string } | null;
+  contributors: { id: string; displayName: string }[];
   events: RequestEvent[];
   eventsNextCursor?: string | null;
   deliverable: Deliverable | null;
@@ -106,7 +108,6 @@ export type RequestDetail = RequestSummary & {
 export type RequestCreateInput = Pick<
   RequestDetail,
   | "title"
-  | "serviceCategory"
   | "description"
   | "questionToAnswer"
   | "desiredOutcome"
@@ -128,7 +129,6 @@ export type RequestCreateInput = Pick<
 
 export type RequestDraftInput = {
   title?: string | null;
-  serviceCategory?: string | null;
   description?: string | null;
   questionToAnswer?: string | null;
   desiredOutcome?: string | null;
@@ -168,4 +168,9 @@ export type FeedbackInput = {
   submissionKey?: string;
   rating: number;
   comments: string;
+};
+
+export type RequestCancelInput = {
+  expectedVersion: number;
+  reason: string;
 };

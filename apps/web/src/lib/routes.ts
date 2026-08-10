@@ -50,13 +50,17 @@ export const trackingRoles: UserRole[] = [
 const organisationLink = { label: "Organisation", path: "/organisation" };
 
 export function homeRouteForRole(role: UserRole, capabilities: ServerCapabilities) {
+  if (role === "REQUESTER") return roleRoutes.REQUESTER;
+  if (
+    capabilities.statistics
+    && ["PLATFORM_ADMIN", "INTAKE_TRIAGE", "SERVICE_COORDINATION", "OPERATIONS_ALLOCATION", "DELIVERY_TEAM_LEAD", "QUALITY_RELEASE"].includes(role)
+  ) return "/overview";
   return capabilities.myWork ? "/my-work" : roleRoutes[role];
 }
 
 export function navigationForRole(role: UserRole, capabilities = disabledCapabilities): NavigationItem[] {
   if (role === "REQUESTER") {
     return [
-      ...(capabilities.myWork ? [{ label: "My work", path: "/my-work" }] : []),
       { label: "My requests", path: "/requests" },
       { label: "New request", path: "/requests/new" },
       organisationLink,
@@ -64,6 +68,7 @@ export function navigationForRole(role: UserRole, capabilities = disabledCapabil
   }
   if (role === "PLATFORM_ADMIN") {
     return [
+      ...(capabilities.statistics ? [{ label: "Overview", path: "/overview" }] : []),
       ...(capabilities.myWork ? [{ label: "My work", path: "/my-work" }] : []),
       { label: "User accounts", path: "/admin/users" },
       ...(capabilities.configuration ? [{ label: "Configuration", path: "/admin/configuration" }] : []),
@@ -71,6 +76,7 @@ export function navigationForRole(role: UserRole, capabilities = disabledCapabil
     ];
   }
   const navigation = [
+    ...(role !== "DELIVERY_SPECIALIST" && capabilities.statistics ? [{ label: "Overview", path: "/overview" }] : []),
     ...(capabilities.myWork ? [{ label: "My work", path: "/my-work" }] : []),
     { label: role === "DELIVERY_SPECIALIST" ? "Production queue" : "Work queue", path: queueRoutes[role]! },
   ];

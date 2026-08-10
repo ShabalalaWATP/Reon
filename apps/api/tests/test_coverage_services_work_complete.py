@@ -106,8 +106,12 @@ async def test_assignment_validation_rejects_invalid_specialists() -> None:
             destination_unit_id=uuid4(),
         ),
     )
-    payload = AssignSpecialist(action="assign", specialist_id=uuid4())
-    with pytest.raises(InvalidAction, match="outside this delivery team"):
+    payload = AssignSpecialist(
+        action="assign",
+        specialist_id=uuid4(),
+        reason="The Manager selected the accountable delivery Lead.",
+    )
+    with pytest.raises(InvalidAction, match="active member of this team"):
         await service._validate_assignment(value.record, payload)
     repository.found_specialist = actor(UserRole.DELIVERY_TEAM_LEAD)
     with pytest.raises(InvalidAction):

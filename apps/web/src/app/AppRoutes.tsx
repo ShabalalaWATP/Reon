@@ -41,8 +41,21 @@ const TeamWorkspacePage = lazy(() => import("../features/teams/TeamWorkspacePage
   .then(({ TeamWorkspacePage: page }) => ({ default: page })));
 const StaffQueuePage = lazy(() => import("../features/work/StaffQueuePage")
   .then(({ StaffQueuePage: page }) => ({ default: page })));
+const ProfilePage = lazy(() => import("../features/profile/ProfilePage")
+  .then(({ ProfilePage: page }) => ({ default: page })));
+const RoleOverviewPage = lazy(() => import("../features/overview/RoleOverviewPage")
+  .then(({ RoleOverviewPage: page }) => ({ default: page })));
 
 type CapabilityName = keyof ServerCapabilities;
+const staffMyWorkRoles: UserRole[] = [
+  "PLATFORM_ADMIN",
+  "INTAKE_TRIAGE",
+  "SERVICE_COORDINATION",
+  "OPERATIONS_ALLOCATION",
+  "DELIVERY_TEAM_LEAD",
+  "DELIVERY_SPECIALIST",
+  "QUALITY_RELEASE",
+];
 
 export function AppRoutes() {
   return (
@@ -53,7 +66,13 @@ export function AppRoutes() {
           <Route element={<AppShell />}>
             <Route index element={<RoleHome />} />
             <Route element={<CapabilityGate capability="myWork" />}>
-              <Route path="my-work" element={<MyWorkPage />} />
+              <Route element={<RoleGate allowed={staffMyWorkRoles} />}>
+                <Route path="my-work" element={<MyWorkPage />} />
+              </Route>
+            </Route>
+            <Route path="profile" element={<ProfilePage />} />
+            <Route element={<CapabilityGate capability="statistics" />}>
+              <Route path="overview" element={<RoleOverviewPage />} />
             </Route>
             <Route element={<CapabilityGate capability="notifications" />}>
               <Route path="notifications" element={<NotificationsPage />} />
@@ -155,13 +174,12 @@ function HomeRedirect() {
   const { session } = useAuth();
   const { capabilities, isPending } = useCapabilities();
   if (isPending) return <PageState kind="loading" title="Opening ISTARI" />;
-  return <Navigate replace to={session ? homeRouteForRole(session.user.role, capabilities) : "/login"} />;
+  return <Navigate replace to={homeRouteForRole(session!.user.role, capabilities)} />;
 }
 
 function RoleHome() {
   const { session } = useAuth();
   const { capabilities, isPending } = useCapabilities();
-  if (!session) return null;
   if (isPending) return <PageState kind="loading" title="Opening ISTARI" />;
-  return <Navigate replace to={homeRouteForRole(session.user.role, capabilities)} />;
+  return <Navigate replace to={homeRouteForRole(session!.user.role, capabilities)} />;
 }

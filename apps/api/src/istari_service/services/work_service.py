@@ -264,24 +264,31 @@ class WorkService:
         if not isinstance(payload, AssignSpecialist):
             return
         team_id = work.request.assigned_delivery_team_id
-        specialist = (
-            await self._repository.find_specialist(payload.specialist_id)
-            if team_id is None
-            else await self._repository.find_specialist(
-                payload.specialist_id,
-                delivery_team_id=team_id,
+        selected_ids = [payload.specialist_id, *payload.contributor_ids]
+        if len(set(selected_ids)) != len(selected_ids):
+            raise InvalidAction("The Lead Analyst cannot also be a Contributor.")
+        specialists = [
+            (
+                await self._repository.find_specialist(user_id)
+                if team_id is None
+                else await self._repository.find_specialist(
+                    user_id,
+                    delivery_team_id=team_id,
+                )
             )
-        )
-        if (
+            for user_id in selected_ids
+        ]
+        if any(
             specialist is None
             or specialist.role != UserRole.DELIVERY_SPECIALIST
             or (
                 team_id is None
                 and specialist.scope != work.request.assigned_delivery_team
             )
+            for specialist in specialists
         ):
             raise InvalidAction(
-                "The selected specialist is outside this delivery team."
+                "Every selected Analyst must be an active member of this team."
             )
 
     @staticmethod

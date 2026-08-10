@@ -14,6 +14,7 @@ from istari_service.policies import can_view_request
 from istari_service.schemas.requests import (
     FeedbackCreate,
     FeedbackView,
+    RequestCancel,
     RequestCreate,
     RequestDetail,
     RequestSummary,
@@ -67,6 +68,13 @@ class RequestRepository(Protocol):
         actor: Actor,
         command: FeedbackCreate,
     ) -> FeedbackView: ...
+
+    async def cancel(
+        self,
+        request_id: UUID,
+        actor: Actor,
+        command: RequestCancel,
+    ) -> RequestDetail: ...
 
 
 class RequestService:
@@ -165,6 +173,23 @@ class RequestService:
         if record.status != RequestStatus.COMPLETED:
             raise FeedbackUnavailable()
         return await self._repository.add_feedback(request_id, actor, command)
+
+    async def cancel(
+        self,
+        actor: Actor,
+        request_id: UUID,
+        command: RequestCancel,
+    ) -> RequestDetail:
+        record = await self._repository.get_record_for_actor(
+            request_id, actor, lock=True
+        )
+        if (
+            record is None
+            or actor.role is not UserRole.REQUESTER
+            or record.requester_id != actor.id
+        ):
+            raise ObjectNotFound()
+        return await self._repository.cancel(request_id, actor, command)
 
     async def download_product(
         self,

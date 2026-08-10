@@ -7,8 +7,10 @@ from uuid import uuid4
 
 from sqlalchemy import select
 
-from conftest import ApiHarness
+from conftest import ApiHarness, request_payload
 from istari_service.calendar_models import CalendarCapacityPreview
+from istari_service.models import RequestStatus, ServiceRequest
+from istari_service.schemas.requests import RequestCreate
 
 
 def event_payload(
@@ -134,12 +136,28 @@ async def test_team_calendar_enforces_exact_manager_and_subject_authority(
     assert denied_change.status_code == 404
 
     osg = await workspace(harness)
+    requester_id = await harness.user_id("admin2")
+    osg_unit_id = await harness.unit_id("OSG_TEAM")
+    async with harness.sessions() as session, session.begin():
+        request = ServiceRequest(
+            reference="SR-CALENDAR-AUTHORITY",
+            requester_id=requester_id,
+            status=RequestStatus.IN_PROGRESS,
+            current_owner="OSG Team",
+            assigned_delivery_team="OSG Team",
+            assigned_delivery_team_id=osg_unit_id,
+            **RequestCreate.model_validate(request_payload()).model_dump(),
+        )
+        session.add(request)
+        await session.flush()
+        request_id = str(request.id)
     non_member = await harness.user_id("admin1")
     invalid_subject = await harness.client.post(
         f"/api/v1/team-workspaces/{osg['teamId']}/calendar/commitments",
         json={
             **event_payload(visibility="TEAM_DETAIL"),
             "grantId": osg["grantId"],
+            "requestId": request_id,
             "subjectUserId": str(non_member),
         },
         headers=harness.mutation_headers(),
@@ -151,6 +169,7 @@ async def test_team_calendar_enforces_exact_manager_and_subject_authority(
         json={
             **event_payload(visibility="TEAM_DETAIL"),
             "grantId": osg["grantId"],
+            "requestId": request_id,
             "subjectUserId": str(analyst_id),
         },
         headers=harness.mutation_headers(),

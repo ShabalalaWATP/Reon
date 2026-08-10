@@ -19,10 +19,13 @@ from istari_service import (
     organisation_models,
     outbox_model,
     planning_analytics_models,
+    platform_security_models,
     product_models,
     related_record_models,
     request_draft_models,
+    request_participant_models,
     team_models,
+    workspace_collaboration_models,
 )
 
 # Importing every module registers its ORM tables with the shared metadata. Keeping
@@ -47,8 +50,11 @@ REGISTERED_MODEL_MODULES = (
     organisation_models,
     outbox_model,
     planning_analytics_models,
+    platform_security_models,
     product_models,
     related_record_models,
     request_draft_models,
+    request_participant_models,
     team_models,
+    workspace_collaboration_models,
 )

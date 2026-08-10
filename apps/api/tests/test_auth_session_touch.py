@@ -36,6 +36,7 @@ async def test_find_session_does_not_rewrite_a_recent_last_seen(
     now = datetime.now(UTC)
     user = User(
         username="recent-session@example.test",
+        email="recent-session@example.test",
         display_name="Recent Session",
         password_hash="stored-hash",
         role=UserRole.REQUESTER,

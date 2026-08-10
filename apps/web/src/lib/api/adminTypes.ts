@@ -5,9 +5,11 @@ export type UserMembership = {
   organisationUnitId: string;
   organisationUnitName: string;
   organisationUnitKind: OrganisationUnit["kind"];
+  workspacePosition: "MANAGER" | "MEMBER";
 };
 
-export type AdminUser = User & {
+export type AdminUser = Omit<User, "organisationUnitIds"> & {
+  email: string;
   isActive: boolean;
   version: number;
   memberships: UserMembership[];
@@ -17,9 +19,11 @@ export type AdminUser = User & {
 
 export type AdminUserWriteInput = {
   displayName: string;
+  email: string;
   role: UserRole;
   scope: string;
   organisationUnitIds: string[];
+  workspacePosition?: "MANAGER" | "MEMBER" | null;
 };
 
 export type AdminUserUpdateInput = AdminUserWriteInput & {

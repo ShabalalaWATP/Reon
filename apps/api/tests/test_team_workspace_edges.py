@@ -11,14 +11,12 @@ from conftest import ApiHarness
 from istari_service.errors import InvalidAdministrationChange
 from istari_service.models import User
 from istari_service.organisation_models import UserOrganisationMembership
-from istari_service.repositories.team_workspaces import (
-    SqlAlchemyTeamWorkspaceRepository,
-)
 from istari_service.team_membership_admin import align_admin_team_membership
 from istari_service.team_membership_seed import seed_team_membership_history
 from istari_service.team_membership_sync import synchronise_due_team_memberships
 from istari_service.team_models import TeamMembership
 from istari_service.team_workspace_views import _as_utc
+from istari_service.workspace_workloads import active_work_counts
 
 
 async def _access(harness: ApiHarness, username: str, team_code: str) -> dict:
@@ -297,8 +295,7 @@ async def test_admin_moves_preserve_timeline_and_small_helpers(
         )
         assert [item.team_id for item in history] == [cedar_id, quartz_id]
         assert all(item.effective_until is not None for item in history)
-        repository = SqlAlchemyTeamWorkspaceRepository(session)
-        assert await repository._active_work_counts(set()) == {}
+        assert await active_work_counts(session, set()) == {}
         assert _as_utc(datetime.now(UTC)).tzinfo is UTC
         assert (
             await synchronise_due_team_memberships(

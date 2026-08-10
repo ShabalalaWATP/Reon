@@ -8,7 +8,6 @@ from uuid import UUID
 from istari_service.domain import Actor
 from istari_service.errors import InvalidRosterChange, TeamWorkspaceNotFound
 from istari_service.management_models import ManagementAction
-from istari_service.models import UserRole
 from istari_service.repositories.management import resolve_management_scope
 from istari_service.repositories.team_memberships import (
     SqlAlchemyTeamMembershipRepository,
@@ -45,10 +44,7 @@ class TeamWorkspaceService:
 
     async def people(self, actor: Actor, team_id: UUID) -> list[TeamMember]:
         access = await self._views.require_read(actor.id, team_id)
-        reveal_reasons = (
-            actor.role is UserRole.DELIVERY_TEAM_LEAD
-            and ManagementAction.ROSTER in access.permissions
-        )
+        reveal_reasons = ManagementAction.ROSTER in access.permissions
         return await self._views.people(
             actor.id, team_id, reveal_reasons=reveal_reasons
         )
@@ -121,10 +117,6 @@ class TeamWorkspaceService:
         *,
         lock: bool = False,
     ) -> None:
-        _require(
-            actor.role is UserRole.DELIVERY_TEAM_LEAD,
-            TeamWorkspaceNotFound(),
-        )
         scope = await resolve_management_scope(
             self._views.session,
             subject_user_id=actor.id,

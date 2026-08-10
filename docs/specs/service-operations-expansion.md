@@ -89,7 +89,8 @@ The local fixture grants are:
 - `admin4`: JIOC statistics with descendants;
 - `admin5`: separate descendant statistics grants for DIGOC, SYGOC and MYGOC;
 - `admin6`: NCGI-A Ops, Aurora Ops, Vertex Ops, Nimbus Ops and Parallax Ops;
-- `admin10`: Horizon Ops, Meridian Ops, Solstice Ops and Frontier Ops; and
+- `admin10`: Horizon Ops, Meridian Ops, Solstice Ops and Frontier Ops;
+- `admin15`: JIOC statistics for the shared QC function; and
 - every active Team Manager: their exact team for statistics, roster, calendar,
   board and capacity.
 
@@ -110,7 +111,6 @@ expected version, so two tabs cannot silently overwrite one another.
 Every displayed business field is mandatory at final submission:
 
 - title;
-- service category;
 - description of the need;
 - specific question to answer;
 - desired outcome;
@@ -183,11 +183,13 @@ loop. Older workflow instances remain on their original process definition.
 
 ### Scope rules
 
-- JIOC grant: the JIOC aggregate and authorised descendant comparisons.
-- Command grant: that command and its descendants only.
-- Ops grant: that Ops group and its direct teams only.
+- JIOC grant: JIOC and every configured descendant, selectable one node at a
+  time.
+- Command grant: that command and any descendant, never a parent or sibling.
+- Ops grant: that Ops group and its direct teams, never its command aggregate or
+  an Ops sibling.
 - Team grant: that exact team only.
-- Platform Administrator: whole-platform aggregate and health only, with no
+- Platform Administrator: any configured node from the platform root, with no
   request narrative, Customer identity, product or feedback comment.
 
 An API request names one grant and a unit within its authority. The server derives
@@ -213,6 +215,14 @@ All measures derive from content-free request facts and stage intervals.
 Definitions, time range, time zone, last refresh and suppressed values are shown.
 Every graph has a table and textual summary. Pagination and query bounds prevent
 large hierarchy or date-range scans.
+
+The default landing page is deliberately smaller than this workspace. Routing
+users see their immediate demand, actions and direct child organisations. Team
+Managers land on the existing team Overview. QC and Platform Administrators use
+role-specific overviews. My work remains the personal action register, and My
+requests remains the Customer request register. The complete selection and
+presentation contract is in
+[`hierarchical-operational-overviews.md`](hierarchical-operational-overviews.md).
 
 ## Team workspace
 

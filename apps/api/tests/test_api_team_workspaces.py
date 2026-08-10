@@ -74,8 +74,28 @@ async def test_workspace_access_overview_people_activity_and_scope_boundaries(
     assert denied.status_code == 404
 
     await harness.login("admin5")
-    no_team = await harness.client.get("/api/v1/team-workspaces")
-    assert no_team.json() == {"items": []}
+    routing_workspaces = await harness.client.get("/api/v1/team-workspaces")
+    assert routing_workspaces.status_code == 200
+    assert {item["teamCode"] for item in routing_workspaces.json()["items"]} == {
+        "DIGOC",
+        "SYGOC",
+        "MYGOC",
+    }
+    assert all(
+        item["unitKind"] == "COMMAND"
+        and item["workspacePosition"] == "MANAGER"
+        and item["views"]
+        == [
+            "OVERVIEW",
+            "QUEUE",
+            "CALENDAR",
+            "PEOPLE",
+            "STATISTICS",
+            "HANDOVER",
+            "ACTIVITY",
+        ]
+        for item in routing_workspaces.json()["items"]
+    )
     unknown = await harness.client.get(f"/api/v1/team-workspaces/{quartz_id}")
     assert unknown.status_code == 404
 

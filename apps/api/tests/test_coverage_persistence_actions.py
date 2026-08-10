@@ -63,8 +63,10 @@ async def database() -> AsyncIterator[
 
 
 def make_user(role: UserRole, scope: str) -> User:
+    username = f"user.{uuid4().hex}@example.test"
     return User(
-        username=f"user.{uuid4().hex}@example.test",
+        username=username,
+        email=username,
         display_name="Synthetic User",
         password_hash="$argon2id$synthetic",
         role=role,
@@ -163,7 +165,11 @@ async def test_validation_and_every_persisted_work_effect(
             session,
             request,
             reviewer_actor,
-            AssignSpecialist(action="assign", specialist_id=author.id),
+            AssignSpecialist(
+                action="assign",
+                specialist_id=author.id,
+                reason="The Manager selected the accountable delivery Lead.",
+            ),
         )
         assert request.required_capabilities == ["Writing"]
         assert request.assigned_specialist_id == author.id

@@ -2,9 +2,9 @@
 
 ## Current implementation evidence
 
-Current-head record reviewed on 9 August 2026.
+Current-head record reviewed on 10 August 2026.
 
-The current migration head is `0022_customer_intake`. The application,
+The current migration head is `0028_access_classification`. The application,
 restore script and restore verifier use that same default rather than a stale
 embedded revision. Empty-database upgrade, metadata drift and downgrade/re-upgrade
 checks run through the isolated compatibility harness as release gates. The
@@ -19,8 +19,10 @@ performance indexes in ORM metadata. Revision 0022 replaces internal routing
 questions on Customer requests with the richer Customer-owned requirement set
 and adds reviewed account-request records. It preserves sealed configuration
 snapshots rather than rewriting their historical field lists.
-`scripts/restore-postgres.ps1` and the maintenance verifier now default to the
-exact `0022_customer_intake` revision.
+Revision 0028 adds normalised unique account email, the versioned global visual
+classification singleton and privacy-minimised password-assistance attempt
+records. `scripts/restore-postgres.ps1` and the maintenance verifier now default
+to the exact `0028_access_classification` revision.
 
 The PostgreSQL backup and restore controls are implemented in:
 
@@ -39,8 +41,33 @@ Static PowerShell parsing and control-contract checks pass.
 
 ## Current-head PostgreSQL migration and guard evidence
 
+On 10 August 2026 a separate disposable PostgreSQL 17 database created from
+`template0` was upgraded from empty through every revision to
+`0028_access_classification`, downgraded to `0027_workspace_collaboration`,
+re-upgraded and checked with `alembic check`. The final revision was exactly the
+single head and no model drift was detected. The first rehearsal exposed a
+text-typed singleton UUID bind that SQLite had accepted; the migration was fixed
+to use an explicit UUID bind and the entire clean sequence then passed. The
+temporary database was removed after verification. The subsequent live
+classification update exposed a second SQLite-masked boundary: SQLAlchemy was
+persisting the Python enum member name `OFFICIAL_SENSITIVE` while the migration
+constraint correctly accepts the public value `OFFICIAL-SENSITIVE`. Enum
+persistence now uses declared string values, a metadata regression test protects
+the mapping, and the PostgreSQL update succeeded before the singleton was
+restored to `OFFICIAL`.
+
+On 10 August 2026 a disposable PostgreSQL 17 database created from `template0`
+was upgraded from an empty application schema through every revision to
+`0027_workspace_collaboration`. It then downgraded through the four unified
+workspace revisions to `0023_cancellation_profiles`, re-upgraded to head and
+passed `alembic check` with no new upgrade operations. The temporary database
+was removed after the successful rehearsal. This proves clean installation and
+reversibility of the new membership, participant, calendar-link and
+collaboration schema. It does not replace the multi-store backup and restore
+exercise required for a connected production release.
+
 On 9 August 2026 the retained synthetic local PostgreSQL 17.10 database migrated
-from `0011_operational_evidence` through `0022_customer_intake`. The first
+from `0011_operational_evidence` through `0027_workspace_collaboration`. The first
 pre-release rehearsal correctly rejected an attempted update to a sealed
 configuration snapshot, rolled the transaction back and exposed that the data
 rewrite was unnecessary. Revision 0022 was corrected to leave sealed history
@@ -123,7 +150,6 @@ The rehearsal used the same PostgreSQL native operations and verification comman
 as the operator scripts. It is pilot evidence, not proof of enterprise backup
 storage, encryption, key escrow or a hosted disaster-recovery service.
 
-The retained-data 0022 upgrade and clean metadata check are not a complete
-current-head backup and restore rehearsal. A fresh current-head PostgreSQL
-downgrade/re-upgrade and multi-store recovery rehearsal remain open Product
-Evolution gates.
+The current-head clean install and downgrade/re-upgrade rehearsal is complete.
+A current-candidate backup/restore run covering PostgreSQL, product storage and
+workflow state together remains an open Product Evolution gate.

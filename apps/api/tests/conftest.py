@@ -81,7 +81,6 @@ def pytest_runtestloop(session: pytest.Session) -> Any:
 def request_payload(**updates: Any) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "title": "Prepare a synthetic service summary",
-        "serviceCategory": "Research support",
         "description": (
             "Provide a structured summary for a fictional planning exercise."
         ),

@@ -119,8 +119,24 @@ async def test_complete_representative_workflow_and_feedback(
     await _complete(
         harness,
         await _claim_current(harness),
-        {"action": "assign", "specialistId": str(specialist_id)},
+        {
+            "action": "assign",
+            "specialistId": str(specialist_id),
+            "contributorIds": [str(await harness.user_id("admin12"))],
+            "reason": "The Manager selected the Lead and supporting Contributor.",
+        },
     )
+
+    contributor_session = await harness.login("admin12")
+    assert contributor_session["user"]["role"] == "DELIVERY_SPECIALIST"
+    contributor_detail = await harness.client.get(f"/api/v1/requests/{request_id}")
+    assert contributor_detail.status_code == 200
+    assert contributor_detail.json()["contributors"] == [
+        {
+            "id": str(await harness.user_id("admin12")),
+            "displayName": "Nathan Patterson",
+        }
+    ]
 
     specialist_session = await harness.login("admin11")
     assert specialist_session["user"]["scope"] == "OSG Team"

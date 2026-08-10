@@ -33,7 +33,7 @@ def test_documented_user_directory_matches_every_seeded_identity() -> None:
         for identity in DEMO_IDENTITIES
     }
     assert documented == expected
-    assert list(documented) == [f"admin{index}" for index in range(1, 74)]
+    assert list(documented) == [f"admin{index}" for index in range(1, 100)]
 
 
 def test_mock_user_reference_is_a_locator_not_a_duplicate_roster() -> None:

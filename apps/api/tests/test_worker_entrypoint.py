@@ -30,6 +30,7 @@ def settings(*, notifications_enabled: bool = False) -> Settings:
             False,
             {
                 "workflow-start-dispatch",
+                "workflow-cancellation-dispatch",
                 "workflow-command-dispatch",
                 "workflow-reconciliation",
                 "membership-projection",
@@ -39,6 +40,7 @@ def settings(*, notifications_enabled: bool = False) -> Settings:
             True,
             {
                 "workflow-start-dispatch",
+                "workflow-cancellation-dispatch",
                 "workflow-command-dispatch",
                 "workflow-reconciliation",
                 "notification-projection",

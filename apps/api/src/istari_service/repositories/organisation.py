@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, and_, delete, exists, or_, select
+from sqlalchemy import ColumnElement, and_, delete, exists, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.domain import Actor
@@ -23,6 +24,7 @@ from istari_service.repositories.configuration_policies import (
 )
 from istari_service.repositories.organisation_tracking import tracked_requests
 from istari_service.repositories.routing_options import routing_workspace
+from istari_service.request_participant_models import RequestParticipant
 from istari_service.schemas.organisation import (
     OrganisationUnitView,
     RoutingOptionsWorkspace,
@@ -156,6 +158,7 @@ async def apply_routing_selection(
 ) -> None:
     if routing is None:
         return
+    await _end_request_participants(session, request)
     await session.execute(
         delete(RequestRouteSelection).where(
             RequestRouteSelection.request_id == request.id,
@@ -191,6 +194,8 @@ async def clear_route_from(
     request: ServiceRequest,
     position: int,
 ) -> None:
+    if position <= 3:
+        await _end_request_participants(session, request)
     await session.execute(
         delete(RequestRouteSelection).where(
             RequestRouteSelection.request_id == request.id,
@@ -315,3 +320,21 @@ def _clear_team(request: ServiceRequest) -> None:
     request.assigned_delivery_team_id = None
     request.assigned_specialist_id = None
     request.awaiting_team_staffing = False
+
+
+async def _end_request_participants(
+    session: AsyncSession, request: ServiceRequest
+) -> None:
+    now = datetime.now(UTC)
+    await session.execute(
+        update(RequestParticipant)
+        .where(
+            RequestParticipant.request_id == request.id,
+            RequestParticipant.ended_at.is_(None),
+        )
+        .values(
+            ended_at=now,
+            end_reason="The delivery route changed.",
+            version=RequestParticipant.version + 1,
+        )
+    )

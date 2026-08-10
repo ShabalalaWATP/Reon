@@ -13,7 +13,6 @@ from istari_service.schemas.requests import CustomerUrgency, RequestCreate, Sens
 
 class DraftFields(StrictApiModel):
     title: str | None = Field(default=None, max_length=160)
-    service_category: str | None = Field(default=None, max_length=80)
     description: str | None = Field(default=None, max_length=5000)
     question_to_answer: str | None = Field(default=None, max_length=2000)
     desired_outcome: str | None = Field(default=None, max_length=2000)
@@ -49,7 +48,6 @@ class RequestDraftView(ApiModel):
     id: UUID
     requester_id: UUID
     title: str | None
-    service_category: str | None
     description: str | None
     question_to_answer: str | None
     desired_outcome: str | None

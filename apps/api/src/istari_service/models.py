@@ -129,10 +129,15 @@ class User(TimestampMixin, Base):
     __table_args__ = (Index("ix_users_updated_id", "updated_at", "id"),)
 
     username: Mapped[str] = mapped_column(String(254), unique=True, index=True)
+    email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(120))
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[UserRole] = mapped_column(_enum(UserRole, "user_role"), index=True)
     scope: Mapped[str] = mapped_column(String(120))
+    profile_team: Mapped[str | None] = mapped_column(String(120))
+    rank_or_grade: Mapped[str | None] = mapped_column(String(120))
+    service_number: Mapped[str | None] = mapped_column(String(80))
+    additional_information: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default=text("true")
     )
@@ -190,7 +195,9 @@ class ServiceRequest(TimestampMixin, Base):
         ForeignKey("users.id", ondelete="RESTRICT"), index=True
     )
     title: Mapped[str] = mapped_column(String(160))
-    service_category: Mapped[str] = mapped_column(String(80))
+    service_category: Mapped[str] = mapped_column(
+        String(80), default="General service request"
+    )
     description: Mapped[str] = mapped_column(Text)
     question_to_answer: Mapped[str] = mapped_column(Text)
     desired_outcome: Mapped[str] = mapped_column(Text)

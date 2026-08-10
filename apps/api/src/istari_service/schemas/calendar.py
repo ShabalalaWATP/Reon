@@ -71,6 +71,7 @@ class TeamEventCommand(CalendarEventCommand):
 
 class CommitmentCommand(TeamEventCommand):
     subject_user_id: UUID
+    request_id: UUID
 
 
 class CalendarEventUpdate(CalendarEventCommand):
@@ -132,6 +133,7 @@ class CalendarOccurrence(BaseModel):
     subject_user_id: UUID
     subject_display_name: str
     team_id: UUID | None
+    request_id: UUID | None
     all_day: bool
     time_zone: str
     recurrence: RecurrenceFrequency

@@ -7,14 +7,15 @@ Last reviewed: 9 August 2026
 
 ISTARI Service is a human-led service-request application. A Customer submits a
 structured request, authorised routing users select each organisational
-destination, a Team Manager assigns an Analyst, and QC releases a product for
+destination, a Team Manager assigns one Lead Analyst and optional Contributors,
+and QC releases a product for
 authenticated download. Camunda coordinates human user tasks. It does not make
 priority, category, route, assignment, approval or release decisions.
 
 This document describes the executable React, FastAPI, PostgreSQL and Camunda
 system. The organisation model is in
 [Organisation and routing](ORGANISATION_AND_ROUTING.md). Detailed decisions are
-in [ADRs 0001 to 0021](../adr/). Production gaps remain authoritative in the
+in [ADRs 0001 to 0025](../adr/). Production gaps remain authoritative in the
 [gap register](../ENTERPRISE_READINESS_GAP_REGISTER.md).
 
 ## 2. System context
@@ -128,7 +129,8 @@ exists in this repository.
 | Concern | System of record | Consistency rule |
 |---|---|---|
 | Human task position and lifecycle | Camunda | Reconciled into PostgreSQL |
-| User, role, scope and active state | PostgreSQL | Checked at every protected boundary |
+| User, role, scope, active state and effective workspace membership | PostgreSQL | Checked at every protected boundary |
+| Lead and Contributor participation | PostgreSQL | One active Lead, up to ten Contributors, exact delivery team |
 | Request content and immutable revision | PostgreSQL | Submission transaction pins a revision |
 | Organisation and workflow template | Sealed PostgreSQL configuration revision | Request pins the active revision at start |
 | Human decision and reason | PostgreSQL audit event | Append-only, prior-hash linked |
@@ -177,6 +179,22 @@ the question and full history; Camunda moves to the requester task. The response
 returns work to the same Analyst. Routing organisations observe progress but do
 not approve the delivered product.
 
+### Organisation workspaces and assignment
+
+Every organisation unit has an effective-dated workspace roster. The global
+representative role controls workflow eligibility, while the independent
+Manager or Member position controls exact-unit stewardship. A Manager may
+maintain Members and unit calendar events. Every Member may record their own
+leave, courses, training and availability. Only delivery-team Managers can
+create request-linked commitments, assign one Lead and up to ten Contributors,
+or use board, iteration and capacity controls. Routing Managers and Members both
+claim their own routing task and neither creates an extra approval step.
+
+Participant history remains in PostgreSQL. Only the active Lead is sent to
+Camunda as the task assignee. Contributors gain object-level read and
+collaboration access through the FastAPI policy boundary, not through broader
+organisation scope or a second Camunda task.
+
 ### Product lifecycle
 
 1. An authorised user opens an upload intent with bounded metadata.
@@ -187,7 +205,8 @@ not approve the delivered product.
    unavailable scanning does not release the product.
 4. A clean artefact is promoted, then a new fenced transaction reauthorises and
    associates it with the package revision.
-5. Team Manager and QC actions follow the Camunda task sequence.
+5. The accountable Lead, Team Manager and QC actions follow the Camunda task
+   sequence. Contributors cannot complete the Lead's parent task.
 6. QC dissemination makes an approved file or allowlisted HTTPS link visible to
    the owning Customer dashboard.
 7. File download rechecks request ownership and product release state, commits
@@ -258,6 +277,21 @@ claims-to-role bootstrap, MFA integration, identity-provider logout, service
 account model, PAM or break-glass procedure. `ENVIRONMENT=prod` rejects demo
 accounts and insecure cookies but cannot make the missing identity integration
 exist.
+
+Password assistance is deliberately administrative rather than self-service in
+the MVP. The public endpoint always returns the same accepted response. It
+normalises and matches an active account inside a bounded transaction, records
+only a one-way source key plus an optional matched-user identifier, and sends a
+mandatory in-app account-security notification to every active Platform
+Administrator. Per-source, per-account and global limits constrain abuse without
+revealing whether an account exists.
+
+The platform classification is a versioned singleton in PostgreSQL. Every page
+reads its public, content-free value and defaults visually to `OFFICIAL` while
+that read is pending. Only a Platform Administrator with CSRF and fresh step-up
+may change it, using optimistic version matching and the administration audit
+chain. This strip is a global visual marking, not an information-authorisation
+label and not a substitute for object-level access control.
 
 ## 10. Trust boundaries
 

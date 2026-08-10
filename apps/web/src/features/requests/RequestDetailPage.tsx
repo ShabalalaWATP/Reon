@@ -12,6 +12,7 @@ import { useAuth } from "../../lib/auth/AuthProvider";
 import { formatDate } from "../../lib/status";
 import { FeedbackForm } from "./FeedbackForm";
 import { RequestActivity } from "./RequestActivity";
+import { RequestCancellation } from "./RequestCancellation";
 import { RequesterAction } from "./RequesterAction";
 import { RequestOverview } from "./RequestOverview";
 import { requestDetailPollInterval } from "./requestPolling";
@@ -59,6 +60,7 @@ export function RequestDetailPage() {
           requestId={request.id}
         />
       ) : null}
+      <RequestCancellation request={request} />
       <div className="detail-layout">
         <RequestOverview request={request} />
         <aside aria-label="Activity, released product and feedback" className="detail-aside">

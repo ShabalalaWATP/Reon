@@ -25,7 +25,6 @@ from istari_service.models import (
     ServiceRequest,
     UserRole,
 )
-from istari_service.organisation_models import UserOrganisationMembership
 from istari_service.policies import allowed_actions
 from istari_service.repositories.event_store import (
     append_request_event,
@@ -35,6 +34,7 @@ from istari_service.repositories.event_store import (
 from istari_service.repositories.requests import SqlAlchemyRequestRepository
 from istari_service.response_security import SecurityHeadersMiddleware
 from istari_service.services.request_service import RequestRepository, RequestService
+from istari_service.team_models import TeamMembership
 
 
 class ProductRepository:
@@ -174,9 +174,10 @@ async def test_staff_detail_is_concealed_after_route_membership_revocation(
     unit_id = await api_harness.unit_id("JIOC")
     async with api_harness.sessions() as session, session.begin():
         membership = await session.scalar(
-            select(UserOrganisationMembership).where(
-                UserOrganisationMembership.user_id == user_id,
-                UserOrganisationMembership.unit_id == unit_id,
+            select(TeamMembership).where(
+                TeamMembership.user_id == user_id,
+                TeamMembership.team_id == unit_id,
+                TeamMembership.effective_until.is_(None),
             )
         )
         assert membership is not None

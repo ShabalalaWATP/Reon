@@ -79,6 +79,20 @@ class ReturnToCoordination(StrictApiModel):
 class AssignSpecialist(StrictApiModel):
     action: Literal["assign"]
     specialist_id: UUID
+    contributor_ids: list[UUID] = Field(default_factory=list, max_length=10)
+    reason: str = Field(min_length=10, max_length=500)
+
+    @field_validator("contributor_ids")
+    @classmethod
+    def contributors_are_unique(cls, value: list[UUID]) -> list[UUID]:
+        if len(set(value)) != len(value):
+            raise ValueError("Contributors must be unique.")
+        return value
+
+    @field_validator("reason", mode="before")
+    @classmethod
+    def reason_is_not_blank(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
 
 
 class ReturnForReallocation(StrictApiModel):

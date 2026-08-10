@@ -16,7 +16,8 @@ It remains non-production until the named acceptance gates are signed.
 - Customer tracking, request detail, current owner, activity and stage journey.
 - Stored Analyst-to-Customer clarification loops that return to the same Analyst.
 - Role-filtered dashboards and queues for all seven representative user types.
-- Exactly scoped operational statistics for JIOC, command, Ops and team Managers.
+- Hierarchy-aware operational statistics and role-specific landing views. Each
+  grant exposes its root and descendants, never its parents or sibling branches.
 - Shared team roster, calendar, Kanban board, planning and activity workspaces.
 - Camunda 8.9 human-task routing with no automated business decisions.
 - Managed PDF, DOCX and PPTX product review, QC, authenticated dashboard
@@ -87,7 +88,7 @@ process-identity variables. Complete Windows, macOS and Linux steps are in the
 private synthetic AWS/GCP/Azure sandbox paths are in the
 [deployment index](docs/deployment/README.md).
 
-The seeded logons are `admin1` through `admin73`, all using password `admin` in
+The seeded logons are `admin1` through `admin99`, all using password `admin` in
 local/test only. `admin1` is the Platform Administrator. `admin16` is
 intentionally inactive, so its otherwise matching fixture password cannot start
 a session. Every mock username, identity, role and assignment is documented in

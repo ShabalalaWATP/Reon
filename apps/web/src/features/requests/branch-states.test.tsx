@@ -23,7 +23,7 @@ describe("request branch states", () => {
       ? json(requesterSession)
       : json({ items: [requestSummary] }));
     renderApp("/requests");
-    expect(await screen.findByRole("heading", { name: "In progress" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Current requests" })).toBeInTheDocument();
     expect(screen.queryByText("Completed history")).not.toBeInTheDocument();
   });
 

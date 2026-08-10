@@ -419,7 +419,11 @@ reconciliation evidence.
 - [x] Provide NCGI-A Ops, Aurora Ops, Nimbus Ops and other Ops managers only their
   own group and direct-team statistics.
 - [x] Provide Team Managers only their exact-team statistics and Platform
-  Administrators whole-platform aggregates without request content.
+  Administrators selectable content-free aggregates from the configured root.
+- [x] Authorise drill-down from each grant root to its descendants while denying
+  every parent, sibling and unit belonging only to another grant.
+- [x] Add role-specific operational, team, quality and administration overviews
+  without merging personal work or Customer requests into statistics.
 - [x] Show bounded traffic, WIP, age, due risk, throughput, stage duration,
   clarification, rework, feedback and child-unit comparisons.
 - [x] Provide accessible table equivalents and suppress unsafe small feedback
@@ -764,3 +768,75 @@ product-owner direction.
   results to the security evidence record.
 - [ ] Obtain security-owner acceptance and any independent penetration-test
   evidence required by the target environment.
+
+## Unified organisation workspace milestone
+
+Status: implemented locally on 9 August 2026. Final repository and live-runtime
+evidence is recorded in the assurance documents. Connected-environment rollout
+remains subject to the enterprise gap register.
+
+- [x] Make effective-dated Manager and Member membership authoritative for every
+  JIOC, command, Ops and delivery-team workspace.
+- [x] Seed one named Manager and Member in every routing unit, preserve all
+  existing identities and extend the sequential local directory to `admin99`.
+- [x] Give every current workspace member calendar self-service for leave,
+  courses, training, duty, appointments and availability.
+- [x] Limit unit events to exact-unit Managers and request-linked commitments to
+  delivery-team Managers, current Analysts and work owned by that exact team.
+- [x] Replace single-Analyst allocation with one accountable Lead and up to ten
+  Contributors, retaining effective history, mandatory evidence and optimistic
+  version checks.
+- [x] Keep the Lead as the sole Camunda assignee and deny Contributors the parent
+  task outcome while granting bounded request collaboration access.
+- [x] Provide routing workspaces with Overview, Queue, Calendar, People,
+  Statistics, Handover and Activity without introducing Manager approval.
+- [x] Provide delivery workspaces with Overview, Board, Calendar, People,
+  Planning, Statistics and Activity.
+- [x] Add bounded description, handover, risk, blocker, decision and HTTPS-link
+  records with immutable create and resolve events.
+- [x] Keep statistics inside each explicit unit-and-descendant grant, excluding
+  parent and sibling branches.
+- [x] Add migrations 0024 to 0027, update restore expectations, threat modelling,
+  architecture, user directory and operational documentation.
+- [x] Add positive, negative, cross-unit, effective-date, assignment-history,
+  calendar, collaboration, accessibility and workflow regression tests.
+- [x] Pass 922 backend tests at 98.26 per cent coverage and 321 frontend tests
+  at 99.40 per cent line and 95.03 per cent branch coverage.
+- [x] Pass repository policy, formatting, lint, type, dead-code, line-limit,
+  documentation, licence, dependency-audit, Bandit, build and bundle gates.
+- [x] Rebuild the local Compose application, confirm all services healthy,
+  exercise the Camunda route contract and inspect JIOC and OSG workspaces in
+  Chromium with no unexpected authenticated-page console error.
+- [x] Upgrade a disposable PostgreSQL database from empty to revision 0027,
+  downgrade to 0023, re-upgrade and confirm no model drift.
+- [ ] Obtain representative user acceptance from JIOC, command, Ops, OSG and QC
+  users before connected-environment rollout.
+
+## Access assistance and global classification milestone
+
+Status: implemented and assured locally on 10 August 2026. Connected-environment
+rollout remains subject to the enterprise gap register.
+
+- [x] Add a secondary forgotten-password journey to the existing sign-in panel,
+  using mandatory, validated work email and a deliberately non-disclosing result.
+- [x] Notify every active Platform Administrator when an active account matches,
+  while suppressing duplicates and applying shared source and global limits.
+- [x] Persist no submitted email in assistance-attempt records and retain only a
+  one-way source key, optional internal account identifier and timestamps.
+- [x] Add unique normalised account email to the governed identity directory,
+  Customer profile and Administrator create/edit surfaces.
+- [x] Add a versioned, audited PostgreSQL singleton for `OFFICIAL`,
+  `OFFICIAL-SENSITIVE`, `SECRET` and `TOP-SECRET`, defaulting to `OFFICIAL`.
+- [x] Require Platform Administrator role, CSRF, fresh step-up and expected
+  version for global classification changes.
+- [x] Add a 22-pixel persistent, accessible classification strip above every
+  anonymous and authenticated page, with restrained green, blue and red states.
+- [x] Add the feature specification, ADR 0026, architecture, permission and
+  threat-model changes without duplicating operational procedures.
+- [x] Prove empty-to-0028 PostgreSQL upgrade, downgrade to 0027, re-upgrade and
+  drift-free metadata, correcting the UUID bind defect exposed by PostgreSQL.
+- [x] Pass 926 backend tests at 98.84 per cent line and 95.08 per cent branch
+  coverage, plus 326 frontend tests at 99.41 per cent line and 95.01 per cent
+  branch coverage.
+- [x] Complete full repository gates and live Chromium visual/accessibility
+  evidence.

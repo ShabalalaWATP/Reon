@@ -11,7 +11,7 @@ import { json, mockFetch, renderApp } from "../../test/render";
 
 const managerSession: Session = { ...requesterSession, user: { ...requesterSession.user, id: "manager-osg", username: "admin8", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", scope: "OSG Team" } };
 const analystSession: Session = { ...managerSession, user: { ...managerSession.user, id: "analyst-osg", username: "admin11", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST" } };
-const managerAccess: TeamWorkspaceAccess = { teamId: "team-osg", teamCode: "OSG_TEAM", teamName: "OSG Team", grantId: "grant-osg", permissions: ["CALENDAR", "CAPACITY", "ROSTER"] };
+const managerAccess: TeamWorkspaceAccess = { teamId: "team-osg", teamCode: "OSG_TEAM", teamName: "OSG Team", unitKind: "TEAM", workspacePosition: "MANAGER", grantId: "grant-osg", permissions: ["CALENDAR", "CAPACITY", "ROSTER"] };
 const analystAccess: TeamWorkspaceAccess = { ...managerAccess, grantId: null, permissions: [] };
 const people: TeamMember[] = [{ membershipId: "membership-manager", accountId: "manager-osg", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, startReason: null, endReason: null }, { membershipId: "membership-analyst", accountId: "analyst-osg", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, startReason: null, endReason: null }];
 
@@ -72,17 +72,19 @@ describe("canonical workforce calendar", () => {
     mockCalendar(managerSession, managerAccess, [occurrence({ title: "Busy", notes: null })], calls);
     const user = userEvent.setup();
     renderApp("/teams/team-osg/calendar");
-    expect(await screen.findByRole("heading", { name: "Add to team calendar" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Add calendar activity" })).toBeInTheDocument();
     expect(await screen.findByText("Busy")).toBeInTheDocument();
 
+    await user.click(screen.getByRole("button", { name: "Unit event" }));
     await user.type(screen.getByLabelText(/^Title/), "OSG planning session");
     await user.type(screen.getByLabelText(/^Notes/), "Required shared planning detail for the OSG team.");
     await user.click(screen.getByRole("button", { name: "Create event" }));
     await waitFor(() => expect(calls.some((call) => call.path.endsWith("/calendar/events"))).toBe(true));
 
-    await user.click(screen.getByRole("button", { name: "Personal commitment" }));
+    await user.click(screen.getByRole("button", { name: "Ticket commitment" }));
     fireEvent.submit(screen.getByRole("button", { name: "Create commitment" }).closest("form")!);
-    expect(await screen.findByRole("alert")).toHaveTextContent("Select an Analyst");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Select a request and an Analyst");
+    await user.selectOptions(screen.getByLabelText(/^Service request/), "request-one");
     await user.selectOptions(screen.getByLabelText(/^Analyst/), "analyst-osg");
     await user.type(screen.getByLabelText(/^Title/), "Protected delivery commitment");
     await user.type(screen.getByLabelText(/^Notes/), "Required commitment detail for subject acknowledgement.");
@@ -260,14 +262,31 @@ describe("canonical workforce calendar", () => {
     expect(screen.queryByRole("heading", { name: "Add to team calendar" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Capacity snapshot" })).not.toBeInTheDocument();
   });
+
+  it("fails closed when ticket choices cannot be loaded", async () => {
+    mockCalendar(managerSession, managerAccess, [], [], { boardFailure: true });
+    const user = userEvent.setup();
+    renderApp("/teams/team-osg/calendar");
+    await user.click(await screen.findByRole("button", { name: "Ticket commitment" }));
+    expect(await screen.findByRole("option", { name: "Requests unavailable" })).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Service request/)).toBeDisabled();
+  });
 });
 
-function mockCalendar(session: Session, access: TeamWorkspaceAccess, items: CalendarOccurrence[], calls: Array<{ path: string; body: Record<string, unknown> }>, options: { calendarFailures?: number; mutationFailure?: string } = {}) {
+function mockCalendar(session: Session, access: TeamWorkspaceAccess, items: CalendarOccurrence[], calls: Array<{ path: string; body: Record<string, unknown> }>, options: { boardFailure?: boolean; calendarFailures?: number; mutationFailure?: string } = {}) {
   let calendarReads = 0;
   return mockFetch(async (url, init) => {
     if (url.pathname.endsWith("/auth/me")) return json(session);
     if (url.pathname.endsWith("/team-workspaces")) return json({ items: [access] });
     if (url.pathname.endsWith("/people")) return json({ items: people });
+    if (url.pathname.endsWith("/board")) return options.boardFailure ? json({ detail: "Synthetic board failure" }, 503) : json({
+      items: [{ id: "request-one", itemType: "SERVICE_REQUEST", reference: "REQ-001", title: "Synthetic current request", column: "IN_PROGRESS", priority: "MEDIUM", dueOn: tomorrow(16), ownerUserId: "analyst-osg", ownerDisplayName: "Lewis Ferguson", version: 1, linkedRequestId: null, availableColumns: ["IN_PROGRESS"] }],
+      nextCursor: null,
+      wipLimits: {},
+      configurationVersion: 1,
+      savedViews: [],
+      generatedAt: new Date().toISOString(),
+    });
     if (url.pathname.endsWith("/calendar/personal") || url.pathname.endsWith("/calendar")) {
       calendarReads += 1;
       if (calendarReads <= (options.calendarFailures ?? 0)) return json({ detail: "Synthetic calendar read failure" }, 503);

@@ -78,7 +78,10 @@ async def test_waiting_clarification_is_visible_to_exact_team_roles_without_lock
         "route_membership_condition",
         lambda _actor: None,
     )
-    session = SimpleNamespace(scalar=AsyncMock(return_value=request))
+    session = SimpleNamespace(
+        scalar=AsyncMock(return_value=request),
+        scalars=AsyncMock(return_value=[]),
+    )
     repository = SqlAlchemyRequestRepository(session, process_id="service-request-v1")
     record = await repository.get_record_for_actor(request.id, actor)
     assert record is not None and record.id == request.id
@@ -90,7 +93,10 @@ async def test_locked_waiting_lookup_rechecks_route_membership(
 ) -> None:
     actor = _actor(UserRole.DELIVERY_SPECIALIST)
     request = _request(actor)
-    session = SimpleNamespace(scalar=AsyncMock(side_effect=[_user(actor), request]))
+    session = SimpleNamespace(
+        scalar=AsyncMock(side_effect=[_user(actor), None, request]),
+        scalars=AsyncMock(return_value=[]),
+    )
     membership = AsyncMock(return_value=True)
     monkeypatch.setattr(request_scope, "has_route_membership", membership)
     monkeypatch.setattr(

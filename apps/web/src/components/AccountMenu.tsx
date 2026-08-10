@@ -1,6 +1,8 @@
-import { ChevronDown, LogOut, ShieldCheck } from "lucide-react";
+import { ChevronDown, LogOut, ShieldCheck, UserRound } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import { Link } from "react-router";
 
+import { profileAccessLabel, profileInitials } from "../features/profile/profileModel";
 import type { Session } from "../lib/api/types";
 import { roleLabels } from "../lib/routes";
 import { formatDate } from "../lib/status";
@@ -22,7 +24,7 @@ export function AccountMenu({ onSignOut, pathname, session }: Props) {
   useEffect(() => {
     if (!open) return undefined;
     const closeOutside = (event: PointerEvent) => {
-      if (!container.current?.contains(event.target as Node)) setOpen(false);
+      if (!container.current!.contains(event.target as Node)) setOpen(false);
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
@@ -54,7 +56,7 @@ export function AccountMenu({ onSignOut, pathname, session }: Props) {
         ref={trigger}
         type="button"
       >
-        <span aria-hidden="true" className="account-avatar">{initials(user.displayName)}</span>
+        <span aria-hidden="true" className="account-avatar">{profileInitials(user.displayName)}</span>
         <span className="account-menu__identity">
           <strong>{user.displayName}</strong>
           <small>{roleLabels[user.role]}</small>
@@ -64,28 +66,22 @@ export function AccountMenu({ onSignOut, pathname, session }: Props) {
       {open ? (
         <div aria-label="Account details" className="account-menu__popover" id={menuId} role="dialog">
           <header>
-            <span aria-hidden="true" className="account-avatar account-avatar--large">{initials(user.displayName)}</span>
+            <span aria-hidden="true" className="account-avatar account-avatar--large">{profileInitials(user.displayName)}</span>
             <div><strong>{user.displayName}</strong><small>{user.username}</small></div>
           </header>
           <dl>
             <div><dt>Role</dt><dd>{roleLabels[user.role]}</dd></div>
-            <div><dt>Scope</dt><dd>{user.scope}</dd></div>
+            <div><dt>Access</dt><dd>{profileAccessLabel(user)}</dd></div>
             <div><dt>Session</dt><dd><ShieldCheck aria-hidden="true" size={14} /> Active until {formatDate(session.expiresAt, true)}</dd></div>
           </dl>
-          <button className="account-menu__action" onClick={() => void signOut()} type="button">
+          <Link className="account-menu__action account-menu__action--profile" to="/profile">
+            <UserRound aria-hidden="true" size={16} />View profile
+          </Link>
+          <button className="account-menu__action account-menu__action--signout" onClick={() => void signOut()} type="button">
             <LogOut aria-hidden="true" size={16} />Sign out
           </button>
         </div>
       ) : null}
     </div>
   );
-}
-
-function initials(displayName: string) {
-  return displayName
-    .split(/\s+/u)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toLocaleUpperCase("en-GB"))
-    .join("");
 }

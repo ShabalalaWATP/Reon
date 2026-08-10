@@ -1,7 +1,7 @@
 # Role and permission matrix
 
 Status: implemented MVP roles with enterprise boundary decisions identified
-Last reviewed: 8 August 2026
+Last reviewed: 10 August 2026
 
 ## Enforcement principles
 
@@ -9,6 +9,8 @@ Last reviewed: 8 August 2026
   and workflow state for every read and mutation.
 - React navigation and filtered choices are usability controls only.
 - Camunda candidate groups do not grant application data access.
+- Effective workspace membership and its Manager or Member position are
+  independent of the representative workflow role.
 - Platform administration is metadata-only and grants no request or product
   content access.
 - Denials avoid confirming whether an out-of-scope object exists.
@@ -19,14 +21,19 @@ Last reviewed: 8 August 2026
 |---|---|---|---|---|
 | Customer | Create and submit a request | Own authenticated account; every submission field valid | Requester ID becomes immutable ownership | Submission audited without narrative in admin telemetry |
 | Customer | Track, answer clarification, download and give feedback | Own request; matching workflow state; released product for download | Ownership and action-state check on every request | Download and feedback events attributable to Customer |
-| JIOC Routing User | Review, request information, close or choose a Command | Active JIOC candidate group and claimed task | Destination must be an effective direct Command child | Claim and outcome recorded; no product approval |
-| Command Routing User | Choose an Ops group, return, hold or close | Active candidate group for the selected Command and claimed task | Destination must be an effective direct Ops-group child | Human outcome recorded; no team or analyst selection |
-| Ops Routing User | Choose a delivery team or return | Active candidate group for the selected Ops group and claimed task | Destination must be an effective direct team child | Human outcome recorded; unstaffed choice remains explicit |
-| Team Manager | Assign an Analyst and review submitted work | Exact active team membership and candidate group; claimed task | Analyst must have active membership in that exact team | Assignment and approval/rework outcome audited |
+| JIOC Routing User | Review, request information, close or choose a Command | Active JIOC candidate group and personally claimed task | Destination must be an effective direct Command child | Manager and Member use the same claim-based routing action; no product approval |
+| Command Routing User | Choose an Ops group, return, hold or close | Active candidate group for the selected Command and personally claimed task | Destination must be an effective direct Ops-group child | Manager and Member use the same action; no team or Analyst selection |
+| Ops Routing User | Choose a delivery team or return | Active candidate group for the selected Ops group and personally claimed task | Destination must be an effective direct team child | Manager and Member use the same action; unstaffed choice remains explicit |
+| Workspace Member | Create, edit and cancel personal calendar activity | Current effective membership in the exact unit | Subject is always the authenticated user; no request link or alternate subject accepted | Private detail is redacted from shared views |
+| Routing Manager | Maintain exact-unit Members, unit events and shared handover context | Current Manager position and exact management grant | No parent, child or sibling management and no ticket commitment | Does not add routing approval or assign routing tasks |
+| Team Manager | Assign one Lead and up to ten Contributors and review submitted work | Exact active team membership and candidate group; claimed task | Every participant must be a current Member of that exact team | Assignment reason, history and approval/rework outcome audited |
 | Team Manager | Manage roster, board and team calendar | Exact active management grant for the team | Grant, membership state and optimistic revision checked | Membership and planning events attributable and reversible |
-| Team Analyst | Produce, revise and submit a product package | Assigned request and active exact-team membership | Assignment, package state and expected revision checked | Immutable package history retained |
+| Team Analyst, Lead | Produce, revise and submit a product package | Active Lead participation and active exact-team membership | Sole Camunda assignee; package state and expected revision checked | Immutable package and participation history retained |
+| Team Analyst, Contributor | Read and collaborate on an assigned request | Active Contributor participation and active exact-team membership | Cannot complete the Lead's parent Camunda task | Participation and linked work remain attributable |
 | QC Manager | Review, return, disseminate or withdraw a product | Active QC group and matching workflow/package state | Exact approved package and Customer request relationship | Manager approval cannot substitute for QC release |
 | Platform Administrator | Manage accounts, profiles, memberships and safe configuration metadata | Active Platform Administrator and fresh step-up for sensitive changes | Dedicated metadata schemas and action checks | No implicit request/product access; tamper-evident admin audit |
+| Platform Administrator | Change the global visual classification marking | Active Platform Administrator, CSRF and fresh step-up | Exact singleton and expected version | New value and actor recorded in the administration audit chain |
+| Platform Administrator | Receive a password-assistance notification | Active Platform Administrator | A submitted email matched an active account after shared rate limits | Notification identifies the account but never stores the submitted email in the attempt record |
 | Configuration Approver | Approve or reject proposed changes | Platform Administrator, fresh step-up, proposal awaiting approval | Must not be proposal creator; exact immutable revision | Reason and reviewed revision recorded |
 | Workflow Operator | Deploy a compatible Camunda definition | Operator-controlled deployment boundary, outside ordinary application role | Compatibility key, process identity and checksum attested | Cannot approve configuration or obtain product content |
 | Support Operator | Inspect health and content-free diagnostics | Named operational authority; no implicit application role | Correlation, status and aggregate metadata only | Elevated diagnostics and recovery actions recorded |

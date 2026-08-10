@@ -11,7 +11,7 @@ export function AdminUserRegister({ users }: { users: AdminUser[] }) {
         <tbody>
           {users.map((user) => (
             <tr key={user.id}>
-              <td className="mono-ref">{user.username}</td>
+              <td className="admin-account-identity"><strong className="mono-ref">{user.username}</strong><small>{user.email}</small></td>
               <td><strong>{user.displayName}</strong></td>
               <td>{roleLabels[user.role]}</td>
               <td>{user.scope}</td>

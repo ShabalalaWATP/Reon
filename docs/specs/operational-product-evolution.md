@@ -65,13 +65,14 @@ and threat model before activation.
 
 ## Role-specific action workspace
 
-Each account receives a `My work` workspace. The server assembles action items
-from current Camunda tasks and product-owned projections, then applies role,
-assignment, object and organisation policy before returning them.
+Each staff account receives a `My work` workspace. The server assembles action
+items from current Camunda tasks and product-owned projections, then applies
+role, assignment, object and organisation policy before returning them. The
+Customer's equivalent action surface is `My requests`, where clarification,
+released-product and feedback actions stay attached to the relevant request.
 
 | Role | Action groups |
 | --- | --- |
-| Customer | Drafts, clarification responses, released products and feedback due |
 | JIOC Routing User | New submissions, claimed intake, held work and due-risk routing |
 | Command Routing User | Requests awaiting an Ops choice, held work and returns |
 | Ops Routing User | Requests awaiting a team choice, staffing waits and returns |
@@ -124,8 +125,9 @@ The notification centre records at least:
   notification never grants access by itself.
 - Revoked grants, ended memberships and disabled accounts remove live access
   immediately while retaining the audit record.
-- The header count and `My work` page refresh without a full-page reload. A
-  bounded polling fallback remains available if live updates fail.
+- The header count and active action page (`My requests` for Customers or
+  `My work` for staff) refresh without a full-page reload. A bounded polling
+  fallback remains available if live updates fail.
 
 Preferences cover in-application event groups and due-date reminder windows.
 Safety-critical account and release notifications cannot be entirely disabled.
@@ -341,8 +343,9 @@ system exposes freshness or pending state instead of inventing success.
 
 The capability is complete only when:
 
-1. every representative role can complete its `My work` journey and cannot see
-   sibling, ancestor or unrelated action items;
+1. every representative role can complete its action journey (`My requests` for
+   Customers and `My work` for staff) and cannot see sibling, ancestor or
+   unrelated action items;
 2. every required event creates one correctly scoped notification and replay
    creates no duplicate;
 3. a Customer can download released PDF, DOCX and PPTX artefacts or open an

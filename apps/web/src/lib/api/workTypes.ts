@@ -79,7 +79,7 @@ export type WorkAction =
       requiredCapabilities: string[];
     }
   | { action: "return_to_coordination"; reason: string }
-  | { action: "assign"; specialistId: string }
+  | { action: "assign"; specialistId: string; contributorIds: string[]; reason: string }
   | { action: "return_for_reallocation"; reason: string }
   | { action: "submit"; deliverableTitle: string; deliverableText: string }
   | {

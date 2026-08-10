@@ -8,15 +8,16 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.auth_service import PasswordHasher
+from istari_service.demo_membership_seed import seed_demo_memberships
+from istari_service.demo_workspace_fixtures import (
+    DELIVERY_IDENTITY_FIXTURES,
+    OSG_IDENTITY_FIXTURES,
+    ROUTING_IDENTITY_FIXTURES,
+)
 from istari_service.management_seed import seed_management_grants
 from istari_service.models import User, UserRole
-from istari_service.organisation_models import (
-    OrganisationKind,
-    OrganisationUnit,
-    UserOrganisationMembership,
-)
 from istari_service.organisation_seed import seed_organisation_units
-from istari_service.team_membership_seed import seed_team_membership_history
+from istari_service.team_models import WorkspacePosition
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,6 +29,7 @@ class DemoIdentity:
     active: bool = True
     legacy_username: str | None = None
     unit_codes: tuple[str, ...] = ()
+    workspace_position: WorkspacePosition = WorkspacePosition.MEMBER
 
 
 def _identity(
@@ -37,9 +39,19 @@ def _identity(
     *,
     legacy: str | None = None,
     units: tuple[str, ...] = (),
+    manager: bool = False,
     active: bool = True,
 ) -> DemoIdentity:
-    return DemoIdentity("", display_name, role, scope, active, legacy, units)
+    return DemoIdentity(
+        "",
+        display_name,
+        role,
+        scope,
+        active,
+        legacy,
+        units,
+        WorkspacePosition.MANAGER if manager else WorkspacePosition.MEMBER,
+    )
 
 
 _BASE_IDENTITIES = (
@@ -52,13 +64,13 @@ _BASE_IDENTITIES = (
     _identity(
         "John McGinn",
         UserRole.REQUESTER,
-        "Requesting Area A",
+        "Customer",
         legacy="requester.1@example.test",
     ),
     _identity(
         "Billy Gilmour",
         UserRole.REQUESTER,
-        "Requesting Area B",
+        "Customer",
         legacy="requester.2@example.test",
     ),
     _identity(
@@ -67,6 +79,7 @@ _BASE_IDENTITIES = (
         "JIOC",
         legacy="triage.1@example.test",
         units=("JIOC",),
+        manager=True,
     ),
     _identity(
         "Callum McGregor",
@@ -74,12 +87,21 @@ _BASE_IDENTITIES = (
         "Shared command routing",
         legacy="coordination.2@example.test",
         units=("DIGOC", "SYGOC", "MYGOC"),
+        manager=True,
     ),
     _identity(
         "Kieran Tierney",
         UserRole.OPERATIONS_ALLOCATION,
         "Shared Ops routing",
         legacy="allocation.1@example.test",
+        units=(
+            "NCGI_A_OPS",
+            "AURORA_OPS",
+            "VERTEX_OPS",
+            "NIMBUS_OPS",
+            "PARALLAX_OPS",
+        ),
+        manager=True,
     ),
     _identity(
         "Ryan Christie",
@@ -94,6 +116,7 @@ _BASE_IDENTITIES = (
         "OSG Team",
         legacy="delivery.lead.1@example.test",
         units=("OSG_TEAM",),
+        manager=True,
     ),
     _identity(
         "Kenny McLean",
@@ -101,12 +124,14 @@ _BASE_IDENTITIES = (
         "OSG Team",
         legacy="delivery.lead.2@example.test",
         units=("OSG_TEAM",),
+        manager=True,
     ),
     _identity(
         "Craig Gordon",
         UserRole.OPERATIONS_ALLOCATION,
         "Shared Ops routing",
         legacy="allocation.2@example.test",
+        units=("HORIZON_OPS", "MERIDIAN_OPS", "SOLSTICE_OPS", "FRONTIER_OPS"),
     ),
     _identity(
         "Lewis Ferguson",
@@ -145,91 +170,51 @@ _BASE_IDENTITIES = (
     _identity(
         "James Forrest",
         UserRole.REQUESTER,
-        "Requesting Area A",
+        "Customer",
         legacy="requester.disabled@example.test",
         active=False,
     ),
 )
 
-_ADDITIONAL_OSG_STAFF = (
-    _identity(
-        "Lawrence Shankland",
-        UserRole.DELIVERY_TEAM_LEAD,
-        "OSG Team",
-        units=("OSG_TEAM",),
-    ),
-    _identity(
-        "Tommy Conway",
-        UserRole.DELIVERY_SPECIALIST,
-        "OSG Team",
-        units=("OSG_TEAM",),
-    ),
-    _identity(
-        "Steve Clarke",
-        UserRole.DELIVERY_SPECIALIST,
-        "OSG Team",
-        units=("OSG_TEAM",),
-    ),
-    _identity(
-        "Derek McInnes",
-        UserRole.DELIVERY_SPECIALIST,
-        "OSG Team",
-        units=("OSG_TEAM",),
-    ),
-)
-
-_TEAM_STAFF_NAMES = (
-    ("CEDAR_TEAM", "Cedar Team", "Kenny Dalglish", "Denis Law"),
-    ("QUARTZ_TEAM", "Quartz Team", "Graeme Souness", "Alan Hansen"),
-    ("LANTERN_TEAM", "Lantern Team", "Gordon Strachan", "Ally McCoist"),
-    ("MOSAIC_TEAM", "Mosaic Team", "Darren Fletcher", "James McFadden"),
-    ("COMPASS_TEAM", "Compass Team", "Barry Ferguson", "Paul McStay"),
-    ("EMBER_TEAM", "Ember Team", "Gary McAllister", "John Collins"),
-    ("ATLAS_TEAM", "Atlas Team", "Kevin Gallacher", "Colin Hendry"),
-    ("HARBOUR_TEAM", "Harbour Team", "Alex McLeish", "Willie Miller"),
-    ("BEACON_TEAM", "Beacon Team", "Joe Jordan", "Archie Gemmill"),
-    ("SLATE_TEAM", "Slate Team", "Dave Mackay", "Billy Bremner"),
-    ("ORCHARD_TEAM", "Orchard Team", "Jim Baxter", "Danny McGrain"),
-    ("LUMEN_TEAM", "Lumen Team", "Jimmy Johnstone", "Bobby Lennox"),
-    ("NORTHSTAR_TEAM", "Northstar Team", "John Greig", "Sandy Jardine"),
-    ("COPPER_TEAM", "Copper Team", "Maurice Johnston", "Gordon Durie"),
-    ("ROWAN_TEAM", "Rowan Team", "Stuart McCall", "Neil McCann"),
-    ("VELA_TEAM", "Vela Team", "Don Hutchison", "Christian Dailly"),
-    ("KEEL_TEAM", "Keel Team", "Gary Naysmith", "Lee McCulloch"),
-    ("FLINT_TEAM", "Flint Team", "Steven Naismith", "Charlie Adam"),
-    ("THISTLE_TEAM", "Thistle Team", "Robert Snodgrass", "Steven Fletcher"),
-    ("GRANITE_TEAM", "Granite Team", "James Morrison", "Shaun Maloney"),
-    ("KESTREL_TEAM", "Kestrel Team", "Barry Bannan", "David Marshall"),
-    ("JUNIPER_TEAM", "Juniper Team", "Allan McGregor", "Stephen O'Donnell"),
-    ("VALE_TEAM", "Vale Team", "Lyndon Dykes", "Ryan Porteous"),
-    ("TIDAL_TEAM", "Tidal Team", "Jack Hendry", "Aaron Hickey"),
-    ("GROVE_TEAM", "Grove Team", "Scott McKenna", "Greg Taylor"),
-    ("PRISM_TEAM", "Prism Team", "Ryan Jack", "Stuart Armstrong"),
-)
-
-
-def _team_identities() -> tuple[DemoIdentity, ...]:
-    identities: list[DemoIdentity] = []
-    for code, name, manager, analyst in _TEAM_STAFF_NAMES:
-        units = (code,)
-        identities.extend(
-            (
-                _identity(manager, UserRole.DELIVERY_TEAM_LEAD, name, units=units),
-                _identity(analyst, UserRole.DELIVERY_SPECIALIST, name, units=units),
-            )
-        )
-    return tuple(identities)
-
-
 _APPROVER_SCOPE = "Platform configuration approval"
+
+
 DEMO_IDENTITIES = tuple(
     replace(identity, username=f"admin{index}")
     for index, identity in enumerate(
         (
             *_BASE_IDENTITIES,
-            *_ADDITIONAL_OSG_STAFF,
-            *_team_identities(),
+            *(
+                _identity(
+                    fixture.display_name,
+                    fixture.role,
+                    fixture.scope,
+                    units=(fixture.unit_code,),
+                    manager=fixture.manager,
+                )
+                for fixture in OSG_IDENTITY_FIXTURES
+            ),
+            *(
+                _identity(
+                    fixture.display_name,
+                    fixture.role,
+                    fixture.scope,
+                    units=(fixture.unit_code,),
+                    manager=fixture.manager,
+                )
+                for fixture in DELIVERY_IDENTITY_FIXTURES
+            ),
             _identity("Jim Leighton", UserRole.PLATFORM_ADMIN, _APPROVER_SCOPE),
+            *(
+                _identity(
+                    fixture.display_name,
+                    fixture.role,
+                    fixture.scope,
+                    units=(fixture.unit_code,),
+                    manager=fixture.manager,
+                )
+                for fixture in ROUTING_IDENTITY_FIXTURES
+            ),
         ),
         start=1,
     )
@@ -288,6 +273,8 @@ async def seed_demo_users(
             created += 1
         else:
             user.username = identity.username
+        if identity.username not in stored_by_username or not user.email:
+            user.email = f"{identity.username}@istari.example.test"
         if identity.username not in stored_by_username:
             user.display_name = identity.display_name
             user.password_hash = password_hash
@@ -297,54 +284,11 @@ async def seed_demo_users(
             managed_usernames.add(identity.username)
         users[identity.username] = user
     await session.flush()
-    await _seed_memberships(session, users, managed_usernames)
+    await seed_demo_memberships(
+        session,
+        users,
+        managed_usernames,
+        DEMO_IDENTITIES,
+    )
     await seed_management_grants(session)
     return created
-
-
-async def _seed_memberships(
-    session: AsyncSession,
-    users: dict[str, User],
-    managed_usernames: set[str],
-) -> None:
-    if not managed_usernames:
-        return
-    units = (
-        await session.scalars(
-            select(OrganisationUnit).where(OrganisationUnit.is_configured.is_(True))
-        )
-    ).all()
-    unit_by_code = {unit.code: unit for unit in units}
-    ops_codes = tuple(
-        unit.code for unit in units if unit.kind is OrganisationKind.OPS_GROUP
-    )
-    desired_codes = {
-        identity.username: (
-            ops_codes
-            if identity.role is UserRole.OPERATIONS_ALLOCATION
-            else identity.unit_codes
-        )
-        for identity in DEMO_IDENTITIES
-        if identity.username in managed_usernames
-    }
-    managed_user_ids = {users[username].id for username in managed_usernames}
-    memberships = (
-        await session.scalars(
-            select(UserOrganisationMembership).where(
-                UserOrganisationMembership.user_id.in_(managed_user_ids)
-            )
-        )
-    ).all()
-    existing = {(item.user_id, item.unit_id): item for item in memberships}
-    desired = {
-        (users[username].id, unit_by_code[code].id)
-        for username, codes in desired_codes.items()
-        for code in codes
-    }
-    for key in desired - existing.keys():
-        session.add(UserOrganisationMembership(user_id=key[0], unit_id=key[1]))
-    for key in existing.keys() - desired:
-        await session.delete(existing[key])
-    await session.flush()
-    team_ids = {unit.id for unit in units if unit.kind is OrganisationKind.TEAM}
-    await seed_team_membership_history(session, desired, team_ids)

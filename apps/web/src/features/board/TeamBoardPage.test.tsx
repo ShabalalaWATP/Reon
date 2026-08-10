@@ -41,7 +41,7 @@ const board: BoardResult = {
 };
 
 describe("team workflow board", () => {
-  it("renders workflow and package cards, filters, saved views, WIP and package creation", async () => {
+  it("renders workflow cards and supports packages, saved views and movement", async () => {
     const calls: Array<{ path: string; method: string; body: Record<string, unknown> }> = [];
     mockBoard(managerSession, managerAccess, calls);
     const user = userEvent.setup();
@@ -74,6 +74,14 @@ describe("team workflow board", () => {
     const packageCard = (await screen.findByRole("heading", { name: "Prepare synthetic product" })).closest("article");
     await user.click(within(packageCard as HTMLElement).getByRole("button", { name: "Move to In Progress" }));
     await waitFor(() => expect(calls.some((call) => call.path.endsWith("/board/moves") && call.body.target === "IN_PROGRESS")).toBe(true));
+  });
+
+  it("filters board views, pages results and updates WIP limits", async () => {
+    const calls: Array<{ path: string; method: string; body: Record<string, unknown> }> = [];
+    mockBoard(managerSession, managerAccess, calls);
+    const user = userEvent.setup();
+    renderApp("/teams/team-osg/board");
+    expect(await screen.findByRole("heading", { name: "Workflow board" })).toBeInTheDocument();
 
     await user.click(await screen.findByRole("button", { name: "Table" }));
     expect(screen.getByRole("table", { name: "Filtered team work" })).toBeInTheDocument();
@@ -106,7 +114,6 @@ describe("team workflow board", () => {
     await user.type(within(wip as HTMLElement).getByLabelText("Ready"), "6");
     await user.click(within(wip as HTMLElement).getByRole("button", { name: "Save limits" }));
     await waitFor(() => expect(calls.some((call) => call.path.endsWith("/board/configuration") && call.body.expectedVersion === 2)).toBe(true));
-
   });
 
   it("keeps Analyst controls scoped, reports empty and retries board failures", async () => {

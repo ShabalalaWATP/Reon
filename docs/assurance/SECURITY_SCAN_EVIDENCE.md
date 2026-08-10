@@ -1,5 +1,19 @@
 # Security scan evidence
 
+## Unified workspace source verification, 10 August 2026
+
+The complete current source passed Ruff formatting and lint, MyPy across 282
+source files, Bandit across 42,421 lines with zero low, medium or high finding,
+and the repository's Knip and Vulture dead-code gates. Strict `pip-audit` of the
+locked Python dependency export and `pnpm audit --audit-level=high` both reported
+no known vulnerability. The 926-test backend suite passed at 98.84 per cent line
+and 95.08 per cent branch coverage; the 326-test frontend suite passed at 99.41
+per cent line and 95.01 per cent branch coverage. These results cover the unified
+workspace, access-assistance and global-classification changes. The dated image,
+SBOM, secret, Semgrep and ZAP records below were not regenerated and must remain
+tied to their recorded candidate rather than being represented as scans of this
+uncommitted working tree.
+
 ## Current remediation candidate, 9 August 2026
 
 This section applies to the current `codex/product-evolution` and `main` source.

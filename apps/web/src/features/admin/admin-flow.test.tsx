@@ -95,7 +95,8 @@ describe("platform administrator workspace", () => {
     expect(create).toBeEnabled();
     expect(expire).toBeTypeOf("function");
     act(() => expire?.());
-    expect(await screen.findByLabelText(/^Current password/)).toHaveFocus();
+    const password = await screen.findByLabelText(/^Current password/);
+    await waitFor(() => expect(password).toHaveFocus());
     expect(create).toBeDisabled();
   });
 
@@ -143,6 +144,41 @@ describe("platform administrator workspace", () => {
     expect(await axe(view.container)).toHaveNoViolations();
   });
 
+  it("applies the global classification with optimistic version protection", async () => {
+    let classification = "OFFICIAL";
+    let fail = false;
+    let version = 1;
+    let submitted: Record<string, unknown> | undefined;
+    mockFetch((url, init) => {
+      if (url.pathname.endsWith("/auth/me")) return json(adminSession);
+      if (url.pathname.endsWith("/admin/users")) return json({ items: [] });
+      if (url.pathname.endsWith("/admin/platform/classification") && init.method === "PATCH") {
+        if (fail) return json({ detail: "Stale version" }, 409);
+        const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+        submitted = body;
+        classification = String(body.classification);
+        version += 1;
+        return json({ classification, version, updatedAt: "2026-08-10T10:00:00Z" });
+      }
+      throw new Error(`${init.method ?? "GET"} ${url.pathname}`);
+    });
+    const user = userEvent.setup();
+    const view = renderApp("/admin/users");
+
+    expect(await screen.findByRole("heading", { name: "Platform classification" })).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("Classification"), "OFFICIAL-SENSITIVE");
+    await user.click(screen.getByRole("button", { name: "Apply to everyone" }));
+
+    expect(await screen.findByText("Classification updated for every workspace.")).toHaveAttribute("role", "status");
+    expect(screen.getByRole("note", { name: "Security classification: OFFICIAL-SENSITIVE" })).toBeInTheDocument();
+    expect(submitted).toEqual({ classification: "OFFICIAL-SENSITIVE", expectedVersion: 1 });
+    expect(await axe(view.container)).toHaveNoViolations();
+    fail = true;
+    await user.selectOptions(screen.getByLabelText("Classification"), "SECRET");
+    await user.click(screen.getByRole("button", { name: "Apply to everyone" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("changed elsewhere");
+  });
+
   it("recovers from a list error and reports an empty register", async () => {
     let fail = true;
     mockFetch((url) => {
@@ -161,7 +197,7 @@ describe("platform administrator workspace", () => {
   it("creates a generated account with compatible team membership", async () => {
     let created = false;
     let posted: Record<string, unknown> | undefined;
-    const saved = { ...adminManagedUser, id: "new-user", username: "admin99", displayName: "Billy Gilmour", role: "DELIVERY_SPECIALIST" as const, scope: "Cedar Team", memberships: [{ organisationUnitId: organisationUnit("CEDAR_TEAM").id, organisationUnitName: "Cedar Team", organisationUnitKind: "TEAM" as const }] };
+    const saved = { ...adminManagedUser, id: "new-user", username: "admin100", displayName: "Billy Gilmour", role: "DELIVERY_SPECIALIST" as const, scope: "Cedar Team", memberships: [{ organisationUnitId: organisationUnit("CEDAR_TEAM").id, organisationUnitName: "Cedar Team", organisationUnitKind: "TEAM" as const, workspacePosition: "MEMBER" as const }] };
     mockFetch(async (url, init) => {
       if (url.pathname.endsWith("/auth/me")) return json(adminSession);
       if (url.pathname.endsWith("/organisation/units")) return json({ items: organisationUnits });
@@ -172,14 +208,15 @@ describe("platform administrator workspace", () => {
     const user = userEvent.setup();
     const view = renderApp("/admin/users/new");
     await screen.findByRole("heading", { name: "Create user" });
-    await user.type(screen.getByLabelText("Display name"), "Billy Gilmour");
+    await user.type(screen.getByLabelText("Name"), "Billy Gilmour");
+    await user.type(screen.getByLabelText("Work email"), "billy@example.test");
     await user.selectOptions(screen.getByLabelText("Representative role"), "DELIVERY_SPECIALIST");
     await user.type(screen.getByLabelText("Scope"), "Cedar Team");
     await user.click(screen.getByLabelText(/Cedar Team/));
     await user.click(screen.getByRole("button", { name: "Create user" }));
     expect(await screen.findByRole("heading", { name: "Billy Gilmour" })).toBeInTheDocument();
-    expect(screen.getByText(/Account created\. Username:/)).toHaveTextContent("Account created. Username: admin99");
-    expect(screen.getByDisplayValue("admin99")).toBeInTheDocument();
+    expect(screen.getByText(/Account created\. Username:/)).toHaveTextContent("Account created. Username: admin100");
+    expect(screen.getByDisplayValue("admin100")).toBeInTheDocument();
     expect(posted).toMatchObject({ displayName: "Billy Gilmour", role: "DELIVERY_SPECIALIST", organisationUnitIds: [organisationUnit("CEDAR_TEAM").id] });
     expect(await axe(view.container)).toHaveNoViolations();
   });
@@ -198,8 +235,8 @@ describe("platform administrator workspace", () => {
     const user = userEvent.setup();
     renderApp(`/admin/users/${managed.id}`);
     expect(await screen.findByRole("heading", { name: "John McGinn" })).toBeInTheDocument();
-    await user.clear(screen.getByLabelText("Display name"));
-    await user.type(screen.getByLabelText("Display name"), "John McGinn Updated");
+    await user.clear(screen.getByLabelText("Name"));
+    await user.type(screen.getByLabelText("Name"), "John McGinn Updated");
     await user.click(screen.getByRole("button", { name: "Save changes" }));
     expect(await screen.findByText("Account details saved.")).toBeInTheDocument();
     expect(bodies[0]).toMatchObject({ expectedVersion: 1, displayName: "John McGinn Updated" });
@@ -227,7 +264,8 @@ describe("platform administrator workspace", () => {
     const submit = vi.fn();
     const user = userEvent.setup();
     render(<AdminUserForm disabled={false} onSubmit={submit} units={organisationUnits} />);
-    await user.type(screen.getByLabelText("Display name"), "Kieran Tierney");
+    await user.type(screen.getByLabelText("Name"), "Kieran Tierney");
+    await user.type(screen.getByLabelText("Work email"), "kieran@example.test");
     await user.type(screen.getByLabelText("Scope"), "OSG Team");
     await user.selectOptions(screen.getByLabelText("Representative role"), "DELIVERY_TEAM_LEAD");
     await user.click(screen.getByRole("button", { name: "Create user" }));
@@ -237,6 +275,24 @@ describe("platform administrator workspace", () => {
     expect(screen.getByText("This role does not require an organisation membership.")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Create user" }));
     expect(submit).toHaveBeenCalledWith(expect.objectContaining({ organisationUnitIds: [] }), expect.anything());
+  });
+
+  it("lets an Administrator appoint a routing-unit Manager explicitly", async () => {
+    const submit = vi.fn();
+    const user = userEvent.setup();
+    render(<AdminUserForm disabled={false} onSubmit={submit} units={organisationUnits} />);
+    await user.type(screen.getByLabelText("Name"), "Alan Rough");
+    await user.type(screen.getByLabelText("Work email"), "alan@example.test");
+    await user.type(screen.getByLabelText("Scope"), "JIOC");
+    await user.selectOptions(screen.getByLabelText("Representative role"), "INTAKE_TRIAGE");
+    await user.selectOptions((await screen.findAllByRole("combobox"))[1], "MANAGER");
+    await user.click(screen.getByRole("checkbox", { name: /JIOC/ }));
+    await user.click(screen.getByRole("button", { name: "Create user" }));
+    expect(submit).toHaveBeenCalledWith(expect.objectContaining({
+      organisationUnitIds: [organisationUnit("JIOC").id],
+      role: "INTAKE_TRIAGE",
+      workspacePosition: "MANAGER",
+    }), expect.anything());
   });
 
   it("reports editor failures and prevents the current Administrator deactivating themselves", async () => {
@@ -256,8 +312,8 @@ describe("platform administrator workspace", () => {
     await user.click(screen.getByRole("button", { name: "Try again" }));
     const deactivate = await screen.findByRole("button", { name: "Deactivate account" });
     expect(deactivate).toBeDisabled();
-    await user.clear(screen.getByLabelText("Display name"));
-    await user.type(screen.getByLabelText("Display name"), "Andy Robertson Updated");
+    await user.clear(screen.getByLabelText("Name"));
+    await user.type(screen.getByLabelText("Name"), "Andy Robertson Updated");
     await user.click(screen.getByRole("button", { name: "Save changes" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Version conflict");
     expect(await axe(view.container)).toHaveNoViolations();

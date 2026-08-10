@@ -11,7 +11,9 @@ from pydantic import Field, field_validator
 
 from istari_service.management_models import ManagementAction
 from istari_service.models import UserRole
+from istari_service.organisation_models import OrganisationKind
 from istari_service.schemas.common import ApiModel, StrictApiModel
+from istari_service.team_models import WorkspacePosition
 
 
 class MembershipState(StrEnum):
@@ -24,8 +26,11 @@ class TeamWorkspaceAccess(ApiModel):
     team_id: UUID
     team_code: str
     team_name: str
+    unit_kind: OrganisationKind
+    workspace_position: WorkspacePosition | None
     grant_id: UUID | None
     permissions: list[ManagementAction]
+    views: list[str]
 
 
 class TeamWorkspaceList(ApiModel):
@@ -35,6 +40,7 @@ class TeamWorkspaceList(ApiModel):
 class TeamWorkspaceOverview(ApiModel):
     access: TeamWorkspaceAccess
     manager_count: int = Field(ge=0)
+    member_count: int = Field(ge=0)
     analyst_count: int = Field(ge=0)
     active_work_count: int = Field(ge=0)
     due_soon_count: int = Field(ge=0)
@@ -46,6 +52,7 @@ class TeamMember(ApiModel):
     account_id: UUID
     display_name: str
     role: UserRole
+    workspace_position: WorkspacePosition
     state: MembershipState
     effective_from: datetime
     effective_until: datetime | None

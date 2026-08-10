@@ -23,6 +23,7 @@ export function CalendarPage({ access }: { access?: TeamWorkspaceAccess }) {
   const [view, setView] = useState<CalendarView>(initialView);
   const [anchor, setAnchor] = useState(() => new Date());
   const [selected, setSelected] = useState<CalendarOccurrence | null>(null);
+  const [draftDate, setDraftDate] = useState<Date | null>(null);
   const range = calendarRange(anchor, view);
   const userId = session?.user.id ?? "anonymous";
   const queryKey = access
@@ -48,10 +49,10 @@ export function CalendarPage({ access }: { access?: TeamWorkspaceAccess }) {
       </section>
       {query.isPending ? <PageState kind="loading" title="Loading calendar" /> : null}
       {query.isError ? <PageState action={<button className="button" onClick={() => void query.refetch()}>Try again</button>} kind="error" title="Calendar could not be loaded" /> : null}
-      {query.data ? <CalendarViews anchor={anchor} items={query.data.items} onSelect={setSelected} view={view} /> : null}
+      {query.data ? <CalendarViews anchor={anchor} items={query.data.items} onCreate={(day) => { setDraftDate(day); requestAnimationFrame(() => document.querySelector(".calendar-form-panel input")?.scrollIntoView({ behavior: "smooth", block: "center" })); }} onSelect={setSelected} view={view} /> : null}
       <div className="calendar-support-grid">
-        <CalendarEventForm access={access} members={people.data?.items} range={range} />
-        {access ? <CapacityPanel access={access} /> : <CalendarPrivacy />}
+        <CalendarEventForm access={access} initialDate={draftDate} members={people.data?.items} range={range} />
+        {access && canManage && access.unitKind !== "ROOT" && access.unitKind !== "COMMAND" && access.unitKind !== "OPS_GROUP" ? <CapacityPanel access={access} /> : <CalendarPrivacy />}
       </div>
       {selected ? <CalendarOccurrencePanel canManage={canManage} item={selected} key={`${selected.eventId}:${selected.occurrenceStart}`} onClose={() => setSelected(null)} queryKey={queryKey} /> : null}
     </div>

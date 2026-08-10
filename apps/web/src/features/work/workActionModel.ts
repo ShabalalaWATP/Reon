@@ -12,6 +12,7 @@ export type WorkActionValues = {
   destinationUnitId?: string;
   requiredCapabilities?: string;
   specialistId?: string;
+  contributorIds?: string[];
   deliverableTitle?: string;
   deliverableText?: string;
   information?: string;
@@ -62,6 +63,7 @@ export const workActionSchema = z.object({
   destinationUnitId: z.string().optional(),
   requiredCapabilities: z.string().optional(),
   specialistId: z.string().optional(),
+  contributorIds: z.array(z.string()).max(10).optional(),
   deliverableTitle: z.string().optional(),
   deliverableText: z.string().optional(),
   information: z.string().optional(),
@@ -90,7 +92,15 @@ export const workActionSchema = z.object({
     required("destinationUnitId", "Choose a destination unit.");
     required("requiredCapabilities", "Add at least one required capability.");
   }
-  if (action === "assign") required("specialistId", "Choose an Analyst.");
+  if (action === "assign") {
+    required("specialistId", "Choose a Lead Analyst.");
+    if ((values.reason?.trim().length ?? 0) < 10) {
+      context.addIssue({ code: "custom", message: "Give an assignment reason of at least 10 characters.", path: ["reason"] });
+    }
+    if (values.contributorIds?.includes(values.specialistId ?? "")) {
+      context.addIssue({ code: "custom", message: "The Lead cannot also be a Contributor.", path: ["contributorIds"] });
+    }
+  }
   if (action === "submit") {
     required("deliverableTitle", "Enter a product title.");
     required("deliverableText", "Enter the product text.");
@@ -121,7 +131,7 @@ export const actionLabels: Record<WorkActionName, string> = {
   resume: "Resume command routing",
   allocate: "Route to team",
   return_to_coordination: "Return to command routing",
-  assign: "Assign Analyst",
+  assign: "Assign Analysts",
   return_for_reallocation: "Return to Ops routing",
   submit: "Submit product",
   request_clarification: "Ask Customer for information",
@@ -156,7 +166,7 @@ export function buildWorkAction(values: WorkActionValues): WorkAction {
     case "resume": return { action: values.action, note: values.note! };
     case "allocate": return { action: values.action, destinationUnitId: values.destinationUnitId!, requiredCapabilities: lines(values.requiredCapabilities) };
     case "return_to_coordination": return { action: values.action, reason: values.reason! };
-    case "assign": return { action: values.action, specialistId: values.specialistId! };
+    case "assign": return { action: values.action, specialistId: values.specialistId!, contributorIds: values.contributorIds ?? [], reason: values.reason! };
     case "return_for_reallocation": return { action: values.action, reason: values.reason! };
     case "submit": return { action: values.action, deliverableTitle: values.deliverableTitle!, deliverableText: values.deliverableText! };
     case "request_clarification": return { action: values.action, question: values.question!, reason: values.reason!, responseDeadline: values.responseDeadline! };

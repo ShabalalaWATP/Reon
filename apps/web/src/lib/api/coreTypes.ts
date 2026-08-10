@@ -14,6 +14,7 @@ export type User = {
   displayName: string;
   role: UserRole;
   scope: string;
+  organisationUnitIds: string[];
 };
 
 export type Session = {
@@ -22,6 +23,24 @@ export type Session = {
   expiresAt: string;
   elevatedUntil: string | null;
 };
+
+export type PersonalProfile = {
+  userId: string;
+  name: string;
+  username: string;
+  email: string;
+  role: UserRole;
+  profileTeam: string | null;
+  rankOrGrade: string | null;
+  serviceNumber: string | null;
+  additionalInformation: string | null;
+  version: number;
+};
+
+export type PersonalProfileUpdate = Pick<
+  PersonalProfile,
+  "profileTeam" | "rankOrGrade" | "serviceNumber" | "additionalInformation"
+> & { expectedVersion: number };
 
 export type ListResponse<T> = {
   items: T[];

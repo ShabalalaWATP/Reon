@@ -18,6 +18,7 @@ from istari_service.repositories.projection_pagination import (
     encode_cursor,
 )
 from istari_service.schemas.admin import AdminMembership, AdminUser
+from istari_service.team_models import TeamMembership, WorkspacePosition
 
 
 class AdminReadRepositoryMixin:
@@ -41,6 +42,7 @@ class AdminReadRepositoryMixin:
                 or_(
                     func.lower(User.username).contains(normalised, autoescape=True),
                     func.lower(User.display_name).contains(normalised, autoescape=True),
+                    func.lower(User.email).contains(normalised, autoescape=True),
                 )
             )
         if cursor is not None:
@@ -87,28 +89,37 @@ class AdminReadRepositoryMixin:
                     OrganisationUnit.id,
                     OrganisationUnit.name,
                     OrganisationUnit.kind,
+                    TeamMembership.workspace_position,
                 )
                 .join(
                     OrganisationUnit,
                     OrganisationUnit.id == UserOrganisationMembership.unit_id,
                 )
                 .where(UserOrganisationMembership.user_id.in_({u.id for u in users}))
+                .outerjoin(
+                    TeamMembership,
+                    (TeamMembership.user_id == UserOrganisationMembership.user_id)
+                    & (TeamMembership.team_id == UserOrganisationMembership.unit_id)
+                    & (TeamMembership.effective_until.is_(None)),
+                )
                 .order_by(OrganisationUnit.sort_order, OrganisationUnit.id)
             )
         ).all()
         memberships: dict[UUID, list[AdminMembership]] = {u.id: [] for u in users}
-        for user_id, unit_id, name, kind in rows:
+        for user_id, unit_id, name, kind, position in rows:
             memberships[user_id].append(
                 AdminMembership(
                     organisation_unit_id=unit_id,
                     organisation_unit_name=name,
                     organisation_unit_kind=kind,
+                    workspace_position=position or WorkspacePosition.MEMBER,
                 )
             )
         return [
             AdminUser(
                 id=user.id,
                 username=user.username,
+                email=user.email,
                 display_name=user.display_name,
                 role=user.role,
                 scope=user.scope,

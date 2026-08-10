@@ -71,7 +71,7 @@ describe("authentication and route policy", () => {
     await user.click(await screen.findByRole("button", { name: "Request account" }));
     const submit = screen.getByRole("button", { name: "Submit account request" });
     expect(submit).toBeDisabled();
-    await user.type(screen.getByLabelText(/Display name/), "Synthetic Customer");
+    await user.type(screen.getByLabelText(/^Name/), "Synthetic Customer");
     await user.type(screen.getByLabelText(/Work email/), "customer@example.test");
     await user.type(screen.getByLabelText(/Reason for access/), "I need access for a fictional request.");
     expect(submit).toBeEnabled();
@@ -124,7 +124,15 @@ describe("authentication and route policy", () => {
       requesterSession.user.username,
     );
     expect(screen.getByRole("dialog", { name: "Account details" })).toHaveTextContent("Customer");
+    expect(screen.getByRole("dialog", { name: "Account details" })).toHaveTextContent("Own requests and released products");
+    expect(screen.getByRole("link", { name: "View profile" })).toHaveAttribute("href", "/profile");
+    await user.click(screen.getByRole("dialog", { name: "Account details" }));
+    await user.keyboard("a");
+    expect(screen.getByRole("dialog", { name: "Account details" })).toBeInTheDocument();
     await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Account details" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Open account menu/ }));
+    await user.click(document.body);
     expect(screen.queryByRole("dialog", { name: "Account details" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /Open account menu/ }));
     await user.click(screen.getByRole("button", { name: "Sign out" }));

@@ -36,6 +36,7 @@ def sqlite_settings(url: str = "sqlite+aiosqlite:///:memory:") -> Settings:
 def make_user(username: str) -> User:
     return User(
         username=username,
+        email=username,
         display_name="Synthetic User",
         password_hash="$argon2id$synthetic",
         role=UserRole.REQUESTER,

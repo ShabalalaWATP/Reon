@@ -14,6 +14,8 @@
 .register-section > header span { margin: 0; }
 .register-section h2 { margin: 0; font-size: 1.15rem; }
 .request-register { border-top: 1px solid var(--border); }
+.request-register__header { display: grid; grid-template-columns: minmax(112px, .5fr) minmax(190px, 1.6fr) minmax(130px, .75fr) minmax(130px, .8fr) minmax(120px, .6fr) auto; gap: 12px; align-items: center; min-height: 34px; border-bottom: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border)); padding: 7px 14px; background: color-mix(in srgb, var(--accent) 3%, transparent); color: color-mix(in srgb, var(--muted) 86%, var(--accent)); font-family: var(--font-mono); font-size: .61rem; font-weight: 800; letter-spacing: .105em; text-transform: uppercase; }
+.request-register__header span:last-child { justify-self: end; }
 .request-row { position: relative; display: grid; grid-template-columns: minmax(112px, .5fr) minmax(190px, 1.6fr) minmax(130px, .75fr) minmax(130px, .8fr) minmax(120px, .6fr) auto; gap: 12px; align-items: center; min-height: 70px; border-bottom: 1px solid var(--border); padding: 12px 14px; text-decoration: none; transition: background var(--speed-fast), padding-left var(--speed-fast); }
 .request-row:hover { padding-left: 18px; background: color-mix(in srgb, var(--accent) 6%, transparent); }
 .request-row:focus-within { padding-left: 18px; background: color-mix(in srgb, var(--accent) 9%, transparent); outline: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: -2px; }
@@ -97,5 +99,13 @@
 .deliverable { border-left: 2px solid var(--accent); padding-left: 15px; }
 .feedback-form { display: grid; gap: 14px; }
 .feedback-result p { margin: 7px 0; color: var(--muted); line-height: 1.5; }
+.request-cancellation { display: grid; gap: 18px; border-block: 1px solid color-mix(in srgb, var(--critical) 35%, var(--border)); padding: 18px 2px; }
+.request-cancellation--closed { grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-color: var(--border); }
+.request-cancellation > header { display: flex; align-items: flex-start; gap: 12px; }
+.request-cancellation > header > svg { flex: 0 0 auto; margin-top: 2px; color: var(--critical); }
+.request-cancellation span { color: var(--critical); font-family: var(--font-mono); font-size: .64rem; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+.request-cancellation h2 { margin: 3px 0 0; font-size: 1rem; }
+.request-cancellation p { margin: 5px 0 0; color: var(--muted); font-size: .78rem; line-height: 1.55; }
+.request-cancellation form { display: grid; gap: 15px; max-width: 720px; }
 @keyframes indicator-breathe { 50% { opacity: .45; } }
 @keyframes current-stage { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 10%, transparent); } }

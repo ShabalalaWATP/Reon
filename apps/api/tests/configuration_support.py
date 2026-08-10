@@ -209,6 +209,7 @@ def make_request(requester_id: UUID) -> ServiceRequest:
 def _user(username: str, role: UserRole) -> User:
     return User(
         username=username,
+        email=username,
         display_name=username.split("@", maxsplit=1)[0].replace(".", " ").title(),
         password_hash="$argon2id$synthetic",
         role=role,

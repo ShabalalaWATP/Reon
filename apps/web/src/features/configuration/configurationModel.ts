@@ -14,7 +14,7 @@ export const configurationStatusLabels = {
   VALIDATED: "Ready for review",
 } as const;
 
-export const currentCoreRequestFields = [
+const currentCoreRequestFields = [
   "title",
   "service_category",
   "description",

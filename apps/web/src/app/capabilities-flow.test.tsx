@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import type { ServerCapabilities } from "../lib/api/capabilityClient";
-import type { ActionWorkspace, NotificationList } from "../lib/api/actionNotificationTypes";
+import type { NotificationList } from "../lib/api/actionNotificationTypes";
 import { requesterSession } from "../test/fixtures";
 import { json, mockFeatureFetch, mockFetch, renderApp } from "../test/render";
 
@@ -17,13 +17,6 @@ const enabled: ServerCapabilities = {
   statistics: true,
 };
 const freshness = { status: "CURRENT" as const, projectedAt: null, sourceChangedAt: null, lagSeconds: null, pendingCount: 0 };
-const actions: ActionWorkspace = {
-  items: [],
-  counts: { needsMyAction: 0, waiting: 0, dueSoon: 0, recentlyCompleted: 0 },
-  savedViews: [],
-  nextCursor: null,
-  freshness,
-};
 const notifications: NotificationList = { items: [], unreadCount: 2, nextCursor: null, freshness };
 
 describe("server capabilities", () => {
@@ -77,23 +70,39 @@ describe("server capabilities", () => {
     expect(paths).not.toContain("/api/v1/statistics/scopes");
   });
 
-  it("preserves My work and notification journeys when enabled", async () => {
+  it("keeps Customer actions in My requests and preserves notifications", async () => {
     mockFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
       if (url.pathname.endsWith("/me/capabilities")) return json(enabled);
-      if (url.pathname.endsWith("/me/actions")) return json(actions);
       if (url.pathname.endsWith("/me/notifications/count")) return json({ unreadCount: 2, projectedAt: null });
       if (url.pathname.endsWith("/me/notifications/preferences")) return json({ groups: [] });
       if (url.pathname.endsWith("/me/notifications")) return json(notifications);
+      if (url.pathname.endsWith("/request-drafts")) return json({ items: [] });
+      if (url.pathname.endsWith("/requests")) return json({ items: [] });
       throw new Error(`Unexpected ${url.pathname}`);
     }, true, true, true, false, false, false);
     const user = userEvent.setup();
-    renderApp("/");
+    renderApp("/my-work");
 
-    expect(await screen.findByRole("heading", { name: "My work" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "My work" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "My work" })).not.toBeInTheDocument();
+    expect(screen.getByText(/New actions also appear in notifications/)).toBeInTheDocument();
     await user.click(screen.getByRole("link", { name: "2 unread notifications" }));
     expect(await screen.findByRole("heading", { name: "Notifications" })).toBeInTheDocument();
     expect(screen.getAllByLabelText("2 unread notifications")).toHaveLength(2);
+  });
+
+  it("keeps a large unread count compact without hiding the exact accessible count", async () => {
+    mockFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabled);
+      if (url.pathname.endsWith("/me/notifications/count")) return json({ unreadCount: 120, projectedAt: null });
+      if (url.pathname.endsWith("/request-drafts")) return json({ items: [] });
+      if (url.pathname.endsWith("/requests")) return json({ items: [] });
+      throw new Error(`Unexpected ${url.pathname}`);
+    }, true, true, true, false, false, false);
+    renderApp("/requests");
+    const link = await screen.findByRole("link", { name: "120 unread notifications" });
+    expect(link).toHaveTextContent("99+");
   });
 });

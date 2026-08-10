@@ -40,6 +40,12 @@ async def perform(
     username: str,
     payload: dict[str, Any],
 ) -> dict[str, Any]:
+    if payload.get("action") == "assign" and "reason" not in payload:
+        payload = {
+            **payload,
+            "contributorIds": payload.get("contributorIds", []),
+            "reason": "The Manager selected this accountable delivery team.",
+        }
     await harness.login(username)
     item = await current_item(harness)
     payload = await _with_routing_destination(harness, item["id"], payload)

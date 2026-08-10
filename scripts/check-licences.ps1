@@ -26,7 +26,7 @@ function Test-ApprovedLicence([string]$Licence) {
     return $false
 }
 
-$nodeRaw = & pnpm licenses list --prod --json
+$nodeRaw = & corepack pnpm licenses list --prod --json
 if ($LASTEXITCODE -ne 0) {
     throw 'Could not enumerate production Node licences.'
 }

@@ -14,12 +14,12 @@ from istari_service.management_models import (
     ManagementGrant,
     ManagementGrantAction,
 )
-from istari_service.models import User, UserRole
+from istari_service.models import User
 from istari_service.organisation_models import (
     OrganisationKind,
     OrganisationUnit,
-    UserOrganisationMembership,
 )
+from istari_service.team_models import TeamMembership, WorkspacePosition
 
 MANAGEMENT_NAMESPACE = UUID("b1979c10-bd60-4a46-852b-2f59cb777961")
 SEED_EFFECTIVE_FROM = datetime(2026, 1, 1, tzinfo=UTC)
@@ -41,11 +41,15 @@ NAMED_STATISTICS_GRANTS = {
         "SOLSTICE_OPS",
         "FRONTIER_OPS",
     ),
+    "admin15": ("JIOC",),
 }
 
 
-def management_grant_id(username: str, unit_code: str) -> UUID:
-    return uuid5(MANAGEMENT_NAMESPACE, f"{username}:{unit_code}")
+def management_grant_id(
+    username: str, unit_code: str, purpose: str = "statistics"
+) -> UUID:
+    suffix = "" if purpose == "statistics" else f":{purpose}"
+    return uuid5(MANAGEMENT_NAMESPACE, f"{username}:{unit_code}{suffix}")
 
 
 async def seed_management_grants(session: AsyncSession) -> int:
@@ -62,36 +66,50 @@ async def seed_management_grants(session: AsyncSession) -> int:
     administrator = by_username.get("admin1")
     if administrator is None:
         return 0
-    definitions: list[tuple[User, OrganisationUnit, tuple[ManagementAction, ...]]] = []
+    definitions: list[
+        tuple[
+            User,
+            OrganisationUnit,
+            tuple[ManagementAction, ...],
+            bool,
+            str,
+        ]
+    ] = []
     for username, unit_codes in NAMED_STATISTICS_GRANTS.items():
         subject = by_username.get(username)
         if subject is None or not subject.is_active:
             continue
         for unit_code in unit_codes:
             definitions.append(
-                (subject, by_code[unit_code], (ManagementAction.STATISTICS,))
-            )
-    definitions.extend(await _team_manager_definitions(session, by_code))
-    existing_ids = set(
-        await session.scalars(
-            select(ManagementGrant.id).where(
-                ManagementGrant.id.in_(
-                    management_grant_id(subject.username, unit.code)
-                    for subject, unit, _actions in definitions
+                (
+                    subject,
+                    by_code[unit_code],
+                    (ManagementAction.STATISTICS,),
+                    True,
+                    "statistics",
                 )
             )
+    definitions.extend(await _workspace_manager_definitions(session, by_code))
+    definitions_by_id = {
+        management_grant_id(subject.username, unit.code, purpose): definition
+        for definition in definitions
+        for subject, unit, _actions, _descendants, purpose in (definition,)
+    }
+    existing_ids = set(
+        await session.scalars(
+            select(ManagementGrant.id).where(ManagementGrant.id.in_(definitions_by_id))
         )
     )
     created = 0
-    for subject, unit, actions in definitions:
-        grant_id = management_grant_id(subject.username, unit.code)
+    for grant_id, definition in definitions_by_id.items():
+        subject, unit, actions, include_descendants, _purpose = definition
         if grant_id in existing_ids:
             continue
         grant = ManagementGrant(
             id=grant_id,
             subject_user_id=subject.id,
             root_unit_id=unit.id,
-            include_descendants=unit.kind is not OrganisationKind.TEAM,
+            include_descendants=include_descendants,
             effective_from=SEED_EFFECTIVE_FROM,
             effective_until=None,
             granted_by_user_id=administrator.id,
@@ -107,27 +125,54 @@ async def seed_management_grants(session: AsyncSession) -> int:
     return created
 
 
-async def _team_manager_definitions(
+async def _workspace_manager_definitions(
     session: AsyncSession,
     by_code: dict[str, OrganisationUnit],
-) -> list[tuple[User, OrganisationUnit, tuple[ManagementAction, ...]]]:
+) -> list[tuple[User, OrganisationUnit, tuple[ManagementAction, ...], bool, str]]:
     rows = (
         await session.execute(
             select(User, OrganisationUnit.code)
             .join(
-                UserOrganisationMembership,
-                UserOrganisationMembership.user_id == User.id,
+                TeamMembership,
+                TeamMembership.user_id == User.id,
             )
             .join(
                 OrganisationUnit,
-                OrganisationUnit.id == UserOrganisationMembership.unit_id,
+                OrganisationUnit.id == TeamMembership.team_id,
             )
             .where(
-                User.role == UserRole.DELIVERY_TEAM_LEAD,
+                TeamMembership.workspace_position == WorkspacePosition.MANAGER,
+                TeamMembership.effective_from <= datetime.now(UTC),
+                TeamMembership.effective_until.is_(None),
                 User.is_active.is_(True),
-                OrganisationUnit.kind == OrganisationKind.TEAM,
                 OrganisationUnit.is_configured.is_(True),
             )
         )
     ).all()
-    return [(user, by_code[code], ALL_TEAM_ACTIONS) for user, code in rows]
+    definitions: list[
+        tuple[User, OrganisationUnit, tuple[ManagementAction, ...], bool, str]
+    ] = []
+    for user, code in rows:
+        unit = by_code[code]
+        if unit.kind is OrganisationKind.TEAM:
+            definitions.append((user, unit, ALL_TEAM_ACTIONS, False, "statistics"))
+            continue
+        definitions.extend(
+            (
+                (
+                    user,
+                    unit,
+                    (ManagementAction.STATISTICS,),
+                    True,
+                    "statistics",
+                ),
+                (
+                    user,
+                    unit,
+                    (ManagementAction.ROSTER, ManagementAction.CALENDAR),
+                    False,
+                    "workspace",
+                ),
+            )
+        )
+    return definitions

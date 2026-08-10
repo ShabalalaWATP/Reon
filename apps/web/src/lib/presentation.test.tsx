@@ -34,9 +34,21 @@ describe("presentation helpers", () => {
       { label: "Organisation", path: "/organisation" },
     ]);
     expect(navigationForRole("DELIVERY_TEAM_LEAD")).not.toContainEqual({ label: "Tracking", path: "/tracking" });
-    const enabled = { ...disabledCapabilities, myWork: true, configuration: true, products: true };
+    const enabled = {
+      ...disabledCapabilities,
+      myWork: true,
+      configuration: true,
+      products: true,
+      statistics: true,
+    };
     expect(homeRouteForRole("REQUESTER", disabledCapabilities)).toBe("/requests");
-    expect(homeRouteForRole("REQUESTER", enabled)).toBe("/my-work");
+    expect(homeRouteForRole("REQUESTER", enabled)).toBe("/requests");
+    expect(homeRouteForRole("PLATFORM_ADMIN", enabled)).toBe("/overview");
+    expect(homeRouteForRole("INTAKE_TRIAGE", enabled)).toBe("/overview");
+    expect(homeRouteForRole("DELIVERY_TEAM_LEAD", enabled)).toBe("/overview");
+    expect(homeRouteForRole("DELIVERY_SPECIALIST", enabled)).toBe("/my-work");
+    expect(homeRouteForRole("QUALITY_RELEASE", enabled)).toBe("/overview");
+    expect(navigationForRole("REQUESTER", enabled)).not.toContainEqual({ label: "My work", path: "/my-work" });
     expect(navigationForRole("PLATFORM_ADMIN", enabled)).toContainEqual({ label: "Configuration", path: "/admin/configuration" });
     expect(navigationForRole("DELIVERY_SPECIALIST", enabled)).toContainEqual({ label: "Product package", path: "/product-packages/new" });
   });
@@ -104,8 +116,8 @@ describe("presentation helpers", () => {
     expect(protectedQueryKeys.statisticsScopes("user-a")).not.toEqual(
       protectedQueryKeys.statisticsScopes("user-b"),
     );
-    expect(protectedQueryKeys.statistics("user-a", "scope", "from", "to", "UTC")).not.toEqual(
-      protectedQueryKeys.statistics("user-b", "scope", "from", "to", "UTC"),
+    expect(protectedQueryKeys.statistics("user-a", "scope", "unit", "from", "to", "UTC")).not.toEqual(
+      protectedQueryKeys.statistics("user-b", "scope", "unit", "from", "to", "UTC"),
     );
     expect(protectedQueryKeys.teamWorkspaces("user-a")).not.toEqual(
       protectedQueryKeys.teamWorkspaces("user-b"),

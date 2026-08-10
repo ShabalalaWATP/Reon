@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { describe, expect, it, vi } from "vitest";
@@ -30,7 +30,7 @@ describe("work action controls", () => {
     ["send_to_allocation", "Routing note"],
     ["progress", "Confirmed category"],
     ["allocate", "Destination unit"],
-    ["assign", "Team Analyst"],
+    ["assign", "Lead Analyst"],
     ["submit", "Product title"],
     ["provide_information", "Additional information"],
     ["request_clarification", "Question for the Customer"],
@@ -123,24 +123,27 @@ describe("work action controls", () => {
       />,
     );
 
-    const specialistSelect = screen.getByLabelText("Team Analyst");
+    const specialistSelect = screen.getByLabelText("Lead Analyst");
     expect(specialistSelect).toHaveAttribute("aria-invalid", "false");
     expect(specialistSelect).not.toHaveAttribute("aria-describedby");
     expect(await axe(view.container)).toHaveNoViolations();
-    await user.click(screen.getByRole("button", { name: "Assign Analyst" }));
-    const error = await screen.findByText("Choose an Analyst.");
+    await user.click(screen.getByRole("button", { name: "Assign Analysts" }));
+    const error = await screen.findByText("Choose a Lead Analyst.");
     expect(error.id).not.toBe("");
     expect(specialistSelect).toHaveAttribute("aria-invalid", "true");
     expect(specialistSelect).toHaveAttribute("aria-describedby", error.id);
     expect(await axe(view.container)).toHaveNoViolations();
 
-    await user.click(screen.getByRole("button", { name: "Assign Analyst" }));
-    expect(screen.getByText("Choose an Analyst.")).toHaveAttribute("id", error.id);
+    await user.click(screen.getByRole("button", { name: "Assign Analysts" }));
+    expect(screen.getByText("Choose a Lead Analyst.")).toHaveAttribute("id", error.id);
     await user.selectOptions(specialistSelect, "specialist-2");
-    await user.click(screen.getByRole("button", { name: "Assign Analyst" }));
+    await user.type(screen.getByLabelText(/^Assignment reason/), "Euan is the accountable Lead for this request.");
+    await user.click(screen.getByRole("button", { name: "Assign Analysts" }));
 
     expect(submit).toHaveBeenCalledWith({
       action: "assign",
+      contributorIds: [],
+      reason: "Euan is the accountable Lead for this request.",
       specialistId: "specialist-2",
     });
   });
@@ -158,9 +161,9 @@ describe("work action controls", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Team Analyst")).toBeDisabled();
+    expect(screen.getByLabelText("Lead Analyst")).toBeDisabled();
     expect(screen.getByRole("status")).toHaveTextContent("Loading eligible Analysts…");
-    expect(screen.getByRole("button", { name: "Assign Analyst" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Assign Analysts" })).toBeDisabled();
 
     rerender(
       <WorkActionForm
@@ -187,7 +190,7 @@ describe("work action controls", () => {
     expect(screen.getByRole("status")).toHaveTextContent(
       "No eligible Analysts are available for this team.",
     );
-    expect(screen.getByLabelText("Team Analyst")).toBeDisabled();
+    expect(screen.getByLabelText("Lead Analyst")).toBeDisabled();
 
     rerender(
       <WorkActionForm
@@ -197,10 +200,11 @@ describe("work action controls", () => {
         specialistOptions={readySpecialists}
       />,
     );
-    expect(screen.getByRole("option", { name: "Aisha Rahman" })).toHaveValue(
+    const readyLead = screen.getByLabelText("Lead Analyst");
+    expect(within(readyLead).getByRole("option", { name: "Aisha Rahman" })).toHaveValue(
       "specialist-1",
     );
-    expect(screen.getByLabelText("Team Analyst")).toBeEnabled();
+    expect(screen.getByLabelText("Lead Analyst")).toBeEnabled();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 

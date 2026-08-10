@@ -218,8 +218,11 @@ async def test_commitment_decision_and_team_change_authority_branches() -> None:
             teamId=team_id,
             teamCode="OSG_TEAM",
             teamName="OSG Team",
+            unitKind="TEAM",
+            workspacePosition="MEMBER",
             grantId=None,
             permissions=[],
+            views=["OVERVIEW", "CALENDAR"],
         )
     )
     with pytest.raises(CalendarItemNotFound):
@@ -229,8 +232,11 @@ async def test_commitment_decision_and_team_change_authority_branches() -> None:
         teamId=team_id,
         teamCode="OSG_TEAM",
         teamName="OSG Team",
+        unitKind="TEAM",
+        workspacePosition="MANAGER",
         grantId=grant_id,
         permissions=[ManagementAction.CALENDAR],
+        views=["OVERVIEW", "CALENDAR"],
     )
     service._authorise = AsyncMock()  # type: ignore[method-assign]
     await service._authorise_event_change(actor, event)
@@ -260,13 +266,13 @@ async def test_roster_disposition_checks_work_then_commitments() -> None:
             session, uuid4(), datetime.now(UTC) + timedelta(days=1)
         )
 
-    session.scalar.side_effect = [None, uuid4()]
+    session.scalar.side_effect = [None, None, uuid4()]
     with pytest.raises(InvalidRosterChange, match="commitments"):
         await reject_active_roster_assignments(
             session, uuid4(), datetime.now(UTC) + timedelta(days=1)
         )
 
-    session.scalar.side_effect = [None, None, None, None]
+    session.scalar.side_effect = [None, None, None, None, None]
     await reject_active_roster_assignments(
         session, uuid4(), datetime.now(UTC) + timedelta(days=1)
     )

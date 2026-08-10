@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from typing import Any, cast
 from uuid import UUID
 
-from istari_service.models import User, UserRole
+from istari_service.models import User
 from istari_service.organisation_models import OrganisationUnit
 from istari_service.schemas.team_workspaces import (
     EligibleRosterAnalyst,
@@ -20,10 +20,6 @@ from istari_service.team_models import TeamMembership
 
 def access_pair(access: TeamWorkspaceAccess) -> tuple[UUID, TeamWorkspaceAccess]:
     return access.team_id, access
-
-
-def role_count_pair(row: Any) -> tuple[UserRole, int]:
-    return row[0], row[1]
 
 
 def member_user_id(row: Any) -> UUID:
@@ -57,6 +53,7 @@ def member_view(
         account_id=user.id,
         display_name=user.display_name,
         role=user.role,
+        workspace_position=membership.workspace_position,
         state=_membership_state(membership, now),
         effective_from=_as_utc(membership.effective_from),
         effective_until=(

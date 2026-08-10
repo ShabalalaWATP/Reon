@@ -57,6 +57,7 @@ def make_user(*, role: UserRole = UserRole.REQUESTER) -> User:
     suffix = uuid4().hex
     return User(
         username=f"user.{suffix}@example.test",
+        email=f"user.{suffix}@example.test",
         display_name="Synthetic User",
         password_hash="$argon2id$synthetic",
         role=role,

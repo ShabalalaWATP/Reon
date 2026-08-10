@@ -127,7 +127,7 @@ async def test_allocation_and_planning_return_loops(api_harness: ApiHarness) -> 
     await reach_allocation(harness)
     detail = await perform(
         harness,
-        "admin10",
+        "admin6",
         {"action": "return_to_coordination", "reason": "Clarify the target."},
     )
     assert detail["status"] == "COORDINATION_REVIEW"
@@ -194,7 +194,12 @@ async def test_invalid_action_and_wrong_team_are_rejected_before_engine(
     wrong_specialist = await harness.user_id("admin15")
     response = await harness.client.post(
         f"/api/v1/work-items/{item['id']}/complete",
-        json={"action": "assign", "specialistId": str(wrong_specialist)},
+        json={
+            "action": "assign",
+            "specialistId": str(wrong_specialist),
+            "contributorIds": [],
+            "reason": "A deliberately invalid delivery assignment is being tested.",
+        },
         headers=harness.mutation_headers(),
     )
     assert response.status_code == 409
@@ -240,7 +245,12 @@ async def test_eligible_specialists_are_contextual_and_team_scoped(
     await harness.login("admin8")
     completed = await harness.client.post(
         f"/api/v1/work-items/{work['id']}/complete",
-        json={"action": "assign", "specialistId": str(specialist_id)},
+        json={
+            "action": "assign",
+            "specialistId": str(specialist_id),
+            "contributorIds": [],
+            "reason": "The Manager selected the accountable delivery Lead.",
+        },
         headers=harness.mutation_headers(),
     )
     assert completed.status_code == 200

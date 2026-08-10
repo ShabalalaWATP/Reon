@@ -2,7 +2,7 @@
 
 This file contains current visual orientation and dated assurance records. The
 source-controlled screenshots below were captured from the internally matched,
-running synthetic QA Compose application on 9 August 2026. The web, API,
+running synthetic QA Compose application on 9 and 10 August 2026. The web, API,
 PostgreSQL and Camunda containers were healthy, and the authenticated captures
 produced no unexpected browser console error. Playwright CLI used Chromium with
 a 1,440 by 1,000 CSS-pixel viewport. The images prove that the
@@ -17,7 +17,7 @@ acceptance gates.
 
 ## Current application screenshots
 
-The images deliberately contain only synthetic fixtures. Four representative
+The images deliberately contain only synthetic fixtures. Nine representative
 screens are retained in source control. Replace an image when its corresponding
 surface changes materially instead of accumulating a screenshot for every test
 state.
@@ -25,8 +25,30 @@ state.
 ### Login
 
 Blank login form in the graphite ISTARI visual system. No credential is shown.
+The green `OFFICIAL` strip is visible at the top and the secondary forgotten
+password action remains subordinate to sign-in.
 
 ![ISTARI login screen](../assets/screenshots/login.png)
+
+### Password assistance
+
+The anonymous assistance state accepts a governed work email and returns the
+same non-disclosing response. This synthetic example notified all active
+Platform Administrators and exposed only account `admin2`, not the submitted
+email, in their mandatory account-security notification.
+
+![Forgotten-password assistance](../assets/screenshots/password-assistance.png)
+
+### Global classification administration
+
+Elevated Platform Administrator `admin1` changed the versioned marking from
+`OFFICIAL` to `OFFICIAL-SENSITIVE`. The persistent strip changed to blue and the
+page confirmed the global update. The live PostgreSQL path initially exposed an
+enum persistence mismatch that the SQLite tests could not reveal; the mapping
+was corrected, regression-tested and successfully repeated before the retained
+setting was restored to `OFFICIAL`.
+
+![Platform classification administration](../assets/screenshots/platform-classification-admin.png)
 
 ### Structured request form
 
@@ -54,10 +76,42 @@ Kanban controls without allowing drag-and-drop to bypass named workflow actions.
 
 ![OSG Team workflow board](../assets/screenshots/team-workflow-board.png)
 
+### Routing workspace
+
+JIOC Manager `admin74` on the JIOC Overview. The routing workspace provides a
+single operational entry point to its Queue, Calendar, People, Statistics,
+Handover and Activity views. It deliberately does not expose delivery-team
+planning or an additional Manager approval stage.
+
+![JIOC routing workspace overview](../assets/screenshots/routing-workspace-overview.png)
+
+### Shared team calendar
+
+OSG Team Manager `admin8` on the shared Calendar. Every current member can add
+their own leave, course, training and availability records. Exact-team Managers
+can also add unit events and, for delivery teams only, link commitments to
+eligible tickets. Month, week and agenda modes share the same governed records.
+
+![OSG Team shared calendar](../assets/screenshots/team-calendar-manager.png)
+
+### Effective-dated team roster
+
+OSG Team Manager `admin8` on People. Current and historical Manager and Member
+positions remain visible. Manager appointment, transfer and end actions require
+effective dates and reasons; platform administrators retain organisation-wide
+control.
+
+![OSG Team effective-dated roster](../assets/screenshots/team-people-manager.png)
+
 ## Automated workspace-state coverage
 
-The following is the historical candidate index recorded on 7 August 2026. The
-then-current 188-test frontend suite covered loading, empty, success and
+The current 326-test frontend suite passed on 10 August 2026 with 99.41 per cent
+line and 95.01 per cent branch coverage. It includes access-assistance,
+classification, routing-workspace,
+effective-membership, self-service calendar, Lead and Contributor, collaboration
+and hierarchy-statistics regressions. The following table began as the candidate
+index recorded on 7 August 2026 and now identifies the principal current test
+locations. The frontend suite covers loading, empty, success and
 recoverable-error presentation throughout the critical workspaces. Conflict,
 stale-version and permission outcomes were also exercised at API and form
 boundaries.
@@ -65,6 +119,7 @@ boundaries.
 | Workspace | Principal evidence |
 | --- | --- |
 | Authentication and route policy | `app/auth-flow.test.tsx` |
+| Password assistance and classification | `app/password-assistance-flow.test.tsx`, `app/admin-flow.test.tsx`, `components/classification-control.test.tsx` |
 | Customer register and request detail | `requester-flow.test.tsx`, `branch-states.test.tsx` |
 | Drafts and mandatory form | `draft-flow.test.tsx`, `requester-flow.test.tsx` |
 | Staff queues and routing | `staff-flow.test.tsx`, `routing-options-flow.test.tsx` |
@@ -72,6 +127,8 @@ boundaries.
 | Metadata tracking | `tracking-flow.test.tsx` |
 | Statistics | `StatisticsPage.test.tsx` |
 | Team overview and People | `TeamWorkspacePage.test.tsx` |
+| Routing workspaces and queues | `RoutingWorkspacePage.test.tsx` |
+| Workspace collaboration | `TeamWorkspacePage.test.tsx`, `RoutingWorkspacePage.test.tsx` |
 | Calendar and capacity | `CalendarPage.test.tsx` |
 | Board and packages | `TeamBoardPage.test.tsx` |
 | Planning and iterations | `TeamPlanningPage.test.tsx` |
@@ -180,9 +237,12 @@ representative-user acceptance remain separate human decisions.
 On 8 August 2026, the current React source was served locally and inspected in
 Chromium against the existing synthetic local API. The Customer workspace showed
 exactly one `aria-current="page"` item on both `/requests` and `/requests/new`.
-The account dialog exposed `admin2`, Customer role, Requesting Area A scope and
-session expiry, closed on Escape and route change, and remained within a
-640-pixel viewport. Keyboard focus produced a visible two-pixel outline.
+At the time of this historical capture, the account dialog exposed `admin2`,
+Customer role, the former Requesting Area A seed scope and session expiry. The
+current product replaces that fictional scope with Customer workspace access
+and links to a complete profile. The dialog closed on Escape and route change,
+remained within a 640-pixel viewport, and keyboard focus produced a visible
+two-pixel outline.
 
 This focused check covers the changed shell at desktop and narrow width. It does
 not replace the recorded three-browser baseline or constitute representative

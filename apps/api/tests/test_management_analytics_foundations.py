@@ -72,7 +72,24 @@ async def test_seeded_closure_and_grants_match_exact_management_authority(
         assert depths[osg_id] == 0
         assert depths[ncgi_id] == 1
         assert depths[jioc_id] == 3
-        assert await session.scalar(select(func.count(ManagementGrant.id))) == 42
+        assert await session.scalar(select(func.count(ManagementGrant.id))) == 78
+
+        qc_grant = await session.get(
+            ManagementGrant,
+            management_grant_id("admin15", "JIOC"),
+        )
+        assert qc_grant is not None
+        assert qc_grant.subject_user_id == await harness.user_id("admin15")
+        assert qc_grant.root_unit_id == jioc_id
+        assert qc_grant.include_descendants is True
+        qc_actions = set(
+            await session.scalars(
+                select(ManagementGrantAction.action).where(
+                    ManagementGrantAction.grant_id == qc_grant.id
+                )
+            )
+        )
+        assert qc_actions == {ManagementAction.STATISTICS}
 
         manager_id = await harness.user_id("admin8")
         manager_grant_id = management_grant_id("admin8", "OSG_TEAM")

@@ -46,9 +46,11 @@ Recorded on 7 August 2026.
 
 ## Git state
 
-The repository remains local with no configured private remote or initial commit.
-The master plan keeps sponsor confirmation and remote selection open rather than
-claiming backup or review evidence that does not exist.
+The repository is on `main` with `origin` configured for
+`ShabalalaWATP/Reon`. The unified workspace implementation and its current
+assurance evidence remain working-tree changes until a separate commit and push
+is explicitly requested. Hosted review evidence must therefore be tied to a
+later commit rather than inferred from this local record.
 
 ## Expansion 3: Management grants and analytics facts
 
@@ -60,7 +62,7 @@ Recorded on 7 August 2026.
 | Decisions | ADR 0006 explicit grants and ADR 0007 content-free analytics |
 | Threat model | `docs/threat-model/management-and-analytics.md` |
 | Migration | `0005_management_analytics_foundations.py`; empty upgrade, drift check, downgrade to `0004`, re-upgrade and second drift check passed |
-| Seed | 42 deterministic grants: named JIOC, command and Ops statistics scopes plus exact-team grants for every active Team Manager |
+| Seed | 43 deterministic grants: named JIOC, command, Ops and shared QC statistics scopes plus exact-team grants for every active Team Manager |
 | Scope | Exact, descendant, ancestor, sibling, wrong-action, inactive, expired and revoked cases passed; stale mutation versions denied |
 | Hierarchy | 40 self rows plus bounded ancestor paths; cycle and missing-parent rebuilds rejected |
 | Projection | Authoritative event append refreshes idempotent request facts and stage intervals; full rebuild produces a ready checkpoint |

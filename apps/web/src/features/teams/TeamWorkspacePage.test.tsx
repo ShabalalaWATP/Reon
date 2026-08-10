@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { describe, expect, it } from "vitest";
@@ -146,17 +146,18 @@ describe("team workspace", () => {
     const view = renderApp("/teams/team-osg/overview");
     expect(await screen.findByRole("heading", { name: "OSG Team" })).toBeInTheDocument();
     expect(await screen.findByText("3", { selector: ".team-metric strong" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Team workspace" })).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /Overview|Board|Calendar|People|Planning|Activity/ })).toHaveLength(6);
+    expect(screen.getByRole("link", { name: "Workspace" })).toBeInTheDocument();
+    expect(within(screen.getByRole("navigation", { name: "Organisation workspace views" })).getAllByRole("link")).toHaveLength(7);
     expect(await axe(view.container)).toHaveNoViolations();
 
-    await user.click(screen.getByRole("link", { name: "Board" }));
+    const tabs = screen.getByRole("navigation", { name: "Organisation workspace views" });
+    await user.click(within(tabs).getByRole("link", { name: "Board" }));
     expect(await screen.findByRole("heading", { name: "Workflow board" })).toBeInTheDocument();
-    await user.click(screen.getByRole("link", { name: "Calendar" }));
-    expect(await screen.findByRole("heading", { name: "Add to team calendar" })).toBeInTheDocument();
-    await user.click(screen.getByRole("link", { name: "Planning" }));
+    await user.click(within(screen.getByRole("navigation", { name: "Organisation workspace views" })).getByRole("link", { name: "Calendar" }));
+    expect(await screen.findByRole("heading", { name: "Add calendar activity" })).toBeInTheDocument();
+    await user.click(within(screen.getByRole("navigation", { name: "Organisation workspace views" })).getByRole("link", { name: "Planning" }));
     expect(await screen.findByRole("heading", { name: "Team planning" })).toBeInTheDocument();
-    await user.click(screen.getByRole("link", { name: "Activity" }));
+    await user.click(within(screen.getByRole("navigation", { name: "Organisation workspace views" })).getByRole("link", { name: "Activity" }));
     expect(await screen.findByText("A scheduled Analyst transfer became effective.")).toBeInTheDocument();
     expect(screen.getByText(/scheduled membership service/)).toBeInTheDocument();
   });
@@ -171,13 +172,13 @@ describe("team workspace", () => {
     expect(screen.getAllByRole("button", { name: "End membership" })[0]).toBeEnabled();
     expect(screen.getAllByRole("button", { name: "End membership" })[1]).toBeDisabled();
 
-    await user.selectOptions(screen.getByLabelText(/Analyst/), "alan");
+    await user.selectOptions(screen.getByLabelText(/^Member/), "alan");
     await user.type(screen.getByLabelText(/^Reason/), "Alan is joining to balance current delivery demand.");
-    await user.click(screen.getByRole("button", { name: "Add Analyst" }));
+    await user.click(screen.getByRole("button", { name: "Add Member" }));
     await waitFor(() => expect(bodies.some((body) => body.analystId === "alan")).toBe(true));
 
     await user.click(screen.getByRole("button", { name: "Schedule transfer" }));
-    await user.selectOptions(screen.getByLabelText(/Analyst/), "beth");
+    await user.selectOptions(screen.getByLabelText(/^Member/), "beth");
     fireEvent.change(screen.getByLabelText(/Effective date/), { target: { value: "2026-08-20T10:00" } });
     await user.type(screen.getByLabelText(/^Reason/), "Beth will transfer after the current planning cycle.");
     await user.click(screen.getByRole("button", { name: "Confirm transfer" }));
@@ -239,7 +240,7 @@ describe("team workspace", () => {
     expect(await screen.findByRole("heading", { name: "Team workspace could not be loaded" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("One team, one operational picture")).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText("Team"), "team-quartz");
+    await user.selectOptions(screen.getByLabelText("Workspace"), "team-quartz");
     expect(await screen.findByRole("heading", { name: "Quartz Team" })).toBeInTheDocument();
   });
 
@@ -275,18 +276,28 @@ describe("team workspace", () => {
         eligibleAttempts += 1;
         return eligibleAttempts === 1 ? json({ detail: "Unavailable" }, 503) : json({ items: eligible });
       }
+      if (url.pathname.endsWith("/end")) return json({ detail: "Membership end conflict" }, 409);
       if (url.pathname.endsWith("/memberships")) return json({ detail: "Roster conflict" }, 409);
       throw new Error(`Unexpected ${url.pathname}`);
     }, true, true, false);
     renderApp("/teams/team-osg/people");
     expect(await screen.findByRole("heading", { name: "Team people could not be loaded" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
-    expect(await screen.findByText("Eligible Analysts could not be loaded.")).toBeInTheDocument();
+    expect(await screen.findByText("Eligible Members could not be loaded.")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
-    await user.selectOptions(await screen.findByLabelText(/Analyst/), "alan");
+    await user.selectOptions(await screen.findByLabelText(/^Member/), "alan");
     await user.type(screen.getByLabelText(/^Reason/), "Alan cannot join while a conflicting change is pending.");
-    await user.click(screen.getByRole("button", { name: "Add Analyst" }));
+    await user.click(screen.getByRole("button", { name: "Add Member" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Roster conflict");
+    await user.click(screen.getByRole("button", { name: "Schedule transfer" }));
+    await user.selectOptions(screen.getByLabelText(/^Member/), "beth");
+    fireEvent.submit(screen.getByRole("button", { name: "Confirm transfer" }).closest("form")!);
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Complete the transfer details"));
+    await user.click(screen.getAllByRole("button", { name: "End membership" })[0]);
+    await user.type(screen.getByLabelText(/Reason for ending/), "Lewis cannot leave during a conflicting roster update.");
+    await user.click(screen.getByRole("button", { name: "Confirm end" }));
+    const endForm = screen.getByRole("button", { name: "Confirm end" }).closest("form")!;
+    expect(await within(endForm).findByRole("alert")).toHaveTextContent("Membership end conflict");
   });
 });
 

@@ -2,11 +2,46 @@
 
 ## Customer intake and account-request boundary
 
-The Customer request contract excludes internal business areas, routing destinations and intended recipients. This reduces topology disclosure and prevents a requester from influencing authorisation or routing through untrusted form values. The authenticated requester identity is bound server-side and is the eventual dissemination recipient.
+The Customer request contract excludes service classification, internal business areas, routing destinations and intended recipients. This reduces topology disclosure and prevents a requester from influencing classification, authorisation or routing through untrusted form values. The persisted service-category value is server-owned compatibility metadata and is not part of Customer input. The authenticated requester identity is bound server-side and is the eventual dissemination recipient.
 
 Every workflow-submitted field is mandatory and bounded at both the React and FastAPI boundaries. Cross-field date rules execute server-side. Private drafts may be incomplete but receive the same length and type limits, and draft submission is revalidated as a complete request.
 
+The session profile returns organisation-unit identifiers only for the signed-in
+identity. A separate self-profile endpoint stores optional Team or business area,
+Rank or grade, Service number and Additional information. Those values do not
+grant access, are never used for routing and are returned only to the signed-in
+identity. Every
+request, work, statistics and organisation endpoint continues to reapply its
+server-side object, role and membership policy. Customer action prompts are
+shown on `My requests` and through minimal notifications; notification links do
+not confer authority.
+
 Unauthenticated account requests accept only a display name, normalised work email and access reason. They do not accept credentials, role, scope or memberships. Duplicate pending emails receive the same accepted response to limit account enumeration. The endpoint is restricted to environments where synthetic demo identities are enabled. Administrative approval requires an authenticated Platform Administrator, CSRF validation, recent password step-up and optimistic version matching. Approval can create only a Customer role through this path and is written to the administration audit chain.
+
+## Password assistance and global marking
+
+The public password-assistance endpoint can be used to probe identities or flood
+administrators. Every valid-looking email receives the same HTTP 202 response,
+regardless of account existence, activity, throttling or recent requests. The
+submitted address is normalised for the lookup but is never persisted in the
+attempt record or copied into logs. Attempts retain a one-way source key and an
+optional internal account identifier, expire after seven days, and are bounded
+by shared PostgreSQL source and global windows. A per-account cooldown suppresses
+duplicate notifications. All active Platform Administrators receive the same
+mandatory, content-minimised in-app event, so no single administrator becomes a
+silent availability dependency. A managed edge control remains required against
+distributed volumetric abuse.
+
+A stolen or stale administrator session could otherwise downgrade the global
+visual marking. Mutation therefore requires the Platform Administrator role,
+trusted origin and CSRF checks, a fresh password step-up, row locking and the
+expected singleton version. The audit chain records the actor and old/new
+classification. The unauthenticated read returns only the marking, version and
+timestamp. The interface and architecture explicitly state that the strip is a
+visual marking only: it cannot grant access, reclassify request content or
+replace request-level handling policy. Client caching may delay another open tab
+by at most its short refresh interval, while focus refresh and mutation cache
+updates normally converge sooner.
 
 ## Scope and assets
 
@@ -37,6 +72,13 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | Threat | Control |
 | --- | --- |
 | Another Customer reads a request | Query by Customer ID and recheck object ownership on detail and product access |
+| A Customer cancels another or stale request | Lock the request, require exact Customer ownership, a non-terminal state and optimistic version, then return a non-disclosing denial or conflict |
+| Cancellation closes PostgreSQL but leaves active work | Atomically cancel local tasks, packages and reservations and enqueue a fenced Camunda termination command; suppress a start that has not left PostgreSQL |
+| An uncertain Camunda cancellation is replayed | Use one idempotent outbox key and prove the exact process is `TERMINATED` before recording command success |
+| Cancellation notifications expose the reason or accept browser recipients | Keep the subject content-free, derive recipients from server-owned route selections and assignments, and retain the reason only in authorised request activity |
+| Self-entered profile data changes access | Keep personal fields in a dedicated self-profile contract and never consume them in role, scope, membership, routing, statistics or workflow policy |
+| A user reads or edits another profile | Bind the profile row to the authenticated actor server-side; accept no user ID and require CSRF plus optimistic concurrency for updates |
+| Service number or profile narrative leaks through secondary systems | Exclude self-profile fields from sessions, notifications, analytics and logs; bound and render them as escaped plain text |
 | A staff member performs another role's action | Server-side role-to-stage policy and expected-status check before every mutation |
 | A user manipulates an object identifier | Recheck role, scope, ownership or assignment on the loaded object and return a non-disclosing denial |
 | Related-work search leaks records | Require the active claimed JIOC task and route membership in the candidate query; return bounded metadata only |
@@ -62,6 +104,10 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | An alternative team silently receives OSG staff | Scope Team Manager and Analyst tasks to the selected team; represent missing membership as `Awaiting team staffing` |
 | Administrative account changes remove the last Manager or Analyst | Recalculate staffing from active role-qualified memberships after every relevant change; keep the team selectable and surface `Awaiting team staffing` rather than falling back |
 | Tracking access becomes content or cross-unit access | Use a dedicated metadata-only projection and response schema; SQL-scope rows by the actor's selected JIOC, command or Ops membership before they leave persistence; never reuse request detail or product repositories |
+| A statistics user selects a parent or sibling unit | Resolve the active grant server-side, require the selected unit to be its root or an authorised configured descendant through the organisation closure, and return a non-disclosing not-found response otherwise |
+| A cached hierarchy leaks a previously authorised branch | Key protected queries by actor, grant and selected unit, reauthorise every API and export read, and remove disabled or revoked units from server responses immediately |
+| Multiple grants become an implicit cross-branch scope | Treat every grant as an independent root and require an explicit scope switch; never build navigation edges between separately granted sibling roots |
+| Drill-down defeats cohort suppression | Recalculate suppression independently for the selected node and retain content-free facts, so ancestor and descendant navigation cannot reveal protected individual or request content |
 | Cross-site request forgery | HttpOnly SameSite session cookie plus per-session CSRF header token and trusted-origin checks |
 | High-frequency reads contend on session activity writes | Validate expiry, idle state, account state and credential version on every request, but persist `last_seen_at` only after half of the configured idle window has elapsed |
 | Session theft or replay | Random opaque token, hash at rest, expiry, rotation on login and invalidation on logout |
@@ -109,6 +155,20 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | A slow product upload, scan or download holds a metadata transaction | Split metadata validation, external I/O and fenced finalisation; close authorisation sessions before response streaming |
 | A malformed or replayed page cursor widens visibility | Treat cursors only as bounded ordering keys and reapply full requester, role, route and team policy to every page |
 | An older process instance receives the new loop | Deploy a new BPMN version, record process-definition version per request and leave existing instances pinned |
+
+## Unified workspace and collaboration threats
+
+| Threat | Control |
+| --- | --- |
+| A member forges another person's self-service calendar event | Self-event commands derive the subject from the authenticated session and reject subject, request and package identifiers. |
+| Private leave or appointment notes leak into a shared calendar | Repository views redact by visibility before returning data; the client never receives concealed fields. |
+| A routing Manager assigns or approves work outside the human-led route | Routing workspace capabilities exclude ticket assignment; the user must claim the Camunda task before recording a routing decision. |
+| A Delivery Manager assigns an outsider or expired member | Assignment locks the request and resolves every participant against current exact-team membership at the command time. |
+| Several Analysts produce conflicting workflow outcomes | One Lead remains the Camunda assignee; Contributors cannot complete the parent workflow task. |
+| Concurrent handovers leave PostgreSQL and Camunda with different Leads | Optimistic request and participation versions select one winner; durable fenced commands reconcile Camunda and retain prior state. |
+| Removing membership leaves request or cache access behind | Active leadership, participation and reservations require handover; membership and assignment mutations invalidate user-scoped protected caches. |
+| A local Manager promotes a peer or crosses a unit boundary | Local administration accepts only compatible Member accounts in the exact unit; Manager appointment and global identity changes remain Platform Administrator actions. |
+| Small-team statistics expose individual performance | Workspace statistics are aggregate, feedback is suppressed below its cohort threshold, and individual ranking is not implemented. |
 
 ## Residual risks and go-live gates
 

@@ -38,11 +38,17 @@ export function CategoryPanel({
   );
 }
 
-export function ThroughputPanel({ rows }: { rows: DailyThroughput[] }) {
+export function ThroughputPanel({
+  rows,
+  resolution,
+}: {
+  rows: DailyThroughput[];
+  resolution: "DAILY" | "WEEKLY" | "MONTHLY";
+}) {
   const maximum = Math.max(1, ...rows.flatMap((row) => [row.received, row.completed]));
   return (
     <section className="statistics-panel statistics-panel--wide">
-      <header><h2>Daily throughput</h2><span>Received and completed</span></header>
+      <header><h2>{resolutionLabel(resolution)} throughput</h2><span>Received and completed</span></header>
       <div aria-hidden="true" className="throughput-chart">
         {rows.map((row) => (
           <div className="throughput-chart__day" key={row.date} title={row.date}>
@@ -76,19 +82,30 @@ export function DurationPanel({ rows }: { rows: StageDuration[] }) {
   );
 }
 
-export function ChildrenPanel({ rows }: { rows: ChildUnitComparison[] }) {
+export function ChildrenPanel({
+  rows,
+  onSelect,
+}: {
+  rows: ChildUnitComparison[];
+  onSelect: (unitId: string) => void;
+}) {
   const maximum = Math.max(1, ...rows.map((row) => row.received));
   if (rows.length === 0) return null;
   return (
     <section className="statistics-panel statistics-panel--wide">
       <header><h2>Direct child units</h2><span>Demand within this scope</span></header>
-      <div aria-hidden="true" className="child-comparison">
+      <div className="child-comparison">
         {rows.map((row) => (
-          <div key={row.unitId}>
+          <button
+            aria-label={`View ${row.name} statistics`}
+            key={row.unitId}
+            onClick={() => onSelect(row.unitId)}
+            type="button"
+          >
             <span>{row.name}</span>
             <div><i style={{ width: `${(row.received / maximum) * 100}%` }} /></div>
             <strong>{row.received}</strong>
-          </div>
+          </button>
         ))}
       </div>
       <DataTable
@@ -117,22 +134,29 @@ function DataTable({
   rows: Array<Array<string | number>>;
 }) {
   return (
-    <div className="statistics-table-wrap">
-      <table className="statistics-table">
-        <caption>{caption}</caption>
-        <thead><tr>{headers.map((header) => <th key={header} scope="col">{header}</th>)}</tr></thead>
-        <tbody>
-          {rows.map((row, rowIndex) => (
-            <tr key={`${caption}-${rowIndex}`}>
-              {row.map((cell, cellIndex) => cellIndex === 0
-                ? <th key={cellIndex} scope="row">{cell}</th>
-                : <td key={cellIndex}>{cell}</td>)}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <details className="statistics-data-disclosure">
+      <summary>View data</summary>
+      <div className="statistics-table-wrap">
+        <table className="statistics-table">
+          <caption>{caption}</caption>
+          <thead><tr>{headers.map((header) => <th key={header} scope="col">{header}</th>)}</tr></thead>
+          <tbody>
+            {rows.map((row, rowIndex) => (
+              <tr key={`${caption}-${rowIndex}`}>
+                {row.map((cell, cellIndex) => cellIndex === 0
+                  ? <th key={cellIndex} scope="row">{cell}</th>
+                  : <td key={cellIndex}>{cell}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
   );
+}
+
+function resolutionLabel(value: "DAILY" | "WEEKLY" | "MONTHLY") {
+  return { DAILY: "Daily", WEEKLY: "Weekly", MONTHLY: "Monthly" }[value];
 }
 
 function formatDate(value: string) {

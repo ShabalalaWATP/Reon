@@ -323,7 +323,7 @@ gates remain above 95 per cent for both lines and branches.
 - Added explicit, independently actionable management grants for statistics,
   roster, calendar, board and capacity. Grants are time bounded, versioned,
   reasoned, revocable and separate from workflow roles and team membership.
-- Seeded 42 deterministic local grants: the named JIOC, command and Ops scopes,
+- Seeded 43 deterministic local grants: the named JIOC, command, Ops and shared QC scopes,
   plus exact-team authority for every active Team Manager. Re-seeding preserves
   later grant changes rather than silently restoring authority.
 - Added a transactionally rebuilt organisation closure with self, ancestor and
@@ -678,3 +678,97 @@ gates remain above 95 per cent for both lines and branches.
   production builds, terminology, documentation, operations-contract, licence
   and Python/Node dependency gates on the final runtime-hardening source. The
   current dependency audits reported no known vulnerability.
+- Refined the Customer workspace on 9 August 2026. Service classification is
+  now server-owned rather than Customer input, all remaining intake fields stay
+  mandatory, and Customer actions live with their request and notification
+  instead of a duplicate staff `My work` navigation item.
+- Replaced ambiguous organisation badges with `Routing function`, `Team staffed`
+  and `Team awaiting staffing`. Added a complete profile for every signed-in
+  user, including meaningful access, organisation assignment and session data,
+  and removed fictional requesting-area scopes from Customer seed identities.
+- Closed the refinement with 886 backend tests at 98.22 per cent combined
+  coverage and 298 frontend tests at 99.48 per cent line and 95.04 per cent
+  branch coverage. Split an overloaded Board scenario, removed unreachable
+  protected-route branches and made step-up focus assertions deterministic.
+- Added Customer-owned cancellation on 9 August 2026. A mandatory reason,
+  optimistic version and locked ownership check atomically close the request,
+  local tasks, linked planning packages, capacity reservations and any open
+  clarification. A fenced worker then terminates the exact Camunda process and
+  safely recovers retries or an already-terminated instance.
+- Added bounded self-service profile fields for team or business area, rank or
+  grade, service number and additional information. They are isolated from
+  governed role, organisation membership and routing, and are returned only by
+  the authenticated user's profile endpoint.
+- Renamed the Customer register to `Current requests`, added accessible visual
+  column headings and changed the public account-request identity label to
+  `Name`. The feature includes the accepted ADR, specification and threat-model
+  controls for ownership, notification minimisation and Camunda convergence.
+- Closed the milestone with 908 backend tests at 98.87 per cent line and 95.22
+  per cent branch coverage, plus 302 frontend tests at 99.49 per cent line and
+  95.04 per cent branch coverage. Ruff, MyPy, ESLint, TypeScript and source line
+  limits passed before the repository-wide operational gates.
+- Added hierarchy-aware statistics and role-specific operational overviews on
+  9 August 2026. Each query now reauthorises its selected organisation node
+  against a single active grant, with explicit parent, sibling and cross-grant
+  denials. JIOC and Platform views can drill down through configured descendants,
+  command and Ops users remain inside their branch, and Team Managers remain at
+  their exact team.
+- Kept My work and My requests transaction-focused. Routing users receive a
+  restrained operational landing, Team Managers land on their team Overview,
+  QC receives quality and release measures, and Administrators receive platform
+  control links. Date presets, adaptive throughput resolution, accessible child
+  drill-down, breadcrumb navigation and consolidated suppression messaging make
+  detailed statistics easier to read without weakening server-side scope.
+- Closed the hierarchy and overview milestone with 912 backend tests at 98.84
+  per cent line and 95.09 per cent branch coverage, plus 310 frontend tests at
+  99.49 per cent statements and 95.08 per cent branches. Ruff, formatting,
+  MyPy, Bandit, dependency audit, Knip, Vulture, ESLint, TypeScript, the
+  production bundle budget and every repository quality gate passed. The root
+  scripts now invoke the pinned pnpm 10 runtime through Corepack, preventing an
+  incompatible global pnpm 11 shim from breaking local verification.
+- Completed unified organisation workspaces on 10 August 2026. Effective-dated
+  Manager and Member positions now govern every routing and delivery unit. The
+  synthetic directory contains 99 named Scottish football identities, with at
+  least one Manager and Member in every workspace and the expanded OSG roster.
+- Added calendar self-service for all current members, Manager-owned unit events
+  and delivery-ticket commitments, and one accountable Lead with up to ten
+  Contributors. Only the Lead owns the Camunda task outcome; Contributors gain
+  bounded collaboration access without weakening workflow accountability.
+- Added routing-specific Queue, Calendar, People, Statistics, Handover and
+  Activity surfaces, while delivery teams retain Board and Planning tools.
+  Exact-unit and descendant scoping prevents parent, sibling and unrelated-unit
+  data leakage. Immutable workspace notes, risks, blockers, decisions and links
+  provide a governed operational handover record.
+- Closed automated assurance with 922 backend tests at 98.26 per cent coverage
+  and 321 frontend tests at 99.40 per cent line and 95.03 per cent branch
+  coverage. Ruff, formatting, MyPy, Bandit, npm and Python dependency audits,
+  Knip, Vulture, TypeScript, ESLint, repository policy and the production bundle
+  budget passed.
+- Rebuilt the Compose stack with PostgreSQL 17.10 and Camunda 8.9.14, confirmed
+  every service healthy, passed the Camunda route contract and inspected the
+  JIOC and OSG workspaces in Chromium. A disposable PostgreSQL database passed
+  empty-to-0027 migration, downgrade to 0023, re-upgrade and drift checks.
+- Added password assistance and a global visual classification marking on 10
+  August 2026. The anonymous flow validates a work email but always returns the
+  same accepted result; PostgreSQL source/global limits, per-account suppression
+  and content-minimised notifications protect the active Administrator group.
+- Added governed unique email to every account and profile. The global marking
+  is a versioned singleton, defaults to `OFFICIAL`, and can be changed only by a
+  recently elevated Platform Administrator through CSRF, expected-version and
+  audit controls. A restrained 22-pixel strip now remains visible above the
+  sign-in page and every authenticated workspace.
+- Exercised both journeys in live Chromium. A synthetic `admin2` assistance
+  request produced the neutral Customer response and the expected mandatory
+  account-security notification for `admin1`, without disclosing the submitted
+  email in the notification. The Administrator changed the platform to blue
+  `OFFICIAL-SENSITIVE`, observed the global confirmation and restored green
+  `OFFICIAL`.
+- The live PostgreSQL action exposed an enum-name/value mismatch hidden by the
+  SQLite unit-test path. SQLAlchemy enum persistence now consistently uses
+  declared public values, and a focused regression assertion protects all four
+  permitted classification strings.
+- Closed the feature with 926 backend tests at 98.84 per cent line and 95.08 per
+  cent branch coverage, plus 326 frontend tests at 99.41 per cent line and 95.01
+  per cent branch coverage. Ruff, formatting, MyPy, Bandit, dependency audits,
+  dead-code, documentation, type, lint, build, bundle and live-runtime checks
+  passed.

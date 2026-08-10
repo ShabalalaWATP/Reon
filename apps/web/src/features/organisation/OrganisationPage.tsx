@@ -20,9 +20,9 @@ const kindLabels: Record<OrganisationUnit["kind"], string> = {
 };
 
 const staffingLabels: Record<OrganisationUnit["staffingStatus"], string> = {
-  ROUTING_POOL: "Routing pool",
-  STAFFED: "Staffed",
-  UNSTAFFED: "Awaiting staffing",
+  ROUTING_POOL: "Routing function",
+  STAFFED: "Team staffed",
+  UNSTAFFED: "Team awaiting staffing",
 };
 
 export function OrganisationPage() {
@@ -61,7 +61,7 @@ export function OrganisationPage() {
   const unstaffedTeams = units.filter(
     (unit) => unit.kind === "TEAM" && unit.staffingStatus === "UNSTAFFED",
   ).length;
-  const routingPools = units.filter(
+  const routingUnits = units.filter(
     (unit) => unit.staffingStatus === "ROUTING_POOL",
   ).length;
   const admin = session?.user.role === "PLATFORM_ADMIN";
@@ -74,8 +74,9 @@ export function OrganisationPage() {
           <span>Organisation reference</span>
           <h1>JIOC routing hierarchy</h1>
           <p>
-            Browse the command structure and staffing state. Each task presents
-            its own valid child destinations when a routing decision is claimed.
+            Browse routing responsibility and delivery-team staffing. JIOC,
+            command and Ops units are staffed routing functions; team badges
+            show whether Manager and Analyst roles are currently covered.
           </p>
         </div>
       </header>
@@ -87,7 +88,7 @@ export function OrganisationPage() {
       ) : (
         <>
           <dl className="organisation-summary" aria-label="Staffing summary">
-            <div><dt>Routing pools</dt><dd>{routingPools}</dd></div>
+            <div><dt>Routing functions</dt><dd>{routingUnits}</dd></div>
             <div><dt>Staffed teams</dt><dd>{staffedTeams}</dd></div>
             <div><dt>Awaiting staffing</dt><dd>{unstaffedTeams}</dd></div>
           </dl>

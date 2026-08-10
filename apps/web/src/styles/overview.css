@@ -1,0 +1,26 @@
+.role-overview { max-width: 1380px; }
+.overview-heading { display: flex; align-items: end; justify-content: space-between; gap: 28px; border-bottom: 1px solid var(--border); padding-bottom: 24px; }
+.overview-heading > div > span, .overview-register header span, .overview-links > span { color: var(--accent); font-family: var(--font-mono); font-size: .68rem; font-weight: 750; letter-spacing: .13em; text-transform: uppercase; }
+.overview-heading h1 { margin: 7px 0; font-size: clamp(1.8rem, 3vw, 2.55rem); letter-spacing: -.035em; }
+.overview-heading p { max-width: 680px; margin: 0; color: var(--muted); line-height: 1.55; }
+.overview-measures { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-block: 1px solid var(--border); }
+.overview-measures > div { min-height: 94px; border-right: 1px solid var(--border); padding: 18px; }
+.overview-measures > div:last-child { border-right: 0; }
+.overview-measures span { display: block; min-height: 32px; color: var(--muted); font-size: .72rem; }
+.overview-measures strong { font-family: var(--font-mono); font-size: 1.45rem; }
+.overview-columns { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(260px, .65fr); gap: 42px; }
+.overview-register, .overview-links { min-width: 0; border-top: 2px solid var(--border-strong); padding-top: 16px; }
+.overview-register h2, .overview-links h2 { margin: 6px 0 18px; font-size: 1.05rem; }
+.overview-register > a:not(.overview-text-link) { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 16px; border-top: 1px solid var(--border); padding: 14px 4px; color: inherit; text-decoration: none; transition: background .16s ease, padding .16s ease; }
+.overview-register > a:not(.overview-text-link):hover, .overview-register > a:not(.overview-text-link):focus-visible { padding-inline: 10px; background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.overview-register a span { display: grid; gap: 4px; }
+.overview-register a small { color: var(--muted); }
+.overview-register a b { font-family: var(--font-mono); }
+.overview-text-link { display: inline-flex; align-items: center; gap: 7px; margin-top: 16px; color: var(--accent); font-weight: 700; text-decoration: none; }
+.overview-links { display: grid; align-content: start; }
+.overview-links a { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid var(--border); padding: 13px 2px; color: inherit; text-decoration: none; }
+.overview-links a:hover, .overview-links a:focus-visible { color: var(--accent); }
+.overview-links--wide { max-width: 720px; }
+@media (max-width: 900px) { .overview-measures { grid-template-columns: repeat(2, minmax(0, 1fr)); } .overview-measures > div { border-bottom: 1px solid var(--border); } .overview-columns { grid-template-columns: 1fr; } }
+@media (max-width: 700px) { .overview-heading { align-items: flex-start; flex-direction: column; } .overview-measures { grid-template-columns: 1fr 1fr; } }
+@media (prefers-reduced-motion: reduce) { .overview-register > a:not(.overview-text-link) { transition: none; } }
