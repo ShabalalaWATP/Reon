@@ -41,7 +41,7 @@ READY`, `DECISION REQUIRED`, `NOT IMPLEMENTED` and `OUT OF SCOPE`.
 The product must not be described as enterprise-ready or used with real service
 content until production identity, hosting, named ownership, classification,
 penetration testing, accepted RPO/RTO, operational monitoring and the applicable
-expanded-capability Definition of Done gates are accepted.
+[Definition of Done gates](assurance/DEFINITION_OF_DONE_MATRIX.md) are accepted.
 
 Setting `ENVIRONMENT=prod` does not remove these blockers. In particular, the
 repository has no application OIDC/bootstrap, production object-storage runtime,

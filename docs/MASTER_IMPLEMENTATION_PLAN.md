@@ -19,6 +19,23 @@
 - [x] Enforce documentation links, duplication, current terminology and image
   validity through repository checks.
 
+## Accessibility plan and evidence, 11 August 2026
+
+- [x] Design towards WCAG 2.2 Level AA with semantic structure, keyboard
+  operation, visible focus, reduced-motion support, accessible chart-table
+  parity and reflow down to 320 CSS pixels.
+- [x] Maintain one current technical authority in the
+  [accessibility and WCAG 2.2 evidence](assurance/ACCESSIBILITY_EVIDENCE.md).
+- [x] Make accessibility discoverable from the root README, documentation home,
+  [programme Definition of Done](PROGRAMME_DEFINITIONS_OF_DONE.md#user-experience-and-accessibility),
+  [completion matrix](assurance/DEFINITION_OF_DONE_MATRIX.md#accessibility-compatibility-and-performance-gates)
+  and [production gates](deployment/PRODUCTION_GATES.md).
+- [x] Keep automated component, contrast, axe, keyboard, focus and reflow checks
+  as release evidence without treating automation as human acceptance.
+- [ ] Complete named keyboard, screen-reader, zoom, text-spacing,
+  forced-colours, cognitive and representative-user reviews before claiming
+  WCAG conformance or production acceptance.
+
 ## Route lifecycle tracking and analytical presentation, 10 August 2026
 
 - [x] Make request title the primary tracking identity while retaining linked
@@ -554,7 +571,8 @@ line and 97.48% branch, and 183 frontend tests at 99.41% line and 95.15% branch.
   calendar and Kanban Playwright journeys against PostgreSQL and Camunda.
 - [ ] Obtain product, security, operational and user-acceptance sign-off.
 
-Evidence: the programme evidence ledger and signed pilot record.
+Evidence: the [Definition of Done matrix](assurance/DEFINITION_OF_DONE_MATRIX.md)
+and signed [acceptance record](assurance/ACCEPTANCE_RECORD.md).
 
 Evidence to date: migrations and a clean PostgreSQL restore pass. The complete
 Customer, clarification, SSG delivery and alternative-team journeys pass against
@@ -585,7 +603,7 @@ team-planning enhancements and further scoped operational statistics.
 This work is specified in
 [Operational product capabilities](specs/operational-product-evolution.md) and its
 completion state is tracked in the
-[expanded-capability Definition of Done](assurance/PRODUCT_EVOLUTION_DEFINITION_OF_DONE_MATRIX.md).
+[detailed capability gates](assurance/DEFINITION_OF_DONE_MATRIX.md#detailed-current-capability-gates).
 A local release candidate is implemented behind disabled-by-default production
 flags, but it is not part of the accepted MVP baseline. No phase is accepted
 until its own
@@ -674,9 +692,9 @@ acceptance gates remain open.
 - [x] Prove an empty PostgreSQL 17 migration and first-start baseline at 0018,
   plus runtime-role denials for sealed component reassignment and approved
   workflow identity mutation.
-- [x] Add requirement traceability, enterprise documentation index, continuity
-  framework, detailed configuration permission matrix and unsigned Product
-  expanded-capability acceptance record.
+- [x] Add requirement traceability, the current documentation home, continuity
+  framework, detailed configuration permission matrix and one unsigned
+  acceptance record.
 - [ ] Record live browser, narrow-width, 200% zoom, three-browser, large-tree
   performance, forged-parent, PostgreSQL concurrency and Camunda route evidence.
 - [ ] Obtain named product, security, operational and representative-user

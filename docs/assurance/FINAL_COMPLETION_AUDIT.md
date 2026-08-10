@@ -1,7 +1,7 @@
 # Final completion audit
 
 > Dated local baseline audit. Current open gates are recorded in the
-> expanded-capability Definition of Done matrix.
+> [Definition of Done matrix](DEFINITION_OF_DONE_MATRIX.md).
 
 ## Audit result
 

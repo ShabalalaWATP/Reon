@@ -74,5 +74,5 @@ be regenerated and attached to a commit before acceptance.
 - Native routing breadcrumb and bounded direct-child destination search, with
   keyboard, non-enumeration and no-ranking evidence.
 
-Nothing in this record authorises production use or closes expanded-capability
+Nothing in this record authorises production use or closes detailed capability
 Definition of Done gates without the missing evidence and named acceptance.

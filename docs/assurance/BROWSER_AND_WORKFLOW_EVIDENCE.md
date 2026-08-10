@@ -7,7 +7,7 @@ surface changes materially. The latest Customer form, Customer register, team
 board, calendar, people, CRIOC workspace and administration captures use the
 current local source and produced no browser warning or error. The images prove
 that the documented screens rendered, but are not a source-to-image attestation,
-accessibility acceptance or evidence that every expanded-capability gate is
+accessibility acceptance or evidence that every detailed capability gate is
 closed.
 
 The workflow and cross-browser records after the screenshots are dated evidence.

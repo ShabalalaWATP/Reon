@@ -28,9 +28,10 @@ rather than creating a new architectural decision.
 | Fenced maintenance, external-I/O phases and bounded operational feeds | `runtime-scaling-and-worker-hardening.md` | 0020 | `operations-and-recovery.md`, `service-request-workflow.md` |
 
 All referenced records exist in `docs/specs`, `docs/adr` and
-`docs/threat-model`. The expanded-capability Definition of Done matrix, master
-implementation plan and enterprise gap register are the current aggregate
-authorities for evidence, delivery status and human acceptance.
+`docs/threat-model`. The [Definition of Done matrix](DEFINITION_OF_DONE_MATRIX.md),
+master implementation plan, acceptance record and enterprise gap register are
+the current aggregate authorities for evidence, delivery status and human
+acceptance.
 
 ## Configuration and routing requirement trace
 

@@ -289,8 +289,8 @@ Done when:
 
 Done when:
 
-- every earlier phase passes its own definition and the programme evidence ledger
-  contains current commands, results and artefacts;
+- every earlier phase passes its own definition and the focused assurance
+  records contain current commands, results and artefacts;
 - migration from the previous local schema and a backup restore are rehearsed;
 - security, privacy, accessibility, browser and performance matrices pass with no
   unresolved severe finding;
@@ -300,7 +300,7 @@ Done when:
 - no checklist item is marked complete from intention, partial implementation or
   a narrower test than the requirement.
 
-## Programme evidence ledger
+## Programme evidence requirements
 
 Each phase records:
 

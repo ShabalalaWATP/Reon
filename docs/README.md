@@ -1,7 +1,7 @@
 # ISTARI Service documentation home
 
 Status: current documentation map
-Last reviewed: 10 August 2026
+Last reviewed: 11 August 2026
 
 This is the starting point for product, delivery, engineering, security,
 operations and assurance documentation. It separates current behaviour from
@@ -25,6 +25,7 @@ without knowing its development history.
 | Respond to an incident | [Support and incident runbook](operations/SUPPORT_AND_INCIDENT_RUNBOOK.md) |
 | Back up, restore or maintain data | [Backup, restore and maintenance](operations/BACKUP_RESTORE_AND_MAINTENANCE.md) |
 | Review security design and evidence | [SECURITY.md](../SECURITY.md), [threat models](threat-model/), [security evidence](assurance/SECURITY_SCAN_EVIDENCE.md) |
+| Review accessibility design, evidence and remaining human acceptance | [Accessibility and WCAG 2.2 evidence](assurance/ACCESSIBILITY_EVIDENCE.md) |
 | See what is not ready for production | [Enterprise readiness gap register](ENTERPRISE_READINESS_GAP_REGISTER.md) |
 | See current delivery status | [Master implementation plan](MASTER_IMPLEMENTATION_PLAN.md) |
 | Understand how the codebase developed | [Development story](DEVELOPMENT_STORY.md) |
@@ -65,6 +66,14 @@ without knowing its development history.
 4. Compare controls with the [role matrix](reference/ROLE_PERMISSION_MATRIX.md).
 5. Check the dated [security scan evidence](assurance/SECURITY_SCAN_EVIDENCE.md)
    and [security matrix](assurance/SECURITY_MATRIX_EVIDENCE.md).
+
+### Accessibility reviewer
+
+1. Start with the current [accessibility position and WCAG 2.2 evidence](assurance/ACCESSIBILITY_EVIDENCE.md).
+2. Review the inclusive acceptance criteria in the [current user stories](USER_STORIES.md).
+3. Check the accessibility gates in the [Definition of Done matrix](assurance/DEFINITION_OF_DONE_MATRIX.md#accessibility-compatibility-and-performance-gates).
+4. Confirm the remaining manual and representative-user work in the [production gates](deployment/PRODUCTION_GATES.md).
+5. Record named review results in the [acceptance record](assurance/ACCEPTANCE_RECORD.md).
 
 ### Operator or evaluator
 
@@ -110,6 +119,7 @@ These documents describe how the service works now.
 | Environment variables and invariants | [Configuration reference](deployment/CONFIGURATION_REFERENCE.md) |
 | Current delivery status and next work | [Master implementation plan](MASTER_IMPLEMENTATION_PLAN.md) |
 | Production blockers and accountable decisions | [Enterprise readiness gap register](ENTERPRISE_READINESS_GAP_REGISTER.md) |
+| Accessibility controls, technical evidence and open human review | [Accessibility and WCAG 2.2 evidence](assurance/ACCESSIBILITY_EVIDENCE.md) |
 
 Current-state guides state current behaviour directly. Delivery history and
 superseded decisions do not appear in task guidance.
@@ -141,6 +151,7 @@ traceability. The current guides are the preferred reading path for stakeholders
 Key specifications include:
 
 - [Structured service request MVP](specs/service-request-mvp.md)
+- [Action deep links and workspace navigation](specs/action-deep-links-and-workspace-navigation.md)
 - [Customer intake and account requests](specs/customer-intake-and-account-requests.md)
 - [Requester cancellation and profiles](specs/requester-cancellation-and-personal-profiles.md)
 - [Manual related records](specs/manual-related-records.md)
@@ -153,6 +164,7 @@ Key specifications include:
 - [Platform administration](specs/platform-administration-mvp.md)
 - [Configuration administration usability](specs/configuration-administration-usability.md)
 - [Access assistance and classification](specs/access-assistance-and-global-classification.md)
+- [Request coordination language and ownership](specs/request-coordination-language-and-ownership.md)
 - [Security remediation](specs/security-remediation-2026-08.md)
 - [Runtime scaling and worker hardening](specs/runtime-scaling-and-worker-hardening.md)
 - [Operational readiness](specs/operational-readiness.md)
@@ -204,7 +216,7 @@ They do not override current architecture or status.
 | Data and recovery | [Migration and restore](assurance/MIGRATION_AND_RESTORE_EVIDENCE.md), [recovery](assurance/RECOVERY_EVIDENCE.md) |
 | Performance | [Performance evidence](assurance/PERFORMANCE_EVIDENCE.md) |
 | Configuration | [Configuration and routing](assurance/CONFIGURATION_AND_ROUTING_EVIDENCE.md) |
-| Acceptance | [Definition of Done](assurance/DEFINITION_OF_DONE_MATRIX.md), [final audit](assurance/FINAL_COMPLETION_AUDIT.md), [acceptance record](assurance/PRODUCT_EVOLUTION_ACCEPTANCE_RECORD.md) |
+| Acceptance | [Definition of Done](assurance/DEFINITION_OF_DONE_MATRIX.md), [final audit](assurance/FINAL_COMPLETION_AUDIT.md), [acceptance record](assurance/ACCEPTANCE_RECORD.md) |
 | Source control | [Source-control baseline](assurance/SOURCE_CONTROL_BASELINE.md) |
 
 An evidence file may mention the exact database, browser or candidate version

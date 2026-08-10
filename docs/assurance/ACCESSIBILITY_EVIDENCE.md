@@ -7,6 +7,13 @@ ISTARI is designed towards the [Web Content Accessibility Guidelines (WCAG)
 current technical position. It is not a claim of formal conformance or a
 replacement for an accessibility audit by disabled users and a named reviewer.
 
+Related authorities:
+
+- [master accessibility plan](../MASTER_IMPLEMENTATION_PLAN.md#accessibility-plan-and-evidence-11-august-2026);
+- [accessibility completion gates](DEFINITION_OF_DONE_MATRIX.md#accessibility-compatibility-and-performance-gates);
+- [production gates](../deployment/PRODUCTION_GATES.md); and
+- [representative-user acceptance record](ACCEPTANCE_RECORD.md).
+
 The latest review was completed on 10 August 2026 against the local production
 React build. The stack was healthy and served from Docker at
 `http://localhost:5173`.

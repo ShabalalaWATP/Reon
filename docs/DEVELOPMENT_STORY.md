@@ -1,5 +1,27 @@
 # Development Story
 
+## 11 August 2026: accessibility navigation and assurance consolidation
+
+- Added a direct accessibility route from the documentation home and master
+  plan to the WCAG evidence, completion criteria, production gates and named
+  acceptance record.
+- Kept the honest assurance boundary: automated axe, contrast, keyboard, focus
+  and reflow evidence supports review but cannot replace testing by disabled and
+  representative users.
+- Combined the aggregate and detailed capability gates into one Definition of
+  Done matrix so readers no longer have to reconcile competing completion
+  registers.
+- Replaced the superseded pilot and expanded-capability templates with one
+  current acceptance record covering every role, accessibility review and named
+  accountable sign-off.
+- Retired the orphaned expansion evidence ledger. Its useful dated migration,
+  coverage, workflow, statistics, roster, calendar, board and operational
+  results were already preserved in the corresponding 7 August entries below
+  and in the current focused assurance records.
+- Added the two previously unlisted current specifications to the documentation
+  map and retained separate architecture, threat-model, ADR and cloud deployment
+  guides where they answer distinct questions.
+
 ## 10 August 2026: current-state documentation and architecture
 
 - Rebuilt the root README as the plain-English entry point for product users,
