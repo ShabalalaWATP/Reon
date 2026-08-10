@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
@@ -18,6 +18,7 @@ from istari_service.database import (
 from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
 from istari_service.organisation_models import UserOrganisationMembership
 from istari_service.organisation_seed import organisation_id, seed_organisation_units
+from istari_service.repositories.projection_pagination import encode_cursor
 from istari_service.repositories.work import SqlAlchemyWorkRepository
 from istari_service.schemas.work import ProgressRequest
 from istari_service.team_models import TeamMembership
@@ -127,3 +128,53 @@ async def test_nonterminal_completion_can_wait_for_reconciliation(
         assert detail.status is RequestStatus.COORDINATION_REVIEW
         assert request.workflow_error == "The next work item is being reconciled."
         assert instance.current_element_id is None
+
+
+@pytest.mark.asyncio
+async def test_work_pages_are_unit_scoped_and_cursor_paginated(
+    work_database: tuple[AsyncEngine, async_sessionmaker[AsyncSession]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _, factory = work_database
+    async with factory() as session:
+        worker, _, _, first = await seed_work(
+            session, RequestStatus.TRIAGE_REVIEW, UserRole.INTAKE_TRIAGE
+        )
+        await seed_work(session, RequestStatus.TRIAGE_REVIEW, UserRole.INTAKE_TRIAGE)
+        repository = SqlAlchemyWorkRepository(session)
+        actor = actor_from(worker, organisation_id("JIOC"))
+
+        page, cursor = await repository.page_for_actor(actor, limit=1)
+        assert len(page) == 1
+        assert cursor is not None
+        next_page, next_cursor = await repository.page_for_actor(
+            actor, limit=1, cursor=cursor
+        )
+        assert len(next_page) == 1
+        assert next_page[0].record.id != page[0].record.id
+        assert next_cursor is None
+
+        scoped, _ = await repository.page_for_actor(
+            actor, unit_id=organisation_id("JIOC")
+        )
+        assert first.id in {item.record.id for item in scoped}
+        sibling, _ = await repository.page_for_actor(
+            actor, unit_id=organisation_id("DIGOC")
+        )
+        assert sibling == []
+
+        with monkeypatch.context() as patch:
+            patch.setattr(session.get_bind().dialect, "name", "postgresql")
+            native_page, _ = await repository.page_for_actor(
+                actor,
+                cursor=encode_cursor(datetime.now(UTC) + timedelta(days=1), uuid4()),
+            )
+        assert len(native_page) == 2
+
+        customer, _, _, _ = await seed_work(
+            session, RequestStatus.CUSTOMER_INFORMATION_REQUIRED, UserRole.REQUESTER
+        )
+        unsupported, _ = await repository.page_for_actor(
+            actor_from(customer), unit_id=organisation_id("JIOC")
+        )
+        assert unsupported == []

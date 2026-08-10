@@ -62,7 +62,7 @@ export function AppShell() {
   }
   if (teamWorkspaces.data?.items[0]) {
     navigation.splice(navigation.length - 1, 0, {
-      label: "Workspace",
+      label: `${teamWorkspaces.data.items[0].teamName} workspace`,
       path: `/teams/${teamWorkspaces.data.items[0].teamId}/overview`,
     });
   }

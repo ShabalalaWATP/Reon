@@ -11,7 +11,7 @@ orientation and a separate statistics workspace for detailed reporting. A
 statistics grant authorises its root organisation unit and, when configured,
 every descendant beneath that root. It never authorises a parent or sibling.
 
-`My work` remains the place for personal actions. `My requests` remains the
+`My actions` remains the place for personal and explicitly shared actions. `My requests` remains the
 Customer request register. Team and operational overviews answer what is
 happening now. The Statistics workspace answers why performance is changing and
 supports hierarchy navigation, comparisons and definitions.
@@ -40,7 +40,7 @@ orient and act, while detailed evidence remains in the Statistics workspace.
 | User | Default landing | Detailed reporting |
 | --- | --- | --- |
 | Customer | My requests | No organisation statistics |
-| Team Analyst | My work | No management statistics without an explicit grant |
+| Team Analyst | My actions | No management statistics without an explicit grant |
 | Team Manager | Team overview | Exact-team statistics |
 | JIOC, Command and Ops routing users | Operational overview | Granted root and descendants |
 | QC Manager | Quality and release overview | Explicitly granted quality scope |
@@ -91,9 +91,9 @@ bottlenecks; completed interval durations remain available separately.
 
 Operational routing users see the active grant root, actions requiring attention,
 active demand, due risk, throughput and direct child comparison, with links to
-My work, Tracking and Statistics. Team Managers use the existing Team overview,
+My actions, Tracking and Statistics. Team Managers use the existing Team overview,
 extended with statistics and links to Board, Calendar, People and Planning.
-Team Analysts retain My work as their default. Platform Administrators receive a
+Team Analysts retain My actions as their default. Platform Administrators receive a
 separate administration overview with account, configuration and projection
 health links rather than a generic operational card grid.
 
@@ -116,7 +116,7 @@ health links rather than a generic operational card grid.
 2. Command and Ops users cannot read a parent or sibling by URL, API or export.
 3. A Team Manager sees only the exact granted team.
 4. Multiple independent grants remain separately bounded.
-5. Landing pages preserve the distinct purposes of My work and My requests.
+5. Landing pages preserve the distinct purposes of My actions and My requests.
 6. Charts have readable values, accessible table parity and useful empty states.
 7. Terminal states are excluded from active bottleneck measures.
 8. Backend and frontend retain at least 95 per cent line and branch coverage.

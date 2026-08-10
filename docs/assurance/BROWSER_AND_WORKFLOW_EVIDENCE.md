@@ -286,3 +286,52 @@ The content-free traces and screenshots are under
 screenshot, fixture, plan result and HTTP result to a content hash. These local
 generated files must be copied to the approved immutable evidence store when a
 candidate release is qualified.
+
+## Team-operations candidate browser check
+
+On 10 August 2026, the rebuilt Compose candidate at migration
+`0030_team_operational_skills` was inspected in the in-app Chromium browser.
+
+## Role-aware action-link regression, 10 August 2026
+
+The local Compose candidate was rebuilt and migrated to
+`0031_role_aware_action_links`. PostgreSQL confirmed that the active Russian
+Troop Movements projection was assigned to admin4 and stored the role-owned link
+`/triage?requestId=28f0b5c4-e459-441f-80eb-c4620162b182`.
+
+The existing in-app browser session was reloaded against the rebuilt candidate.
+The following visible behaviour was then exercised as Scott McTominay (admin4):
+
+1. Primary navigation showed `My actions`, `JIOC queue` and `JIOC workspace` as
+   separate destinations.
+2. My actions showed Russian Troop Movements as `Assigned to you`.
+3. Open navigated to the exact stored JIOC queue link.
+4. The JIOC queue selected SR-2026-28F0B5C4 and rendered Russian Troop Movements,
+   its full request record, previous-request matching and the human decision
+   form. It did not redirect to Overview or silently select another ticket.
+5. The JIOC queue navigation item exposed `aria-current="page"` and the active
+   styling class on the selected route.
+
+The migration was then downgraded once and re-upgraded against the live
+PostgreSQL dataset. The repaired personal audience and exact role-owned link
+were present after the rehearsal.
+Every service was healthy, including PostgreSQL 17.10, Camunda 8.9.14, the API,
+worker, web tier and antivirus services.
+
+- OSG Manager `admin8` saw linked assignment, clarification, review, due-risk,
+  capacity, calendar, people, handover, activity and exact-team statistics on the
+  workspace home.
+- The OSG Board exposed active lanes first, collapsed exception and terminal
+  groups, a table alternative and complete filtered column totals. Expanding the
+  terminal group returned two completed requests and the side inspector loaded
+  the authorised Customer requirement and delivery context.
+- JIOC Manager `admin74` saw a routing-only decision home, its Manager/Member
+  roster and one exact-unit JIOC routing decision. The unit Queue contained that
+  same decision and did not expose delivery Kanban or allocation controls.
+- No unexpected browser console warning or error was recorded. One safe 404 in
+  the first OSG inspector pass exposed an overly narrow terminal-history policy;
+  exact-team Manager history access was corrected, regression-tested and then
+  verified successfully against the same PostgreSQL record.
+
+This focused current-candidate check is read-oriented and Chromium-only. It does
+not replace representative-user, cross-browser or accessibility acceptance.

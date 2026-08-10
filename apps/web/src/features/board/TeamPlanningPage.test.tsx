@@ -13,8 +13,8 @@ const session: Session = { ...requesterSession, user: { ...requesterSession.user
 const access: TeamWorkspaceAccess = { teamId: "team-osg", teamCode: "OSG_TEAM", teamName: "OSG Team", grantId: "grant-osg", permissions: ["BOARD", "CAPACITY"] };
 const analystAccess: TeamWorkspaceAccess = { ...access, grantId: null, permissions: [] };
 const members: TeamMember[] = [
-  { membershipId: "manager", accountId: "manager-osg", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, startReason: null, endReason: null },
-  { membershipId: "analyst", accountId: "analyst-osg", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 1, startReason: null, endReason: null },
+  { membershipId: "manager", accountId: "manager-osg", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, skills: ["Delivery leadership"], startReason: null, endReason: null },
+  { membershipId: "analyst", accountId: "analyst-osg", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 1, skills: ["Research"], startReason: null, endReason: null },
 ];
 const iteration: Iteration = { id: "iteration-one", name: "Pilot iteration", goal: "Deliver a synthetic customer product.", startsOn: "2026-08-01", endsOn: "2026-08-14", status: "ACTIVE", completionSummary: null, version: 1 };
 const workPackage: WorkPackage = {

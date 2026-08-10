@@ -117,11 +117,15 @@ not-relevant decision only when each decision type is unique and attributable.
 
 ## Accessibility and interaction
 
-The intake detail opens with automatic suggestions. Each result has a labelled
-match band, visible score, matched-field reasons and an expandable comparison.
-The accessible table-equivalent text is present without relying on colour.
-Advanced search, comparison and decision controls are keyboard-operable and
-include loading, empty, partial-index, error, conflict and success states.
+The intake detail loads the automatic comparison but presents it as a compact,
+collapsed summary so lower-confidence suggestions do not dominate the routing
+decision. The summary distinguishes strong matches from optional suggestions.
+Expanding it reveals manual search and a keyboard-focusable, fixed-height result
+region with its own vertical scroll. Each result retains a labelled match band,
+visible score, matched-field reasons and an expandable comparison without
+relying on colour. Search, disclosure, scrolling, comparison and decision
+controls are keyboard-operable and include loading, empty, partial-index, error,
+conflict and success states.
 
 ## Acceptance criteria
 
@@ -142,6 +146,9 @@ include loading, empty, partial-index, error, conflict and success states.
 8. PostgreSQL full-text and vector indexes, empty upgrade, downgrade, re-upgrade
    and drift checks pass.
 9. Backend and frontend retain at least 95 per cent line and branch coverage.
+10. Automatic results are collapsed by default, their summary does not describe
+    lower-confidence suggestions as strong matches, and expansion cannot make
+    the result list exceed its bounded scroll region.
 
 ## Non-goals
 

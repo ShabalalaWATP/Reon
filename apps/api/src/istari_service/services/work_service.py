@@ -48,6 +48,8 @@ class WorkRepository(Protocol):
         *,
         limit: int = 50,
         cursor: str | None = None,
+        unit_id: UUID | None = None,
+        request_id: UUID | None = None,
     ) -> tuple[list[WorkBundle], str | None]: ...
 
     async def get(
@@ -115,9 +117,15 @@ class WorkService:
         *,
         limit: int = 50,
         cursor: str | None = None,
+        unit_id: UUID | None = None,
+        request_id: UUID | None = None,
     ) -> tuple[list[WorkItem], str | None]:
         bundles, next_cursor = await self._repository.page_for_actor(
-            actor, limit=limit, cursor=cursor
+            actor,
+            limit=limit,
+            cursor=cursor,
+            unit_id=unit_id,
+            request_id=request_id,
         )
         visible = [bundle for bundle in bundles if self._visible(actor, bundle)]
         return [self._with_actions(actor, bundle) for bundle in visible], next_cursor

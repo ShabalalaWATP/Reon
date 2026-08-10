@@ -14,8 +14,11 @@ import type {
 import { apiRequest, pagedPath } from "./transport";
 
 export const workApi = {
-  workItems: (cursor?: string) =>
-    apiRequest<ListResponse<WorkItem>>(pagedPath("/work-items", cursor)),
+  workItems: (cursor?: string, unitId?: string, requestId?: string) =>
+    apiRequest<ListResponse<WorkItem>>(pagedPath("/work-items", cursor, {
+      ...(unitId ? { unitId } : {}),
+      ...(requestId ? { requestId } : {}),
+    })),
   organisationUnits: () =>
     apiRequest<ListResponse<OrganisationUnit>>("/organisation/units"),
   trackedRequests: (cursor?: string) =>

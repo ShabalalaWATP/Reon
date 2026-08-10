@@ -118,6 +118,7 @@ def item(
             version=1,
             linkedRequestId=None,
             availableColumns=[],
+            changedAt=datetime.now(UTC),
         ),
         datetime.now(UTC) + timedelta(seconds=days),
     )

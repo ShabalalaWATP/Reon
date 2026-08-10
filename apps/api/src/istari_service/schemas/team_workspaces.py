@@ -58,6 +58,7 @@ class TeamMember(ApiModel):
     effective_until: datetime | None
     version: int
     active_work_count: int = Field(ge=0)
+    skills: list[str]
     start_reason: str | None
     end_reason: str | None
 
@@ -121,8 +122,11 @@ class EndMembershipCommand(StrictApiModel):
 WorkspaceView = Literal[
     "OVERVIEW",
     "BOARD",
+    "QUEUE",
     "CALENDAR",
     "PEOPLE",
     "PLANNING",
+    "STATISTICS",
+    "HANDOVER",
     "ACTIVITY",
 ]

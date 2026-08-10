@@ -67,8 +67,21 @@ async def test_workspace_access_overview_people_activity_and_scope_boundaries(
 
     analyst_osg = await _workspace(harness, "admin11", "OSG_TEAM")
     assert analyst_osg["permissions"] == []
+    profile = await harness.client.patch(
+        "/api/v1/profile",
+        json={
+            "skills": ["Research", "Data analysis"],
+            "expectedVersion": 1,
+        },
+        headers=harness.mutation_headers(),
+    )
+    assert profile.status_code == 200
     analyst_people = await _people(harness, analyst_osg["teamId"])
     assert all(item["startReason"] is None for item in analyst_people)
+    lewis = next(
+        item for item in analyst_people if item["displayName"] == "Lewis Ferguson"
+    )
+    assert lewis["skills"] == ["Research", "Data analysis"]
     quartz_id = await harness.unit_id("QUARTZ_TEAM")
     denied = await harness.client.get(f"/api/v1/team-workspaces/{quartz_id}/people")
     assert denied.status_code == 404

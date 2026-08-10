@@ -65,7 +65,7 @@ function ScopedOverview({ administrator }: { administrator: boolean }) {
     <main className="page-stack role-overview">
       <header className="overview-heading">
         <div><span>{administrator ? "Platform control" : roleLabels[session!.user.role]}</span><h1>{administrator ? "Administration overview" : `${scope.name} overview`}</h1><p>{administrator ? "Service health, access and aggregate demand in one operational view." : "Current demand, immediate actions and authorised organisation performance."}</p></div>
-        <Link className="button" to="/my-work">Open My work</Link>
+        <Link className="button" to="/my-work">Open My actions</Link>
       </header>
       <OverviewMeasures actions={actions.data} data={statistics.data} />
       <div className="overview-columns">
@@ -111,7 +111,7 @@ function ChildRegister({ data, scopeId }: { data: StatisticsDashboard; scopeId: 
 function OverviewLinks({ administrator }: { administrator: boolean }) {
   const links = administrator
     ? [["User accounts", "/admin/users"], ["Configuration", "/admin/configuration"], ["Organisation", "/organisation"], ["Statistics", "/statistics"]]
-    : [["My work", "/my-work"], ["Tracking", "/tracking"], ["Organisation", "/organisation"], ["Statistics", "/statistics"]];
+    : [["My actions", "/my-work"], ["Tracking", "/tracking"], ["Organisation", "/organisation"], ["Statistics", "/statistics"]];
   return <nav aria-label="Overview destinations" className="overview-links"><span>Workspace links</span><h2>Continue working</h2>{links.map(([label, path]) => <Link key={path} to={path}>{label}<ArrowUpRight aria-hidden="true" size={15} /></Link>)}</nav>;
 }
 
@@ -139,7 +139,7 @@ function QualityOverview() {
         <div><span>Rework decisions</span><strong>{metrics.get("rework") ?? 0}</strong></div>
         <div><span>Feedback received</span><strong>{metrics.get("feedback") ?? 0}</strong></div>
       </section>
-      <nav aria-label="Quality workspace links" className="overview-links overview-links--wide"><span>Workspace links</span><h2>Continue working</h2><Link to="/quality-release">QC queue<ArrowUpRight size={15} /></Link><Link to="/my-work">My work<ArrowUpRight size={15} /></Link><Link to={`/statistics?scopeId=${encodeURIComponent(scope.id)}&unitId=${encodeURIComponent(scope.unitId)}`}>Quality statistics<ArrowUpRight size={15} /></Link><Link to="/organisation">Organisation<ArrowUpRight size={15} /></Link></nav>
+      <nav aria-label="Quality workspace links" className="overview-links overview-links--wide"><span>Workspace links</span><h2>Continue working</h2><Link to="/quality-release">QC queue<ArrowUpRight size={15} /></Link><Link to="/my-work">My actions<ArrowUpRight size={15} /></Link><Link to={`/statistics?scopeId=${encodeURIComponent(scope.id)}&unitId=${encodeURIComponent(scope.unitId)}`}>Quality statistics<ArrowUpRight size={15} /></Link><Link to="/organisation">Organisation<ArrowUpRight size={15} /></Link></nav>
     </main>
   );
 }

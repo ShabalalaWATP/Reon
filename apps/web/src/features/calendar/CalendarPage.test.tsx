@@ -13,7 +13,7 @@ const managerSession: Session = { ...requesterSession, user: { ...requesterSessi
 const analystSession: Session = { ...managerSession, user: { ...managerSession.user, id: "analyst-osg", username: "admin11", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST" } };
 const managerAccess: TeamWorkspaceAccess = { teamId: "team-osg", teamCode: "OSG_TEAM", teamName: "OSG Team", unitKind: "TEAM", workspacePosition: "MANAGER", grantId: "grant-osg", permissions: ["CALENDAR", "CAPACITY", "ROSTER"] };
 const analystAccess: TeamWorkspaceAccess = { ...managerAccess, grantId: null, permissions: [] };
-const people: TeamMember[] = [{ membershipId: "membership-manager", accountId: "manager-osg", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, startReason: null, endReason: null }, { membershipId: "membership-analyst", accountId: "analyst-osg", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, startReason: null, endReason: null }];
+const people: TeamMember[] = [{ membershipId: "membership-manager", accountId: "manager-osg", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, skills: ["Delivery leadership"], startReason: null, endReason: null }, { membershipId: "membership-analyst", accountId: "analyst-osg", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, skills: ["Research"], startReason: null, endReason: null }];
 
 function occurrence(overrides: Partial<CalendarOccurrence> = {}): CalendarOccurrence {
   const startsAt = tomorrow(9);
@@ -280,8 +280,10 @@ function mockCalendar(session: Session, access: TeamWorkspaceAccess, items: Cale
     if (url.pathname.endsWith("/team-workspaces")) return json({ items: [access] });
     if (url.pathname.endsWith("/people")) return json({ items: people });
     if (url.pathname.endsWith("/board")) return options.boardFailure ? json({ detail: "Synthetic board failure" }, 503) : json({
-      items: [{ id: "request-one", itemType: "SERVICE_REQUEST", reference: "REQ-001", title: "Synthetic current request", column: "IN_PROGRESS", priority: "MEDIUM", dueOn: tomorrow(16), ownerUserId: "analyst-osg", ownerDisplayName: "Lewis Ferguson", version: 1, linkedRequestId: null, availableColumns: ["IN_PROGRESS"] }],
+      items: [{ id: "request-one", itemType: "SERVICE_REQUEST", reference: "REQ-001", title: "Synthetic current request", column: "IN_PROGRESS", priority: "MEDIUM", dueOn: tomorrow(16), ownerUserId: "analyst-osg", ownerDisplayName: "Lewis Ferguson", version: 1, linkedRequestId: null, availableColumns: ["IN_PROGRESS"], changedAt: "2026-08-07T10:00:00Z" }],
       nextCursor: null,
+      columnCounts: {},
+      totalCount: 1,
       wipLimits: {},
       configurationVersion: 1,
       savedViews: [],

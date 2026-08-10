@@ -82,7 +82,7 @@ Manager has an explicit JIOC statistics grant for the shared quality overview.
 
 Landing pages show only a small operational summary. Detailed trends,
 definitions, date controls, hierarchy breadcrumbs and export policy remain in
-Statistics. My work remains personal actions, and My requests remains the
+Statistics. My actions remains the staff action register, and My requests remains the
 Customer register.
 
 ## Organisation tree

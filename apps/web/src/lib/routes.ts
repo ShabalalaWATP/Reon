@@ -22,6 +22,15 @@ const queueRoutes: Partial<Record<UserRole, string>> = {
   QUALITY_RELEASE: "/quality-release",
 };
 
+const queueLabels: Partial<Record<UserRole, string>> = {
+  INTAKE_TRIAGE: "JIOC queue",
+  SERVICE_COORDINATION: "Command queue",
+  OPERATIONS_ALLOCATION: "Ops queue",
+  DELIVERY_TEAM_LEAD: "Team queue",
+  DELIVERY_SPECIALIST: "Production queue",
+  QUALITY_RELEASE: "QC queue",
+};
+
 export const roleLabels: Record<UserRole, string> = {
   PLATFORM_ADMIN: "Platform Administrator",
   REQUESTER: "Customer",
@@ -34,6 +43,10 @@ export const roleLabels: Record<UserRole, string> = {
 };
 
 export type NavigationItem = { label: string; path: string };
+
+export function queueLabelForRole(role: UserRole) {
+  return queueLabels[role] ?? "Work queue";
+}
 
 export function isNavigationItemActive(pathname: string, path: string) {
   if (path === "/requests") {
@@ -69,7 +82,7 @@ export function navigationForRole(role: UserRole, capabilities = disabledCapabil
   if (role === "PLATFORM_ADMIN") {
     return [
       ...(capabilities.statistics ? [{ label: "Overview", path: "/overview" }] : []),
-      ...(capabilities.myWork ? [{ label: "My work", path: "/my-work" }] : []),
+      ...(capabilities.myWork ? [{ label: "My actions", path: "/my-work" }] : []),
       { label: "User accounts", path: "/admin/users" },
       ...(capabilities.configuration ? [{ label: "Configuration", path: "/admin/configuration" }] : []),
       organisationLink,
@@ -77,8 +90,8 @@ export function navigationForRole(role: UserRole, capabilities = disabledCapabil
   }
   const navigation = [
     ...(role !== "DELIVERY_SPECIALIST" && capabilities.statistics ? [{ label: "Overview", path: "/overview" }] : []),
-    ...(capabilities.myWork ? [{ label: "My work", path: "/my-work" }] : []),
-    { label: role === "DELIVERY_SPECIALIST" ? "Production queue" : "Work queue", path: queueRoutes[role]! },
+    ...(capabilities.myWork ? [{ label: "My actions", path: "/my-work" }] : []),
+    { label: queueLabelForRole(role), path: queueRoutes[role]! },
   ];
   if (role === "DELIVERY_SPECIALIST" && capabilities.products) {
     navigation.push({ label: "Product package", path: "/product-packages/new" });

@@ -8,6 +8,7 @@ import { ActionRegister } from "./ActionRegister";
 const action: PersonalAction = {
   id: "action",
   section: "WAITING",
+  actionAccess: "PERSONAL",
   actionType: "CUSTOMER_INPUT",
   sourceType: "REQUEST",
   reference: "ISR-200",

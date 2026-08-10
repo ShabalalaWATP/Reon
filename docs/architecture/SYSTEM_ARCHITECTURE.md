@@ -182,6 +182,30 @@ therefore favours durable intent and convergence over a distributed transaction.
 5. If Camunda is unavailable or its search view lags, leases expire safely and
    reconciliation proves the actual task/process state before recovery.
 
+### Action links and operational navigation
+
+PostgreSQL projects a content-minimised **My actions** register from the
+authoritative request event chain. The projection is a locator, not a workflow
+authority. Unclaimed candidate work is marked `SHARED`; a successful Camunda
+claim causes the next atomic request-event projection to address only the named
+assignee and mark it `PERSONAL`.
+
+Customer actions link to the Customer request page. Staff actions link to the
+appropriate JIOC, command, Ops, Team Manager, Team Analyst or QC queue with the
+request UUID as a selector. `GET /work-items?requestId=...` applies that selector
+inside the existing actor-scoped task query. A copied UUID therefore cannot
+broaden access. A missing, completed or differently assigned task returns no
+row, and the frontend reports that the action ended instead of selecting the
+first item in the queue.
+
+The navigation separates three concerns:
+
+- **My actions** is the personal and explicitly shared action register;
+- the role-named queue, such as **JIOC queue**, is where human workflow decisions
+  are claimed and recorded;
+- the organisation-named workspace, such as **JIOC workspace**, contains people,
+  calendar, handover and other unit collaboration features.
+
 ### Clarification
 
 An assigned Analyst may request information from the Customer. PostgreSQL stores
@@ -204,6 +228,12 @@ Participant history remains in PostgreSQL. Only the active Lead is sent to
 Camunda as the task assignee. Contributors gain object-level read and
 collaboration access through the FastAPI policy boundary, not through broader
 organisation scope or a second Camunda task.
+
+The same policy boundary permits a current Manager membership to read active and
+terminal requests assigned to that exact delivery team. This keeps the team's
+Board history inspectable without extending visibility to ancestors, siblings or
+other teams. PostgreSQL membership, effective dates and assigned-team identity
+are rechecked for every detail read.
 
 ### Product lifecycle
 
@@ -266,6 +296,24 @@ ordering columns have matching PostgreSQL indexes. Board search and filters run
 in SQL, with each applicable source reading at most `limit + 1` candidates
 before a bounded merge. The browser appends pages and resets the cursor when a
 filter changes. Cursors contain ordering keys only and never grant authority.
+
+Team workspaces compose several independently authorised bounded projections.
+Delivery-team Overview combines exact-team Board totals, planning freshness,
+capacity, current membership, calendar occurrences, collaboration records and
+recent activity. Routing-unit Overview combines a unit-scoped human decision
+queue with its calendar, handover and activity. A failed source is labelled and
+does not widen another source's scope.
+
+The delivery Board returns two distinct facts: a cursor-bounded item page and
+complete per-column aggregates for the same search, type, priority, owner and
+due-date predicates. Active delivery lanes are shown first. Downstream,
+exception and terminal lanes remain explicitly expandable. Request cards are
+workflow projections and can change stage only through named Camunda actions;
+work packages use their own reasoned, versioned planning transitions.
+
+Current team membership exposes bounded, self-declared operational skill labels
+from the user's profile. These labels support human allocation only. They carry
+no proficiency, ranking, endorsement or automated assignment semantics.
 
 ## 9. Authentication and session controls
 

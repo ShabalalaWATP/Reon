@@ -29,7 +29,7 @@ describe("presentation helpers", () => {
       { label: "Organisation", path: "/organisation" },
     ]);
     expect(navigationForRole("INTAKE_TRIAGE")).toEqual([
-      { label: "Work queue", path: "/triage" },
+      { label: "JIOC queue", path: "/triage" },
       { label: "Tracking", path: "/tracking" },
       { label: "Organisation", path: "/organisation" },
     ]);
@@ -48,9 +48,10 @@ describe("presentation helpers", () => {
     expect(homeRouteForRole("DELIVERY_TEAM_LEAD", enabled)).toBe("/overview");
     expect(homeRouteForRole("DELIVERY_SPECIALIST", enabled)).toBe("/my-work");
     expect(homeRouteForRole("QUALITY_RELEASE", enabled)).toBe("/overview");
-    expect(navigationForRole("REQUESTER", enabled)).not.toContainEqual({ label: "My work", path: "/my-work" });
+    expect(navigationForRole("REQUESTER", enabled)).not.toContainEqual({ label: "My actions", path: "/my-work" });
     expect(navigationForRole("PLATFORM_ADMIN", enabled)).toContainEqual({ label: "Configuration", path: "/admin/configuration" });
     expect(navigationForRole("DELIVERY_SPECIALIST", enabled)).toContainEqual({ label: "Product package", path: "/product-packages/new" });
+    expect(navigationForRole("INTAKE_TRIAGE", enabled)).toContainEqual({ label: "My actions", path: "/my-work" });
   });
 
   it("groups and labels statuses without exposing raw values", () => {

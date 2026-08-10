@@ -55,6 +55,7 @@ def projected_item(item_type: BoardItemType) -> ProjectedBoardItem:
             version=1,
             linkedRequestId=None,
             availableColumns=[],
+            changedAt=datetime.now(UTC),
         ),
         datetime.now(UTC),
     )

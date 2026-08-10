@@ -12,7 +12,7 @@ Customers can request an ISTARI account from the sign-in page and submit a compl
 - Period end cannot precede period start and the required-by date cannot be in the past.
 - The Customer is the release recipient. Internal routing and assignment are selected later by authorised people.
 - Incomplete private drafts remain permitted, but a draft cannot enter workflow until it satisfies the complete request contract.
-- `My requests` is the Customer home and action workspace. Clarification responses, released products and feedback due are grouped with the affected request rather than duplicated in the staff-only `My work` page.
+- `My requests` is the Customer home and action workspace. Clarification responses, released products and feedback due are grouped with the affected request rather than duplicated in the staff-only `My actions` page.
 - Customer action notifications deep-link to the affected request. A notification does not replace the action state held on the request.
 
 ## Customer profile acceptance criteria

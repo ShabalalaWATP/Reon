@@ -13,6 +13,27 @@ import {
 import { json, mockFetch, renderApp } from "../../test/render";
 
 describe("staff work queue", () => {
+  it("opens the exact request from an action link without falling back", async () => {
+    const requested: string[] = [];
+    mockFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(staffSession);
+      if (url.pathname.endsWith("/work-items")) {
+        requested.push(url.searchParams.get("requestId") ?? "");
+        return json({ items: url.searchParams.get("requestId") === workItem.requestId ? [workItem] : [] });
+      }
+      throw new Error(`Unexpected ${url.pathname}`);
+    });
+
+    const exact = renderApp(`/triage?requestId=${workItem.requestId}`);
+    expect(await screen.findAllByText(workItem.requestReference)).toHaveLength(2);
+    expect(requested).toEqual([workItem.requestId]);
+    exact.unmount();
+
+    renderApp("/triage?requestId=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+    expect(await screen.findByRole("heading", { name: "This action is no longer available" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open JIOC queue" })).toHaveAttribute("href", "/triage");
+  });
+
   it("claims work and records a stage-specific human outcome", async () => {
     let item = workItem;
     let completeBody: unknown;

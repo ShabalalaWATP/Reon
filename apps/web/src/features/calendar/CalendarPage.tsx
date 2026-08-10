@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useParams } from "react-router";
 
+import "../../styles/teams.css";
+
 import { PageState } from "../../components/PageState";
 import { api } from "../../lib/api/client";
 import type { CalendarOccurrence } from "../../lib/api/calendarTypes";

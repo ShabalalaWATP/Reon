@@ -33,7 +33,7 @@ def parser() -> argparse.ArgumentParser:
     verification = subcommands.add_parser("verify-restore")
     verification.add_argument(
         "--expected-revision",
-        default="0029_related_request_search",
+        default="0031_role_aware_action_links",
     )
     snapshot = subcommands.add_parser("health-snapshot")
     snapshot.add_argument("--max-command-age-seconds", type=int, default=300)

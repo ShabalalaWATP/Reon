@@ -18,7 +18,7 @@ function ActionRow({ columns, item }: { columns: ActionColumn[]; item: PersonalA
   const href = safeWorkspaceHref(item.deepLink);
   return <tr>
     {columns.includes("REFERENCE") ? <td className="mono-ref">{item.reference}</td> : null}
-    {columns.includes("TITLE") ? <td><strong>{item.title ?? "Restricted item"}</strong><small>{humaniseCode(item.actionType)}</small></td> : null}
+    {columns.includes("TITLE") ? <td><strong>{item.title ?? "Restricted item"}</strong><small>{humaniseCode(item.actionType)}</small><small>{item.actionAccess === "PERSONAL" ? "Assigned to you" : `Available to ${item.currentOwner ?? "your unit"}`}</small></td> : null}
     {columns.includes("CURRENT_OWNER") ? <td>{item.currentOwner ?? "Unassigned"}</td> : null}
     {columns.includes("REQUIRED_BY") ? <td>{formatActionDate(item.requiredBy)}</td> : null}
     {columns.includes("AGE") ? <td>{item.ageDays === 0 ? "Today" : `${item.ageDays}d`}</td> : null}

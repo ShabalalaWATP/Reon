@@ -25,7 +25,7 @@ from istari_service.repositories.organisation import (
     route_membership_condition,
 )
 from istari_service.request_participant_models import RequestParticipant
-from istari_service.team_models import TeamMembership
+from istari_service.team_models import TeamMembership, WorkspacePosition
 
 
 async def scoped_request(
@@ -46,6 +46,11 @@ async def scoped_request(
         )
         if participant_request is not None:
             return participant_request
+        manager_request = await _team_manager_request(
+            session, request_id, actor, lock=lock
+        )
+        if manager_request is not None:
+            return manager_request
         waiting = await _waiting_clarification_request(
             session,
             request_id,
@@ -96,6 +101,40 @@ async def _participant_request(
             or_(
                 TeamMembership.effective_until.is_(None),
                 TeamMembership.effective_until > datetime.now(UTC),
+            ),
+        )
+    )
+    if lock:
+        query = query.with_for_update()
+    return cast(ServiceRequest | None, await session.scalar(query))
+
+
+async def _team_manager_request(
+    session: AsyncSession,
+    request_id: UUID,
+    actor: Actor,
+    *,
+    lock: bool,
+) -> ServiceRequest | None:
+    """Keep an exact-team Manager's historical request context visible."""
+
+    if actor.role is not UserRole.DELIVERY_TEAM_LEAD:
+        return None
+    now = datetime.now(UTC)
+    query = (
+        select(ServiceRequest)
+        .join(
+            TeamMembership,
+            TeamMembership.team_id == ServiceRequest.assigned_delivery_team_id,
+        )
+        .where(
+            ServiceRequest.id == request_id,
+            TeamMembership.user_id == actor.id,
+            TeamMembership.workspace_position == WorkspacePosition.MANAGER,
+            TeamMembership.effective_from <= now,
+            or_(
+                TeamMembership.effective_until.is_(None),
+                TeamMembership.effective_until > now,
             ),
         )
     )

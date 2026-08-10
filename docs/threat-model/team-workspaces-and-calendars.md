@@ -8,7 +8,7 @@ projections. It also covers package templates, checklist instances, blockers,
 dependencies, iterations, handover previews and versioned capacity scenarios in
 the planning cockpit. Protected assets include private calendar text, staffing
 history, individual availability, workload, package notes and exact team
-boundaries.
+boundaries. Self-declared operational skill labels are team-visible profile data.
 
 ## Trust boundaries
 
@@ -40,6 +40,10 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 | Package link changes request state | Keep package aggregate and request commands separate; link is reference-only |
 | Large package history exhausts database connections | Bound package pages to 1–100 records and bulk-load contributors, dependencies, activity and reservations through a dedicated read projection |
 | Cross-team saved view leaks identifiers | Scope filters and returned rows on every execution, not only view creation |
+| Aggregate board totals reveal hidden work | Apply the same exact-team authorisation and filters before every aggregate query; never calculate a broader total and redact it in React |
+| Inspector loads an inaccessible request or package | Reuse the authoritative object-level detail endpoint; allow terminal request history only for a current Manager membership in the exact assigned team; fail closed for parent, sibling, unrelated, expired and revoked access without confirming that an identifier exists |
+| A compact board hides a workflow state | Keep exception, downstream and terminal state groups discoverable, include their scoped totals and provide an equivalent table view |
+| Team home combines data into a broader side channel | Authorise each source independently, use exact-team or authorised descendant scope and render no partial protected data after a failed required query |
 | Capacity reports expose private reasons | Use availability and duration only; omit event title, notes and dispute text |
 | A capacity estimate automatically assigns work | Label estimates and source freshness; require a named Manager-led assignment or handover command and never move a Camunda task from a scenario |
 | A stale planning scenario overwrites commitments | Bind preview and commit to membership, calendar, work, package and reservation versions; return a conflict when any source drifts |
@@ -48,6 +52,7 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 | Blocker or checklist text leaks across teams | Apply exact-team ownership and grant policy on list, detail, notification and saved-view execution |
 | Iteration completion becomes an individual ranking | Report factual team commitment and completion only; do not create Analyst league tables, surveillance scores or inferred performance measures |
 | Planning notification exposes private calendar detail | Publish content-minimal assignment, blocker, due-risk, iteration and dispute events without event title, notes or private reasons |
+| Skill labels become an allocation score or leak outside the team | Bound and normalise self-declared labels, return them only through the authorised exact-team people projection and prohibit proficiency scores, inferred ranking and automated assignment |
 | Notes or calendar text reaches logs | Structured metadata logging with sensitive-field redaction and regression tests |
 
 ## Required evidence
@@ -61,6 +66,11 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 - Recurrence and time-zone property tests, including DST gaps and overlaps.
 - Commitment acknowledgement, dispute, stale-preview and reservation tests.
 - Board invalid-transition, assignment, stale-state and Camunda-outage tests.
+- Board aggregate tests proving totals are independent of pagination and remain
+  exact-team scoped under every supported filter.
+- Inspector tests for direct identifiers, cross-team identifiers, revoked access,
+  terminal exact-team Manager history, keyboard focus containment and
+  request/work-package command separation.
 - Package ownership, dependency-cycle, WIP and reservation consistency tests.
 - Template/checklist ownership, blocker ageing and iteration-boundary tests.
 - Capacity-scenario drift across leave, recurrence, transfer, active work,
@@ -68,6 +78,8 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 - Manager-led handover audit tests and proof that no scenario, board gesture or
   planning notification mutates Camunda directly.
 - Planning-notification recipient and content-minimisation tests.
+- Profile skill validation plus exact-team, sibling, revoked and expired people-
+  projection tests.
 - Fixed 5,000-occurrence and 2,500-package performance evidence with visible
   source freshness.
 - Keyboard alternatives for board and calendar, 200 per cent zoom and reduced

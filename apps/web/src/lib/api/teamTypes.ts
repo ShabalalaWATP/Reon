@@ -39,6 +39,7 @@ export type TeamMember = {
   effectiveUntil: string | null;
   version: number;
   activeWorkCount: number;
+  skills: string[];
   startReason: string | null;
   endReason: string | null;
 };

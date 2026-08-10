@@ -80,13 +80,22 @@ describe("routing organisation workspace", () => {
   });
 
   it("summarises the routing unit and its authorised descendant statistics", async () => {
-    mockRoutingApi(routingManager, managerAccess);
+    mockRoutingApi(routingManager, managerAccess, [], { workItems: [
+      routingWork({ id: "available" }),
+      routingWork({ id: "mine", assigneeId: "manager-jioc", assigneeDisplayName: "Alan Rough", stage: "INFORMATION_REQUIRED" }),
+    ] });
     renderApp("/teams/jioc/overview");
     expect(await screen.findByRole("heading", { name: "JIOC" })).toBeInTheDocument();
     expect(screen.getByText("Shared routing workspace for queue decisions, people, calendar, statistics and handover.")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Routing decisions" })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Available to claim").closest("div")).toHaveTextContent("1"));
+    expect(screen.getByText("Claimed by you").closest("div")).toHaveTextContent("1");
+    const decisions = screen.getByRole("region", { name: "Routing decisions" });
+    expect(within(decisions).getByText("Information required").closest("div")).toHaveTextContent("1");
+    expect(screen.getByRole("heading", { name: "Current stages" })).toBeInTheDocument();
     expect(await screen.findByText("Received in 30 days")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Full statistics" })).toHaveAttribute("href", "/statistics?scopeId=scope-jioc&unitId=jioc");
-    expect(within(screen.getByRole("navigation", { name: "Workspace overview destinations" })).getByRole("link", { name: "Queue" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open routing queue" })).toHaveAttribute("href", "/triage");
   });
 
   it("shows claimed and available routing work and recovers a failed queue read", async () => {

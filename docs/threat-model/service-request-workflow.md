@@ -91,6 +91,9 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | A possible duplicate is treated as workflow truth | Keep links informational and append-only; never change Camunda variables or request state from a link |
 | An action projection becomes a second task authority | Keep source and source version on every projection; invoke only named use cases that recheck authoritative state and never mutate from the projection itself |
 | A stale action is presented as current | Return measured freshness and source version, reject stale mutations with conflict metadata and repair projections idempotently |
+| A staff action link opens a Customer-only page or an unrelated queue item | Generate role-aware relative queue links, filter the actor-scoped work query by request UUID and show an ended-action state when no authorised task remains; never fall back to the first queue item |
+| A copied request UUID enumerates another unit's task | Treat `requestId` only as an additional selector inside the existing role, membership, task-state and assignee predicates; return the same empty result for missing and inaccessible work |
+| Shared work remains visible after another user claims it | Reproject the action to the proven Camunda task assignee in the same request-event transaction and require current task ownership on every queue read and mutation |
 | Notification retry creates duplicates | Use the source event plus recipient as a unique idempotency key and reconcile through the transactional outbox |
 | A notification leaks protected content | Store a minimum safe subject only; exclude request narrative, clarification text, product content, Customer identity and private calendar text from payloads, logs and metrics |
 | A copied notification deep link grants access | Recheck current recipient, role, object, assignment and organisation policy at the target endpoint; notification possession is never authority |

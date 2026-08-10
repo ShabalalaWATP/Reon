@@ -122,15 +122,17 @@ def can_view_request(actor: ActorLike, request: RequestLike) -> bool:
         request, "participant_ids", frozenset()
     ):
         return True
-    if request.status is RequestStatus.CUSTOMER_INFORMATION_REQUIRED:
-        if actor.role is UserRole.DELIVERY_SPECIALIST:
-            return request.assigned_specialist_id == actor.id
-        if actor.role is UserRole.DELIVERY_TEAM_LEAD:
-            return (
-                request.assigned_delivery_team_id in actor.organisation_unit_ids
-                if request.assigned_delivery_team_id is not None
-                else request.assigned_delivery_team == actor.scope
-            )
+    if actor.role is UserRole.DELIVERY_TEAM_LEAD:
+        return (
+            request.assigned_delivery_team_id in actor.organisation_unit_ids
+            if request.assigned_delivery_team_id is not None
+            else request.assigned_delivery_team == actor.scope
+        )
+    if (
+        request.status is RequestStatus.CUSTOMER_INFORMATION_REQUIRED
+        and actor.role is UserRole.DELIVERY_SPECIALIST
+    ):
+        return request.assigned_specialist_id == actor.id
     return can_access_work(actor, request)
 
 

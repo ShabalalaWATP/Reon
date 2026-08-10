@@ -12,6 +12,7 @@ const personalProfile = {
   profileTeam: null,
   rankOrGrade: null,
   serviceNumber: null,
+  skills: [],
   additionalInformation: null,
   version: 1,
 };
@@ -104,6 +105,7 @@ describe("personal profile", () => {
           profileTeam: "Fictional Customer Team",
           rankOrGrade: "Grade 7",
           serviceNumber: "SYN-1042",
+          skills: ["Research", "Data analysis"],
           additionalInformation: "Synthetic profile context.",
           version: 2,
         });
@@ -117,6 +119,7 @@ describe("personal profile", () => {
     await user.type(await screen.findByLabelText(/Team or business area/), "Fictional Customer Team");
     await user.type(screen.getByLabelText(/Rank or grade/), "Grade 7");
     await user.type(screen.getByLabelText(/Service number/), "SYN-1042");
+    await user.type(screen.getByLabelText(/Operational skills/), "Research, Data analysis");
     await user.type(screen.getByLabelText(/Additional information/), "Synthetic profile context.");
     await user.click(screen.getByRole("button", { name: "Save personal details" }));
 
@@ -124,6 +127,7 @@ describe("personal profile", () => {
       profileTeam: "Fictional Customer Team",
       rankOrGrade: "Grade 7",
       serviceNumber: "SYN-1042",
+      skills: ["Research", "Data analysis"],
       additionalInformation: "Synthetic profile context.",
       expectedVersion: 1,
     }));
@@ -151,6 +155,7 @@ describe("personal profile", () => {
       profileTeam: null,
       rankOrGrade: "Grade 6",
       serviceNumber: null,
+      skills: [],
       additionalInformation: null,
       expectedVersion: 1,
     }));
@@ -179,8 +184,11 @@ describe("personal profile", () => {
     fireEvent.change(screen.getByLabelText(/Additional information/), {
       target: { value: "I".repeat(2001) },
     });
+    fireEvent.change(screen.getByLabelText(/Operational skills/), {
+      target: { value: Array.from({ length: 13 }, (_, index) => `Skill ${index}`).join(", ") },
+    });
 
-    expect(await screen.findAllByRole("alert")).toHaveLength(4);
+    expect(await screen.findAllByRole("alert")).toHaveLength(5);
     expect(screen.getByRole("button", { name: "Save personal details" })).toBeDisabled();
   });
 });

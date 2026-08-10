@@ -1,5 +1,19 @@
 # Development Story
 
+## 10 August 2026: action-oriented team workspaces
+
+- Reworked delivery and routing workspace homes around decisions requiring
+  attention, rather than duplicating the deeper Statistics page.
+- Made Kanban totals independent of cursor pages, focused the default lanes and
+  added saved and built-in views, progressive disclosure, a table alternative
+  and a shared work-item inspector.
+- Connected the daily team surface to clarifications, review, planning freshness,
+  blockers, dependencies, capacity, calendars, people, handover and activity.
+- Corrected routing queue reads so each selected unit shows only its own current
+  decision position.
+- Added migration 0030 for bounded self-declared operational skill labels, shown
+  only through Profile and an authorised exact-team people projection.
+
 ## 10 August 2026: explainable request matching and simpler JIOC routing
 
 - Replaced the misleading title/reference lookup with automatic, explainable
@@ -714,7 +728,7 @@ gates remain above 95 per cent for both lines and branches.
 - Refined the Customer workspace on 9 August 2026. Service classification is
   now server-owned rather than Customer input, all remaining intake fields stay
   mandatory, and Customer actions live with their request and notification
-  instead of a duplicate staff `My work` navigation item.
+  instead of a duplicate staff `My actions` navigation item.
 - Replaced ambiguous organisation badges with `Routing function`, `Team staffed`
   and `Team awaiting staffing`. Added a complete profile for every signed-in
   user, including meaningful access, organisation assignment and session data,
@@ -746,7 +760,7 @@ gates remain above 95 per cent for both lines and branches.
   denials. JIOC and Platform views can drill down through configured descendants,
   command and Ops users remain inside their branch, and Team Managers remain at
   their exact team.
-- Kept My work and My requests transaction-focused. Routing users receive a
+- Kept My actions and My requests transaction-focused. Routing users receive a
   restrained operational landing, Team Managers land on their team Overview,
   QC receives quality and release measures, and Administrators receive platform
   control links. Date presets, adaptive throughput resolution, accessible child
@@ -805,3 +819,50 @@ gates remain above 95 per cent for both lines and branches.
   per cent branch coverage. Ruff, formatting, MyPy, Bandit, dependency audits,
   dead-code, documentation, type, lint, build, bundle and live-runtime checks
   passed.
+- Reworked team operations on 10 August 2026 around decisions rather than passive
+  navigation. Delivery Managers now land on linked attention, capacity, people,
+  calendar, handover and activity signals. Routing units receive a separate
+  claim-based decision home. The Kanban defaults to active flow, keeps exception
+  and terminal lanes discoverable, exposes complete filtered totals and opens an
+  authorised side inspector from either board or table presentation.
+- Added exact-unit routing queue reads, operational skill labels and migration
+  0030. A live OSG history check exposed that terminal cards could outlive active
+  task-based detail access. The request policy now permits history only for a
+  current Manager of the exact assigned team, retains concealed denial elsewhere
+  and is covered by allow-and-deny regression tests.
+- Closed the team-operations candidate with 940 backend tests at 98.88 per cent
+  statement and 95.06 per cent branch coverage, plus 337 frontend tests at 99.46
+  per cent line and 95.03 per cent branch coverage. All repository gates, static
+  analysis, dependency audits, the production build and the live PostgreSQL,
+  Camunda, OSG and JIOC walkthrough passed. Route-splitting reduced initial CSS
+  from 120.7 KB to 91.3 KB.
+- Repaired staff action navigation on 10 August 2026. Operational action cards
+  now deep-link to the correct role queue with an exact request selector, while
+  Customer actions retain the Customer request detail. The queue fails closed
+  when the selected action has completed, moved or left the actor's scope.
+- Separated `My actions`, the role-owned queue and the named organisation
+  workspace in primary navigation. Shared actions are labelled as available to
+  the unit, while claimed work is shown only to its named assignee.
+- Added migration 0031 to repair existing links and claimed audiences. A real
+  PostgreSQL downgrade and re-upgrade retained the repaired admin4 assignment
+  and `/triage?requestId=…` link for Russian Troop Movements.
+- The PostgreSQL rehearsal also exposed Alembic attempting unsupported equality
+  on `json` defaults. The schema-drift comparator now normalises JSON defaults
+  directly while retaining normal Alembic comparison for every other type.
+- Verified the reported journey in the in-app browser: admin4 opened Russian
+  Troop Movements from My actions and arrived at the selected JIOC routing
+  record with the full request, matching evidence and human decision controls.
+- Closed automated assurance with 951 backend tests at 98.88 per cent statement
+  and 95.06 per cent branch coverage, plus 338 frontend tests at 99.46 per cent
+  line and 95.00 per cent branch coverage. Repository policy, static analysis,
+  documentation, licence, dependency, production-build, reversible-migration
+  and PostgreSQL schema-drift gates passed.
+- Reduced previous-request comparison to secondary decision support on 10 August
+  2026. The JIOC routing record now shows a collapsed summary by default,
+  distinguishes strong matches from lower-confidence suggestions and reveals
+  search and evidence only on request. Expanded results remain in a 330 px or
+  42 viewport-height keyboard-focusable scrolling region.
+- Added regression coverage for collapsed disclosure, honest strong and weak
+  summaries, plural and mixed result states, keyboard access, recording a human
+  decision and returning to automatic comparison. The frontend closes with 339
+  tests at 99.46 per cent line and 95.02 per cent branch coverage.

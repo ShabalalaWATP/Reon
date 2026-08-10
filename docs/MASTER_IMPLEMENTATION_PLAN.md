@@ -865,3 +865,87 @@ rollout remains subject to the enterprise gap register.
   rehearsal.
 - [ ] Complete a coordinated current-candidate backup/restore before release
   acceptance.
+
+## Action-oriented team workspace milestone
+
+Status: implemented and assured locally on 10 August 2026. Representative-user
+acceptance remains required.
+
+- [x] Replace the passive delivery overview with linked overdue, assignment,
+  clarification, review, capacity, calendar, people, handover and activity
+  signals.
+- [x] Give routing units a separately designed, unit-scoped decision home without
+  delivery allocation or a Manager approval stage.
+- [x] Return complete filtered Board column aggregates independently of the
+  cursor-bounded item page.
+- [x] Focus the default Kanban on active delivery, with expandable downstream,
+  exception and terminal groups plus an equivalent table presentation.
+- [x] Add built-in and saved views, WIP signals, compact filters, a focused work-
+  package drawer and an accessible request/package inspector.
+- [x] Keep request movement behind named Camunda workflow actions and package
+  movement behind explicit, reasoned, versioned commands.
+- [x] Surface customer clarification, Lead review, blockers, dependency warnings,
+  capacity reservations, calendar availability, iteration progress and handover
+  context at the point of work.
+- [x] Add up to twelve normalised, unique, self-declared operational skill labels
+  to Profile and the authorised exact-team people view without scoring or
+  automated assignment.
+- [x] Scope every routing queue read to the selected organisation unit.
+- [x] Complete full backend and frontend coverage, policy, migration and live-
+  browser assurance for the current candidate. The final evidence is 940
+  backend tests at 98.88 per cent statement and 95.06 per cent branch coverage,
+  plus 337 frontend tests at 99.46 per cent line and 95.03 per cent branch
+  coverage.
+- [ ] Obtain representative acceptance from a routing Manager, routing Member,
+  delivery Team Manager and delivery Analyst.
+
+## Role-aware action navigation milestone
+
+Status: implemented and assured locally on 10 August 2026. Representative-user
+acceptance remains required.
+
+- [x] Replace ambiguous staff navigation with role-specific action, queue and
+  workspace labels, including `My actions`, `JIOC queue` and `JIOC workspace`.
+- [x] Project every operational action to its role-owned queue with an exact,
+  server-authorised `requestId` selector instead of a Customer-only detail URL.
+- [x] Keep shared, unclaimed work visible to the authorised unit while making a
+  claimed action personal to the assignee and removing it from peer registers.
+- [x] Refuse to substitute another queue item when a linked action was completed,
+  claimed by somebody else or left the actor's scope.
+- [x] Backfill existing active actions through migration 0031, preserving the
+  safer personal audience on downgrade and repairing the reported Russian Troop
+  Movements card.
+- [x] Add positive role-route, exact-selection, claim-isolation, empty-state and
+  legacy-projection regression coverage.
+- [x] Record the access-control analysis in the workflow threat model and the
+  projection, selection and navigation boundaries in system architecture.
+- [x] Exercise admin4 in the local browser and prove that Open selects Russian
+  Troop Movements in the JIOC routing queue rather than redirecting to Overview.
+- [x] Pass 951 backend tests at 98.88 per cent statement and 95.06 per cent
+  branch coverage, plus 338 frontend tests at 99.46 per cent line and 95.00 per
+  cent branch coverage.
+- [x] Pass formatting, Ruff, MyPy, Bandit, ESLint, TypeScript, dead-code,
+  line-limit, documentation, licence, OpenAPI, Dependabot, secret-scan contract,
+  dependency-audit, production-build and PostgreSQL schema-drift gates.
+- [ ] Obtain acceptance from representative JIOC, command, Ops, delivery and QC
+  users for the final labels and linked-action recovery message.
+
+## Compact previous-request evidence milestone
+
+Status: implemented and assured locally on 10 August 2026. Representative JIOC
+acceptance remains required.
+
+- [x] Keep automatic comparison running without automatically exposing a long
+  list of advisory results in the routing form.
+- [x] Show a compact collapsed summary that distinguishes strong matches from
+  lower-confidence suggestions and does not imply a weak score is a match.
+- [x] Reveal manual history search, match evidence and human-decision controls
+  through a labelled, keyboard-operable disclosure.
+- [x] Bound expanded results to a keyboard-focusable scrolling region of at most
+  330 px or 42 per cent of viewport height.
+- [x] Retain existing request-scope authorisation and advisory-only routing
+  semantics without changing the API or workflow.
+- [x] Pass the complete 339-test frontend suite at 99.46 per cent line and 95.02
+  per cent branch coverage, plus TypeScript, ESLint and line-limit checks.
+- [ ] Obtain representative JIOC acceptance for the summary wording and expanded
+  result height at normal operational display sizes.

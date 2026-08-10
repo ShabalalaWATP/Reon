@@ -3,18 +3,28 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
 
 from conftest import ApiHarness
 from istari_service.errors import InvalidAdministrationChange
+from istari_service.management_models import ManagementAction
 from istari_service.models import User
-from istari_service.organisation_models import UserOrganisationMembership
+from istari_service.organisation_models import (
+    OrganisationKind,
+    UserOrganisationMembership,
+)
+from istari_service.repositories.team_workspaces import (
+    _merge_authority,
+    _own_authority,
+    _workspace_views,
+)
 from istari_service.team_membership_admin import align_admin_team_membership
 from istari_service.team_membership_seed import seed_team_membership_history
 from istari_service.team_membership_sync import synchronise_due_team_memberships
-from istari_service.team_models import TeamMembership
+from istari_service.team_models import TeamMembership, WorkspacePosition
 from istari_service.team_workspace_views import _as_utc
 from istari_service.workspace_workloads import active_work_counts
 
@@ -304,3 +314,22 @@ async def test_admin_moves_preserve_timeline_and_small_helpers(
             == 0
         )
         await seed_team_membership_history(session, set(), {cedar_id})
+
+
+def test_workspace_authority_helpers_preserve_role_specific_views() -> None:
+    team = SimpleNamespace(id=uuid4())
+    own_id, own = _own_authority((team, WorkspacePosition.MANAGER))
+    assert own_id == team.id
+    assert own.position is WorkspacePosition.MANAGER
+
+    first_grant = SimpleNamespace(id=uuid4())
+    authority = _merge_authority({}, (first_grant, ManagementAction.STATISTICS, team))
+    assert authority[team.id].grant_id == first_grant.id
+    replacement = SimpleNamespace(id=uuid4())
+    _merge_authority(authority, (replacement, ManagementAction.BOARD, team))
+    assert authority[team.id].grant_id == first_grant.id
+    _merge_authority(authority, (replacement, ManagementAction.ROSTER, team))
+    assert authority[team.id].grant_id == replacement.id
+
+    assert "BOARD" in _workspace_views(OrganisationKind.TEAM)
+    assert "QUEUE" in _workspace_views(OrganisationKind.COMMAND)

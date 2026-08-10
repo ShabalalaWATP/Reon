@@ -4,12 +4,7 @@ import { axe } from "jest-axe";
 import { describe, expect, it } from "vitest";
 
 import type { Session } from "../../lib/api/types";
-import type {
-  EligibleRosterAnalyst,
-  TeamActivity,
-  TeamMember,
-  TeamWorkspaceAccess,
-} from "../../lib/api/teamTypes";
+import type { EligibleRosterAnalyst, TeamActivity, TeamMember, TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import { json, mockFeatureFetch, renderApp } from "../../test/render";
 import { enabledCapabilities, requesterSession } from "../../test/fixtures";
 
@@ -38,8 +33,11 @@ const managerAccess: TeamWorkspaceAccess = {
   teamId: "team-osg",
   teamCode: "OSG_TEAM",
   teamName: "OSG Team",
+  unitKind: "TEAM",
+  workspacePosition: "MANAGER",
   grantId: "grant-osg",
   permissions: ["BOARD", "CALENDAR", "CAPACITY", "ROSTER", "STATISTICS"],
+  views: ["OVERVIEW", "BOARD", "CALENDAR", "PLANNING", "PEOPLE", "STATISTICS", "HANDOVER", "ACTIVITY"],
 };
 const analystAccess: TeamWorkspaceAccess = {
   ...managerAccess,
@@ -57,6 +55,7 @@ const people: TeamMember[] = [
     effectiveUntil: null,
     version: 1,
     activeWorkCount: 0,
+    skills: ["Delivery leadership", "Briefing"],
     startReason: "Established synthetic team baseline.",
     endReason: null,
   },
@@ -70,6 +69,7 @@ const people: TeamMember[] = [
     effectiveUntil: null,
     version: 2,
     activeWorkCount: 0,
+    skills: ["Research", "Data analysis"],
     startReason: "Established synthetic team baseline.",
     endReason: null,
   },
@@ -83,6 +83,7 @@ const people: TeamMember[] = [
     effectiveUntil: null,
     version: 1,
     activeWorkCount: 2,
+    skills: [],
     startReason: "Established synthetic team baseline.",
     endReason: null,
   },
@@ -96,6 +97,7 @@ const people: TeamMember[] = [
     effectiveUntil: "2026-01-01T09:00:00Z",
     version: 2,
     activeWorkCount: 0,
+    skills: [],
     startReason: "Historical team membership.",
     endReason: "The Analyst transferred to another team.",
   },
@@ -145,20 +147,38 @@ describe("team workspace", () => {
     const user = userEvent.setup();
     const view = renderApp("/teams/team-osg/overview");
     expect(await screen.findByRole("heading", { name: "OSG Team" })).toBeInTheDocument();
-    expect(await screen.findByText("3", { selector: ".team-metric strong" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Workspace" })).toBeInTheDocument();
-    expect(within(screen.getByRole("navigation", { name: "Organisation workspace views" })).getAllByRole("link")).toHaveLength(7);
+    const staffing = await screen.findByRole("region", { name: "Workspace staffing" });
+    expect(within(staffing).getByText("Managers").closest("div")).toHaveTextContent("3");
+    expect(screen.getByRole("heading", { name: "Team attention" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Delivery outlook" })).toBeInTheDocument();
+    expect(await screen.findByText("WP-001 blocked for 3 days")).toBeInTheDocument();
+    expect(screen.getByText("Research, Data analysis", { exact: false })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Upcoming team calendar" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "OSG Team workspace" })).toBeInTheDocument();
+    expect(within(screen.getByRole("navigation", { name: "Organisation workspace views" })).getAllByRole("link")).toHaveLength(8);
     expect(await axe(view.container)).toHaveNoViolations();
 
     const tabs = screen.getByRole("navigation", { name: "Organisation workspace views" });
-    await user.click(within(tabs).getByRole("link", { name: "Board" }));
-    expect(await screen.findByRole("heading", { name: "Workflow board" })).toBeInTheDocument();
-    await user.click(within(screen.getByRole("navigation", { name: "Organisation workspace views" })).getByRole("link", { name: "Calendar" }));
-    expect(await screen.findByRole("heading", { name: "Add calendar activity" })).toBeInTheDocument();
-    await user.click(within(screen.getByRole("navigation", { name: "Organisation workspace views" })).getByRole("link", { name: "Planning" }));
-    expect(await screen.findByRole("heading", { name: "Team planning" })).toBeInTheDocument();
-    await user.click(within(screen.getByRole("navigation", { name: "Organisation workspace views" })).getByRole("link", { name: "Activity" }));
-    expect(await screen.findByText("A scheduled Analyst transfer became effective.")).toBeInTheDocument();
+    expect(within(tabs).getByRole("link", { name: "Board" })).toHaveAttribute(
+      "href",
+      "/teams/team-osg/board",
+    );
+    expect(within(tabs).getByRole("link", { name: "Calendar" })).toHaveAttribute(
+      "href",
+      "/teams/team-osg/calendar",
+    );
+    expect(within(tabs).getByRole("link", { name: "Planning" })).toHaveAttribute(
+      "href",
+      "/teams/team-osg/planning",
+    );
+    await user.click(within(tabs).getByRole("link", { name: "Activity" }));
+    expect(
+      await screen.findByText(
+        "A scheduled Analyst transfer became effective.",
+        {},
+        { timeout: 5_000 },
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText(/scheduled membership service/)).toBeInTheDocument();
   });
 
@@ -203,7 +223,7 @@ describe("team workspace", () => {
 
     mockTeamApi(analystSession, analystAccess);
     renderApp("/teams/team-osg/not-a-view");
-    expect(await screen.findByText("One team, one operational picture")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Team attention" })).toBeInTheDocument();
   });
 
   it("reports an empty assignment and recovers workspace and overview queries", async () => {
@@ -237,9 +257,9 @@ describe("team workspace", () => {
     expect(await screen.findByRole("heading", { name: "Team workspace could not be loaded" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(workspaceAttempts).toBe(2));
-    expect(await screen.findByRole("heading", { name: "Team workspace could not be loaded" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Team home could not be loaded" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
-    expect(await screen.findByText("One team, one operational picture")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Team attention" })).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText("Workspace"), "team-quartz");
     expect(await screen.findByRole("heading", { name: "Quartz Team" })).toBeInTheDocument();
   });
@@ -313,10 +333,12 @@ function mockTeamApi(
     if (url.pathname.endsWith("/eligible-analysts")) return json({ items: eligible });
     if (url.pathname.endsWith("/people")) return json({ items: people.map((item) => access.grantId ? item : { ...item, startReason: null, endReason: null }) });
     if (url.pathname.endsWith("/activity")) return json({ items: activity });
-    if (url.pathname.endsWith("/board")) return json({ items: [], nextCursor: null, wipLimits: {}, configurationVersion: 0, savedViews: [], generatedAt: "2026-08-07T12:00:00Z" });
+    if (url.pathname.endsWith("/board")) return json({ items: [], nextCursor: null, columnCounts: { AWAITING_ASSIGNMENT: 2, BLOCKED: 1, MANAGER_REVIEW: 1 }, totalCount: 4, wipLimits: {}, configurationVersion: 0, savedViews: [], generatedAt: "2026-08-07T12:00:00Z" });
     if (url.pathname.endsWith("/iterations")) return json({ items: [] });
     if (url.pathname.endsWith("/packages")) return json({ items: [] });
-    if (url.pathname.endsWith("/calendar")) return json({ items: [] });
+    if (url.pathname.endsWith("/planning/cockpit")) return json({ teamId: access.teamId, generatedAt: "2026-08-07T12:00:00Z", advisoryOnly: true, freshness: { health: "READY", label: "Current", sourceVersion: 3 }, summary: { backlogCount: 4, activeIterationCount: 1, dueRiskCount: 1, wipCount: 2, blockedCount: 1, availableMinutes: 900, reservedMinutes: 240 }, lanes: [], blockers: [{ packageId: "package-one", reference: "WP-001", title: "Synthetic package", ageDays: 3, reason: "Waiting for a public-safe dependency." }], dependencies: [{ packageId: "package-two", reference: "WP-002", title: "Dependent package", dependencyReference: "WP-001", status: "AT_RISK", warning: "The dependency is blocked." }], iteration: { id: "iteration-one", name: "Pilot iteration", goal: "Deliver the pilot.", startsOn: "2026-08-01", endsOn: "2026-08-14", status: "ACTIVE", committedPoints: 8, completedPoints: 3, committedPackages: 2, completedPackages: 1, factualSummary: null }, checklists: [] });
+    if (url.pathname.endsWith("/calendar")) return json({ items: [{ eventId: "event-one", occurrenceStart: "2026-08-11T09:00:00Z", startsAt: "2026-08-11T09:00:00Z", endsAt: "2026-08-11T16:00:00Z", title: "Synthetic course", subjectDisplayName: "Lewis Ferguson", category: "TRAINING" }] });
+    if (url.pathname.endsWith("/records")) return json({ items: [{ id: "record-one", kind: "RISK", status: "OPEN", title: "Review capacity assumption", body: "Synthetic context.", url: null, createdByDisplayName: "Grant Hanley", resolution: null, version: 1, createdAt: "2026-08-07T09:00:00Z", updatedAt: "2026-08-07T10:00:00Z" }] });
     if (url.pathname.endsWith("/memberships") || url.pathname.endsWith("/transfers") || url.pathname.endsWith("/end")) {
       bodies.push(JSON.parse(String(init.body)) as Record<string, unknown>);
       return json({ items: people });

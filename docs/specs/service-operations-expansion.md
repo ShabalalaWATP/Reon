@@ -219,7 +219,7 @@ large hierarchy or date-range scans.
 The default landing page is deliberately smaller than this workspace. Routing
 users see their immediate demand, actions and direct child organisations. Team
 Managers land on the existing team Overview. QC and Platform Administrators use
-role-specific overviews. My work remains the personal action register, and My
+role-specific overviews. My actions remains the staff action register, and My
 requests remains the Customer request register. The complete selection and
 presentation contract is in
 [`hierarchical-operational-overviews.md`](hierarchical-operational-overviews.md).

@@ -2,7 +2,7 @@ import type { ActionColumn, ActionSection, ProjectionFreshness } from "../../lib
 
 export const actionSections: ActionSection[] = ["NEEDS_MY_ACTION", "WAITING", "DUE_SOON", "RECENTLY_COMPLETED"];
 export const sectionLabels: Record<ActionSection, string> = {
-  NEEDS_MY_ACTION: "Needs my action",
+  NEEDS_MY_ACTION: "Needs attention",
   WAITING: "Waiting",
   DUE_SOON: "Due soon",
   RECENTLY_COMPLETED: "Recently completed",

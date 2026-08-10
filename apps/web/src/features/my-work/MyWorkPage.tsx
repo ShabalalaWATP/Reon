@@ -50,7 +50,7 @@ export function MyWorkPage() {
     ? "No action update checkpoint has been recorded yet. This view will keep checking for changes."
     : freshnessMessage(first.freshness);
   return <main className="page-stack my-work-page">
-    <header className="page-heading"><div><span>{roleLabels[session!.user.role]}</span><h1>My work</h1><p>Your current actions, waiting items and recent progress from authorised workflow records.</p></div><Link className="button button--quiet" to="/notifications">Notifications</Link></header>
+    <header className="page-heading"><div><span>{roleLabels[session!.user.role]}</span><h1>My actions</h1><p>Work assigned to you, actions available to your unit and recent authorised progress.</p></div><Link className="button button--quiet" to="/notifications">Notifications</Link></header>
     <p className="sr-only" aria-live="polite">{countAnnouncement} work items across all sections.</p>
     <div className="work-counts" aria-label="Work counts" role="group">{actionSections.map((section) => <button className={filters.sections[0] === section ? "work-count work-count--active" : "work-count"} key={section} onClick={() => setFilters((current) => ({ ...current, sections: current.sections[0] === section ? [] : [section] }))} type="button"><span>{sectionLabels[section]}</span><strong>{first.counts[sectionCountKeys[section]]}</strong></button>)}</div>
     {freshness ? <p className="freshness-banner" role="status"><strong>{awaitingInitialCheckpoint ? "Starting" : first.freshness.pendingCount ? "Updating" : humaniseCode(first.freshness.status)}</strong> {freshness}</p> : null}

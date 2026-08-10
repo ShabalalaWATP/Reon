@@ -9,8 +9,8 @@ import { roleRoutes } from "../../lib/routes";
 import { elapsedTime } from "../../lib/serviceTiming";
 import { statusLabels } from "../../lib/status";
 
-export function RoutingQueuePanel({ role, userId }: { role: UserRole; userId: string }) {
-  const query = useQuery({ queryKey: protectedQueryKeys.workItems(userId), queryFn: () => api.workItems() });
+export function RoutingQueuePanel({ role, teamId, userId }: { role: UserRole; teamId: string; userId: string }) {
+  const query = useQuery({ queryKey: protectedQueryKeys.workItems(userId, teamId), queryFn: () => api.workItems(undefined, teamId) });
   if (query.isPending) return <PageState kind="loading" title="Loading routing queue" />;
   if (query.isError) return <PageState action={<button className="button" onClick={() => void query.refetch()}>Try again</button>} kind="error" title="Routing queue could not be loaded" />;
   return <section className="routing-queue" aria-labelledby="routing-queue-title">

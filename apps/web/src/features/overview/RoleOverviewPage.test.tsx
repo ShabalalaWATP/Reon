@@ -103,7 +103,7 @@ describe("role-specific operational overview", () => {
     renderApp("/overview");
 
     expect(await screen.findByRole("heading", { name: "OSG Team" })).toBeInTheDocument();
-    expect(await screen.findByRole("region", { name: "Team overview measures" }, { timeout: 5_000 })).toHaveTextContent("Analysts4");
+    expect(await screen.findByRole("region", { name: "Workspace staffing" }, { timeout: 5_000 })).toHaveTextContent("Analysts4");
   });
 
   it("keeps Customer and Analyst home destinations transactional", async () => {
@@ -113,7 +113,7 @@ describe("role-specific operational overview", () => {
 
     mockOverview(asRole("DELIVERY_SPECIALIST", "Team Analyst"));
     renderApp("/overview");
-    expect(await screen.findByRole("heading", { name: "My work" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "My actions" })).toBeInTheDocument();
   });
 
   it("reports missing scope and team assignments without broadening access", async () => {

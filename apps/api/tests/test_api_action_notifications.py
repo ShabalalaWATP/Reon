@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from uuid import uuid4
+
 from fastapi import FastAPI
 
 from api_helpers import perform
@@ -37,6 +39,10 @@ async def test_existing_workflow_events_drive_actions_and_notifications(
     intake_body = intake_actions.json()
     assert intake_body["items"][0]["actionType"] == "REVIEW_SUBMISSION"
     assert intake_body["items"][0]["reference"] == submitted.json()["reference"]
+    assert intake_body["items"][0]["actionAccess"] == "SHARED"
+    assert intake_body["items"][0]["deepLink"] == (
+        f"/triage?requestId={submitted.json()['id']}"
+    )
     assert intake_body["freshness"]["status"] == "CURRENT"
 
     intake_notifications = await api_harness.client.get("/api/v1/me/notifications")
@@ -47,6 +53,30 @@ async def test_existing_workflow_events_drive_actions_and_notifications(
     )
 
     assert await api_harness.dispatch_start()
+    filtered = await api_harness.client.get(
+        "/api/v1/work-items", params={"requestId": submitted.json()["id"]}
+    )
+    assert filtered.status_code == 200
+    assert [item["requestId"] for item in filtered.json()["items"]] == [
+        submitted.json()["id"]
+    ]
+    hidden = await api_harness.client.get(
+        "/api/v1/work-items", params={"requestId": str(uuid4())}
+    )
+    assert hidden.status_code == 200
+    assert hidden.json()["items"] == []
+    intake_item = filtered.json()["items"][0]
+    claimed = await api_harness.client.post(
+        f"/api/v1/work-items/{intake_item['id']}/claim",
+        headers=api_harness.mutation_headers(),
+    )
+    assert claimed.status_code == 200
+    personal = (await api_harness.client.get("/api/v1/me/actions")).json()["items"]
+    assert personal[0]["actionAccess"] == "PERSONAL"
+
+    await api_harness.login("admin7")
+    assert (await api_harness.client.get("/api/v1/me/actions")).json()["items"] == []
+
     await perform(
         api_harness,
         "admin4",
@@ -56,6 +86,9 @@ async def test_existing_workflow_events_drive_actions_and_notifications(
     command_actions = await api_harness.client.get("/api/v1/me/actions")
     assert command_actions.status_code == 200
     assert command_actions.json()["items"][0]["actionType"] == "CHOOSE_OPS_GROUP"
+    assert command_actions.json()["items"][0]["deepLink"] == (
+        f"/coordination?requestId={submitted.json()['id']}"
+    )
 
     command_notifications = await api_harness.client.get(
         "/api/v1/me/notifications?eventTypes=TASK_ASSIGNED"
