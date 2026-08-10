@@ -5,7 +5,11 @@ import { describe, expect, it } from "vitest";
 
 import { organisationUnit, organisationUnits, requesterSession } from "../../test/fixtures";
 import { json, mockFetch, renderApp } from "../../test/render";
-import { profileMembershipText } from "./profileModel";
+import {
+  profileMembershipText,
+  profilePositionLabel,
+  profileWorkspacePositionText,
+} from "./profileModel";
 
 const personalProfile = {
   email: "admin2@istari.example.test",
@@ -23,6 +27,22 @@ describe("personal profile", () => {
     expect(profileMembershipText(0, [], false)).toBe("No organisation unit assignment required");
     expect(profileMembershipText(1, [], false)).toBe("Loading organisation assignments…");
     expect(profileMembershipText(2, ["OSG Team", "Cedar Team"], false)).toBe("OSG Team, Cedar Team");
+  });
+
+  it("describes every workspace-position state", () => {
+    const manager = { teamId: "jioc", teamCode: "JIOC", teamName: "JIOC", workspacePosition: "MANAGER" as const, grantId: null, permissions: [] };
+    const member = { ...manager, teamId: "digoc", teamCode: "DIGOC", teamName: "DIGOC", workspacePosition: "MEMBER" as const };
+    const legacy = { ...member, teamId: "sygoc", teamCode: "SYGOC", teamName: "SYGOC", workspacePosition: undefined };
+
+    expect(profilePositionLabel([])).toBeNull();
+    expect(profilePositionLabel([manager])).toBe("Manager");
+    expect(profilePositionLabel([manager, member])).toBe("Mixed positions");
+    expect(profileWorkspacePositionText(1, [], true)).toBe("Workspace positions unavailable");
+    expect(profileWorkspacePositionText(0, [], false)).toBe("No workspace position required");
+    expect(profileWorkspacePositionText(1, [], false)).toBe("Loading workspace positions…");
+    expect(profileWorkspacePositionText(3, [manager, member, legacy], false)).toBe(
+      "Manager in JIOC; Member in DIGOC; Member in SYGOC",
+    );
   });
 
   it("gives a Customer a current profile without internal routing scope", async () => {
@@ -66,6 +86,43 @@ describe("personal profile", () => {
     expect(await screen.findByRole("heading", { name: "Grant Hanley" })).toBeInTheDocument();
     expect(screen.getAllByText("OSG Team").length).toBeGreaterThan(0);
     expect(screen.getByText("Team management")).toBeInTheDocument();
+  });
+
+  it("distinguishes a representative routing role from Manager authority", async () => {
+    const jioc = organisationUnit("JIOC");
+    const manager = {
+      ...requesterSession,
+      user: {
+        ...requesterSession.user,
+        id: "manager-jioc",
+        username: "admin74",
+        displayName: "Alan Rough",
+        role: "INTAKE_TRIAGE" as const,
+        scope: "JIOC",
+        organisationUnitIds: [jioc.id],
+      },
+    };
+    mockFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(manager);
+      if (url.pathname.endsWith("/profile")) return json(personalProfile);
+      if (url.pathname.endsWith("/organisation/units")) return json({ items: organisationUnits });
+      if (url.pathname.endsWith("/team-workspaces")) return json({ items: [{
+        teamId: jioc.id,
+        teamCode: "JIOC",
+        teamName: "JIOC",
+        unitKind: "ROOT",
+        workspacePosition: "MANAGER",
+        grantId: "jioc-roster-grant",
+        permissions: ["ROSTER"],
+      }] });
+      throw new Error(`Unexpected ${url.pathname}`);
+    }, true, true, false);
+
+    renderApp("/profile");
+    expect(await screen.findByRole("heading", { name: "Alan Rough" })).toBeInTheDocument();
+    expect(await screen.findByText("JIOC Routing User · Manager")).toBeInTheDocument();
+    expect(await screen.findByText("Manager in JIOC")).toBeInTheDocument();
+    expect(await screen.findByText("JIOC routing; Manager controls for JIOC")).toBeInTheDocument();
   });
 
   it("makes loading and unavailable staff assignments explicit", async () => {

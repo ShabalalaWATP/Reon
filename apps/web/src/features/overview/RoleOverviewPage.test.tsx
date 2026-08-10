@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { describe, expect, it } from "vitest";
 
@@ -57,12 +57,19 @@ describe("role-specific operational overview", () => {
     mockOverview(staffSession);
     const view = renderApp("/overview");
 
-    expect(await screen.findByRole("heading", { name: "JIOC overview" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Operational overview measures" })).toHaveTextContent("Needs your action3");
-    expect(screen.getByRole("link", { name: /DIGOC/ })).toHaveAttribute(
-      "href",
-      expect.stringContaining(`unitId=${childId}`),
-    );
+    expect(await screen.findByRole("heading", { name: "Welcome, Scott" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Your workload" })).toHaveTextContent("Needs your action3");
+    expect(screen.getByRole("region", { name: "Your workload" })).toHaveTextContent("Waiting on others2");
+    expect(screen.getByRole("region", { name: "JIOC organisation workload" })).toHaveTextContent("Active demand8");
+    expect(screen.getByRole("region", { name: "JIOC organisation workload" })).toHaveTextContent("not your personal workload");
+    const destinations = screen.getByRole("navigation", { name: "Home destinations" });
+    expect(within(destinations).getByRole("heading", { name: "Continue working" })).toBeInTheDocument();
+    expect(within(destinations).getAllByRole("link")).toHaveLength(6);
+    expect(within(destinations).getByRole("link", { name: /My assigned actions/ })).toHaveAttribute("href", "/my-work");
+    expect(within(destinations).getByRole("link", { name: /JIOC routing queue/ })).toHaveAttribute("href", "/triage");
+    expect(within(destinations).getByRole("link", { name: /JIOC workspace/ })).toHaveAttribute("href", `/teams/${rootId}/overview`);
+    expect(within(destinations).getByRole("link", { name: /Operational statistics/ })).toHaveAttribute("href", "/statistics");
+    expect(screen.queryByText("DIGOC")).not.toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
   });
 
@@ -70,8 +77,8 @@ describe("role-specific operational overview", () => {
     mockOverview(adminSession);
     renderApp("/");
 
-    expect(await screen.findByRole("heading", { name: "Administration overview" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Overview destinations" })).toHaveTextContent("User accounts");
+    expect(await screen.findByRole("heading", { name: "Welcome, Andy" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Home destinations" })).toHaveTextContent("User accounts");
     expect(screen.queryByText("My requests")).not.toBeInTheDocument();
   });
 
@@ -79,8 +86,9 @@ describe("role-specific operational overview", () => {
     mockOverview(asRole("QUALITY_RELEASE", "QC Manager"));
     renderApp("/overview");
 
-    expect(await screen.findByRole("heading", { name: "Quality overview" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Quality work measures" })).toHaveTextContent("Products released4");
+    expect(await screen.findByRole("heading", { name: "Welcome, Scott" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Your workload" })).toHaveTextContent("Needs your action3");
+    expect(screen.getByRole("region", { name: "Quality and release workload" })).toHaveTextContent("Products released4");
     expect(screen.getByRole("link", { name: /Quality statistics/ })).toHaveAttribute("href", expect.stringContaining(scope.id));
   });
 
@@ -94,8 +102,8 @@ describe("role-specific operational overview", () => {
     );
     renderApp("/overview");
 
-    expect(await screen.findByRole("heading", { name: "Selected scope" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Operational overview measures" })).toHaveTextContent("Active demand0");
+    expect(await screen.findByRole("heading", { name: "Continue working" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "JIOC organisation workload" })).toHaveTextContent("Active demand0");
   });
 
   it("redirects a Team Manager to their shared team overview", async () => {
@@ -156,7 +164,10 @@ function mockOverview(
     }
     if (url.pathname.endsWith("/statistics")) return json(dashboard);
     if (url.pathname.endsWith("/team-workspaces")) {
-      return json({ items: emptyTeams ? [] : [{ teamId, teamCode: "OSG_TEAM", teamName: "OSG Team", grantId: "grant-osg", permissions: ["STATISTICS"] }] });
+      const selectedWorkspace = withTeam
+        ? { teamId, teamCode: "OSG_TEAM", teamName: "OSG Team", grantId: "grant-osg", permissions: ["STATISTICS"] }
+        : { teamId: rootId, teamCode: "JIOC", teamName: "JIOC", grantId: null, permissions: [] };
+      return json({ items: emptyTeams ? [] : [selectedWorkspace] });
     }
     if (url.pathname.endsWith(`/team-workspaces/${teamId}`)) {
       return json({ access: { teamId, teamCode: "OSG_TEAM", teamName: "OSG Team", grantId: "grant-osg", permissions: ["STATISTICS"] }, managerCount: 2, analystCount: 4, activeWorkCount: 5, dueSoonCount: 2, overdueCount: 1 });

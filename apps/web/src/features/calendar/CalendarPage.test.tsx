@@ -172,7 +172,7 @@ describe("canonical workforce calendar", () => {
     await user.type(screen.getByLabelText(/^Title/), "Weekly protected development");
     await user.type(screen.getByLabelText(/^Notes/), "Required recurring development detail for this synthetic event.");
     await user.selectOptions(screen.getByLabelText(/^Category/), "TRAINING");
-    await user.selectOptions(screen.getByLabelText(/^Privacy/), "AVAILABILITY_ONLY");
+    expect(screen.getByRole("checkbox", { name: /Private appointment/ })).not.toBeChecked();
     await user.selectOptions(screen.getByLabelText(/^Time zone/), "Europe/Paris");
     fireEvent.change(screen.getByLabelText(/^Starts/), { target: { value: localTomorrow(12) } });
     fireEvent.change(screen.getByLabelText(/^Ends/), { target: { value: localTomorrow(14) } });
@@ -181,7 +181,7 @@ describe("canonical workforce calendar", () => {
     fireEvent.change(screen.getByLabelText(/^Repeat until/), { target: { value: localTomorrow(18) } });
     await user.click(screen.getByLabelText("All-day activity"));
     await user.click(screen.getByRole("button", { name: "Create event" }));
-    await waitFor(() => expect(calls.some((call) => call.body.recurrence === "WEEKLY" && call.body.recurrenceInterval === 2 && call.body.allDay === true)).toBe(true));
+    await waitFor(() => expect(calls.some((call) => call.body.recurrence === "WEEKLY" && call.body.recurrenceInterval === 2 && call.body.allDay === true && call.body.visibility === "TEAM_DETAIL")).toBe(true));
   });
 
   it("supports disputes, occurrence cancellation, future changes and whole-event confirmation", async () => {
@@ -213,6 +213,20 @@ describe("canonical workforce calendar", () => {
       await waitFor(() => expect(calls.some((call) => call.path.endsWith(itemCase.suffix))).toBe(true));
       rendered.unmount();
     }
+  });
+
+  it("never falls back to hidden detail when the unit-name lookup is unavailable", async () => {
+    const calls: Array<{ path: string; body: Record<string, unknown> }> = [];
+    mockCalendar(analystSession, analystAccess, [], calls, { workspaceFailure: true });
+    const user = userEvent.setup();
+    renderApp("/calendar/month");
+    await user.click(await screen.findByRole("button", { name: "Add event" }));
+    expect(screen.getByRole("checkbox", { name: /Private appointment/ })).not.toBeChecked();
+    expect(screen.getByText(/visible to other members of your current unit/)).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/^Title/), "Visible planning activity");
+    await user.type(screen.getByLabelText(/^Notes/), "Required synthetic detail for the unit calendar.");
+    await user.click(screen.getByRole("button", { name: "Create event" }));
+    await waitFor(() => expect(calls.some((call) => call.body.visibility === "TEAM_DETAIL")).toBe(true));
   });
 
   it("keeps edits reversible and presents calendar and capacity write conflicts", async () => {
@@ -279,11 +293,11 @@ describe("canonical workforce calendar", () => {
   });
 });
 
-function mockCalendar(session: Session, access: TeamWorkspaceAccess, items: CalendarOccurrence[], calls: Array<{ path: string; body: Record<string, unknown> }>, options: { boardFailure?: boolean; calendarFailures?: number; mutationFailure?: string } = {}) {
+function mockCalendar(session: Session, access: TeamWorkspaceAccess, items: CalendarOccurrence[], calls: Array<{ path: string; body: Record<string, unknown> }>, options: { boardFailure?: boolean; calendarFailures?: number; mutationFailure?: string; workspaceFailure?: boolean } = {}) {
   let calendarReads = 0;
   return mockFetch(async (url, init) => {
     if (url.pathname.endsWith("/auth/me")) return json(session);
-    if (url.pathname.endsWith("/team-workspaces")) return json({ items: [access] });
+    if (url.pathname.endsWith("/team-workspaces")) return options.workspaceFailure ? json({ detail: "Synthetic workspace failure" }, 503) : json({ items: [access] });
     if (url.pathname.endsWith("/people")) return json({ items: people });
     if (url.pathname.endsWith("/board")) return options.boardFailure ? json({ detail: "Synthetic board failure" }, 503) : json({
       items: [{ id: "request-one", itemType: "SERVICE_REQUEST", reference: "REQ-001", title: "Synthetic current request", column: "IN_PROGRESS", priority: "MEDIUM", dueOn: tomorrow(16), ownerUserId: "analyst-osg", ownerDisplayName: "Lewis Ferguson", version: 1, linkedRequestId: null, availableColumns: ["IN_PROGRESS"], changedAt: "2026-08-07T10:00:00Z" }],

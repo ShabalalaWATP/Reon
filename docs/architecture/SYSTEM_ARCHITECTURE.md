@@ -200,8 +200,9 @@ first item in the queue.
 
 The navigation separates three concerns:
 
-- **My actions** is the personal and explicitly shared action register;
-- the role-named queue, such as **JIOC queue**, is where human workflow decisions
+- **My assigned actions** is the sidebar route to the personal and explicitly
+  shared action register;
+- the purpose-named queue, such as **JIOC routing queue**, is where human workflow decisions
   are claimed and recorded;
 - the organisation-named workspace, such as **JIOC workspace**, contains people,
   calendar, handover and other unit collaboration features.

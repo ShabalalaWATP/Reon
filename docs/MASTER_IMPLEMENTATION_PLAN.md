@@ -933,7 +933,8 @@ Status: implemented and assured locally on 10 August 2026. Representative-user
 acceptance remains required.
 
 - [x] Replace ambiguous staff navigation with role-specific action, queue and
-  workspace labels, including `My actions`, `JIOC queue` and `JIOC workspace`.
+  workspace labels, including `My assigned actions`, `JIOC routing queue` and
+  `JIOC workspace`.
 - [x] Project every operational action to its role-owned queue with an exact,
   server-authorised `requestId` selector instead of a Customer-only detail URL.
 - [x] Keep shared, unclaimed work visible to the authorised unit while making a
@@ -977,3 +978,60 @@ acceptance remains required.
   per cent branch coverage, plus TypeScript, ESLint and line-limit checks.
 - [ ] Obtain representative JIOC acceptance for the summary wording and expanded
   result height at normal operational display sizes.
+
+## Workspace-authority identity milestone
+
+Status: implemented and assured locally on 10 August 2026.
+
+- [x] Preserve `JIOC Routing User` as the representative workflow role while
+  displaying the independent, permission-bearing Manager or Member position.
+- [x] Combine role and position in the compact account identity and name each
+  organisation-position pair explicitly in the account details and profile.
+- [x] Keep the effective server-side membership and grant as the sole
+  authorisation source; presentation remains explanatory only.
+- [x] Cover Manager, Member, mixed, loading, unavailable and no-position states.
+- [x] Pass 367 frontend tests at 99.51 per cent line and 95.03 per cent branch
+  coverage, all repository gates and the production bundle budget.
+
+## Personalised overview and primary-navigation milestone
+
+Status: implemented and assured locally on 10 August 2026. Representative-user
+acceptance remains required.
+
+- [x] Greet routing, quality and administration users by first name.
+- [x] Separate personal assigned-action measures from explicitly named aggregate
+  organisation workload and explain that aggregate values are not personal.
+- [x] Keep direct-child organisation drill-down on Operational statistics and
+  replace it on staff Home pages with explanatory tiles for every other
+  authorised primary-navigation destination.
+- [x] Order navigation deterministically as Home, assigned actions, role queue,
+  named workspace, role tools, request tracking, operational statistics and
+  organisation directory, omitting destinations the account cannot use.
+- [x] Rename ambiguous sidebar destinations without changing routes or
+  authorisation.
+- [x] Pass 368 frontend tests at 99.52 per cent line and 95.06 per cent branch
+  coverage, including accessible tile navigation, capability-derived links,
+  zero states and reduced-motion styling.
+- [ ] Obtain representative JIOC, command, Ops, QC and Administrator acceptance
+  for the final wording and information hierarchy.
+
+## Explicit personal-calendar visibility milestone
+
+Status: implemented and assured locally on 10 August 2026. Representative-user
+acceptance remains required.
+
+- [x] Default new personal activity to exact-unit detail from My calendar and
+  the shared organisation calendar.
+- [x] Replace the technical visibility selector with one unchecked, accessible
+  `Private appointment` choice and immediate plain-language audience guidance.
+- [x] Keep personal sharing context separate from Manager-only unit-event and
+  ticket-commitment authority.
+- [x] Reject new availability-only personal writes at the FastAPI use-case
+  boundary while retaining existing canonical records and projection redaction.
+- [x] Update the feature specification, calendar ADR, workspace specification,
+  threat model and development record.
+- [x] Pass 953 backend tests at 98.87 per cent statement and 95.00 per cent
+  branch coverage, plus 368 frontend tests at 99.52 per cent line and 95.03 per
+  cent branch coverage, including the unit-name failure path.
+- [ ] Obtain representative routing and delivery-user acceptance for the final
+  checkbox wording and default audience.

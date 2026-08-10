@@ -44,7 +44,7 @@ describe("organisation hierarchy", () => {
     const alternative = within(hierarchy).getByText("Cedar Team").closest("article")!;
     expect(within(alternative).getByText("Team staffed")).toBeInTheDocument();
     expect(within(hierarchy).getAllByText("Routing function").length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: "Organisation" })).toHaveClass("nav-link--active");
+    expect(screen.getByRole("link", { name: "Organisation directory" })).toHaveClass("nav-link--active");
     expect(await axe(view.container)).toHaveNoViolations();
   });
 

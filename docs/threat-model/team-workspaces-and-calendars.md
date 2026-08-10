@@ -27,12 +27,15 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 | Threat | Control |
 | --- | --- |
 | Member uses a stale or misconfigured roster grant | Require both a current exact-unit `MANAGER` membership and the active exact-unit roster grant at the FastAPI use-case boundary; React suppression is usability only |
+| A broad role label conceals Manager authority from the account holder | Present the representative role and authoritative effective workspace position together in the account menu and separately in the profile; continue to authorise only from the server-side membership and grant |
 | Team Manager alters another roster | Require a current exact-team Manager position and active exact-team roster grant in the mutation transaction; restrict team controls to Member records |
 | Manager creates or promotes a global identity | Team roster commands accept existing active Analysts only; global identity and role stay administrator-only |
 | Concurrent transfers create two home teams | Exclusion constraint or serialised effective-range check plus one-winner concurrency tests |
 | Member with active work is removed | Require explicit reassignment, handover or cancellation for tasks, packages, commitments and reservations |
 | Historical attribution disappears | End effective membership; never hard-delete a referenced identity or membership |
 | Private event text appears in team view | Redact at repository projection before schema construction; privacy matrix tests every view and role |
+| A user unintentionally hides a routine personal event or misunderstands a technical visibility option | Default new personal activity to exact-unit detail, expose one unchecked plain-language `Private appointment` choice and reject availability-only personal creation at the server boundary; preserve existing records without silently changing their audience |
+| A team-visible personal event exposes detail beyond the intended colleagues | Derive shared calendar projections only from current exact-unit membership; ancestors and siblings receive aggregate statistics rather than calendar records |
 | Recurrence expansion exhausts resources | Restrict recurrence forms and occurrence window; limit range and result count |
 | Daylight-saving conversion moves commitments | Store IANA zone and local intent; test gaps, overlaps, all-day boundaries and zone changes |
 | Manager commitment impersonates consent | Record creator separately and require subject acknowledgement or reasoned dispute |
@@ -66,6 +69,8 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 - Calendar privacy tests across personal, exact-team Manager, team member,
   Platform Administrator and unrelated users. Organisational ancestors receive
   aggregate statistics only.
+- Creation-policy tests proving team-detail is the client default, private is an
+  explicit user choice and availability-only personal creation is rejected.
 - Recurrence and time-zone property tests, including DST gaps and overlaps.
 - Commitment acknowledgement, dispute, stale-preview and reservation tests.
 - Board invalid-transition, assignment, stale-state and Camunda-outage tests.

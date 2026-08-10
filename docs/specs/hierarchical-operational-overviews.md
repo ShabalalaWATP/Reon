@@ -89,13 +89,16 @@ bottlenecks; completed interval durations remain available separately.
 
 ## Landing composition
 
-Operational routing users see the active grant root, actions requiring attention,
-active demand, due risk, throughput and direct child comparison, with links to
-My actions, Tracking and Statistics. Team Managers use the existing Team overview,
-extended with statistics and links to Board, Calendar, People and Planning.
+Operational routing users are greeted by first name. Their personal assigned,
+waiting and due-soon action counts appear in a **Your workload** region. Active
+demand, due risk, completions and direct child comparison appear separately in a
+named organisation workload region which states that it is not personal workload.
+Team Managers use the existing Team overview, extended with statistics and links
+to Board, Calendar, People and Planning.
 Team Analysts retain My actions as their default. Platform Administrators receive a
 separate administration overview with account, configuration and projection
-health links rather than a generic operational card grid.
+health links rather than a generic operational card grid. Staff overview pages do
+not repeat the complete sidebar as a second destination list.
 
 ## Security and privacy
 

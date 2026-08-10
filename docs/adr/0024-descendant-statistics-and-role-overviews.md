@@ -30,6 +30,19 @@ continues to contain personal actions and My requests continues to contain
 Customer requests. Detailed trends, definitions and exports remain on the
 Statistics page.
 
+Staff overviews will greet the authenticated account holder by first name and
+present the personal action projection separately from the authorised aggregate
+organisation workload. The organisation region must name its scope and state
+that its values are not the individual's workload. Primary navigation will be
+assembled in operational order from explicit context, with plain-purpose labels
+and no positional mutation after assembly.
+
+The Home page will use that same assembled navigation to render explanatory
+quick-access tiles, excluding Home itself. Direct child-organisation records and
+their drill-down links remain on Operational statistics. The tiles are a second
+interaction surface for known destinations, not an independent capability or
+authorisation model.
+
 ## Consequences
 
 - No schema migration is required because grants and organisation closure already
@@ -39,6 +52,11 @@ Statistics page.
 - The UI gains useful drill-down without exposing a global organisation picker.
 - Overview pages may reuse statistics summaries, but must keep a small role-specific
   composition instead of reproducing the full reporting page.
+- Presentation becomes easier to interpret without changing role, object or
+  action authorisation. Dynamic workspace and statistics links have deterministic
+  positions. Home mirrors the authorised sidebar destinations with short purpose
+  descriptions, while omitting itself and keeping hierarchy drill-down inside
+  Operational statistics.
 
 ## Rejected alternatives
 

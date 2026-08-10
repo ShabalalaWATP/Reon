@@ -38,6 +38,12 @@ export function CalendarPage({ access }: { access?: TeamWorkspaceAccess }) {
     queryKey,
     queryFn: () => access ? api.teamCalendar(access.teamId, range.from, range.to) : api.personalCalendar(range.from, range.to),
   });
+  const workspaces = useQuery({
+    queryKey: protectedQueryKeys.teamWorkspaces(userId),
+    queryFn: api.teamWorkspaces,
+    enabled: !access,
+  });
+  const sharingUnitName = access?.teamName ?? workspaces.data?.items[0]?.teamName;
   const canManage = Boolean(access?.grantId && access.permissions.includes("CALENDAR"));
   const people = useQuery({
     queryKey: protectedQueryKeys.teamPeople(userId, access?.teamId),
@@ -47,7 +53,7 @@ export function CalendarPage({ access }: { access?: TeamWorkspaceAccess }) {
   const openEventForm = (day: Date) => { setDraftDate(day); setCreating(true); };
   return (
     <div className={`calendar-page${access ? " calendar-page--embedded" : ""}`}>
-      {!access ? <header className="page-heading" role="group"><span>Personal workspace</span><h1>My calendar</h1><p>Plan private time, availability and recurring delivery activity from one canonical record.</p></header> : null}
+      {!access ? <header className="page-heading" role="group"><span>Personal workspace</span><h1>My calendar</h1><p>Plan availability and recurring activity. Event details are shared with your unit unless you mark an appointment as private.</p></header> : null}
       <section aria-label="Calendar controls" className="calendar-toolbar">
         <div><button aria-label="Previous calendar period" onClick={() => setAnchor(moveAnchor(anchor, view, -1))} type="button">‹</button><button onClick={() => setAnchor(new Date())} type="button">Today</button><button aria-label="Next calendar period" onClick={() => setAnchor(moveAnchor(anchor, view, 1))} type="button">›</button></div>
         <h2>{calendarTitle(anchor, view)}</h2>
@@ -59,12 +65,12 @@ export function CalendarPage({ access }: { access?: TeamWorkspaceAccess }) {
       <div className="calendar-support-grid calendar-support-grid--single">
         {access && canManage && access.unitKind !== "ROOT" && access.unitKind !== "COMMAND" && access.unitKind !== "OPS_GROUP" ? <CapacityPanel access={access} /> : <CalendarPrivacy />}
       </div>
-      <ModalDrawer label="Add calendar event" onClose={() => setCreating(false)} open={creating} variant="dialog"><CalendarEventForm access={access} initialDate={draftDate} members={people.data?.items} onCreated={() => setCreating(false)} range={range} /></ModalDrawer>
+      <ModalDrawer label="Add calendar event" onClose={() => setCreating(false)} open={creating} variant="dialog"><CalendarEventForm access={access} initialDate={draftDate} members={people.data?.items} onCreated={() => setCreating(false)} range={range} sharingUnitName={sharingUnitName} /></ModalDrawer>
       {selected ? <CalendarOccurrencePanel canManage={canManage} item={selected} key={`${selected.eventId}:${selected.occurrenceStart}`} onClose={() => setSelected(null)} queryKey={queryKey} /> : null}
     </div>
   );
 }
 
 function CalendarPrivacy() {
-  return <section className="calendar-privacy"><span>Privacy at source</span><h2>One event, bounded views</h2><p>Private and availability-only details are redacted before a shared calendar response is created. Team-detail events remain visible to the current team.</p><ul><li>Private: you retain the full detail.</li><li>Availability only: shared views receive a busy period.</li><li>Team detail: your current team can see the title and notes.</li></ul></section>;
+  return <section className="calendar-privacy"><span>Visibility at source</span><h2>Clear by default, private by choice</h2><p>Your unit can normally see the title, category and notes for personal calendar activity. Select Private appointment while adding an event when those details should be hidden.</p><ul><li>Visible to unit: colleagues see the event detail.</li><li>Private appointment: colleagues see only Busy and the time.</li><li>Existing time-only events keep their original protection.</li></ul></section>;
 }

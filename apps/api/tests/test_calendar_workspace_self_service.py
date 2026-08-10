@@ -18,7 +18,7 @@ def _event() -> dict:
         "timeZone": "Europe/London",
         "allDay": False,
         "category": "TRAINING",
-        "visibility": "AVAILABILITY_ONLY",
+        "visibility": "TEAM_DETAIL",
         "recurrence": "NONE",
         "recurrenceInterval": 1,
         "recurrenceUntil": None,
@@ -63,3 +63,24 @@ async def test_non_member_cannot_create_a_personal_workspace_event(
         headers=harness.mutation_headers(),
     )
     assert denied.status_code == 404
+
+
+async def test_personal_activity_requires_team_detail_or_explicit_private_visibility(
+    api_harness: ApiHarness,
+) -> None:
+    harness = api_harness
+    await harness.login("admin75")
+    ambiguous = await harness.client.post(
+        "/api/v1/calendar/events",
+        json={**_event(), "visibility": "AVAILABILITY_ONLY"},
+        headers=harness.mutation_headers(),
+    )
+    assert ambiguous.status_code == 409
+    assert "Private appointment" in ambiguous.json()["detail"]["message"]
+
+    private = await harness.client.post(
+        "/api/v1/calendar/events",
+        json={**_event(), "visibility": "PRIVATE"},
+        headers=harness.mutation_headers(),
+    )
+    assert private.status_code == 200

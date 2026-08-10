@@ -23,8 +23,12 @@ terminology.
 - Derive personal and authorised exact-team projections at query time from
   canonical data, current memberships and active grants. Higher organisational
   levels receive aggregate statistics, not individual calendar records.
-- Visibility is private, availability-only or team-detail. Shared projections
-  redact title and notes before leaving the repository boundary.
+- Retain private, availability-only and team-detail projections for canonical
+  records. New personal events default to team-detail and the creation surface
+  exposes one explicit `Private appointment` choice. Reject availability-only
+  personal creation at the use-case boundary, while preserving that projection
+  for existing records. Shared private and availability-only projections redact
+  title and notes before leaving the repository boundary.
 - Permit Managers with the calendar action to create team events and personal
   commitments. The subject acknowledges or disputes a commitment with a
   mandatory reason.

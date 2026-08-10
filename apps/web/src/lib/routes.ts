@@ -23,12 +23,12 @@ const queueRoutes: Partial<Record<UserRole, string>> = {
 };
 
 const queueLabels: Partial<Record<UserRole, string>> = {
-  INTAKE_TRIAGE: "JIOC queue",
-  SERVICE_COORDINATION: "Command queue",
-  OPERATIONS_ALLOCATION: "Ops queue",
-  DELIVERY_TEAM_LEAD: "Team queue",
+  INTAKE_TRIAGE: "JIOC routing queue",
+  SERVICE_COORDINATION: "Command routing queue",
+  OPERATIONS_ALLOCATION: "Ops routing queue",
+  DELIVERY_TEAM_LEAD: "Team work queue",
   DELIVERY_SPECIALIST: "Production queue",
-  QUALITY_RELEASE: "QC queue",
+  QUALITY_RELEASE: "Quality and release queue",
 };
 
 export const roleLabels: Record<UserRole, string> = {
@@ -43,6 +43,11 @@ export const roleLabels: Record<UserRole, string> = {
 };
 
 export type NavigationItem = { label: string; path: string };
+
+export type NavigationContext = {
+  statisticsAvailable?: boolean;
+  workspace?: { id: string; name: string };
+};
 
 export function queueLabelForRole(role: UserRole) {
   return queueLabels[role] ?? "Work queue";
@@ -60,7 +65,7 @@ export const trackingRoles: UserRole[] = [
   "OPERATIONS_ALLOCATION",
 ];
 
-const organisationLink = { label: "Organisation", path: "/organisation" };
+const organisationLink = { label: "Organisation directory", path: "/organisation" };
 
 export function homeRouteForRole(role: UserRole, capabilities: ServerCapabilities) {
   if (role === "REQUESTER") return roleRoutes.REQUESTER;
@@ -71,7 +76,11 @@ export function homeRouteForRole(role: UserRole, capabilities: ServerCapabilitie
   return capabilities.myWork ? "/my-work" : roleRoutes[role];
 }
 
-export function navigationForRole(role: UserRole, capabilities = disabledCapabilities): NavigationItem[] {
+export function navigationForRole(
+  role: UserRole,
+  capabilities = disabledCapabilities,
+  context: NavigationContext = {},
+): NavigationItem[] {
   if (role === "REQUESTER") {
     return [
       { label: "My requests", path: "/requests" },
@@ -81,23 +90,34 @@ export function navigationForRole(role: UserRole, capabilities = disabledCapabil
   }
   if (role === "PLATFORM_ADMIN") {
     return [
-      ...(capabilities.statistics ? [{ label: "Overview", path: "/overview" }] : []),
-      ...(capabilities.myWork ? [{ label: "My actions", path: "/my-work" }] : []),
+      ...(capabilities.statistics ? [{ label: "Home", path: "/overview" }] : []),
+      ...(capabilities.myWork ? [{ label: "My assigned actions", path: "/my-work" }] : []),
       { label: "User accounts", path: "/admin/users" },
       ...(capabilities.configuration ? [{ label: "Configuration", path: "/admin/configuration" }] : []),
+      ...(context.statisticsAvailable ? [{ label: "Operational statistics", path: "/statistics" }] : []),
       organisationLink,
     ];
   }
   const navigation = [
-    ...(role !== "DELIVERY_SPECIALIST" && capabilities.statistics ? [{ label: "Overview", path: "/overview" }] : []),
-    ...(capabilities.myWork ? [{ label: "My actions", path: "/my-work" }] : []),
+    ...(role !== "DELIVERY_SPECIALIST" && capabilities.statistics ? [{ label: "Home", path: "/overview" }] : []),
+    ...(capabilities.myWork ? [{ label: "My assigned actions", path: "/my-work" }] : []),
     { label: queueLabelForRole(role), path: queueRoutes[role]! },
+    ...(context.workspace ? [{
+      label: `${context.workspace.name} workspace`,
+      path: `/teams/${context.workspace.id}/overview`,
+    }] : []),
   ];
+  if (["DELIVERY_TEAM_LEAD", "DELIVERY_SPECIALIST"].includes(role)) {
+    navigation.push({ label: "My calendar", path: "/calendar/month" });
+  }
   if (role === "DELIVERY_SPECIALIST" && capabilities.products) {
     navigation.push({ label: "Product package", path: "/product-packages/new" });
   }
   if (trackingRoles.includes(role)) {
-    navigation.push({ label: "Tracking", path: "/tracking" });
+    navigation.push({ label: "Request tracking", path: "/tracking" });
+  }
+  if (context.statisticsAvailable) {
+    navigation.push({ label: "Operational statistics", path: "/statistics" });
   }
   navigation.push(organisationLink);
   return navigation;

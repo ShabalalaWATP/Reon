@@ -42,9 +42,9 @@ ended or my access changed, rather than being shown an unrelated queue item.
 
 ### User understands the navigation
 
-As a member of JIOC, I want to see **My actions**, **JIOC queue** and
-**JIOC workspace** so that I can distinguish an action inbox, routing decisions
-and unit collaboration.
+As a member of JIOC, I want to see **My assigned actions**,
+**JIOC routing queue** and **JIOC workspace** so that I can distinguish an action
+inbox, routing decisions and unit collaboration.
 
 ## Functional requirements
 
@@ -63,8 +63,9 @@ and unit collaboration.
    to its assignee and is `PERSONAL`.
 9. The action register displays **Assigned to you** or
    **Available to &lt;current unit&gt;** without treating availability as assignment.
-10. Staff navigation uses **My actions**, a role-specific queue label and the
-    configured organisation name followed by **workspace**.
+10. Staff navigation uses **My assigned actions**, a purpose-specific routing or
+    delivery queue label and the configured organisation name followed by
+    **workspace**.
 
 ## Security requirements
 

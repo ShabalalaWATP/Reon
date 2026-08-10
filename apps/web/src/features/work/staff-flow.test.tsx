@@ -31,7 +31,7 @@ describe("staff work queue", () => {
 
     renderApp("/triage?requestId=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
     expect(await screen.findByRole("heading", { name: "This action is no longer available" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open JIOC queue" })).toHaveAttribute("href", "/triage");
+    expect(screen.getByRole("link", { name: "Open JIOC routing queue" })).toHaveAttribute("href", "/triage");
   });
 
   it("claims work and records a stage-specific human outcome", async () => {

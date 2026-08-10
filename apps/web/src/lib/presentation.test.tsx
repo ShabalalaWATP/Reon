@@ -26,14 +26,14 @@ describe("presentation helpers", () => {
     expect(navigationForRole("REQUESTER")).toHaveLength(3);
     expect(navigationForRole("PLATFORM_ADMIN")).toEqual([
       { label: "User accounts", path: "/admin/users" },
-      { label: "Organisation", path: "/organisation" },
+      { label: "Organisation directory", path: "/organisation" },
     ]);
     expect(navigationForRole("INTAKE_TRIAGE")).toEqual([
-      { label: "JIOC queue", path: "/triage" },
-      { label: "Tracking", path: "/tracking" },
-      { label: "Organisation", path: "/organisation" },
+      { label: "JIOC routing queue", path: "/triage" },
+      { label: "Request tracking", path: "/tracking" },
+      { label: "Organisation directory", path: "/organisation" },
     ]);
-    expect(navigationForRole("DELIVERY_TEAM_LEAD")).not.toContainEqual({ label: "Tracking", path: "/tracking" });
+    expect(navigationForRole("DELIVERY_TEAM_LEAD")).not.toContainEqual({ label: "Request tracking", path: "/tracking" });
     const enabled = {
       ...disabledCapabilities,
       myWork: true,
@@ -48,10 +48,21 @@ describe("presentation helpers", () => {
     expect(homeRouteForRole("DELIVERY_TEAM_LEAD", enabled)).toBe("/overview");
     expect(homeRouteForRole("DELIVERY_SPECIALIST", enabled)).toBe("/my-work");
     expect(homeRouteForRole("QUALITY_RELEASE", enabled)).toBe("/overview");
-    expect(navigationForRole("REQUESTER", enabled)).not.toContainEqual({ label: "My actions", path: "/my-work" });
+    expect(navigationForRole("REQUESTER", enabled)).not.toContainEqual({ label: "My assigned actions", path: "/my-work" });
     expect(navigationForRole("PLATFORM_ADMIN", enabled)).toContainEqual({ label: "Configuration", path: "/admin/configuration" });
     expect(navigationForRole("DELIVERY_SPECIALIST", enabled)).toContainEqual({ label: "Product package", path: "/product-packages/new" });
-    expect(navigationForRole("INTAKE_TRIAGE", enabled)).toContainEqual({ label: "My actions", path: "/my-work" });
+    expect(navigationForRole("INTAKE_TRIAGE", enabled, {
+      statisticsAvailable: true,
+      workspace: { id: "jioc", name: "JIOC" },
+    })).toEqual([
+      { label: "Home", path: "/overview" },
+      { label: "My assigned actions", path: "/my-work" },
+      { label: "JIOC routing queue", path: "/triage" },
+      { label: "JIOC workspace", path: "/teams/jioc/overview" },
+      { label: "Request tracking", path: "/tracking" },
+      { label: "Operational statistics", path: "/statistics" },
+      { label: "Organisation directory", path: "/organisation" },
+    ]);
   });
 
   it("groups and labels statuses without exposing raw values", () => {

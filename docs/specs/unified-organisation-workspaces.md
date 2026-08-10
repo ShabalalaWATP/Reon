@@ -22,6 +22,13 @@ the routing decision themselves.
 The server returns capabilities for the selected unit. React does not infer
 authority from a role name, navigation item or organisation kind.
 
+The account menu and personal profile must present the representative workflow
+role and the effective workspace position as separate facts. For example, a
+JIOC Manager is a `JIOC Routing User` by representative role and a `Manager` in
+the JIOC workspace. The compact account identity combines both labels, while
+the expanded profile names the organisation attached to each position. Neither
+label is an authorisation source.
+
 ## Membership and management
 
 One effective-dated organisation membership is authoritative for workspace
@@ -59,14 +66,17 @@ one or more current members. A linked commitment is valid only when the request
 or work package belongs to the Manager's exact delivery team. Routing Managers
 may create team events but cannot create ticket commitments.
 
-Leave and appointments default to availability-only. Private notes are redacted
-before a shared response leaves the backend. Existing events are clickable and
-empty calendar slots support keyboard-accessible quick creation. A single
-prominent Add event button and every calendar-slot creation affordance open the
-same modal form. Selecting a day pre-fills that date, successful creation closes
-the modal and returns focus, and validation or API errors preserve entered
-values. Dragging is an enhancement to the same commands, never a separate
-authority path.
+Personal events default to showing their title, category and notes to the
+member's current exact unit. The creation form provides one unchecked `Private
+appointment` control; selecting it redacts the title and notes before a shared
+response leaves the backend and shows colleagues only `Busy` and the event time.
+New availability-only personal events are not accepted, while existing records
+retain that projection. Existing events are clickable and empty calendar slots
+support keyboard-accessible quick creation. A single prominent Add event button
+and every calendar-slot creation affordance open the same modal form. Selecting
+a day pre-fills that date, successful creation closes the modal and returns
+focus, and validation or API errors preserve entered values. Dragging is an
+enhancement to the same commands, never a separate authority path.
 
 ## Multiple Analysts on one request
 
@@ -119,3 +129,5 @@ authoritative operational records.
   backend and frontend, including negative authorisation and concurrency tests.
 - Verify every People column sort in both directions, Manager-first initial
   ordering, Member read-only behaviour, Add event modal focus and day pre-fill.
+- Verify that Manager and Member accounts see their effective workspace
+  position alongside, rather than hidden behind, their representative role.

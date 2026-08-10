@@ -147,7 +147,7 @@ describe("operational statistics", () => {
 
     expect(await screen.findByRole("heading", { name: "Statistics" })).toBeInTheDocument();
     expect(await screen.findByText("Projection current")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Statistics" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Operational statistics" })).toBeInTheDocument();
     expect(within(screen.getByRole("region", { name: "Summary measures" })).getByText("8")).toBeInTheDocument();
     expect(screen.getByLabelText("Organisation")).toHaveValue(platformScope.units[2].id);
     expect(screen.getByRole("table", { name: "Current status data" })).toBeInTheDocument();
@@ -184,7 +184,7 @@ describe("operational statistics", () => {
     renderApp("/statistics");
     await user.click(await screen.findByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("heading", { name: "No statistics scope assigned" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Statistics" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Operational statistics" })).not.toBeInTheDocument();
   });
 
   it("reports dashboard failures and renders an empty degraded projection", async () => {

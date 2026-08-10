@@ -43,10 +43,16 @@
 .calendar-form-panel > header > span, .calendar-privacy > span, .capacity-panel > header > span { display: block; margin-bottom: 7px; color: var(--accent); font-family: var(--font-mono); font-size: .65rem; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
 .calendar-form-panel form, .capacity-panel form { display: grid; gap: 14px; margin-top: 18px; }
 .calendar-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.calendar-form-grid--single { grid-template-columns: minmax(0, 1fr); }
 .calendar-mode { display: flex; margin-top: 14px; }
 .calendar-mode button { border: 1px solid var(--border); padding: 9px 12px; background: transparent; color: var(--muted); }
 .calendar-mode button[aria-pressed="true"] { border-color: var(--accent); background: var(--surface-strong); color: var(--text); }
 .calendar-check { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: .74rem; }
+.calendar-private-choice { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 10px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 12px 2px; cursor: pointer; }
+.calendar-private-choice input { margin-top: 3px; }
+.calendar-private-choice span { display: grid; gap: 4px; }
+.calendar-private-choice strong { font-size: .78rem; }
+.calendar-private-choice small { color: var(--muted); font-size: .7rem; line-height: 1.45; }
 .calendar-privacy ul { display: grid; gap: 8px; padding-left: 18px; color: var(--muted); font-size: .75rem; }
 .capacity-panel { border-top: 0; }
 .capacity-panel > .button { margin-top: 14px; }
