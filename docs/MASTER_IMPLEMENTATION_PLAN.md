@@ -1,5 +1,22 @@
 # ISTARI Service Master Implementation Plan
 
+## Route lifecycle tracking and analytical presentation, 10 August 2026
+
+- [x] Make request title the primary tracking identity while retaining linked
+  references, ownership, required date and submission date.
+- [x] Show the selected organisation route and delivery lifecycle for every
+  request visible to an exact JIOC, command or Ops route member.
+- [x] Add a direct, read-only historical detail route whose backend query repeats
+  route membership and whose schema excludes actions, clarification, feedback
+  and product content.
+- [x] Add current-status, due-risk and active-age donut charts and a median-to-
+  90th-percentile stage-duration graphic without creating a new analytics or
+  authorisation path.
+- [x] Retain labelled legends, content-free summaries, accessible table parity,
+  keyboard focus and reduced-motion behaviour.
+- [x] Pass backend and frontend coverage gates, repository quality gates,
+  production build, live JIOC link navigation and browser console review.
+
 ## GitHub quality and dependency automation, 9 August 2026
 
 - [x] Replace the Windows-only secure-production test path with a portable
@@ -246,8 +263,9 @@ stale, duplicate, cross-team and invalid-transition actions are denied.
   their own output.
 - [x] Show disseminated content through an authenticated application-owned
   download only to its originating Customer.
-- [x] Keep JIOC, command and Ops trackers metadata-only and remove them from the
-  approval path after routing.
+- [x] Keep JIOC, command and Ops trackers read-only and remove them from the
+  approval path after routing. Exact-route members may reopen the original
+  submission, but not actions, clarification, feedback or product content.
 - [x] Record Customer dissemination and permit one feedback response after completion.
 - [x] Reconstruct the full request, decision, rework, approval and dissemination history.
 
@@ -323,7 +341,8 @@ authorisation become mandatory only if files are approved in a later specificati
 4. Route through DIGOC → NCGI-A Ops → OSG Team, assign an Analyst and query work.
 5. Complete a route through an alternative command, Ops group and staffed team;
    prove distinct Manager and Analyst candidate groups with no OSG fallback.
-6. Record time-stamped progress notes and observe metadata-only routing trackers.
+6. Record time-stamped progress notes and observe route-scoped, read-only
+   routing trackers through the full lifecycle.
 7. Submit the service product, complete Manager and QC rework, disseminate, download and
    give feedback without routing approval back up the hierarchy.
 8. Attempt every cross-role, cross-scope, identifier and transition abuse case.
@@ -449,6 +468,9 @@ branch). Performance and live-browser evidence are consolidated in Expansion 8.
   packages, commitments and reservations before a move.
 - [x] Preserve membership history and prevent sibling, ancestor and unrelated-team
   changes.
+- [x] Make every People column keyboard-sortable, default Managers first and
+  require current exact-unit Manager position as well as roster authority for
+  every local membership operation.
 
 Evidence: the membership timeline migration, scheduled one-winner tests,
 authority matrix, active-request, package, commitment and reservation guards and
@@ -469,6 +491,8 @@ membership action became available.
 - [x] Let authorised Managers create team events and personal commitments, with
   acknowledgement or reasoned dispute by the subject.
 - [x] Apply versioned preview and commit to calendar-backed capacity.
+- [x] Replace the permanently expanded creation form with one accessible modal
+  opened by the Add event control or a selected calendar day.
 
 Evidence: migration `0007_canonical_calendar` passed empty upgrade, drift,
 downgrade to `0006`, re-upgrade and second drift. Recurrence, DST, privacy,
@@ -782,6 +806,8 @@ remains subject to the enterprise gap register.
   existing identities and extend the sequential local directory to `admin99`.
 - [x] Give every current workspace member calendar self-service for leave,
   courses, training, duty, appointments and availability.
+- [x] Use one date-aware Add event modal from both the calendar toolbar and day
+  cells, preserving errors and returning focus after close.
 - [x] Limit unit events to exact-unit Managers and request-linked commitments to
   delivery-team Managers, current Analysts and work owned by that exact team.
 - [x] Replace single-Analyst allocation with one accountable Lead and up to ten
@@ -801,6 +827,8 @@ remains subject to the enterprise gap register.
   architecture, user directory and operational documentation.
 - [x] Add positive, negative, cross-unit, effective-date, assignment-history,
   calendar, collaboration, accessibility and workflow regression tests.
+- [x] Prove Manager-first and seven-column roster sorting plus a fail-closed
+  deliberately misconfigured Member roster grant.
 - [x] Pass 922 backend tests at 98.26 per cent coverage and 321 frontend tests
   at 99.40 per cent line and 95.03 per cent branch coverage.
 - [x] Pass repository policy, formatting, lint, type, dead-code, line-limit,

@@ -15,6 +15,20 @@ evidence. They do not prove the later managed-product or guided-configuration
 capabilities and must not be used to close Product Evolution browser or
 acceptance gates.
 
+## Route lifecycle and chart presentation, 10 August 2026
+
+The rebuilt local production containers were exercised with a JIOC routing
+session. Tracking showed title-first rows, linked references, exact selected
+routes and delivery lifecycles. Selecting **Russian Troop Movements** opened
+`/tracking/{requestId}` and displayed the original submitted request in a
+read-only view without workflow actions or product controls.
+
+The same session opened Statistics at the JIOC grant root. Current status,
+due-date risk and active request age rendered as donut charts, and completed
+stage duration rendered median and 90th-percentile ranges. Legends, textual
+summaries and table disclosures remained present. The browser console contained
+no warnings or errors.
+
 ## Current application screenshots
 
 The images deliberately contain only synthetic fixtures. Nine representative
@@ -262,7 +276,7 @@ production-built React and FastAPI images against the clean 2,500-row PostgreSQL
   cursor page. One hundred drafts remained visible and both older-request and
   older-draft responses returned successfully.
 - JIOC user `admin4` rendered and retained 100 staff-work items, then retained
-  100 metadata-only tracked requests after loading another page.
+  100 route-scoped tracking rows after loading another page.
 - OSG Manager `admin8` opened the OSG Board and moved from 25 cards on page one
   to 25 cards on page two using the opaque Board cursor.
 - Platform Administrator `admin1` retained 100 user-register rows after loading

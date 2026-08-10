@@ -142,9 +142,11 @@ export const workItem: WorkItem = {
 export const trackedRequest: TrackedRequest = {
   id: requestDetail.id,
   reference: requestDetail.reference,
+  title: requestDetail.title,
   status: "ALLOCATION_REVIEW",
   currentOwner: "Cedar Team",
   requiredBy: requestDetail.requiredBy,
+  createdAt: requestDetail.createdAt,
   updatedAt: requestDetail.updatedAt,
   route: [
     organisationUnit("JIOC"),

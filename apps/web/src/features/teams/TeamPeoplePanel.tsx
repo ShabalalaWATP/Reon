@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { PageState } from "../../components/PageState";
 import { api, ApiError } from "../../lib/api/client";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import type { TeamMember, TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import { useAuth } from "../../lib/auth/AuthProvider";
+import { canEndMembership, canManageRoster, DEFAULT_PEOPLE_SORT, memberPosition, sortPeople, type PeopleSortKey } from "./peopleSorting";
 
 export function TeamPeoplePanel({ access, userId }: { access: TeamWorkspaceAccess; userId: string }) {
   const { session } = useAuth();
@@ -14,7 +15,7 @@ export function TeamPeoplePanel({ access, userId }: { access: TeamWorkspaceAcces
   const [selectedId, setSelectedId] = useState("");
   const [reason, setReason] = useState("");
   const [effectiveFrom, setEffectiveFrom] = useState("");
-  const canManage = access.permissions.includes("ROSTER") && Boolean(access.grantId);
+  const canManage = canManageRoster(access);
   const people = useQuery({ queryKey: protectedQueryKeys.teamPeople(userId, access.teamId), queryFn: () => api.teamPeople(access.teamId) });
   const eligible = useQuery({ queryKey: protectedQueryKeys.teamEligibleAnalysts(userId, access.teamId), queryFn: () => api.eligibleRosterAnalysts(access.teamId, access.grantId ?? ""), enabled: canManage });
   const mutation = useMutation({
@@ -61,14 +62,24 @@ export function TeamPeoplePanel({ access, userId }: { access: TeamWorkspaceAcces
 }
 
 function PeopleTable({ access, items, userId }: { access: TeamWorkspaceAccess; items: TeamMember[]; userId: string }) {
-  return <div className="team-table-wrap"><table className="team-table"><caption>Workspace membership history</caption><thead><tr><th scope="col">Person</th><th scope="col">Position</th><th scope="col">Skills</th><th scope="col">State</th><th scope="col">Effective</th><th scope="col">Active work</th><th scope="col">Action</th></tr></thead><tbody>{items.map((member) => <PersonRow access={access} key={member.membershipId} member={member} userId={userId} />)}</tbody></table></div>;
+  const [sort, setSort] = useState(DEFAULT_PEOPLE_SORT);
+  const sorted = useMemo(() => sortPeople(items, sort, canManageRoster(access)), [access, items, sort]);
+  const changeSort = (key: PeopleSortKey) => setSort((current) => ({
+    key,
+    direction: current.key === key && current.direction === "ascending" ? "descending" : "ascending",
+  }));
+  return <div className="team-table-wrap"><table className="team-table"><caption>Workspace membership history</caption><thead><tr><SortHeader active={sort.key === "person"} direction={sort.direction} label="Person" onSort={() => changeSort("person")} /><SortHeader active={sort.key === "position"} direction={sort.direction} label="Position" onSort={() => changeSort("position")} /><SortHeader active={sort.key === "skills"} direction={sort.direction} label="Skills" onSort={() => changeSort("skills")} /><SortHeader active={sort.key === "state"} direction={sort.direction} label="State" onSort={() => changeSort("state")} /><SortHeader active={sort.key === "effective"} direction={sort.direction} label="Effective" onSort={() => changeSort("effective")} /><SortHeader active={sort.key === "activeWork"} direction={sort.direction} label="Active work" onSort={() => changeSort("activeWork")} /><SortHeader active={sort.key === "action"} direction={sort.direction} label="Action" onSort={() => changeSort("action")} /></tr></thead><tbody>{sorted.map((member) => <PersonRow access={access} key={member.membershipId} member={member} userId={userId} />)}</tbody></table></div>;
+}
+
+function SortHeader({ active, direction, label, onSort }: { active: boolean; direction: "ascending" | "descending"; label: string; onSort: () => void }) {
+  return <th aria-sort={active ? direction : "none"} scope="col"><button className="team-table__sort" onClick={onSort} type="button"><span>{label}</span><i aria-hidden="true">{active ? direction === "ascending" ? "↑" : "↓" : "↕"}</i></button></th>;
 }
 
 function PersonRow({ access, member, userId }: { access: TeamWorkspaceAccess; member: TeamMember; userId: string }) {
   const { session } = useAuth(); const client = useQueryClient(); const [ending, setEnding] = useState(false); const [reason, setReason] = useState("");
   const mutation = useMutation({ mutationFn: () => api.endTeamMembership(access.teamId, member.membershipId, { grantId: access.grantId ?? "", expectedVersion: member.version, reason }, session?.csrfToken ?? ""), onSuccess: (data) => { client.setQueryData(protectedQueryKeys.teamPeople(userId, access.teamId), data); setEnding(false); } });
-  const canEnd = access.permissions.includes("ROSTER") && (member.workspacePosition ?? (member.role === "DELIVERY_TEAM_LEAD" ? "MANAGER" : "MEMBER")) === "MEMBER" && member.state === "CURRENT";
-  return <><tr><th scope="row"><strong>{member.displayName}</strong>{member.endReason ? <small>{member.endReason}</small> : null}</th><td>{member.workspacePosition ?? (member.role === "DELIVERY_TEAM_LEAD" ? "MANAGER" : "MEMBER")}</td><td>{member.skills.length ? <ul aria-label={`${member.displayName} skills`} className="skill-tags">{member.skills.map((skill) => <li key={skill}>{skill}</li>)}</ul> : <span className="muted-text">Not listed</span>}</td><td><span className={`membership-state membership-state--${member.state.toLowerCase()}`}>{member.state.toLowerCase()}</span></td><td>{formatDate(member.effectiveFrom)}{member.effectiveUntil ? ` to ${formatDate(member.effectiveUntil)}` : " onwards"}</td><td>{member.activeWorkCount}</td><td>{canEnd ? <button className="button button--quiet" disabled={member.activeWorkCount > 0} onClick={() => setEnding(!ending)} type="button">End membership</button> : "Not applicable"}</td></tr>{ending ? <tr className="end-membership-row"><td colSpan={7}><form onSubmit={(event) => { event.preventDefault(); mutation.mutate(); }}><label className="form-field">Reason for ending membership<span className="field-hint">Required</span><textarea minLength={10} onChange={(event) => setReason(event.target.value)} required value={reason} /></label>{mutation.isError ? <p role="alert">{errorMessage(mutation.error)}</p> : null}<button className="button button--danger" disabled={mutation.isPending} type="submit">Confirm end</button></form></td></tr> : null}</>;
+  const canEnd = canEndMembership(access, member);
+  return <><tr><th scope="row"><strong>{member.displayName}</strong>{member.endReason ? <small>{member.endReason}</small> : null}</th><td>{memberPosition(member)}</td><td>{member.skills.length ? <ul aria-label={`${member.displayName} skills`} className="skill-tags">{member.skills.map((skill) => <li key={skill}>{skill}</li>)}</ul> : <span className="muted-text">Not listed</span>}</td><td><span className={`membership-state membership-state--${member.state.toLowerCase()}`}>{member.state.toLowerCase()}</span></td><td>{formatDate(member.effectiveFrom)}{member.effectiveUntil ? ` to ${formatDate(member.effectiveUntil)}` : " onwards"}</td><td>{member.activeWorkCount}</td><td>{canEnd ? <button className="button button--quiet" disabled={member.activeWorkCount > 0} onClick={() => setEnding(!ending)} type="button">End membership</button> : "Not applicable"}</td></tr>{ending ? <tr className="end-membership-row"><td colSpan={7}><form onSubmit={(event) => { event.preventDefault(); mutation.mutate(); }}><label className="form-field">Reason for ending membership<span className="field-hint">Required</span><textarea minLength={10} onChange={(event) => setReason(event.target.value)} required value={reason} /></label>{mutation.isError ? <p role="alert">{errorMessage(mutation.error)}</p> : null}<button className="button button--danger" disabled={mutation.isPending} type="submit">Confirm end</button></form></td></tr> : null}</>;
 }
 
 function formatDate(value: string) { return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(value)); }

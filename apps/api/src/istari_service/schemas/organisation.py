@@ -1,4 +1,4 @@
-"""Public organisation hierarchy and metadata-only tracking schemas."""
+"""Public organisation hierarchy and route-scoped tracking schemas."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from uuid import UUID
 from istari_service.models import RequestStatus
 from istari_service.organisation_models import OrganisationKind, StaffingStatus
 from istari_service.schemas.common import ApiModel
+from istari_service.schemas.requests import CustomerUrgency, Sensitivity
 
 
 class OrganisationUnitView(ApiModel):
@@ -45,12 +46,34 @@ class TrackedRouteUnit(ApiModel):
 class TrackedRequest(ApiModel):
     id: UUID
     reference: str
+    title: str
     status: RequestStatus
     current_owner: str | None
     required_by: date
+    created_at: datetime
     updated_at: datetime
     route: list[TrackedRouteUnit]
     awaiting_team_staffing: bool
+
+
+class TrackedRequestDetail(TrackedRequest):
+    requester_display_name: str
+    description: str
+    question_to_answer: str
+    desired_outcome: str
+    background_context: str
+    subject_area_or_location: str
+    coverage_start: date
+    coverage_end: date
+    customer_urgency: CustomerUrgency
+    supported_activity_or_decision: str
+    required_by_reason: str
+    preferred_deliverable_type: str
+    success_criteria: str
+    constraints_or_caveats: str
+    supporting_information: str
+    sensitivity: Sensitivity
+    handling_instructions: str
 
 
 class TrackedRequestList(ApiModel):

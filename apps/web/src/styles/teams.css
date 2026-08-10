@@ -80,6 +80,10 @@
 .team-table caption { padding: 9px 11px; color: var(--muted); text-align: left; font-size: .68rem; }
 .team-table th, .team-table td { border-top: 1px solid var(--border); padding: 11px; text-align: left; vertical-align: top; }
 .team-table thead th { background: var(--surface-raised); color: var(--muted); font-size: .68rem; }
+.team-table__sort { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; border: 0; padding: 0; background: transparent; color: inherit; font: inherit; font-weight: 750; letter-spacing: .045em; text-align: left; text-transform: uppercase; }
+.team-table__sort i { color: color-mix(in srgb, var(--muted) 60%, transparent); font-family: var(--font-mono); font-size: .76rem; font-style: normal; }
+.team-table__sort:hover, .team-table__sort:focus-visible, th[aria-sort]:not([aria-sort="none"]) .team-table__sort { color: var(--accent); }
+.team-table__sort:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .team-table tbody th strong, .team-table tbody th small { display: block; }
 .team-table tbody th small { max-width: 260px; margin-top: 4px; color: var(--muted); font-weight: 450; line-height: 1.35; }
 .skill-tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; list-style: none; }

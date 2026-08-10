@@ -26,7 +26,8 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 
 | Threat | Control |
 | --- | --- |
-| Team Manager alters another roster | Require an active exact-team roster grant in the locked mutation transaction |
+| Member uses a stale or misconfigured roster grant | Require both a current exact-unit `MANAGER` membership and the active exact-unit roster grant at the FastAPI use-case boundary; React suppression is usability only |
+| Team Manager alters another roster | Require a current exact-team Manager position and active exact-team roster grant in the mutation transaction; restrict team controls to Member records |
 | Manager creates or promotes a global identity | Team roster commands accept existing active Analysts only; global identity and role stay administrator-only |
 | Concurrent transfers create two home teams | Exclusion constraint or serialised effective-range check plus one-winner concurrency tests |
 | Member with active work is removed | Require explicit reassignment, handover or cancellation for tasks, packages, commitments and reservations |
@@ -58,6 +59,8 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 ## Required evidence
 
 - Exact, sibling, ancestor, descendant, revoked and expired workspace-access tests.
+- Deliberately misconfigured Member-grant tests proving that eligible-person,
+  add, transfer and end-membership use cases fail closed independently of React.
 - Membership add, end and scheduled-transfer tests with active-work disposition
   and concurrent changes.
 - Calendar privacy tests across personal, exact-team Manager, team member,

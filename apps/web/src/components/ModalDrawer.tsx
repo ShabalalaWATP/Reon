@@ -5,11 +5,13 @@ export function ModalDrawer({
   label,
   onClose,
   open,
+  variant = "drawer",
 }: {
   children: ReactNode;
   label: string;
   onClose: () => void;
   open: boolean;
+  variant?: "dialog" | "drawer";
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
@@ -31,7 +33,7 @@ export function ModalDrawer({
   return (
     <dialog
       aria-label={label}
-      className="modal-drawer"
+      className={`modal-drawer modal-drawer--${variant}`}
       onCancel={(event) => { event.preventDefault(); onClose(); }}
       onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}
       ref={dialog}

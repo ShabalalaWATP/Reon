@@ -61,6 +61,7 @@ describe("canonical workforce calendar", () => {
     await user.click(screen.getByRole("button", { name: "Acknowledge" }));
     await waitFor(() => expect(calls.some((call) => call.path.endsWith("/acknowledge"))).toBe(true));
 
+    await user.click(screen.getByRole("button", { name: "Add event" }));
     await user.type(screen.getByLabelText(/^Title/), "Personal development block");
     await user.type(screen.getByLabelText(/^Notes/), "Required synthetic detail for a personal calendar event.");
     await user.click(screen.getByRole("button", { name: "Create event" }));
@@ -72,15 +73,17 @@ describe("canonical workforce calendar", () => {
     mockCalendar(managerSession, managerAccess, [occurrence({ title: "Busy", notes: null })], calls);
     const user = userEvent.setup();
     renderApp("/teams/team-osg/calendar");
-    expect(await screen.findByRole("heading", { name: "Add calendar activity" })).toBeInTheDocument();
     expect(await screen.findByText("Busy")).toBeInTheDocument();
 
+    await user.click(screen.getByRole("button", { name: "Add event" }));
+    expect(await screen.findByRole("heading", { name: "Add calendar activity" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Unit event" }));
     await user.type(screen.getByLabelText(/^Title/), "OSG planning session");
     await user.type(screen.getByLabelText(/^Notes/), "Required shared planning detail for the OSG team.");
     await user.click(screen.getByRole("button", { name: "Create event" }));
     await waitFor(() => expect(calls.some((call) => call.path.endsWith("/calendar/events"))).toBe(true));
 
+    await user.click(screen.getByRole("button", { name: "Add event" }));
     await user.click(screen.getByRole("button", { name: "Ticket commitment" }));
     fireEvent.submit(screen.getByRole("button", { name: "Create commitment" }).closest("form")!);
     expect(await screen.findByRole("alert")).toHaveTextContent("Select a request and an Analyst");
@@ -165,6 +168,7 @@ describe("canonical workforce calendar", () => {
     await user.click(screen.getByRole("button", { name: "Next calendar period" }));
     expect(await screen.findByText("No calendar activity")).toBeInTheDocument();
 
+    await user.click(screen.getByRole("button", { name: "Add event" }));
     await user.type(screen.getByLabelText(/^Title/), "Weekly protected development");
     await user.type(screen.getByLabelText(/^Notes/), "Required recurring development detail for this synthetic event.");
     await user.selectOptions(screen.getByLabelText(/^Category/), "TRAINING");
@@ -235,6 +239,7 @@ describe("canonical workforce calendar", () => {
     const user = userEvent.setup();
     const personal = renderApp("/calendar/month");
     await screen.findByRole("region", { name: "month calendar" });
+    await user.click(screen.getByRole("button", { name: "Add event" }));
     await user.type(screen.getByLabelText(/^Title/), "Protected work block");
     await user.type(screen.getByLabelText(/^Notes/), "Required detail retained after a rejected write.");
     await user.click(screen.getByRole("button", { name: "Create event" }));
@@ -267,6 +272,7 @@ describe("canonical workforce calendar", () => {
     mockCalendar(managerSession, managerAccess, [], [], { boardFailure: true });
     const user = userEvent.setup();
     renderApp("/teams/team-osg/calendar");
+    await user.click(await screen.findByRole("button", { name: "Add event" }));
     await user.click(await screen.findByRole("button", { name: "Ticket commitment" }));
     expect(await screen.findByRole("option", { name: "Requests unavailable" })).toBeInTheDocument();
     expect(screen.getByLabelText(/^Service request/)).toBeDisabled();

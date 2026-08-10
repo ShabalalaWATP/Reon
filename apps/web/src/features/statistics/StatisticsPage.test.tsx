@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { describe, expect, it } from "vitest";
@@ -9,6 +9,7 @@ import type {
 } from "../../lib/api/statisticsTypes";
 import { adminSession, enabledCapabilities } from "../../test/fixtures";
 import { json, mockFeatureFetch, renderApp } from "../../test/render";
+import { CategoryPanel } from "./StatisticsVisuals";
 
 const platformScope: StatisticsScope = {
   id: "platform",
@@ -107,6 +108,17 @@ const dashboard: StatisticsDashboard = {
 };
 
 describe("operational statistics", () => {
+  it("renders a neutral donut when a populated category set totals zero", () => {
+    const view = render(
+      <CategoryPanel rows={[{ key: "none", label: "No overdue work", count: 0 }]} title="Due-date risk" />,
+    );
+
+    expect(view.container.querySelector(".donut-chart")).toHaveStyle({
+      background: "var(--surface-strong)",
+    });
+    expect(screen.getByRole("table", { name: "Due-date risk data" })).toHaveTextContent("No overdue work");
+  });
+
   it("shows only granted scopes with accessible chart-table parity", async () => {
     const requestedScopes: string[] = [];
     const requestedUnits: string[] = [];
@@ -141,6 +153,8 @@ describe("operational statistics", () => {
     expect(screen.getByRole("table", { name: "Current status data" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Daily throughput data" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Direct child unit comparison data" })).toHaveTextContent("SYGOC");
+    expect(view.container.querySelectorAll(".donut-chart")).toHaveLength(3);
+    expect(view.container.querySelector(".duration-range-chart")).toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
 
     await user.click(screen.getByRole("button", { name: "View DIGOC statistics" }));

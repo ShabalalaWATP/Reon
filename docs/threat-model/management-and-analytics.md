@@ -38,6 +38,7 @@ analytics repository.
 | Stale projection misleads a manager | Return freshness and degraded state; alert on lag instead of presenting it as current |
 | Large ranges cause denial of service | Limit date range, dimensions and page size; use statement timeout and indexed closure joins |
 | CSV or table export bypasses scope | Use the same scoped query and suppression service; no separate unrestricted export path |
+| A decorative chart diverges from the authorised measure or hides meaning | Derive every donut, range graphic, legend and accessible table from the same response rows; keep graphics non-interactive and decorative so they cannot become a second filtering or authorisation path |
 | PDF export renders a broader dataset than the screen | Generate CSV, PDF, chart, table and textual summary from the same authorised, bounded and suppressed tabular rows |
 | Dissemination facts reveal product or Customer identity | Record event type, authorised organisation key and timing only; omit product labels, filenames, destinations, request IDs and Customer identifiers |
 | Notification measures expose message content | Project event group, safe timing and resolution state only; never ingest notification subject or protected source fields |

@@ -23,6 +23,12 @@ an independent workspace position of Manager or Member and calculate workspace
 capabilities on the server from unit kind, global role, membership and explicit
 management authority.
 
+Present People as one sortable membership-history ledger across all unit kinds.
+The default order places current Managers before Members; every column exposes
+an accessible two-direction sort. Roster writes require the Manager position as
+well as explicit authority, so a grant alone cannot promote a regular user into
+local administration.
+
 Represent request collaboration as one active Lead and zero to ten active
 Contributors. Only the Lead is the Camunda assignee. Contributors receive
 application-level collaboration access, while linked work packages remain the

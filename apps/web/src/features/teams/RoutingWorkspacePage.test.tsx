@@ -71,7 +71,9 @@ describe("routing organisation workspace", () => {
   it("gives a routing Member calendar self-service without unit controls", async () => {
     const memberAccess = { ...managerAccess, workspacePosition: "MEMBER" as const, grantId: null, permissions: [] };
     mockRoutingApi(routingMember, memberAccess);
+    const user = userEvent.setup();
     renderApp("/teams/jioc/calendar");
+    await user.click(await screen.findByRole("button", { name: "Add event" }));
     expect(await screen.findByRole("heading", { name: "Add calendar activity" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "My event" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Unit event" })).not.toBeInTheDocument();

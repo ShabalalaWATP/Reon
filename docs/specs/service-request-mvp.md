@@ -147,9 +147,13 @@ task. Camunda must not infer or recommend a route.
 The Customer dashboard groups these into Needs your input, In progress and
 Completed without exposing engine terminology.
 
-JIOC, Command Routing and Ops Routing Users retain a separate metadata-only
-tracker after their routing action. They do not approve the service product
-and cannot use tracking access to open unreleased content.
+JIOC, Command Routing and Ops Routing Users retain a separate route-scoped,
+read-only tracker after their routing action. It shows title, reference,
+ownership and lifecycle and permits an exact-route member to reopen the original
+submitted request. It excludes actions, clarification, feedback and product
+content or links. These users do not approve the service product and cannot use
+tracking access to open unreleased content. The detailed amendment and acceptance
+criteria are in `tracking-lifecycle-and-analytical-visuals.md`.
 
 ## Pages and routes
 

@@ -1,5 +1,36 @@
 # Development Story
 
+## 10 August 2026: sortable people and focused calendar creation
+
+- Turned every organisation People register into an accessible sortable ledger,
+  with Managers first by default and deterministic current-history ordering.
+- Closed a defence-in-depth gap by requiring a current exact-unit Manager
+  membership as well as an active roster grant in FastAPI. A deliberately
+  misconfigured Member grant now fails closed, while React also withholds every
+  roster control from Members.
+- Replaced the permanently expanded calendar form with a centred modal. The
+  toolbar Add event control and calendar-day affordances open the same form,
+  selected days pre-fill 09:00, failed writes retain context and successful
+  creation closes the modal with focus restoration.
+
+## 10 August 2026: lifecycle tracking and analytical graphics
+
+- Reworked the route-scoped tracking register around request titles, linked
+  references, current ownership and a graphic view of both organisational route
+  and delivery lifecycle.
+- Added a dedicated historical detail contract. Exact JIOC, command and Ops
+  route membership is rechecked in PostgreSQL, while the read-only response
+  excludes workflow actions, clarification, feedback and every product field.
+- Added status, due-risk and active-age donut charts plus a median-to-90th-
+  percentile stage-duration graphic. Existing scoped API data, legends and
+  accessible tables remain the single source of every displayed value.
+- Passed all 951 backend tests at 98.26 per cent total coverage and 354 frontend
+  tests at 99.47 per cent line and 95.01 per cent branch coverage. Repository
+  gates, production build and bundle budget passed. A live JIOC browser journey
+  reopened the Russian Troop Movements request from Tracking, rendered the
+  read-only lifecycle and displayed the new charts with no console warning or
+  error.
+
 ## 10 August 2026: action-oriented team workspaces
 
 - Reworked delivery and routing workspace homes around decisions requiring
@@ -866,3 +897,18 @@ gates remain above 95 per cent for both lines and branches.
   summaries, plural and mixed result states, keyboard access, recording a human
   decision and returning to automatic comparison. The frontend closes with 339
   tests at 99.46 per cent line and 95.02 per cent branch coverage.
+- Tightened organisation workspace membership and calendar interactions on 10
+  August 2026. Every People column now supports accessible ascending and
+  descending sorting, with Managers first by default. Roster changes require a
+  current Manager position in the exact workspace as well as the roster grant,
+  so a stale or misconfigured grant cannot authorise an ordinary Member.
+- Replaced the permanently visible calendar form with one central dialog. The
+  `Add event` command and every calendar day open that same form, with a clicked
+  day pre-populating the start and end date. The dialog restores focus when it
+  closes and closes automatically after a successful creation.
+- Verified the change with 952 backend tests at 98.87 per cent line and 95.00
+  per cent branch coverage, plus 365 frontend tests at 99.51 per cent line and
+  95.04 per cent branch coverage. Repository policy, OpenAPI, lint, type,
+  security, dead-code, documentation and production-build gates passed. A live
+  JIOC Manager walkthrough confirmed the sortable roster and both calendar
+  dialog entry points with no browser warnings or errors.

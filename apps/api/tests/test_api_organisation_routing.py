@@ -8,7 +8,7 @@ from uuid import UUID
 from sqlalchemy import delete, select
 
 from api_helpers import current_item, submit_request
-from conftest import ApiHarness
+from conftest import ApiHarness, request_payload
 from istari_service.models import (
     ServiceRequest,
     UserRole,
@@ -158,13 +158,16 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
     assert set(tracked) == {
         "id",
         "reference",
+        "title",
         "status",
         "currentOwner",
         "requiredBy",
+        "createdAt",
         "updatedAt",
         "route",
         "awaitingTeamStaffing",
     }
+    assert tracked["title"] == request_payload()["title"]
     assert tracked["currentOwner"] == "Team Manager"
     assert tracked["awaitingTeamStaffing"] is False
     assert [unit["name"] for unit in tracked["route"]] == [
@@ -173,6 +176,18 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
         "Nimbus Ops",
         "Beacon Team",
     ]
+    tracked_detail = await harness.client.get(
+        f"/api/v1/tracked-requests/{request_id}"
+    )
+    assert tracked_detail.status_code == 200
+    assert tracked_detail.json()["title"] == request_payload()["title"]
+    assert tracked_detail.json()["description"] == request_payload()["description"]
+    assert {
+        "deliverable",
+        "clarifications",
+        "feedback",
+        "availableActions",
+    }.isdisjoint(tracked_detail.json())
 
     async with harness.sessions() as session:
         task = await session.scalar(
@@ -195,6 +210,9 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
         headers=harness.mutation_headers(),
     )
     assert denied.status_code == 404
+    assert (
+        await harness.client.get(f"/api/v1/tracked-requests/{request_id}")
+    ).status_code == 404
 
     await harness.login("admin37")
     beacon_items = (await harness.client.get("/api/v1/work-items")).json()["items"]

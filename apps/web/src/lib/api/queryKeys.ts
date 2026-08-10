@@ -98,6 +98,8 @@ export const protectedQueryKeys = {
     ["protected", userId, "workspace-records", unitId] as const,
   trackedRequests: (userId: string) =>
     ["protected", userId, "tracked-requests"] as const,
+  trackedRequest: (userId: string, requestId: string) =>
+    ["protected", userId, "tracked-requests", requestId] as const,
   workItems: (userId: string, unitId?: string, requestId?: string) => requestId
     ? ["protected", userId, "work-items", "request", requestId] as const
     : unitId

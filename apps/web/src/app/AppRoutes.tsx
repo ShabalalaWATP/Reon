@@ -35,6 +35,8 @@ const RequestDetailPage = lazy(() => import("../features/requests/RequestDetailP
   .then(({ RequestDetailPage: page }) => ({ default: page })));
 const TrackingPage = lazy(() => import("../features/tracking/TrackingPage")
   .then(({ TrackingPage: page }) => ({ default: page })));
+const TrackingDetailPage = lazy(() => import("../features/tracking/TrackingDetailPage")
+  .then(({ TrackingDetailPage: page }) => ({ default: page })));
 const StatisticsPage = lazy(() => import("../features/statistics/StatisticsPage")
   .then(({ StatisticsPage: page }) => ({ default: page })));
 const TeamWorkspacePage = lazy(() => import("../features/teams/TeamWorkspacePage")
@@ -100,6 +102,7 @@ export function AppRoutes() {
             </Route>
             <Route element={<RoleGate allowed={trackingRoles} />}>
               <Route path="tracking" element={<TrackingPage />} />
+              <Route path="tracking/:requestId" element={<TrackingDetailPage />} />
             </Route>
             <Route element={<RoleGate allowed={["REQUESTER"]} />}>
               <Route path="requests" element={<RequestDashboardPage />} />

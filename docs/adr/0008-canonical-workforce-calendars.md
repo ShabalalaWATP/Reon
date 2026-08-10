@@ -30,15 +30,19 @@ terminology.
   mandatory reason.
 - Calculate capacity from canonical calendar periods and work reservations using
   a versioned preview and commit token.
+- Use one accessible modal creation surface for the toolbar and day-slot entry
+  points. Day selection pre-fills the date, errors retain context, successful
+  creation closes the surface and focus returns to the invoking control.
 - Keep external calendar connectors out of scope until separately specified and
   threat-modelled.
 
 ## Consequences
 
-One event remains consistent across views and organisation changes. Privacy and
-capacity logic have one source. Exact-team calendar scope reduces unnecessary
-availability exposure. Recurrence, daylight-saving changes, transfers and
-concurrent edits require property and boundary tests.
+One event and one creation interaction remain consistent across views and
+organisation changes. Privacy and capacity logic have one source. Exact-team
+calendar scope reduces unnecessary availability exposure. Recurrence,
+daylight-saving changes, transfers and concurrent edits require property and
+boundary tests.
 
 ## Rejected alternatives
 

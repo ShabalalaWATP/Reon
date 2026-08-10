@@ -8,6 +8,7 @@ import type {
   RequestLinkWorkspace,
   RoutingOptionsWorkspace,
   TrackedRequest,
+  TrackedRequestDetail,
   WorkAction,
   WorkItem,
 } from "./types";
@@ -23,6 +24,8 @@ export const workApi = {
     apiRequest<ListResponse<OrganisationUnit>>("/organisation/units"),
   trackedRequests: (cursor?: string) =>
     apiRequest<ListResponse<TrackedRequest>>(pagedPath("/tracked-requests", cursor)),
+  trackedRequest: (requestId: string) =>
+    apiRequest<TrackedRequestDetail>(`/tracked-requests/${encodeURIComponent(requestId)}`),
   routingOptions: (workItemId: string) =>
     apiRequest<RoutingOptionsWorkspace>(`/work-items/${encodeURIComponent(workItemId)}/routing-options`),
   eligibleSpecialists: (workItemId: string) =>

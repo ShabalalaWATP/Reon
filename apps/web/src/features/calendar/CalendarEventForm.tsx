@@ -11,10 +11,11 @@ import { localInput } from "./calendarDates";
 
 type Mode = "personal" | "team" | "commitment";
 
-export function CalendarEventForm({ access, initialDate, members, range }: {
+export function CalendarEventForm({ access, initialDate, members, onCreated, range }: {
   access?: TeamWorkspaceAccess;
   initialDate?: Date | null;
   members?: TeamMember[];
+  onCreated?: () => void;
   range: { from: string; to: string };
 }) {
   const { session } = useAuth();
@@ -77,6 +78,7 @@ export function CalendarEventForm({ access, initialDate, members, range }: {
         ? protectedQueryKeys.teamCalendar(session?.user.id ?? "anonymous", access.teamId, range.from, range.to)
         : protectedQueryKeys.personalCalendar(session?.user.id ?? "anonymous", range.from, range.to);
       void client.invalidateQueries({ queryKey: key });
+      onCreated?.();
     },
   });
   const analysts = (members ?? []).filter((item) => item.state === "CURRENT" && item.role === "DELIVERY_SPECIALIST");

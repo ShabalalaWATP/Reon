@@ -12,6 +12,7 @@ rather than creating a new architectural decision.
 | Organisation tree and selectable routing | `service-request-mvp.md` | 0004 | `service-request-workflow.md` |
 | Analyst clarification loop | `service-operations-expansion.md` | 0010 | `service-request-workflow.md` |
 | Scoped statistics | `service-operations-expansion.md` | 0006, 0007 | `management-and-analytics.md` |
+| Route lifecycle tracking and analytical visuals | `tracking-lifecycle-and-analytical-visuals.md` | 0004, 0007 | `service-request-workflow.md`, `management-and-analytics.md` |
 | Team roster lifecycle | `service-operations-expansion.md` | 0006, 0011 | `team-workspaces-and-calendars.md` |
 | Shared and personal calendars | `service-operations-expansion.md` | 0006, 0008 | `team-workspaces-and-calendars.md` |
 | Workflow board and agile planning | `service-operations-expansion.md` | 0006, 0009 | `team-workspaces-and-calendars.md` |

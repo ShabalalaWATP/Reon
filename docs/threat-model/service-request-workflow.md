@@ -110,7 +110,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | A browser supplies a candidate-group name | Ignore browser group values; derive candidate groups from governed organisation records in FastAPI |
 | An alternative team silently receives OSG staff | Scope Team Manager and Analyst tasks to the selected team; represent missing membership as `Awaiting team staffing` |
 | Administrative account changes remove the last Manager or Analyst | Recalculate staffing from active role-qualified memberships after every relevant change; keep the team selectable and surface `Awaiting team staffing` rather than falling back |
-| Tracking access becomes content or cross-unit access | Use a dedicated metadata-only projection and response schema; SQL-scope rows by the actor's selected JIOC, command or Ops membership before they leave persistence; never reuse request detail or product repositories |
+| Tracking access becomes cross-unit or operational access | Apply exact selected-route membership inside both list and direct-detail SQL queries; use a dedicated read-only detail schema limited to the original submission; exclude actions, clarifications, feedback, product metadata, files and links; return a non-disclosing not-found response outside scope |
 | A statistics user selects a parent or sibling unit | Resolve the active grant server-side, require the selected unit to be its root or an authorised configured descendant through the organisation closure, and return a non-disclosing not-found response otherwise |
 | A cached hierarchy leaks a previously authorised branch | Key protected queries by actor, grant and selected unit, reauthorise every API and export read, and remove disabled or revoked units from server responses immediately |
 | Multiple grants become an implicit cross-branch scope | Treat every grant as an independent root and require an explicit scope switch; never build navigation edges between separately granted sibling roots |
@@ -233,8 +233,10 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 - Direct-child search and route-breadcrumb tests, plus stale-destination,
   competing-claim and crafted-parent tests, including confirmation that no
   ranking or fallback occurs.
-- Metadata-only tracker tests and pre-dissemination, cross-Customer and malformed
-  product-download denials.
+- Exact-route tracker list and direct-detail tests, including title and lifecycle
+  visibility, sibling-route denial, and exclusion of actions, clarifications,
+  feedback and product content; plus pre-dissemination, cross-Customer and
+  malformed product-download denials.
 - Expired, replayed, disabled-account, login-throttling, origin and CSRF tests.
 - Administrator denial tests for every request-content endpoint.
 - Audit-chain verification and safe-logging assertions.

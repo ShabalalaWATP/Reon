@@ -17,7 +17,7 @@ locked repository transactions. React navigation is not an authority boundary.
 | Analyst approves or disseminates own output | Denied by separation-of-duties workflow tests |
 | Non-child or skipped route | Denied by data-driven parent-child validation tests |
 | Unstaffed destination | Creates an explicit waiting state; no OSG fallback |
-| Tracker opens unreleased product | Tracker remains metadata-only; product endpoint denies access |
+| Tracker opens sibling-route or unreleased product data | Exact route membership is applied to list and direct detail; the read-only schema excludes actions, clarification, feedback and product data; product endpoints independently deny access |
 | Platform Administrator opens request content | Denied; administration and request permissions are separate |
 | Missing or reused CSRF | Denied by authentication and request-security tests |
 | Expired, disabled or replayed session | Denied and session invalidated where required |

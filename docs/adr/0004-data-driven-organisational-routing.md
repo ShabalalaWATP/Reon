@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted, 6 August 2026. Staffing baseline amended on 6 August 2026.
+Accepted, 6 August 2026. Staffing baseline amended on 6 August 2026. Historical
+route visibility amended on 10 August 2026.
 
 ## Context
 
@@ -37,8 +38,12 @@ and unsafe workflow state.
 - After team delivery begins, route approval only from Team Analyst to Team
   Manager and then QC Manager. JIOC, command and Ops users receive tracking
   visibility, not product-approval authority.
-- Scope tracking rows in PostgreSQL to the actor's selected root, command or Ops
-  membership before returning the metadata-only projection.
+- Scope every tracking list and detail query in PostgreSQL to exact membership
+  of the request's selected JIOC, command or Ops route before returning data.
+- Show title, reference, current ownership, selected route and lifecycle in the
+  register. Permit an authorised route member to reopen only the original
+  submitted request through a dedicated read-only contract. Exclude actions,
+  clarifications, feedback and all product content or release links.
 - Disseminate an authenticated application-owned plain-text download link. Do
   not fetch arbitrary URLs or accept binary files in this slice.
 - Revalidate the selected relationship, actor, role, task, request version and
@@ -52,6 +57,7 @@ team. The alternative-route smoke completes through Beacon Team's own Manager
 and Analyst groups. If later account changes leave any team unstaffed, that
 route waits visibly instead of borrowing another team's identities.
 
-Tracking views need a separate read-only policy from task ownership. The product
-also needs negative tests for crafted unit IDs, skipped levels, cross-scope
-tracking and unreleased product access.
+Tracking views use a separate read-only policy and response contract from task
+ownership and operational request detail. The product also needs negative tests
+for crafted unit IDs, skipped levels, direct cross-scope identifiers and
+unreleased product access.

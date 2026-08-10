@@ -12,8 +12,8 @@ import {
 } from "../../test/fixtures";
 import { json, mockFetch, renderApp } from "../../test/render";
 
-describe("metadata-only request tracking", () => {
-  it("shows routing metadata without request or product content", async () => {
+describe("route-scoped request tracking", () => {
+  it("shows titles, lifecycle graphics and links without loading request content", async () => {
     const paths: string[] = [];
     mockFetch((url) => {
       paths.push(url.pathname);
@@ -26,6 +26,7 @@ describe("metadata-only request tracking", () => {
               ...trackedRequest,
               id: "tracked-staffed",
               reference: "ISR-2026-0013",
+              title: "Completed route assurance",
               status: "COMPLETED",
               currentOwner: "OSG Team",
               route: [
@@ -40,6 +41,7 @@ describe("metadata-only request tracking", () => {
               ...trackedRequest,
               id: "tracked-pending",
               reference: "ISR-2026-0014",
+              title: "Pending routing request",
               status: "ROUTING_PENDING",
               currentOwner: null,
               route: [],
@@ -54,27 +56,70 @@ describe("metadata-only request tracking", () => {
     const view = renderApp("/tracking");
     expect(await screen.findByRole("heading", { name: "Request tracking" })).toBeInTheDocument();
     expect(screen.getByText("JIOC Routing User")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: trackedRequest.reference })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: trackedRequest.reference })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: trackedRequest.title })).toHaveAttribute(
+      "href",
+      `/tracking/${trackedRequest.id}`,
+    );
+    expect(screen.getAllByLabelText(/^Request lifecycle for /)).toHaveLength(3);
     expect(screen.getByText("Ops routing")).toBeInTheDocument();
     expect(screen.getByText("Disseminated")).toBeInTheDocument();
     expect(screen.getAllByText("NCGI-A Ops")).not.toHaveLength(0);
     const routedRow = screen
-      .getByRole("heading", { name: trackedRequest.reference })
+      .getByRole("heading", { name: trackedRequest.title })
       .closest("article")!;
     expect(within(routedRow).getAllByText("Cedar Team")).not.toHaveLength(0);
     expect(within(routedRow).queryByText("Awaiting team staffing")).not.toBeInTheDocument();
     const staffedRow = screen
-      .getByRole("heading", { name: "ISR-2026-0013" })
+      .getByRole("heading", { name: "Completed route assurance" })
       .closest("article")!;
     expect(within(staffedRow).getAllByText("OSG Team")).not.toHaveLength(0);
     expect(within(staffedRow).queryByText("Awaiting team staffing")).not.toBeInTheDocument();
     expect(screen.getByText("Awaiting routing")).toBeInTheDocument();
-    expect(screen.getByText("Route pending")).toBeInTheDocument();
-    expect(screen.queryByText(requestDetail.title)).not.toBeInTheDocument();
+    expect(screen.getByText("Waiting for the first routing decision.")).toBeInTheDocument();
     expect(screen.queryByText(requestDetail.description)).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Service product" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Approve|Disseminate|Record outcome/ })).not.toBeInTheDocument();
     expect(paths).toEqual(["/api/v1/auth/me", "/api/v1/tracked-requests"]);
+    expect(await axe(view.container)).toHaveNoViolations();
+  });
+
+  it("opens an authorised historical request as a read-only lifecycle view", async () => {
+    const detail = {
+      ...trackedRequest,
+      requesterDisplayName: requestDetail.requester.displayName,
+      description: requestDetail.description,
+      questionToAnswer: requestDetail.questionToAnswer,
+      desiredOutcome: requestDetail.desiredOutcome,
+      backgroundContext: requestDetail.backgroundContext,
+      subjectAreaOrLocation: requestDetail.subjectAreaOrLocation,
+      coverageStart: requestDetail.coverageStart,
+      coverageEnd: requestDetail.coverageEnd,
+      customerUrgency: requestDetail.customerUrgency,
+      supportedActivityOrDecision: requestDetail.supportedActivityOrDecision,
+      requiredByReason: requestDetail.requiredByReason,
+      preferredDeliverableType: requestDetail.preferredDeliverableType,
+      successCriteria: requestDetail.successCriteria,
+      constraintsOrCaveats: requestDetail.constraintsOrCaveats,
+      supportingInformation: requestDetail.supportingInformation,
+      sensitivity: requestDetail.sensitivity,
+      handlingInstructions: requestDetail.handlingInstructions,
+    };
+    mockFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(staffSession);
+      if (url.pathname.endsWith(`/tracked-requests/${trackedRequest.id}`)) return json(detail);
+      if (url.pathname.endsWith("/tracked-requests")) return json({ items: [trackedRequest] });
+      throw new Error(`Unexpected ${url.pathname}`);
+    });
+    const view = renderApp(`/tracking/${trackedRequest.id}`);
+
+    expect(await screen.findByRole("heading", { name: trackedRequest.title })).toBeInTheDocument();
+    expect(screen.getByText(requestDetail.description)).toBeInTheDocument();
+    expect(screen.getByText("Read-only lifecycle view")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to tracking" })).toBeInTheDocument();
+    expect(screen.getByLabelText(`Request lifecycle for ${trackedRequest.reference}`)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Record outcome|Disseminate|Assign/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Service product" })).not.toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
   });
 

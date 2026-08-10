@@ -12,20 +12,17 @@ export function CategoryPanel({
   rows: CategoryCount[];
   title: string;
 }) {
-  const maximum = Math.max(1, ...rows.map((row) => row.count));
+  const total = rows.reduce((sum, row) => sum + row.count, 0);
   return (
     <section className="statistics-panel">
-      <header><h2>{title}</h2><span>{rows.reduce((sum, row) => sum + row.count, 0)} total</span></header>
+      <header><h2>{title}</h2><span>{total} total</span></header>
       {rows.length === 0 ? <p className="inline-empty">No records in this period.</p> : (
         <>
-          <div aria-hidden="true" className="bar-register">
-            {rows.map((row) => (
-              <div className="bar-register__row" key={row.key}>
-                <span>{row.label}</span>
-                <div><i style={{ width: `${(row.count / maximum) * 100}%` }} /></div>
-                <strong>{row.count}</strong>
-              </div>
-            ))}
+          <div className="category-visual">
+            <div aria-hidden="true" className="donut-chart" style={{ background: donutBackground(rows, total) }}><span><strong>{total}</strong><small>requests</small></span></div>
+            <ul className="donut-legend">
+              {rows.map((row, index) => <li key={row.key}><i aria-hidden="true" style={{ background: sliceColour(index) }} /><span>{row.label}</span><strong>{row.count}</strong></li>)}
+            </ul>
           </div>
           <DataTable
             caption={`${title} data`}
@@ -68,15 +65,22 @@ export function ThroughputPanel({
 }
 
 export function DurationPanel({ rows }: { rows: StageDuration[] }) {
+  const maximum = Math.max(1, ...rows.map((row) => row.p90Hours));
   return (
     <section className="statistics-panel statistics-panel--wide">
       <header><h2>Completed stage duration</h2><span>Median and 90th percentile</span></header>
       {rows.length === 0 ? <p className="inline-empty">No completed stages in this period.</p> : (
-        <DataTable
-          caption="Completed stage duration data"
-          headers={["Stage", "Intervals", "Median hours", "90th percentile hours"]}
-          rows={rows.map((row) => [row.label, row.completedIntervals, row.medianHours, row.p90Hours])}
-        />
+        <>
+          <div aria-hidden="true" className="duration-range-chart">
+            {rows.map((row) => <div key={row.key}><span>{row.label}</span><i><b style={{ width: `${(row.p90Hours / maximum) * 100}%` }} /><em style={{ left: `${(row.medianHours / maximum) * 100}%` }} /></i><strong>{row.medianHours} h</strong><small>{row.p90Hours} h</small></div>)}
+          </div>
+          <p className="duration-legend"><i /> Median <i /> 90th percentile</p>
+          <DataTable
+            caption="Completed stage duration data"
+            headers={["Stage", "Intervals", "Median hours", "90th percentile hours"]}
+            rows={rows.map((row) => [row.label, row.completedIntervals, row.medianHours, row.p90Hours])}
+          />
+        </>
       )}
     </section>
   );
@@ -166,4 +170,28 @@ function formatDate(value: string) {
     year: "numeric",
     timeZone: "UTC",
   }).format(new Date(`${value}T00:00:00Z`));
+}
+
+const sliceColours = [
+  "var(--accent)",
+  "var(--teal)",
+  "var(--warning)",
+  "var(--critical)",
+  "var(--border-strong)",
+  "var(--accent-strong)",
+];
+
+function sliceColour(index: number) {
+  return sliceColours[index % sliceColours.length];
+}
+
+function donutBackground(rows: CategoryCount[], total: number) {
+  if (total === 0) return "var(--surface-strong)";
+  let offset = 0;
+  const segments = rows.map((row, index) => {
+    const start = offset;
+    offset += (row.count / total) * 100;
+    return `${sliceColour(index)} ${start}% ${offset}%`;
+  });
+  return `conic-gradient(${segments.join(", ")})`;
 }

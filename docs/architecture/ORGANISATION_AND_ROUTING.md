@@ -34,11 +34,16 @@ Every route and outcome is a human action. Camunda coordinates user tasks using
 stable organisation identifiers. It does not select, recommend or infer a route.
 
 JIOC, the selected command and the selected Ops group keep read-only tracking
-visibility after routing. They do not approve the service product. The Team
-Manager checks the analyst's work, and the QC Manager performs final quality
-control and dissemination to the customer. One Lead Analyst remains the
-accountable Camunda assignee. Up to ten Contributors can see the request and
-collaborate, but cannot complete the parent workflow task.
+visibility after routing. The register identifies each request by title and
+reference, and renders both the selected organisation route and the delivery
+lifecycle. An exact-route member may reopen the Customer's submitted request in
+a separate read-only view. That view does not expose workflow actions, Analyst
+clarifications, feedback, product metadata, files or links. These routing levels
+do not approve the service product. The Team Manager checks the Analyst's work,
+and the QC Manager performs final quality control and dissemination to the
+Customer. One Lead Analyst remains the accountable Camunda assignee. Up to ten
+Contributors can see the request and collaborate, but cannot complete the
+parent workflow task.
 
 The Customer dashboard exposes an authenticated download for a released PDF,
 DOCX or PPTX file, or an authenticated redirect to a normalised allow-listed
@@ -84,6 +89,13 @@ Landing pages show only a small operational summary. Detailed trends,
 definitions, date controls, hierarchy breadcrumbs and export policy remain in
 Statistics. My actions remains the staff action register, and My requests remains the
 Customer register.
+
+The Statistics workspace renders current status, due risk and active-age
+distributions as restrained donut charts. Completed stage duration compares the
+median with the 90th percentile as a range graphic. These are presentational
+views over the already authorised aggregate response: the same rows remain
+available as labelled tables, and no browser-side hierarchy filter broadens the
+server-selected scope.
 
 ## Organisation tree
 
