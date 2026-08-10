@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM postgres:17.10-alpine3.23@sha256:8189a1f6e40904781fc9e2612687877791d21679866db58b1de996b31fc312e4 AS vector-build
+FROM postgres:18.4-alpine3.23@sha256:996d0920e4ff9df1fc19dacb904492f3c1ec0ec1cc338f0ad7123be7731c5f5e AS vector-build
 
 ADD --checksum=sha256:a9094dfb85ccdde3cbb295f1086d4c71a20db1d26bf1d6c39f07a7d164033eb4 \
     https://github.com/pgvector/pgvector/archive/refs/tags/v0.8.1.tar.gz \
@@ -15,7 +15,7 @@ RUN apk add --no-cache --virtual .vector-build-deps \
     && mkdir -p /usr/share/doc/pgvector \
     && cp /tmp/pgvector/LICENSE /tmp/pgvector/README.md /usr/share/doc/pgvector/
 
-FROM postgres:17.10-alpine3.23@sha256:8189a1f6e40904781fc9e2612687877791d21679866db58b1de996b31fc312e4
+FROM postgres:18.4-alpine3.23@sha256:996d0920e4ff9df1fc19dacb904492f3c1ec0ec1cc338f0ad7123be7731c5f5e
 
 COPY --from=vector-build /usr/local/lib/postgresql/vector.so /usr/local/lib/postgresql/vector.so
 COPY --from=vector-build /usr/local/share/postgresql/extension/vector* /usr/local/share/postgresql/extension/
