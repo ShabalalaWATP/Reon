@@ -124,8 +124,19 @@ describe("role-specific operational overview", () => {
     expect(await screen.findByRole("heading", { name: "My actions" })).toBeInTheDocument();
   });
 
-  it("reports missing scope and team assignments without broadening access", async () => {
+  it("gives a workspace Member a personal home without broadening statistics access", async () => {
     mockOverview(staffSession, false, true);
+    renderApp("/overview");
+    expect(await screen.findByRole("heading", { name: "Welcome, Scott" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Your workload" })).toHaveTextContent("Needs your action3");
+    const destinations = screen.getByRole("navigation", { name: "Home destinations" });
+    expect(within(destinations).getByRole("link", { name: /JIOC workspace/ })).toHaveAttribute("href", `/teams/${rootId}/overview`);
+    expect(screen.queryByRole("link", { name: /Operational statistics/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "JIOC organisation workload" })).not.toBeInTheDocument();
+  });
+
+  it("reports missing scope and team assignments without broadening access", async () => {
+    mockOverview(staffSession, false, true, true);
     renderApp("/overview");
     expect(await screen.findByRole("heading", { name: "Your overview could not be loaded" })).toBeInTheDocument();
 
@@ -165,8 +176,8 @@ function mockOverview(
     if (url.pathname.endsWith("/statistics")) return json(dashboard);
     if (url.pathname.endsWith("/team-workspaces")) {
       const selectedWorkspace = withTeam
-        ? { teamId, teamCode: "OSG_TEAM", teamName: "OSG Team", grantId: "grant-osg", permissions: ["STATISTICS"] }
-        : { teamId: rootId, teamCode: "JIOC", teamName: "JIOC", grantId: null, permissions: [] };
+        ? { teamId, teamCode: "OSG_TEAM", teamName: "OSG Team", workspacePosition: "MANAGER", grantId: "grant-osg", permissions: ["STATISTICS"] }
+        : { teamId: rootId, teamCode: "JIOC", teamName: "JIOC", workspacePosition: "MEMBER", grantId: null, permissions: [] };
       return json({ items: emptyTeams ? [] : [selectedWorkspace] });
     }
     if (url.pathname.endsWith(`/team-workspaces/${teamId}`)) {

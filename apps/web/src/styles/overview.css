@@ -42,6 +42,10 @@
   gap: 42px;
 }
 
+.overview-workloads--personal {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .overview-workload {
   min-width: 0;
   border-top: 2px solid var(--border-strong);

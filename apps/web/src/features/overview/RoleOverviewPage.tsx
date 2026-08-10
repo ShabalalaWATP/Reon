@@ -74,26 +74,38 @@ function ScopedOverview({ administrator }: { administrator: boolean }) {
     queryFn: api.teamWorkspaces,
     enabled: !administrator,
   });
+  const workspace = workspaces.data?.items[0];
   if (capabilitiesPending || scopes.isPending || actions.isPending || (Boolean(scope?.unitId) && statistics.isPending) || (!administrator && workspaces.isPending)) {
     return <PageState kind="loading" title="Opening your overview" />;
   }
-  if (scopes.isError || actions.isError || statistics.isError || !scope?.unitId || !statistics.data) {
+  const memberWithoutStatistics = !administrator
+    && workspace?.workspacePosition === "MEMBER"
+    && !scope?.unitId;
+  if (
+    scopes.isError
+    || actions.isError
+    || workspaces.isError
+    || statistics.isError
+    || (!memberWithoutStatistics && (!scope?.unitId || !statistics.data))
+  ) {
     return <PageState kind="error" title="Your overview could not be loaded">Refresh the page or ask an Administrator to review your reporting access.</PageState>;
   }
   const firstName = session!.user.displayName.trim().split(/\s+/u)[0];
-  const organisationName = administrator ? "Platform service" : scope.name;
-  const workspace = workspaces.data?.items[0];
+  const organisationName = administrator ? "Platform service" : (scope?.name ?? workspace!.teamName);
+  const statisticsAvailable = Boolean(statistics.data);
   const destinations = navigationForRole(session!.user.role, capabilities, {
-    statisticsAvailable: true,
+    statisticsAvailable,
     workspace: workspace ? { id: workspace.teamId, name: workspace.teamName } : undefined,
   }).filter((item) => item.path !== "/overview");
   return (
     <main className="page-stack role-overview">
       <header className="overview-heading">
         <div>
-          <span>{administrator ? "Administration overview" : `${scope.name} · ${roleLabels[session!.user.role]}`}</span>
+          <span>{administrator ? "Administration overview" : `${organisationName} · ${roleLabels[session!.user.role]}`}</span>
           <h1>Welcome, {firstName}</h1>
-          <p>Your assigned actions and the authorised {organisationName} workload are separated below.</p>
+          <p>{statisticsAvailable
+            ? `Your assigned actions and the authorised ${organisationName} workload are separated below.`
+            : `Your assigned actions and shared ${organisationName} workspace are available below.`}</p>
         </div>
         <Link className="button" to="/my-work">Open my assigned actions</Link>
       </header>
@@ -109,15 +121,15 @@ function OverviewWorkloads({
   organisationName,
 }: {
   actions: Awaited<ReturnType<typeof actionNotificationApi.actions>>;
-  data: StatisticsDashboard;
+  data?: StatisticsDashboard;
   organisationName: string;
 }) {
-  const metrics = new Map(data.summary.map((metric) => [metric.key, metric]));
+  const metrics = new Map(data?.summary.map((metric) => [metric.key, metric]));
   const organisationTitle = organisationName === "Platform service"
     ? "Platform service workload"
     : `${organisationName} organisation workload`;
   return (
-    <div className="overview-workloads">
+    <div className={data ? "overview-workloads" : "overview-workloads overview-workloads--personal"}>
       <WorkloadRegion
         description="Actions assigned to you, including work waiting for somebody else to respond."
         title="Your workload"
@@ -127,7 +139,7 @@ function OverviewWorkloads({
           ["Due soon", actions.counts.dueSoon],
         ]}
       />
-      <WorkloadRegion
+      {data ? <WorkloadRegion
         description={`Combined demand for ${organisationName}. This is organisation workload, not your personal workload.`}
         title={organisationTitle}
         values={[
@@ -136,7 +148,7 @@ function OverviewWorkloads({
           ["Overdue", metrics.get("overdue")?.value ?? 0],
           ["Completed in period", metrics.get("completed")?.value ?? 0],
         ]}
-      />
+      /> : null}
     </div>
   );
 }
@@ -195,7 +207,7 @@ function destinationIcon(path: string): LucideIcon {
 
 function destinationDescription(item: NavigationItem) {
   if (item.path === "/my-work") return "Review actions assigned to you, including work that is waiting or due soon.";
-  if (item.path.startsWith("/teams/")) return "Use the shared queue, calendar, people, statistics and handover tools.";
+  if (item.path.startsWith("/teams/")) return "Use the shared queue, calendar, people and handover tools available to your unit.";
   if (item.path === "/tracking") return "Follow previously routed requests through their full operational lifecycle.";
   if (item.path === "/statistics") return "Explore authorised workload, timeliness and delivery trends for your branch.";
   if (item.path === "/organisation") return "Browse staffed units, reporting relationships and the wider organisation structure.";

@@ -27,6 +27,7 @@ analytics repository.
 | --- | --- |
 | Client supplies a sibling or ancestor unit ID | Load the active grant and derive allowable units from closure inside the final repository query |
 | Broad role grants unintended access | Keep action-specific management grants independent of role labels and membership |
+| A workspace Member's Home page implies or acquires Manager reporting access | Render personal actions and exact-unit workspace links only when no statistics grant exists; omit aggregate measures and statistics navigation, while every reporting API continues to require its active grant |
 | Expired or revoked authority remains cached | Validate grant dates and version on every request; use short content-free client caching only |
 | Organisation cycle expands scope | Enforce cycle-free parent mutations and closure-table constraints transactionally |
 | Administrator reporting exposes request content | Serve aggregates from content-free facts only and retain request-repository denial |

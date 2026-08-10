@@ -18,6 +18,11 @@ The staff overview greets the account holder by first name. It then separates:
 3. **Quick access**, containing purpose-labelled tiles for the destinations the
    account can open from the primary navigation, except the current Home page.
 
+A current routing workspace Member without a statistics management grant still
+receives the personal workload region and exact-unit workspace destinations.
+The overview omits organisation measures and the statistics destination rather
+than treating the deliberately narrower account as misconfigured.
+
 The quick-access section deliberately mirrors authorised sidebar destinations
 because it adds explanatory context rather than another navigation label list.
 It uses the same navigation builder and capability context as the sidebar, so it
@@ -53,6 +58,8 @@ role, object or action authorisation.
 - The tile grid omits Home, uses the same link targets as the sidebar and does
   not expose direct child-organisation data.
 - Dynamic workspace and statistics tiles retain deterministic positions.
+- A routing Member without a statistics grant receives a useful personal Home
+  page and cannot see organisation measures or a statistics destination.
 - Active, hover and keyboard-focus navigation styling remains unchanged.
 - Existing Customer, Analyst, Manager, QC and Administrator destinations remain
   authorised exactly as before.
