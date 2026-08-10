@@ -58,7 +58,9 @@ guarded start and BPMN validation/deployment scripts are PowerShell scripts.
 2. Configure non-root Docker access according to organisational policy. Logging
    out and back in may be required after group changes.
 3. Install Git and PowerShell 7.4 or later.
-4. Start Docker and verify the four commands shown above.
+4. Optionally install [uv](https://docs.astral.sh/uv/), required only for the
+   `-SeedDemoData` start option described below.
+5. Start Docker and verify the four commands shown above.
 
 Review Docker Desktop licensing before enterprise or government use.
 
@@ -114,7 +116,17 @@ pwsh -File ./scripts/start-local.ps1 -NoBuild
 
 # Only when deliberately testing without workflow deployment
 pwsh -File ./scripts/start-local.ps1 -SkipWorkflowDeployment
+
+# Also seed the synthetic request portfolio for a populated demonstration
+pwsh -File ./scripts/start-local.ps1 -SeedDemoData
 ```
+
+`-SeedDemoData` drives a varied set of synthetic requests through the live
+workflow with the demo accounts, giving every delivery team completed and
+in-flight work, then re-times the recorded history across recent weeks so the
+statistics views hold believable trends. It needs `uv` on the host, waits on
+the sign-in rate limiter for several minutes, and can be rerun safely: an
+interrupted pass resumes instead of duplicating requests.
 
 Compose forwards database pool, session expiry and Camunda process settings from
 `.env` into the API. Check the resolved model without printing or sharing its

@@ -472,6 +472,7 @@ The supported local path uses Docker Compose and loopback-only host ports.
 - Git
 - Docker Desktop or another Docker Engine with Compose v2
 - PowerShell 7.4 or later
+- [uv](https://docs.astral.sh/uv/) when using the `-SeedDemoData` option
 - at least 8 GB free memory for the complete stack
 - enough disk space for container images, PostgreSQL, Camunda and scanner data
 
@@ -510,6 +511,19 @@ The helper:
 - waits for dependency health;
 - verifies application readiness; and
 - records workflow availability from inside the API container.
+
+To explore a populated system rather than an empty one, add `-SeedDemoData`:
+
+```powershell
+pwsh -File ./scripts/start-local.ps1 -SeedDemoData
+```
+
+This walks realistic synthetic requests through the genuine workflow as the
+demo accounts, leaving every team with finished products, live work and
+routing queue items, and spreads the audit history over previous weeks so the
+statistics pages show meaningful charts. Expect ten to fifteen minutes, mostly
+spent respecting the login rate limit; interrupting and rerunning is safe
+because completed journeys are detected and skipped.
 
 ### 4. Check health
 
