@@ -137,7 +137,9 @@ function AuthenticatedTeamBoard({ access, session }: { access: TeamWorkspaceAcce
         filteredColumns={filters.columns}
         items={board.data.items}
         mode={mode}
+        moving={move.isPending}
         onInspect={setSelected}
+        onMove={(item, target, reason) => move.mutateAsync({ item, target, reason }).then(() => undefined)}
         onShowArchive={toggleArchive}
         onShowExceptions={toggleExceptions}
         showArchive={showArchive}

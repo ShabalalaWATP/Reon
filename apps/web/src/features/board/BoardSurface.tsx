@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import type {
   BoardColumn,
   BoardItem,
@@ -18,13 +20,22 @@ type Context = {
   planning?: PlanningCockpit;
 };
 
+type DragState = {
+  dragging: BoardItem | null;
+  onDragStart: (item: BoardItem) => void;
+  onDragEnd: () => void;
+  onDropColumn: (column: BoardColumn) => void;
+};
+
 export function BoardSurface({
   columnCounts,
   context,
   filteredColumns,
   items,
   mode,
+  moving = false,
   onInspect,
+  onMove,
   showArchive,
   showExceptions,
   totalCount,
@@ -37,7 +48,9 @@ export function BoardSurface({
   filteredColumns: BoardColumn[];
   items: BoardItem[];
   mode: "board" | "table";
+  moving?: boolean;
   onInspect: (item: BoardItem) => void;
+  onMove?: (item: BoardItem, target: BoardColumn, reason: string) => Promise<void>;
   showArchive: boolean;
   showExceptions: boolean;
   totalCount: number;
@@ -45,17 +58,31 @@ export function BoardSurface({
   onShowArchive: () => void;
   onShowExceptions: () => void;
 }) {
+  const [dragging, setDragging] = useState<BoardItem | null>(null);
+  const [pending, setPending] = useState<{ item: BoardItem; target: BoardColumn } | null>(null);
   if (mode === "table") {
     return <BoardTable items={items} onInspect={onInspect} totalCount={totalCount} />;
   }
   const selected = filteredColumns.length ? filteredColumns : activeBoardColumns;
   const customSelection = filteredColumns.length > 0;
+  const drag: DragState = {
+    dragging,
+    onDragStart: (item) => setDragging(item),
+    onDragEnd: () => setDragging(null),
+    onDropColumn: (column) => {
+      if (dragging && onMove && dragging.column !== column && dragging.availableColumns.includes(column)) {
+        setPending({ item: dragging, target: column });
+      }
+      setDragging(null);
+    },
+  };
   return (
     <div className="board-flow">
       <BoardColumns
         columnCounts={columnCounts}
         columns={selected}
         context={context}
+        drag={drag}
         items={items}
         onInspect={onInspect}
         wipLimits={wipLimits}
@@ -78,9 +105,10 @@ export function BoardSurface({
           />
         </div>
       ) : null}
-      {!customSelection && showExceptions ? <BoardColumns columnCounts={columnCounts} columns={exceptionBoardColumns} context={context} items={items} onInspect={onInspect} wipLimits={wipLimits} /> : null}
-      {!customSelection && showArchive ? <BoardColumns columnCounts={columnCounts} columns={archiveBoardColumns} context={context} items={items} onInspect={onInspect} wipLimits={wipLimits} /> : null}
-      <p className="board-result-note">Showing {items.length} of {totalCount} matching work items. Column totals cover the complete filtered result.</p>
+      {!customSelection && showExceptions ? <BoardColumns columnCounts={columnCounts} columns={exceptionBoardColumns} context={context} drag={drag} items={items} onInspect={onInspect} wipLimits={wipLimits} /> : null}
+      {!customSelection && showArchive ? <BoardColumns columnCounts={columnCounts} columns={archiveBoardColumns} context={context} drag={drag} items={items} onInspect={onInspect} wipLimits={wipLimits} /> : null}
+      <p className="board-result-note">Showing {items.length} of {totalCount} matching work items. Column totals cover the complete filtered result. Drag a work-package card to move it; service requests change stage through their named workflow action.</p>
+      {pending ? <PackageMoveDialog item={pending.item} moving={moving} onCancel={() => setPending(null)} onConfirm={async (reason) => { await onMove?.(pending.item, pending.target, reason); setPending(null); }} target={pending.target} /> : null}
     </div>
   );
 }
@@ -89,6 +117,7 @@ function BoardColumns({
   columnCounts,
   columns,
   context,
+  drag,
   items,
   onInspect,
   wipLimits,
@@ -96,10 +125,14 @@ function BoardColumns({
   columnCounts: Partial<Record<BoardColumn, number>>;
   columns: BoardColumn[];
   context: Context;
+  drag: DragState;
   items: BoardItem[];
   onInspect: (item: BoardItem) => void;
   wipLimits: Record<string, number>;
 }) {
+  const [over, setOver] = useState<BoardColumn | null>(null);
+  const droppable = (column: BoardColumn) =>
+    Boolean(drag.dragging && drag.dragging.column !== column && drag.dragging.availableColumns.includes(column));
   return (
     <section aria-label="Team Kanban board" className="kanban">
       {columns.map((column) => {
@@ -107,12 +140,23 @@ function BoardColumns({
         const count = columnCounts[column] ?? 0;
         const limit = wipLimits[column];
         const breached = Boolean(limit && count > limit);
+        const canDrop = droppable(column);
+        const classes = ["kanban-column"];
+        if (breached) classes.push("kanban-column--breached");
+        if (canDrop) classes.push("kanban-column--droppable");
+        if (over === column && canDrop) classes.push("kanban-column--over");
         return (
-          <section className={breached ? "kanban-column kanban-column--breached" : "kanban-column"} key={column}>
+          <section
+            className={classes.join(" ")}
+            key={column}
+            onDragLeave={() => setOver((value) => (value === column ? null : value))}
+            onDragOver={(event) => { if (canDrop) { event.preventDefault(); setOver(column); } }}
+            onDrop={(event) => { if (canDrop) { event.preventDefault(); drag.onDropColumn(column); } setOver(null); }}
+          >
             <header><div><h3>{boardLabel(column)}</h3>{limit ? <small>Limit {limit}</small> : null}</div><span aria-label={`${count} total`}>{count}</span></header>
             {breached ? <p className="kanban-warning" role="status">WIP limit exceeded by {count - limit}</p> : null}
-            {cards.map((item) => <BoardCard context={context} item={item} key={`${item.itemType}-${item.id}`} onInspect={onInspect} />)}
-            {cards.length === 0 ? <p className="kanban-empty">No items on this page.</p> : null}
+            {cards.map((item) => <BoardCard context={context} drag={drag} item={item} key={`${item.itemType}-${item.id}`} onInspect={onInspect} />)}
+            {cards.length === 0 ? <p className="kanban-empty">{canDrop ? "Drop here to move" : "No items on this page."}</p> : null}
           </section>
         );
       })}
@@ -120,12 +164,13 @@ function BoardColumns({
   );
 }
 
-function BoardCard({ context, item, onInspect }: { context: Context; item: BoardItem; onInspect: (item: BoardItem) => void }) {
+function BoardCard({ context, drag, item, onInspect }: { context: Context; drag: DragState; item: BoardItem; onInspect: (item: BoardItem) => void }) {
   const signal = dueSignal(item.dueOn);
   const lane = context.planning?.lanes.flatMap((value) => value.items).find((value) => value.id === item.id);
   const checklist = context.planning?.checklists.find((value) => value.packageId === item.id);
   const packageItem = context.packages?.find((value) => value.id === item.id);
   const reserved = packageItem?.reservations.filter((value) => value.status === "ACTIVE").reduce((total, value) => total + value.minutes, 0) ?? 0;
+  const draggable = item.itemType === "WORK_PACKAGE" && item.availableColumns.length > 0;
   const signals = [
     item.itemType === "SERVICE_REQUEST" && item.column === "BLOCKED" ? "Waiting for customer" : null,
     !item.ownerUserId ? "Unassigned" : null,
@@ -134,8 +179,15 @@ function BoardCard({ context, item, onInspect }: { context: Context; item: Board
     checklist ? `${checklist.completedCount}/${checklist.totalCount} checklist` : null,
     reserved ? `${Math.round(reserved / 60 * 10) / 10}h reserved` : null,
   ].filter((value): value is string => Boolean(value));
+  const isDragging = drag.dragging?.id === item.id && drag.dragging.itemType === item.itemType;
   return (
-    <article className={`board-card board-card--${signal.tone}`}>
+    <article
+      className={`board-card board-card--${signal.tone}${draggable ? " board-card--draggable" : ""}${isDragging ? " board-card--dragging" : ""}`}
+      draggable={draggable}
+      onDragEnd={draggable ? drag.onDragEnd : undefined}
+      onDragStart={draggable ? (event) => { if (event.dataTransfer) event.dataTransfer.effectAllowed = "move"; drag.onDragStart(item); } : undefined}
+    >
+      {draggable ? <span aria-hidden="true" className="board-card__grip">⠿</span> : null}
       <button className="board-card__open" onClick={() => onInspect(item)} type="button">
         <span>{item.itemType === "SERVICE_REQUEST" ? "Service request" : "Work package"} · {item.reference}</span>
         <h4>{item.title}</h4>
@@ -147,6 +199,31 @@ function BoardCard({ context, item, onInspect }: { context: Context; item: Board
         <em>{item.itemType === "WORK_PACKAGE" ? "Inspect or move" : "Inspect work"}</em>
       </button>
     </article>
+  );
+}
+
+function PackageMoveDialog({ item, moving, onCancel, onConfirm, target }: { item: BoardItem; moving: boolean; onCancel: () => void; onConfirm: (reason: string) => Promise<void>; target: BoardColumn }) {
+  const [reason, setReason] = useState("");
+  const [failed, setFailed] = useState(false);
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    setFailed(false);
+    void onConfirm(reason).catch(() => setFailed(true));
+  };
+  return (
+    <div aria-label="Confirm package move" className="board-move-dialog" role="dialog">
+      <form className="board-move-dialog__card" onSubmit={submit}>
+        <span>Move work package</span>
+        <h3>{item.title}</h3>
+        <p>Move to <strong>{boardLabel(target)}</strong>. Every package move is recorded with your reason.</p>
+        <label className="form-field">Reason<span className="field-hint">Required, at least 10 characters</span><textarea autoFocus maxLength={500} minLength={10} onChange={(event) => setReason(event.target.value)} required rows={3} value={reason} /></label>
+        {failed ? <p className="form-banner form-banner--error" role="alert">The move could not be saved. Your reason is kept; try again.</p> : null}
+        <div className="board-move-dialog__actions">
+          <button className="button button--quiet" onClick={onCancel} type="button">Cancel</button>
+          <button className="button button--primary" disabled={moving || reason.trim().length < 10} type="submit">{moving ? "Moving…" : `Move to ${boardLabel(target)}`}</button>
+        </div>
+      </form>
+    </div>
   );
 }
 

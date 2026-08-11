@@ -180,6 +180,45 @@ describe("board operational components", () => {
     expect(inspect).toHaveBeenCalledWith(requestItem);
   });
 
+  it("moves a work package by drag and drop with a recorded reason, leaving requests fixed", async () => {
+    const move = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    const props = {
+      columnCounts: { READY: 1, BLOCKED: 3 },
+      context: { packages: [richPackage], planning },
+      filteredColumns: [],
+      items: [requestItem, packageItem],
+      mode: "board" as const,
+      moving: false,
+      onInspect: vi.fn(),
+      onMove: move,
+      showArchive: false,
+      showExceptions: false,
+      totalCount: 2,
+      wipLimits: {},
+      onShowArchive: vi.fn(),
+      onShowExceptions: vi.fn(),
+    };
+    render(<BoardSurface {...props} />);
+    const requestCard = screen.getByText("Blocked customer request").closest("article") as HTMLElement;
+    expect(requestCard).not.toHaveAttribute("draggable", "true");
+    const packageCard = screen.getByText("Rich work package").closest("article") as HTMLElement;
+    expect(packageCard).toHaveAttribute("draggable", "true");
+    const inProgress = screen.getByRole("heading", { name: "In Progress" }).closest(".kanban-column") as HTMLElement;
+
+    fireEvent.dragStart(packageCard);
+    fireEvent.dragOver(inProgress);
+    fireEvent.drop(inProgress);
+
+    const dialog = await screen.findByRole("dialog", { name: "Confirm package move" });
+    expect(dialog).toHaveTextContent("In Progress");
+    const confirm = within(dialog).getByRole("button", { name: "Move to In Progress" });
+    expect(confirm).toBeDisabled();
+    await user.type(within(dialog).getByLabelText(/^Reason/), "Sources are gathered so this is ready for active work.");
+    await user.click(within(dialog).getByRole("button", { name: "Move to In Progress" }));
+    expect(move).toHaveBeenCalledWith(packageItem, "IN_PROGRESS", "Sources are gathered so this is ready for active work.");
+  });
+
   it("supports drawer cancellation, backdrop close and focus return", () => {
     const onClose = vi.fn();
     const trigger = document.createElement("button");
