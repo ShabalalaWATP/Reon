@@ -2,7 +2,10 @@
 
 FROM node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32 AS build
 WORKDIR /workspace
-RUN corepack enable
+# Corepack is no longer bundled with newer Node.js images, so install the
+# version used by this repository before activating the pinned pnpm release.
+RUN npm install --global corepack@0.34.5 \
+    && corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json apps/web/package.json
 RUN pnpm install --filter @istari-service/web... --frozen-lockfile
