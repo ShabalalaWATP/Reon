@@ -7,15 +7,6 @@ export default defineConfig({
   plugins: [react()],
   build: {
     manifest: true,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          forms: ["react-hook-form", "@hookform/resolvers", "zod"],
-          query: ["@tanstack/react-query"],
-          react: ["react", "react-dom", "react-router"],
-        },
-      },
-    },
   },
   server: {
     port: 5173,

@@ -81,7 +81,7 @@ describe("platform administrator workspace", () => {
         typeof handler === "function"
         && Number(timeout) >= 4_000
         && Number(timeout) <= 6_000
-      ) expire = handler;
+      ) expire = () => handler();
       return nativeSetTimeout(handler, timeout, ...arguments_) as unknown as ReturnType<typeof setTimeout>;
     });
     mockFetch((url) => {

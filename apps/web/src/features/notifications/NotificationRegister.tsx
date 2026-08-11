@@ -16,7 +16,7 @@ export function NotificationRegister({ items, selected, toggle }: Props) {
       <label className="notification-select"><input aria-label={`Select ${item.subject}`} checked={selected.has(item.id)} onChange={() => toggle(item.id)} type="checkbox" /><span className="sr-only">Select</span></label>
       <div className="notification-main"><span className="mono-ref">{humaniseCode(item.eventGroup)}</span><strong>{item.subject}</strong><small>{humaniseCode(item.eventType)} · {formatActionDate(item.occurredAt)}</small></div>
       <div className="notification-state">{item.isArchived ? <span className="status-pill">Archived</span> : item.isActionCompleted ? <span className="status-pill status-pill--success">Action complete</span> : item.isRead ? <span className="status-pill">Read</span> : <span className="status-pill status-pill--active">Unread</span>}</div>
-      <div>{href ? <Link className="button button--quiet" to={href}>Open<span className="sr-only"> {item.subject}</span></Link> : item.deepLink ? <span className="work-link-ended">Access ended</span> : null}</div>
+      <div>{href ? <Link aria-label={`Open ${item.subject}`} className="button button--quiet" to={href}>Open</Link> : item.deepLink ? <span className="work-link-ended">Access ended</span> : null}</div>
     </li>;
   })}</ol>;
 }
