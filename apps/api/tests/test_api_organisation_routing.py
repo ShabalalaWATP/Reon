@@ -176,9 +176,7 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
         "Nimbus Ops",
         "Beacon Team",
     ]
-    tracked_detail = await harness.client.get(
-        f"/api/v1/tracked-requests/{request_id}"
-    )
+    tracked_detail = await harness.client.get(f"/api/v1/tracked-requests/{request_id}")
     assert tracked_detail.status_code == 200
     assert tracked_detail.json()["title"] == request_payload()["title"]
     assert tracked_detail.json()["description"] == request_payload()["description"]
