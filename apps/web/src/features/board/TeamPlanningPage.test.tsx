@@ -99,7 +99,7 @@ describe("team agile planning", () => {
     await user.click(screen.getByRole("button", { name: "Close iteration" }));
     await waitFor(() => expect(calls.some((call) => call.path.endsWith("/close") && call.body.expectedVersion === 1)).toBe(true));
 
-    await user.selectOptions(screen.getByLabelText(/^Package/), sparsePackage.id);
+    await user.click(within(screen.getByRole("list", { name: "Work package list" })).getByRole("button", { name: /Archive planning record/ }));
     expect(screen.getByRole("heading", { name: "Archive planning record" })).toBeInTheDocument();
     expect(screen.getAllByText("None")).toHaveLength(2);
     expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();

@@ -144,7 +144,7 @@ function BoardCard({ context, item, onInspect }: { context: Context; item: Board
         <small>{daysInState(item.changedAt)}</small>
         {packageItem?.contributors.length ? <p>With {packageItem.contributors.map((value) => value.displayName).join(", ")}</p> : null}
         {signals.length ? <ul className="board-card__signals">{signals.map((value) => <li key={value}>{value}</li>)}</ul> : null}
-        <em>Inspect work</em>
+        <em>{item.itemType === "WORK_PACKAGE" ? "Inspect or move" : "Inspect work"}</em>
       </button>
     </article>
   );
