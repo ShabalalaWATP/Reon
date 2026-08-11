@@ -123,9 +123,9 @@ async def test_tracking_enforces_membership_and_maps_the_selected_route(
         repository = SqlAlchemyOrganisationRepository(session)
 
         assert (await repository.page_tracked_requests(actor_from(requester)))[0] == []
-        assert (
-            await repository.page_tracked_requests(actor_from(triage_user))
-        )[0] == []
+        assert (await repository.page_tracked_requests(actor_from(triage_user)))[
+            0
+        ] == []
 
         session.add_all(
             [
