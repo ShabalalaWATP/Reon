@@ -16,17 +16,17 @@ async def test_scope_catalogues_are_explicit_and_cross_branch_access_is_denied(
     harness = api_harness
     expected = {
         "admin1": ["Whole platform"],
-        "admin4": ["JIOC"],
-        "admin5": ["DIGOC", "SYGOC", "MYGOC"],
+        "admin4": ["CRIOC"],
+        "admin5": ["JOCK", "SYGOC", "MYGOC"],
         "admin6": [
-            "NCGI-A Ops",
+            "ACSA-B Ops",
             "Aurora Ops",
             "Vertex Ops",
             "Nimbus Ops",
             "Parallax Ops",
         ],
         "admin10": ["Horizon Ops", "Meridian Ops", "Solstice Ops", "Frontier Ops"],
-        "admin8": ["OSG Team"],
+        "admin8": ["SSG Team"],
         "admin2": [],
     }
     for username, names in expected.items():
@@ -68,13 +68,13 @@ async def test_dashboards_show_only_the_authorised_operational_branch(
         "/api/v1/statistics",
         params={
             **date_params,
-            "scopeId": str(management_grant_id("admin6", "NCGI_A_OPS")),
+            "scopeId": str(management_grant_id("admin6", "ACSA_B_OPS")),
         },
     )
     assert ncgi.status_code == 200, ncgi.text
     body = ncgi.json()
     metrics = {item["key"]: item for item in body["summary"]}
-    assert body["scope"]["name"] == "NCGI-A Ops"
+    assert body["scope"]["name"] == "ACSA-B Ops"
     assert metrics["received"]["value"] == 6
     assert metrics["active"]["value"] == 1
     assert metrics["completed"]["value"] == 5
@@ -87,7 +87,7 @@ async def test_dashboards_show_only_the_authorised_operational_branch(
         "suppressed": False,
     }
     assert [child["name"] for child in body["children"]] == [
-        "OSG Team",
+        "SSG Team",
         "Cedar Team",
         "Quartz Team",
     ]
@@ -97,27 +97,27 @@ async def test_dashboards_show_only_the_authorised_operational_branch(
     assert "requestId" not in ncgi.text
 
     await harness.login("admin5")
-    digoc = await harness.client.get(
+    jock = await harness.client.get(
         "/api/v1/statistics",
         params={
             **date_params,
-            "scopeId": str(management_grant_id("admin5", "DIGOC")),
+            "scopeId": str(management_grant_id("admin5", "JOCK")),
         },
     )
-    assert digoc.status_code == 200
-    assert {child["name"]: child["received"] for child in digoc.json()["children"]} == {
-        "NCGI-A Ops": 6,
+    assert jock.status_code == 200
+    assert {child["name"]: child["received"] for child in jock.json()["children"]} == {
+        "ACSA-B Ops": 6,
         "Aurora Ops": 1,
         "Vertex Ops": 0,
     }
-    assert "Nimbus Ops" not in digoc.text
+    assert "Nimbus Ops" not in jock.text
 
     await harness.login("admin8")
     team = await harness.client.get(
         "/api/v1/statistics",
         params={
             **date_params,
-            "scopeId": str(management_grant_id("admin8", "OSG_TEAM")),
+            "scopeId": str(management_grant_id("admin8", "SSG_TEAM")),
         },
     )
     assert team.status_code == 200
@@ -132,7 +132,7 @@ async def test_dashboards_show_only_the_authorised_operational_branch(
     assert platform.status_code == 200
     assert platform.json()["summary"][0]["value"] == 10
     assert [child["name"] for child in platform.json()["children"]] == [
-        "DIGOC",
+        "JOCK",
         "SYGOC",
         "MYGOC",
     ]
@@ -185,30 +185,30 @@ async def test_statistics_grant_can_select_descendants_but_not_siblings(
         "from": (today - timedelta(days=30)).isoformat(),
         "to": today.isoformat(),
     }
-    jioc_scope = str(management_grant_id("admin4", "JIOC"))
-    ncgi_id = await harness.unit_id("NCGI_A_OPS")
-    osg_id = await harness.unit_id("OSG_TEAM")
+    crioc_scope = str(management_grant_id("admin4", "CRIOC"))
+    ncgi_id = await harness.unit_id("ACSA_B_OPS")
+    ssg_id = await harness.unit_id("SSG_TEAM")
     await harness.login("admin4")
     descendant = await harness.client.get(
         "/api/v1/statistics",
-        params={**dates, "scopeId": jioc_scope, "unitId": str(osg_id)},
+        params={**dates, "scopeId": crioc_scope, "unitId": str(ssg_id)},
     )
     assert descendant.status_code == 200, descendant.text
-    assert descendant.json()["selectedUnit"]["name"] == "OSG Team"
+    assert descendant.json()["selectedUnit"]["name"] == "SSG Team"
     assert [item["name"] for item in descendant.json()["breadcrumb"]] == [
-        "JIOC",
-        "DIGOC",
-        "NCGI-A Ops",
-        "OSG Team",
+        "CRIOC",
+        "JOCK",
+        "ACSA-B Ops",
+        "SSG Team",
     ]
     assert descendant.json()["summary"][0]["value"] == 6
 
-    ncgi_scope = str(management_grant_id("admin6", "NCGI_A_OPS"))
+    ncgi_scope = str(management_grant_id("admin6", "ACSA_B_OPS"))
     aurora_id = await harness.unit_id("AURORA_OPS")
     await harness.login("admin6")
     own_team = await harness.client.get(
         "/api/v1/statistics",
-        params={**dates, "scopeId": ncgi_scope, "unitId": str(osg_id)},
+        params={**dates, "scopeId": ncgi_scope, "unitId": str(ssg_id)},
     )
     assert own_team.status_code == 200
     sibling = await harness.client.get(
@@ -222,15 +222,15 @@ async def test_statistics_grant_can_select_descendants_but_not_siblings(
         "/api/v1/statistics",
         params={
             **dates,
-            "scopeId": str(management_grant_id("admin5", "DIGOC")),
-            "unitId": str(await harness.unit_id("JIOC")),
+            "scopeId": str(management_grant_id("admin5", "JOCK")),
+            "unitId": str(await harness.unit_id("CRIOC")),
         },
     )
     other_grant_root = await harness.client.get(
         "/api/v1/statistics",
         params={
             **dates,
-            "scopeId": str(management_grant_id("admin5", "DIGOC")),
+            "scopeId": str(management_grant_id("admin5", "JOCK")),
             "unitId": str(await harness.unit_id("SYGOC")),
         },
     )

@@ -59,6 +59,7 @@ def production_settings(**overrides: Any) -> Settings:
         "trusted_origins": frozenset({"https://staff.example.test"}),
         "audit_hmac_key": SecretStr("a" * 32),
         "product_storage_path": str(product_storage_path),
+        "request_embedding_cache_path": str(product_storage_path / "model-cache"),
         "worker_health_required": True,
     }
     values.update(overrides)

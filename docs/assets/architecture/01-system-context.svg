@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="780" viewBox="0 0 1440 780" role="img" aria-labelledby="title desc">
+  <title id="title">ISTARI Service system context</title>
+  <desc id="desc">A C4-style context diagram showing the people who use ISTARI Service and the external services it depends on.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071018"/><stop offset="1" stop-color="#0b1822"/></linearGradient>
+    <linearGradient id="core" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#123044"/><stop offset="1" stop-color="#0d2332"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000" flood-opacity=".28"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6bbbdc"/></marker>
+    <style>
+      .title{font:700 30px Inter,Segoe UI,sans-serif;fill:#f4f8fb}.subtitle{font:400 15px Inter,Segoe UI,sans-serif;fill:#91a9b8}.eyebrow{font:700 12px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:2px;fill:#36c7ff}.name{font:700 18px Inter,Segoe UI,sans-serif;fill:#f4f8fb}.copy{font:400 13px Inter,Segoe UI,sans-serif;fill:#afc0cb}.tag{font:700 11px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:1px;fill:#7dd7ff}.person{fill:#0f1b24;stroke:#2b4a5d;stroke-width:1.5}.system{fill:url(#core);stroke:#36c7ff;stroke-width:2}.external{fill:#121b22;stroke:#3c4d58;stroke-width:1.5}.line{fill:none;stroke:#6bbbdc;stroke-width:2;marker-end:url(#arrow)}.line-label{font:600 11px Inter,Segoe UI,sans-serif;fill:#8fc9e1}.boundary{fill:none;stroke:#28485b;stroke-width:1.5;stroke-dasharray:7 7}
+    </style>
+  </defs>
+  <rect width="1440" height="780" rx="24" fill="url(#bg)"/>
+  <text x="64" y="62" class="eyebrow">C4 · SYSTEM CONTEXT</text>
+  <text x="64" y="102" class="title">Who uses ISTARI Service, and what sits around it?</text>
+  <text x="64" y="132" class="subtitle">One application supports the request from submission to released product. People make every operational decision.</text>
+
+  <rect x="48" y="168" width="1344" height="560" rx="22" class="boundary"/>
+  <text x="72" y="198" class="tag">ISTARI SERVICE LANDSCAPE</text>
+
+  <g filter="url(#shadow)">
+    <rect x="82" y="236" width="280" height="108" rx="14" class="person"/>
+    <text x="106" y="266" class="tag">PERSON</text><text x="106" y="295" class="name">Customer</text>
+    <text x="106" y="321" class="copy">Submits, tracks, responds, downloads</text>
+
+    <rect x="82" y="370" width="280" height="108" rx="14" class="person"/>
+    <text x="106" y="400" class="tag">PEOPLE</text><text x="106" y="429" class="name">Routing organisations</text>
+    <text x="106" y="455" class="copy">CRIOC, command and Ops users route work</text>
+
+    <rect x="82" y="504" width="280" height="108" rx="14" class="person"/>
+    <text x="106" y="534" class="tag">PEOPLE</text><text x="106" y="563" class="name">Delivery and quality</text>
+    <text x="106" y="589" class="copy">Managers, Analysts and QC deliver it</text>
+
+    <rect x="82" y="638" width="280" height="66" rx="14" class="person"/>
+    <text x="106" y="665" class="name">Platform and support staff</text>
+    <text x="106" y="688" class="copy">Maintain safe metadata and runtime health</text>
+
+    <rect x="512" y="284" width="416" height="330" rx="24" class="system"/>
+    <text x="548" y="326" class="tag">SOFTWARE SYSTEM</text>
+    <text x="548" y="370" class="title">ISTARI Service</text>
+    <text x="548" y="407" class="copy">A secure, human-led service-request workspace.</text>
+    <line x1="548" y1="438" x2="892" y2="438" stroke="#28546b"/>
+    <text x="548" y="474" class="name">What it does</text>
+    <text x="548" y="503" class="copy">• captures complete requests in a structured form</text>
+    <text x="548" y="530" class="copy">• routes work through named organisations</text>
+    <text x="548" y="557" class="copy">• coordinates assignment, production and review</text>
+    <text x="548" y="584" class="copy">• releases an authorised product to the Customer</text>
+
+    <rect x="1080" y="260" width="280" height="112" rx="14" class="external"/>
+    <text x="1104" y="290" class="tag">EXTERNAL SYSTEM</text><text x="1104" y="319" class="name">Camunda 8.9</text>
+    <text x="1104" y="346" class="copy">Process position and human tasks</text>
+
+    <rect x="1080" y="404" width="280" height="112" rx="14" class="external"/>
+    <text x="1104" y="434" class="tag">DATA SERVICE</text><text x="1104" y="463" class="name">PostgreSQL 17</text>
+    <text x="1104" y="490" class="copy">Application records and audit history</text>
+
+    <rect x="1080" y="548" width="280" height="112" rx="14" class="external"/>
+    <text x="1104" y="578" class="tag">PRIVATE SERVICES</text><text x="1104" y="607" class="name">Product storage and scan</text>
+    <text x="1104" y="634" class="copy">Quarantine, malware check and download</text>
+  </g>
+
+  <path d="M362 290 C430 290 442 360 512 360" class="line"/><text x="394" y="277" class="line-label">uses</text>
+  <path d="M362 424 C438 424 440 424 512 424" class="line"/><text x="405" y="413" class="line-label">routes</text>
+  <path d="M362 558 C430 558 442 506 512 506" class="line"/><text x="392" y="545" class="line-label">delivers</text>
+  <path d="M362 670 C450 670 452 578 512 578" class="line"/><text x="395" y="651" class="line-label">operates</text>
+  <path d="M928 356 C995 356 1010 316 1080 316" class="line"/><text x="974" y="322" class="line-label">coordinates</text>
+  <path d="M928 452 C995 452 1010 460 1080 460" class="line"/><text x="979" y="443" class="line-label">stores</text>
+  <path d="M928 548 C995 548 1010 604 1080 604" class="line"/><text x="967" y="574" class="line-label">protects files</text>
+
+  <circle cx="1030" cy="704" r="5" fill="#36c7ff"/><text x="1044" y="709" class="copy">Blue: ISTARI-owned</text>
+  <circle cx="1228" cy="704" r="5" fill="#8b9aa5"/><text x="1242" y="709" class="copy">Grey: dependency</text>
+</svg>

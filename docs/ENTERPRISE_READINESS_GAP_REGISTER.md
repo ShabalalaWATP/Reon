@@ -9,7 +9,7 @@ READY`, `DECISION REQUIRED`, `NOT IMPLEMENTED` and `OUT OF SCOPE`.
 | Domain | Current state | Status | Exit evidence or decision |
 |---|---|---|---|
 | Human-led service workflow | Camunda-coordinated named human decisions and pinned configuration | IMPLEMENTED | Accepted representative-role UAT remains required |
-| Routing destination usability | Authorised path breadcrumb, selected-route summary and literal direct-child name/code search are implemented without ranking or global enumeration | IMPLEMENTED, ACCEPTANCE OPEN | Complete representative JIOC, Command and Ops routing UAT on the immutable candidate |
+| Routing destination usability | Authorised path breadcrumb, selected-route summary and literal direct-child name/code search are implemented without ranking or global enumeration | IMPLEMENTED, ACCEPTANCE OPEN | Complete representative CRIOC, Command and Ops routing UAT on the immutable candidate |
 | Organisation configuration | Effective-dated revisions, all-checkpoint preview, canonical approval digest, PostgreSQL snapshot guards, validation, independent approval and guided workspace | IMPLEMENTED | Runtime-role denial and fresh-current-head evidence recorded; Camunda sibling-route, activation race and recovery acceptance remain open |
 | Identity and MFA | Synthetic database accounts, Argon2/session controls and shared local fixture password; no OIDC/bootstrap | NOT IMPLEMENTED | Approved OIDC, MFA, claims/group bootstrap, privileged access and account lifecycle |
 | Authorisation | Central role, scope, ownership, assignment and action policy | EVIDENCE READY | Full production identity-group and negative-access matrix |
@@ -41,7 +41,7 @@ READY`, `DECISION REQUIRED`, `NOT IMPLEMENTED` and `OUT OF SCOPE`.
 The product must not be described as enterprise-ready or used with real service
 content until production identity, hosting, named ownership, classification,
 penetration testing, accepted RPO/RTO, operational monitoring and the applicable
-Product Evolution Definition of Done gates are accepted.
+[Definition of Done gates](assurance/DEFINITION_OF_DONE_MATRIX.md) are accepted.
 
 Setting `ENVIRONMENT=prod` does not remove these blockers. In particular, the
 repository has no application OIDC/bootstrap, production object-storage runtime,

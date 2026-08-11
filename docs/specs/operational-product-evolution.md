@@ -1,14 +1,10 @@
-# Operational Product Evolution
+# Operational Product Capabilities
 
 ## Status
 
-Accepted for implementation on 7 August 2026 following the user's instruction to
-implement the plan. This acceptance authorises the bounded design
-below but does not satisfy operational, security, infrastructure or release
-acceptance. This specification extends the completed local MVP. It supersedes the
-notification, managed-product, configuration, planning-enhancement and
-advanced-statistics exclusions in `service-operations-expansion.md` only for the
-bounded capabilities below.
+Current capability contract. Last reviewed 10 August 2026. Operational,
+security, infrastructure and production acceptance remain governed by the
+current readiness register and release gates.
 
 ## Outcome
 
@@ -17,18 +13,18 @@ their action is required, let Quality and Release Managers disseminate managed
 files or approved product links through the Customer dashboard, and let the
 organisation expand without hard-coded teams or unsafe workflow editing.
 
-The existing human-led route remains unchanged:
+The human-led route is:
 
-`Customer -> JIOC -> command -> Ops group -> delivery team -> Team Analyst ->
+`Customer -> CRIOC -> command -> Ops group -> delivery team -> Team Analyst ->
 Team Manager -> Quality and Release Manager -> Customer`.
 
-JIOC, command and Ops users route and track. They do not approve the product.
+CRIOC, command and Ops users route and track. They do not approve the product.
 Camunda coordinates named human tasks and never chooses a route, priority,
 assignee, approval or recipient.
 
 ## Scope
 
-This evolution covers:
+This contract covers:
 
 1. role-specific action workspaces and personal inboxes;
 2. an auditable in-application notification centre;
@@ -65,7 +61,7 @@ and threat model before activation.
 
 ## Role-specific action workspace
 
-Each staff account receives a `My work` workspace. The server assembles action
+Each staff account receives a `My actions` workspace. The server assembles action
 items from current Camunda tasks and product-owned projections, then applies
 role, assignment, object and organisation policy before returning them. The
 Customer's equivalent action surface is `My requests`, where clarification,
@@ -73,8 +69,8 @@ released-product and feedback actions stay attached to the relevant request.
 
 | Role | Action groups |
 | --- | --- |
-| JIOC Routing User | New submissions, claimed intake, held work and due-risk routing |
-| Command Routing User | Requests awaiting an Ops choice, held work and returns |
+| CRIOC Routing User | New submissions, claimed intake, held work and due-risk routing |
+| Request Coordination User | Requests awaiting an Ops choice, held work and returns |
 | Ops Routing User | Requests awaiting a team choice, staffing waits and returns |
 | Team Manager | Team intake, assignment, due risk, Manager review and rework |
 | Team Analyst | Assigned work, clarification replies, due risk and returned products |
@@ -126,7 +122,7 @@ The notification centre records at least:
 - Revoked grants, ended memberships and disabled accounts remove live access
   immediately while retaining the audit record.
 - The header count and active action page (`My requests` for Customers or
-  `My work` for staff) refresh without a full-page reload. A bounded polling
+  `My actions` for staff) refresh without a full-page reload. A bounded polling
   fallback remains available if live updates fail.
 
 Preferences cover in-application event groups and due-date reminder windows.
@@ -218,10 +214,9 @@ Customer-to-team route. An unstaffed team can remain selectable, but activation
 must warn that work will wait at `Awaiting team staffing`.
 
 High-impact configuration requires step-up authentication, a reason, preview and
-approval by a different authorised configuration approver. Local fixtures must
-contain enough administrators to prove separation of duties. The evolution adds
-`admin73`, Jim Leighton, as a second synthetic Platform Administrator without
-changing the original `admin1` to `admin72` mappings.
+approval by a different authorised configuration approver. Local fixtures
+include `admin1` and `admin73` as separate synthetic Platform Administrators so
+the evaluation can prove separation of duties.
 
 The administrator interface presents the **Current configuration** and
 **Proposed changes**, not internal draft/version terminology. Search by display
@@ -344,7 +339,7 @@ system exposes freshness or pending state instead of inventing success.
 The capability is complete only when:
 
 1. every representative role can complete its action journey (`My requests` for
-   Customers and `My work` for staff) and cannot see sibling, ancestor or
+   Customers and `My actions` for staff) and cannot see sibling, ancestor or
    unrelated action items;
 2. every required event creates one correctly scoped notification and replay
    creates no duplicate;

@@ -124,7 +124,13 @@ async def recipient_rules_for(
     rules: list[RecipientRule] = []
     for audience in await action_audiences(session, request):
         if audience.recipient_user_id is not None:
-            rules.append(_direct_rule(request, audience.recipient_user_id))
+            rules.append(
+                _direct_rule(
+                    request,
+                    audience.recipient_user_id,
+                    audience.recipient_role,
+                )
+            )
         elif audience.organisation_unit_id is not None and audience.candidate_role:
             rules.extend(
                 await _route_rules(
@@ -277,9 +283,13 @@ def _participant_rule(user_id: UUID) -> RecipientRule:
     )
 
 
-def _direct_rule(request: ServiceRequest, user_id: UUID) -> RecipientRule:
-    return (
-        _requester_rule(request)
-        if user_id == request.requester_id
-        else _assignee_rule(request)
-    )
+def _direct_rule(
+    request: ServiceRequest, user_id: UUID, role: UserRole | None
+) -> RecipientRule:
+    if user_id == request.requester_id:
+        return _requester_rule(request)
+    if user_id == request.assigned_specialist_id:
+        return _assignee_rule(request)
+    if role is None:
+        raise ValueError("a direct notification recipient role is required")
+    return RecipientRule(user_id, NotificationAccessKind.ASSIGNEE, role)

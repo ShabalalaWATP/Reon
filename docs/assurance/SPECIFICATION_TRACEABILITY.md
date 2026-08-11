@@ -1,6 +1,6 @@
 # Specification, decision and threat traceability
 
-Recorded on 7 August 2026 and updated on 8 August 2026. Each implemented capability is mapped to its accepted
+Recorded on 7 August 2026 and updated on 10 August 2026. Each implemented capability is mapped to its accepted
 Markdown specification, expensive-to-reverse decision record and current threat
 model. Shared foundation records apply where a feature uses an existing boundary
 rather than creating a new architectural decision.
@@ -10,12 +10,13 @@ rather than creating a new architectural decision.
 | Customer form, drafts, tracking, release and feedback | `service-request-mvp.md` | 0001, 0002, 0003 | `service-request-workflow.md` |
 | Human-led Camunda workflow | `service-request-mvp.md` | 0001, 0003 | `service-request-workflow.md` |
 | Organisation tree and selectable routing | `service-request-mvp.md` | 0004 | `service-request-workflow.md` |
-| Analyst clarification loop | `service-operations-expansion.md` | 0010 | `service-request-workflow.md` |
-| Scoped statistics | `service-operations-expansion.md` | 0006, 0007 | `management-and-analytics.md` |
-| Team roster lifecycle | `service-operations-expansion.md` | 0006, 0011 | `team-workspaces-and-calendars.md` |
-| Shared and personal calendars | `service-operations-expansion.md` | 0006, 0008 | `team-workspaces-and-calendars.md` |
-| Workflow board and agile planning | `service-operations-expansion.md` | 0006, 0009 | `team-workspaces-and-calendars.md` |
-| Manual related records | `manual-related-records.md` | 0012 | `service-request-workflow.md` |
+| Analyst clarification loop | `service-request-mvp.md` | 0010 | `service-request-workflow.md` |
+| Scoped statistics | `hierarchical-operational-overviews.md` | 0006, 0007, 0024 | `management-and-analytics.md` |
+| Route lifecycle tracking and analytical visuals | `tracking-lifecycle-and-analytical-visuals.md` | 0004, 0007 | `service-request-workflow.md`, `management-and-analytics.md` |
+| Team roster lifecycle | `unified-organisation-workspaces.md` | 0006, 0011, 0025 | `team-workspaces-and-calendars.md` |
+| Shared and personal calendars | `team-visible-personal-calendar-events.md` | 0006, 0008 | `team-workspaces-and-calendars.md` |
+| Workflow board and agile planning | `team-operations-workspace-evolution.md` | 0006, 0009, 0028 | `team-workspaces-and-calendars.md` |
+| Explainable related-request matching and human decisions | `manual-related-records.md` | 0012, 0027 | `service-request-workflow.md` |
 | Platform administration | `platform-administration-mvp.md` | 0005, 0013 | `platform-administration.md` |
 | Retention, telemetry, backup and recovery | `operational-readiness.md` | 0014 | `operations-and-recovery.md` |
 | Action and notification workspace | `operational-product-evolution.md` | 0015 | `service-request-workflow.md` |
@@ -27,9 +28,10 @@ rather than creating a new architectural decision.
 | Fenced maintenance, external-I/O phases and bounded operational feeds | `runtime-scaling-and-worker-hardening.md` | 0020 | `operations-and-recovery.md`, `service-request-workflow.md` |
 
 All referenced records exist in `docs/specs`, `docs/adr` and
-`docs/threat-model`. The Product Evolution Definition of Done matrix, master
-implementation plan and enterprise gap register are the current aggregate
-authorities for evidence, delivery status and human acceptance.
+`docs/threat-model`. The [Definition of Done matrix](DEFINITION_OF_DONE_MATRIX.md),
+master implementation plan, acceptance record and enterprise gap register are
+the current aggregate authorities for evidence, delivery status and human
+acceptance.
 
 ## Configuration and routing requirement trace
 
@@ -50,7 +52,7 @@ claimed by this milestone.
 | HRU-01 direct-child human routing | Exact candidate group, claimed task, server-loaded children | routing, hierarchy and BPMN contract tests | Implemented |
 | HRU-02 routing-stage path confirmation | Routing user, authorised current path only | routing repository, API and component tests | Implemented, representative acceptance open |
 | HRU-03 routing destination search | Routing user, direct authorised children only | literal-filter component, API scope and accessibility tests | Implemented, representative acceptance open |
-| HRU-04 explicit unstaffed selection | Human choice retained; no OSG fallback | routing, staffing and workflow tests | Implemented |
+| HRU-04 explicit unstaffed selection | Human choice retained; no SSG fallback | routing, staffing and workflow tests | Implemented |
 | HRU-05 stale destination rejection | Request pin, parent, stage and expected revision checked server-side | routing and configuration pin tests | Implemented |
 | HRU-06 competing claim | Exact candidate group and active task; one winner | workflow concurrency and API tests | Implemented |
 | HRU-07 stored clarification loop | Customer ownership or named human assignment | clarification API, workflow and browser evidence | Implemented |

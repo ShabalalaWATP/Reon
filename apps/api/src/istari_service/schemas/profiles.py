@@ -34,6 +34,7 @@ class ProfileView(ApiModel):
     rank_or_grade: str | None
     service_number: str | None
     additional_information: str | None
+    skills: list[str]
     version: int
 
 
@@ -42,6 +43,7 @@ class ProfileUpdate(StrictApiModel):
     rank_or_grade: str | None = Field(default=None, max_length=120)
     service_number: str | None = Field(default=None, max_length=80)
     additional_information: str | None = Field(default=None, max_length=2000)
+    skills: list[str] = Field(default_factory=list, max_length=12)
     expected_version: int = Field(ge=1)
 
     @field_validator("profile_team", "rank_or_grade")
@@ -58,3 +60,12 @@ class ProfileUpdate(StrictApiModel):
     @classmethod
     def bounded_information(cls, value: str | None) -> str | None:
         return _plain_optional(value, maximum=2000)
+
+    @field_validator("skills")
+    @classmethod
+    def bounded_skills(cls, value: list[str]) -> list[str]:
+        cleaned = [_plain_optional(item, maximum=80) for item in value]
+        labels = [item for item in cleaned if item is not None]
+        if len({item.casefold() for item in labels}) != len(labels):
+            raise ValueError("skills must be unique")
+        return labels

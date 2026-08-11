@@ -121,4 +121,4 @@ def test_display_names_reject_bidirectional_control_characters() -> None:
     with pytest.raises(ValueError, match="2 to 120 visible"):
         normalise_display_name("x")
     with pytest.raises(ValueError, match="control or bidirectional"):
-        normalise_display_name("OSG\N{RIGHT-TO-LEFT OVERRIDE}Team")
+        normalise_display_name("SSG\N{RIGHT-TO-LEFT OVERRIDE}Team")

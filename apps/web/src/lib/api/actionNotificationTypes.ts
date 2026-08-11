@@ -21,6 +21,7 @@ export type ActionFilters = {
 export type PersonalAction = {
   id: string;
   section: ActionSection;
+  actionAccess: "PERSONAL" | "SHARED";
   actionType: string;
   sourceType: string;
   reference: string;

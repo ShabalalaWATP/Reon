@@ -10,7 +10,9 @@ from camunda_orchestration_sdk import CamundaAsyncClient
 
 from istari_service.config import Settings, get_settings
 from istari_service.database import SessionFactory, dispose_database
+from istari_service.request_embeddings import FastEmbedRequestEmbeddingProvider
 from istari_service.request_event_projection import NotificationProjectionReconciler
+from istari_service.request_search_indexer import RequestSearchIndexer
 from istari_service.team_membership_sync import TeamMembershipProjector
 from istari_service.worker_runtime import MaintenanceJob, WorkerIteration, run_worker
 from istari_service.workflow.camunda import CamundaWorkflowEngine
@@ -56,6 +58,19 @@ def build_iteration(
         notifications = NotificationProjectionReconciler(SessionFactory)
         jobs.append(
             MaintenanceJob("notification-projection", notifications.reconcile_once)
+        )
+    if settings.request_matching_semantic_enabled:
+        request_search = RequestSearchIndexer(
+            SessionFactory,
+            FastEmbedRequestEmbeddingProvider(
+                model_name=settings.request_embedding_model,
+                cache_path=settings.request_embedding_cache_path,
+                threads=settings.request_embedding_threads,
+            ),
+            batch_size=settings.request_embedding_batch_size,
+        )
+        jobs.append(
+            MaintenanceJob("request-search-index", request_search.reconcile_once)
         )
     jobs.append(MaintenanceJob("membership-projection", membership.reconcile_once))
     return WorkerIteration(

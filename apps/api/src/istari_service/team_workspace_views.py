@@ -63,6 +63,7 @@ def member_view(
         ),
         version=membership.version,
         active_work_count=active_counts.get(user.id, 0),
+        skills=user.skills,
         start_reason=membership.start_reason if reveal_reasons else None,
         end_reason=membership.end_reason if reveal_reasons else None,
     )

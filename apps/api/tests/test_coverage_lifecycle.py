@@ -147,6 +147,7 @@ def test_production_disables_interactive_api_schema_surfaces(tmp_path: Path) -> 
             camunda_password=SecretStr("synthetic-secret"),
             audit_hmac_key=SecretStr("a" * 32),
             product_storage_path=str(tmp_path / "istari-products"),
+            request_embedding_cache_path=str(tmp_path / "model-cache"),
             worker_health_required=True,
         ),
         workflow_engine=FakeWorkflowEngine(),

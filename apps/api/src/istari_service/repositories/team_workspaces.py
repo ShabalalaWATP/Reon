@@ -309,8 +309,7 @@ class SqlAlchemyTeamWorkspaceRepository:
 
 
 def _merge_authority(
-    authority: dict[UUID, _Authority],
-    row: Any,
+    authority: dict[UUID, _Authority], row: Any
 ) -> dict[UUID, _Authority]:
     grant, action, team = row
     item = authority.setdefault(team.id, _Authority(team=team))
@@ -337,6 +336,7 @@ def _workspace_views(kind: OrganisationKind) -> list[str]:
             "PEOPLE",
             "PLANNING",
             "STATISTICS",
+            "HANDOVER",
             "ACTIVITY",
         ]
     return [

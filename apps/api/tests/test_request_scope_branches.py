@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -11,11 +12,12 @@ from sqlalchemy import true
 
 from istari_service.domain import Actor
 from istari_service.models import RequestStatus, UserRole
+from istari_service.policies import can_view_request
 from istari_service.repositories import request_scope
 from istari_service.repositories.requests import SqlAlchemyRequestRepository
 
 
-def _actor(role: UserRole, *, scope: str = "OSG Team") -> Actor:
+def _actor(role: UserRole, *, scope: str = "SSG Team") -> Actor:
     return Actor(uuid4(), "user@example.test", "Synthetic User", role, scope)
 
 
@@ -35,10 +37,37 @@ def _request(actor: Actor) -> SimpleNamespace:
         id=uuid4(),
         requester_id=uuid4(),
         status=RequestStatus.CUSTOMER_INFORMATION_REQUIRED,
-        assigned_delivery_team="OSG Team",
+        assigned_delivery_team="SSG Team",
+        assigned_delivery_team_id=uuid4(),
         assigned_specialist_id=actor.id,
         version=4,
     )
+
+
+@pytest.mark.asyncio
+async def test_exact_team_manager_can_read_historical_team_request() -> None:
+    actor = _actor(UserRole.DELIVERY_TEAM_LEAD)
+    request = _request(actor)
+    request.status = RequestStatus.COMPLETED
+    session = SimpleNamespace(
+        scalar=AsyncMock(return_value=request),
+        scalars=AsyncMock(return_value=[]),
+    )
+    repository = SqlAlchemyRequestRepository(session, process_id="service-request-v1")
+    record = await repository.get_record_for_actor(request.id, actor)
+    assert record is not None and record.id == request.id
+
+    scoped_actor = Actor(
+        actor.id,
+        actor.username,
+        actor.display_name,
+        actor.role,
+        actor.scope,
+        frozenset({request.assigned_delivery_team_id}),
+    )
+    assert can_view_request(scoped_actor, record)
+    wrong_team = replace(record, assigned_delivery_team_id=uuid4())
+    assert not can_view_request(scoped_actor, wrong_team)
 
 
 @pytest.mark.asyncio

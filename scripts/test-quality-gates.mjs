@@ -32,7 +32,7 @@ async function createFixture(root) {
   await writeFile(join(root, "apps/web/scripts/check.mjs"), "export {};\n");
   await writeFile(
     join(root, "apps/web/src/approved.ts"),
-    "export const analyst_queue = 'JIOCAnalyst serviceProduct dissemination disseminate disseminated defence-in-depth from_collection';\n",
+    "export const analyst_queue = 'CRIOCAnalyst serviceProduct dissemination disseminate disseminated defence-in-depth from_collection';\n",
   );
   await writeFile(join(root, "infra/check.sh"), "#!/usr/bin/env sh\n");
   await writeFile(join(root, "scripts/check.mjs"), "export {};\n");

@@ -6,7 +6,7 @@ Accepted for implementation.
 
 ## Context
 
-The current process supports intake clarification returning to JIOC. During
+The current process supports intake clarification returning to CRIOC. During
 production an assigned Analyst may also need information from the Customer. That
 conversation must pause work, retain the assignment, be visible in the Customer
 dashboard and resume without travelling back through routing approvals.
@@ -34,7 +34,7 @@ all older instances have ended.
 
 ## Rejected alternatives
 
-- Reuse intake clarification: it would incorrectly return work to JIOC.
+- Reuse intake clarification: it would incorrectly return work to CRIOC.
 - Store a free-text progress note only: it gives the Customer no actionable task
   and cannot model response state.
 - Contact the Customer offline: loses history, access control and service timing.

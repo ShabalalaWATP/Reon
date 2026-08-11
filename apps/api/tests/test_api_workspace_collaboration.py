@@ -21,16 +21,16 @@ async def test_manager_records_handover_and_member_reads_it(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    jioc = await _workspace(harness, "admin74", "JIOC")
-    assert jioc["workspacePosition"] == "MANAGER"
-    assert jioc["unitKind"] == "ROOT"
+    crioc = await _workspace(harness, "admin74", "CRIOC")
+    assert crioc["workspacePosition"] == "MANAGER"
+    assert crioc["unitKind"] == "ROOT"
     assert {"QUEUE", "CALENDAR", "PEOPLE", "HANDOVER", "STATISTICS"} <= set(
-        jioc["views"]
+        crioc["views"]
     )
     create = await harness.client.post(
-        f"/api/v1/team-workspaces/{jioc['teamId']}/records",
+        f"/api/v1/team-workspaces/{crioc['teamId']}/records",
         json={
-            "grantId": jioc["grantId"],
+            "grantId": crioc["grantId"],
             "kind": "HANDOVER",
             "title": "Routing handover",
             "body": "Monitor the synthetic priority request during the next shift.",
@@ -42,15 +42,15 @@ async def test_manager_records_handover_and_member_reads_it(
     record = create.json()["items"][0]
     assert record["status"] == "OPEN"
 
-    member = await _workspace(harness, "admin75", "JIOC")
+    member = await _workspace(harness, "admin75", "CRIOC")
     assert member["workspacePosition"] == "MEMBER"
     listed = await harness.client.get(
-        f"/api/v1/team-workspaces/{jioc['teamId']}/records"
+        f"/api/v1/team-workspaces/{crioc['teamId']}/records"
     )
     assert listed.status_code == 200
     assert listed.json()["items"][0]["title"] == "Routing handover"
     denied = await harness.client.post(
-        f"/api/v1/team-workspaces/{jioc['teamId']}/records",
+        f"/api/v1/team-workspaces/{crioc['teamId']}/records",
         json={
             "grantId": str(uuid4()),
             "kind": "RISK",
@@ -61,11 +61,11 @@ async def test_manager_records_handover_and_member_reads_it(
     )
     assert denied.status_code == 404
 
-    jioc = await _workspace(harness, "admin74", "JIOC")
+    crioc = await _workspace(harness, "admin74", "CRIOC")
     resolved = await harness.client.post(
-        f"/api/v1/team-workspaces/{jioc['teamId']}/records/{record['id']}/resolve",
+        f"/api/v1/team-workspaces/{crioc['teamId']}/records/{record['id']}/resolve",
         json={
-            "grantId": jioc["grantId"],
+            "grantId": crioc["grantId"],
             "expectedVersion": record["version"],
             "resolution": "The next shift accepted the routing handover.",
         },
@@ -89,11 +89,11 @@ async def test_collaboration_validation_and_stale_resolution_fail_closed(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    jioc = await _workspace(harness, "admin74", "JIOC")
+    crioc = await _workspace(harness, "admin74", "CRIOC")
     invalid = await harness.client.post(
-        f"/api/v1/team-workspaces/{jioc['teamId']}/records",
+        f"/api/v1/team-workspaces/{crioc['teamId']}/records",
         json={
-            "grantId": jioc["grantId"],
+            "grantId": crioc["grantId"],
             "kind": "LINK",
             "title": "Unsafe link",
             "body": "Only normal HTTPS links are accepted.",
@@ -103,9 +103,9 @@ async def test_collaboration_validation_and_stale_resolution_fail_closed(
     )
     assert invalid.status_code == 422
     missing_url = await harness.client.post(
-        f"/api/v1/team-workspaces/{jioc['teamId']}/records",
+        f"/api/v1/team-workspaces/{crioc['teamId']}/records",
         json={
-            "grantId": jioc["grantId"],
+            "grantId": crioc["grantId"],
             "kind": "LINK",
             "title": "Missing useful link",
             "body": "A link record must include its HTTPS destination.",
@@ -114,7 +114,7 @@ async def test_collaboration_validation_and_stale_resolution_fail_closed(
     )
     assert missing_url.status_code == 422
     forged_grant = await harness.client.post(
-        f"/api/v1/team-workspaces/{jioc['teamId']}/records",
+        f"/api/v1/team-workspaces/{crioc['teamId']}/records",
         json={
             "grantId": str(uuid4()),
             "kind": "RISK",
@@ -125,9 +125,9 @@ async def test_collaboration_validation_and_stale_resolution_fail_closed(
     )
     assert forged_grant.status_code == 404
     missing = await harness.client.post(
-        f"/api/v1/team-workspaces/{jioc['teamId']}/records/{uuid4()}/resolve",
+        f"/api/v1/team-workspaces/{crioc['teamId']}/records/{uuid4()}/resolve",
         json={
-            "grantId": jioc["grantId"],
+            "grantId": crioc["grantId"],
             "expectedVersion": 1,
             "resolution": "A missing record cannot be resolved.",
         },
@@ -135,9 +135,9 @@ async def test_collaboration_validation_and_stale_resolution_fail_closed(
     )
     assert missing.status_code == 404
     created = await harness.client.post(
-        f"/api/v1/team-workspaces/{jioc['teamId']}/records",
+        f"/api/v1/team-workspaces/{crioc['teamId']}/records",
         json={
-            "grantId": jioc["grantId"],
+            "grantId": crioc["grantId"],
             "kind": "DECISION",
             "title": "Bounded decision",
             "body": "This record exercises exact-version resolution behaviour.",
@@ -146,9 +146,9 @@ async def test_collaboration_validation_and_stale_resolution_fail_closed(
     )
     record = created.json()["items"][0]
     stale = await harness.client.post(
-        f"/api/v1/team-workspaces/{jioc['teamId']}/records/{record['id']}/resolve",
+        f"/api/v1/team-workspaces/{crioc['teamId']}/records/{record['id']}/resolve",
         json={
-            "grantId": jioc["grantId"],
+            "grantId": crioc["grantId"],
             "expectedVersion": 2,
             "resolution": "A stale version cannot resolve this decision.",
         },
@@ -156,9 +156,9 @@ async def test_collaboration_validation_and_stale_resolution_fail_closed(
     )
     assert stale.status_code == 409
     resolved = await harness.client.post(
-        f"/api/v1/team-workspaces/{jioc['teamId']}/records/{record['id']}/resolve",
+        f"/api/v1/team-workspaces/{crioc['teamId']}/records/{record['id']}/resolve",
         json={
-            "grantId": jioc["grantId"],
+            "grantId": crioc["grantId"],
             "expectedVersion": 1,
             "resolution": "The exact current version resolved this decision.",
         },
@@ -166,9 +166,9 @@ async def test_collaboration_validation_and_stale_resolution_fail_closed(
     )
     assert resolved.status_code == 200
     repeated = await harness.client.post(
-        f"/api/v1/team-workspaces/{jioc['teamId']}/records/{record['id']}/resolve",
+        f"/api/v1/team-workspaces/{crioc['teamId']}/records/{record['id']}/resolve",
         json={
-            "grantId": jioc["grantId"],
+            "grantId": crioc["grantId"],
             "expectedVersion": 2,
             "resolution": "A resolved record cannot be resolved for a second time.",
         },

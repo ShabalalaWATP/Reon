@@ -3,18 +3,28 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
 
 from conftest import ApiHarness
 from istari_service.errors import InvalidAdministrationChange
+from istari_service.management_models import ManagementAction
 from istari_service.models import User
-from istari_service.organisation_models import UserOrganisationMembership
+from istari_service.organisation_models import (
+    OrganisationKind,
+    UserOrganisationMembership,
+)
+from istari_service.repositories.team_workspaces import (
+    _merge_authority,
+    _own_authority,
+    _workspace_views,
+)
 from istari_service.team_membership_admin import align_admin_team_membership
 from istari_service.team_membership_seed import seed_team_membership_history
 from istari_service.team_membership_sync import synchronise_due_team_memberships
-from istari_service.team_models import TeamMembership
+from istari_service.team_models import TeamMembership, WorkspacePosition
 from istari_service.team_workspace_views import _as_utc
 from istari_service.workspace_workloads import active_work_counts
 
@@ -38,13 +48,13 @@ async def test_roster_rejects_wrong_accounts_teams_grants_and_versions(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    osg = await _access(harness, "admin8", "OSG_TEAM")
-    lewis = await _member(harness, osg["teamId"], "Lewis Ferguson")
+    ssg = await _access(harness, "admin8", "SSG_TEAM")
+    lewis = await _member(harness, ssg["teamId"], "Lewis Ferguson")
     manager_id = await harness.user_id("admin8")
     existing = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/memberships",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/memberships",
         json={
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
             "analystId": lewis["accountId"],
             "reason": "This deliberately attempts to add an existing member.",
         },
@@ -52,9 +62,9 @@ async def test_roster_rejects_wrong_accounts_teams_grants_and_versions(
     )
     assert existing.status_code == 409
     wrong_role = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/memberships",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/memberships",
         json={
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
             "analystId": str(manager_id),
             "reason": (
                 "A Team Manager cannot be added through the Analyst roster action."
@@ -64,9 +74,9 @@ async def test_roster_rejects_wrong_accounts_teams_grants_and_versions(
     )
     assert wrong_role.status_code == 409
     missing = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/memberships",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/memberships",
         json={
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
             "analystId": str(uuid4()),
             "reason": "An unknown account must not disclose any roster information.",
         },
@@ -74,9 +84,9 @@ async def test_roster_rejects_wrong_accounts_teams_grants_and_versions(
     )
     assert missing.status_code == 404
     stale = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/memberships/{lewis['membershipId']}/end",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/memberships/{lewis['membershipId']}/end",
         json={
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
             "expectedVersion": lewis["version"] + 1,
             "reason": "A stale membership version must lose the concurrent update.",
         },
@@ -85,15 +95,15 @@ async def test_roster_rejects_wrong_accounts_teams_grants_and_versions(
     assert stale.status_code == 409
     assert stale.json()["detail"]["code"] == "STALE_VERSION"
     wrong_grant = await harness.client.get(
-        f"/api/v1/team-workspaces/{osg['teamId']}/eligible-analysts",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/eligible-analysts",
         params={"grantId": str(uuid4())},
     )
     assert wrong_grant.status_code == 404
 
     await harness.login("admin11")
     analyst_denied = await harness.client.get(
-        f"/api/v1/team-workspaces/{osg['teamId']}/eligible-analysts",
-        params={"grantId": osg["grantId"]},
+        f"/api/v1/team-workspaces/{ssg['teamId']}/eligible-analysts",
+        params={"grantId": ssg["grantId"]},
     )
     assert analyst_denied.status_code == 404
 
@@ -102,17 +112,17 @@ async def test_transfer_validation_and_immediate_projection_change(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    osg = await _access(harness, "admin8", "OSG_TEAM")
-    lewis = await _member(harness, osg["teamId"], "Lewis Ferguson")
+    ssg = await _access(harness, "admin8", "SSG_TEAM")
+    lewis = await _member(harness, ssg["teamId"], "Lewis Ferguson")
     base = {
-        "grantId": osg["grantId"],
+        "grantId": ssg["grantId"],
         "analystId": lewis["accountId"],
         "currentMembershipId": lewis["membershipId"],
         "expectedVersion": lewis["version"],
         "reason": "A valid-length synthetic transfer reason for boundary testing.",
     }
     same_team = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/transfers",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/transfers",
         json={
             **base,
             "effectiveFrom": (datetime.now(UTC) + timedelta(days=1)).isoformat(),
@@ -304,3 +314,22 @@ async def test_admin_moves_preserve_timeline_and_small_helpers(
             == 0
         )
         await seed_team_membership_history(session, set(), {cedar_id})
+
+
+def test_workspace_authority_helpers_preserve_role_specific_views() -> None:
+    team = SimpleNamespace(id=uuid4())
+    own_id, own = _own_authority((team, WorkspacePosition.MANAGER))
+    assert own_id == team.id
+    assert own.position is WorkspacePosition.MANAGER
+
+    first_grant = SimpleNamespace(id=uuid4())
+    authority = _merge_authority({}, (first_grant, ManagementAction.STATISTICS, team))
+    assert authority[team.id].grant_id == first_grant.id
+    replacement = SimpleNamespace(id=uuid4())
+    _merge_authority(authority, (replacement, ManagementAction.BOARD, team))
+    assert authority[team.id].grant_id == first_grant.id
+    _merge_authority(authority, (replacement, ManagementAction.ROSTER, team))
+    assert authority[team.id].grant_id == replacement.id
+
+    assert "BOARD" in _workspace_views(OrganisationKind.TEAM)
+    assert "QUEUE" in _workspace_views(OrganisationKind.COMMAND)

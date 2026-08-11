@@ -23,49 +23,49 @@ $deployment = $deploymentOutput |
     Select-Object -Last 1
 Assert-SmokeResult ($null -ne $deployment) "Workflow deployment returned no process definition."
 
-$jiocActorId = "00000000-0000-4000-8000-000000000101"
+$criocActorId = "00000000-0000-4000-8000-000000000101"
 $commandActorId = "00000000-0000-4000-8000-000000000102"
 $opsActorId = "00000000-0000-4000-8000-000000000103"
-$osgManagerActorId = "00000000-0000-4000-8000-000000000104"
-$osgAnalystActorId = "00000000-0000-4000-8000-000000000105"
+$ssgManagerActorId = "00000000-0000-4000-8000-000000000104"
+$ssgAnalystActorId = "00000000-0000-4000-8000-000000000105"
 $qcManagerActorId = "00000000-0000-4000-8000-000000000106"
 $beaconManagerActorId = "00000000-0000-4000-8000-000000000107"
 $beaconAnalystActorId = "00000000-0000-4000-8000-000000000108"
 
 $staffedRoute = @(
     @{
-        ElementId = "intake_review"; Name = "JIOC Routing"; Group = "jioc-routing"
-        Actor = $jiocActorId; Action = "progress"; Claim = $true
+        ElementId = "intake_review"; Name = "CRIOC Routing"; Group = "crioc-routing"
+        Actor = $criocActorId; Action = "progress"; Claim = $true
         Variables = @{
-            intakeDecision = "progress"; selectedCommandId = "DIGOC"
-            selectedCommandCandidateGroup = @("digoc-routing")
+            intakeDecision = "progress"; selectedCommandId = "JOCK"
+            selectedCommandCandidateGroup = @("jock-routing")
         }
     }
     @{
-        ElementId = "coordination_review"; Name = "Command Routing"; Group = "digoc-routing"
+        ElementId = "coordination_review"; Name = "Request Coordination"; Group = "jock-routing"
         Actor = $commandActorId; Action = "send_to_allocation"; Claim = $true
         Variables = @{
-            coordinationDecision = "send_to_allocation"; selectedOpsId = "NCGI_A_OPS"
-            selectedOpsCandidateGroup = @("ncgi-a-ops-routing")
+            coordinationDecision = "send_to_allocation"; selectedOpsId = "ACSA_B_OPS"
+            selectedOpsCandidateGroup = @("acsa-b-ops-routing")
         }
     }
     @{
-        ElementId = "allocation_review"; Name = "Ops Routing"; Group = "ncgi-a-ops-routing"
+        ElementId = "allocation_review"; Name = "Ops Routing"; Group = "acsa-b-ops-routing"
         Actor = $opsActorId; Action = "allocate"; Claim = $true
         Variables = @{
-            allocationDecision = "allocate"; selectedTeamId = "OSG_TEAM"
-            selectedTeamManagerCandidateGroup = @("osg-team-managers")
-            selectedTeamAnalystCandidateGroup = @("osg-team-analysts")
+            allocationDecision = "allocate"; selectedTeamId = "SSG_TEAM"
+            selectedTeamManagerCandidateGroup = @("ssg-team-managers")
+            selectedTeamAnalystCandidateGroup = @("ssg-team-analysts")
         }
     }
     @{
-        ElementId = "delivery_planning"; Name = "Team Assignment"; Group = "osg-team-managers"
-        Actor = $osgManagerActorId; Action = "assign"; Claim = $true
-        Variables = @{ planningDecision = "assign"; assignedSpecialistId = $osgAnalystActorId }
+        ElementId = "delivery_planning"; Name = "Team Assignment"; Group = "ssg-team-managers"
+        Actor = $ssgManagerActorId; Action = "assign"; Claim = $true
+        Variables = @{ planningDecision = "assign"; assignedSpecialistId = $ssgAnalystActorId }
     }
     @{
-        ElementId = "delivery_work"; Name = "Product Production"; Group = "osg-team-analysts"
-        Actor = $osgAnalystActorId; Assignee = $osgAnalystActorId; Action = "request_clarification"; Claim = $false
+        ElementId = "delivery_work"; Name = "Product Production"; Group = "ssg-team-analysts"
+        Actor = $ssgAnalystActorId; Assignee = $ssgAnalystActorId; Action = "request_clarification"; Claim = $false
         Variables = @{ deliveryDecision = "request_clarification" }
     }
     @{
@@ -74,8 +74,8 @@ $staffedRoute = @(
         Variables = @{ clarificationDecision = "provide_clarification" }
     }
     @{
-        ElementId = "delivery_work"; Name = "Product Production"; Group = "osg-team-analysts"
-        Actor = $osgAnalystActorId; Assignee = $osgAnalystActorId; Action = "request_clarification"; Claim = $false
+        ElementId = "delivery_work"; Name = "Product Production"; Group = "ssg-team-analysts"
+        Actor = $ssgAnalystActorId; Assignee = $ssgAnalystActorId; Action = "request_clarification"; Claim = $false
         Variables = @{ deliveryDecision = "request_clarification" }
     }
     @{
@@ -84,13 +84,13 @@ $staffedRoute = @(
         Variables = @{ clarificationDecision = "provide_clarification" }
     }
     @{
-        ElementId = "delivery_work"; Name = "Product Production"; Group = "osg-team-analysts"
-        Actor = $osgAnalystActorId; Assignee = $osgAnalystActorId; Action = "submit"; Claim = $false
+        ElementId = "delivery_work"; Name = "Product Production"; Group = "ssg-team-analysts"
+        Actor = $ssgAnalystActorId; Assignee = $ssgAnalystActorId; Action = "submit"; Claim = $false
         Variables = @{ deliveryDecision = "submit" }
     }
     @{
-        ElementId = "lead_review"; Name = "Manager Review"; Group = "osg-team-managers"
-        Actor = $osgManagerActorId; Action = "approve"; Claim = $true
+        ElementId = "lead_review"; Name = "Manager Review"; Group = "ssg-team-managers"
+        Actor = $ssgManagerActorId; Action = "approve"; Claim = $true
         Variables = @{ leadReviewDecision = "approve" }
     }
     @{
@@ -125,15 +125,15 @@ $completed = Get-CompletedProcess `
 
 $alternativeRoute = @(
     @{
-        ElementId = "intake_review"; Name = "JIOC Routing"; Group = "jioc-routing"
-        Actor = $jiocActorId; Action = "progress"; Claim = $true
+        ElementId = "intake_review"; Name = "CRIOC Routing"; Group = "crioc-routing"
+        Actor = $criocActorId; Action = "progress"; Claim = $true
         Variables = @{
             intakeDecision = "progress"; selectedCommandId = "SYGOC"
             selectedCommandCandidateGroup = @("sygoc-routing")
         }
     }
     @{
-        ElementId = "coordination_review"; Name = "Command Routing"; Group = "sygoc-routing"
+        ElementId = "coordination_review"; Name = "Request Coordination"; Group = "sygoc-routing"
         Actor = $commandActorId; Action = "send_to_allocation"; Claim = $true
         Variables = @{
             coordinationDecision = "send_to_allocation"; selectedOpsId = "NIMBUS_OPS"
@@ -194,11 +194,11 @@ $alternativeCompleted = Get-CompletedProcess `
     ProcessDefinitionVersion = $deployment.Version
     BusinessIdUniqueness = "verified"
     StaffedProcessInstanceKey = $staffed.ProcessInstanceKey
-    StaffedPath = "DIGOC -> NCGI-A Ops -> OSG Team"
+    StaffedPath = "JOCK -> ACSA-B Ops -> SSG Team"
     StaffedFirstTask = $staffedTasks[0].elementId
     StaffedLastTask = $staffedTasks[-1].elementId
     StaffedClarificationLoops = 2
-    StaffedSpecialistRetained = $osgAnalystActorId
+    StaffedSpecialistRetained = $ssgAnalystActorId
     StaffedState = $completed.state
     AlternativeProcessInstanceKey = $alternative.ProcessInstanceKey
     AlternativePath = "SYGOC -> Nimbus Ops -> Beacon Team"

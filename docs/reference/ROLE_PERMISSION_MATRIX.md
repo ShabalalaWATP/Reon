@@ -1,6 +1,6 @@
 # Role and permission matrix
 
-Status: implemented MVP roles with enterprise boundary decisions identified
+Status: current application permissions with production boundary decisions identified
 Last reviewed: 10 August 2026
 
 ## Enforcement principles
@@ -19,15 +19,16 @@ Last reviewed: 10 August 2026
 
 | Actor | Permitted action | Required scope and state | Object/action check | Separation and audit |
 |---|---|---|---|---|
+| Authenticated user | Maintain their profile and personal calendar | Own active account | Subject is always the authenticated user | Team-visible personal events show detail by default; an explicitly private appointment shows colleagues only `Busy` and its time |
 | Customer | Create and submit a request | Own authenticated account; every submission field valid | Requester ID becomes immutable ownership | Submission audited without narrative in admin telemetry |
 | Customer | Track, answer clarification, download and give feedback | Own request; matching workflow state; released product for download | Ownership and action-state check on every request | Download and feedback events attributable to Customer |
-| JIOC Routing User | Review, request information, close or choose a Command | Active JIOC candidate group and personally claimed task | Destination must be an effective direct Command child | Manager and Member use the same claim-based routing action; no product approval |
-| Command Routing User | Choose an Ops group, return, hold or close | Active candidate group for the selected Command and personally claimed task | Destination must be an effective direct Ops-group child | Manager and Member use the same action; no team or Analyst selection |
+| CRIOC Routing User | Review, request information, close or choose a Command | Active CRIOC candidate group and personally claimed task | Destination must be an effective direct Command child | Manager and Member use the same claim-based routing action; no product approval |
+| Request Coordination User | Choose an Ops group, return, hold or close | Active candidate group for the selected Command and personally claimed task | Destination must be an effective direct Ops-group child | Manager and Member use the same action; no team or Analyst selection |
 | Ops Routing User | Choose a delivery team or return | Active candidate group for the selected Ops group and personally claimed task | Destination must be an effective direct team child | Manager and Member use the same action; unstaffed choice remains explicit |
 | Workspace Member | Create, edit and cancel personal calendar activity | Current effective membership in the exact unit | Subject is always the authenticated user; no request link or alternate subject accepted | Private detail is redacted from shared views |
 | Routing Manager | Maintain exact-unit Members, unit events and shared handover context | Current Manager position and exact management grant | No parent, child or sibling management and no ticket commitment | Does not add routing approval or assign routing tasks |
 | Team Manager | Assign one Lead and up to ten Contributors and review submitted work | Exact active team membership and candidate group; claimed task | Every participant must be a current Member of that exact team | Assignment reason, history and approval/rework outcome audited |
-| Team Manager | Manage roster, board and team calendar | Exact active management grant for the team | Grant, membership state and optimistic revision checked | Membership and planning events attributable and reversible |
+| Team Manager | Manage roster, board and team calendar | Current exact-team Manager position and exact active management grant | Position, grant, membership state and optimistic revision checked | Membership and planning events attributable and reversible |
 | Team Analyst, Lead | Produce, revise and submit a product package | Active Lead participation and active exact-team membership | Sole Camunda assignee; package state and expected revision checked | Immutable package and participation history retained |
 | Team Analyst, Contributor | Read and collaborate on an assigned request | Active Contributor participation and active exact-team membership | Cannot complete the Lead's parent Camunda task | Participation and linked work remain attributable |
 | QC Manager | Review, return, disseminate or withdraw a product | Active QC group and matching workflow/package state | Exact approved package and Customer request relationship | Manager approval cannot substitute for QC release |
@@ -43,7 +44,7 @@ Last reviewed: 10 August 2026
 | Scope | May see request content | May track progress | May route | May approve product | May administer configuration |
 |---|---:|---:|---:|---:|---:|
 | Customer owning request | Yes | Yes | No | No | No |
-| JIOC on selected path | Operationally required fields | Yes | JIOC task only | No | No |
+| CRIOC on selected path | Operationally required fields | Yes | CRIOC task only | No | No |
 | Selected Command | Operationally required fields | Yes | Command task only | No | No |
 | Selected Ops group | Operationally required fields | Yes | Ops task only | No | No |
 | Selected delivery team | Yes | Yes | Manager assigns within team | Manager review only | No |

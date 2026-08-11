@@ -1,5 +1,144 @@
 # Development Story
 
+## 11 August 2026: accessibility navigation and assurance consolidation
+
+- Added a direct accessibility route from the documentation home and master
+  plan to the WCAG evidence, completion criteria, production gates and named
+  acceptance record.
+- Kept the honest assurance boundary: automated axe, contrast, keyboard, focus
+  and reflow evidence supports review but cannot replace testing by disabled and
+  representative users.
+- Combined the aggregate and detailed capability gates into one Definition of
+  Done matrix so readers no longer have to reconcile competing completion
+  registers.
+- Replaced the superseded pilot and expanded-capability templates with one
+  current acceptance record covering every role, accessibility review and named
+  accountable sign-off.
+- Retired the orphaned expansion evidence ledger. Its useful dated migration,
+  coverage, workflow, statistics, roster, calendar, board and operational
+  results were already preserved in the corresponding 7 August entries below
+  and in the current focused assurance records.
+- Added the two previously unlisted current specifications to the documentation
+  map and retained separate architecture, threat-model, ADR and cloud deployment
+  guides where they answer distinct questions.
+
+## 10 August 2026: current-state documentation and architecture
+
+- Rebuilt the root README as the plain-English entry point for product users,
+  evaluators, engineers, security reviewers and operators. It now covers the
+  complete request lifecycle, local setup, cloud sandbox options, security,
+  quality gates and all 99 synthetic accounts.
+- Added a current user-story catalogue and a dedicated Camunda BPMN guide that
+  explain routing, clarification, Lead and Contributor assignment, rework,
+  quality review, release, feedback and cancellation without requiring readers
+  to understand internal workflow code.
+- Added six focused ISTARI-styled architecture views for system context,
+  containers, organisational routing, delivery, durable workflow commands and
+  the organisation hierarchy, plus an editable Structurizr DSL workspace.
+- Consolidated the documentation around one documentation home, one system
+  architecture authority and one complete account directory. Redundant index,
+  foundations, account-roster and service-expansion files were retired, with
+  links redirected to the current authorities.
+- Refreshed the Customer request, Customer dashboard, team Board, team calendar,
+  team People, CRIOC workspace and platform administration screenshots from the
+  running local application and visually reviewed each image against its current
+  documented surface.
+- Established the rule that current guides describe only the product a reader
+  can use now. Superseded interface and terminology history belongs here, while
+  architecture decisions retain only the rationale needed to understand durable
+  technical constraints.
+- Adopted the public-safe synthetic organisation names CRIOC, JOCK, ACSA-B Ops
+  and SSG Team across seed data, workflow labels, application presentation,
+  tests, current documentation and diagrams. The previous names remain only in
+  this chronological record where they are needed to explain older evidence.
+- Incorporated the current accessibility controls for bypass navigation,
+  320-pixel reflow, visible focus, target size and automated contrast, and the
+  Customer form's four-part progress navigation, completion signals, character
+  limits and strengthened validation presentation.
+- Passed all 955 backend tests at 98.874 per cent line and 95.016 per cent
+  branch coverage, plus all 378 frontend tests at 99.48 per cent line and 95.08
+  per cent branch coverage. The repository quality command, production build,
+  bundle budgets, documentation duplication and links, terminology, line
+  limits, dead-code checks, licences and OpenAPI contract all passed.
+
+## 10 August 2026: sortable people and focused calendar creation
+
+- Turned every organisation People register into an accessible sortable ledger,
+  with Managers first by default and deterministic current-history ordering.
+- Closed a defence-in-depth gap by requiring a current exact-unit Manager
+  membership as well as an active roster grant in FastAPI. A deliberately
+  misconfigured Member grant now fails closed, while React also withholds every
+  roster control from Members.
+- Replaced the permanently expanded calendar form with a centred modal. The
+  toolbar Add event control and calendar-day affordances open the same form,
+  selected days pre-fill 09:00, failed writes retain context and successful
+  creation closes the modal with focus restoration.
+
+## 10 August 2026: lifecycle tracking and analytical graphics
+
+- Reworked the route-scoped tracking register around request titles, linked
+  references, current ownership and a graphic view of both organisational route
+  and delivery lifecycle.
+- Added a dedicated historical detail contract. Exact JIOC, command and Ops
+  route membership is rechecked in PostgreSQL, while the read-only response
+  excludes workflow actions, clarification, feedback and every product field.
+- Added status, due-risk and active-age donut charts plus a median-to-90th-
+  percentile stage-duration graphic. Existing scoped API data, legends and
+  accessible tables remain the single source of every displayed value.
+- Passed all 951 backend tests at 98.26 per cent total coverage and 354 frontend
+  tests at 99.47 per cent line and 95.01 per cent branch coverage. Repository
+  gates, production build and bundle budget passed. A live JIOC browser journey
+  reopened the Russian Troop Movements request from Tracking, rendered the
+  read-only lifecycle and displayed the new charts with no console warning or
+  error.
+
+## 10 August 2026: action-oriented team workspaces
+
+- Reworked delivery and routing workspace homes around decisions requiring
+  attention, rather than duplicating the deeper Statistics page.
+- Made Kanban totals independent of cursor pages, focused the default lanes and
+  added saved and built-in views, progressive disclosure, a table alternative
+  and a shared work-item inspector.
+- Connected the daily team surface to clarifications, review, planning freshness,
+  blockers, dependencies, capacity, calendars, people, handover and activity.
+- Corrected routing queue reads so each selected unit shows only its own current
+  decision position.
+- Added migration 0030 for bounded self-declared operational skill labels, shown
+  only through Profile and an authorised exact-team people projection.
+
+## 10 August 2026: explainable request matching and simpler JIOC routing
+
+- Replaced the misleading title/reference lookup with automatic, explainable
+  matching across every Customer-submitted field. PostgreSQL full-text,
+  `pg_trgm` and pgvector retrieval feed deterministic field, semantic and
+  structured scoring; the interface exposes bounded evidence and never treats
+  the score as a duplicate decision.
+- Added one transactionally created projection per submitted request and a
+  lease-fenced worker indexer. FastEmbed runs a revision and checksum-verified
+  `BAAI/bge-small-en-v1.5` model from an offline image cache, so indexing does
+  not send request content outside the application and cannot block submission.
+- Kept decisions human-led and append-only. JIOC can record possible duplicate,
+  related request, existing released product or not-relevant outcomes after
+  reviewing the comparison. Every query and save re-applies task ownership and
+  route scope.
+- Removed the uncontrolled Confirmed category input from the JIOC progress
+  contract and interface. Priority and the chosen direct-child route remain the
+  only progress values required at that stage; the nullable historical column
+  remains for compatibility.
+- Built PostgreSQL 17.10 with checksum-pinned pgvector 0.8.1, migrated the
+  retained synthetic database to revision 0029 and backfilled all ten requests.
+  The worker indexed every projection and a live JIOC API and browser journey
+  returned hybrid matches with field evidence. The browser showed no Confirmed
+  category field.
+- Passed all 936 backend tests at 98.85 per cent line and 95.03 per cent branch
+  coverage, plus 327 frontend tests at 99.41 per cent line and 95.03 per cent
+  branch coverage. Ruff, MyPy, Bandit, dependency audits and all repository
+  gates passed. Refreshed Trivy scans reported zero High or Critical finding in
+  each of the API, web, PostgreSQL, Camunda and ClamAV images without an ignore
+  file. The API now uses digest-pinned Ubuntu 24.04 with Python 3.12, while the
+  PostgreSQL image compiles checksum-pinned pgvector in a discarded build stage
+  and runs on Alpine 3.23 without the unused privilege helper.
+
 ## 9 August 2026: Customer-owned intake and reviewed account requests
 
 - Replaced Customer-facing business-area and recipient-routing questions with a
@@ -681,7 +820,7 @@ gates remain above 95 per cent for both lines and branches.
 - Refined the Customer workspace on 9 August 2026. Service classification is
   now server-owned rather than Customer input, all remaining intake fields stay
   mandatory, and Customer actions live with their request and notification
-  instead of a duplicate staff `My work` navigation item.
+  instead of a duplicate staff `My actions` navigation item.
 - Replaced ambiguous organisation badges with `Routing function`, `Team staffed`
   and `Team awaiting staffing`. Added a complete profile for every signed-in
   user, including meaningful access, organisation assignment and session data,
@@ -713,7 +852,7 @@ gates remain above 95 per cent for both lines and branches.
   denials. JIOC and Platform views can drill down through configured descendants,
   command and Ops users remain inside their branch, and Team Managers remain at
   their exact team.
-- Kept My work and My requests transaction-focused. Routing users receive a
+- Kept My actions and My requests transaction-focused. Routing users receive a
   restrained operational landing, Team Managers land on their team Overview,
   QC receives quality and release measures, and Administrators receive platform
   control links. Date presets, adaptive throughput resolution, accessible child
@@ -772,3 +911,126 @@ gates remain above 95 per cent for both lines and branches.
   per cent branch coverage. Ruff, formatting, MyPy, Bandit, dependency audits,
   dead-code, documentation, type, lint, build, bundle and live-runtime checks
   passed.
+- Reworked team operations on 10 August 2026 around decisions rather than passive
+  navigation. Delivery Managers now land on linked attention, capacity, people,
+  calendar, handover and activity signals. Routing units receive a separate
+  claim-based decision home. The Kanban defaults to active flow, keeps exception
+  and terminal lanes discoverable, exposes complete filtered totals and opens an
+  authorised side inspector from either board or table presentation.
+- Added exact-unit routing queue reads, operational skill labels and migration
+  0030. A live OSG history check exposed that terminal cards could outlive active
+  task-based detail access. The request policy now permits history only for a
+  current Manager of the exact assigned team, retains concealed denial elsewhere
+  and is covered by allow-and-deny regression tests.
+- Closed the team-operations candidate with 940 backend tests at 98.88 per cent
+  statement and 95.06 per cent branch coverage, plus 337 frontend tests at 99.46
+  per cent line and 95.03 per cent branch coverage. All repository gates, static
+  analysis, dependency audits, the production build and the live PostgreSQL,
+  Camunda, OSG and JIOC walkthrough passed. Route-splitting reduced initial CSS
+  from 120.7 KB to 91.3 KB.
+- Repaired staff action navigation on 10 August 2026. Operational action cards
+  now deep-link to the correct role queue with an exact request selector, while
+  Customer actions retain the Customer request detail. The queue fails closed
+  when the selected action has completed, moved or left the actor's scope.
+- Separated `My actions`, the role-owned queue and the named organisation
+  workspace in primary navigation. Shared actions are labelled as available to
+  the unit, while claimed work is shown only to its named assignee.
+- Added migration 0031 to repair existing links and claimed audiences. A real
+  PostgreSQL downgrade and re-upgrade retained the repaired admin4 assignment
+  and `/triage?requestId=…` link for Russian Troop Movements.
+- The PostgreSQL rehearsal also exposed Alembic attempting unsupported equality
+  on `json` defaults. The schema-drift comparator now normalises JSON defaults
+  directly while retaining normal Alembic comparison for every other type.
+- Verified the reported journey in the in-app browser: admin4 opened Russian
+  Troop Movements from My actions and arrived at the selected JIOC routing
+  record with the full request, matching evidence and human decision controls.
+- Closed automated assurance with 951 backend tests at 98.88 per cent statement
+  and 95.06 per cent branch coverage, plus 338 frontend tests at 99.46 per cent
+  line and 95.00 per cent branch coverage. Repository policy, static analysis,
+  documentation, licence, dependency, production-build, reversible-migration
+  and PostgreSQL schema-drift gates passed.
+- Reduced previous-request comparison to secondary decision support on 10 August
+  2026. The JIOC routing record now shows a collapsed summary by default,
+  distinguishes strong matches from lower-confidence suggestions and reveals
+  search and evidence only on request. Expanded results remain in a 330 px or
+  42 viewport-height keyboard-focusable scrolling region.
+- Added regression coverage for collapsed disclosure, honest strong and weak
+  summaries, plural and mixed result states, keyboard access, recording a human
+  decision and returning to automatic comparison. The frontend closes with 339
+  tests at 99.46 per cent line and 95.02 per cent branch coverage.
+- Tightened organisation workspace membership and calendar interactions on 10
+  August 2026. Every People column now supports accessible ascending and
+  descending sorting, with Managers first by default. Roster changes require a
+  current Manager position in the exact workspace as well as the roster grant,
+  so a stale or misconfigured grant cannot authorise an ordinary Member.
+- Replaced the permanently visible calendar form with one central dialog. The
+  `Add event` command and every calendar day open that same form, with a clicked
+  day pre-populating the start and end date. The dialog restores focus when it
+  closes and closes automatically after a successful creation.
+- Verified the change with 952 backend tests at 98.87 per cent line and 95.00
+  per cent branch coverage, plus 365 frontend tests at 99.51 per cent line and
+  95.04 per cent branch coverage. Repository policy, OpenAPI, lint, type,
+  security, dead-code, documentation and production-build gates passed. A live
+  JIOC Manager walkthrough confirmed the sortable roster and both calendar
+  dialog entry points with no browser warnings or errors.
+- Removed an identity-authority ambiguity on 10 August 2026. Alan Rough was
+  correctly seeded as the JIOC Manager, but the account identity exposed only
+  the broad `JIOC Routing User` role. The compact identity now combines role and
+  position, while the account details and profile state `Manager in JIOC` and
+  name the associated local controls. Server-side membership and grant checks
+  remain authoritative.
+- Added position-presentation coverage for Manager, Member, mixed, loading,
+  unavailable and non-workspace accounts. All 367 frontend tests passed at
+  99.51 per cent line and 95.03 per cent branch coverage, together with the
+  repository checks and production bundle budget.
+- Personalised staff overviews on 10 August 2026 with a first-name greeting and
+  distinct personal and organisation workload regions. Aggregate measures now
+  name their authorised scope and state that they are not the user's personal
+  workload.
+- Reordered the primary navigation around the normal operating journey and
+  replaced generic sidebar labels with `Home`, `My assigned actions`,
+  purpose-specific queues, `Request tracking`, `Operational statistics` and
+  `Organisation directory`. Named workspaces now sit next to their queue and
+  all destinations retain one deterministic source.
+- Covered the new information hierarchy, navigation order, zero and error states,
+  QC and Administrator variants and axe semantics. The complete 367-test frontend
+  suite passed at 99.52 per cent line and 95.04 per cent branch coverage.
+- Made personal calendar visibility explicit on 10 August 2026. New personal
+  activity is now visible with detail to the member's exact unit by default from
+  either My calendar or the shared workspace. One unchecked `Private
+  appointment` control hides the title and notes when deliberately selected.
+- Removed the technical three-value privacy selector from creation and rejected
+  new availability-only personal writes at the service boundary. Existing
+  protected records remain unchanged, shared projections still redact before
+  response construction and Manager-only calendar controls remain independent
+  from personal sharing context.
+- Verified the calendar change with 953 backend tests at 98.87 per cent
+  statement and 95.00 per cent branch coverage, plus 368 frontend tests at 99.52
+  per cent line and 95.03 per cent branch coverage. The frontend suite includes
+  a unit-name lookup failure proving that visibility does not fall back to
+  private.
+- Refined staff Home pages after representative JIOC feedback on 10 August 2026.
+  Removed the direct-child organisation register and its unexpected statistics
+  links from Home. Organisation hierarchy comparison remains inside Operational
+  statistics.
+- Added a responsive quick-access surface generated by the same capability-aware
+  navigation model as the sidebar. Each interactive tile explains its purpose,
+  excludes the current Home destination and uses restrained entrance, hover and
+  keyboard-focus treatment with a reduced-motion fallback. All 368 frontend
+  tests passed at 99.52 per cent line and 95.06 per cent branch coverage.
+- Replaced the deprecated coordination vocabulary on 10 August 2026 with
+  `Incoming requests`, `Request coordination` and `Request Coordination User`
+  across React, FastAPI presentation defaults, Camunda task metadata, smoke
+  contracts and current documentation.
+- Made action ownership route-aware without changing access policy. Shared work
+  now resolves its already-authorised unit at read time and displays
+  `<unit> · Awaiting owner`; claimed work displays the claimant's name. The
+  action summary says `New request requires attention` while preserving stable
+  internal action codes.
+- Migrated existing scopes, request owners and projection snapshots to revision
+  `0032_coordination_language`. The rebuilt local stack retained its data and
+  PostgreSQL confirmed the new revision and values.
+- Verified 953 backend tests, then the additional defensive ownership branch,
+  at 98.87 per cent line and 95.02 per cent branch coverage. All 369 frontend
+  tests passed at 99.52 per cent line and 95.06 per cent branch coverage, and
+  every repository quality gate passed.

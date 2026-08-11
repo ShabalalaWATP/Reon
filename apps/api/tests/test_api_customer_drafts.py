@@ -207,7 +207,7 @@ async def test_draft_schema_and_non_customer_service_edges() -> None:
         "staff@example.test",
         "Synthetic Staff",
         UserRole.INTAKE_TRIAGE,
-        "JIOC",
+        "CRIOC",
     )
     service = DraftService(object())  # type: ignore[arg-type]
     with pytest.raises(ObjectNotFound):

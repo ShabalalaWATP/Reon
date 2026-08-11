@@ -52,7 +52,7 @@ async def test_requester_cancellation_closes_work_and_notifies_route(
 ) -> None:
     harness = api_harness
     request_id = UUID(await submit_request(harness))
-    team_id = await harness.unit_id("OSG_TEAM")
+    team_id = await harness.unit_id("SSG_TEAM")
     specialist_id = await harness.user_id("admin11")
     now = datetime.now(UTC)
     async with harness.sessions() as session, session.begin():

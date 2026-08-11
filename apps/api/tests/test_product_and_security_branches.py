@@ -67,7 +67,7 @@ async def test_product_service_conceals_denials_and_sanitises_filename() -> None
         "staff.synthetic@example.test",
         "Synthetic Staff",
         UserRole.INTAKE_TRIAGE,
-        "JIOC",
+        "CRIOC",
     )
     repository = ProductRepository(None)
     service = RequestService(cast(RequestRepository, repository))
@@ -171,7 +171,7 @@ async def test_staff_detail_is_concealed_after_route_membership_revocation(
     assert calls == [(UserRole.INTAKE_TRIAGE, True)]
 
     user_id = await api_harness.user_id("admin4")
-    unit_id = await api_harness.unit_id("JIOC")
+    unit_id = await api_harness.unit_id("CRIOC")
     async with api_harness.sessions() as session, session.begin():
         membership = await session.scalar(
             select(TeamMembership).where(

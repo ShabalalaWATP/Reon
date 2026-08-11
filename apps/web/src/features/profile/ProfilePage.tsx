@@ -13,6 +13,7 @@ import {
   profileMembershipText,
   profileRoleDescription,
   profileScopeLabel,
+  profileWorkspacePositionText,
 } from "./profileModel";
 import { PersonalProfileForm } from "./PersonalProfileForm";
 
@@ -27,6 +28,12 @@ export function ProfilePage() {
   const organisation = useQuery({
     queryKey: protectedQueryKeys.organisationUnits(user.id),
     queryFn: api.organisationUnits,
+    enabled: user.organisationUnitIds.length > 0,
+    staleTime: 60_000,
+  });
+  const workspaceAccess = useQuery({
+    queryKey: protectedQueryKeys.teamWorkspaces(user.id),
+    queryFn: api.teamWorkspaces,
     enabled: user.organisationUnitIds.length > 0,
     staleTime: 60_000,
   });
@@ -60,7 +67,7 @@ export function ProfilePage() {
             <div><dt>Account ID</dt><dd className="mono-ref">{user.username}</dd></div>
             <div><dt>Work email</dt><dd>{profile.data.email}</dd></div>
             <div><dt>Representative role</dt><dd>{roleLabels[user.role]}</dd></div>
-            <div><dt>Workspace access</dt><dd>{profileAccessLabel(user)}</dd></div>
+            <div><dt>Workspace access</dt><dd>{profileAccessLabel(user, workspaceAccess.data?.items ?? [])}</dd></div>
           </dl>
         </section>
 
@@ -77,6 +84,7 @@ export function ProfilePage() {
           <dl className="profile-definition-list">
             <div><dt>Operational scope</dt><dd>{profileScopeLabel(user)}</dd></div>
             <div><dt>Organisation assignments</dt><dd>{profileMembershipText(user.organisationUnitIds.length, memberships.map((unit) => unit.name), organisation.isError)}</dd></div>
+            {user.organisationUnitIds.length > 0 ? <div><dt>Workspace position</dt><dd>{profileWorkspacePositionText(user.organisationUnitIds.length, workspaceAccess.data?.items ?? [], workspaceAccess.isError)}</dd></div> : null}
           </dl>
           {user.role === "REQUESTER" ? <p className="profile-note">Customers do not choose or see an internal routing destination. Each request is visible only to its Customer and authorised staff.</p> : null}
         </section>

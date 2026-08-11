@@ -11,7 +11,7 @@ from istari_service.auth_service import PasswordHasher
 from istari_service.demo_membership_seed import seed_demo_memberships
 from istari_service.demo_workspace_fixtures import (
     DELIVERY_IDENTITY_FIXTURES,
-    OSG_IDENTITY_FIXTURES,
+    SSG_IDENTITY_FIXTURES,
     ROUTING_IDENTITY_FIXTURES,
 )
 from istari_service.management_seed import seed_management_grants
@@ -76,17 +76,17 @@ _BASE_IDENTITIES = (
     _identity(
         "Scott McTominay",
         UserRole.INTAKE_TRIAGE,
-        "JIOC",
+        "CRIOC",
         legacy="triage.1@example.test",
-        units=("JIOC",),
+        units=("CRIOC",),
         manager=True,
     ),
     _identity(
         "Callum McGregor",
         UserRole.SERVICE_COORDINATION,
-        "Shared command routing",
+        "Shared request coordination",
         legacy="coordination.2@example.test",
-        units=("DIGOC", "SYGOC", "MYGOC"),
+        units=("JOCK", "SYGOC", "MYGOC"),
         manager=True,
     ),
     _identity(
@@ -95,7 +95,7 @@ _BASE_IDENTITIES = (
         "Shared Ops routing",
         legacy="allocation.1@example.test",
         units=(
-            "NCGI_A_OPS",
+            "ACSA_B_OPS",
             "AURORA_OPS",
             "VERTEX_OPS",
             "NIMBUS_OPS",
@@ -106,24 +106,24 @@ _BASE_IDENTITIES = (
     _identity(
         "Ryan Christie",
         UserRole.INTAKE_TRIAGE,
-        "JIOC",
+        "CRIOC",
         legacy="triage.2@example.test",
-        units=("JIOC",),
+        units=("CRIOC",),
     ),
     _identity(
         "Grant Hanley",
         UserRole.DELIVERY_TEAM_LEAD,
-        "OSG Team",
+        "SSG Team",
         legacy="delivery.lead.1@example.test",
-        units=("OSG_TEAM",),
+        units=("SSG_TEAM",),
         manager=True,
     ),
     _identity(
         "Kenny McLean",
         UserRole.DELIVERY_TEAM_LEAD,
-        "OSG Team",
+        "SSG Team",
         legacy="delivery.lead.2@example.test",
-        units=("OSG_TEAM",),
+        units=("SSG_TEAM",),
         manager=True,
     ),
     _identity(
@@ -136,30 +136,30 @@ _BASE_IDENTITIES = (
     _identity(
         "Lewis Ferguson",
         UserRole.DELIVERY_SPECIALIST,
-        "OSG Team",
+        "SSG Team",
         legacy="specialist.1@example.test",
-        units=("OSG_TEAM",),
+        units=("SSG_TEAM",),
     ),
     _identity(
         "Nathan Patterson",
         UserRole.DELIVERY_SPECIALIST,
-        "OSG Team",
+        "SSG Team",
         legacy="specialist.2@example.test",
-        units=("OSG_TEAM",),
+        units=("SSG_TEAM",),
     ),
     _identity(
         "Ben Doak",
         UserRole.DELIVERY_SPECIALIST,
-        "OSG Team",
+        "SSG Team",
         legacy="specialist.3@example.test",
-        units=("OSG_TEAM",),
+        units=("SSG_TEAM",),
     ),
     _identity(
         "Che Adams",
         UserRole.DELIVERY_SPECIALIST,
-        "OSG Team",
+        "SSG Team",
         legacy="specialist.4@example.test",
-        units=("OSG_TEAM",),
+        units=("SSG_TEAM",),
     ),
     _identity(
         "Angus Gunn",
@@ -192,7 +192,7 @@ DEMO_IDENTITIES = tuple(
                     units=(fixture.unit_code,),
                     manager=fixture.manager,
                 )
-                for fixture in OSG_IDENTITY_FIXTURES
+                for fixture in SSG_IDENTITY_FIXTURES
             ),
             *(
                 _identity(

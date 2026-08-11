@@ -124,14 +124,14 @@ describe("platform administrator workspace", () => {
     mockFetch((url) => {
       paths.push(`${url.pathname}${url.search}`);
       if (url.pathname.endsWith("/auth/me")) return json(adminSession);
-      if (url.pathname.endsWith("/admin/users")) return json({ items: url.searchParams.get("query") ? [] : [{ ...adminManagedUser, role: "DELIVERY_SPECIALIST", memberships: [{ organisationUnitId: organisationUnit("OSG_TEAM").id, organisationUnitName: "OSG Team", organisationUnitKind: "TEAM" }] }, { ...adminManagedUser, id: "inactive", username: "admin3", displayName: "Erin Cuthbert", isActive: false }] });
+      if (url.pathname.endsWith("/admin/users")) return json({ items: url.searchParams.get("query") ? [] : [{ ...adminManagedUser, role: "DELIVERY_SPECIALIST", memberships: [{ organisationUnitId: organisationUnit("SSG_TEAM").id, organisationUnitName: "SSG Team", organisationUnitKind: "TEAM" }] }, { ...adminManagedUser, id: "inactive", username: "admin3", displayName: "Erin Cuthbert", isActive: false }] });
       throw new Error(`Unexpected ${url.pathname}`);
     });
     const user = userEvent.setup();
     const view = renderApp("/admin/users");
     expect(await screen.findByRole("heading", { name: "User accounts" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Manage John McGinn" })).toBeInTheDocument();
-    expect(screen.getByText("OSG Team")).toBeInTheDocument();
+    expect(screen.getByText("SSG Team")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Manage Erin Cuthbert" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "User accounts" })).toHaveClass("nav-link--active");
     expect(screen.queryByText("My requests")).not.toBeInTheDocument();
@@ -266,11 +266,11 @@ describe("platform administrator workspace", () => {
     render(<AdminUserForm disabled={false} onSubmit={submit} units={organisationUnits} />);
     await user.type(screen.getByLabelText("Name"), "Kieran Tierney");
     await user.type(screen.getByLabelText("Work email"), "kieran@example.test");
-    await user.type(screen.getByLabelText("Scope"), "OSG Team");
+    await user.type(screen.getByLabelText("Scope"), "SSG Team");
     await user.selectOptions(screen.getByLabelText("Representative role"), "DELIVERY_TEAM_LEAD");
     await user.click(screen.getByRole("button", { name: "Create user" }));
     expect(await screen.findByText("Select at least one compatible organisation unit.")).toBeInTheDocument();
-    await user.click(screen.getByLabelText(/OSG Team/));
+    await user.click(screen.getByLabelText(/SSG Team/));
     await user.selectOptions(screen.getByLabelText("Representative role"), "REQUESTER");
     expect(screen.getByText("This role does not require an organisation membership.")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Create user" }));
@@ -283,13 +283,13 @@ describe("platform administrator workspace", () => {
     render(<AdminUserForm disabled={false} onSubmit={submit} units={organisationUnits} />);
     await user.type(screen.getByLabelText("Name"), "Alan Rough");
     await user.type(screen.getByLabelText("Work email"), "alan@example.test");
-    await user.type(screen.getByLabelText("Scope"), "JIOC");
+    await user.type(screen.getByLabelText("Scope"), "CRIOC");
     await user.selectOptions(screen.getByLabelText("Representative role"), "INTAKE_TRIAGE");
     await user.selectOptions((await screen.findAllByRole("combobox"))[1], "MANAGER");
-    await user.click(screen.getByRole("checkbox", { name: /JIOC/ }));
+    await user.click(screen.getByRole("checkbox", { name: /CRIOC/ }));
     await user.click(screen.getByRole("button", { name: "Create user" }));
     expect(submit).toHaveBeenCalledWith(expect.objectContaining({
-      organisationUnitIds: [organisationUnit("JIOC").id],
+      organisationUnitIds: [organisationUnit("CRIOC").id],
       role: "INTAKE_TRIAGE",
       workspacePosition: "MANAGER",
     }), expect.anything());

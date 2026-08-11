@@ -23,6 +23,17 @@ an independent workspace position of Manager or Member and calculate workspace
 capabilities on the server from unit kind, global role, membership and explicit
 management authority.
 
+Present the broad representative role and effective workspace position as
+separate identity facts. The compact account identity may combine them, but the
+profile must identify each organisation and position explicitly. Presentation
+never replaces the server-side membership and grant decision.
+
+Present People as one sortable membership-history ledger across all unit kinds.
+The default order places current Managers before Members; every column exposes
+an accessible two-direction sort. Roster writes require the Manager position as
+well as explicit authority, so a grant alone cannot promote a regular user into
+local administration.
+
 Represent request collaboration as one active Lead and zero to ten active
 Contributors. Only the Lead is the Camunda assignee. Contributors receive
 application-level collaboration access, while linked work packages remain the
@@ -40,5 +51,7 @@ allocation or approval stage.
   workspace activity.
 - Routing and delivery workspaces share a shell but retain different tools.
 - Multi-Analyst collaboration is explicit without weakening Camunda authority.
+- Users can see when a broad routing role is accompanied by local Manager
+  authority instead of discovering that authority only through visible controls.
 - A later external calendar connector can consume the same redacted canonical
   events without becoming authoritative.

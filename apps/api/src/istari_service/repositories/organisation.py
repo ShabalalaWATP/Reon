@@ -1,4 +1,4 @@
-"""Organisation hierarchy, route validation and metadata-only tracking."""
+"""Organisation hierarchy, route validation and route-scoped tracking."""
 
 from __future__ import annotations
 
@@ -22,13 +22,17 @@ from istari_service.organisation_models import (
 from istari_service.repositories.configuration_policies import (
     load_request_configuration_policy,
 )
-from istari_service.repositories.organisation_tracking import tracked_requests
+from istari_service.repositories.organisation_tracking import (
+    tracked_request_detail,
+    tracked_requests,
+)
 from istari_service.repositories.routing_options import routing_workspace
 from istari_service.request_participant_models import RequestParticipant
 from istari_service.schemas.organisation import (
     OrganisationUnitView,
     RoutingOptionsWorkspace,
     TrackedRequest,
+    TrackedRequestDetail,
 )
 from istari_service.schemas.work import (
     AllocateRequest,
@@ -84,10 +88,6 @@ class SqlAlchemyOrganisationRepository:
     ) -> RoutingOptionsWorkspace:
         return await routing_workspace(self._session, request_id, status)
 
-    async def list_tracked_requests(self, actor: Actor) -> list[TrackedRequest]:
-        items, _cursor = await self.page_tracked_requests(actor, limit=100, cursor=None)
-        return items
-
     async def page_tracked_requests(
         self,
         actor: Actor,
@@ -101,6 +101,16 @@ class SqlAlchemyOrganisationRepository:
         return await tracked_requests(
             self._session, membership, limit=limit, cursor=cursor
         )
+
+    async def get_tracked_request_detail(
+        self,
+        actor: Actor,
+        request_id: UUID,
+    ) -> TrackedRequestDetail | None:
+        membership = route_membership_condition(actor)
+        if membership is None:
+            return None
+        return await tracked_request_detail(self._session, membership, request_id)
 
 
 async def resolve_routing_selection(

@@ -1,11 +1,11 @@
-"""Scoped SQLAlchemy adapter for manual related-record checks."""
+"""Scoped SQLAlchemy adapter for explainable related-request matching."""
 
 from __future__ import annotations
 
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, exists, or_, select
+from sqlalchemy import ColumnElement, exists, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,9 +25,11 @@ from istari_service.models import WorkflowTask as StoredWorkflowTask
 from istari_service.related_record_models import RequestLink, RequestLinkType
 from istari_service.repositories.event_store import append_request_event
 from istari_service.repositories.organisation import route_membership_condition
+from istari_service.repositories.related_record_search import RelatedRecordSearch
 from istari_service.repositories.work_scope import work_scope_conditions
 from istari_service.schemas.related_records import (
     RelatedRecordCandidate,
+    RelatedRecordCandidateList,
     RequestLinkCreate,
     RequestLinkView,
     RequestLinkWorkspace,
@@ -80,31 +82,15 @@ class SqlAlchemyRelatedRecordRepository:
         self,
         source_id: UUID,
         actor: Actor,
-        query: str,
+        query: str | None,
         limit: int,
-    ) -> list[RelatedRecordCandidate]:
-        membership = route_membership_condition(actor)
-        if membership is None:
-            return []
-        escaped = _escape_like(query.casefold())
-        pattern = f"%{escaped}%"
-        released = _released_product_exists()
-        rows = (
-            await self._session.execute(
-                select(ServiceRequest, released.label("product_available"))
-                .where(
-                    ServiceRequest.id != source_id,
-                    membership,
-                    or_(
-                        ServiceRequest.reference.ilike(pattern, escape="\\"),
-                        ServiceRequest.title.ilike(pattern, escape="\\"),
-                    ),
-                )
-                .order_by(ServiceRequest.updated_at.desc(), ServiceRequest.id)
-                .limit(limit)
-            )
-        ).all()
-        return [_candidate(request, available) for request, available in rows]
+    ) -> RelatedRecordCandidateList:
+        return await RelatedRecordSearch(self._session).search(
+            source_id,
+            actor,
+            query=query,
+            limit=limit,
+        )
 
     async def links(self, source_id: UUID) -> list[RequestLinkView]:
         target = ServiceRequest
@@ -159,7 +145,7 @@ class SqlAlchemyRelatedRecordRepository:
                 request_id=request.id,
                 actor_id=actor.id,
                 event_type="related_record_linked",
-                message="Manual related-record check recorded.",
+                message="Related-request decision recorded.",
                 prior_status=request.status,
                 next_status=request.status,
                 details={
@@ -227,7 +213,3 @@ def _link_view(
         actor_display_name=link.actor_display_name,
         created_at=link.created_at,
     )
-
-
-def _escape_like(value: str) -> str:
-    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")

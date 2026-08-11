@@ -8,7 +8,7 @@ from uuid import UUID
 from sqlalchemy import delete, select
 
 from api_helpers import current_item, submit_request
-from conftest import ApiHarness
+from conftest import ApiHarness, request_payload
 from istari_service.models import (
     ServiceRequest,
     UserRole,
@@ -54,11 +54,11 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
     triage = await current_item(harness)
     command_workspace = await _workspace(harness, triage["id"])
     assert [(unit["name"], unit["code"]) for unit in command_workspace["route"]] == [
-        ("JIOC", "JIOC")
+        ("CRIOC", "CRIOC")
     ]
     command_options = command_workspace["items"]
     assert [option["code"] for option in command_options] == [
-        "DIGOC",
+        "JOCK",
         "SYGOC",
         "MYGOC",
     ]
@@ -67,7 +67,6 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
         triage["id"],
         {
             "action": "progress",
-            "category": "Research support",
             "priority": "HIGH",
             "destinationUnitId": str(await harness.unit_id("NIMBUS_OPS")),
         },
@@ -79,7 +78,6 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
         triage["id"],
         {
             "action": "progress",
-            "category": "Research support",
             "priority": "HIGH",
             "destinationUnitId": str(sygoc_id),
         },
@@ -88,7 +86,7 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
     await harness.login("admin5")
     command = await current_item(harness)
     ops_workspace = await _workspace(harness, command["id"])
-    assert [unit["code"] for unit in ops_workspace["route"]] == ["JIOC", "SYGOC"]
+    assert [unit["code"] for unit in ops_workspace["route"]] == ["CRIOC", "SYGOC"]
     ops_options = ops_workspace["items"]
     assert [option["code"] for option in ops_options] == [
         "NIMBUS_OPS",
@@ -120,7 +118,7 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
     allocation = await current_item(harness)
     team_workspace = await _workspace(harness, allocation["id"])
     assert [unit["code"] for unit in team_workspace["route"]] == [
-        "JIOC",
+        "CRIOC",
         "SYGOC",
         "NIMBUS_OPS",
     ]
@@ -160,21 +158,36 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
     assert set(tracked) == {
         "id",
         "reference",
+        "title",
         "status",
         "currentOwner",
         "requiredBy",
+        "createdAt",
         "updatedAt",
         "route",
         "awaitingTeamStaffing",
     }
+    assert tracked["title"] == request_payload()["title"]
     assert tracked["currentOwner"] == "Team Manager"
     assert tracked["awaitingTeamStaffing"] is False
     assert [unit["name"] for unit in tracked["route"]] == [
-        "JIOC",
+        "CRIOC",
         "SYGOC",
         "Nimbus Ops",
         "Beacon Team",
     ]
+    tracked_detail = await harness.client.get(
+        f"/api/v1/tracked-requests/{request_id}"
+    )
+    assert tracked_detail.status_code == 200
+    assert tracked_detail.json()["title"] == request_payload()["title"]
+    assert tracked_detail.json()["description"] == request_payload()["description"]
+    assert {
+        "deliverable",
+        "clarifications",
+        "feedback",
+        "availableActions",
+    }.isdisjoint(tracked_detail.json())
 
     async with harness.sessions() as session:
         task = await session.scalar(
@@ -197,6 +210,9 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
         headers=harness.mutation_headers(),
     )
     assert denied.status_code == 404
+    assert (
+        await harness.client.get(f"/api/v1/tracked-requests/{request_id}")
+    ).status_code == 404
 
     await harness.login("admin37")
     beacon_items = (await harness.client.get("/api/v1/work-items")).json()["items"]
@@ -205,7 +221,7 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
     await harness.login("admin2")
     detail = await harness.client.get(f"/api/v1/requests/{request_id}")
     assert detail.json()["assignedDeliveryTeam"] == "Beacon Team"
-    assert "OSG_TEAM" not in detail.text
+    assert "SSG_TEAM" not in detail.text
 
     await harness.login("admin5")
     assert (
@@ -234,7 +250,7 @@ async def test_organisation_reference_data_is_authenticated_and_complete(
     items = response.json()["items"]
     assert len(items) == 40
     assert sum(item["staffingStatus"] == "STAFFED" for item in items) == 27
-    assert next(item for item in items if item["code"] == "OSG_TEAM")["name"] == (
-        "OSG Team"
+    assert next(item for item in items if item["code"] == "SSG_TEAM")["name"] == (
+        "SSG Team"
     )
     assert all("candidateGroup" not in item for item in items)

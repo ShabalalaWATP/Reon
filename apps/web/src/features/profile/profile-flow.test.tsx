@@ -5,13 +5,18 @@ import { describe, expect, it } from "vitest";
 
 import { organisationUnit, organisationUnits, requesterSession } from "../../test/fixtures";
 import { json, mockFetch, renderApp } from "../../test/render";
-import { profileMembershipText } from "./profileModel";
+import {
+  profileMembershipText,
+  profilePositionLabel,
+  profileWorkspacePositionText,
+} from "./profileModel";
 
 const personalProfile = {
   email: "admin2@istari.example.test",
   profileTeam: null,
   rankOrGrade: null,
   serviceNumber: null,
+  skills: [],
   additionalInformation: null,
   version: 1,
 };
@@ -21,7 +26,23 @@ describe("personal profile", () => {
     expect(profileMembershipText(1, [], true)).toBe("Organisation assignments unavailable");
     expect(profileMembershipText(0, [], false)).toBe("No organisation unit assignment required");
     expect(profileMembershipText(1, [], false)).toBe("Loading organisation assignments…");
-    expect(profileMembershipText(2, ["OSG Team", "Cedar Team"], false)).toBe("OSG Team, Cedar Team");
+    expect(profileMembershipText(2, ["SSG Team", "Cedar Team"], false)).toBe("SSG Team, Cedar Team");
+  });
+
+  it("describes every workspace-position state", () => {
+    const manager = { teamId: "crioc", teamCode: "CRIOC", teamName: "CRIOC", workspacePosition: "MANAGER" as const, grantId: null, permissions: [] };
+    const member = { ...manager, teamId: "jock", teamCode: "JOCK", teamName: "JOCK", workspacePosition: "MEMBER" as const };
+    const legacy = { ...member, teamId: "sygoc", teamCode: "SYGOC", teamName: "SYGOC", workspacePosition: undefined };
+
+    expect(profilePositionLabel([])).toBeNull();
+    expect(profilePositionLabel([manager])).toBe("Manager");
+    expect(profilePositionLabel([manager, member])).toBe("Mixed positions");
+    expect(profileWorkspacePositionText(1, [], true)).toBe("Workspace positions unavailable");
+    expect(profileWorkspacePositionText(0, [], false)).toBe("No workspace position required");
+    expect(profileWorkspacePositionText(1, [], false)).toBe("Loading workspace positions…");
+    expect(profileWorkspacePositionText(3, [manager, member, legacy], false)).toBe(
+      "Manager in CRIOC; Member in JOCK; Member in SYGOC",
+    );
   });
 
   it("gives a Customer a current profile without internal routing scope", async () => {
@@ -41,17 +62,17 @@ describe("personal profile", () => {
   });
 
   it("shows a staff member's current organisation assignments", async () => {
-    const osg = organisationUnit("OSG_TEAM");
+    const ssg = organisationUnit("SSG_TEAM");
     const manager = {
       ...requesterSession,
       user: {
         ...requesterSession.user,
-        id: "manager-osg",
+        id: "manager-ssg",
         username: "admin8",
         displayName: "Grant Hanley",
         role: "DELIVERY_TEAM_LEAD" as const,
-        scope: "OSG Team",
-        organisationUnitIds: [osg.id],
+        scope: "SSG Team",
+        organisationUnitIds: [ssg.id],
       },
     };
     mockFetch((url) => {
@@ -63,18 +84,55 @@ describe("personal profile", () => {
 
     renderApp("/profile");
     expect(await screen.findByRole("heading", { name: "Grant Hanley" })).toBeInTheDocument();
-    expect(screen.getAllByText("OSG Team").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("SSG Team").length).toBeGreaterThan(0);
     expect(screen.getByText("Team management")).toBeInTheDocument();
   });
 
+  it("distinguishes a representative routing role from Manager authority", async () => {
+    const crioc = organisationUnit("CRIOC");
+    const manager = {
+      ...requesterSession,
+      user: {
+        ...requesterSession.user,
+        id: "manager-crioc",
+        username: "admin74",
+        displayName: "Alan Rough",
+        role: "INTAKE_TRIAGE" as const,
+        scope: "CRIOC",
+        organisationUnitIds: [crioc.id],
+      },
+    };
+    mockFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(manager);
+      if (url.pathname.endsWith("/profile")) return json(personalProfile);
+      if (url.pathname.endsWith("/organisation/units")) return json({ items: organisationUnits });
+      if (url.pathname.endsWith("/team-workspaces")) return json({ items: [{
+        teamId: crioc.id,
+        teamCode: "CRIOC",
+        teamName: "CRIOC",
+        unitKind: "ROOT",
+        workspacePosition: "MANAGER",
+        grantId: "crioc-roster-grant",
+        permissions: ["ROSTER"],
+      }] });
+      throw new Error(`Unexpected ${url.pathname}`);
+    }, true, true, false);
+
+    renderApp("/profile");
+    expect(await screen.findByRole("heading", { name: "Alan Rough" })).toBeInTheDocument();
+    expect(await screen.findByText("CRIOC Routing User · Manager")).toBeInTheDocument();
+    expect(await screen.findByText("Manager in CRIOC")).toBeInTheDocument();
+    expect(await screen.findByText("CRIOC routing; Manager controls for CRIOC")).toBeInTheDocument();
+  });
+
   it("makes loading and unavailable staff assignments explicit", async () => {
-    const osg = organisationUnit("OSG_TEAM");
+    const ssg = organisationUnit("SSG_TEAM");
     const manager = {
       ...requesterSession,
       user: {
         ...requesterSession.user,
         role: "DELIVERY_TEAM_LEAD" as const,
-        organisationUnitIds: [osg.id],
+        organisationUnitIds: [ssg.id],
       },
     };
     let resolveOrganisation: (response: Response) => void = () => undefined;
@@ -104,6 +162,7 @@ describe("personal profile", () => {
           profileTeam: "Fictional Customer Team",
           rankOrGrade: "Grade 7",
           serviceNumber: "SYN-1042",
+          skills: ["Research", "Data analysis"],
           additionalInformation: "Synthetic profile context.",
           version: 2,
         });
@@ -117,6 +176,7 @@ describe("personal profile", () => {
     await user.type(await screen.findByLabelText(/Team or business area/), "Fictional Customer Team");
     await user.type(screen.getByLabelText(/Rank or grade/), "Grade 7");
     await user.type(screen.getByLabelText(/Service number/), "SYN-1042");
+    await user.type(screen.getByLabelText(/Operational skills/), "Research, Data analysis");
     await user.type(screen.getByLabelText(/Additional information/), "Synthetic profile context.");
     await user.click(screen.getByRole("button", { name: "Save personal details" }));
 
@@ -124,6 +184,7 @@ describe("personal profile", () => {
       profileTeam: "Fictional Customer Team",
       rankOrGrade: "Grade 7",
       serviceNumber: "SYN-1042",
+      skills: ["Research", "Data analysis"],
       additionalInformation: "Synthetic profile context.",
       expectedVersion: 1,
     }));
@@ -151,6 +212,7 @@ describe("personal profile", () => {
       profileTeam: null,
       rankOrGrade: "Grade 6",
       serviceNumber: null,
+      skills: [],
       additionalInformation: null,
       expectedVersion: 1,
     }));
@@ -179,8 +241,11 @@ describe("personal profile", () => {
     fireEvent.change(screen.getByLabelText(/Additional information/), {
       target: { value: "I".repeat(2001) },
     });
+    fireEvent.change(screen.getByLabelText(/Operational skills/), {
+      target: { value: Array.from({ length: 13 }, (_, index) => `Skill ${index}`).join(", ") },
+    });
 
-    expect(await screen.findAllByRole("alert")).toHaveLength(4);
+    expect(await screen.findAllByRole("alert")).toHaveLength(5);
     expect(screen.getByRole("button", { name: "Save personal details" })).toBeDisabled();
   });
 });

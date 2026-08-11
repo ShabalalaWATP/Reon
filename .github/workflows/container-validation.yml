@@ -66,27 +66,27 @@ jobs:
           timeout --signal=TERM --kill-after=10s 3m docker compose run --rm --no-deps migrator alembic downgrade -1
           timeout --signal=TERM --kill-after=10s 3m docker compose run --rm --no-deps migrator alembic upgrade head
           timeout --signal=TERM --kill-after=10s 3m docker compose run --rm --no-deps api alembic check
-      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: istari-service-local-api
           severity: HIGH,CRITICAL
           exit-code: "1"
-      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: istari-service-local-web
           severity: HIGH,CRITICAL
           exit-code: "1"
-      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
-          image-ref: istari/postgres-local:17.10-alpine3.23
+          image-ref: istari/postgres-local:17.10-pgvector0.8.1-alpine3.23
           severity: HIGH,CRITICAL
           exit-code: "1"
-      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: istari/camunda-local:8.9.14
           severity: HIGH,CRITICAL
           exit-code: "1"
-      - uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: istari/clamav-local:1.5.3
           severity: HIGH,CRITICAL
@@ -101,11 +101,11 @@ jobs:
           done <<'IMAGES'
           api=istari-service-local-api
           web=istari-service-local-web
-          postgres=istari/postgres-local:17.10-alpine3.23
+          postgres=istari/postgres-local:17.10-pgvector0.8.1-alpine3.23
           camunda=istari/camunda-local:8.9.14
           clamav=istari/clamav-local:1.5.3
           IMAGES
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: container-sboms
           path: sbom/*.cdx.json

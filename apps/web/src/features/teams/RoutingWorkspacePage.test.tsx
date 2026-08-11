@@ -13,29 +13,29 @@ const routingManager: Session = {
   ...requesterSession,
   user: {
     ...requesterSession.user,
-    id: "manager-jioc",
+    id: "manager-crioc",
     username: "admin74",
     displayName: "Alan Rough",
     role: "INTAKE_TRIAGE",
-    scope: "JIOC",
+    scope: "CRIOC",
   },
 };
 const routingMember: Session = {
   ...routingManager,
   user: {
     ...routingManager.user,
-    id: "member-jioc",
+    id: "member-crioc",
     username: "admin75",
     displayName: "Willie Ormond",
   },
 };
 const managerAccess: TeamWorkspaceAccess = {
-  teamId: "jioc",
-  teamCode: "JIOC",
-  teamName: "JIOC",
+  teamId: "crioc",
+  teamCode: "CRIOC",
+  teamName: "CRIOC",
   unitKind: "ROOT",
   workspacePosition: "MANAGER",
-  grantId: "grant-jioc",
+  grantId: "grant-crioc",
   permissions: ["STATISTICS", "ROSTER", "CALENDAR"],
   views: ["OVERVIEW", "QUEUE", "CALENDAR", "PEOPLE", "STATISTICS", "HANDOVER", "ACTIVITY"],
 };
@@ -43,7 +43,7 @@ const managerAccess: TeamWorkspaceAccess = {
 describe("routing organisation workspace", () => {
   it("presents claim-based queue decisions without a manager approval layer", async () => {
     mockRoutingApi(routingManager, managerAccess);
-    const view = renderApp("/teams/jioc/queue");
+    const view = renderApp("/teams/crioc/queue");
     expect(await screen.findByRole("heading", { name: "Current queue" })).toBeInTheDocument();
     expect(screen.getByText(/Manager status does not add an approval stage/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open routing actions" })).toHaveAttribute("href", "/triage");
@@ -54,7 +54,7 @@ describe("routing organisation workspace", () => {
     const bodies: Array<Record<string, unknown>> = [];
     mockRoutingApi(routingManager, managerAccess, bodies);
     const user = userEvent.setup();
-    renderApp("/teams/jioc/handover");
+    renderApp("/teams/crioc/handover");
     expect(await screen.findByRole("heading", { name: "Handover and decisions" })).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText(/^Record type/), "RISK");
     await user.type(screen.getByLabelText(/^Title/), "Synthetic routing risk");
@@ -64,14 +64,16 @@ describe("routing organisation workspace", () => {
     await user.type(screen.getByLabelText(/^Resolution/), "The additional context was supplied and accepted.");
     await user.click(screen.getByRole("button", { name: "Resolve record" }));
     await waitFor(() => expect(bodies).toHaveLength(2));
-    expect(bodies[0]).toMatchObject({ kind: "RISK", grantId: "grant-jioc" });
-    expect(bodies[1]).toMatchObject({ expectedVersion: 1, grantId: "grant-jioc" });
+    expect(bodies[0]).toMatchObject({ kind: "RISK", grantId: "grant-crioc" });
+    expect(bodies[1]).toMatchObject({ expectedVersion: 1, grantId: "grant-crioc" });
   });
 
   it("gives a routing Member calendar self-service without unit controls", async () => {
     const memberAccess = { ...managerAccess, workspacePosition: "MEMBER" as const, grantId: null, permissions: [] };
     mockRoutingApi(routingMember, memberAccess);
-    renderApp("/teams/jioc/calendar");
+    const user = userEvent.setup();
+    renderApp("/teams/crioc/calendar");
+    await user.click(await screen.findByRole("button", { name: "Add event" }));
     expect(await screen.findByRole("heading", { name: "Add calendar activity" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "My event" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Unit event" })).not.toBeInTheDocument();
@@ -80,23 +82,32 @@ describe("routing organisation workspace", () => {
   });
 
   it("summarises the routing unit and its authorised descendant statistics", async () => {
-    mockRoutingApi(routingManager, managerAccess);
-    renderApp("/teams/jioc/overview");
-    expect(await screen.findByRole("heading", { name: "JIOC" })).toBeInTheDocument();
+    mockRoutingApi(routingManager, managerAccess, [], { workItems: [
+      routingWork({ id: "available" }),
+      routingWork({ id: "mine", assigneeId: "manager-crioc", assigneeDisplayName: "Alan Rough", stage: "INFORMATION_REQUIRED" }),
+    ] });
+    renderApp("/teams/crioc/overview");
+    expect(await screen.findByRole("heading", { name: "CRIOC" })).toBeInTheDocument();
     expect(screen.getByText("Shared routing workspace for queue decisions, people, calendar, statistics and handover.")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Routing decisions" })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Available to claim").closest("div")).toHaveTextContent("1"));
+    expect(screen.getByText("Claimed by you").closest("div")).toHaveTextContent("1");
+    const decisions = screen.getByRole("region", { name: "Routing decisions" });
+    expect(within(decisions).getByText("Information required").closest("div")).toHaveTextContent("1");
+    expect(screen.getByRole("heading", { name: "Current stages" })).toBeInTheDocument();
     expect(await screen.findByText("Received in 30 days")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Full statistics" })).toHaveAttribute("href", "/statistics?scopeId=scope-jioc&unitId=jioc");
-    expect(within(screen.getByRole("navigation", { name: "Workspace overview destinations" })).getByRole("link", { name: "Queue" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Full statistics" })).toHaveAttribute("href", "/statistics?scopeId=scope-crioc&unitId=crioc");
+    expect(screen.getByRole("link", { name: "Open routing queue" })).toHaveAttribute("href", "/triage");
   });
 
   it("shows claimed and available routing work and recovers a failed queue read", async () => {
     const workItems: WorkItem[] = [
       routingWork({ id: "available", assigneeId: null, assigneeDisplayName: null }),
-      routingWork({ id: "claimed", assigneeId: "member-jioc", assigneeDisplayName: null }),
+      routingWork({ id: "claimed", assigneeId: "member-crioc", assigneeDisplayName: null }),
     ];
     mockRoutingApi(routingManager, managerAccess, [], { workItems, workItemFailures: 1 });
     const user = userEvent.setup();
-    renderApp("/teams/jioc/queue");
+    renderApp("/teams/crioc/queue");
     expect(await screen.findByRole("heading", { name: "Routing queue could not be loaded" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("table", { name: "Current routing work visible to you" })).toBeInTheDocument();
@@ -110,7 +121,7 @@ describe("routing organisation workspace", () => {
       { id: "link-1", kind: "LINK", status: "RESOLVED", title: "Reference service", body: "A public-safe operating reference.", url: "https://example.test/reference", createdByDisplayName: "Alan Rough", resolution: "The reference was incorporated into the handover.", version: 2, createdAt: "2026-08-09T09:00:00Z", updatedAt: "2026-08-09T10:00:00Z" },
     ];
     mockRoutingApi(routingMember, memberAccess, [], { records });
-    renderApp("/teams/jioc/handover");
+    renderApp("/teams/crioc/handover");
     expect(await screen.findByRole("link", { name: "Open useful link" })).toHaveAttribute("href", "https://example.test/reference");
     expect(screen.getByText(/The reference was incorporated/)).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Add shared context" })).not.toBeInTheDocument();
@@ -120,7 +131,7 @@ describe("routing organisation workspace", () => {
   it("recovers an unavailable collaboration register and reports write conflicts", async () => {
     mockRoutingApi(routingManager, managerAccess, [], { recordFailures: 1, mutationFailure: true });
     const user = userEvent.setup();
-    renderApp("/teams/jioc/handover");
+    renderApp("/teams/crioc/handover");
     expect(await screen.findByRole("heading", { name: "Workspace records could not be loaded" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("heading", { name: "No workspace records" })).toBeInTheDocument();
@@ -134,7 +145,7 @@ describe("routing organisation workspace", () => {
     const bodies: Array<Record<string, unknown>> = [];
     mockRoutingApi(routingManager, managerAccess, bodies, { resolveFailure: true });
     const user = userEvent.setup();
-    renderApp("/teams/jioc/handover");
+    renderApp("/teams/crioc/handover");
     await screen.findByRole("heading", { name: "Handover and decisions" });
     await user.selectOptions(screen.getByLabelText(/^Record type/), "LINK");
     await user.type(screen.getByLabelText(/^Title/), "Synthetic operating reference");
@@ -154,8 +165,8 @@ describe("routing organisation workspace", () => {
 
   it("shows explicit zeroes when a routing workspace has no recorded activity", async () => {
     mockRoutingApi(routingManager, managerAccess, [], { omitMemberCount: true, statisticsSummary: [] });
-    renderApp("/teams/jioc/overview");
-    expect(await screen.findByRole("heading", { name: "JIOC" })).toBeInTheDocument();
+    renderApp("/teams/crioc/overview");
+    expect(await screen.findByRole("heading", { name: "CRIOC" })).toBeInTheDocument();
     expect((await screen.findByText("Members")).closest("div")).toHaveTextContent("0");
     const serviceMeasures = await screen.findByRole("region", { name: "Team service measures" });
     expect(within(serviceMeasures).getByText("Received in 30 days").closest("div")).toHaveTextContent("0");
@@ -189,7 +200,7 @@ function mockRoutingApi(
     if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
     if (url.pathname.endsWith("/team-workspaces")) return json({ items: [access] });
     if (url.pathname.endsWith(`/team-workspaces/${access.teamId}`)) return json({ access, managerCount: 1, ...(options.omitMemberCount ? {} : { memberCount: 1 }), analystCount: 0, activeWorkCount: 2, dueSoonCount: 1, overdueCount: 0 });
-    if (url.pathname.endsWith("/statistics/scopes")) return json({ items: [{ id: "scope-jioc", unitId: "jioc", name: "JIOC", kind: "ROOT", includeDescendants: true, units: [{ id: "jioc", parentId: null, name: "JIOC", kind: "ROOT", depth: 0 }] }] });
+    if (url.pathname.endsWith("/statistics/scopes")) return json({ items: [{ id: "scope-crioc", unitId: "crioc", name: "CRIOC", kind: "ROOT", includeDescendants: true, units: [{ id: "crioc", parentId: null, name: "CRIOC", kind: "ROOT", depth: 0 }] }] });
     if (url.pathname.endsWith("/statistics")) return json({ summary: options.statisticsSummary ?? [{ key: "received", label: "Received", value: 8, unit: "count", suppressed: false }, { key: "completed", label: "Completed", value: 3, unit: "count", suppressed: false }, { key: "released", label: "Released", value: 2, unit: "count", suppressed: false }] });
     if (url.pathname.endsWith("/work-items")) {
       workItemReads += 1;

@@ -28,10 +28,10 @@ const evolution: StatisticsEvolution = {
     name: "Whole platform",
     kind: "PLATFORM",
     includeDescendants: true,
-    units: [{ id: filters.unitId, parentId: null, name: "JIOC", kind: "ROOT", depth: 0 }],
+    units: [{ id: filters.unitId, parentId: null, name: "CRIOC", kind: "ROOT", depth: 0 }],
   },
-  selectedUnit: { id: filters.unitId, parentId: null, name: "JIOC", kind: "ROOT", depth: 0 },
-  breadcrumb: [{ id: filters.unitId, parentId: null, name: "JIOC", kind: "ROOT", depth: 0 }],
+  selectedUnit: { id: filters.unitId, parentId: null, name: "CRIOC", kind: "ROOT", depth: 0 },
+  breadcrumb: [{ id: filters.unitId, parentId: null, name: "CRIOC", kind: "ROOT", depth: 0 }],
   range: {
     fromDate: filters.from,
     toDate: filters.to,

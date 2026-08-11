@@ -64,7 +64,7 @@ def request(status: RequestStatus, *, aware: bool = True) -> ServiceRequest:
         sensitivity="STANDARD",
         handling_instructions="Synthetic content only.",
         status=status,
-        current_owner="OSG Team",
+        current_owner="SSG Team",
         priority="HIGH",
         updated_at=now if aware else now.replace(tzinfo=None),
         version=2,
@@ -118,6 +118,7 @@ def item(
             version=1,
             linkedRequestId=None,
             availableColumns=[],
+            changedAt=datetime.now(UTC),
         ),
         datetime.now(UTC) + timedelta(seconds=days),
     )

@@ -26,6 +26,18 @@ available:
 uv run --directory apps/api --env-file ../../.env uvicorn istari_service.main:app --reload
 ```
 
+Source-running the worker with semantic request matching enabled also needs the
+approved model in its offline cache. Download it once during an authorised
+development setup, then start the worker without network-dependent model access:
+
+```powershell
+uv run --directory apps/api python -c "from fastembed import TextEmbedding; TextEmbedding(model_name='BAAI/bge-small-en-v1.5', cache_dir='.local/request-embedding-cache')"
+uv run --directory apps/api --env-file ../../.env istari-worker
+```
+
+The normal Compose image bakes and checksum-verifies this cache during its
+build, so the runtime containers do not download request content or model data.
+
 The normal full-stack entry point is the guarded helper from the repository root:
 
 ```powershell

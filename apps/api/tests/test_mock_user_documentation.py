@@ -36,7 +36,5 @@ def test_documented_user_directory_matches_every_seeded_identity() -> None:
     assert list(documented) == [f"admin{index}" for index in range(1, 100)]
 
 
-def test_mock_user_reference_is_a_locator_not_a_duplicate_roster() -> None:
-    reference = (ROOT / "docs/reference/MOCK_USERS.md").read_text(encoding="utf-8")
-    assert "ORGANISATION_AND_ROUTING.md#complete-synthetic-user-directory" in reference
-    assert reference.count("| `admin") == 0
+def test_synthetic_user_directory_has_no_duplicate_reference_document() -> None:
+    assert not (ROOT / "docs/reference/MOCK_USERS.md").exists()

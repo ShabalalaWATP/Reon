@@ -53,7 +53,7 @@ PLAN_QUERIES = {
     "board": """
         SELECT id, updated_at
         FROM work_packages
-        WHERE team_id = CAST(:osg_team_id AS UUID)
+        WHERE team_id = CAST(:ssg_team_id AS UUID)
         ORDER BY updated_at DESC, id DESC
         LIMIT 51
     """,
@@ -87,7 +87,7 @@ async def query_plan_evidence(
     parameters = {
         "requester_id": context.requester_id,
         "request_id": context.request_id,
-        "osg_team_id": context.osg_team_id,
+        "ssg_team_id": context.ssg_team_id,
         "triage_unit_id": triage_unit_id,
     }
     async with sessions() as session, session.begin():

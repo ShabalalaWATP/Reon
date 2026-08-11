@@ -43,15 +43,15 @@ async def seed_request_feeds(
     requester_id = await session.scalar(
         select(User.id).where(User.username == "admin2")
     )
-    jioc_id = await session.scalar(
-        select(OrganisationUnit.id).where(OrganisationUnit.code == "JIOC")
+    crioc_id = await session.scalar(
+        select(OrganisationUnit.id).where(OrganisationUnit.code == "CRIOC")
     )
-    if requester_id is None or jioc_id is None:
-        raise RuntimeError("admin2 and the JIOC unit must exist before scale seeding")
+    if requester_id is None or crioc_id is None:
+        raise RuntimeError("admin2 and the CRIOC unit must exist before scale seeding")
     request_ids = [fixture_id("request", sequence) for sequence in range(1, target + 1)]
     added_requests = await _seed_requests(session, requester_id, request_ids)
     added_drafts = await _seed_drafts(session, requester_id, target)
-    added_routes = await _seed_routes(session, jioc_id, request_ids)
+    added_routes = await _seed_routes(session, crioc_id, request_ids)
     added_instances = await _seed_instances(session, request_ids)
     added_tasks = await _seed_tasks(session, request_ids)
     event_count = await _seed_history(session, request_ids[0], requester_id, target)
@@ -118,7 +118,7 @@ async def _seed_requests(
                 sensitivity="STANDARD",
                 handling_instructions="Synthetic data only.",
                 status=RequestStatus.TRIAGE_REVIEW,
-                current_owner="JIOC Routing",
+                current_owner="CRIOC Routing",
                 created_at=changed_at,
                 updated_at=changed_at,
             )
@@ -148,13 +148,13 @@ async def _seed_drafts(session: AsyncSession, requester_id: UUID, target: int) -
 
 
 async def _seed_routes(
-    session: AsyncSession, jioc_id: UUID, request_ids: list[UUID]
+    session: AsyncSession, crioc_id: UUID, request_ids: list[UUID]
 ) -> int:
     existing = await _existing_ids(
         session, RequestRouteSelection.request_id, request_ids
     )
     rows = [
-        RequestRouteSelection(request_id=request_id, unit_id=jioc_id, position=0)
+        RequestRouteSelection(request_id=request_id, unit_id=crioc_id, position=0)
         for request_id in request_ids
         if request_id not in existing
     ]
@@ -200,7 +200,7 @@ async def _seed_tasks(session: AsyncSession, request_ids: list[UUID]) -> int:
                 workflow_instance_id=fixture_id("instance", sequence),
                 task_key=f"performance-task-{sequence:06d}",
                 element_id="triage_review",
-                name="JIOC routing review",
+                name="CRIOC routing review",
                 candidate_role=UserRole.INTAKE_TRIAGE,
                 expected_status=RequestStatus.TRIAGE_REVIEW,
                 status=WorkflowTaskStatus.OPEN,

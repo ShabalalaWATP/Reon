@@ -61,6 +61,7 @@ class BoardItem(BoardModel):
     version: int
     linked_request_id: UUID | None
     available_columns: list[BoardColumn]
+    changed_at: datetime
 
 
 class SavedBoardViewResult(BoardModel):
@@ -73,6 +74,8 @@ class SavedBoardViewResult(BoardModel):
 class BoardResult(BoardModel):
     items: list[BoardItem]
     next_cursor: str | None
+    column_counts: dict[BoardColumn, int]
+    total_count: int = Field(ge=0)
     wip_limits: dict[str, int]
     configuration_version: int
     saved_views: list[SavedBoardViewResult]

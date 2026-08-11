@@ -32,6 +32,7 @@ from istari_service.repositories.request_scope import scoped_request
 from istari_service.repositories.request_views import (
     build_request_detail,
 )
+from istari_service.request_search_projection import new_search_document
 from istari_service.schemas.requests import (
     RequestCancel,
     RequestCreate,
@@ -96,10 +97,11 @@ class SqlAlchemyRequestRepository(RequestCustomerRepositoryMixin):
             reference=f"SR-{now.year}-{request_id.hex[:8].upper()}",
             requester_id=actor.id,
             status=RequestStatus.ROUTING_PENDING,
-            current_owner="JIOC Routing",
+            current_owner="CRIOC Routing",
             **values,
         )
         self._session.add(request)
+        self._session.add(new_search_document(request_id, command))
         await self._session.flush()
         pin = await self._configuration_pins.pin_request(request_id, now=now)
         pinned_process_id = pin.snapshot.get("processId")

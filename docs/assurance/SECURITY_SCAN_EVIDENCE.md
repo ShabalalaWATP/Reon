@@ -2,17 +2,45 @@
 
 ## Unified workspace source verification, 10 August 2026
 
-The complete current source passed Ruff formatting and lint, MyPy across 282
-source files, Bandit across 42,421 lines with zero low, medium or high finding,
-and the repository's Knip and Vulture dead-code gates. Strict `pip-audit` of the
-locked Python dependency export and `pnpm audit --audit-level=high` both reported
-no known vulnerability. The 926-test backend suite passed at 98.84 per cent line
-and 95.08 per cent branch coverage; the 326-test frontend suite passed at 99.41
-per cent line and 95.01 per cent branch coverage. These results cover the unified
-workspace, access-assistance and global-classification changes. The dated image,
-SBOM, secret, Semgrep and ZAP records below were not regenerated and must remain
-tied to their recorded candidate rather than being represented as scans of this
-uncommitted working tree.
+The complete current source passed Ruff formatting and lint across 485 Python
+files, MyPy across 290 source files, Bandit across 43,405 lines with zero low,
+medium or high finding, and the repository's Knip and Vulture dead-code gates.
+Strict `pip-audit` of the lock-derived third-party dependency export and
+`pnpm audit --audit-level=high` both reported no known vulnerability. The
+936-test backend suite passed at 98.85 per cent line and 95.03 per cent branch
+coverage; the 327-test frontend suite passed at 99.41 per cent line and 95.03
+per cent branch coverage.
+
+Trivy 0.69.3, using its refreshed 10 August database, reported zero High or
+Critical findings in each finished local image: API, web, PostgreSQL 17.10,
+Camunda 8.9.14 and ClamAV 1.5.3. No ignore file or vulnerability exception was
+used. The relevant final image identities were:
+
+| Image | Local image identity | High | Critical |
+|---|---|---:|---:|
+| API | `sha256:4da1772874878f163db8aeea5e8f8c630302ae0c02c05d24b5398ac8d71d5ee7` | 0 | 0 |
+| Web | `sha256:44bc3f3d339453e080e0a98e6580d05ce7c2b0cee984bb171740b77f667803ee` | 0 | 0 |
+| PostgreSQL | `sha256:df0ccbdf138bbef48d80b43aae6dde1002a92b272801880327a5746485d9de6d` | 0 | 0 |
+| Camunda | `sha256:f521ca02d756763c8eb65b60ccfedf9694756112216e78983e0e7793963ce1ab` | 0 | 0 |
+| ClamAV | `sha256:7f48a18200a481016b882dbca2e25cd0742f3fdd2f84f1e4524b44cb400cf63e` | 0 | 0 |
+
+The API runtime moved from an unfixed Debian 12 base to digest-pinned Ubuntu
+24.04 and runs Python 3.12.3 as UID 10001. PostgreSQL now uses a digest-pinned
+Alpine 3.23 runtime as the image's real `postgres` identity (UID/GID 70), with
+checksum-pinned pgvector 0.8.1 compiled in a discarded build stage; the unused
+`gosu` helper is absent. The live retained-data stack was recreated on those
+images and remained healthy at migration 0029, with all ten request-search
+projections in `READY` state. This current evidence covers
+the explainable request-matching capability and controlled intake contract. The
+dated SBOM, secret, Semgrep and ZAP records below were not regenerated and remain
+tied to their stated candidates.
+
+The retained development volume predates the final Alpine runtime and still
+records a glibc collation version. All collation-dependent indexes were rebuilt,
+but a logical dump and restore into a fresh Alpine volume remains a documented
+release-evidence gate. This does not affect fresh installations or the clean
+component and migration rehearsals, and no unsupported system-catalog edit was
+used to hide the warning.
 
 ## Current remediation candidate, 9 August 2026
 
@@ -121,7 +149,7 @@ The fresh QA runtime then proved:
 - PostgreSQL reached `0021_schema_metadata`; `alembic check` reported no model
   drift. The constraint-name alignment migration downgraded to 0020 and upgraded
   to head again while the application was stopped, then remained drift-free.
-- Camunda completed the staffed DIGOC → NCGI-A Ops → OSG Team route, including
+- Camunda completed the staffed JOCK → ACSA-B Ops → SSG Team route, including
   two clarification loops, and the selectable SYGOC → Nimbus Ops → Beacon Team
   route. Both finished at release.
 - API and Nginx returned opener, embedder and resource isolation headers. API
