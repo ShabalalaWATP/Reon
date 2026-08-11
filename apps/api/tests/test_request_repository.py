@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
@@ -11,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from istari_service.audit import canonical_event_hash, verify_event_chain
+from istari_service.audit_types import AuditEventEvidence
 from istari_service.config import Environment, Settings
 from istari_service.database import (
     create_database_engine,
@@ -141,7 +143,6 @@ async def test_create_list_get_and_hash_linked_events(
         assert instance is not None and instance.process_id == "service-request-v1"
         assert instance.process_version == 1
         assert instance.process_checksum == "a" * 64
-
         second = await append_request_event(
             session,
             request_id=request_id,
@@ -161,18 +162,18 @@ async def test_create_list_get_and_hash_linked_events(
             )
         ).all()
         chain = [
-            {
-                "request_id": event.request_id,
-                "event_type": event.type,
-                "message": event.message,
-                "actor_id": event.actor_user_id,
-                "created_at": event.created_at,
-                "previous_hash": event.previous_hash,
-                "prior_status": event.prior_status,
-                "next_status": event.next_status,
-                "details": event.details,
-                "event_hash": event.event_hash,
-            }
+            AuditEventEvidence(
+                request_id=event.request_id,
+                event_type=event.type,
+                message=event.message,
+                actor_id=event.actor_user_id,
+                created_at=event.created_at,
+                previous_hash=event.previous_hash,
+                prior_status=event.prior_status,
+                next_status=event.next_status,
+                details=event.details,
+                event_hash=event.event_hash,
+            )
             for event in events
         ]
         anchored = await session.get(ServiceRequest, request_id)
@@ -188,14 +189,14 @@ async def test_create_list_get_and_hash_linked_events(
             expected_count=anchored.audit_event_count,
         )
         assert verify_event_chain([], audit_key=audit_key)
-        bad_previous = [dict(item) for item in chain]
-        bad_previous[1]["previous_hash"] = "f" * 64
+        bad_previous = [*chain]
+        bad_previous[1] = replace(bad_previous[1], previous_hash="f" * 64)
         assert not verify_event_chain(bad_previous, audit_key=audit_key)
-        bad_hash = [dict(item) for item in chain]
-        bad_hash[0]["event_hash"] = "f" * 64
+        bad_hash = [*chain]
+        bad_hash[0] = replace(bad_hash[0], event_hash="f" * 64)
         assert not verify_event_chain(bad_hash, audit_key=audit_key)
-        bad_status = [dict(item) for item in chain]
-        bad_status[1]["next_status"] = RequestStatus.COMPLETED
+        bad_status = [*chain]
+        bad_status[1] = replace(bad_status[1], next_status=RequestStatus.COMPLETED)
         assert not verify_event_chain(bad_status, audit_key=audit_key)
         assert not verify_event_chain(
             chain[:-1],

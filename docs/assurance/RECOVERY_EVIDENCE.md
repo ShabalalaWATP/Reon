@@ -71,3 +71,25 @@ attestation and completed `SR-2026-2E06B694` through the alternative route. A
 second request returned the current route as `CRIOC [CRIOC]` and exactly `JOCK`,
 `SYGOC` and `MYGOC` as direct destinations. The isolated containers, networks and
 volumes were removed after the rehearsal; the long-lived QA data was retained.
+
+## SOLID and Secure by Design boundary rehearsal, 11 August 2026
+
+Forty-one focused restore verification, Camunda recovery, cancellation,
+workflow-command dispatch and operational-snapshot tests passed before the live
+exercise.
+
+The retained local Camunda service was stopped without deleting its container
+or volumes. `/ready` returned HTTP 503 with `workflow: unavailable` while the
+database, configuration and maintenance checks remained `ok`. `docker compose
+up -d --wait --wait-timeout 90 orchestration` returned the service to healthy
+and full API readiness in 42.48 seconds.
+
+PostgreSQL was then stopped independently. `/ready` returned HTTP 503 with the
+database, configuration and maintenance checks unavailable while workflow
+remained `ok`. `docker compose up -d --wait --wait-timeout 90 postgres` returned
+PostgreSQL and full API readiness in 11.80 seconds.
+
+No volume, request or account data was removed. These local dependency
+interruptions prove controlled failure and recovery inside the 15-minute local
+target. They do not replace a current coordinated production backup/restore or
+target-environment disaster-recovery rehearsal.

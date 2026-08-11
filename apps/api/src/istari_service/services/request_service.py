@@ -7,10 +7,11 @@ import re
 from typing import Protocol
 from uuid import UUID
 
+from istari_service.authorisation import RequestOperation
 from istari_service.domain import Actor, ProductDownload, RequestRecord
 from istari_service.errors import FeedbackUnavailable, ObjectNotFound
-from istari_service.models import RequestStatus, UserRole
-from istari_service.policies import can_view_request
+from istari_service.models import RequestStatus
+from istari_service.policies import decide_request_access
 from istari_service.schemas.requests import (
     FeedbackCreate,
     FeedbackView,
@@ -84,12 +85,12 @@ class RequestService:
         self._repository = repository
 
     async def create(self, actor: Actor, command: RequestCreate) -> RequestDetail:
-        if actor.role != UserRole.REQUESTER:
+        if not decide_request_access(actor, RequestOperation.CREATE).allowed:
             raise ObjectNotFound()
         return await self._repository.create(actor, command)
 
     async def list(self, actor: Actor) -> list[RequestSummary]:
-        if actor.role != UserRole.REQUESTER:
+        if not decide_request_access(actor, RequestOperation.LIST).allowed:
             raise ObjectNotFound()
         return await self._repository.list_for_requester(actor.id)
 
@@ -100,7 +101,7 @@ class RequestService:
         limit: int = 50,
         cursor: str | None = None,
     ) -> tuple[builtins.list[RequestSummary], str | None]:
-        if actor.role != UserRole.REQUESTER:
+        if not decide_request_access(actor, RequestOperation.LIST).allowed:
             raise ObjectNotFound()
         return await self._repository.page_for_requester(
             actor.id, limit=limit, cursor=cursor
@@ -135,14 +136,17 @@ class RequestService:
         record = await self._repository.get_record_for_actor(
             request_id, actor, lock=True
         )
-        if record is None or not can_view_request(actor, record):
+        if (
+            record is None
+            or not decide_request_access(actor, RequestOperation.VIEW, record).allowed
+        ):
             raise ObjectNotFound()
-        reveal = actor.role != UserRole.REQUESTER
-        clarifications = actor.role in {
-            UserRole.REQUESTER,
-            UserRole.DELIVERY_SPECIALIST,
-            UserRole.DELIVERY_TEAM_LEAD,
-        }
+        reveal = decide_request_access(
+            actor, RequestOperation.VIEW_UNRELEASED_PRODUCT, record
+        ).allowed
+        clarifications = decide_request_access(
+            actor, RequestOperation.VIEW_CLARIFICATIONS, record
+        ).allowed
         if event_limit is None:
             detail = await self._repository.get_detail(
                 request_id,
@@ -168,8 +172,9 @@ class RequestService:
         record = await self._repository.get_record_for_actor(request_id, actor)
         if (
             record is None
-            or actor.role != UserRole.REQUESTER
-            or record.requester_id != actor.id
+            or not decide_request_access(
+                actor, RequestOperation.FEEDBACK, record
+            ).allowed
         ):
             raise ObjectNotFound()
         if record.status != RequestStatus.COMPLETED:
@@ -187,8 +192,7 @@ class RequestService:
         )
         if (
             record is None
-            or actor.role is not UserRole.REQUESTER
-            or record.requester_id != actor.id
+            or not decide_request_access(actor, RequestOperation.CANCEL, record).allowed
         ):
             raise ObjectNotFound()
         return await self._repository.cancel(request_id, actor, command)
@@ -198,7 +202,13 @@ class RequestService:
         actor: Actor,
         request_id: UUID,
     ) -> tuple[str, str]:
-        if actor.role is not UserRole.REQUESTER:
+        record = await self._repository.get_record_for_actor(request_id, actor)
+        if (
+            record is None
+            or not decide_request_access(
+                actor, RequestOperation.DOWNLOAD_PRODUCT, record
+            ).allowed
+        ):
             raise ObjectNotFound()
         product = await self._repository.get_released_product(request_id, actor.id)
         if product is None:

@@ -42,6 +42,23 @@ class ProductRepository:
         self.product = product
         self.calls: list[tuple[UUID, UUID]] = []
 
+    async def get_record_for_actor(
+        self,
+        request_id: UUID,
+        actor: Actor,
+        *,
+        lock: bool = False,
+    ) -> RequestRecord:
+        del lock
+        return RequestRecord(
+            request_id,
+            actor.id,
+            RequestStatus.COMPLETED,
+            None,
+            None,
+            1,
+        )
+
     async def get_released_product(
         self, request_id: UUID, requester_id: UUID
     ) -> ProductDownload | None:

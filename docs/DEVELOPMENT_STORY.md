@@ -1,5 +1,49 @@
 # Development Story
 
+## 11 August 2026: SOLID and Secure by Design programme completed
+
+- Added executable dependency fitness rules for framework-free domain policy,
+  thin business HTTP handlers, repository-owned SQL expression construction and
+  repositories that remain independent of FastAPI and the Camunda SDK.
+- Split configuration commands into draft, validation, review and activation
+  use cases. Split managed-product transfer into grant, byte-transfer and scan/
+  promotion coordinators behind the existing public facades and transaction
+  boundaries.
+- Replaced request and administrative audit hash input with immutable records
+  and bounded recursive JSON evidence validation. Added one validated durable
+  workflow-start command while retaining the explicit marked-legacy recovery
+  path.
+- Completed architecture, maintainability and Secure by Design review, with the
+  remaining connected-environment controls stated rather than treated as local
+  implementation.
+- Passed 1,018 backend tests at 98.87 per cent statement and 95.16 per cent
+  branch coverage. The bounded-worker frontend suite passed at 99.50 per cent
+  line and 95.00 per cent branch coverage. Ruff, MyPy, Bandit, dead-code,
+  dependency, documentation, licence, OpenAPI and production-build gates passed.
+- Proved controlled local Camunda and PostgreSQL interruption and recovery in
+  42.48 and 11.80 seconds respectively, rebuilt the API and worker, and confirmed
+  health, readiness, unauthenticated denial and synthetic login behaviour.
+
+## 11 August 2026: typed request and work authorisation
+
+- Replaced repeated request and active-work role, ownership, team, stage and
+  assignment combinations with immutable typed domain decisions. Request and
+  work services now name the operation being authorised while retaining their
+  existing public behaviour.
+- Kept PostgreSQL-scoped request and work lookups as a separate enforcement
+  layer. The policy therefore protects the use case even if an adapter returns
+  too broad a record, while the query boundary minimises retrieved data.
+- Added framework-dependency fitness checks plus unit and public API denial
+  matrices. Platform support, another Customer, wrong-stage staff, an
+  unassigned colleague, an Analyst and a sibling route user receive the same
+  concealed response for forbidden and unknown direct identifiers.
+- Preserved the distinction between inaccessible objects and invalid workflow
+  actions: denials remain non-disclosing `404` responses, while an authorised
+  current assignee's invalid action remains a conflict.
+- Closed the milestone with 988 backend tests at 98.89 per cent line and 95.08
+  per cent branch coverage, without lowering either independent 95 per cent
+  gate.
+
 ## 11 August 2026: hastener review remediation and transparent history
 
 - Changed the product decision on hastener visibility: the reminder is part of
@@ -1086,3 +1130,8 @@ gates remain above 95 per cent for both lines and branches.
   now size to their available column, wrap long text and keep the state marker
   stable instead of covering the current-owner field. The shared component rule
   protects request registers and every other status-pill use consistently.
+- Began the SOLID and Secure by Design improvement programme on 11 August 2026
+  by extracting one context-managed Camunda runtime. API and worker composition
+  now depend on the `WorkflowEngine` port, SDK configuration and lifecycle casts
+  remain inside the infrastructure adapter, and startup fails closed without
+  leaking a partially constructed engine.

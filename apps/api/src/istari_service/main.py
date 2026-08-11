@@ -4,12 +4,10 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 from dataclasses import replace
 from datetime import timedelta
-from typing import Any, cast
 
-from camunda_orchestration_sdk import CamundaAsyncClient
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -61,9 +59,11 @@ from istari_service.routers import (
     workspace_collaboration,
 )
 from istari_service.telemetry import OperationalTelemetryMiddleware
-from istari_service.workflow.camunda import CamundaWorkflowEngine
 from istari_service.workflow.engine import WorkflowEngine
-from istari_service.workflow_client import camunda_client_configuration
+from istari_service.workflow_runtime import (
+    WorkflowRuntimeFactory,
+    managed_camunda_engine,
+)
 
 
 def _product_runtime(settings: Settings) -> ProductRuntime:
@@ -122,6 +122,7 @@ def create_app(
     workflow_engine: WorkflowEngine | None = None,
     password_hasher: PasswordHasher | None = None,
     product_runtime: ProductRuntime | None = None,
+    workflow_runtime_factory: WorkflowRuntimeFactory = managed_camunda_engine,
 ) -> FastAPI:
     configured = settings or get_settings()
     sessions = session_factory or SessionFactory
@@ -130,50 +131,44 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
-        client: CamundaAsyncClient | None = None
-        engine = workflow_engine
-        if engine is None:
-            client = CamundaAsyncClient(
-                configuration=cast(Any, camunda_client_configuration(configured))
-            )
-            await client.__aenter__()
-            engine = CamundaWorkflowEngine(client)
-        application.state.workflow_engine = engine
+        async with AsyncExitStack() as stack:
+            engine = workflow_engine
+            if engine is None:
+                engine = await stack.enter_async_context(
+                    workflow_runtime_factory(configured)
+                )
+            application.state.workflow_engine = engine
 
-        async with sessions() as session, session.begin():
-            restored_configuration = await restore_active_configuration_projection(
-                session
-            )
-            if not restored_configuration:
-                await seed_organisation_units(session)
-            if configured.allow_demo_users:
-                password = (
-                    configured.demo_user_password.get_secret_value()
-                    if configured.demo_user_password
-                    else None
+            async with sessions() as session, session.begin():
+                restored_configuration = await restore_active_configuration_projection(
+                    session
                 )
-                await seed_demo_users(
-                    session,
-                    hasher,
-                    environment=configured.environment.value,
-                    enabled=True,
-                    shared_password=password,
-                    ensure_organisation=False,
-                )
-                await initialise_admin_identity_sequence(session)
-                await initialise_admin_audit_anchor(session)
-            await initialise_platform_classification(session)
-            if restored_configuration:
+                if not restored_configuration:
+                    await seed_organisation_units(session)
                 if configured.allow_demo_users:
-                    await restore_active_configuration_projection(session)
-            else:
-                await seed_baseline_configuration(session)
+                    password = (
+                        configured.demo_user_password.get_secret_value()
+                        if configured.demo_user_password
+                        else None
+                    )
+                    await seed_demo_users(
+                        session,
+                        hasher,
+                        environment=configured.environment.value,
+                        enabled=True,
+                        shared_password=password,
+                        ensure_organisation=False,
+                    )
+                    await initialise_admin_identity_sequence(session)
+                    await initialise_admin_audit_anchor(session)
+                await initialise_platform_classification(session)
+                if restored_configuration:
+                    if configured.allow_demo_users:
+                        await restore_active_configuration_projection(session)
+                else:
+                    await seed_baseline_configuration(session)
 
-        try:
             yield
-        finally:
-            if client is not None:
-                await client.__aexit__(None, None, None)
 
     application = FastAPI(
         title="ISTARI Service API",

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, cast
 
@@ -217,35 +219,28 @@ async def test_lifespan_creates_and_closes_camunda_client(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     disable_organisation_seed(monkeypatch)
-    configurations: list[dict[str, str]] = []
     events: list[object] = []
     engine = FakeWorkflowEngine()
 
-    class ClientDouble:
-        def __init__(self, *, configuration: Any) -> None:
-            configurations.append(configuration)
+    @asynccontextmanager
+    async def runtime(configured: Settings) -> AsyncIterator[FakeWorkflowEngine]:
+        events.append(("entered", configured.camunda_base_url))
+        try:
+            yield engine
+        finally:
+            events.append("exited")
 
-        async def __aenter__(self) -> ClientDouble:
-            events.append("entered")
-            return self
-
-        async def __aexit__(self, *args: object) -> None:
-            events.append(("exited", args))
-
-    monkeypatch.setattr(main_module, "CamundaAsyncClient", ClientDouble)
-    monkeypatch.setattr(main_module, "CamundaWorkflowEngine", lambda _client: engine)
     application = create_app(
         settings=make_settings(),
         session_factory=cast(Any, SessionFactoryDouble()),
         password_hasher=FastHasher(),
+        workflow_runtime_factory=runtime,
     )
 
     async with application.router.lifespan_context(application):
         assert application.state.workflow_engine is engine
 
-    assert configurations[0]["CAMUNDA_REST_ADDRESS"].endswith("/v2")
-    assert events[0] == "entered"
-    assert events[1] == ("exited", (None, None, None))
+    assert events == [("entered", "http://localhost:8080"), "exited"]
 
 
 @pytest.mark.asyncio

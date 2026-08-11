@@ -6,7 +6,6 @@ import hashlib
 import hmac
 import json
 from datetime import UTC, datetime
-from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -18,6 +17,7 @@ from istari_service.admin_models import (
     AdminAuditEvent,
 )
 from istari_service.audit import canonical_anchor_mac
+from istari_service.audit_types import AdminAuditEvidence
 from istari_service.repositories.event_store import audit_key_for_session
 
 
@@ -43,17 +43,17 @@ def admin_event_hash(
 ) -> str:
     if created_at.tzinfo is None:
         created_at = created_at.replace(tzinfo=UTC)
-    payload: dict[str, Any] = {
-        "action": action,
-        "actorId": str(actor_id),
-        "changedFields": sorted(changed_fields),
-        "createdAt": created_at.astimezone(UTC).isoformat(timespec="microseconds"),
-        "previousHash": previous_hash,
-        "sequence": sequence,
-        "summary": summary,
-        "targetId": target_id,
-        "targetType": target_type,
-    }
+    payload = AdminAuditEvidence(
+        sequence=sequence,
+        actor_id=actor_id,
+        action=action,
+        target_type=target_type,
+        target_id=target_id,
+        changed_fields=changed_fields,
+        summary=summary,
+        created_at=created_at.astimezone(UTC),
+        previous_hash=previous_hash,
+    ).canonical_payload()
     canonical = json.dumps(
         payload, ensure_ascii=False, separators=(",", ":"), sort_keys=True
     ).encode("utf-8")

@@ -3,10 +3,23 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
-from istari_service.models import RequestStatus, UserRole
+from istari_service.authorisation import (
+    ALLOW,
+    PolicyDecision,
+    PolicyDenial,
+    RequestOperation,
+    WorkOperation,
+    deny,
+)
+from istari_service.models import (
+    RequestStatus,
+    UserRole,
+    WorkflowTaskStatus,
+)
 
 
 class ActorLike(Protocol):
@@ -38,6 +51,20 @@ class RequestLike(Protocol):
 
     @property
     def assigned_specialist_id(self) -> UUID | None: ...
+
+
+class WorkLike(Protocol):
+    @property
+    def request(self) -> RequestLike: ...
+
+    @property
+    def task_status(self) -> WorkflowTaskStatus: ...
+
+    @property
+    def assignee_id(self) -> UUID | None: ...
+
+    @property
+    def completed_at(self) -> datetime | None: ...
 
 
 ROLE_BY_STAGE: Mapping[RequestStatus, UserRole] = {
@@ -90,6 +117,14 @@ CLAIMABLE_ROLES = frozenset(
     }
 )
 
+ROUTING_STAGES = frozenset(
+    {
+        RequestStatus.TRIAGE_REVIEW,
+        RequestStatus.COORDINATION_REVIEW,
+        RequestStatus.ALLOCATION_REVIEW,
+    }
+)
+
 
 def has_stage_role(actor: ActorLike, request: RequestLike) -> bool:
     """Return whether the actor holds the exact role for the current stage."""
@@ -124,9 +159,7 @@ def can_access_work(actor: ActorLike, request: RequestLike) -> bool:
     return has_stage_role(actor, request) and is_object_scoped(actor, request)
 
 
-def can_view_request(actor: ActorLike, request: RequestLike) -> bool:
-    """Requesters see their own objects; staff see only applicable work."""
-
+def _request_is_visible(actor: ActorLike, request: RequestLike) -> bool:
     if actor.role == UserRole.REQUESTER:
         return request.requester_id == actor.id
     if actor.role is UserRole.DELIVERY_SPECIALIST and actor.id in getattr(
@@ -147,6 +180,61 @@ def can_view_request(actor: ActorLike, request: RequestLike) -> bool:
     return can_access_work(actor, request)
 
 
+def decide_request_access(
+    actor: ActorLike,
+    operation: RequestOperation | str,
+    request: RequestLike | None = None,
+) -> PolicyDecision:
+    """Decide one request operation without exposing the denial category."""
+
+    if operation in {RequestOperation.CREATE, RequestOperation.LIST}:
+        return ALLOW if actor.role is UserRole.REQUESTER else deny(PolicyDenial.ROLE)
+    if request is None:
+        return deny(PolicyDenial.OBJECT_SCOPE)
+    if operation is RequestOperation.VIEW:
+        return (
+            ALLOW
+            if _request_is_visible(actor, request)
+            else deny(PolicyDenial.OBJECT_SCOPE)
+        )
+    if operation in {
+        RequestOperation.CANCEL,
+        RequestOperation.FEEDBACK,
+        RequestOperation.DOWNLOAD_PRODUCT,
+    }:
+        if actor.role is not UserRole.REQUESTER:
+            return deny(PolicyDenial.ROLE)
+        return (
+            ALLOW
+            if request.requester_id == actor.id
+            else deny(PolicyDenial.OBJECT_SCOPE)
+        )
+    if not _request_is_visible(actor, request):
+        return deny(PolicyDenial.OBJECT_SCOPE)
+    if operation is RequestOperation.VIEW_UNRELEASED_PRODUCT:
+        return (
+            ALLOW if actor.role is not UserRole.REQUESTER else deny(PolicyDenial.ROLE)
+        )
+    if operation is RequestOperation.VIEW_CLARIFICATIONS:
+        return (
+            ALLOW
+            if actor.role
+            in {
+                UserRole.REQUESTER,
+                UserRole.DELIVERY_SPECIALIST,
+                UserRole.DELIVERY_TEAM_LEAD,
+            }
+            else deny(PolicyDenial.ROLE)
+        )
+    return deny(PolicyDenial.ACTION)
+
+
+def can_view_request(actor: ActorLike, request: RequestLike) -> bool:
+    """Compatibility predicate derived from the typed request policy."""
+
+    return decide_request_access(actor, RequestOperation.VIEW, request).allowed
+
+
 def allowed_actions(actor: ActorLike, request: RequestLike) -> tuple[str, ...]:
     if not can_access_work(actor, request):
         return ()
@@ -165,6 +253,63 @@ def may_complete(
     action: str,
     assignee_id: UUID | None,
 ) -> bool:
-    """Completion requires current scope, an allowed action and a claimed task."""
+    """Compatibility predicate derived from the typed completion policy."""
 
-    return action in allowed_actions(actor, request) and assignee_id == actor.id
+    return decide_work_completion(actor, request, action, assignee_id).allowed
+
+
+def decide_work_access(
+    actor: ActorLike,
+    work: WorkLike,
+    operation: WorkOperation | str,
+) -> PolicyDecision:
+    """Decide whether an actor may discover or address one active work item."""
+
+    if work.completed_at is not None:
+        return deny(PolicyDenial.WORK_STATE)
+    if not can_access_work(actor, work.request):
+        return deny(PolicyDenial.OBJECT_SCOPE)
+    if work.task_status is WorkflowTaskStatus.OPEN:
+        visible = work.assignee_id is None and may_claim(actor, work.request)
+    else:
+        visible = work.assignee_id == actor.id
+    if not visible:
+        return deny(PolicyDenial.ASSIGNMENT)
+    if operation in {WorkOperation.VIEW, WorkOperation.COMPLETE}:
+        return ALLOW
+    if operation is WorkOperation.CLAIM:
+        return ALLOW if may_claim(actor, work.request) else deny(PolicyDenial.ROLE)
+    if operation is WorkOperation.LIST_ELIGIBLE_SPECIALISTS:
+        if actor.role is not UserRole.DELIVERY_TEAM_LEAD:
+            return deny(PolicyDenial.ROLE)
+        if work.request.status is not RequestStatus.DELIVERY_PLANNING:
+            return deny(PolicyDenial.STAGE)
+        return (
+            ALLOW
+            if work.request.assigned_delivery_team is not None
+            else deny(PolicyDenial.OBJECT_SCOPE)
+        )
+    if operation is WorkOperation.VIEW_ROUTING_OPTIONS:
+        return (
+            ALLOW if work.request.status in ROUTING_STAGES else deny(PolicyDenial.STAGE)
+        )
+    return deny(PolicyDenial.ACTION)
+
+
+def decide_work_completion(
+    actor: ActorLike,
+    request: RequestLike,
+    action: str,
+    assignee_id: UUID | None,
+) -> PolicyDecision:
+    """Decide a completion after work visibility and task state are established."""
+
+    if not can_access_work(actor, request):
+        return deny(PolicyDenial.OBJECT_SCOPE)
+    if assignee_id != actor.id:
+        return deny(PolicyDenial.ASSIGNMENT)
+    return (
+        ALLOW
+        if action in allowed_actions(actor, request)
+        else deny(PolicyDenial.ACTION)
+    )

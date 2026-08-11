@@ -36,6 +36,32 @@
   forced-colours, cognitive and representative-user reviews before claiming
   WCAG conformance or production acceptance.
 
+## SOLID and Secure by Design improvement programme, 11 August 2026
+
+- [x] Record a bounded first milestone for the external workflow runtime, with
+  explicit dependency-direction, failure and credential-handling criteria.
+- [x] Move Camunda SDK construction and lifecycle into one managed
+  infrastructure adapter shared by the API and independent worker.
+- [x] Make worker composition depend on the narrow `WorkflowEngine` port and add
+  an architecture test that prevents process entry points importing the SDK.
+- [x] Add broader dependency fitness tests for framework-free domain policy,
+  thin HTTP routes and repository-only SQLAlchemy access, introducing no new
+  layers unless they protect a real boundary.
+- [x] Consolidate core request and active-work object/action authorisation behind
+  typed policy decisions, then exercise cross-role, cross-route and
+  direct-identifier denial matrices at the API boundary. Retain scoped database
+  queries as independent defence in depth and keep the separate administration,
+  statistics, planning and workspace grant models bounded to their own objects.
+- [x] Separate remaining high-change service coordinators by use case, starting
+  with configuration and product transfer, while retaining transaction and
+  audit ownership in one explicit application boundary.
+- [x] Replace remaining unstructured security-relevant dictionaries at external
+  and audit boundaries with validated types, preserving forward-compatible
+  evidence fields where required.
+- [x] Complete independent architecture, code-quality and cyber-security review,
+  full coverage gates, PostgreSQL/Camunda recovery checks and updated assurance
+  evidence before closing the programme.
+
 ## Route lifecycle tracking and analytical presentation, 10 August 2026
 
 - [x] Make request title the primary tracking identity while retaining linked

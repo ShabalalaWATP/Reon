@@ -5,9 +5,14 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
-from typing import Any
 from uuid import UUID
+
+from istari_service.audit_types import (
+    AuditEventEvidence,
+    validate_audit_details,
+)
 
 AUDIT_KEY_INFO = "audit_hmac_key"
 
@@ -23,7 +28,7 @@ def canonical_event_hash(
     audit_key: bytes,
     prior_status: str | None = None,
     next_status: str | None = None,
-    details: dict[str, Any] | None = None,
+    details: Mapping[str, object] | None = None,
 ) -> str:
     """Hash stable event fields and the preceding event hash."""
 
@@ -32,7 +37,7 @@ def canonical_event_hash(
     payload = {
         "actorId": str(actor_id) if actor_id else None,
         "createdAt": created_at.astimezone(UTC).isoformat(timespec="microseconds"),
-        "details": details or {},
+        "details": validate_audit_details(details),
         "eventType": event_type,
         "message": message,
         "nextStatus": next_status,
@@ -71,7 +76,7 @@ def canonical_anchor_mac(
 
 
 def verify_event_chain(
-    events: list[dict[str, Any]],
+    events: Sequence[AuditEventEvidence],
     *,
     audit_key: bytes,
     expected_head_hash: str | None = None,
@@ -83,21 +88,21 @@ def verify_event_chain(
         return False
     previous_hash: str | None = None
     for event in events:
-        if event["previous_hash"] != previous_hash:
+        if event.previous_hash != previous_hash:
             return False
         calculated = canonical_event_hash(
-            request_id=event["request_id"],
-            event_type=event["event_type"],
-            message=event["message"],
-            actor_id=event["actor_id"],
-            created_at=event["created_at"],
+            request_id=event.request_id,
+            event_type=event.event_type,
+            message=event.message,
+            actor_id=event.actor_id,
+            created_at=event.created_at,
             previous_hash=previous_hash,
             audit_key=audit_key,
-            prior_status=event.get("prior_status"),
-            next_status=event.get("next_status"),
-            details=event.get("details"),
+            prior_status=event.prior_status,
+            next_status=event.next_status,
+            details=event.validated_details(),
         )
-        if calculated != event["event_hash"]:
+        if not hmac.compare_digest(calculated, event.event_hash):
             return False
         previous_hash = calculated
     return expected_head_hash is None or previous_hash == expected_head_hash

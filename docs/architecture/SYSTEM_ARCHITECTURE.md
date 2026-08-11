@@ -1,7 +1,7 @@
 # ISTARI Service system architecture
 
 Status: current executable architecture and explicit deployment boundaries
-Last reviewed: 10 August 2026
+Last reviewed: 11 August 2026
 
 ## 1. Purpose and scope
 
@@ -14,7 +14,7 @@ priority, route, assignment, approval or release decisions.
 This document describes the executable React, FastAPI, PostgreSQL and Camunda
 system. The organisation model is in
 [Organisation and routing](ORGANISATION_AND_ROUTING.md). Detailed decisions are
-in [ADRs 0001 to 0029](../adr/). The complete process is explained in
+in [ADRs 0001 to 0030](../adr/). The complete process is explained in
 [Workflow and Camunda](WORKFLOW_AND_BPMN.md). Production gaps remain authoritative in the
 [gap register](../ENTERPRISE_READINESS_GAP_REGISTER.md).
 
@@ -106,6 +106,25 @@ security headers and correlation-aware telemetry. Authorisation is evaluated on
 the server at role, operational-scope, object, assignment and transition levels.
 Hidden navigation is never treated as a security control.
 
+Core request and active-work services use typed, immutable domain decisions for
+named operations such as view, cancel, feedback, claim, complete and routing
+options. The decision may retain an internal denial category for tests and
+diagnostics, but public request/work endpoints conceal role, route, ownership
+and assignment denials behind the same `404 NOT_FOUND` response as an unknown
+identifier. An authorised assignee attempting an action that is invalid for the
+current workflow state still receives the existing conflict response.
+
+This service-level policy is not the only control. PostgreSQL repositories also
+scope request and work lookups by the authenticated identity, current role,
+route membership, exact team and task assignment as applicable. Both layers are
+required: query filtering minimises data retrieval, while the domain decision
+protects each use case if an adapter returns a broader record than expected.
+
+Executable architecture fitness tests protect these boundaries. Framework-free
+policy cannot import FastAPI, SQLAlchemy or Camunda. Business route handlers
+cannot contain SQL or branching workflow logic. Services cannot construct SQL
+expressions, and repositories cannot depend on FastAPI or the Camunda SDK.
+
 ### Product PostgreSQL
 
 PostgreSQL is authoritative for accounts, password/session state, request and
@@ -155,6 +174,18 @@ The application deliberately refuses to construct this local product runtime in
 content-disarm-and-reconstruction service, lifecycle policy or key integration
 exists in this repository.
 
+Managed-product transfer is composed from focused grant, content-transfer and
+scan/promotion coordinators. One shared transfer context owns the session
+factory, storage, scanner, audit, quarantine cleanup and lease recovery.
+External storage and scanner calls remain outside database transactions. The
+public facade preserves the route contract while keeping these reasons for
+change separate.
+
+Configuration lifecycle uses the same restrained pattern. Draft, validation,
+review and activation commands are separate use cases behind a compatibility
+facade. They share one repository, settings, event publisher and clock, so audit
+and transaction ownership do not drift between phases.
+
 ## 4. Authorities and consistency
 
 | Concern | System of record | Consistency rule |
@@ -171,6 +202,12 @@ exists in this repository.
 
 PostgreSQL and Camunda cannot participate in one atomic transaction. The system
 therefore favours durable intent and convergence over a distributed transaction.
+
+Request and administrative audit hash input uses immutable named records.
+Request audit details accept forward-compatible keys but recursively constrain
+depth, collection size, key shape, text length and JSON value types before
+hashing and persistence. Workflow-start outbox commands likewise use one
+validated serialisation and parsing type before the worker contacts Camunda.
 
 ## 5. Core data flows
 
@@ -292,10 +329,16 @@ when the action is submitted.
 
 ## 7. Startup and background processing
 
-Application startup creates the Camunda client, restores or seeds the active
-configuration projection, and seeds synthetic accounts only when explicitly
-allowed. It starts no maintenance loop. The separate `istari-worker` executable
-coordinates:
+One managed workflow-runtime adapter creates the Camunda SDK client from
+validated settings, enters it, wraps it behind the `WorkflowEngine` port and
+guarantees client shutdown. Both application startup and the independent worker
+depend on that context-managed port rather than constructing the SDK directly.
+Startup fails closed if client entry or adapter construction fails. Credentials
+remain inside the outer adapter and are not copied into application state.
+
+Application startup restores or seeds the active configuration projection and
+seeds synthetic accounts only when explicitly allowed. It starts no maintenance
+loop. The separate `istari-worker` executable coordinates:
 
 - process-start outbox dispatch;
 - human workflow-command dispatch;
@@ -400,7 +443,9 @@ label and not a substitute for object-level access control.
 2. **API to PostgreSQL:** parameterised SQL/ORM, least-privileged runtime role,
    migrations kept separate.
 3. **API to Camunda:** external-effect boundary with authentication, TLS and
-   contract validation required in a connected target.
+   contract validation required in a connected target. One managed runtime owns
+   SDK construction and shutdown for API and worker processes; neither entry
+   point may import the SDK directly.
 4. **API to product/scanner:** hostile files remain quarantined until scanning;
    fail closed on scanner error. Clamd is internal-only and reads definitions
    from a read-only mount. A separate updater that never receives submitted files
@@ -497,7 +542,8 @@ interface for every function:
 
 - routes translate HTTP and delegate;
 - services coordinate one use case and its transactions;
-- policy modules answer permission and transition questions;
+- policy modules return typed permission and transition decisions without
+  importing FastAPI, SQLAlchemy or Camunda;
 - repositories translate between application concepts and PostgreSQL;
 - adapters isolate external systems whose contracts can fail or change; and
 - React components focus on rendering and interaction while API clients and

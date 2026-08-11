@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import hmac
+from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -17,6 +17,7 @@ from istari_service.audit import (
     canonical_event_hash,
     verify_event_chain,
 )
+from istari_service.audit_types import AuditEventEvidence, validate_audit_details
 from istari_service.models import RequestEvent, RequestStatus, ServiceRequest
 from istari_service.request_event_projection import project_request_event
 
@@ -30,7 +31,7 @@ async def append_request_event(
     message: str,
     prior_status: RequestStatus | None,
     next_status: RequestStatus | None,
-    details: dict[str, Any] | None = None,
+    details: Mapping[str, object] | None = None,
 ) -> RequestEvent:
     """Append one event linked to the latest hash for this request."""
 
@@ -42,7 +43,7 @@ async def append_request_event(
     previous_hash = request.audit_head_hash
     audit_key = audit_key_for_session(session)
     created_at = datetime.now(UTC)
-    safe_details = details or {}
+    safe_details = validate_audit_details(details)
     event_hash = canonical_event_hash(
         request_id=request_id,
         event_type=event_type,
@@ -117,18 +118,18 @@ async def verify_request_event_integrity(
         )
     ).all()
     chain = [
-        {
-            "request_id": event.request_id,
-            "event_type": event.type,
-            "message": event.message,
-            "actor_id": event.actor_user_id,
-            "created_at": event.created_at,
-            "previous_hash": event.previous_hash,
-            "prior_status": event.prior_status,
-            "next_status": event.next_status,
-            "details": event.details,
-            "event_hash": event.event_hash,
-        }
+        AuditEventEvidence(
+            request_id=event.request_id,
+            event_type=event.type,
+            message=event.message,
+            actor_id=event.actor_user_id,
+            created_at=event.created_at,
+            previous_hash=event.previous_hash,
+            prior_status=event.prior_status,
+            next_status=event.next_status,
+            details=event.details,
+            event_hash=event.event_hash,
+        )
         for event in events
     ]
     return verify_event_chain(

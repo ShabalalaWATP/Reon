@@ -38,6 +38,7 @@ from istari_service.schemas.requests import (
     RequestCreate,
     RequestDetail,
 )
+from istari_service.workflow_start_types import WorkflowStartCommand
 
 
 def record_from_request(
@@ -129,15 +130,13 @@ class SqlAlchemyRequestRepository(RequestCustomerRepositoryMixin):
                 status=WorkflowInstanceStatus.START_PENDING,
             )
         )
-        start_payload: dict[str, object] = {
-            "requestId": str(request_id),
-            "requesterId": str(actor.id),
-            "processId": pinned_process_id,
-        }
-        if pinned_process_version is not None:
-            start_payload["processVersion"] = pinned_process_version
-        if pinned_process_checksum is not None:
-            start_payload["processChecksum"] = pinned_process_checksum
+        start_payload = WorkflowStartCommand(
+            request_id=request_id,
+            requester_id=actor.id,
+            process_id=pinned_process_id,
+            process_version=pinned_process_version,
+            process_checksum=pinned_process_checksum,
+        ).to_payload()
         self._session.add(
             WorkflowOutbox(
                 request_id=request_id,

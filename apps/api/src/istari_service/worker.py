@@ -4,9 +4,6 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-from typing import Any, cast
-
-from camunda_orchestration_sdk import CamundaAsyncClient
 
 from istari_service.config import Settings, get_settings
 from istari_service.database import SessionFactory, dispose_database
@@ -15,14 +12,17 @@ from istari_service.request_event_projection import NotificationProjectionReconc
 from istari_service.request_search_indexer import RequestSearchIndexer
 from istari_service.team_membership_sync import TeamMembershipProjector
 from istari_service.worker_runtime import MaintenanceJob, WorkerIteration, run_worker
-from istari_service.workflow.camunda import CamundaWorkflowEngine
+from istari_service.workflow.engine import WorkflowEngine
 from istari_service.workflow_cancellation_dispatch import (
     WorkflowCancellationDispatcher,
 )
-from istari_service.workflow_client import camunda_client_configuration
 from istari_service.workflow_command_dispatch import WorkflowCommandDispatcher
 from istari_service.workflow_dispatch import WorkflowOutboxDispatcher
 from istari_service.workflow_maintenance import WorkflowReconciler
+from istari_service.workflow_runtime import (
+    WorkflowRuntimeFactory,
+    managed_camunda_engine,
+)
 
 
 def parser() -> argparse.ArgumentParser:
@@ -33,7 +33,7 @@ def parser() -> argparse.ArgumentParser:
 
 def build_iteration(
     settings: Settings,
-    engine: CamundaWorkflowEngine,
+    engine: WorkflowEngine,
 ) -> WorkerIteration:
     starts = WorkflowOutboxDispatcher(
         SessionFactory,
@@ -80,28 +80,25 @@ def build_iteration(
     )
 
 
-async def async_main(arguments: argparse.Namespace) -> int:
+async def async_main(
+    arguments: argparse.Namespace,
+    *,
+    workflow_runtime_factory: WorkflowRuntimeFactory = managed_camunda_engine,
+) -> int:
     settings = get_settings()
-    client = CamundaAsyncClient(
-        configuration=cast(Any, camunda_client_configuration(settings))
-    )
-    entered = False
     try:
-        await client.__aenter__()
-        entered = True
-        iteration = build_iteration(settings, CamundaWorkflowEngine(client))
-        if arguments.once:
-            await iteration.run_once()
+        async with workflow_runtime_factory(settings) as engine:
+            iteration = build_iteration(settings, engine)
+            if arguments.once:
+                await iteration.run_once()
+                return 0
+            await run_worker(
+                iteration,
+                asyncio.Event(),
+                interval_seconds=settings.worker_interval_seconds,
+            )
             return 0
-        await run_worker(
-            iteration,
-            asyncio.Event(),
-            interval_seconds=settings.worker_interval_seconds,
-        )
-        return 0
     finally:
-        if entered:
-            await client.__aexit__(None, None, None)
         await dispose_database()
 
 

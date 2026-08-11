@@ -44,6 +44,7 @@ from istari_service.workflow.types import (
     StartProcessCommand,
     WorkflowTask,
 )
+from istari_service.workflow_start_types import WorkflowStartCommand
 from istari_service.workflow_start_validation import reject_invalid_start_identity
 
 DEFAULT_START_LOOKUP_POLICY = TaskLookupPolicy()
@@ -157,6 +158,16 @@ class WorkflowOutboxDispatcher:
             outbox.lease_owner = lease_owner
             outbox.lease_generation += 1
             outbox.available_at = now + timedelta(seconds=30)
+            try:
+                start_command = WorkflowStartCommand.from_payload(
+                    outbox.payload,
+                    legacy_process_id=self._process_id,
+                )
+            except ValueError:
+                outbox.status = OutboxStatus.FAILED
+                outbox.lease_owner = None
+                outbox.last_error = "Workflow start command is invalid."
+                return None
             return PendingStart(
                 outbox_id=outbox.id,
                 request_id=request.id,
@@ -164,26 +175,9 @@ class WorkflowOutboxDispatcher:
                 attempts=outbox.attempts,
                 lease_owner=lease_owner,
                 lease_generation=outbox.lease_generation,
-                process_id=self._outbox_process_id(outbox.payload),
-                process_version=self._outbox_process_version(outbox.payload),
+                process_id=start_command.process_id,
+                process_version=start_command.process_version or -1,
             )
-
-    def _outbox_process_id(self, payload: dict[str, object]) -> str:
-        process_id = payload.get("processId")
-        if isinstance(process_id, str) and 0 < len(process_id) <= 160:
-            return process_id
-        return self._process_id
-
-    @staticmethod
-    def _outbox_process_version(payload: dict[str, object]) -> int:
-        process_version = payload.get("processVersion")
-        if (
-            isinstance(process_version, int)
-            and not isinstance(process_version, bool)
-            and process_version >= 1
-        ):
-            return process_version
-        return -1
 
     async def _start_idempotently(
         self,

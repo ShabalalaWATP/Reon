@@ -1,5 +1,26 @@
 # Security scan evidence
 
+## SOLID and Secure by Design programme, 11 August 2026
+
+The current programme candidate passed Ruff formatting and lint, MyPy across
+308 source files, Vulture and Knip dead-code checks, and the 350-line source
+limit. Bandit scanned 45,044 lines of application and migration code with zero
+low, medium or high finding. Strict audit of the lock-derived Python dependency
+set and the Node high-severity dependency audit both reported no known
+vulnerability.
+
+The authoritative backend suite passed 1,018 tests at 98.87 per cent statement
+and 95.16 per cent branch coverage. The full frontend suite passed with bounded
+local worker concurrency at 99.50 per cent line and 95.00 per cent branch
+coverage. Root secret-scan, dependency-policy, Dependabot, OpenAPI, operations,
+documentation, licence and production-build contracts passed. Hosted CodeQL,
+container scanning and current-source secret scanning remain CI controls and
+are not restated as newly executed local scans.
+
+The detailed architecture, code-quality, UK government Secure by Design and
+residual-risk assessment is in
+[SOLID and Secure by Design review](SOLID_SECURE_BY_DESIGN_REVIEW.md).
+
 ## Unified workspace source verification, 10 August 2026
 
 The complete current source passed Ruff formatting and lint across 485 Python

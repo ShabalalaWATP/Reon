@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Protocol
 from uuid import UUID
 
+from istari_service.authorisation import WorkOperation
 from istari_service.domain import Actor, WorkRecord
 from istari_service.errors import (
     AlreadyClaimed,
@@ -14,12 +15,11 @@ from istari_service.errors import (
     WorkflowActionPending,
     WorkflowUnavailable,
 )
-from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
+from istari_service.models import UserRole, WorkflowTaskStatus
 from istari_service.policies import (
     allowed_actions,
-    can_access_work,
-    may_claim,
-    may_complete,
+    decide_work_access,
+    decide_work_completion,
 )
 from istari_service.schemas.organisation import RoutingOptionsWorkspace
 from istari_service.schemas.requests import RequestDetail
@@ -143,14 +143,15 @@ class WorkService:
         bundle = await self._repository.get(work_id, actor)
         if (
             bundle is None
-            or actor.role != UserRole.DELIVERY_TEAM_LEAD
-            or not self._visible(actor, bundle)
-            or bundle.record.request.status != RequestStatus.DELIVERY_PLANNING
-            or bundle.record.request.assigned_delivery_team is None
+            or not decide_work_access(
+                actor, bundle.record, WorkOperation.LIST_ELIGIBLE_SPECIALISTS
+            ).allowed
         ):
             raise ObjectNotFound()
         team_name = bundle.record.request.assigned_delivery_team
         team_id = bundle.record.request.assigned_delivery_team_id
+        if team_name is None:
+            raise ObjectNotFound()
         specialists = (
             await self._repository.list_active_specialists(team_name)
             if team_id is None
@@ -172,13 +173,9 @@ class WorkService:
         bundle = await self._repository.get(work_id, actor)
         if (
             bundle is None
-            or not self._visible(actor, bundle)
-            or bundle.record.request.status
-            not in {
-                RequestStatus.TRIAGE_REVIEW,
-                RequestStatus.COORDINATION_REVIEW,
-                RequestStatus.ALLOCATION_REVIEW,
-            }
+            or not decide_work_access(
+                actor, bundle.record, WorkOperation.VIEW_ROUTING_OPTIONS
+            ).allowed
         ):
             raise ObjectNotFound()
         return await self._repository.routing_options(bundle.record)
@@ -187,8 +184,7 @@ class WorkService:
         bundle = await self._repository.get(work_id, actor)
         if (
             bundle is None
-            or not self._visible(actor, bundle)
-            or not may_claim(actor, bundle.record.request)
+            or not decide_work_access(actor, bundle.record, WorkOperation.CLAIM).allowed
         ):
             raise ObjectNotFound()
         if bundle.record.task_status in {
@@ -237,7 +233,12 @@ class WorkService:
         payload: CompletionPayload,
     ) -> RequestDetail:
         bundle = await self._repository.get(work_id, actor)
-        if bundle is None or not self._visible(actor, bundle):
+        if (
+            bundle is None
+            or not decide_work_access(
+                actor, bundle.record, WorkOperation.COMPLETE
+            ).allowed
+        ):
             raise ObjectNotFound()
         if bundle.record.task_status in {
             WorkflowTaskStatus.CLAIM_PENDING,
@@ -248,12 +249,12 @@ class WorkService:
         if bundle.record.task_status is not WorkflowTaskStatus.CLAIMED:
             raise InvalidAction()
         action = WorkflowAction(payload.action)
-        if not may_complete(
+        if not decide_work_completion(
             actor,
             bundle.record.request,
             action.value,
             bundle.record.assignee_id,
-        ):
+        ).allowed:
             raise InvalidAction()
         await self._validate_assignment(bundle.record, payload)
         outbox_id = await self._repository.prepare_completion(
@@ -310,15 +311,7 @@ class WorkService:
 
     @staticmethod
     def _visible(actor: Actor, bundle: WorkBundle) -> bool:
-        if bundle.record.completed_at is not None or not can_access_work(
-            actor, bundle.record.request
-        ):
-            return False
-        if bundle.record.task_status is WorkflowTaskStatus.OPEN:
-            return bundle.record.assignee_id is None and may_claim(
-                actor, bundle.record.request
-            )
-        return bundle.record.assignee_id == actor.id
+        return decide_work_access(actor, bundle.record, WorkOperation.VIEW).allowed
 
     @staticmethod
     def _with_actions(actor: Actor, bundle: WorkBundle) -> WorkItem:
