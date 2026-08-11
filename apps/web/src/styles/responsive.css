@@ -28,8 +28,10 @@
   .login-intro h1 { font-size: 2.45rem; }
   .login-points { display: none; }
   .nav-rail { grid-template-columns: 1fr auto; }
-  .nav-rail nav { grid-column: 1 / -1; grid-row: 2; justify-content: stretch; overflow-x: auto; }
-  .nav-link { flex: 1 0 auto; text-align: center; }
+  .nav-rail nav { display: grid; grid-column: 1 / -1; grid-row: 2; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; overflow: visible; }
+  .nav-link { min-width: 0; justify-content: center; text-align: center; }
+  .nav-link span { overflow-wrap: anywhere; }
+  .nav-link i { display: none; }
   .nav-session-status { display: none; }
   .top-bar__context { display: none; }
   .top-bar { justify-content: flex-end; padding: 0 16px; }

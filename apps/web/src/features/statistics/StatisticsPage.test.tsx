@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { describe, expect, it } from "vitest";
@@ -9,6 +9,7 @@ import type {
 } from "../../lib/api/statisticsTypes";
 import { adminSession, enabledCapabilities } from "../../test/fixtures";
 import { json, mockFeatureFetch, renderApp } from "../../test/render";
+import { CategoryPanel } from "./StatisticsVisuals";
 
 const platformScope: StatisticsScope = {
   id: "platform",
@@ -17,18 +18,18 @@ const platformScope: StatisticsScope = {
   kind: "PLATFORM",
   includeDescendants: true,
   units: [
-    { id: "00000000-0000-4000-8000-000000000001", parentId: null, name: "JIOC", kind: "ROOT", depth: 0 },
-    { id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", parentId: "00000000-0000-4000-8000-000000000001", name: "DIGOC", kind: "COMMAND", depth: 1 },
+    { id: "00000000-0000-4000-8000-000000000001", parentId: null, name: "CRIOC", kind: "ROOT", depth: 0 },
+    { id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", parentId: "00000000-0000-4000-8000-000000000001", name: "JOCK", kind: "COMMAND", depth: 1 },
     { id: "ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee", parentId: "00000000-0000-4000-8000-000000000001", name: "SYGOC", kind: "COMMAND", depth: 1 },
   ],
 };
 const commandScope: StatisticsScope = {
-  id: "command-digoc",
+  id: "command-jock",
   unitId: "11111111-2222-4333-8444-555555555555",
-  name: "NCGI-A Ops",
+  name: "ACSA-B Ops",
   kind: "OPS_GROUP",
   includeDescendants: true,
-  units: [{ id: "11111111-2222-4333-8444-555555555555", parentId: null, name: "NCGI-A Ops", kind: "OPS_GROUP", depth: 0 }],
+  units: [{ id: "11111111-2222-4333-8444-555555555555", parentId: null, name: "ACSA-B Ops", kind: "OPS_GROUP", depth: 0 }],
 };
 
 const dashboard: StatisticsDashboard = {
@@ -81,7 +82,7 @@ const dashboard: StatisticsDashboard = {
   children: [
     {
       unitId: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
-      name: "DIGOC",
+      name: "JOCK",
       kind: "COMMAND",
       received: 6,
       active: 4,
@@ -107,6 +108,17 @@ const dashboard: StatisticsDashboard = {
 };
 
 describe("operational statistics", () => {
+  it("renders a neutral donut when a populated category set totals zero", () => {
+    const view = render(
+      <CategoryPanel rows={[{ key: "none", label: "No overdue work", count: 0 }]} title="Due-date risk" />,
+    );
+
+    expect(view.container.querySelector(".donut-chart")).toHaveStyle({
+      background: "var(--surface-strong)",
+    });
+    expect(screen.getByRole("table", { name: "Due-date risk data" })).toHaveTextContent("No overdue work");
+  });
+
   it("shows only granted scopes with accessible chart-table parity", async () => {
     const requestedScopes: string[] = [];
     const requestedUnits: string[] = [];
@@ -135,21 +147,23 @@ describe("operational statistics", () => {
 
     expect(await screen.findByRole("heading", { name: "Statistics" })).toBeInTheDocument();
     expect(await screen.findByText("Projection current")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Statistics" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Operational statistics" })).toBeInTheDocument();
     expect(within(screen.getByRole("region", { name: "Summary measures" })).getByText("8")).toBeInTheDocument();
     expect(screen.getByLabelText("Organisation")).toHaveValue(platformScope.units[2].id);
     expect(screen.getByRole("table", { name: "Current status data" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Daily throughput data" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Direct child unit comparison data" })).toHaveTextContent("SYGOC");
+    expect(view.container.querySelectorAll(".donut-chart")).toHaveLength(3);
+    expect(view.container.querySelector(".duration-range-chart")).toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
 
-    await user.click(screen.getByRole("button", { name: "View DIGOC statistics" }));
+    await user.click(screen.getByRole("button", { name: "View JOCK statistics" }));
     await waitFor(() => expect(requestedUnits).toContain("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"));
     expect(screen.getByLabelText("Organisation")).toHaveValue("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee");
 
     await user.selectOptions(screen.getByLabelText("Reporting root"), commandScope.id);
     await waitFor(() => expect(requestedScopes).toContain(commandScope.id));
-    expect(await screen.findByText("NCGI-A Ops", { selector: ".statistics-filters option" })).toBeInTheDocument();
+    expect(await screen.findByText("ACSA-B Ops", { selector: ".statistics-filters option" })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("From"), { target: { value: "2099-12-31" } });
     expect(screen.getByRole("alert")).toHaveTextContent("start date");
@@ -170,7 +184,7 @@ describe("operational statistics", () => {
     renderApp("/statistics");
     await user.click(await screen.findByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("heading", { name: "No statistics scope assigned" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Statistics" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Operational statistics" })).not.toBeInTheDocument();
   });
 
   it("reports dashboard failures and renders an empty degraded projection", async () => {

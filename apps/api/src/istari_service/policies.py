@@ -80,6 +80,17 @@ ACTIONS_BY_STAGE: Mapping[RequestStatus, tuple[str, ...]] = {
 }
 
 
+CLAIMABLE_ROLES = frozenset(
+    {
+        UserRole.INTAKE_TRIAGE,
+        UserRole.SERVICE_COORDINATION,
+        UserRole.OPERATIONS_ALLOCATION,
+        UserRole.DELIVERY_TEAM_LEAD,
+        UserRole.QUALITY_RELEASE,
+    }
+)
+
+
 def has_stage_role(actor: ActorLike, request: RequestLike) -> bool:
     """Return whether the actor holds the exact role for the current stage."""
 
@@ -122,15 +133,17 @@ def can_view_request(actor: ActorLike, request: RequestLike) -> bool:
         request, "participant_ids", frozenset()
     ):
         return True
-    if request.status is RequestStatus.CUSTOMER_INFORMATION_REQUIRED:
-        if actor.role is UserRole.DELIVERY_SPECIALIST:
-            return request.assigned_specialist_id == actor.id
-        if actor.role is UserRole.DELIVERY_TEAM_LEAD:
-            return (
-                request.assigned_delivery_team_id in actor.organisation_unit_ids
-                if request.assigned_delivery_team_id is not None
-                else request.assigned_delivery_team == actor.scope
-            )
+    if actor.role is UserRole.DELIVERY_TEAM_LEAD:
+        return (
+            request.assigned_delivery_team_id in actor.organisation_unit_ids
+            if request.assigned_delivery_team_id is not None
+            else request.assigned_delivery_team == actor.scope
+        )
+    if (
+        request.status is RequestStatus.CUSTOMER_INFORMATION_REQUIRED
+        and actor.role is UserRole.DELIVERY_SPECIALIST
+    ):
+        return request.assigned_specialist_id == actor.id
     return can_access_work(actor, request)
 
 
@@ -138,6 +151,12 @@ def allowed_actions(actor: ActorLike, request: RequestLike) -> tuple[str, ...]:
     if not can_access_work(actor, request):
         return ()
     return ACTIONS_BY_STAGE.get(request.status, ())
+
+
+def may_claim(actor: ActorLike, request: RequestLike) -> bool:
+    """Only shared decision roles claim work; Analysts receive named assignments."""
+
+    return actor.role in CLAIMABLE_ROLES and can_access_work(actor, request)
 
 
 def may_complete(

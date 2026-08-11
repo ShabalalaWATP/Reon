@@ -18,14 +18,14 @@ async def test_administrator_can_appoint_and_remove_a_routing_manager(
     harness = api_harness
     await harness.login("admin1")
     await harness.elevate()
-    jioc_id = await harness.unit_id("JIOC")
+    crioc_id = await harness.unit_id("CRIOC")
     created = await harness.client.post(
         "/api/v1/admin/users",
         json={
             "displayName": "Synthetic Routing Manager",
             "role": "INTAKE_TRIAGE",
-            "scope": "JIOC",
-            "organisationUnitIds": [str(jioc_id)],
+            "scope": "CRIOC",
+            "organisationUnitIds": [str(crioc_id)],
             "workspacePosition": "MANAGER",
         },
         headers=harness.mutation_headers(),
@@ -59,7 +59,7 @@ async def test_administrator_can_appoint_and_remove_a_routing_manager(
                 session,
                 subject_user_id=user_id,
                 grant_id=exact.id,
-                target_unit_id=jioc_id,
+                target_unit_id=crioc_id,
                 action=ManagementAction.ROSTER,
             )
         ) is not None
@@ -68,7 +68,7 @@ async def test_administrator_can_appoint_and_remove_a_routing_manager(
                 session,
                 subject_user_id=user_id,
                 grant_id=statistics.id,
-                target_unit_id=jioc_id,
+                target_unit_id=crioc_id,
                 action=ManagementAction.STATISTICS,
             )
         ) is not None
@@ -78,8 +78,8 @@ async def test_administrator_can_appoint_and_remove_a_routing_manager(
         json={
             "displayName": "Synthetic Routing Member",
             "role": "INTAKE_TRIAGE",
-            "scope": "JIOC",
-            "organisationUnitIds": [str(jioc_id)],
+            "scope": "CRIOC",
+            "organisationUnitIds": [str(crioc_id)],
             "workspacePosition": "MEMBER",
             "expectedVersion": account["version"],
         },
@@ -111,7 +111,7 @@ async def test_administrator_cannot_invert_delivery_workspace_positions(
     harness = api_harness
     await harness.login("admin1")
     await harness.elevate()
-    osg_id = await harness.unit_id("OSG_TEAM")
+    ssg_id = await harness.unit_id("SSG_TEAM")
     for role, position in (
         ("DELIVERY_TEAM_LEAD", "MEMBER"),
         ("DELIVERY_SPECIALIST", "MANAGER"),
@@ -121,8 +121,8 @@ async def test_administrator_cannot_invert_delivery_workspace_positions(
             json={
                 "displayName": f"Invalid {role}",
                 "role": role,
-                "scope": "OSG Team",
-                "organisationUnitIds": [str(osg_id)],
+                "scope": "SSG Team",
+                "organisationUnitIds": [str(ssg_id)],
                 "workspacePosition": position,
             },
             headers=harness.mutation_headers(),

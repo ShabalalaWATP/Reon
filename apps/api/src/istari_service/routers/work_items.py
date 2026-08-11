@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Query
@@ -69,9 +70,15 @@ async def list_work_items(
     settings: AppSettings,
     limit: int = Query(default=50, ge=1, le=100),
     cursor: str | None = Query(default=None, max_length=500),
+    unit_id: Annotated[UUID | None, Query(alias="unitId")] = None,
+    request_id: Annotated[UUID | None, Query(alias="requestId")] = None,
 ) -> WorkItemList:
     items, next_cursor = await _service(session, engine, sessions, settings).list_page(
-        actor, limit=limit, cursor=cursor
+        actor,
+        limit=limit,
+        cursor=cursor,
+        unit_id=unit_id,
+        request_id=request_id,
     )
     return WorkItemList(items=items, next_cursor=next_cursor)
 

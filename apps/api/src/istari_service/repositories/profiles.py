@@ -36,6 +36,7 @@ class SqlAlchemyProfileRepository:
         user.rank_or_grade = command.rank_or_grade
         user.service_number = command.service_number
         user.additional_information = command.additional_information
+        user.skills = command.skills
         user.version += 1
         await self._session.flush()
         return self._view(user)
@@ -52,5 +53,6 @@ class SqlAlchemyProfileRepository:
             rank_or_grade=user.rank_or_grade,
             service_number=user.service_number,
             additional_information=user.additional_information,
+            skills=user.skills,
             version=user.version,
         )

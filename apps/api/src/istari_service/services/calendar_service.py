@@ -10,6 +10,7 @@ from istari_service.calendar_capacity import CalendarCapacityService
 from istari_service.calendar_models import (
     CalendarEvent,
     CalendarEventKind,
+    CalendarVisibility,
     CommitmentStatus,
     RecurrenceFrequency,
 )
@@ -72,11 +73,14 @@ class CalendarService:
     async def create_personal(
         self, actor: Actor, command: PersonalEventCommand
     ) -> CalendarEventResult:
-        _require(
-            bool(actor.organisation_unit_ids),
-            CalendarItemNotFound(),
-        )
         _command(command)
+        _require(
+            command.visibility
+            in {CalendarVisibility.TEAM_DETAIL, CalendarVisibility.PRIVATE},
+            InvalidCalendarChange(
+                "Choose team-visible detail or select Private appointment."
+            ),
+        )
         event = await self._calendar.create_event(
             actor_id=actor.id,
             subject_id=actor.id,

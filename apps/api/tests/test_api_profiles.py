@@ -29,6 +29,7 @@ async def test_authenticated_user_can_maintain_only_their_profile(
         "rankOrGrade": None,
         "serviceNumber": None,
         "additionalInformation": None,
+        "skills": [],
         "version": 1,
     }
 
@@ -39,6 +40,7 @@ async def test_authenticated_user_can_maintain_only_their_profile(
             "rankOrGrade": "Grade 7",
             "serviceNumber": "SYN-1042",
             "additionalInformation": "Synthetic profile context.",
+            "skills": ["Research", "Data analysis"],
             "expectedVersion": 1,
         },
         headers=harness.mutation_headers(),
@@ -46,6 +48,7 @@ async def test_authenticated_user_can_maintain_only_their_profile(
     assert saved.status_code == 200
     assert saved.json()["version"] == 2
     assert saved.json()["profileTeam"] == "Fictional Customer Team"
+    assert saved.json()["skills"] == ["Research", "Data analysis"]
 
     stale = await harness.client.patch(
         "/api/v1/profile",
@@ -82,6 +85,12 @@ async def test_profile_rejects_unsafe_or_unrecognised_input(
         headers=harness.mutation_headers(),
     )
     assert extra.status_code == 422
+    duplicate_skills = await harness.client.patch(
+        "/api/v1/profile",
+        json={"skills": ["Research", "research"], "expectedVersion": 1},
+        headers=harness.mutation_headers(),
+    )
+    assert duplicate_skills.status_code == 422
 
     assert _plain_optional("   ", maximum=10) is None
     with pytest.raises(ValueError, match="must not exceed"):

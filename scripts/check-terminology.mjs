@@ -51,7 +51,7 @@ const approvedOrganisationalVocabulary = new Set([
   "analyst",
   "disseminate",
   "dissemination",
-  "jioc",
+  "crioc",
 ]);
 const approvedTechnicalUses = [
   /\bdefence(?:-|_|\s)+in(?:-|_|\s)+depth\b/giu,

@@ -50,13 +50,13 @@ from istari_service.schemas.requests import RequestCreate
 async def seed_planning(harness: ApiHarness) -> tuple[UUID, UUID]:
     now = datetime.now(UTC)
     today = now.date()
-    team_id = await harness.unit_id("OSG_TEAM")
+    team_id = await harness.unit_id("SSG_TEAM")
     manager_id = await harness.user_id("admin8")
     owner_id = await harness.user_id("admin11")
     contributor_id = await harness.user_id("admin12")
-    root_id = await harness.unit_id("JIOC")
-    command_id = await harness.unit_id("DIGOC")
-    ops_id = await harness.unit_id("NCGI_A_OPS")
+    root_id = await harness.unit_id("CRIOC")
+    command_id = await harness.unit_id("JOCK")
+    ops_id = await harness.unit_id("ACSA_B_OPS")
     next_workday = today
     while next_workday.weekday() >= 5:
         next_workday += timedelta(days=1)

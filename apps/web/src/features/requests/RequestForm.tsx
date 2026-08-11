@@ -48,6 +48,34 @@ type Props = {
   onSubmit: (input: RequestCreateInput) => void;
 };
 
+const textLimits: Partial<Record<keyof FormValues, number>> = {
+  title: 160,
+  description: 5000,
+  questionToAnswer: 2000,
+  desiredOutcome: 2000,
+  backgroundContext: 5000,
+  subjectAreaOrLocation: 1000,
+  supportedActivityOrDecision: 2000,
+  requiredByReason: 1000,
+  successCriteria: 2000,
+  constraintsOrCaveats: 2000,
+  supportingInformation: 2000,
+  handlingInstructions: 2000,
+};
+
+type SectionDefinition = { description: string; fields: readonly (keyof FormValues)[]; id: string; title: string };
+const formSections: readonly SectionDefinition[] = [
+  { description: "Describe the need in plain language. Internal teams and routes are selected later.", fields: ["title", "description", "questionToAnswer", "desiredOutcome", "backgroundContext"], id: "need", title: "The need" },
+  { description: "Define what the work should cover and what it will support.", fields: ["subjectAreaOrLocation", "coverageStart", "coverageEnd", "supportedActivityOrDecision"], id: "scope", title: "Scope and purpose" },
+  { description: "Set urgency, timing, format and the measure of success.", fields: ["customerUrgency", "requiredBy", "preferredDeliverableType", "requiredByReason", "successCriteria"], id: "expectations", title: "Product expectations" },
+  { description: "Record caveats, available material and any handling needs.", fields: ["constraintsOrCaveats", "supportingInformation", "sensitivity", "handlingInstructions"], id: "handling", title: "Supporting information and handling" },
+];
+
+function invalidFieldNames(values: FormValues) {
+  const parsed = schema.safeParse(values);
+  return new Set(parsed.success ? [] : parsed.error.issues.map((issue) => String(issue.path[0])));
+}
+
 const fieldLabels: Record<keyof FormValues, string> = {
   title: "Request title",
   description: "Description of the need",
@@ -93,28 +121,42 @@ function defaults(draft?: RequestDraftInput): FormValues {
 }
 
 export function RequestForm(props: Props) {
-  const { formState: { errors, isValid }, getValues, handleSubmit, register } = useForm<FormValues>({
+  const { formState: { errors, isValid }, getValues, handleSubmit, register, watch } = useForm<FormValues>({
     defaultValues: defaults(props.initialValues),
     mode: "onChange",
     resolver: zodResolver(schema),
     shouldFocusError: true,
   });
+  const values = watch();
+  const invalidFields = invalidFieldNames(values);
+  const remaining = (section: SectionDefinition) => section.fields.filter((name) => invalidFields.has(name)).length;
   const field = (name: keyof FormValues, child: ReactElement<Record<string, unknown>>) => (
-    <Field error={errors[name]?.message} label={fieldLabels[name]} name={name}>{child}</Field>
+    <Field count={textLimits[name] === undefined ? undefined : { length: values[name].length, max: textLimits[name] }} error={errors[name]?.message} label={fieldLabels[name]} name={name}>{child}</Field>
   );
 
   return (
     <form className="request-form" onSubmit={(event) => void handleSubmit(props.onSubmit)(event)} noValidate>
       <p className="required-note"><span aria-hidden="true">*</span> Complete every field to enable submission. Incomplete work can be saved privately as a draft.</p>
+      <nav aria-label="Form progress" className="request-progress">
+        {formSections.map((section, index) => {
+          const left = remaining(section);
+          return (
+            <a className={left === 0 ? "request-progress__step request-progress__step--complete" : "request-progress__step"} href={`#request-section-${section.id}`} key={section.id}>
+              <i aria-hidden="true">{left === 0 ? "✓" : String(index + 1).padStart(2, "0")}</i>
+              <span><strong>{section.title}</strong><small>{left === 0 ? "Complete" : `${left} field${left === 1 ? "" : "s"} left`}</small></span>
+            </a>
+          );
+        })}
+      </nav>
       <FormErrorSummary errors={errors} />
-      <FormSection description="Describe the need in plain language. Internal teams and routes are selected later." title="The need">
+      <FormSection complete={remaining(formSections[0]) === 0} section={formSections[0]}>
         {field("title", <input {...register("title")} />)}
         {field("description", <textarea rows={5} {...register("description")} />)}
         {field("questionToAnswer", <textarea rows={3} {...register("questionToAnswer")} />)}
         {field("desiredOutcome", <textarea rows={3} {...register("desiredOutcome")} />)}
         {field("backgroundContext", <textarea rows={4} {...register("backgroundContext")} />)}
       </FormSection>
-      <FormSection description="Define what the work should cover and what it will support." title="Scope and purpose">
+      <FormSection complete={remaining(formSections[1]) === 0} section={formSections[1]}>
         {field("subjectAreaOrLocation", <textarea rows={3} {...register("subjectAreaOrLocation")} />)}
         <div className="form-grid">
           {field("coverageStart", <input type="date" {...register("coverageStart")} />)}
@@ -122,7 +164,7 @@ export function RequestForm(props: Props) {
         </div>
         {field("supportedActivityOrDecision", <textarea rows={3} {...register("supportedActivityOrDecision")} />)}
       </FormSection>
-      <FormSection description="Set urgency, timing, format and the measure of success." title="Product expectations">
+      <FormSection complete={remaining(formSections[2]) === 0} section={formSections[2]}>
         <div className="form-grid">
           {field("customerUrgency", <select {...register("customerUrgency")}><option value="ROUTINE">Routine</option><option value="TIME_SENSITIVE">Time-sensitive</option><option value="IMMEDIATE">Immediate</option></select>)}
           {field("requiredBy", <input min={today()} type="date" {...register("requiredBy")} />)}
@@ -131,7 +173,7 @@ export function RequestForm(props: Props) {
         {field("requiredByReason", <textarea rows={3} {...register("requiredByReason")} />)}
         {field("successCriteria", <textarea rows={3} {...register("successCriteria")} />)}
       </FormSection>
-      <FormSection description="Record caveats, available material and any handling needs." title="Supporting information and handling">
+      <FormSection complete={remaining(formSections[3]) === 0} section={formSections[3]}>
         {field("constraintsOrCaveats", <textarea placeholder="Enter ‘No known constraints’ if none apply." rows={3} {...register("constraintsOrCaveats")} />)}
         {field("supportingInformation", <textarea placeholder="Describe available material, or enter ‘None available’." rows={3} {...register("supportingInformation")} />)}
         {field("sensitivity", <select {...register("sensitivity")}><option value="STANDARD">Standard</option><option value="SENSITIVE">Sensitive</option><option value="RESTRICTED">Restricted</option></select>)}
@@ -153,12 +195,28 @@ function FormErrorSummary({ errors }: { errors: FieldErrors<FormValues> }) {
   return <section className="form-error-summary" role="alert"><strong>Check the required fields</strong><ul>{fields.map((name) => <li key={name}><a href={`#request-${name}`}>{fieldLabels[name]}: {errors[name]?.message}</a></li>)}</ul></section>;
 }
 
-function FormSection({ children, description, title }: { children: ReactNode; description: string; title: string }) {
-  return <fieldset className="form-section"><legend>{title}</legend><p>{description}</p>{children}</fieldset>;
+function FormSection({ children, complete, section }: { children: ReactNode; complete: boolean; section: SectionDefinition }) {
+  return (
+    <fieldset className={complete ? "form-section form-section--complete" : "form-section"} id={`request-section-${section.id}`}>
+      <legend>{section.title}{complete ? <span className="sr-only"> — complete</span> : null}</legend>
+      <p>{section.description}</p>
+      {children}
+    </fieldset>
+  );
 }
 
-function Field({ children, error, label, name }: { children: ReactElement<Record<string, unknown>>; error?: string; label: string; name: keyof FormValues }) {
+function Field({ children, count, error, label, name }: { children: ReactElement<Record<string, unknown>>; count?: { length: number; max: number }; error?: string; label: string; name: keyof FormValues }) {
   const id = `request-${name}`;
   const errorId = `${id}-error`;
-  return <label className="form-field" htmlFor={id}><span>{label} <b aria-hidden="true">*</b><span className="sr-only"> required</span></span>{cloneElement(children, { id, required: true, "aria-invalid": Boolean(error), "aria-describedby": error ? errorId : undefined })}{error ? <small className="field-error" id={errorId} role="alert">{error}</small> : null}</label>;
+  const nearLimit = count !== undefined && count.length >= count.max * 0.9;
+  return (
+    <div className="form-field">
+      <span className="form-field__label-row">
+        <label htmlFor={id}>{label} <b aria-hidden="true">*</b><span className="sr-only"> required</span></label>
+        {count === undefined ? null : <small aria-hidden="true" className={nearLimit ? "char-counter char-counter--limit" : "char-counter"}>{count.length.toLocaleString("en-GB")} / {count.max.toLocaleString("en-GB")}</small>}
+      </span>
+      {cloneElement(children, { id, required: true, "aria-invalid": Boolean(error), "aria-describedby": error ? errorId : undefined })}
+      {error ? <small className="field-error" id={errorId} role="alert">{error}</small> : null}
+    </div>
+  );
 }

@@ -81,10 +81,17 @@ class BoardService:
             )
         except (ValueError, UnicodeError) as error:
             raise InvalidBoardChange("The board cursor is invalid.") from error
+        column_counts = await self._board.board_column_counts(team_id, filters)
         config = await self._board.configuration(team_id)
         return BoardResult(
             items=items,
             next_cursor=next_cursor,
+            column_counts=column_counts,
+            total_count=sum(
+                count
+                for column, count in column_counts.items()
+                if not filters.columns or column in filters.columns
+            ),
             wip_limits=config.wip_limits if config else {},
             configuration_version=config.version if config else 0,
             saved_views=await self._board.saved_views(team_id, actor.id),

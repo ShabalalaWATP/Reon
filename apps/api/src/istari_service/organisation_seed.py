@@ -35,13 +35,13 @@ class UnitDefinition:
 
 TREE = (
     (
-        "DIGOC",
+        "JOCK",
         (
             (
-                "NCGI_A_OPS",
-                "NCGI-A Ops",
+                "ACSA_B_OPS",
+                "ACSA-B Ops",
                 (
-                    ("OSG_TEAM", "OSG Team"),
+                    ("SSG_TEAM", "SSG Team"),
                     ("CEDAR_TEAM", "Cedar Team"),
                     ("QUARTZ_TEAM", "Quartz Team"),
                 ),
@@ -140,12 +140,12 @@ def _group_slug(code: str) -> str:
 def _unit_definitions() -> tuple[UnitDefinition, ...]:
     definitions = [
         UnitDefinition(
-            "JIOC",
-            "JIOC",
+            "CRIOC",
+            "CRIOC",
             OrganisationKind.ROOT,
             None,
             StaffingStatus.ROUTING_POOL,
-            routing_group="jioc-routing",
+            routing_group="crioc-routing",
         )
     ]
     for command_code, ops_groups in TREE:
@@ -154,7 +154,7 @@ def _unit_definitions() -> tuple[UnitDefinition, ...]:
                 command_code,
                 command_code,
                 OrganisationKind.COMMAND,
-                "JIOC",
+                "CRIOC",
                 StaffingStatus.ROUTING_POOL,
                 routing_group=f"{_group_slug(command_code)}-routing",
             )

@@ -8,6 +8,12 @@ const schema = z.object({
   profileTeam: z.string().trim().max(120, "Use 120 characters or fewer."),
   rankOrGrade: z.string().trim().max(120, "Use 120 characters or fewer."),
   serviceNumber: z.string().trim().max(80, "Use 80 characters or fewer."),
+  skills: z.string().trim().max(960, "Use no more than 12 short skills.").superRefine((value, context) => {
+    const labels = parseSkills(value);
+    if (labels.length > 12) context.addIssue({ code: "custom", message: "Use no more than 12 skills." });
+    if (labels.some((label) => label.length > 80)) context.addIssue({ code: "custom", message: "Use 80 characters or fewer for each skill." });
+    if (new Set(labels.map((label) => label.toLocaleLowerCase("en-GB"))).size !== labels.length) context.addIssue({ code: "custom", message: "List each skill once." });
+  }),
   additionalInformation: z.string().trim().max(2000, "Use 2,000 characters or fewer."),
 });
 type Values = z.infer<typeof schema>;
@@ -26,6 +32,7 @@ export function PersonalProfileForm({
       profileTeam: profile.profileTeam ?? "",
       rankOrGrade: profile.rankOrGrade ?? "",
       serviceNumber: profile.serviceNumber ?? "",
+      skills: profile.skills.join(", "),
       additionalInformation: profile.additionalInformation ?? "",
     },
     mode: "onChange",
@@ -36,6 +43,7 @@ export function PersonalProfileForm({
     profileTeam: nullable(values.profileTeam),
     rankOrGrade: nullable(values.rankOrGrade),
     serviceNumber: nullable(values.serviceNumber),
+    skills: parseSkills(values.skills),
     additionalInformation: nullable(values.additionalInformation),
     expectedVersion: profile.version,
   }))(event)}>
@@ -44,7 +52,12 @@ export function PersonalProfileForm({
       <label className="form-field"><span>Rank or grade</span><input aria-invalid={Boolean(errors.rankOrGrade)} {...register("rankOrGrade")} />{errors.rankOrGrade ? <small role="alert">{errors.rankOrGrade.message}</small> : null}</label>
       <label className="form-field"><span>Service number</span><input aria-invalid={Boolean(errors.serviceNumber)} autoComplete="off" {...register("serviceNumber")} />{errors.serviceNumber ? <small role="alert">{errors.serviceNumber.message}</small> : <small>Visible only in your personal profile.</small>}</label>
     </div>
+    <label className="form-field"><span>Operational skills</span><input aria-invalid={Boolean(errors.skills)} placeholder="Research, data analysis, briefing" {...register("skills")} />{errors.skills ? <small role="alert">{errors.skills.message}</small> : <small>Optional comma-separated labels for human team allocation. They are not scores or endorsements.</small>}</label>
     <label className="form-field"><span>Additional information</span><textarea aria-invalid={Boolean(errors.additionalInformation)} rows={5} {...register("additionalInformation")} />{errors.additionalInformation ? <small role="alert">{errors.additionalInformation.message}</small> : <small>Add any context that helps colleagues understand who you are. Do not enter passwords or sensitive operational content.</small>}</label>
     <button className="button button--primary" disabled={disabled || !isDirty || !isValid} type="submit">{disabled ? "Saving…" : "Save personal details"}</button>
   </form>;
+}
+
+function parseSkills(value: string) {
+  return value.split(",").map((label) => label.trim()).filter(Boolean);
 }

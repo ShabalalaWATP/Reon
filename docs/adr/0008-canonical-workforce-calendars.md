@@ -23,22 +23,30 @@ terminology.
 - Derive personal and authorised exact-team projections at query time from
   canonical data, current memberships and active grants. Higher organisational
   levels receive aggregate statistics, not individual calendar records.
-- Visibility is private, availability-only or team-detail. Shared projections
-  redact title and notes before leaving the repository boundary.
+- Retain private, availability-only and team-detail projections for canonical
+  records. New personal events default to team-detail and the creation surface
+  exposes one explicit `Private appointment` choice. Reject availability-only
+  personal creation at the use-case boundary, while preserving that projection
+  for existing records. Shared private and availability-only projections redact
+  title and notes before leaving the repository boundary.
 - Permit Managers with the calendar action to create team events and personal
   commitments. The subject acknowledges or disputes a commitment with a
   mandatory reason.
 - Calculate capacity from canonical calendar periods and work reservations using
   a versioned preview and commit token.
+- Use one accessible modal creation surface for the toolbar and day-slot entry
+  points. Day selection pre-fills the date, errors retain context, successful
+  creation closes the surface and focus returns to the invoking control.
 - Keep external calendar connectors out of scope until separately specified and
   threat-modelled.
 
 ## Consequences
 
-One event remains consistent across views and organisation changes. Privacy and
-capacity logic have one source. Exact-team calendar scope reduces unnecessary
-availability exposure. Recurrence, daylight-saving changes, transfers and
-concurrent edits require property and boundary tests.
+One event and one creation interaction remain consistent across views and
+organisation changes. Privacy and capacity logic have one source. Exact-team
+calendar scope reduces unnecessary availability exposure. Recurrence,
+daylight-saving changes, transfers and concurrent edits require property and
+boundary tests.
 
 ## Rejected alternatives
 

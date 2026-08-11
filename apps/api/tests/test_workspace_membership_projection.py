@@ -36,7 +36,7 @@ async def test_projection_selects_a_stable_unit_when_no_preference_is_supplied(
             )
         )
         assert len(projected) == 3
-        assert user.scope == "DIGOC"
+        assert user.scope == "JOCK"
 
 
 async def test_due_boundary_marks_an_unchanged_projection_without_rewriting_it(

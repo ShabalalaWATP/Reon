@@ -25,6 +25,7 @@ from istari_service.schemas.team_workspaces import (
     TeamWorkspaceOverview,
     TransferCommand,
 )
+from istari_service.team_models import WorkspacePosition
 
 
 class TeamWorkspaceService:
@@ -44,7 +45,10 @@ class TeamWorkspaceService:
 
     async def people(self, actor: Actor, team_id: UUID) -> list[TeamMember]:
         access = await self._views.require_read(actor.id, team_id)
-        reveal_reasons = ManagementAction.ROSTER in access.permissions
+        reveal_reasons = (
+            access.workspace_position is WorkspacePosition.MANAGER
+            and ManagementAction.ROSTER in access.permissions
+        )
         return await self._views.people(
             actor.id, team_id, reveal_reasons=reveal_reasons
         )
@@ -117,6 +121,11 @@ class TeamWorkspaceService:
         *,
         lock: bool = False,
     ) -> None:
+        access = await self._views.require_read(actor.id, team_id)
+        _require(
+            access.workspace_position is WorkspacePosition.MANAGER,
+            TeamWorkspaceNotFound(),
+        )
         scope = await resolve_management_scope(
             self._views.session,
             subject_user_id=actor.id,

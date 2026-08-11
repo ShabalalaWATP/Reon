@@ -34,12 +34,13 @@ export type PersonalProfile = {
   rankOrGrade: string | null;
   serviceNumber: string | null;
   additionalInformation: string | null;
+  skills: string[];
   version: number;
 };
 
 export type PersonalProfileUpdate = Pick<
   PersonalProfile,
-  "profileTeam" | "rankOrGrade" | "serviceNumber" | "additionalInformation"
+  "profileTeam" | "rankOrGrade" | "serviceNumber" | "additionalInformation" | "skills"
 > & { expectedVersion: number };
 
 export type ListResponse<T> = {

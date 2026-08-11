@@ -4,7 +4,7 @@
 
 Current-head record reviewed on 10 August 2026.
 
-The current migration head is `0029_related_request_search`. The application,
+The current migration head is `0032_coordination_language`. The application,
 restore script and restore verifier use that same default rather than a stale
 embedded revision. Empty-database upgrade, metadata drift and downgrade/re-upgrade
 checks run through the isolated compatibility harness as release gates. The
@@ -25,7 +25,10 @@ records. Revision 0029 installs PostgreSQL `pg_trgm` and pgvector, adds the
 all-field request-search projection, backfills every submitted request and
 creates GIN, trigram and HNSW indexes. It also extends recorded related-request
 decisions with `NOT_RELEVANT`. `scripts/restore-postgres.ps1` and the maintenance
-verifier now default to the exact `0029_related_request_search` revision.
+verifier default to the exact `0032_coordination_language` revision. Revision
+0030 adds bounded self-declared user skills, revision 0031 repairs role-aware
+action audiences and queue links, and revision 0032 applies the current
+plain-language coordination presentation values.
 
 The PostgreSQL backup and restore controls are implemented in:
 
@@ -42,7 +45,7 @@ credentials are passed to PostgreSQL tools through a permission-restricted,
 temporary libpq service file, not a password-bearing child-process argument.
 Static PowerShell parsing and control-contract checks pass.
 
-## Current-head PostgreSQL migration and guard evidence
+## PostgreSQL migration and guard evidence for revision 0029
 
 On 10 August 2026 the retained synthetic PostgreSQL 17.10 database was upgraded
 to `0029_related_request_search` through the new locally built PostgreSQL image.
@@ -117,9 +120,10 @@ upgraded to head again. A second metadata check remained clean, and application
 readiness returned `ok` for database, workflow, configuration and maintenance.
 The migration only renames check constraints; it does not rewrite business rows.
 
-Earlier on 8 August 2026 a clean disposable PostgreSQL 17.9 database migrated from no
-schema to `0019_runtime_scaling`. Application startup seeded all 73 documented
-identities and the sealed baseline. A deterministic rehearsal then created 250
+The 8 August 2026 load rehearsal used a clean disposable PostgreSQL 17.9
+database migrated from no schema to `0019_runtime_scaling`. Application startup
+seeded the documented identities and the sealed baseline. The deterministic
+rehearsal then created 250
 active users, 2,500 request, draft, work, route/history and Board records, plus
 5,000 calendar records. All expected indexes were present; target-scale
 statement counts, query plans and two-worker contention passed. The exact
@@ -167,12 +171,12 @@ head before pilot acceptance.
 | Empty migration | Upgrade from no schema to `0011_operational_evidence` passed |
 | Drift | `alembic check` reported no new upgrade operations |
 | Previous revision | Downgrade to `0010_admin_step_up`, re-upgrade and second drift check passed with seeded data |
-| Runtime privilege | 72 synthetic users seeded; schema creation and audit-table update were denied |
+| Runtime privilege | Synthetic users seeded; schema creation and audit-table update were denied |
 | Backup privilege | Read-only identity could create the archive but could not update application data |
 | Archive | Custom-format catalogue validation and SHA-256 calculation passed; rehearsal copy was removed afterwards |
 | Restore precondition | Target public schema contained zero tables before restore |
 | Clean restore | `--no-owner`, `--no-acl`, single-transaction restore passed |
-| Integrity | Revision, 72-user count, pending-command count and request and administrator audit chains passed |
+| Integrity | Revision, user count, pending-command count and request and administrator audit chains passed |
 | Recovery target | Restore plus integrity verification completed in 1.22 seconds, below the 30-minute target |
 | Cleanup | Both exact rehearsal containers, volumes and the temporary archive were removed |
 
@@ -180,7 +184,9 @@ The rehearsal used the same PostgreSQL native operations and verification comman
 as the operator scripts. It is pilot evidence, not proof of enterprise backup
 storage, encryption, key escrow or a hosted disaster-recovery service.
 
-The current-head clean install, downgrade/re-upgrade and drift rehearsal is
-complete on SQLite and PostgreSQL. A current-candidate backup/restore run
-covering PostgreSQL, product storage and workflow state together remains an open
-Product Evolution gate.
+The complete PostgreSQL extension and data-backfill rehearsal is recorded
+through revision 0029. The current codebase also exercises revisions 0030 to
+0032 through migration and application tests, but a fresh end-to-end PostgreSQL
+clean install, downgrade and re-upgrade at revision 0032 remains required for
+release acceptance. A current-candidate backup/restore run covering PostgreSQL,
+product storage and workflow state together also remains open.

@@ -27,6 +27,8 @@ from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.orm import relationship as rel
 
+from istari_service.profile_models import ProfileFieldsMixin
+
 
 class UserRole(StrEnum):
     PLATFORM_ADMIN = "PLATFORM_ADMIN"
@@ -124,20 +126,15 @@ def _enum(enum_type: type[StrEnum], name: str) -> SqlEnum:
     return SqlEnum(enum_type, name=name, native_enum=False, create_constraint=True)
 
 
-class User(TimestampMixin, Base):
+class User(ProfileFieldsMixin, TimestampMixin, Base):
     __tablename__ = "users"
     __table_args__ = (Index("ix_users_updated_id", "updated_at", "id"),)
-
     username: Mapped[str] = mapped_column(String(254), unique=True, index=True)
     email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(120))
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[UserRole] = mapped_column(_enum(UserRole, "user_role"), index=True)
     scope: Mapped[str] = mapped_column(String(120))
-    profile_team: Mapped[str | None] = mapped_column(String(120))
-    rank_or_grade: Mapped[str | None] = mapped_column(String(120))
-    service_number: Mapped[str | None] = mapped_column(String(80))
-    additional_information: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default=text("true")
     )

@@ -28,6 +28,7 @@ export interface BoardItem {
   version: number;
   linkedRequestId: string | null;
   availableColumns: BoardColumn[];
+  changedAt: string;
 }
 
 export interface SavedBoardView {
@@ -40,6 +41,8 @@ export interface SavedBoardView {
 export interface BoardResult {
   items: BoardItem[];
   nextCursor: string | null;
+  columnCounts: Record<BoardColumn, number>;
+  totalCount: number;
   wipLimits: Record<string, number>;
   configurationVersion: number;
   savedViews: SavedBoardView[];
