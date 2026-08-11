@@ -265,6 +265,11 @@ The navigation separates three concerns:
 - the organisation-named workspace, such as **CRIOC workspace**, contains people,
   calendar, handover and other unit collaboration features.
 
+These are staff concerns. Customer primary navigation contains only **My
+requests** and **New request**. Customers are route-gated away from the personal
+calendar and organisation directory as well as having no link to either page.
+Their profile remains available through the account menu.
+
 ### Clarification
 
 An assigned Analyst may request information from the Customer. PostgreSQL stores

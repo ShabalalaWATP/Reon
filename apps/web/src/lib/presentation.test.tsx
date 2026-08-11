@@ -23,7 +23,10 @@ describe("presentation helpers", () => {
       DELIVERY_SPECIALIST: "Team Analyst",
       QUALITY_RELEASE: "QC Manager",
     });
-    expect(navigationForRole("REQUESTER")).toHaveLength(4);
+    expect(navigationForRole("REQUESTER")).toEqual([
+      { label: "My requests", path: "/requests" },
+      { label: "New request", path: "/requests/new" },
+    ]);
     expect(navigationForRole("PLATFORM_ADMIN")).toEqual([
       { label: "User accounts", path: "/admin/users" },
       { label: "Personal calendar", path: "/calendar/month" },
@@ -53,7 +56,8 @@ describe("presentation helpers", () => {
     expect(navigationForRole("REQUESTER", enabled)).not.toContainEqual({ label: "My assigned actions", path: "/my-work" });
     expect(navigationForRole("PLATFORM_ADMIN", enabled)).toContainEqual({ label: "Configuration", path: "/admin/configuration" });
     expect(navigationForRole("DELIVERY_SPECIALIST", enabled)).toContainEqual({ label: "Product package", path: "/product-packages/new" });
-    for (const role of Object.keys(roleRoutes) as Array<keyof typeof roleRoutes>) {
+    for (const role of (Object.keys(roleRoutes) as Array<keyof typeof roleRoutes>)
+      .filter((candidate) => candidate !== "REQUESTER")) {
       expect(navigationForRole(role, enabled)).toContainEqual({ label: "Personal calendar", path: "/calendar/month" });
     }
     expect(navigationForRole("INTAKE_TRIAGE", enabled, {

@@ -11,6 +11,7 @@ import { json, mockFetch, renderApp } from "../../test/render";
 
 const managerSession: Session = { ...requesterSession, user: { ...requesterSession.user, id: "manager-ssg", username: "admin8", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", scope: "SSG Team" } };
 const analystSession: Session = { ...managerSession, user: { ...managerSession.user, id: "analyst-ssg", username: "admin11", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST" } };
+const staffWithoutWorkspace: Session = { ...managerSession, user: { ...managerSession.user, id: "routing-member", username: "admin75", displayName: "Willie Ormond", role: "INTAKE_TRIAGE", scope: "CRIOC" } };
 const managerAccess: TeamWorkspaceAccess = { teamId: "team-ssg", teamCode: "SSG_TEAM", teamName: "SSG Team", unitKind: "TEAM", workspacePosition: "MANAGER", grantId: "grant-ssg", permissions: ["CALENDAR", "CAPACITY", "ROSTER"] };
 const analystAccess: TeamWorkspaceAccess = { ...managerAccess, grantId: null, permissions: [] };
 const people: TeamMember[] = [{ membershipId: "membership-manager", accountId: "manager-ssg", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, skills: ["Delivery leadership"], startReason: null, endReason: null }, { membershipId: "membership-analyst", accountId: "analyst-ssg", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, skills: ["Research"], startReason: null, endReason: null }];
@@ -42,7 +43,7 @@ function occurrence(overrides: Partial<CalendarOccurrence> = {}): CalendarOccurr
 
 describe("canonical workforce calendar", () => {
   it("gives an account without a workspace a personal-only calendar", async () => {
-    mockCalendar(requesterSession, analystAccess, [], [], { noWorkspace: true });
+    mockCalendar(staffWithoutWorkspace, analystAccess, [], [], { noWorkspace: true });
     renderApp("/calendar/month");
 
     expect(await screen.findByRole("heading", { name: "Personal calendar" })).toBeInTheDocument();

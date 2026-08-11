@@ -47,6 +47,12 @@ Staff navigation follows the operating sequence:
 7. `Operational statistics` where authorised
 8. `Organisation directory`
 
+Customer navigation is intentionally shorter. It contains only `My requests`
+and `New request`. Calendar and organisation-directory destinations are staff
+operational tools and add no value to the Customer request journey. A Customer
+opening either staff URL directly returns to `My requests`; the hidden link is
+not treated as the authorisation control.
+
 Role queue labels name their purpose, for example `CRIOC routing queue`,
 `Incoming requests` and `Ops routing queue`. The labels do not alter route,
 role, object or action authorisation.
@@ -67,7 +73,10 @@ role, object or action authorisation.
 - A routing Member without a statistics grant receives a useful personal Home
   page and cannot see organisation measures or a statistics destination.
 - Active, hover and keyboard-focus navigation styling remains unchanged.
-- Existing Customer, Analyst, Manager, QC and Administrator destinations remain
-  authorised exactly as before.
+- Customer navigation contains only `My requests` and `New request`.
+- Customer direct access to the personal calendar or organisation directory is
+  redirected to `My requests` without loading either staff page.
+- Analyst, Manager, QC and Administrator destinations remain authorised exactly
+  as before.
 - WCAG 2.2 AA semantics, responsive layout and reduced-motion behaviour remain
   covered.

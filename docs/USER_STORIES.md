@@ -255,26 +255,25 @@ feedback form so that I can use the result and rate the service.
 - Unreleased and withdrawn product versions are not downloadable.
 - Feedback is accepted once and only for the owning completed request.
 
-### CUST-09: Maintain a personal profile and calendar
+### CUST-09: Maintain a personal profile
 
-**Need:** As any authenticated user, including a Customer, I want a useful profile
-and personal calendar so that my account contains current information and my
-availability is easy to manage.
+**Need:** As a Customer, I want a useful profile so that my account contains
+current information without unrelated staff-operational tools adding noise.
 
 **Expected behaviour**
 
 - The profile can contain name, team or organisation, rank, service number and
   additional personal information within bounded fields.
-- Every account can add, edit and cancel personal calendar events.
-- A user with a current workspace membership sees personal events automatically
-  represented in that team's calendar.
-- A user without a team keeps a personal-only calendar.
+- Customer primary navigation contains only `My requests` and `New request`.
+- Personal calendar and organisation-directory links are not shown to a
+  Customer.
+- Direct Customer access to either staff page returns to `My requests`.
 
 **Acceptance checks**
 
 - Personal information is editable only by the account holder or an authorised
   Administrator using the dedicated administration path.
-- Private calendar entries disclose only busy time to current colleagues.
+- The Customer profile remains available from the account menu.
 
 ## CRIOC routing stories
 

@@ -81,13 +81,15 @@ export function AppRoutes() {
             <Route element={<CapabilityGate capability="notifications" />}>
               <Route path="notifications" element={<NotificationsPage />} />
             </Route>
-            <Route path="organisation" element={<OrganisationPage />} />
+            <Route element={<RoleGate allowed={staffMyWorkRoles} />}>
+              <Route path="organisation" element={<OrganisationPage />} />
+              <Route path="calendar/:calendarView?" element={<CalendarPage />} />
+            </Route>
             <Route element={<CapabilityGate capability="statistics" />}>
               <Route path="statistics" element={<StatisticsPage />} />
             </Route>
             <Route path="teams/:teamId/people/:memberId" element={<TeamMemberProfilePage />} />
             <Route path="teams/:teamId/:view?" element={<TeamWorkspacePage />} />
-            <Route path="calendar/:calendarView?" element={<CalendarPage />} />
             <Route element={<RoleGate allowed={["PLATFORM_ADMIN"]} />}>
               <Route path="admin/users" element={<AdminUsersPage />} />
               <Route path="admin/users/new" element={<AdminUserPage create />} />

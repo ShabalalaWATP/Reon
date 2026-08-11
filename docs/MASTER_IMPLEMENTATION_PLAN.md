@@ -62,6 +62,16 @@
   full coverage gates, PostgreSQL/Camunda recovery checks and updated assurance
   evidence before closing the programme.
 
+## Customer navigation restraint, 11 August 2026
+
+- [x] Limit Customer primary navigation to `My requests` and `New request`.
+- [x] Remove Customer calendar and organisation-directory links without changing
+  staff navigation.
+- [x] Route-gate direct Customer access to those staff destinations and return
+  the account safely to `My requests`.
+- [x] Update navigation, calendar, user-story, permission and architecture
+  authorities and add role-regression coverage.
+
 ## Route lifecycle tracking and analytical presentation, 10 August 2026
 
 - [x] Make request title the primary tracking identity while retaining linked

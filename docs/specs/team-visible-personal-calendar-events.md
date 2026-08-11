@@ -2,16 +2,16 @@
 
 ## Purpose
 
-Every authenticated account has a personal calendar. Personal calendar activity
-created by a current organisation member is also visible with its title,
+Every staff account has a personal calendar. Personal calendar activity created
+by a current organisation member is also visible with its title,
 category and notes in each current exact-team calendar by default. A user can
 deliberately protect an appointment through one plain-language control.
 
 ## Behaviour
 
 - `My event` starts with team-detail visibility.
-- `Personal calendar` is available to every authenticated role.
-- An account without a current workspace can create and manage personal events;
+- `Personal calendar` is available to staff roles, not Customers.
+- A staff account without a current workspace can create and manage personal events;
   those events remain personal because there is no team calendar projection.
 - The same default and choice apply from both `Personal calendar` and the member's
   shared organisation calendar. Personal calendar creation obtains the unit
@@ -36,5 +36,7 @@ deliberately protect an appointment through one plain-language control.
 4. Changing between personal, unit and commitment modes resets visibility to the
    appropriate team-visible value.
 5. Frontend accessibility and backend policy regression tests pass.
-6. A Customer or other account without a workspace can use a personal calendar
-   without gaining access to any team calendar.
+6. A staff account without a workspace can use a personal calendar without
+   gaining access to any team calendar.
+7. A Customer sees no personal-calendar navigation and a direct calendar URL
+   returns to `My requests`.

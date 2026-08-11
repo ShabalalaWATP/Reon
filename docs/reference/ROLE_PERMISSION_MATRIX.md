@@ -19,7 +19,7 @@ Last reviewed: 11 August 2026
 
 | Actor | Permitted action | Required scope and state | Object/action check | Separation and audit |
 |---|---|---|---|---|
-| Authenticated user | Maintain their profile and personal calendar | Own active account | Subject is always the authenticated user | Team-visible personal events show detail by default; an explicitly private appointment shows colleagues only `Busy` and its time |
+| Authenticated user | Maintain their profile | Own active account | Subject is always the authenticated user | Profile changes remain attributable; bounded personal fields do not enter workflow or analytics |
 | Customer | Create and submit a request | Own authenticated account; every submission field valid | Requester ID becomes immutable ownership | Submission audited without narrative in admin telemetry |
 | Customer | Track, answer clarification, download and give feedback | Own request; matching workflow state; released product for download | Ownership and action-state check on every request | Download and feedback events attributable to Customer |
 | CRIOC Routing User | Review, request information, close or choose a Command | Active CRIOC candidate group and personally claimed task | Destination must be an effective direct Command child | Manager and Member use the same claim-based routing action; no product approval |

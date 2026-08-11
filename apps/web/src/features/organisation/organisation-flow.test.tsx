@@ -7,7 +7,7 @@ import {
   organisationUnit,
   organisationUnits,
   adminSession,
-  requesterSession,
+  staffSession,
 } from "../../test/fixtures";
 import { json, mockFetch, renderApp } from "../../test/render";
 import { buildOrganisationTree } from "./organisationTree";
@@ -15,7 +15,7 @@ import { buildOrganisationTree } from "./organisationTree";
 describe("organisation hierarchy", () => {
   it("shows the complete hierarchy and honest staffing states", async () => {
     mockFetch((url) => {
-      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/auth/me")) return json(staffSession);
       if (url.pathname.endsWith("/organisation/units")) {
         return json({ items: organisationUnits });
       }
@@ -51,7 +51,7 @@ describe("organisation hierarchy", () => {
   it("recovers from an error and reports an empty configuration", async () => {
     let fail = true;
     mockFetch((url) => {
-      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/auth/me")) return json(staffSession);
       if (url.pathname.endsWith("/organisation/units")) {
         return fail ? json({ detail: "Unavailable" }, 503) : json({ items: [] });
       }

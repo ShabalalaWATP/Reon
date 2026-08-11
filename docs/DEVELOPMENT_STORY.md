@@ -1,5 +1,15 @@
 # Development Story
 
+## 11 August 2026: focused Customer navigation
+
+- Reduced the Customer sidebar to the two destinations used in the request
+  journey: `My requests` and `New request`.
+- Removed Customer access to the staff personal-calendar and organisation-
+  directory pages. A copied direct URL returns safely to `My requests`, while
+  staff calendars, team calendars and organisation access remain unchanged.
+- Updated the product specifications, user stories, permission matrix and system
+  architecture, with regression coverage for both navigation and direct routes.
+
 ## 11 August 2026: SOLID and Secure by Design programme completed
 
 - Added executable dependency fitness rules for framework-free domain policy,

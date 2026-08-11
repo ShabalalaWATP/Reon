@@ -86,8 +86,6 @@ export function navigationForRole(
     return [
       { label: "My requests", path: "/requests" },
       { label: "New request", path: "/requests/new" },
-      personalCalendarLink,
-      organisationLink,
     ];
   }
   if (role === "PLATFORM_ADMIN") {
