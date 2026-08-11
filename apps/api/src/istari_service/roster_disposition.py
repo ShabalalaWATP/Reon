@@ -22,6 +22,7 @@ from istari_service.calendar_models import (
 )
 from istari_service.errors import InvalidRosterChange
 from istari_service.models import RequestStatus, ServiceRequest
+from istari_service.request_participant_models import RequestParticipant
 
 TERMINAL_REQUEST_STATUSES = {
     RequestStatus.COMPLETED,
@@ -42,6 +43,19 @@ async def reject_active_roster_assignments(
     if request_id is not None:
         raise InvalidRosterChange(
             "Complete or reassign this Analyst's active service work first."
+        )
+    participant_request_id = await session.scalar(
+        select(RequestParticipant.request_id)
+        .join(ServiceRequest, ServiceRequest.id == RequestParticipant.request_id)
+        .where(
+            RequestParticipant.user_id == user_id,
+            RequestParticipant.ended_at.is_(None),
+            ServiceRequest.status.not_in(TERMINAL_REQUEST_STATUSES),
+        )
+    )
+    if participant_request_id is not None:
+        raise InvalidRosterChange(
+            "Hand over this Member's active service participation first."
         )
     commitment_id = await session.scalar(
         select(CalendarEvent.id).where(

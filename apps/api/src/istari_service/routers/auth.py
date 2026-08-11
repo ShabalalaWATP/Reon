@@ -10,18 +10,69 @@ from istari_service.dependencies import (
     AppSettings,
     AuthDependency,
     CurrentSession,
+    DatabaseSession,
     MutationSession,
 )
 from istari_service.login_rate_limiter import login_source_key
+from istari_service.repositories.account_requests import (
+    SqlAlchemyAccountRequestRepository,
+)
+from istari_service.repositories.platform_security import (
+    SqlAlchemyPlatformSecurityRepository,
+)
+from istari_service.schemas.account_requests import (
+    AccountRequestAccepted,
+    AccountRequestCreate,
+)
 from istari_service.schemas.auth import (
     CurrentUser,
     ElevationResponse,
     LoginRequest,
+    PasswordAssistanceAccepted,
+    PasswordAssistanceRequest,
     PasswordConfirmation,
     SessionResponse,
 )
+from istari_service.services.account_request_service import AccountRequestService
+from istari_service.services.platform_security_service import PlatformSecurityService
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
+
+
+@router.post(
+    "/account-requests",
+    response_model=AccountRequestAccepted,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def request_account(
+    command: AccountRequestCreate,
+    session: DatabaseSession,
+    settings: AppSettings,
+) -> AccountRequestAccepted:
+    service = AccountRequestService(
+        SqlAlchemyAccountRequestRepository(session), settings
+    )
+    await service.submit(command)
+    return AccountRequestAccepted()
+
+
+@router.post(
+    "/password-assistance",
+    response_model=PasswordAssistanceAccepted,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def request_password_assistance(
+    command: PasswordAssistanceRequest,
+    request: Request,
+    session: DatabaseSession,
+    settings: AppSettings,
+) -> PasswordAssistanceAccepted:
+    service = PlatformSecurityService(SqlAlchemyPlatformSecurityRepository(session))
+    await service.request_password_assistance(
+        command.email,
+        source_key=login_source_key(request, settings.trusted_proxy_networks),
+    )
+    return PasswordAssistanceAccepted()
 
 
 def _session_response(
@@ -35,6 +86,7 @@ def _session_response(
             display_name=session.actor.display_name,
             role=session.actor.role,
             scope=session.actor.scope,
+            organisation_unit_ids=sorted(session.actor.organisation_unit_ids, key=str),
         ),
         csrf_token=csrf_token,
         expires_at=session.expires_at,

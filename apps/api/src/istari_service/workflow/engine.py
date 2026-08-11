@@ -6,6 +6,7 @@ from typing import Protocol, runtime_checkable
 
 from istari_service.workflow.types import (
     ActiveTaskQuery,
+    CancelProcessCommand,
     ClaimTaskCommand,
     CompleteTaskCommand,
     ProcessStateQuery,
@@ -56,4 +57,8 @@ class WorkflowEngine(Protocol):
 
     async def complete_task(self, command: CompleteTaskCommand) -> None:
         """Complete the exact expected task with a human-selected action."""
+        ...
+
+    async def cancel_process(self, command: CancelProcessCommand) -> None:
+        """Terminate one exact active process instance."""
         ...

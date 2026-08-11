@@ -23,7 +23,9 @@ def _protect_form(_mapper: Any, _connection: Any, target: ServiceRequest) -> Non
     fields = (  # noqa: SIM905
         "title service_category description desired_outcome background_context "
         "required_by required_by_reason preferred_deliverable_type success_criteria "
-        "requesting_business_area intended_recipients sensitivity handling_instructions"
+        "question_to_answer subject_area_or_location coverage_start coverage_end "
+        "customer_urgency supported_activity_or_decision constraints_or_caveats "
+        "supporting_information sensitivity handling_instructions"
     ).split()
     state = inspect(target)
     if any(state.attrs[field].history.has_changes() for field in fields):

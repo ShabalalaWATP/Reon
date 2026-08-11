@@ -96,7 +96,6 @@ def close_request() -> CloseRequest:
 def progress_request() -> ProgressRequest:
     return ProgressRequest(
         action="progress",
-        category="Research",
         priority="LOW",
         destination_unit_id=UNIT_ID,
     )

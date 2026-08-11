@@ -7,20 +7,24 @@ from uuid import UUID
 
 from pydantic import Field, field_validator
 
+from istari_service.identity_validation import normalise_email
 from istari_service.models import UserRole
 from istari_service.organisation_models import OrganisationKind
 from istari_service.schemas.common import ApiModel, StrictApiModel
+from istari_service.team_models import WorkspacePosition
 
 
 class AdminMembership(ApiModel):
     organisation_unit_id: UUID
     organisation_unit_name: str
     organisation_unit_kind: OrganisationKind
+    workspace_position: WorkspacePosition
 
 
 class AdminUser(ApiModel):
     id: UUID
     username: str
+    email: str
     display_name: str
     role: UserRole
     scope: str
@@ -38,9 +42,16 @@ class AdminUserList(ApiModel):
 
 class AdminUserCreate(StrictApiModel):
     display_name: str = Field(min_length=2, max_length=120)
+    email: str | None = Field(default=None, min_length=3, max_length=254)
     role: UserRole
     scope: str = Field(min_length=1, max_length=120)
     organisation_unit_ids: list[UUID] = Field(default_factory=list, max_length=40)
+    workspace_position: WorkspacePosition | None = None
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str | None) -> str | None:
+        return normalise_email(value) if value is not None else None
 
     @field_validator("organisation_unit_ids")
     @classmethod

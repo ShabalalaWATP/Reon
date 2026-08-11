@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { describe, expect, it, vi } from "vitest";
@@ -14,12 +14,13 @@ const readySpecialists: SpecialistOptions = {
   items: [
     { id: "specialist-1", displayName: "Aisha Rahman" },
     { id: "specialist-2", displayName: "Euan Fraser" },
+    { id: "specialist-3", displayName: "Craig Brown" },
   ],
   onRetry: vi.fn(),
   status: "ready",
 };
 const readyRouting: RoutingOptions = {
-  items: organisationChildren("JIOC"),
+  items: organisationChildren("CRIOC"),
   onRetry: vi.fn(),
   status: "ready",
 };
@@ -28,9 +29,9 @@ describe("work action controls", () => {
   it.each([
     ["request_information", "Reason"],
     ["send_to_allocation", "Routing note"],
-    ["progress", "Confirmed category"],
+    ["progress", "Priority"],
     ["allocate", "Destination unit"],
-    ["assign", "Team Analyst"],
+    ["assign", "Lead Analyst"],
     ["submit", "Product title"],
     ["provide_information", "Additional information"],
     ["request_clarification", "Question for the Customer"],
@@ -123,25 +124,67 @@ describe("work action controls", () => {
       />,
     );
 
-    const specialistSelect = screen.getByLabelText("Team Analyst");
+    const specialistSelect = screen.getByLabelText("Lead Analyst");
     expect(specialistSelect).toHaveAttribute("aria-invalid", "false");
     expect(specialistSelect).not.toHaveAttribute("aria-describedby");
     expect(await axe(view.container)).toHaveNoViolations();
-    await user.click(screen.getByRole("button", { name: "Assign Analyst" }));
-    const error = await screen.findByText("Choose an Analyst.");
+    await user.click(screen.getByRole("button", { name: "Assign Analysts" }));
+    const error = await screen.findByText("Choose a Lead Analyst.");
     expect(error.id).not.toBe("");
     expect(specialistSelect).toHaveAttribute("aria-invalid", "true");
     expect(specialistSelect).toHaveAttribute("aria-describedby", error.id);
     expect(await axe(view.container)).toHaveNoViolations();
 
-    await user.click(screen.getByRole("button", { name: "Assign Analyst" }));
-    expect(screen.getByText("Choose an Analyst.")).toHaveAttribute("id", error.id);
+    await user.click(screen.getByRole("button", { name: "Assign Analysts" }));
+    expect(screen.getByText("Choose a Lead Analyst.")).toHaveAttribute("id", error.id);
     await user.selectOptions(specialistSelect, "specialist-2");
-    await user.click(screen.getByRole("button", { name: "Assign Analyst" }));
+    await user.type(screen.getByLabelText(/^Assignment reason/), "Euan is the accountable Lead for this request.");
+    await user.click(screen.getByRole("button", { name: "Assign Analysts" }));
 
     expect(submit).toHaveBeenCalledWith({
       action: "assign",
+      contributorIds: [],
+      reason: "Euan is the accountable Lead for this request.",
       specialistId: "specialist-2",
+    });
+  });
+
+  it("selects multiple Contributors and automatically excludes the Lead", async () => {
+    const submit = vi.fn<(action: WorkAction) => void>();
+    const user = userEvent.setup();
+    render(
+      <WorkActionForm
+        actions={["assign"]}
+        disabled={false}
+        onSubmit={submit}
+        specialistOptions={readySpecialists}
+      />,
+    );
+
+    const aisha = screen.getByRole("checkbox", { name: /Aisha Rahman/ });
+    const euan = screen.getByRole("checkbox", { name: /Euan Fraser/ });
+    const craig = screen.getByRole("checkbox", { name: /Craig Brown/ });
+    await user.click(aisha);
+    await user.click(euan);
+    expect(screen.getByText("2 Contributors selected")).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText("Lead Analyst"), "specialist-1");
+    await waitFor(() => expect(aisha).not.toBeChecked());
+    expect(aisha).toBeDisabled();
+    expect(screen.getByText("1 Contributor selected")).toBeInTheDocument();
+
+    await user.click(craig);
+    await user.type(
+      screen.getByLabelText(/^Assignment reason/),
+      "Euan and Craig will support the accountable Lead.",
+    );
+    await user.click(screen.getByRole("button", { name: "Assign Analysts" }));
+
+    expect(submit).toHaveBeenCalledWith({
+      action: "assign",
+      contributorIds: ["specialist-2", "specialist-3"],
+      reason: "Euan and Craig will support the accountable Lead.",
+      specialistId: "specialist-1",
     });
   });
 
@@ -158,9 +201,9 @@ describe("work action controls", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Team Analyst")).toBeDisabled();
+    expect(screen.getByLabelText("Lead Analyst")).toBeDisabled();
     expect(screen.getByRole("status")).toHaveTextContent("Loading eligible Analysts…");
-    expect(screen.getByRole("button", { name: "Assign Analyst" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Assign Analysts" })).toBeDisabled();
 
     rerender(
       <WorkActionForm
@@ -187,7 +230,7 @@ describe("work action controls", () => {
     expect(screen.getByRole("status")).toHaveTextContent(
       "No eligible Analysts are available for this team.",
     );
-    expect(screen.getByLabelText("Team Analyst")).toBeDisabled();
+    expect(screen.getByLabelText("Lead Analyst")).toBeDisabled();
 
     rerender(
       <WorkActionForm
@@ -197,10 +240,11 @@ describe("work action controls", () => {
         specialistOptions={readySpecialists}
       />,
     );
-    expect(screen.getByRole("option", { name: "Aisha Rahman" })).toHaveValue(
+    const readyLead = screen.getByLabelText("Lead Analyst");
+    expect(within(readyLead).getByRole("option", { name: "Aisha Rahman" })).toHaveValue(
       "specialist-1",
     );
-    expect(screen.getByLabelText("Team Analyst")).toBeEnabled();
+    expect(screen.getByLabelText("Lead Analyst")).toBeEnabled();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
@@ -215,6 +259,9 @@ describe("work action controls", () => {
     const props = { currentUserId: "me", disabled: false, onClaim: vi.fn(), onComplete: vi.fn() };
     const { rerender } = render(<WorkActionPanel {...props} item={workItem} />);
     expect(screen.getByRole("heading", { name: "Take ownership" })).toBeInTheDocument();
+    rerender(<WorkActionPanel {...props} claimAllowed={false} item={workItem} />);
+    expect(screen.getByRole("heading", { name: "Manager assignment required" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Claim work item" })).not.toBeInTheDocument();
     rerender(<WorkActionPanel {...props} item={{ ...workItem, assigneeId: "other", assigneeDisplayName: null }} />);
     expect(screen.getByRole("heading", { name: "Assigned to another team member" })).toBeInTheDocument();
     rerender(<WorkActionPanel {...props} item={{ ...workItem, assigneeId: "me", availableActions: [] }} />);

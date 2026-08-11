@@ -72,6 +72,17 @@ class ProcessStateQuery:
 
 
 @dataclass(frozen=True, slots=True)
+class CancelProcessCommand:
+    """Terminate one exact process instance without arbitrary variables."""
+
+    process_instance_key: str
+
+    def __post_init__(self) -> None:
+        if not self.process_instance_key.strip():
+            raise ValueError("process_instance_key must not be empty")
+
+
+@dataclass(frozen=True, slots=True)
 class WorkflowProcessSnapshot:
     """Minimal process evidence used to recover a terminal command."""
 

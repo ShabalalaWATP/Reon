@@ -50,10 +50,12 @@ export function WorkActionForm({
     handleSubmit,
     register,
     reset,
+    setValue,
     watch,
   } = useForm<WorkActionValues>({
     defaultValues: {
       action: actions[0],
+      contributorIds: [],
       expectedVersion: clarification?.version,
       threadId: clarification?.id,
     },
@@ -63,14 +65,27 @@ export function WorkActionForm({
     () =>
       reset({
         action: actions[0],
+        contributorIds: [],
         expectedVersion: clarification?.version,
         threadId: clarification?.id,
       }),
     [actions, clarification?.id, clarification?.version, reset],
   );
   const action = watch("action");
+  const contributorIds = watch("contributorIds");
   const destinationUnitId = watch("destinationUnitId");
+  const specialistId = watch("specialistId");
   const actionField = register("action");
+
+  useEffect(() => {
+    if (specialistId && contributorIds?.includes(specialistId)) {
+      setValue(
+        "contributorIds",
+        contributorIds.filter((id) => id !== specialistId),
+        { shouldDirty: true, shouldValidate: true },
+      );
+    }
+  }, [contributorIds, setValue, specialistId]);
 
   if (actions.length === 0) {
     return <p className="inline-empty">No actions are available for this item.</p>;
@@ -110,10 +125,12 @@ export function WorkActionForm({
       </label>
       <WorkActionFields
         action={action}
+        contributorIds={contributorIds ?? []}
         destinationUnitId={destinationUnitId}
         errors={errors}
         register={register}
         routingOptions={routingOptions}
+        specialistId={specialistId}
         specialistOptions={specialistOptions}
       />
       <button

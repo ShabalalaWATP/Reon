@@ -32,6 +32,9 @@ from istari_service.organisation_seed import seed_organisation_units
 from istari_service.product_filesystem_storage import PrivateFilesystemObjectStorage
 from istari_service.product_runtime import ProductRuntime, clamav_product_runtime
 from istari_service.product_security import AllowedHttpsLinkPolicy, SafeDocumentScanner
+from istari_service.repositories.platform_security import (
+    initialise_platform_classification,
+)
 from istari_service.request_security import RequestBodyLimitMiddleware
 from istari_service.response_security import SecurityHeadersMiddleware
 from istari_service.routers import (
@@ -46,12 +49,15 @@ from istari_service.routers import (
     health,
     organisation,
     planning,
+    platform_security,
     products,
+    profiles,
     requests,
     statistics,
     statistics_evolution,
     team_workspaces,
     work_items,
+    workspace_collaboration,
 )
 from istari_service.telemetry import OperationalTelemetryMiddleware
 from istari_service.workflow.camunda import CamundaWorkflowEngine
@@ -155,6 +161,7 @@ def create_app(
                 )
                 await initialise_admin_identity_sequence(session)
                 await initialise_admin_audit_anchor(session)
+            await initialise_platform_classification(session)
             if restored_configuration:
                 if configured.allow_demo_users:
                     await restore_active_configuration_projection(session)
@@ -246,13 +253,16 @@ def create_app(
         return JSONResponse(status_code=422, content={"detail": safe_errors})
 
     application.include_router(health.router)
+    application.include_router(platform_security.router, prefix="/api/v1")
     application.include_router(auth.router, prefix="/api/v1")
     application.include_router(capabilities.router, prefix="/api/v1")
     application.include_router(admin.router, prefix="/api/v1")
     application.include_router(organisation.router, prefix="/api/v1")
+    application.include_router(profiles.router, prefix="/api/v1")
     application.include_router(requests.router, prefix="/api/v1")
     application.include_router(statistics.router, prefix="/api/v1")
     application.include_router(team_workspaces.router, prefix="/api/v1")
+    application.include_router(workspace_collaboration.router, prefix="/api/v1")
     application.include_router(board.router, prefix="/api/v1")
     application.include_router(calendar.router, prefix="/api/v1")
     application.include_router(drafts.router, prefix="/api/v1")

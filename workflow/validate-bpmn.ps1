@@ -188,7 +188,7 @@ $expectedTasks = @(
     "customer_clarification_response", "lead_review", "quality_review", "release"
 )
 $expectedAssignments = @{
-    intake_review = "|jioc-routing"
+    intake_review = "|crioc-routing"
     requester_response = "= requesterId|"
     coordination_review = "|= selectedCommandCandidateGroup"
     on_hold = "|= selectedCommandCandidateGroup"
@@ -201,9 +201,9 @@ $expectedAssignments = @{
     release = "|qc-managers"
 }
 $expectedTaskNames = @{
-    intake_review = "JIOC Routing"
+    intake_review = "CRIOC Routing"
     requester_response = "Provide requested information"
-    coordination_review = "Command Routing"
+    coordination_review = "Request Coordination"
     on_hold = "Resolve coordination hold"
     allocation_review = "Ops Routing"
     delivery_planning = "Team Assignment"

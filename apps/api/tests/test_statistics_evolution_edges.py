@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -15,22 +15,31 @@ from istari_service.analytics_evolution_models import (
     OperationalFactType,
 )
 from istari_service.domain import Actor
-from istari_service.errors import StatisticsQueryInvalid
-from istari_service.models import UserRole
+from istari_service.errors import ObjectNotFound, StatisticsQueryInvalid
+from istari_service.models import RequestStatus, UserRole
 from istari_service.organisation_models import OrganisationKind
 from istari_service.repositories import statistics_evolution as repository_module
 from istari_service.repositories.statistics_evolution import (
     SqlAlchemyStatisticsEvolutionRepository,
 )
+from istari_service.schemas.statistics import StatisticsScope, StatisticsUnit
 from istari_service.schemas.statistics_evolution import StatisticsExportCommand
 from istari_service.services.statistics_evolution_service import (
     StatisticsEvolutionService,
 )
-from istari_service.statistics_evolution_calculations import _interval_seconds
+from istari_service.statistics_evolution_calculations import (
+    _bottleneck_rows,
+    _interval_seconds,
+)
+from istari_service.statistics_hierarchy import (
+    selected_statistics_unit,
+    statistics_breadcrumb,
+)
 from istari_service.statistics_operational_calculations import (
     capacity_rows,
     notification_rows,
 )
+from istari_service.statistics_throughput import throughput_rows
 
 
 def _fact() -> OperationalAnalyticsFact:
@@ -59,6 +68,87 @@ def test_empty_notifications_small_capacity_and_aware_interval() -> None:
         duration_seconds=None, started_at=now - timedelta(hours=1)
     )
     assert _interval_seconds(interval, now) == 3600
+
+
+def test_terminal_intervals_are_not_active_bottlenecks() -> None:
+    now = datetime.now(UTC)
+    terminal = SimpleNamespace(
+        status=RequestStatus.COMPLETED,
+        duration_seconds=None,
+        started_at=now - timedelta(hours=8),
+        ended_at=None,
+        request_id=uuid4(),
+    )
+    active = SimpleNamespace(
+        status=RequestStatus.IN_PROGRESS,
+        duration_seconds=None,
+        started_at=now - timedelta(hours=1),
+        ended_at=None,
+        request_id=uuid4(),
+    )
+    dataset = SimpleNamespace(intervals=(terminal, active), facts=())
+    rows = _bottleneck_rows(dataset, now)
+    assert [row.key for row in rows] == [RequestStatus.IN_PROGRESS.value]
+
+
+def test_statistics_hierarchy_selects_only_members_and_builds_a_trail() -> None:
+    root_id = uuid4()
+    child_id = uuid4()
+    root = StatisticsUnit(
+        id=root_id,
+        parent_id=None,
+        name="CRIOC",
+        kind=OrganisationKind.ROOT,
+        depth=0,
+    )
+    child = StatisticsUnit(
+        id=child_id,
+        parent_id=root_id,
+        name="JOCK",
+        kind=OrganisationKind.COMMAND,
+        depth=1,
+    )
+    scope = StatisticsScope(
+        id="crioc",
+        unit_id=root_id,
+        name="CRIOC",
+        kind=OrganisationKind.ROOT,
+        include_descendants=True,
+        units=[root, child],
+    )
+
+    selected = selected_statistics_unit(scope, child_id)
+    assert selected == child
+    assert statistics_breadcrumb(scope, selected) == (root, child)
+    with pytest.raises(ObjectNotFound):
+        selected_statistics_unit(scope, uuid4())
+
+
+def test_statistics_breadcrumb_fails_closed_for_broken_parent_links() -> None:
+    root_id = uuid4()
+    scope = StatisticsScope(
+        id="broken",
+        unit_id=root_id,
+        name="Broken synthetic scope",
+        kind=OrganisationKind.ROOT,
+        include_descendants=True,
+        units=[],
+    )
+    without_parent = StatisticsUnit(
+        id=uuid4(),
+        parent_id=None,
+        name="Detached",
+        kind=OrganisationKind.COMMAND,
+        depth=1,
+    )
+    missing_parent = without_parent.model_copy(
+        update={"id": uuid4(), "parent_id": uuid4()}
+    )
+
+    with pytest.raises(ObjectNotFound):
+        statistics_breadcrumb(scope, without_parent)
+    with pytest.raises(ObjectNotFound):
+        statistics_breadcrumb(scope, missing_parent)
 
 
 async def test_operational_fact_query_cap_fails_closed(
@@ -130,3 +220,20 @@ def _actor() -> Actor:
         role=UserRole.DELIVERY_TEAM_LEAD,
         scope="synthetic",
     )
+
+
+def test_throughput_rows_advance_weekly_and_monthly_buckets() -> None:
+    zone = ZoneInfo("Europe/London")
+    weekly = throughput_rows((), date(2026, 8, 2), date(2026, 8, 18), zone, "WEEKLY")
+    monthly = throughput_rows((), date(2026, 1, 20), date(2026, 3, 2), zone, "MONTHLY")
+    assert [row.date for row in weekly] == [
+        date(2026, 7, 27),
+        date(2026, 8, 3),
+        date(2026, 8, 10),
+        date(2026, 8, 17),
+    ]
+    assert [row.date for row in monthly] == [
+        date(2026, 1, 1),
+        date(2026, 2, 1),
+        date(2026, 3, 1),
+    ]

@@ -1,15 +1,10 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { describe, expect, it } from "vitest";
 
 import type { Session } from "../../lib/api/types";
-import type {
-  EligibleRosterAnalyst,
-  TeamActivity,
-  TeamMember,
-  TeamWorkspaceAccess,
-} from "../../lib/api/teamTypes";
+import type { EligibleRosterAnalyst, TeamActivity, TeamMember, TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import { json, mockFeatureFetch, renderApp } from "../../test/render";
 import { enabledCapabilities, requesterSession } from "../../test/fixtures";
 
@@ -17,29 +12,32 @@ const managerSession: Session = {
   ...requesterSession,
   user: {
     ...requesterSession.user,
-    id: "manager-osg",
+    id: "manager-ssg",
     username: "admin8",
     displayName: "Grant Hanley",
     role: "DELIVERY_TEAM_LEAD",
-    scope: "OSG Team",
+    scope: "SSG Team",
   },
 };
 const analystSession: Session = {
   ...managerSession,
   user: {
     ...managerSession.user,
-    id: "analyst-osg",
+    id: "analyst-ssg",
     username: "admin11",
     displayName: "Lewis Ferguson",
     role: "DELIVERY_SPECIALIST",
   },
 };
 const managerAccess: TeamWorkspaceAccess = {
-  teamId: "team-osg",
-  teamCode: "OSG_TEAM",
-  teamName: "OSG Team",
-  grantId: "grant-osg",
+  teamId: "team-ssg",
+  teamCode: "SSG_TEAM",
+  teamName: "SSG Team",
+  unitKind: "TEAM",
+  workspacePosition: "MANAGER",
+  grantId: "grant-ssg",
   permissions: ["BOARD", "CALENDAR", "CAPACITY", "ROSTER", "STATISTICS"],
+  views: ["OVERVIEW", "BOARD", "CALENDAR", "PLANNING", "PEOPLE", "STATISTICS", "HANDOVER", "ACTIVITY"],
 };
 const analystAccess: TeamWorkspaceAccess = {
   ...managerAccess,
@@ -49,7 +47,7 @@ const analystAccess: TeamWorkspaceAccess = {
 const people: TeamMember[] = [
   {
     membershipId: "membership-manager",
-    accountId: "manager-osg",
+    accountId: "manager-ssg",
     displayName: "Grant Hanley",
     role: "DELIVERY_TEAM_LEAD",
     state: "CURRENT",
@@ -57,12 +55,13 @@ const people: TeamMember[] = [
     effectiveUntil: null,
     version: 1,
     activeWorkCount: 0,
+    skills: ["Delivery leadership", "Briefing"],
     startReason: "Established synthetic team baseline.",
     endReason: null,
   },
   {
     membershipId: "membership-lewis",
-    accountId: "analyst-osg",
+    accountId: "analyst-ssg",
     displayName: "Lewis Ferguson",
     role: "DELIVERY_SPECIALIST",
     state: "CURRENT",
@@ -70,6 +69,7 @@ const people: TeamMember[] = [
     effectiveUntil: null,
     version: 2,
     activeWorkCount: 0,
+    skills: ["Research", "Data analysis"],
     startReason: "Established synthetic team baseline.",
     endReason: null,
   },
@@ -83,6 +83,7 @@ const people: TeamMember[] = [
     effectiveUntil: null,
     version: 1,
     activeWorkCount: 2,
+    skills: [],
     startReason: "Established synthetic team baseline.",
     endReason: null,
   },
@@ -96,6 +97,7 @@ const people: TeamMember[] = [
     effectiveUntil: "2026-01-01T09:00:00Z",
     version: 2,
     activeWorkCount: 0,
+    skills: [],
     startReason: "Historical team membership.",
     endReason: "The Analyst transferred to another team.",
   },
@@ -143,21 +145,40 @@ describe("team workspace", () => {
   it("provides an accessible overview, all workspace views and immutable activity", async () => {
     mockTeamApi(managerSession, managerAccess);
     const user = userEvent.setup();
-    const view = renderApp("/teams/team-osg/overview");
-    expect(await screen.findByRole("heading", { name: "OSG Team" })).toBeInTheDocument();
-    expect(await screen.findByText("3", { selector: ".team-metric strong" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Team workspace" })).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /Overview|Board|Calendar|People|Planning|Activity/ })).toHaveLength(6);
+    const view = renderApp("/teams/team-ssg/overview");
+    expect(await screen.findByRole("heading", { name: "SSG Team" })).toBeInTheDocument();
+    const staffing = await screen.findByRole("region", { name: "Workspace staffing" });
+    expect(within(staffing).getByText("Managers").closest("div")).toHaveTextContent("3");
+    expect(screen.getByRole("heading", { name: "Team attention" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Delivery outlook" })).toBeInTheDocument();
+    expect(await screen.findByText("WP-001 blocked for 3 days")).toBeInTheDocument();
+    expect(screen.getByText("Research, Data analysis", { exact: false })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Upcoming team calendar" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "SSG Team workspace" })).toBeInTheDocument();
+    expect(within(screen.getByRole("navigation", { name: "Organisation workspace views" })).getAllByRole("link")).toHaveLength(8);
     expect(await axe(view.container)).toHaveNoViolations();
 
-    await user.click(screen.getByRole("link", { name: "Board" }));
-    expect(await screen.findByRole("heading", { name: "Workflow board" })).toBeInTheDocument();
-    await user.click(screen.getByRole("link", { name: "Calendar" }));
-    expect(await screen.findByRole("heading", { name: "Add to team calendar" })).toBeInTheDocument();
-    await user.click(screen.getByRole("link", { name: "Planning" }));
-    expect(await screen.findByRole("heading", { name: "Team planning" })).toBeInTheDocument();
-    await user.click(screen.getByRole("link", { name: "Activity" }));
-    expect(await screen.findByText("A scheduled Analyst transfer became effective.")).toBeInTheDocument();
+    const tabs = screen.getByRole("navigation", { name: "Organisation workspace views" });
+    expect(within(tabs).getByRole("link", { name: "Board" })).toHaveAttribute(
+      "href",
+      "/teams/team-ssg/board",
+    );
+    expect(within(tabs).getByRole("link", { name: "Calendar" })).toHaveAttribute(
+      "href",
+      "/teams/team-ssg/calendar",
+    );
+    expect(within(tabs).getByRole("link", { name: "Planning" })).toHaveAttribute(
+      "href",
+      "/teams/team-ssg/planning",
+    );
+    await user.click(within(tabs).getByRole("link", { name: "Activity" }));
+    expect(
+      await screen.findByText(
+        "A scheduled Analyst transfer became effective.",
+        {},
+        { timeout: 5_000 },
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText(/scheduled membership service/)).toBeInTheDocument();
   });
 
@@ -165,19 +186,19 @@ describe("team workspace", () => {
     const bodies: Array<Record<string, unknown>> = [];
     mockTeamApi(managerSession, managerAccess, bodies);
     const user = userEvent.setup();
-    renderApp("/teams/team-osg/people");
+    renderApp("/teams/team-ssg/people");
     expect(await screen.findByRole("heading", { name: "People" })).toBeInTheDocument();
     expect(screen.getByText("The Analyst transferred to another team.")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "End membership" })[0]).toBeEnabled();
     expect(screen.getAllByRole("button", { name: "End membership" })[1]).toBeDisabled();
 
-    await user.selectOptions(screen.getByLabelText(/Analyst/), "alan");
+    await user.selectOptions(screen.getByLabelText(/^Member/), "alan");
     await user.type(screen.getByLabelText(/^Reason/), "Alan is joining to balance current delivery demand.");
-    await user.click(screen.getByRole("button", { name: "Add Analyst" }));
+    await user.click(screen.getByRole("button", { name: "Add Member" }));
     await waitFor(() => expect(bodies.some((body) => body.analystId === "alan")).toBe(true));
 
     await user.click(screen.getByRole("button", { name: "Schedule transfer" }));
-    await user.selectOptions(screen.getByLabelText(/Analyst/), "beth");
+    await user.selectOptions(screen.getByLabelText(/^Member/), "beth");
     fireEvent.change(screen.getByLabelText(/Effective date/), { target: { value: "2026-08-20T10:00" } });
     await user.type(screen.getByLabelText(/^Reason/), "Beth will transfer after the current planning cycle.");
     await user.click(screen.getByRole("button", { name: "Confirm transfer" }));
@@ -191,7 +212,7 @@ describe("team workspace", () => {
 
   it("keeps Analysts read-only and handles unavailable, missing and invalid workspace routes", async () => {
     mockTeamApi(analystSession, analystAccess);
-    renderApp("/teams/team-osg/people");
+    renderApp("/teams/team-ssg/people");
     expect(await screen.findByText("Lewis Ferguson")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Change roster" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "End membership" })).not.toBeInTheDocument();
@@ -201,8 +222,8 @@ describe("team workspace", () => {
     expect(await screen.findByRole("heading", { name: "Team workspace unavailable" })).toBeInTheDocument();
 
     mockTeamApi(analystSession, analystAccess);
-    renderApp("/teams/team-osg/not-a-view");
-    expect(await screen.findByText("One team, one operational picture")).toBeInTheDocument();
+    renderApp("/teams/team-ssg/not-a-view");
+    expect(await screen.findByRole("heading", { name: "Team attention" })).toBeInTheDocument();
   });
 
   it("reports an empty assignment and recovers workspace and overview queries", async () => {
@@ -211,7 +232,7 @@ describe("team workspace", () => {
       if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       throw new Error(`Unexpected ${url.pathname}`);
     });
-    renderApp("/teams/team-osg/overview");
+    renderApp("/teams/team-ssg/overview");
     expect(await screen.findByRole("heading", { name: "No team workspace assigned" })).toBeInTheDocument();
 
     let workspaceAttempts = 0;
@@ -224,7 +245,7 @@ describe("team workspace", () => {
         workspaceAttempts += 1;
         return workspaceAttempts === 1 ? json({ detail: "Unavailable" }, 503) : json({ items: [managerAccess, quartz] });
       }
-      if (url.pathname.endsWith("/team-workspaces/team-osg")) {
+      if (url.pathname.endsWith("/team-workspaces/team-ssg")) {
         overviewAttempts += 1;
         return overviewAttempts === 1 ? json({ detail: "Unavailable" }, 503) : json({ access: managerAccess, managerCount: 2, analystCount: 4, activeWorkCount: 1, dueSoonCount: 0, overdueCount: 0 });
       }
@@ -232,14 +253,14 @@ describe("team workspace", () => {
       throw new Error(`Unexpected ${url.pathname}`);
     }, true, true, false);
     const user = userEvent.setup();
-    renderApp("/teams/team-osg/overview");
+    renderApp("/teams/team-ssg/overview");
     expect(await screen.findByRole("heading", { name: "Team workspace could not be loaded" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(workspaceAttempts).toBe(2));
-    expect(await screen.findByRole("heading", { name: "Team workspace could not be loaded" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Team home could not be loaded" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
-    expect(await screen.findByText("One team, one operational picture")).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText("Team"), "team-quartz");
+    expect(await screen.findByRole("heading", { name: "Team attention" })).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("Workspace"), "team-quartz");
     expect(await screen.findByRole("heading", { name: "Quartz Team" })).toBeInTheDocument();
   });
 
@@ -256,7 +277,7 @@ describe("team workspace", () => {
       throw new Error(`Unexpected ${url.pathname}`);
     }, true, true, false);
     const user = userEvent.setup();
-    renderApp("/teams/team-osg/activity");
+    renderApp("/teams/team-ssg/activity");
     expect(await screen.findByRole("heading", { name: "Team activity could not be loaded" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("heading", { name: "No team activity recorded" })).toBeInTheDocument();
@@ -275,18 +296,28 @@ describe("team workspace", () => {
         eligibleAttempts += 1;
         return eligibleAttempts === 1 ? json({ detail: "Unavailable" }, 503) : json({ items: eligible });
       }
+      if (url.pathname.endsWith("/end")) return json({ detail: "Membership end conflict" }, 409);
       if (url.pathname.endsWith("/memberships")) return json({ detail: "Roster conflict" }, 409);
       throw new Error(`Unexpected ${url.pathname}`);
     }, true, true, false);
-    renderApp("/teams/team-osg/people");
+    renderApp("/teams/team-ssg/people");
     expect(await screen.findByRole("heading", { name: "Team people could not be loaded" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
-    expect(await screen.findByText("Eligible Analysts could not be loaded.")).toBeInTheDocument();
+    expect(await screen.findByText("Eligible Members could not be loaded.")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
-    await user.selectOptions(await screen.findByLabelText(/Analyst/), "alan");
+    await user.selectOptions(await screen.findByLabelText(/^Member/), "alan");
     await user.type(screen.getByLabelText(/^Reason/), "Alan cannot join while a conflicting change is pending.");
-    await user.click(screen.getByRole("button", { name: "Add Analyst" }));
+    await user.click(screen.getByRole("button", { name: "Add Member" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Roster conflict");
+    await user.click(screen.getByRole("button", { name: "Schedule transfer" }));
+    await user.selectOptions(screen.getByLabelText(/^Member/), "beth");
+    fireEvent.submit(screen.getByRole("button", { name: "Confirm transfer" }).closest("form")!);
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Complete the transfer details"));
+    await user.click(screen.getAllByRole("button", { name: "End membership" })[0]);
+    await user.type(screen.getByLabelText(/Reason for ending/), "Lewis cannot leave during a conflicting roster update.");
+    await user.click(screen.getByRole("button", { name: "Confirm end" }));
+    const endForm = screen.getByRole("button", { name: "Confirm end" }).closest("form")!;
+    expect(await within(endForm).findByRole("alert")).toHaveTextContent("Membership end conflict");
   });
 });
 
@@ -302,10 +333,12 @@ function mockTeamApi(
     if (url.pathname.endsWith("/eligible-analysts")) return json({ items: eligible });
     if (url.pathname.endsWith("/people")) return json({ items: people.map((item) => access.grantId ? item : { ...item, startReason: null, endReason: null }) });
     if (url.pathname.endsWith("/activity")) return json({ items: activity });
-    if (url.pathname.endsWith("/board")) return json({ items: [], nextCursor: null, wipLimits: {}, configurationVersion: 0, savedViews: [], generatedAt: "2026-08-07T12:00:00Z" });
+    if (url.pathname.endsWith("/board")) return json({ items: [], nextCursor: null, columnCounts: { AWAITING_ASSIGNMENT: 2, BLOCKED: 1, MANAGER_REVIEW: 1 }, totalCount: 4, wipLimits: {}, configurationVersion: 0, savedViews: [], generatedAt: "2026-08-07T12:00:00Z" });
     if (url.pathname.endsWith("/iterations")) return json({ items: [] });
     if (url.pathname.endsWith("/packages")) return json({ items: [] });
-    if (url.pathname.endsWith("/calendar")) return json({ items: [] });
+    if (url.pathname.endsWith("/planning/cockpit")) return json({ teamId: access.teamId, generatedAt: "2026-08-07T12:00:00Z", advisoryOnly: true, freshness: { health: "READY", label: "Current", sourceVersion: 3 }, summary: { backlogCount: 4, activeIterationCount: 1, dueRiskCount: 1, wipCount: 2, blockedCount: 1, availableMinutes: 900, reservedMinutes: 240 }, lanes: [], blockers: [{ packageId: "package-one", reference: "WP-001", title: "Synthetic package", ageDays: 3, reason: "Waiting for a public-safe dependency." }], dependencies: [{ packageId: "package-two", reference: "WP-002", title: "Dependent package", dependencyReference: "WP-001", status: "AT_RISK", warning: "The dependency is blocked." }], iteration: { id: "iteration-one", name: "Pilot iteration", goal: "Deliver the pilot.", startsOn: "2026-08-01", endsOn: "2026-08-14", status: "ACTIVE", committedPoints: 8, completedPoints: 3, committedPackages: 2, completedPackages: 1, factualSummary: null }, checklists: [] });
+    if (url.pathname.endsWith("/calendar")) return json({ items: [{ eventId: "event-one", occurrenceStart: "2026-08-11T09:00:00Z", startsAt: "2026-08-11T09:00:00Z", endsAt: "2026-08-11T16:00:00Z", title: "Synthetic course", subjectDisplayName: "Lewis Ferguson", category: "TRAINING" }] });
+    if (url.pathname.endsWith("/records")) return json({ items: [{ id: "record-one", kind: "RISK", status: "OPEN", title: "Review capacity assumption", body: "Synthetic context.", url: null, createdByDisplayName: "Grant Hanley", resolution: null, version: 1, createdAt: "2026-08-07T09:00:00Z", updatedAt: "2026-08-07T10:00:00Z" }] });
     if (url.pathname.endsWith("/memberships") || url.pathname.endsWith("/transfers") || url.pathname.endsWith("/end")) {
       bodies.push(JSON.parse(String(init.body)) as Record<string, unknown>);
       return json({ items: people });

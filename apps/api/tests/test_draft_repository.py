@@ -50,16 +50,21 @@ def submission(expected_version: int) -> RequestDraftSubmit:
     return RequestDraftSubmit(
         expected_version=expected_version,
         title="Synthetic service request",
-        service_category="Research",
         description="A sufficiently detailed synthetic request description.",
+        question_to_answer="What does the synthetic evidence show?",
         desired_outcome="A useful fictional written response.",
         background_context="Synthetic context only.",
+        subject_area_or_location="Synthetic subject area",
+        coverage_start=datetime.now(UTC).date(),
+        coverage_end=datetime.now(UTC).date() + timedelta(days=1),
+        customer_urgency="ROUTINE",
+        supported_activity_or_decision="A fictional planning decision.",
         required_by=datetime.now(UTC).date() + timedelta(days=7),
         required_by_reason="Needed for a fictional planning exercise.",
         preferred_deliverable_type="Plain text",
         success_criteria="The synthetic question is answered clearly.",
-        requesting_business_area="Area A",
-        intended_recipients=["Synthetic recipient"],
+        constraints_or_caveats="No known constraints.",
+        supporting_information="No supporting material is available.",
         sensitivity="STANDARD",
         handling_instructions="Retain synthetic content only.",
     )
@@ -73,6 +78,7 @@ async def test_repository_covers_draft_lock_and_submission_branches(
     async with factory() as session:
         user = User(
             username="draft.owner@example.test",
+            email="draft.owner@example.test",
             display_name="Draft Owner",
             password_hash="$argon2id$synthetic",
             role=UserRole.REQUESTER,
@@ -89,7 +95,7 @@ async def test_repository_covers_draft_lock_and_submission_branches(
 
         first = await repository.create(
             actor,
-            RequestDraftCreate(title="First", intended_recipients=[" Recipient "]),
+            RequestDraftCreate(title="First", supporting_information="Available"),
         )
         second = await repository.create(actor, RequestDraftCreate(title="Second"))
         assert len(await repository.list_for_requester(user.id)) == 2

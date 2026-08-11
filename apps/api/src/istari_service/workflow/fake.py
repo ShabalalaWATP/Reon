@@ -22,6 +22,7 @@ from istari_service.workflow.projection import (
 )
 from istari_service.workflow.types import (
     ActiveTaskQuery,
+    CancelProcessCommand,
     ClaimTaskCommand,
     CompleteTaskCommand,
     ProcessStateQuery,
@@ -64,6 +65,8 @@ class FakeWorkflowEngine:
         self._start_commands: list[StartProcessCommand] = []
         self._claim_commands: list[ClaimTaskCommand] = []
         self._completion_commands: list[CompleteTaskCommand] = []
+        self._cancellation_commands: list[CancelProcessCommand] = []
+        self._terminated_processes: set[str] = set()
 
     @property
     def start_commands(self) -> tuple[StartProcessCommand, ...]:
@@ -76,6 +79,10 @@ class FakeWorkflowEngine:
     @property
     def completion_commands(self) -> tuple[CompleteTaskCommand, ...]:
         return tuple(self._completion_commands)
+
+    @property
+    def cancellation_commands(self) -> tuple[CancelProcessCommand, ...]:
+        return tuple(self._cancellation_commands)
 
     @property
     def active_tasks(self) -> tuple[WorkflowTask, ...]:
@@ -147,6 +154,10 @@ class FakeWorkflowEngine:
         query: ProcessStateQuery,
     ) -> WorkflowProcessSnapshot | None:
         self._require_reachable()
+        if query.process_instance_key in self._terminated_processes:
+            return WorkflowProcessSnapshot(
+                query.process_instance_key, WorkflowProcessState.TERMINATED
+            )
         status = self._status_by_process.get(query.process_instance_key)
         if status is None:
             return None
@@ -212,6 +223,17 @@ class FakeWorkflowEngine:
         next_element_id = element_id_for_status(next_status)
         if next_element_id is not None:
             self._create_task(command.process_instance_key, next_element_id)
+
+    async def cancel_process(self, command: CancelProcessCommand) -> None:
+        self._require_reachable()
+        if command.process_instance_key not in self._status_by_process:
+            raise WorkflowTaskNotFound("cancel_process", 404)
+        self._cancellation_commands.append(command)
+        task_key = self._task_by_process.pop(command.process_instance_key, None)
+        if task_key is not None:
+            self._tasks.pop(task_key, None)
+            self._visibility_remaining.pop(task_key, None)
+        self._terminated_processes.add(command.process_instance_key)
 
     def status_for_process(self, process_instance_key: str) -> RequestStatus:
         """Expose deterministic projection state to tests without mutable access."""

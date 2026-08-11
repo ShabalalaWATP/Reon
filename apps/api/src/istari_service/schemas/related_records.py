@@ -1,8 +1,9 @@
-"""Schemas for bounded manual related-record checks."""
+"""Schemas for bounded explainable related-request matching."""
 
 from __future__ import annotations
 
 from datetime import date, datetime
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import Field, field_validator
@@ -21,8 +22,40 @@ class RelatedRecordCandidate(ApiModel):
     product_available: bool
 
 
+class RelatedRecordSearchMode(StrEnum):
+    HYBRID = "HYBRID"
+    TEXT_ONLY = "TEXT_ONLY"
+
+
+class RelatedRecordMatchMethod(StrEnum):
+    FULL_TEXT = "FULL_TEXT"
+    SEMANTIC = "SEMANTIC"
+    STRUCTURED = "STRUCTURED"
+
+
+class RelatedRecordMatchBand(StrEnum):
+    STRONG = "STRONG"
+    POSSIBLE = "POSSIBLE"
+    LIMITED = "LIMITED"
+
+
+class RelatedRecordEvidence(ApiModel):
+    field: str
+    reason: str
+    excerpt: str
+
+
+class RelatedRecordMatch(RelatedRecordCandidate):
+    match_strength: int = Field(ge=0, le=100)
+    match_band: RelatedRecordMatchBand
+    methods: list[RelatedRecordMatchMethod]
+    reasons: list[str]
+    evidence: list[RelatedRecordEvidence]
+
+
 class RelatedRecordCandidateList(ApiModel):
-    items: list[RelatedRecordCandidate]
+    mode: RelatedRecordSearchMode
+    items: list[RelatedRecordMatch]
 
 
 class RequestLinkCreate(StrictApiModel):

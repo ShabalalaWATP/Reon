@@ -24,7 +24,7 @@ async def test_configured_team_rename_preserves_old_and_new_pin_access(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    team_id = await harness.unit_id("OSG_TEAM")
+    team_id = await harness.unit_id("SSG_TEAM")
     old_id = UUID(await submit_request(harness))
 
     async with harness.sessions() as session, session.begin():
@@ -41,7 +41,7 @@ async def test_configured_team_rename_preserves_old_and_new_pin_access(
         payload = payload.model_copy(
             update={
                 "units": [
-                    unit.model_copy(update={"name": "OSG Service Team"})
+                    unit.model_copy(update={"name": "SSG Service Team"})
                     if unit.unit_id == team_id
                     else unit
                     for unit in payload.units
@@ -63,14 +63,14 @@ async def test_configured_team_rename_preserves_old_and_new_pin_access(
     assert listed.status_code == 200
     work_by_request = {UUID(item["requestId"]): item for item in listed.json()["items"]}
     assert set(work_by_request) == {old_id, new_id}
-    assert work_by_request[old_id]["deliveryTeam"] == "OSG Team"
-    assert work_by_request[new_id]["deliveryTeam"] == "OSG Service Team"
+    assert work_by_request[old_id]["deliveryTeam"] == "SSG Team"
+    assert work_by_request[new_id]["deliveryTeam"] == "SSG Service Team"
 
     old_detail = await harness.client.get(f"/api/v1/requests/{old_id}")
     new_detail = await harness.client.get(f"/api/v1/requests/{new_id}")
     assert old_detail.status_code == new_detail.status_code == 200
-    assert old_detail.json()["assignedDeliveryTeam"] == "OSG Team"
-    assert new_detail.json()["assignedDeliveryTeam"] == "OSG Service Team"
+    assert old_detail.json()["assignedDeliveryTeam"] == "SSG Team"
+    assert new_detail.json()["assignedDeliveryTeam"] == "SSG Service Team"
     async with harness.sessions() as session:
         versions = {
             request_id: (await session.get(ServiceRequest, request_id)).version  # type: ignore[union-attr]
@@ -106,14 +106,14 @@ async def test_configured_team_rename_preserves_old_and_new_pin_access(
         assert await _selected_team(session, new_id) == team_id
         assert old_pin.configuration_version_id == activated.based_on_version_id
         assert new_pin.configuration_version_id == activated.id
-        assert _pinned_team_name(old_pin, team_id) == "OSG Team"
-        assert _pinned_team_name(new_pin, team_id) == "OSG Service Team"
+        assert _pinned_team_name(old_pin, team_id) == "SSG Team"
+        assert _pinned_team_name(new_pin, team_id) == "SSG Service Team"
         users = list(
             await session.scalars(
                 select(User).where(User.username.in_(["admin8", "admin11"]))
             )
         )
-        assert {user.scope for user in users} == {"OSG Service Team"}
+        assert {user.scope for user in users} == {"SSG Service Team"}
 
 
 async def test_direct_rename_is_blocked_for_configured_units(
@@ -122,7 +122,7 @@ async def test_direct_rename_is_blocked_for_configured_units(
     harness = api_harness
     await harness.login("admin1")
     await harness.elevate()
-    team_id = await harness.unit_id("OSG_TEAM")
+    team_id = await harness.unit_id("SSG_TEAM")
     units = await harness.client.get("/api/v1/organisation/units")
     team = next(item for item in units.json()["items"] if item["id"] == str(team_id))
     response = await harness.client.patch(
@@ -138,7 +138,7 @@ async def _route_and_assign(harness: ApiHarness) -> None:
     await perform(
         harness,
         "admin4",
-        {"action": "progress", "category": "Research support", "priority": "MEDIUM"},
+        {"action": "progress", "priority": "MEDIUM"},
     )
     await perform(
         harness,

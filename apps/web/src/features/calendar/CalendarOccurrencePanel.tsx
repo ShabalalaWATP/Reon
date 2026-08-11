@@ -46,7 +46,7 @@ export function CalendarOccurrencePanel({
   return (
     <aside aria-labelledby="calendar-detail-title" className="calendar-detail">
       <header><span>{item.category.replaceAll("_", " ")}</span><h2 id="calendar-detail-title">{item.title}</h2><button aria-label="Close calendar detail" onClick={onClose} type="button">×</button></header>
-      <dl><div><dt>Person</dt><dd>{item.subjectDisplayName}</dd></div><div><dt>When</dt><dd>{formatPeriod(item)}</dd></div><div><dt>Privacy</dt><dd>{item.visibility.replaceAll("_", " ")}</dd></div><div><dt>Response</dt><dd>{item.commitmentStatus.replaceAll("_", " ")}</dd></div></dl>
+      <dl><div><dt>Person</dt><dd>{item.subjectDisplayName}</dd></div><div><dt>When</dt><dd>{formatPeriod(item)}</dd></div><div><dt>Visibility</dt><dd>{visibilityLabel(item.visibility)}</dd></div><div><dt>Response</dt><dd>{item.commitmentStatus.replaceAll("_", " ")}</dd></div></dl>
       {item.notes ? <p>{item.notes}</p> : <p>Detail is protected by the event owner’s privacy setting.</p>}
       {pendingCommitment ? <div className="calendar-detail__actions"><button className="button button--primary" disabled={mutation.isPending} onClick={() => mutation.mutate(true)} type="button">Acknowledge</button><button className="button" onClick={() => setAction("dispute")} type="button">Dispute</button></div> : null}
       {canChange ? <div className="calendar-detail__actions"><button className="button" onClick={() => setAction("edit")} type="button">Edit occurrence</button><button className="button" onClick={() => setAction("cancel-occurrence")} type="button">Cancel occurrence</button>{item.recurrence !== "NONE" ? <button className="button" onClick={() => setAction("split")} type="button">Change this and future</button> : null}<button className="button button--danger" onClick={() => setAction("cancel-series")} type="button">Cancel whole event</button></div> : null}
@@ -61,5 +61,8 @@ export function CalendarOccurrencePanel({
 }
 
 function label(action: Exclude<Action, null>) { return action.replaceAll("-", " "); }
+function visibilityLabel(visibility: CalendarOccurrence["visibility"]) {
+  return { PRIVATE: "Private appointment", AVAILABILITY_ONLY: "Time only", TEAM_DETAIL: "Visible to unit" }[visibility];
+}
 function formatPeriod(item: CalendarOccurrence) { const format = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: item.allDay ? undefined : "short" }); return `${format.format(new Date(item.startsAt))} to ${format.format(new Date(item.endsAt))}`; }
 function message(error: Error) { return error instanceof ApiError ? error.message : error.message || "The calendar change could not be saved."; }

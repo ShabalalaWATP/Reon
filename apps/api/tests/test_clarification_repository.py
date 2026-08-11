@@ -27,7 +27,7 @@ def _actor(user_id=None) -> Actor:
         "analyst@example.test",
         "Synthetic Analyst",
         UserRole.DELIVERY_SPECIALIST,
-        "OSG Team",
+        "SSG Team",
     )
 
 

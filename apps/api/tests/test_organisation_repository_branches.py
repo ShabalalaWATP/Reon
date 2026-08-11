@@ -69,7 +69,7 @@ async def test_unit_listing_and_routing_options_include_empty_paths(
 
         units = await repository.list_units()
         assert len(units) == 40
-        assert units[0].code == "JIOC"
+        assert units[0].code == "CRIOC"
         assert (
             await repository.routing_options(request.id, RequestStatus.IN_PROGRESS)
             == []
@@ -82,7 +82,7 @@ async def test_unit_listing_and_routing_options_include_empty_paths(
         session.add(
             RequestRouteSelection(
                 request_id=request.id,
-                unit_id=organisation_id("JIOC"),
+                unit_id=organisation_id("CRIOC"),
                 position=0,
             )
         )
@@ -91,15 +91,15 @@ async def test_unit_listing_and_routing_options_include_empty_paths(
         options = await repository.routing_options(
             request.id, RequestStatus.TRIAGE_REVIEW
         )
-        assert [option.code for option in options] == ["DIGOC", "SYGOC", "MYGOC"]
+        assert [option.code for option in options] == ["JOCK", "SYGOC", "MYGOC"]
         workspace = await repository.routing_workspace(
             request.id, RequestStatus.TRIAGE_REVIEW
         )
         assert [(unit.name, unit.code) for unit in workspace.route] == [
-            ("JIOC", "JIOC")
+            ("CRIOC", "CRIOC")
         ]
         assert [option.code for option in workspace.items] == [
-            "DIGOC",
+            "JOCK",
             "SYGOC",
             "MYGOC",
         ]
@@ -122,36 +122,45 @@ async def test_tracking_enforces_membership_and_maps_the_selected_route(
         await session.flush()
         repository = SqlAlchemyOrganisationRepository(session)
 
-        assert await repository.list_tracked_requests(actor_from(requester)) == []
-        assert await repository.list_tracked_requests(actor_from(triage_user)) == []
+        assert (await repository.page_tracked_requests(actor_from(requester)))[0] == []
+        assert (
+            await repository.page_tracked_requests(actor_from(triage_user))
+        )[0] == []
 
         session.add_all(
             [
                 UserOrganisationMembership(
                     user_id=triage_user.id,
-                    unit_id=organisation_id("JIOC"),
+                    unit_id=organisation_id("CRIOC"),
                 ),
                 RequestRouteSelection(
                     request_id=request.id,
-                    unit_id=organisation_id("JIOC"),
+                    unit_id=organisation_id("CRIOC"),
                     position=0,
                 ),
                 RequestRouteSelection(
                     request_id=request.id,
-                    unit_id=organisation_id("DIGOC"),
+                    unit_id=organisation_id("JOCK"),
                     position=1,
                 ),
             ]
         )
         await session.flush()
 
-        tracked = await repository.list_tracked_requests(
-            actor_from(triage_user, organisation_id("JIOC"))
+        tracked, _cursor = await repository.page_tracked_requests(
+            actor_from(triage_user, organisation_id("CRIOC"))
         )
         assert len(tracked) == 1
         assert tracked[0].id == request.id
+        assert tracked[0].title == request.title
         assert tracked[0].awaiting_team_staffing is True
-        assert [unit.name for unit in tracked[0].route] == ["JIOC", "DIGOC"]
+        assert [unit.name for unit in tracked[0].route] == ["CRIOC", "JOCK"]
+        detail = await repository.get_tracked_request_detail(
+            actor_from(triage_user, organisation_id("CRIOC")), request.id
+        )
+        assert detail is not None
+        assert detail.description == request.description
+        assert detail.requester_display_name == requester.display_name
 
 
 @pytest.mark.asyncio
@@ -171,7 +180,7 @@ async def test_initial_route_requires_a_configured_root_and_adds_it(
             item for item in session.new if isinstance(item, RequestRouteSelection)
         )
         assert selection.request_id == request_id
-        assert selection.unit_id == organisation_id("JIOC")
+        assert selection.unit_id == organisation_id("CRIOC")
         assert selection.position == 0
 
 
@@ -179,7 +188,8 @@ async def test_initial_route_requires_a_configured_root_and_adds_it(
 async def test_organisation_service_hides_tracking_from_non_routing_roles() -> None:
     repository = AsyncMock(spec=OrganisationRepository)
     repository.list_units.return_value = []
-    repository.list_tracked_requests.return_value = []
+    repository.page_tracked_requests.return_value = ([], None)
+    repository.get_tracked_request_detail.return_value = object()
     service = OrganisationService(repository)
     requester = Actor(
         uuid4(),
@@ -191,8 +201,11 @@ async def test_organisation_service_hides_tracking_from_non_routing_roles() -> N
 
     assert await service.list_units(requester) == []
     with pytest.raises(ObjectNotFound):
-        await service.list_tracked_requests(requester)
-    repository.list_tracked_requests.assert_not_awaited()
+        await service.page_tracked_requests(requester)
+    with pytest.raises(ObjectNotFound):
+        await service.get_tracked_request_detail(requester, uuid4())
+    repository.page_tracked_requests.assert_not_awaited()
+    repository.get_tracked_request_detail.assert_not_awaited()
 
     triage_user = Actor(
         uuid4(),
@@ -202,8 +215,15 @@ async def test_organisation_service_hides_tracking_from_non_routing_roles() -> N
         "Shared queue",
         frozenset({uuid4()}),
     )
-    assert await service.list_tracked_requests(triage_user) == []
-    repository.list_tracked_requests.assert_awaited_once_with(triage_user)
+    assert await service.page_tracked_requests(triage_user) == ([], None)
+    repository.page_tracked_requests.assert_awaited_once_with(
+        triage_user, limit=50, cursor=None
+    )
+    request_id = uuid4()
+    assert await service.get_tracked_request_detail(triage_user, request_id) is not None
+    repository.get_tracked_request_detail.assert_awaited_once_with(
+        triage_user, request_id
+    )
 
 
 @pytest.mark.asyncio

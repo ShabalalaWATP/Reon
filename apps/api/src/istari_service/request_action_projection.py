@@ -22,6 +22,7 @@ from istari_service.models import (
     ServiceRequest,
     User,
     UserRole,
+    WorkflowTask,
 )
 from istari_service.organisation_models import RequestRouteSelection
 from istari_service.repositories.actions import SqlAlchemyActionRepository
@@ -30,6 +31,7 @@ from istari_service.repositories.actions import SqlAlchemyActionRepository
 @dataclass(frozen=True, slots=True)
 class ActionAudience:
     recipient_user_id: UUID | None = None
+    recipient_role: UserRole | None = None
     candidate_role: UserRole | None = None
     required_scope: str | None = None
     organisation_unit_id: UUID | None = None
@@ -62,6 +64,15 @@ ACTION_BY_STATUS = {
     ),
 }
 
+QUEUE_BY_ROLE = {
+    UserRole.INTAKE_TRIAGE: "/triage",
+    UserRole.SERVICE_COORDINATION: "/coordination",
+    UserRole.OPERATIONS_ALLOCATION: "/allocation",
+    UserRole.DELIVERY_TEAM_LEAD: "/delivery/team",
+    UserRole.DELIVERY_SPECIALIST: "/delivery/my-work",
+    UserRole.QUALITY_RELEASE: "/quality-release",
+}
+
 
 async def project_request_action(
     session: AsyncSession, event: RequestEvent, request: ServiceRequest
@@ -91,7 +102,7 @@ async def project_request_action(
             required_by=request.required_by,
             last_changed_at=projected_at,
             completed_at=(projected_at if _terminal(request.status) else None),
-            deep_link=f"/requests/{request.id}",
+            deep_link=_action_link(request, audience),
             projected_at=projected_at,
         )
     waiting = waiting_analyst(request)
@@ -116,7 +127,7 @@ async def project_request_action(
             required_by=request.required_by,
             last_changed_at=projected_at,
             completed_at=None,
-            deep_link=f"/requests/{request.id}",
+            deep_link=f"/delivery/my-work?requestId={request.id}",
             projected_at=projected_at,
         )
     await session.execute(
@@ -150,14 +161,34 @@ async def action_audiences(
         RequestStatus.CLOSED_NOT_PROGRESSED,
         RequestStatus.CANCELLED,
     }:
-        return [ActionAudience(recipient_user_id=request.requester_id)]
+        return [
+            ActionAudience(
+                recipient_user_id=request.requester_id,
+                recipient_role=UserRole.REQUESTER,
+            )
+        ]
     if status in {RequestStatus.IN_PROGRESS, RequestStatus.REWORK_REQUIRED}:
         return (
-            [ActionAudience(recipient_user_id=request.assigned_specialist_id)]
+            [
+                ActionAudience(
+                    recipient_user_id=request.assigned_specialist_id,
+                    recipient_role=UserRole.DELIVERY_SPECIALIST,
+                )
+            ]
             if request.assigned_specialist_id
             else []
         )
     if status in {RequestStatus.QUALITY_REVIEW, RequestStatus.READY_FOR_RELEASE}:
+        assignee_id = await _active_assignee(
+            session, request.id, UserRole.QUALITY_RELEASE
+        )
+        if assignee_id is not None:
+            return [
+                ActionAudience(
+                    recipient_user_id=assignee_id,
+                    recipient_role=UserRole.QUALITY_RELEASE,
+                )
+            ]
         scopes = list(
             await session.scalars(
                 select(User.scope)
@@ -180,6 +211,9 @@ async def action_audiences(
     if spec is None:
         return []
     role, position, _action = spec
+    assignee_id = await _active_assignee(session, request.id, role)
+    if assignee_id is not None:
+        return [ActionAudience(recipient_user_id=assignee_id, recipient_role=role)]
     unit_id = await session.scalar(
         select(RequestRouteSelection.unit_id).where(
             RequestRouteSelection.request_id == request.id,
@@ -190,6 +224,43 @@ async def action_audiences(
         [ActionAudience(candidate_role=role, organisation_unit_id=unit_id)]
         if unit_id
         else []
+    )
+
+
+async def _active_assignee(
+    session: AsyncSession, request_id: UUID, role: UserRole
+) -> UUID | None:
+    return await session.scalar(
+        select(WorkflowTask.assignee_user_id)
+        .where(
+            WorkflowTask.request_id == request_id,
+            WorkflowTask.candidate_role == role,
+            WorkflowTask.completed_at.is_(None),
+        )
+        .order_by(WorkflowTask.updated_at.desc())
+        .limit(1)
+    )
+
+
+def _action_link(request: ServiceRequest, audience: ActionAudience) -> str:
+    role = audience.candidate_role or audience.recipient_role
+    if role is None and request.status in ACTION_BY_STATUS:
+        role = ACTION_BY_STATUS[request.status][0]
+    if role is None and request.status in {
+        RequestStatus.QUALITY_REVIEW,
+        RequestStatus.READY_FOR_RELEASE,
+    }:
+        role = UserRole.QUALITY_RELEASE
+    if role is None and request.status in {
+        RequestStatus.IN_PROGRESS,
+        RequestStatus.REWORK_REQUIRED,
+    }:
+        role = UserRole.DELIVERY_SPECIALIST
+    queue = QUEUE_BY_ROLE.get(role) if role is not None else None
+    return (
+        f"{queue}?requestId={request.id}"
+        if queue is not None
+        else f"/requests/{request.id}"
     )
 
 

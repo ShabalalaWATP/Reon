@@ -319,7 +319,7 @@ def test_sealing_migration_only_decodes_declared_json_columns() -> None:
     migration = _sealing_migration()
 
     assert migration._normalise_field("name", "[1]") == "[1]"
-    assert migration._normalise_field("label", '{"team":"OSG"}') == ('{"team":"OSG"}')
+    assert migration._normalise_field("label", '{"team":"SSG"}') == ('{"team":"SSG"}')
     assert migration._normalise_field("service_categories", '["Research"]') == [
         "Research"
     ]

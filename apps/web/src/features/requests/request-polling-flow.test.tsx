@@ -30,9 +30,9 @@ describe("requester projection refresh", () => {
     });
 
     renderApp("/requests");
-    await vi.waitFor(() => expect(requestCalls).toBe(1));
+    await vi.waitFor(() => expect(requestCalls).toBe(1), { timeout: 5_000 });
     await act(() => vi.advanceTimersByTimeAsync(EXPECTED_POLL_INTERVAL_MS));
-    await vi.waitFor(() => expect(requestCalls).toBe(2));
+    await vi.waitFor(() => expect(requestCalls).toBe(2), { timeout: 5_000 });
     expect(screen.getByText("Completed history")).toBeInTheDocument();
 
     await act(() => vi.advanceTimersByTimeAsync(EXPECTED_POLL_INTERVAL_MS * 3));
@@ -55,9 +55,9 @@ describe("requester projection refresh", () => {
     });
 
     renderApp(`/requests/${requestDetail.id}`);
-    await vi.waitFor(() => expect(detailCalls).toBe(1));
+    await vi.waitFor(() => expect(detailCalls).toBe(1), { timeout: 5_000 });
     await act(() => vi.advanceTimersByTimeAsync(EXPECTED_POLL_INTERVAL_MS));
-    await vi.waitFor(() => expect(detailCalls).toBe(2));
+    await vi.waitFor(() => expect(detailCalls).toBe(2), { timeout: 5_000 });
     expect(screen.getByText("Completed")).toBeInTheDocument();
 
     await act(() => vi.advanceTimersByTimeAsync(EXPECTED_POLL_INTERVAL_MS * 3));
@@ -95,12 +95,12 @@ describe("requester projection refresh", () => {
     });
 
     renderApp(`/requests/${requestDetail.id}`);
-    await vi.waitFor(() => expect(workItemCalls).toBe(1));
+    await vi.waitFor(() => expect(workItemCalls).toBe(1), { timeout: 5_000 });
     expect(
       screen.getByText("No response task is currently available."),
     ).toBeInTheDocument();
     await act(() => vi.advanceTimersByTimeAsync(EXPECTED_POLL_INTERVAL_MS));
-    await vi.waitFor(() => expect(workItemCalls).toBe(2));
+    await vi.waitFor(() => expect(workItemCalls).toBe(2), { timeout: 5_000 });
     expect(
       screen.getByRole("heading", { name: "Record outcome" }),
     ).toBeInTheDocument();

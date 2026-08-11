@@ -3,6 +3,7 @@ import type {
   FeedbackInput,
   ListResponse,
   RequestCreateInput,
+  RequestCancelInput,
   RequestDetail,
   RequestDraft,
   RequestDraftInput,
@@ -38,4 +39,10 @@ export const requestApi = {
     apiRequest<RequestDetail>("/requests", { body: input, csrfToken, method: "POST" }),
   feedback: (id: string, input: FeedbackInput, csrfToken: string) =>
     apiRequest<Feedback>(`/requests/${encodeURIComponent(id)}/feedback`, { body: input, csrfToken, method: "POST" }),
+  cancelRequest: (id: string, input: RequestCancelInput, csrfToken: string) =>
+    apiRequest<RequestDetail>(`/requests/${encodeURIComponent(id)}/cancel`, {
+      body: input,
+      csrfToken,
+      method: "POST",
+    }),
 };

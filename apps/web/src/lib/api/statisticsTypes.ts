@@ -2,10 +2,19 @@ import type { OrganisationUnit } from "./types";
 
 export type StatisticsScope = {
   id: string;
-  unitId: string | null;
+  unitId: string;
   name: string;
   kind: OrganisationUnit["kind"] | "PLATFORM";
   includeDescendants: boolean;
+  units: StatisticsUnit[];
+};
+
+export type StatisticsUnit = {
+  id: string;
+  parentId: string | null;
+  name: string;
+  kind: OrganisationUnit["kind"];
+  depth: number;
 };
 
 export type StatisticsRange = {
@@ -71,6 +80,8 @@ export type MetricDefinition = {
 
 export type StatisticsDashboard = {
   scope: StatisticsScope;
+  selectedUnit: StatisticsUnit;
+  breadcrumb: StatisticsUnit[];
   range: StatisticsRange;
   freshness: ProjectionFreshness;
   definitions: MetricDefinition[];
@@ -78,6 +89,7 @@ export type StatisticsDashboard = {
   status: CategoryCount[];
   age: CategoryCount[];
   dueRisk: CategoryCount[];
+  throughputResolution: "DAILY" | "WEEKLY" | "MONTHLY";
   throughput: DailyThroughput[];
   stageDurations: StageDuration[];
   children: ChildUnitComparison[];

@@ -185,12 +185,12 @@ async def test_request_validation_rejects_privileged_and_invalid_fields(
         headers=harness.mutation_headers(),
     )
     assert response.status_code == 422
-    mismatch = await harness.client.post(
+    internal_route_field = await harness.client.post(
         "/api/v1/requests",
         json=request_payload(requestingBusinessArea="Requesting Area B"),
         headers=harness.mutation_headers(),
     )
-    assert mismatch.status_code == 404
+    assert internal_route_field.status_code == 422
 
 
 async def test_validation_errors_never_echo_password_or_context(
