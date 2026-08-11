@@ -80,6 +80,7 @@ inbox, routing decisions and unit collaboration.
 - Claimed work disappears from another eligible CRIOC user's action register.
 - The assignee sees the same action marked **Assigned to you**.
 - All supported staff roles receive the correct queue deep link.
-- The sidebar distinguishes actions, queue and workspace using accessible link
-  names and preserves active navigation styling.
+- The sidebar distinguishes personal actions from the named unit workspace. The
+  unit queue is an accessible workspace view and active navigation styling is
+  preserved.
 - Backend and frontend line and branch coverage remain at least 95 per cent.

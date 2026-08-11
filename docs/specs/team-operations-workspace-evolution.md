@@ -5,7 +5,7 @@
 Turn each authorised organisation workspace into a useful daily operating surface.
 Delivery teams need a coherent view of allocation, execution, review, availability
 and customer clarifications. Routing units need a decision queue, bottleneck view
-and handover record. The workspace must not duplicate Camunda, create a second
+and recent activity. The workspace must not duplicate Camunda, create a second
 workflow or expose sibling and parent data.
 
 ## Product principles
@@ -30,13 +30,12 @@ The overview must show, in priority order:
 2. work awaiting assignment;
 3. blocked work and customer clarification waits;
 4. work awaiting Team Manager review;
-5. current capacity, reservations and active iteration;
-6. upcoming leave, training and ticket commitments;
-7. open risks, blockers and handover records;
-8. recent team activity.
+5. upcoming leave, training and ticket commitments;
+6. current people and workload; and
+7. recent team activity.
 
-Every attention signal links to the correctly filtered Board, Calendar, Planning,
-Handover or Activity view. Managers and Analysts receive the same factual team
+Every attention signal links to the correctly filtered Board, Calendar or
+Activity view. Managers and Analysts receive the same factual team
 picture, with controls still governed by returned capabilities.
 
 ## Delivery board
@@ -105,19 +104,18 @@ Routing units do not receive a delivery Kanban. Their overview shows:
 - information-required work;
 - oldest wait and due-risk signals;
 - stage distribution;
-- open handover, risk, blocker and decision records;
 - upcoming unit calendar events;
-- links to the queue, handover and scoped statistics.
+- links to the embedded work queue and scoped statistics.
 
 Managers and Members still claim and complete their own routing decisions.
 Manager position does not add allocation or approval.
 
 ## Forecasting and supporting tools
 
-The existing advisory Planning cockpit remains the source for capacity, due risk,
-blocker ageing, dependency warnings, templates, checklists, iterations and
-scenarios. The team home and inspector surface those facts. Any forecast is
-labelled advisory, includes freshness and never assigns work.
+The advanced Planning cockpit is retained as a server capability but is not part
+of the primary MVP workspace. The daily surface uses workflow, Board, calendar,
+people and activity projections only. Any retained forecast remains advisory
+and never assigns work.
 
 The workspace may export content-minimal team briefs only after the existing
 statistics/export policy confirms that the actor may see the selected scope.

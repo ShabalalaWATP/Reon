@@ -14,10 +14,10 @@ the routing decision themselves.
 
 | Unit kind | Required views | Manager-only controls |
 | --- | --- | --- |
-| CRIOC root | Overview, Queue, Calendar, People, Statistics, Handover, Activity | Membership, team events, workspace metadata |
-| Command | Overview, Queue, Calendar, People, Statistics, Handover, Activity | Membership, team events, workspace metadata |
-| Ops group | Overview, Queue, Calendar, People, Statistics, Handover, Activity | Membership, team events, workspace metadata |
-| Delivery team | Overview, Board, Calendar, People, Planning, Statistics, Activity | Membership, request assignment, commitments, WIP and capacity |
+| CRIOC root | Overview, Work queue, Calendar, People, Statistics, Activity | Membership and team events |
+| Command | Overview, Work queue, Calendar, People, Statistics, Activity | Membership and team events |
+| Ops group | Overview, Work queue, Calendar, People, Statistics, Activity | Membership and team events |
+| Delivery team | Overview, Work queue, Board, Calendar, People, Statistics, Activity | Membership, request assignment, commitments and WIP |
 
 The server returns capabilities for the selected unit. React does not infer
 authority from a role name, navigation item or organisation kind.
@@ -105,12 +105,13 @@ oldest age, median routing duration and direct-child distribution. Delivery
 workspaces instead show demand, status, due risk, throughput, Manager review,
 capacity and release measures. Individual performance ranking is prohibited.
 
-## Collaboration
+## Retained advanced records
 
-Managers may maintain a bounded workspace description, contact text, useful
-HTTPS links, handover notes, risks, blockers and decisions. This is not chat, a
-document store or a second workflow. Requests, products and Camunda remain the
-authoritative operational records.
+Existing planning and workspace-record data remains stored behind the established
+service boundaries, but Planning and Handover are not primary MVP workspace
+views. Requests, products and Camunda remain the authoritative operational
+records. Any later reintroduction requires a separately approved, understandable
+user journey.
 
 ## Security and acceptance
 

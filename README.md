@@ -130,15 +130,17 @@ authorised request and team work, but cannot complete the Lead's parent task.
 
 Team workspaces include:
 
-- shared queue and workflow-derived Kanban board;
-- iteration and work-package planning;
-- workload, WIP, dependency and blocker information;
+- an actionable, unit-scoped work queue and workflow-derived Kanban board;
+- workload, due-date, assignment and blocker information;
 - people and effective-dated membership history;
 - team-scoped colleague profiles with a direct return to the People register;
-- shared calendar and capacity view;
-- handover information and useful links;
+- a shared calendar and availability view;
 - current team activity; and
 - scoped team statistics.
+
+The MVP navigation deliberately omits the advanced Planning and Handover
+surfaces. Their existing server-side records are retained, but daily team work
+is presented through one named workspace rather than several competing tools.
 
 During active production, any current delivery-team Manager can send a recorded
 task hastener to one assigned Analyst or to the Lead and all Contributors
@@ -271,7 +273,7 @@ request, not as public links.
 
 ![Team workflow board](docs/assets/screenshots/team-workflow-board.png)
 
-The team board is a planning and collaboration view of authoritative request and
+The team board is a visual collaboration view of authoritative request and
 package state. Moving or editing a board item does not bypass the Camunda human
 task or FastAPI workflow policy.
 

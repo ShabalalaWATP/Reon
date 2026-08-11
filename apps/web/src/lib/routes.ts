@@ -102,11 +102,10 @@ export function navigationForRole(
   const navigation = [
     ...(role !== "DELIVERY_SPECIALIST" && capabilities.statistics ? [{ label: "Home", path: "/overview" }] : []),
     ...(capabilities.myWork ? [{ label: "My assigned actions", path: "/my-work" }] : []),
-    { label: queueLabelForRole(role), path: queueRoutes[role]! },
     ...(context.workspace ? [{
       label: `${context.workspace.name} workspace`,
       path: `/teams/${context.workspace.id}/overview`,
-    }] : []),
+    }] : [{ label: queueLabelForRole(role), path: queueRoutes[role]! }]),
   ];
   navigation.push(personalCalendarLink);
   if (role === "DELIVERY_SPECIALIST" && capabilities.products) {

@@ -1,5 +1,17 @@
 # ISTARI Service Master Implementation Plan
 
+## Simplified team workspace, 11 August 2026
+
+- [x] Use the named workspace as the single sidebar destination when a current
+  workspace is available.
+- [x] Embed the established actionable queue as an exact-unit workspace view.
+- [x] Remove Planning and Handover from routing and delivery workspace tabs and
+  overview summaries without deleting stored server records.
+- [x] Redirect old Planning and Handover workspace URLs to Overview.
+- [x] Retain standalone role queues for notification deep links and staff without
+  a current workspace.
+- [x] Update architecture, user stories, specification and regression coverage.
+
 ## Current documentation authority, 10 August 2026
 
 - [x] Present the running product, active terminology and available interface

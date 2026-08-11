@@ -40,12 +40,11 @@ Staff navigation follows the operating sequence:
 
 1. `Home`
 2. `My assigned actions`
-3. the role-specific routing or delivery queue
-4. the named organisation workspace
-5. `Personal calendar` and product tools where applicable
-6. `Request tracking` where authorised
-7. `Operational statistics` where authorised
-8. `Organisation directory`
+3. the named organisation workspace, containing the unit work queue
+4. `Personal calendar` and product tools where applicable
+5. `Request tracking` where authorised
+6. `Operational statistics` where authorised
+7. `Organisation directory`
 
 Customer navigation is intentionally shorter. It contains only `My requests`
 and `New request`. Calendar and organisation-directory destinations are staff
@@ -53,8 +52,9 @@ operational tools and add no value to the Customer request journey. A Customer
 opening either staff URL directly returns to `My requests`; the hidden link is
 not treated as the authorisation control.
 
-Role queue labels name their purpose, for example `CRIOC routing queue`,
-`Incoming requests` and `Ops routing queue`. The labels do not alter route,
+Legacy role queue labels name their purpose, for example `CRIOC routing queue`,
+`Incoming requests` and `Ops routing queue`. They remain available for deep
+links and accounts without a current workspace. The labels do not alter route,
 role, object or action authorisation.
 
 ## Acceptance criteria

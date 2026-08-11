@@ -5,7 +5,6 @@ import { PageState } from "../../components/PageState";
 import { api } from "../../lib/api/client";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import type { TeamWorkspaceAccess } from "../../lib/api/teamTypes";
-import type { UserRole } from "../../lib/api/types";
 import { addLocalDays, localDateInputValue } from "../../lib/dateInputs";
 import { DeliveryTeamHome } from "./DeliveryTeamHome";
 import { RoutingTeamHome } from "./RoutingTeamHome";
@@ -13,7 +12,7 @@ import { RoutingTeamHome } from "./RoutingTeamHome";
 const overviewTo = localDateInputValue(new Date());
 const overviewFrom = localDateInputValue(addLocalDays(new Date(), -29));
 
-export function TeamOverviewPage({ access, role, userId }: { access: TeamWorkspaceAccess; role: UserRole; userId: string }) {
+export function TeamOverviewPage({ access, userId }: { access: TeamWorkspaceAccess; userId: string }) {
   const query = useQuery({ queryKey: protectedQueryKeys.teamWorkspace(userId, access.teamId), queryFn: () => api.teamWorkspace(access.teamId) });
   if (query.isPending) return <PageState kind="loading" title="Loading team home" />;
   if (query.isError) return <PageState action={<button className="button" onClick={() => void query.refetch()}>Try again</button>} kind="error" title="Team home could not be loaded">Check your connection and current workspace access.</PageState>;
@@ -26,7 +25,7 @@ export function TeamOverviewPage({ access, role, userId }: { access: TeamWorkspa
         <div><span>{delivery ? "Analysts" : "Members"}</span><strong>{delivery ? data.analystCount : data.memberCount ?? 0}</strong></div>
         <div><span>Active work</span><strong>{data.activeWorkCount}</strong></div>
       </section>
-      {delivery ? <DeliveryTeamHome access={access} overview={data} userId={userId} /> : <RoutingTeamHome access={access} overview={data} role={role} userId={userId} />}
+      {delivery ? <DeliveryTeamHome access={access} overview={data} userId={userId} /> : <RoutingTeamHome access={access} overview={data} userId={userId} />}
       <TeamStatisticsStrip teamId={access.teamId} userId={userId} />
     </>
   );

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { PageState } from "../components/PageState";
 import { StatusJourney } from "../components/StatusJourney";
 import { StatusPill } from "../components/StatusPill";
-import { homeRouteForRole, navigationForRole, roleLabels, roleRoutes } from "./routes";
+import { homeRouteForRole, navigationForRole, queueLabelForRole, roleLabels, roleRoutes } from "./routes";
 import { disabledCapabilities } from "./api/capabilityClient";
 import { formatDate, isComplete, requesterGroup, statusLabels, statusTone, trackingStatusLabel } from "./status";
 import { protectedQueryKeys } from "./api/queryKeys";
@@ -39,6 +39,7 @@ describe("presentation helpers", () => {
       { label: "Organisation directory", path: "/organisation" },
     ]);
     expect(navigationForRole("DELIVERY_TEAM_LEAD")).not.toContainEqual({ label: "Request tracking", path: "/tracking" });
+    expect(queueLabelForRole("REQUESTER")).toBe("Work queue");
     const enabled = {
       ...disabledCapabilities,
       myWork: true,
@@ -66,7 +67,6 @@ describe("presentation helpers", () => {
     })).toEqual([
       { label: "Home", path: "/overview" },
       { label: "My assigned actions", path: "/my-work" },
-      { label: "CRIOC routing queue", path: "/triage" },
       { label: "CRIOC workspace", path: "/teams/crioc/overview" },
       { label: "Personal calendar", path: "/calendar/month" },
       { label: "Request tracking", path: "/tracking" },

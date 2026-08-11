@@ -45,15 +45,15 @@ The stories describe current product behaviour. Delivery history belongs in the
 | Person | Main responsibility | Primary workspace |
 |---|---|---|
 | Customer | State a complete need and receive the released product | My requests |
-| CRIOC Routing User | Review new demand and choose a direct command | CRIOC routing queue |
-| Request Coordination User | Coordinate the request and choose a direct Ops group | Incoming requests |
-| Ops Routing User | Choose a direct delivery team | Ops routing queue |
-| Team Manager | Assign Analysts, oversee delivery and check the product | Team queue and team workspace |
-| Team Analyst, Lead | Produce and submit the accountable product | Production queue and product package |
-| Team Analyst, Contributor | Collaborate on an assigned request without owning the Lead task | Assigned request and team planning |
+| CRIOC Routing User | Review new demand and choose a direct command | CRIOC workspace |
+| Request Coordination User | Coordinate the request and choose a direct Ops group | Command workspace |
+| Ops Routing User | Choose a direct delivery team | Ops workspace |
+| Team Manager | Assign Analysts, oversee delivery and check the product | Team workspace |
+| Team Analyst, Lead | Produce and submit the accountable product | Team workspace and product package |
+| Team Analyst, Contributor | Collaborate on an assigned request without owning the Lead task | Assigned request and team board |
 | QC Manager | Perform final review and release the approved product | QC queue |
 | Platform Administrator | Maintain people, teams and safe platform configuration | Administration |
-| Workspace Manager | Maintain the exact unit's roster, calendar and handover information | Organisation workspace |
+| Workspace Manager | Maintain the exact unit's roster, calendar and operational work | Organisation workspace |
 | Workspace Member | Work in the exact unit and maintain personal availability | Organisation workspace and personal calendar |
 | Runtime operator | Deploy, observe, back up and restore the service | Controlled operational tooling |
 
@@ -499,18 +499,18 @@ availability and delivery commitments so that I can assign work realistically.
 - Only the Manager can create a request-linked delivery commitment for a named
   Analyst.
 
-### TM-06: Plan work with the board
+### TM-06: Manage work with the board
 
-**Need:** As a Team Manager, I want a Kanban and planning workspace so that the
-team can see work origin, status, priority, iteration, capacity and blockers.
+**Need:** As a Team Manager, I want a clear Kanban board so that the team can see
+work origin, status, priority, ownership and blockers.
 
 **Expected behaviour**
 
 - Request workflow items project onto the board without becoming a second
   workflow authority.
-- Work packages can have owners, Contributors, estimates, acceptance criteria,
-  dependencies and activity history.
-- WIP limits and iteration controls are explicit and attributable.
+- Work packages can have owners, Contributors, acceptance criteria and activity
+  history.
+- WIP limits and status changes are explicit and attributable.
 - Opening a board item shows the originating request and current package detail.
 
 ### TM-07: Understand team statistics
@@ -702,15 +702,15 @@ I can identify operational problems without becoming a support super-user.
 ### WS-01: Use an organisation workspace
 
 **Need:** As a person assigned to CRIOC, a command, an Ops group or a delivery
-team, I want one workspace for the unit so that its queue, people, calendar,
-statistics, handover and activity are easy to find.
+team, I want one workspace for the unit so that its work queue, people,
+calendar, statistics and activity are easy to find.
 
 **Expected behaviour**
 
 - The workspace title uses the current organisation name.
-- Routing workspaces focus on queue decisions and collaboration.
-- Delivery-team workspaces add board, iteration, capacity and ticket-assignment
-  controls.
+- Routing workspaces focus on queue decisions, people and availability.
+- Delivery-team workspaces add a Board and ticket-assignment controls.
+- Planning and Handover do not appear as competing MVP workspace destinations.
 - Every tab explains its purpose and has loading, empty, denied and error states.
 
 ### WS-02: Maintain personal calendar activity

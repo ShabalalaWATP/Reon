@@ -57,6 +57,7 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 | Inspector loads an inaccessible request or package | Reuse the authoritative object-level detail endpoint; allow terminal request history only for a current Manager membership in the exact assigned team; fail closed for parent, sibling, unrelated, expired and revoked access without confirming that an identifier exists |
 | A compact board hides a workflow state | Keep exception, downstream and terminal state groups discoverable, include their scoped totals and provide an equivalent table view |
 | Team home combines data into a broader side channel | Authorise each source independently, use exact-team or authorised descendant scope and render no partial protected data after a failed required query |
+| Embedding the role queue in a workspace broadens task visibility | Pass the exact selected unit identifier to the existing work-item API, reapply server-side role, unit, object and action policy, and treat the workspace tab and hidden standalone link as presentation only |
 | Capacity reports expose private reasons | Use availability and duration only; omit event title, notes and dispute text |
 | A capacity estimate automatically assigns work | Label estimates and source freshness; require a named Manager-led assignment or handover command and never move a Camunda task from a scenario |
 | A stale planning scenario overwrites commitments | Bind preview and commit to membership, calendar, work, package and reservation versions; return a conflict when any source drifts |

@@ -10,7 +10,6 @@ import type {
   BoardItem,
   WorkPackage,
 } from "../../lib/api/boardTypes";
-import type { PlanningCockpit } from "../../lib/api/planningEvolutionTypes";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import type { TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import type { Session } from "../../lib/api/types";
@@ -22,8 +21,6 @@ export function WorkItemInspector({
   item,
   moving,
   packages,
-  planning,
-  teamId,
   userId,
   session,
   onClose,
@@ -33,8 +30,6 @@ export function WorkItemInspector({
   item: BoardItem | null;
   moving: boolean;
   packages: WorkPackage[];
-  planning?: PlanningCockpit;
-  teamId: string;
   userId: string;
   session: Session;
   onClose: () => void;
@@ -62,9 +57,9 @@ export function WorkItemInspector({
             request.isPending ? <PageState kind="loading" title="Loading request context" />
               : request.isError ? <PageState action={<button className="button" onClick={() => void request.refetch()}>Try again</button>} kind="error" title="Request context is unavailable" />
                 : request.data ? <><RequestContext value={request.data} /><TaskHastenerPanel access={access} request={request.data} session={session} /></> : null
-          ) : packageItem ? <PackageContext packages={packages} planning={planning} value={packageItem} />
-            : <PageState kind="empty" title="Package detail is not on this page">Open Planning to inspect the full package register.</PageState>}
-          <InspectorActions item={item} moving={moving} onMove={onMove} teamId={teamId} />
+          ) : packageItem ? <PackageContext packages={packages} value={packageItem} />
+            : <PageState kind="empty" title="Package detail is not on this page">Refresh the board to load the current package detail.</PageState>}
+          <InspectorActions item={item} moving={moving} onMove={onMove} />
         </div>
       ) : null}
     </ModalDrawer>
@@ -96,30 +91,26 @@ function RequestContext({ value }: { value: Awaited<ReturnType<typeof api.reques
   );
 }
 
-function PackageContext({ packages, planning, value }: { packages: WorkPackage[]; planning?: PlanningCockpit; value: WorkPackage }) {
-  const checklist = planning?.checklists.find((item) => item.packageId === value.id);
-  const warnings = planning?.dependencies.filter((item) => item.packageId === value.id) ?? [];
+function PackageContext({ packages, value }: { packages: WorkPackage[]; value: WorkPackage }) {
   const activeReservations = value.reservations.filter((item) => item.status === "ACTIVE");
   return (
     <div className="work-inspector__sections">
       <section><h3>Package detail</h3><p>{value.description}</p><dl><div><dt>Estimate</dt><dd>{value.estimatePoints} points</dd></div><div><dt>Remaining</dt><dd>{value.remainingEffortMinutes} minutes</dd></div><div><dt>Contributors</dt><dd>{value.contributors.map((item) => item.displayName).join(", ") || "None"}</dd></div><div><dt>Iteration</dt><dd>{value.iterationId ?? "Not assigned"}</dd></div></dl></section>
       <section><h3>Acceptance and blockers</h3><p><strong>Acceptance:</strong> {value.acceptanceCriteria}</p><p><strong>Blockers:</strong> {value.blockers}</p></section>
-      <section><h3>Dependencies</h3>{value.dependencyIds.length ? <ul>{value.dependencyIds.map((id) => <li key={id}>{packages.find((item) => item.id === id)?.title ?? id}</li>)}</ul> : <p>No dependencies recorded.</p>}{warnings.map((warning) => <p className="inspector-warning" key={`${warning.packageId}-${warning.dependencyReference}`}>{warning.dependencyReference}: {warning.warning}</p>)}</section>
-      <section><h3>Checklist</h3>{checklist ? <><p>{checklist.completedCount} of {checklist.totalCount} complete from {checklist.templateName}.</p><ul className="inspector-checklist">{checklist.items.map((item) => <li key={item.id}><span aria-hidden="true">{item.completed ? "✓" : "○"}</span>{item.label}</li>)}</ul></> : <p>No checklist is attached.</p>}</section>
+      <section><h3>Dependencies</h3>{value.dependencyIds.length ? <ul>{value.dependencyIds.map((id) => <li key={id}>{packages.find((item) => item.id === id)?.title ?? id}</li>)}</ul> : <p>No dependencies recorded.</p>}</section>
       <section><h3>Reserved capacity</h3>{activeReservations.length ? <ul>{activeReservations.map((item) => <li key={item.id}>{item.userDisplayName}: {item.minutes} minutes, {new Date(item.startsAt).toLocaleString("en-GB")}</li>)}</ul> : <p>No active reservations.</p>}</section>
       <section><h3>Recent package activity</h3>{value.activities.length ? <ol>{value.activities.slice(0, 8).map((activity) => <li key={activity.id}>{activity.summary} · {activity.actorDisplayName}</li>)}</ol> : <p>No activity recorded.</p>}</section>
     </div>
   );
 }
 
-function InspectorActions({ item, moving, onMove, teamId }: { item: BoardItem; moving: boolean; onMove: (item: BoardItem, target: BoardColumn, reason: string) => void; teamId: string }) {
+function InspectorActions({ item, moving, onMove }: { item: BoardItem; moving: boolean; onMove: (item: BoardItem, target: BoardColumn, reason: string) => void }) {
   const [target, setTarget] = useState<BoardColumn | "">("");
   const [reason, setReason] = useState("");
   useEffect(() => { setTarget(""); setReason(""); }, [item.id]);
   return (
     <footer className="work-inspector__actions">
       {item.linkedRequestId ? <Link className="button button--primary" to={`/requests/${item.linkedRequestId}`}>Open full request</Link> : null}
-      {item.itemType === "WORK_PACKAGE" ? <Link className="button button--quiet" to={`/teams/${teamId}/planning`}>Open in Planning</Link> : null}
       {item.availableColumns.length ? <form onSubmit={(event) => { event.preventDefault(); if (target) onMove(item, target, reason); }}>
         <label className="form-field">Move package to<span className="field-hint">Required</span><select onChange={(event) => setTarget(event.target.value as BoardColumn)} required value={target}><option value="">Select status</option>{item.availableColumns.map((column) => <option key={column} value={column}>{boardLabel(column)}</option>)}</select></label>
         <label className="form-field">Reason<span className="field-hint">Required</span><textarea maxLength={500} minLength={10} onChange={(event) => setReason(event.target.value)} required value={reason} /></label>

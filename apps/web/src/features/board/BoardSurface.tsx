@@ -5,7 +5,6 @@ import type {
   BoardItem,
   WorkPackage,
 } from "../../lib/api/boardTypes";
-import type { PlanningCockpit } from "../../lib/api/planningEvolutionTypes";
 import {
   activeBoardColumns,
   archiveBoardColumns,
@@ -17,7 +16,6 @@ import {
 
 type Context = {
   packages?: WorkPackage[];
-  planning?: PlanningCockpit;
 };
 
 type DragState = {
@@ -166,17 +164,12 @@ function BoardColumns({
 
 function BoardCard({ context, drag, item, onInspect }: { context: Context; drag: DragState; item: BoardItem; onInspect: (item: BoardItem) => void }) {
   const signal = dueSignal(item.dueOn);
-  const lane = context.planning?.lanes.flatMap((value) => value.items).find((value) => value.id === item.id);
-  const checklist = context.planning?.checklists.find((value) => value.packageId === item.id);
   const packageItem = context.packages?.find((value) => value.id === item.id);
   const reserved = packageItem?.reservations.filter((value) => value.status === "ACTIVE").reduce((total, value) => total + value.minutes, 0) ?? 0;
   const draggable = item.itemType === "WORK_PACKAGE" && item.availableColumns.length > 0;
   const signals = [
     item.itemType === "SERVICE_REQUEST" && item.column === "BLOCKED" ? "Waiting for customer" : null,
     !item.ownerUserId ? "Unassigned" : null,
-    lane?.blockerAgeDays !== null && lane?.blockerAgeDays !== undefined ? `${lane.blockerAgeDays} blocked days` : null,
-    lane?.dependencyWarningCount ? `${lane.dependencyWarningCount} dependency warning${lane.dependencyWarningCount === 1 ? "" : "s"}` : null,
-    checklist ? `${checklist.completedCount}/${checklist.totalCount} checklist` : null,
     reserved ? `${Math.round(reserved / 60 * 10) / 10}h reserved` : null,
   ].filter((value): value is string => Boolean(value));
   const isDragging = drag.dragging?.id === item.id && drag.dragging.itemType === item.itemType;

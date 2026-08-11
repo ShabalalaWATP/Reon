@@ -5,7 +5,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ModalDrawer } from "../../components/ModalDrawer";
 import type { BoardFilters, BoardItem, WorkPackage } from "../../lib/api/boardTypes";
-import type { PlanningCockpit } from "../../lib/api/planningEvolutionTypes";
 import type { TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import { requesterSession } from "../../test/fixtures";
 import { TestProviders } from "../../test/render";
@@ -105,19 +104,6 @@ const dependencyPackage: WorkPackage = {
   reservations: [],
 };
 
-const planning: PlanningCockpit = {
-  teamId: "team-one",
-  generatedAt: "2026-08-10T09:00:00Z",
-  advisoryOnly: true,
-  freshness: { health: "READY", label: "Current", sourceVersion: 1 },
-  summary: { backlogCount: 1, activeIterationCount: 1, dueRiskCount: 1, wipCount: 1, blockedCount: 1, availableMinutes: 300, reservedMinutes: 90 },
-  lanes: [{ key: "ready", label: "Ready", items: [{ id: packageItem.id, kind: "PACKAGE", reference: packageItem.reference, title: packageItem.title, ownerDisplayName: "Analyst One", priority: "HIGH", dueOn: packageItem.dueOn, status: "READY", iterationName: "Iteration one", blockerAgeDays: 1, dependencyWarningCount: 1 }] }],
-  blockers: [],
-  dependencies: [{ packageId: packageItem.id, reference: packageItem.reference, title: packageItem.title, dependencyReference: "WP-100", status: "AT_RISK", warning: "Dependency is at risk." }],
-  iteration: null,
-  checklists: [{ packageId: packageItem.id, packageTitle: packageItem.title, templateName: "Standard", completedCount: 1, totalCount: 2, items: [{ id: "check-one", label: "Complete", required: true, completed: true }, { id: "check-two", label: "Outstanding", required: false, completed: false }] }],
-};
-
 describe("board operational components", () => {
   it("covers presentation boundaries and every built-in view", () => {
     const now = new Date("2026-08-10T12:00:00Z");
@@ -148,7 +134,7 @@ describe("board operational components", () => {
     const toggles = { archive: vi.fn(), exceptions: vi.fn() };
     const props = {
       columnCounts: { READY: 1, BLOCKED: 3, QUALITY_REVIEW: 1, COMPLETED: 2 },
-      context: { packages: [richPackage], planning },
+      context: { packages: [richPackage] },
       filteredColumns: [],
       items: [requestItem, packageItem],
       mode: "board" as const,
@@ -163,8 +149,6 @@ describe("board operational components", () => {
     const view = render(<BoardSurface {...props} />);
     expect(screen.getByRole("status")).toHaveTextContent("exceeded by 1");
     expect(screen.getByText("Waiting for customer")).toBeInTheDocument();
-    expect(screen.getByText("1 dependency warning")).toBeInTheDocument();
-    expect(screen.getByText("1/2 checklist")).toBeInTheDocument();
     expect(screen.getByText("1.5h reserved")).toBeInTheDocument();
     expect(screen.getByText("With Analyst Two")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /Completed and cancelled/ }));
@@ -185,7 +169,7 @@ describe("board operational components", () => {
     const user = userEvent.setup();
     const props = {
       columnCounts: { READY: 1, BLOCKED: 3 },
-      context: { packages: [richPackage], planning },
+      context: { packages: [richPackage] },
       filteredColumns: [],
       items: [requestItem, packageItem],
       mode: "board" as const,
@@ -239,16 +223,14 @@ describe("board operational components", () => {
     const move = vi.fn();
     const user = userEvent.setup();
     const wrapper = (children: React.ReactNode) => <TestProviders><MemoryRouter>{children}</MemoryRouter></TestProviders>;
-    const view = render(wrapper(<WorkItemInspector access={access} item={packageItem} moving packages={[]} session={requesterSession} teamId="team-one" userId="user-one" onClose={vi.fn()} onMove={move} />));
+    const view = render(wrapper(<WorkItemInspector access={access} item={packageItem} moving packages={[]} session={requesterSession} userId="user-one" onClose={vi.fn()} onMove={move} />));
     expect(screen.getByRole("heading", { name: "Package detail is not on this page" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open in Planning" })).toBeInTheDocument();
+    expect(screen.getByText("Refresh the board to load the current package detail.")).toBeInTheDocument();
 
-    view.rerender(wrapper(<WorkItemInspector access={access} item={{ ...packageItem, linkedRequestId: "request-one" }} moving={false} packages={[richPackage, dependencyPackage]} planning={planning} session={requesterSession} teamId="team-one" userId="user-one" onClose={vi.fn()} onMove={move} />));
+    view.rerender(wrapper(<WorkItemInspector access={access} item={{ ...packageItem, linkedRequestId: "request-one" }} moving={false} packages={[richPackage, dependencyPackage]} session={requesterSession} userId="user-one" onClose={vi.fn()} onMove={move} />));
     expect(screen.getByText("Known dependency")).toBeInTheDocument();
     expect(screen.getByText("dependency-missing")).toBeInTheDocument();
     expect(screen.queryByText("No activity recorded.")).not.toBeInTheDocument();
-    expect(screen.getByText("Dependency is at risk.", { exact: false })).toBeInTheDocument();
-    expect(screen.getByText("Outstanding")).toBeInTheDocument();
     expect(screen.getByText(/Analyst One: 90 minutes/)).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText(/Move package to/), "BLOCKED");
     await user.type(screen.getByLabelText(/^Reason/), "A complete synthetic movement reason.");
@@ -259,9 +241,8 @@ describe("board operational components", () => {
   it("shows empty package facts without inventing operational context", () => {
     const emptyPackage: WorkPackage = { ...richPackage, id: "package-empty", iterationId: null, contributors: [], dependencyIds: [], activities: [], reservations: [] };
     const emptyItem = { ...packageItem, id: emptyPackage.id, availableColumns: [] };
-    render(<TestProviders><MemoryRouter><WorkItemInspector access={access} item={emptyItem} moving={false} packages={[emptyPackage]} session={requesterSession} teamId="team-one" userId="user-one" onClose={vi.fn()} onMove={vi.fn()} /></MemoryRouter></TestProviders>);
+    render(<TestProviders><MemoryRouter><WorkItemInspector access={access} item={emptyItem} moving={false} packages={[emptyPackage]} session={requesterSession} userId="user-one" onClose={vi.fn()} onMove={vi.fn()} /></MemoryRouter></TestProviders>);
     expect(screen.getByText("No dependencies recorded.")).toBeInTheDocument();
-    expect(screen.getByText("No checklist is attached.")).toBeInTheDocument();
     expect(screen.getByText("No active reservations.")).toBeInTheDocument();
     expect(screen.getByText("No activity recorded.")).toBeInTheDocument();
     expect(screen.getByText("Not assigned")).toBeInTheDocument();

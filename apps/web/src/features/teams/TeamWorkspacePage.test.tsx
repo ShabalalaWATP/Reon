@@ -37,7 +37,7 @@ const managerAccess: TeamWorkspaceAccess = {
   workspacePosition: "MANAGER",
   grantId: "grant-ssg",
   permissions: ["BOARD", "CALENDAR", "CAPACITY", "ROSTER", "STATISTICS"],
-  views: ["OVERVIEW", "BOARD", "CALENDAR", "PLANNING", "PEOPLE", "STATISTICS", "HANDOVER", "ACTIVITY"],
+  views: ["OVERVIEW", "BOARD", "CALENDAR", "PEOPLE", "STATISTICS", "ACTIVITY"],
 };
 const analystAccess: TeamWorkspaceAccess = {
   ...managerAccess,
@@ -150,12 +150,10 @@ describe("team workspace", () => {
     const staffing = await screen.findByRole("region", { name: "Workspace staffing" });
     expect(within(staffing).getByText("Managers").closest("div")).toHaveTextContent("3");
     expect(screen.getByRole("heading", { name: "Team attention" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Delivery outlook" })).toBeInTheDocument();
-    expect(await screen.findByText("WP-001 blocked for 3 days")).toBeInTheDocument();
-    expect(screen.getByText("Research, Data analysis", { exact: false })).toBeInTheDocument();
+    expect(await screen.findByText("Research, Data analysis", { exact: false })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Upcoming team calendar" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "SSG Team workspace" })).toBeInTheDocument();
-    expect(within(screen.getByRole("navigation", { name: "Organisation workspace views" })).getAllByRole("link")).toHaveLength(8);
+    expect(within(screen.getByRole("navigation", { name: "Organisation workspace views" })).getAllByRole("link")).toHaveLength(7);
     expect(await axe(view.container)).toHaveNoViolations();
 
     const tabs = screen.getByRole("navigation", { name: "Organisation workspace views" });
@@ -167,10 +165,12 @@ describe("team workspace", () => {
       "href",
       "/teams/team-ssg/calendar",
     );
-    expect(within(tabs).getByRole("link", { name: "Planning" })).toHaveAttribute(
+    expect(within(tabs).getByRole("link", { name: "Work queue" })).toHaveAttribute(
       "href",
-      "/teams/team-ssg/planning",
+      "/teams/team-ssg/queue",
     );
+    expect(within(tabs).queryByRole("link", { name: "Planning" })).not.toBeInTheDocument();
+    expect(within(tabs).queryByRole("link", { name: "Handover" })).not.toBeInTheDocument();
     await user.click(within(tabs).getByRole("link", { name: "Activity" }));
     expect(
       await screen.findByText(
@@ -336,7 +336,6 @@ function mockTeamApi(
     if (url.pathname.endsWith("/board")) return json({ items: [], nextCursor: null, columnCounts: { AWAITING_ASSIGNMENT: 2, BLOCKED: 1, MANAGER_REVIEW: 1 }, totalCount: 4, wipLimits: {}, configurationVersion: 0, savedViews: [], generatedAt: "2026-08-07T12:00:00Z" });
     if (url.pathname.endsWith("/iterations")) return json({ items: [] });
     if (url.pathname.endsWith("/packages")) return json({ items: [] });
-    if (url.pathname.endsWith("/planning/cockpit")) return json({ teamId: access.teamId, generatedAt: "2026-08-07T12:00:00Z", advisoryOnly: true, freshness: { health: "READY", label: "Current", sourceVersion: 3 }, summary: { backlogCount: 4, activeIterationCount: 1, dueRiskCount: 1, wipCount: 2, blockedCount: 1, availableMinutes: 900, reservedMinutes: 240 }, lanes: [], blockers: [{ packageId: "package-one", reference: "WP-001", title: "Synthetic package", ageDays: 3, reason: "Waiting for a public-safe dependency." }], dependencies: [{ packageId: "package-two", reference: "WP-002", title: "Dependent package", dependencyReference: "WP-001", status: "AT_RISK", warning: "The dependency is blocked." }], iteration: { id: "iteration-one", name: "Pilot iteration", goal: "Deliver the pilot.", startsOn: "2026-08-01", endsOn: "2026-08-14", status: "ACTIVE", committedPoints: 8, completedPoints: 3, committedPackages: 2, completedPackages: 1, factualSummary: null }, checklists: [] });
     if (url.pathname.endsWith("/calendar")) return json({ items: [{ eventId: "event-one", occurrenceStart: "2026-08-11T09:00:00Z", startsAt: "2026-08-11T09:00:00Z", endsAt: "2026-08-11T16:00:00Z", title: "Synthetic course", subjectDisplayName: "Lewis Ferguson", category: "TRAINING" }] });
     if (url.pathname.endsWith("/records")) return json({ items: [{ id: "record-one", kind: "RISK", status: "OPEN", title: "Review capacity assumption", body: "Synthetic context.", url: null, createdByDisplayName: "Grant Hanley", resolution: null, version: 1, createdAt: "2026-08-07T09:00:00Z", updatedAt: "2026-08-07T10:00:00Z" }] });
     if (url.pathname.endsWith("/memberships") || url.pathname.endsWith("/transfers") || url.pathname.endsWith("/end")) {

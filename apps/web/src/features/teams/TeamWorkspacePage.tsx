@@ -9,51 +9,42 @@ import { PageState } from "../../components/PageState";
 import { api } from "../../lib/api/client";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import { useAuth } from "../../lib/auth/AuthProvider";
-import { useCapabilities } from "../../lib/capabilities/useCapabilities";
+import { StaffQueuePage } from "../work/StaffQueuePage";
 import { TeamActivityPanel } from "./TeamActivityPanel";
 import { TeamOverviewPage, TeamStatisticsStrip } from "./TeamOverviewPage";
 import { TeamPeoplePanel } from "./TeamPeoplePanel";
-import { RoutingQueuePanel } from "./RoutingQueuePanel";
-import { WorkspaceCollaborationPanel } from "./WorkspaceCollaborationPanel";
 
 const CalendarPage = lazy(() => import("../calendar/CalendarPage")
   .then(({ CalendarPage: page }) => ({ default: page })));
 const TeamBoardPage = lazy(() => import("../board/TeamBoardPage")
   .then(({ TeamBoardPage: page }) => ({ default: page })));
-const TeamPlanningPage = lazy(() => import("../board/TeamPlanningPage")
-  .then(({ TeamPlanningPage: page }) => ({ default: page })));
-
 const deliveryViews = [
   ["overview", "Overview"],
+  ["queue", "Work queue"],
   ["board", "Board"],
   ["calendar", "Calendar"],
   ["people", "People"],
-  ["planning", "Planning"],
   ["statistics", "Statistics"],
-  ["handover", "Handover"],
   ["activity", "Activity"],
 ] as const;
 const routingViews = [
   ["overview", "Overview"],
-  ["queue", "Queue"],
+  ["queue", "Work queue"],
   ["calendar", "Calendar"],
   ["people", "People"],
   ["statistics", "Statistics"],
-  ["handover", "Handover"],
   ["activity", "Activity"],
 ] as const;
 export function TeamWorkspacePage() {
   const { session } = useAuth();
-  const { capabilities, isPending: capabilitiesPending } = useCapabilities();
   const navigate = useNavigate();
   const { teamId, view = "overview" } = useParams();
-  const userId = session?.user.id ?? "anonymous";
+  const userId = session!.user.id;
   const workspaces = useQuery({
     queryKey: protectedQueryKeys.teamWorkspaces(userId),
     queryFn: api.teamWorkspaces,
-    enabled: Boolean(session),
   });
-  if (capabilitiesPending || workspaces.isPending) {
+  if (workspaces.isPending) {
     return <PageState kind="loading" title="Opening team workspace" />;
   }
   if (workspaces.isError) {
@@ -67,14 +58,14 @@ export function TeamWorkspacePage() {
     return <PageState kind="empty" title="Team workspace unavailable">This team is outside your current workspace access.</PageState>;
   }
   const baseViews = selected.unitKind && selected.unitKind !== "TEAM" ? routingViews : deliveryViews;
-  const availableViews = baseViews.filter(([key]) => (key !== "planning" || capabilities.planning) && (!selected.views || selected.views.includes(key.toUpperCase())));
+  const availableViews = baseViews.filter(([key]) => key === "queue" || !selected.views || selected.views.includes(key.toUpperCase()));
   if (!availableViews.some(([key]) => key === view)) {
     return <Navigate replace to={`/teams/${selected.teamId}/overview`} />;
   }
   return (
     <main className="page-stack team-workspace">
       <header className="team-heading">
-        <div><span>{selected.teamCode} · {selected.workspacePosition?.toLowerCase() ?? "authorised"}</span><h1>{selected.teamName}</h1><p>{selected.unitKind === "TEAM" || !selected.unitKind ? "Shared delivery workspace for staffing, service work and team planning." : "Shared routing workspace for queue decisions, people, calendar, statistics and handover."}</p></div>
+        <div><span>{selected.teamCode} · {selected.workspacePosition?.toLowerCase() ?? "authorised"}</span><h1>{selected.teamName}</h1><p>{selected.unitKind === "TEAM" || !selected.unitKind ? "Team work, assignments, people, availability and performance in one place." : "Routing work, people, availability and performance in one place."}</p></div>
         {workspaces.data.items.length > 1 ? (
           <label className="form-field">Workspace
             <select onChange={(event) => { void navigate(`/teams/${event.target.value}/overview`); }} value={selected.teamId}>
@@ -87,14 +78,12 @@ export function TeamWorkspacePage() {
         {availableViews.map(([key, label]) => <NavLink className={({ isActive }) => isActive ? "team-tab team-tab--active" : "team-tab"} key={key} to={`/teams/${selected.teamId}/${key}`}>{label}</NavLink>)}
       </nav>
       <Suspense fallback={<PageState kind="loading" title="Opening team workspace view" />}>
-        {view === "overview" ? <TeamOverviewPage access={selected} role={session!.user.role} userId={userId} /> : null}
+        {view === "overview" ? <TeamOverviewPage access={selected} userId={userId} /> : null}
         {view === "people" ? <TeamPeoplePanel access={selected} userId={userId} /> : null}
         {view === "activity" ? <TeamActivityPanel teamId={selected.teamId} userId={userId} /> : null}
-        {view === "board" && (selected.unitKind === "TEAM" || !selected.unitKind) ? <TeamBoardPage access={selected} /> : null}
+        {view === "board" ? <TeamBoardPage access={selected} /> : null}
         {view === "calendar" ? <CalendarPage access={selected} /> : null}
-        {view === "planning" && capabilities.planning && (selected.unitKind === "TEAM" || !selected.unitKind) ? <TeamPlanningPage access={selected} /> : null}
-        {view === "queue" ? <RoutingQueuePanel role={session!.user.role} teamId={selected.teamId} userId={userId} /> : null}
-        {view === "handover" ? <WorkspaceCollaborationPanel access={selected} userId={userId} /> : null}
+        {view === "queue" ? <StaffQueuePage description="Review and complete work currently assigned or available to this unit." embedded eyebrow="Team work" teamId={selected.teamId} title="Work queue" /> : null}
         {view === "statistics" ? <WorkspaceStatistics access={selected} userId={userId} /> : null}
       </Suspense>
     </main>

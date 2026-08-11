@@ -256,14 +256,15 @@ broaden access. A missing, completed or differently assigned task returns no
 row, and the frontend reports that the action ended instead of selecting the
 first item in the queue.
 
-The navigation separates three concerns:
+The navigation separates personal work from shared unit work:
 
 - **My assigned actions** is the sidebar route to the personal and explicitly
   shared action register;
-- the purpose-named queue, such as **CRIOC routing queue**, is where human workflow decisions
-  are claimed and recorded;
-- the organisation-named workspace, such as **CRIOC workspace**, contains people,
-  calendar, handover and other unit collaboration features.
+- the organisation-named workspace, such as **CRIOC workspace**, contains the
+  actionable unit queue, people, calendar, statistics and activity;
+- standalone purpose-named queue routes remain compatible with notification and
+  bookmarked deep links, but are not duplicated in the sidebar when a current
+  workspace exists.
 
 These are staff concerns. Customer primary navigation contains only **My
 requests** and **New request**. Customers are route-gated away from the personal
@@ -368,11 +369,14 @@ before a bounded merge. The browser appends pages and resets the cursor when a
 filter changes. Cursors contain ordering keys only and never grant authority.
 
 Team workspaces compose several independently authorised bounded projections.
-Delivery-team Overview combines exact-team Board totals, planning freshness,
-capacity, current membership, calendar occurrences, collaboration records and
-recent activity. Routing-unit Overview combines a unit-scoped human decision
-queue with its calendar, handover and activity. A failed source is labelled and
-does not widen another source's scope.
+Delivery-team Overview combines exact-team Board totals, current membership,
+calendar occurrences and recent activity. Routing-unit Overview combines a
+unit-scoped human decision queue with its calendar and activity. The full
+actionable queue is embedded as a unit-scoped workspace view. Advanced Planning
+and Handover views are not part of the MVP navigation, although their existing
+server data is retained. The Board reads its ordinary package projection and no
+longer depends on the planning-cockpit projection. A failed source is labelled
+and does not widen another source's scope.
 
 The delivery Board returns two distinct facts: a cursor-bounded item page and
 complete per-column aggregates for the same search, type, priority, owner and

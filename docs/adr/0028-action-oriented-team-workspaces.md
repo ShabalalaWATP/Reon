@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted, 10 August 2026.
+Superseded in interface scope by [ADR 0031](0031-consolidated-team-workspace-navigation.md),
+11 August 2026. Its Board integrity and skill-label decisions remain applicable.
 
 ## Context
 

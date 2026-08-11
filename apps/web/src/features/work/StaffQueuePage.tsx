@@ -27,13 +27,17 @@ import {
 
 type StaffQueuePageProps = {
   description: string;
+  embedded?: boolean;
   eyebrow: string;
+  teamId?: string;
   title: string;
 };
 
 export function StaffQueuePage({
   description,
+  embedded = false,
   eyebrow,
+  teamId,
   title,
 }: StaffQueuePageProps) {
   const { session } = useAuth();
@@ -42,7 +46,7 @@ export function StaffQueuePage({
   const userId = session?.user.id ?? "anonymous";
   const queueQueryKey = protectedQueryKeys.workItems(
     userId,
-    undefined,
+    teamId,
     requestId,
   );
   const queryClient = useQueryClient();
@@ -54,7 +58,7 @@ export function StaffQueuePage({
   const listQuery = useInfiniteQuery({
     queryKey: queueQueryKey,
     queryFn: ({ pageParam }) =>
-      api.workItems(pageParam ?? undefined, undefined, requestId),
+      api.workItems(pageParam ?? undefined, teamId, requestId),
     initialPageParam: null as string | null,
     getNextPageParam: (page) => page.nextCursor ?? undefined,
     enabled: Boolean(session),
@@ -202,12 +206,14 @@ export function StaffQueuePage({
   }
 
   const mutationError = claim.error ?? complete.error;
+  const Container = embedded ? "section" : "main";
+  const Heading = embedded ? "h2" : "h1";
   return (
-    <main className="page-stack">
+    <Container className={embedded ? "page-stack workspace-work-queue" : "page-stack"}>
       <header className="page-heading">
         <div>
           <span>{eyebrow}</span>
-          <h1>{title}</h1>
+          <Heading>{title}</Heading>
           <p>{description}</p>
         </div>
         <div className="queue-count">
@@ -262,6 +268,6 @@ export function StaffQueuePage({
           />
         </div>
       )}
-    </main>
+    </Container>
   );
 }

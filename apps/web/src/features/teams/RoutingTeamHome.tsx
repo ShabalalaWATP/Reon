@@ -5,21 +5,19 @@ import { Link } from "react-router";
 import { api } from "../../lib/api/client";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import type { TeamWorkspaceAccess, TeamWorkspaceOverview } from "../../lib/api/teamTypes";
-import type { UserRole, WorkItem } from "../../lib/api/types";
+import type { WorkItem } from "../../lib/api/types";
 import { addLocalDays } from "../../lib/dateInputs";
-import { roleRoutes } from "../../lib/routes";
 import { elapsedTime } from "../../lib/serviceTiming";
 import { statusLabels } from "../../lib/status";
 import { boardLabel } from "../board/boardPresentation";
 
-export function RoutingTeamHome({ access, overview, role, userId }: { access: TeamWorkspaceAccess; overview: TeamWorkspaceOverview; role: UserRole; userId: string }) {
+export function RoutingTeamHome({ access, overview, userId }: { access: TeamWorkspaceAccess; overview: TeamWorkspaceOverview; userId: string }) {
   const [from, to] = useMemo(() => {
     const now = new Date();
     return [now.toISOString(), addLocalDays(now, 14).toISOString()];
   }, []);
   const queue = useQuery({ queryKey: protectedQueryKeys.workItems(userId, access.teamId), queryFn: () => api.workItems(undefined, access.teamId) });
   const calendar = useQuery({ queryKey: protectedQueryKeys.teamCalendar(userId, access.teamId, from, to), queryFn: () => api.teamCalendar(access.teamId, from, to) });
-  const records = useQuery({ queryKey: protectedQueryKeys.workspaceRecords(userId, access.teamId), queryFn: () => api.workspaceRecords(access.teamId) });
   const activity = useQuery({ queryKey: protectedQueryKeys.teamActivity(userId, access.teamId), queryFn: () => api.teamActivity(access.teamId) });
   const items = queue.data?.items ?? [];
   const available = items.filter((item) => !item.assigneeId);
@@ -27,7 +25,6 @@ export function RoutingTeamHome({ access, overview, role, userId }: { access: Te
   const information = items.filter((item) => item.stage.includes("INFORMATION"));
   const oldest = [...items].sort((left, right) => left.createdAt.localeCompare(right.createdAt))[0];
   const stages = stageCounts(items);
-  const openRecords = records.data?.items.filter((item) => item.status === "OPEN") ?? [];
   return (
     <div className="team-home routing-home">
       <section className="routing-home__decision" aria-labelledby="routing-decision-title">
@@ -39,7 +36,7 @@ export function RoutingTeamHome({ access, overview, role, userId }: { access: Te
           <HomeMeasure label="Oldest wait" value={oldest ? elapsedTime(oldest.createdAt) : "None"} />
           <HomeMeasure label="Active branch work" value={overview.activeWorkCount} />
         </div>
-        <div className="routing-home__actions"><Link className="button button--primary" to={roleRoutes[role]}>Open routing queue</Link><Link className="button button--quiet" to={`/teams/${access.teamId}/handover`}>Open handover</Link></div>
+        <div className="routing-home__actions"><Link className="button button--primary" to={`/teams/${access.teamId}/queue`}>Open work queue</Link></div>
         {queue.isError ? <p className="inline-unavailable">Routing queue unavailable</p> : null}
       </section>
 
@@ -48,8 +45,7 @@ export function RoutingTeamHome({ access, overview, role, userId }: { access: Te
         <section className="team-home__list"><header><h2>Upcoming unit calendar</h2><Link to={`/teams/${access.teamId}/calendar`}>Open Calendar</Link></header><ol>{calendar.data?.items.slice(0, 5).map((item) => <li key={`${item.eventId}-${item.occurrenceStart}`}><time>{new Date(item.startsAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</time><strong>{item.title}</strong><small>{item.subjectDisplayName} · {boardLabel(item.category)}</small></li>)}{!calendar.isPending && calendar.data?.items.length === 0 ? <li className="inline-empty">No events in the next 14 days.</li> : null}{calendar.isError ? <li className="inline-unavailable">Calendar unavailable</li> : null}</ol></section>
       </div>
 
-      <div className="team-home__columns">
-        <section className="team-home__list"><header><h2>Open handover and decisions</h2><Link to={`/teams/${access.teamId}/handover`}>Open Handover</Link></header><ol>{openRecords.slice(0, 5).map((item) => <li key={item.id}><span className="team-home__kind">{boardLabel(item.kind)}</span><strong>{item.title}</strong><small>Updated {new Date(item.updatedAt).toLocaleDateString("en-GB")}</small></li>)}{!records.isPending && openRecords.length === 0 ? <li className="inline-empty">No open handover records.</li> : null}{records.isError ? <li className="inline-unavailable">Handover unavailable</li> : null}</ol></section>
+      <div className="team-home__columns team-home__columns--single">
         <section className="team-home__list"><header><h2>Recent unit activity</h2><Link to={`/teams/${access.teamId}/activity`}>Open Activity</Link></header><ol>{activity.data?.items.slice(0, 5).map((item) => <li key={item.id}><time>{new Date(item.createdAt).toLocaleDateString("en-GB")}</time><strong>{item.summary}</strong><small>{item.actorDisplayName ?? "System"}</small></li>)}{!activity.isPending && activity.data?.items.length === 0 ? <li className="inline-empty">No recent unit activity.</li> : null}{activity.isError ? <li className="inline-unavailable">Activity unavailable</li> : null}</ol></section>
       </div>
     </div>

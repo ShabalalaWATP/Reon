@@ -5,8 +5,6 @@ import { Link } from "react-router";
 import { boardApi } from "../../lib/api/boardClient";
 import type { BoardFilters } from "../../lib/api/boardTypes";
 import { api } from "../../lib/api/client";
-import { planningEvolutionApi } from "../../lib/api/planningEvolutionClient";
-import type { PlanningCockpit } from "../../lib/api/planningEvolutionTypes";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import type {
   TeamWorkspaceAccess,
@@ -26,17 +24,10 @@ export function DeliveryTeamHome({ access, overview, userId }: { access: TeamWor
     queryKey: protectedQueryKeys.teamBoard(userId, access.teamId, "home-requests"),
     queryFn: () => boardApi.board(access.teamId, requestBoardFilters, { limit: 8 }),
   });
-  const planning = useQuery({
-    queryKey: protectedQueryKeys.teamPlanningCockpit(userId, access.teamId),
-    queryFn: () => planningEvolutionApi.cockpit(access.teamId),
-    enabled: Boolean(access.views?.includes("PLANNING")),
-  });
   const people = useQuery({ queryKey: protectedQueryKeys.teamPeople(userId, access.teamId), queryFn: () => api.teamPeople(access.teamId) });
   const calendar = useQuery({ queryKey: protectedQueryKeys.teamCalendar(userId, access.teamId, calendarFrom, calendarTo), queryFn: () => api.teamCalendar(access.teamId, calendarFrom, calendarTo) });
-  const records = useQuery({ queryKey: protectedQueryKeys.workspaceRecords(userId, access.teamId), queryFn: () => api.workspaceRecords(access.teamId) });
   const activity = useQuery({ queryKey: protectedQueryKeys.teamActivity(userId, access.teamId), queryFn: () => api.teamActivity(access.teamId) });
   const counts = board.data?.columnCounts;
-  const openRecords = records.data?.items.filter((item) => item.status === "OPEN") ?? [];
   const upcoming = calendar.data?.items.slice(0, 5) ?? [];
   const currentPeople = people.data?.items.filter((item) => item.state === "CURRENT") ?? [];
   return (
@@ -53,19 +44,6 @@ export function DeliveryTeamHome({ access, overview, userId }: { access: TeamWor
         {board.isError ? <InlineUnavailable label="Board attention" /> : null}
       </section>
 
-      <section className="team-home__planning">
-        <header><span>Capacity and flow</span><h2>Delivery outlook</h2><Link to={`/teams/${access.teamId}/planning`}>Open Planning</Link></header>
-        {planning.data ? <div className="team-home__measures">
-          <HomeMeasure label="Backlog" value={planning.data.summary.backlogCount} />
-          <HomeMeasure attention={planning.data.summary.blockedCount > 0} label="Blocked" value={planning.data.summary.blockedCount} />
-          <HomeMeasure attention={planning.data.summary.dueRiskCount > 0} label="Due risk" value={planning.data.summary.dueRiskCount} />
-          <HomeMeasure label="Available" value={formatMinutes(planning.data.summary.availableMinutes)} />
-          <HomeMeasure label="Reserved" value={formatMinutes(planning.data.summary.reservedMinutes)} />
-        </div> : <InlineUnavailable label={planning.isPending ? "Loading delivery outlook" : "Delivery outlook"} />}
-        {planning.data?.iteration ? <p className="team-home__iteration"><strong>{planning.data.iteration.name}</strong><span>{planning.data.iteration.completedPoints} of {planning.data.iteration.committedPoints} points complete</span></p> : null}
-        {planning.data ? <PlanningAlerts planning={planning.data} /> : null}
-      </section>
-
       <div className="team-home__columns">
         <HomeList heading="Upcoming team calendar" link={`/teams/${access.teamId}/calendar`} linkLabel="Open Calendar">
           {upcoming.map((item) => <li key={`${item.eventId}-${item.occurrenceStart}`}><time>{new Date(item.startsAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</time><strong>{item.title}</strong><small>{item.subjectDisplayName} · {boardLabel(item.category)}</small></li>)}
@@ -78,12 +56,7 @@ export function DeliveryTeamHome({ access, overview, userId }: { access: TeamWor
         </HomeList>
       </div>
 
-      <div className="team-home__columns">
-        <HomeList heading="Open handover and risks" link={`/teams/${access.teamId}/handover`} linkLabel="Open Handover">
-          {openRecords.slice(0, 5).map((item) => <li key={item.id}><span className="team-home__kind">{boardLabel(item.kind)}</span><strong>{item.title}</strong><small>Updated {new Date(item.updatedAt).toLocaleDateString("en-GB")}</small></li>)}
-          {!records.isPending && openRecords.length === 0 ? <li className="inline-empty">No open handover records or risks.</li> : null}
-          {records.isError ? <li><InlineUnavailable label="Handover" /></li> : null}
-        </HomeList>
+      <div className="team-home__columns team-home__columns--single">
         <HomeList heading="Recent team activity" link={`/teams/${access.teamId}/activity`} linkLabel="Open Activity">
           {activity.data?.items.slice(0, 5).map((item) => <li key={item.id}><time>{new Date(item.createdAt).toLocaleDateString("en-GB")}</time><strong>{item.summary}</strong><small>{item.actorDisplayName ?? "System"}</small></li>)}
           {!activity.isPending && activity.data?.items.length === 0 ? <li className="inline-empty">No recent team activity.</li> : null}
@@ -98,21 +71,8 @@ function AttentionLink({ attention = false, count, label, note, to }: { attentio
   return <Link className={attention ? "team-attention team-attention--urgent" : "team-attention"} to={to}><strong>{count}</strong><span>{label}<small>{note}</small></span><em>Open</em></Link>;
 }
 
-function HomeMeasure({ attention = false, label, value }: { attention?: boolean; label: string; value: number | string }) {
-  return <div className={attention ? "team-home__measure team-home__measure--attention" : "team-home__measure"}><span>{label}</span><strong>{value}</strong></div>;
-}
-
 function HomeList({ children, heading, link, linkLabel }: { children: ReactNode; heading: string; link: string; linkLabel: string }) {
   return <section className="team-home__list"><header><h2>{heading}</h2><Link to={link}>{linkLabel}</Link></header><ol>{children}</ol></section>;
 }
 
-function PlanningAlerts({ planning }: { planning: PlanningCockpit }) {
-  const warnings = [
-    ...planning.blockers.map((item) => ({ key: `blocker-${item.packageId}`, label: `${item.reference} blocked for ${item.ageDays} day${item.ageDays === 1 ? "" : "s"}`, detail: item.reason })),
-    ...planning.dependencies.filter((item) => item.status !== "CLEAR").map((item) => ({ key: `dependency-${item.packageId}-${item.dependencyReference}`, label: `${item.reference} depends on ${item.dependencyReference}`, detail: item.warning })),
-  ].slice(0, 4);
-  return <div className="team-home__planning-alerts"><p><strong>Advisory planning signals</strong><span>{planning.freshness.label} · generated {new Date(planning.generatedAt).toLocaleString("en-GB")}</span></p>{warnings.length ? <ul>{warnings.map((item) => <li key={item.key}><strong>{item.label}</strong><span>{item.detail}</span></li>)}</ul> : <small>No blocker-age or dependency warnings.</small>}</div>;
-}
-
 function InlineUnavailable({ label }: { label: string }) { return <span className="inline-unavailable">{label} unavailable</span>; }
-function formatMinutes(value: number) { return `${Math.floor(value / 60)}h ${value % 60}m`; }

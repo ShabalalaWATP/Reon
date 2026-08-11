@@ -7,7 +7,6 @@ import { PageState } from "../../components/PageState";
 import { boardApi } from "../../lib/api/boardClient";
 import type { BoardColumn, BoardFilters, BoardItem } from "../../lib/api/boardTypes";
 import { ApiError, api } from "../../lib/api/client";
-import { planningEvolutionApi } from "../../lib/api/planningEvolutionClient";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import type { TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import type { Session } from "../../lib/api/types";
@@ -61,11 +60,6 @@ function AuthenticatedTeamBoard({ access, session }: { access: TeamWorkspaceAcce
   const people = useQuery({ queryKey: protectedQueryKeys.teamPeople(userId, access.teamId), queryFn: () => api.teamPeople(access.teamId) });
   const iterations = useQuery({ queryKey: protectedQueryKeys.teamIterations(userId, access.teamId), queryFn: () => boardApi.iterations(access.teamId) });
   const packages = useQuery({ queryKey: protectedQueryKeys.teamPackages(userId, access.teamId), queryFn: () => boardApi.packages(access.teamId) });
-  const planning = useQuery({
-    queryKey: protectedQueryKeys.teamPlanningCockpit(userId, access.teamId),
-    queryFn: () => planningEvolutionApi.cockpit(access.teamId),
-    enabled: Boolean(access.views?.includes("PLANNING")),
-  });
   const deepLinkedRequest = useQuery({
     queryKey: protectedQueryKeys.teamBoardRequest(
       userId,
@@ -87,7 +81,6 @@ function AuthenticatedTeamBoard({ access, session }: { access: TeamWorkspaceAcce
   const refresh = () => Promise.all([
     client.invalidateQueries({ queryKey: ["protected", userId, "team-board", access.teamId] }),
     client.invalidateQueries({ queryKey: protectedQueryKeys.teamPackages(userId, access.teamId) }),
-    client.invalidateQueries({ queryKey: protectedQueryKeys.teamPlanningCockpit(userId, access.teamId) }),
   ]);
   const move = useMutation({
     mutationFn: ({ item, reason, target }: { item: BoardItem; reason: string; target: BoardColumn }) => boardApi.moveItem(access.teamId, {
@@ -148,10 +141,9 @@ function AuthenticatedTeamBoard({ access, session }: { access: TeamWorkspaceAcce
         viewName={viewName}
       />
       {mutationError ? <p className="form-banner form-banner--error" role="alert">{errorMessage(mutationError)}</p> : null}
-      {planning.isError ? <p className="form-banner" role="status">Planning context is temporarily unavailable. Core board records remain current.</p> : null}
       <BoardSurface
         columnCounts={board.data.columnCounts}
-        context={{ packages: packages.data.items, planning: planning.data }}
+        context={{ packages: packages.data.items }}
         filteredColumns={filters.columns}
         items={board.data.items}
         mode={mode}
@@ -173,7 +165,7 @@ function AuthenticatedTeamBoard({ access, session }: { access: TeamWorkspaceAcce
       <ModalDrawer label="Board settings" onClose={() => setSettings(false)} open={settings}>
         <BoardSettings current={board.data.wipLimits} error={configure.error} onSave={(limits) => configure.mutate(limits)} pending={configure.isPending} />
       </ModalDrawer>
-      <WorkItemInspector access={access} item={selected} moving={move.isPending} onClose={() => setSelected(null)} onMove={(item, target, reason) => move.mutate({ item, target, reason })} packages={packages.data.items} planning={planning.data} session={session} teamId={access.teamId} userId={userId} />
+      <WorkItemInspector access={access} item={selected} moving={move.isPending} onClose={() => setSelected(null)} onMove={(item, target, reason) => move.mutate({ item, target, reason })} packages={packages.data.items} session={session} userId={userId} />
     </div>
   );
 }

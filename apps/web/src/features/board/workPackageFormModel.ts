@@ -1,4 +1,4 @@
-import type { WorkPackage, WorkPackageInput, WorkPackagePriority } from "../../lib/api/boardTypes";
+import type { WorkPackageInput, WorkPackagePriority } from "../../lib/api/boardTypes";
 
 export type WorkPackageFormValue = {
   title: string;
@@ -31,24 +31,6 @@ export function emptyWorkPackage(ownerUserId: string): WorkPackageFormValue {
     linkedRequestId: "",
     dependencyIds: [],
     iterationId: "",
-  };
-}
-
-export function workPackageValue(item: WorkPackage): WorkPackageFormValue {
-  return {
-    title: item.title,
-    description: item.description,
-    ownerUserId: item.ownerUserId,
-    contributorIds: item.contributors.map((contributor) => contributor.userId),
-    estimatePoints: item.estimatePoints,
-    remainingEffortMinutes: item.remainingEffortMinutes,
-    dueOn: item.dueOn,
-    priority: item.priority,
-    blockers: item.blockers,
-    acceptanceCriteria: item.acceptanceCriteria,
-    linkedRequestId: item.linkedRequestId ?? "",
-    dependencyIds: item.dependencyIds,
-    iterationId: item.iterationId ?? "",
   };
 }
 

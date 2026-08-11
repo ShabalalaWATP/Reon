@@ -1,5 +1,18 @@
 # Development Story
 
+## 11 August 2026: one focused team workspace
+
+- Consolidated the role queue and named unit workspace into one primary
+  navigation destination.
+- Embedded the established actionable queue inside every routing and delivery
+  workspace, scoped to the exact authorised unit.
+- Removed Planning and Handover tabs and overview panels from the MVP interface.
+  Existing service records remain intact and old view URLs return to Overview.
+- Reduced overview reads by no longer loading planning or workspace-record
+  projections that are not displayed.
+- Updated the architecture decision, feature specification, user stories and
+  delivery and routing regression coverage.
+
 ## 11 August 2026: focused Customer navigation
 
 - Reduced the Customer sidebar to the two destinations used in the request

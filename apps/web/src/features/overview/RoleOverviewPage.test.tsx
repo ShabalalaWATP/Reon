@@ -64,9 +64,8 @@ describe("role-specific operational overview", () => {
     expect(screen.getByRole("region", { name: "CRIOC organisation workload" })).toHaveTextContent("not your personal workload");
     const destinations = screen.getByRole("navigation", { name: "Home destinations" });
     expect(within(destinations).getByRole("heading", { name: "Continue working" })).toBeInTheDocument();
-    expect(within(destinations).getAllByRole("link")).toHaveLength(7);
+    expect(within(destinations).getAllByRole("link")).toHaveLength(6);
     expect(within(destinations).getByRole("link", { name: /My assigned actions/ })).toHaveAttribute("href", "/my-work");
-    expect(within(destinations).getByRole("link", { name: /CRIOC routing queue/ })).toHaveAttribute("href", "/triage");
     expect(within(destinations).getByRole("link", { name: /CRIOC workspace/ })).toHaveAttribute("href", `/teams/${rootId}/overview`);
     expect(within(destinations).getByRole("link", { name: /Personal calendar/ })).toHaveAttribute("href", "/calendar/month");
     expect(within(destinations).getByRole("link", { name: /Operational statistics/ })).toHaveAttribute("href", "/statistics");

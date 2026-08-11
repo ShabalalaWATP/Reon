@@ -84,6 +84,7 @@
 .team-home__planning-alerts li strong, .team-home__planning-alerts li span { display: block; }
 .team-home__planning-alerts li span, .team-home__planning-alerts > small { margin-top: 3px; color: var(--muted); }
 .team-home__columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px; }
+.team-home__columns--single { grid-template-columns: 1fr; }
 .team-home__list > header { border-bottom: 1px solid var(--border); padding-bottom: 12px; }
 .team-home__list h2 { margin: 0; font-size: .98rem; }
 .team-home__list ol { margin: 4px 0 0; padding: 0; list-style: none; }

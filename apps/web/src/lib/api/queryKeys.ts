@@ -88,18 +88,10 @@ export const protectedQueryKeys = {
     ["protected", userId, "team-packages", teamId] as const,
   teamIterations: (userId: string, teamId: string) =>
     ["protected", userId, "team-iterations", teamId] as const,
-  teamPlanningCockpit: (userId: string, teamId: string) =>
-    ["protected", userId, "team-planning-cockpit", teamId] as const,
-  teamPlanningScenarios: (userId: string, teamId: string) =>
-    ["protected", userId, "team-planning-scenarios", teamId] as const,
-  teamPlanningTemplates: (userId: string, teamId: string) =>
-    ["protected", userId, "team-planning-templates", teamId] as const,
   teamWorkspace: (userId: string, teamId: string | undefined) =>
     ["protected", userId, "team-workspace", teamId] as const,
   teamWorkspaces: (userId: string) =>
     ["protected", userId, "team-workspaces"] as const,
-  workspaceRecords: (userId: string, unitId: string) =>
-    ["protected", userId, "workspace-records", unitId] as const,
   trackedRequests: (userId: string) =>
     ["protected", userId, "tracked-requests"] as const,
   trackedRequest: (userId: string, requestId: string) =>

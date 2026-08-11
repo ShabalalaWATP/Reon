@@ -98,19 +98,3 @@ export type EndMembershipInput = {
   expectedVersion: number;
   reason: string;
 };
-
-export type WorkspaceRecordKind = "DESCRIPTION" | "HANDOVER" | "RISK" | "BLOCKER" | "DECISION" | "LINK";
-export type WorkspaceRecord = {
-  id: string;
-  kind: WorkspaceRecordKind;
-  status: "OPEN" | "RESOLVED";
-  title: string;
-  body: string;
-  url: string | null;
-  createdByDisplayName: string;
-  resolution: string | null;
-  version: number;
-  createdAt: string;
-  updatedAt: string;
-};
-export type WorkspaceRecordList = { items: WorkspaceRecord[] };

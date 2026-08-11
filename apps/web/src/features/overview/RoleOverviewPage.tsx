@@ -209,7 +209,7 @@ function destinationIcon(path: string): LucideIcon {
 
 function destinationDescription(item: NavigationItem) {
   if (item.path === "/my-work") return "Review actions assigned to you, including work that is waiting or due soon.";
-  if (item.path.startsWith("/teams/")) return "Use the shared queue, calendar, people and handover tools available to your unit.";
+  if (item.path.startsWith("/teams/")) return "Open your unit's work queue, board, calendar, people and performance tools.";
   if (item.path === "/tracking") return "Follow previously routed requests through their full operational lifecycle.";
   if (item.path.startsWith("/calendar/")) return "Manage your own availability and events, which also appear in your current team calendar.";
   if (item.path === "/statistics") return "Explore authorised workload, timeliness and delivery trends for your branch.";

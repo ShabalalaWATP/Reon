@@ -99,7 +99,23 @@ describe("team workflow board", () => {
       ...requestDetail,
       id: "request-one",
       title: "Customer request projection",
+      status: "CUSTOMER_INFORMATION_REQUIRED",
+      assignedDeliveryTeam: null,
+      assignedSpecialist: null,
       contributors: [{ id: "analyst-two", displayName: "Nathan Patterson" }],
+      clarifications: [{
+        id: "clarification-one",
+        sequence: 1,
+        question: "Which synthetic location should be prioritised?",
+        reason: "The request needs a bounded scope.",
+        responseDeadline: "2026-08-15T12:00:00Z",
+        status: "OPEN",
+        version: 1,
+        assignedSpecialist: { id: "analyst-ssg", displayName: "Lewis Ferguson" },
+        messages: [],
+        createdAt: "2026-08-11T09:00:00Z",
+        closedAt: null,
+      }],
       events: [],
     };
     mockBoard(
@@ -114,6 +130,9 @@ describe("team workflow board", () => {
     const view = renderApp("/teams/team-ssg/board?itemId=request-one");
     const dialog = await screen.findByRole("dialog", { name: "Work item details" });
     expect(within(dialog).getByText("Rework", { selector: "dd" })).toBeInTheDocument();
+    expect(await within(dialog).findByRole("heading", { name: "Waiting for customer information" })).toBeInTheDocument();
+    expect(within(dialog).getByText("Routing in progress")).toBeInTheDocument();
+    expect(within(dialog).getAllByText("Unassigned", { selector: "dd" })).toHaveLength(2);
     await user.click(await screen.findByRole("button", { name: "Send hastener" }));
     expect(await screen.findByLabelText(/^Recipients/)).toHaveValue("ALL_ASSIGNED");
     await user.type(screen.getByLabelText(/^Message/), "Please confirm progress before this afternoon's review.");
@@ -148,6 +167,8 @@ describe("team workflow board", () => {
     renderApp("/teams/team-ssg/board");
     expect(await screen.findByRole("heading", { name: "Team delivery" })).toBeInTheDocument();
 
+    await user.click(screen.getByRole("button", { name: /Exceptions and downstream/ }));
+    await user.click(screen.getByRole("button", { name: /Completed and cancelled/ }));
     await user.click(await screen.findByRole("button", { name: "Table" }));
     expect(screen.getByRole("table", { name: /Filtered team work/ })).toBeInTheDocument();
     await user.type(screen.getByLabelText("Search work"), "product");
