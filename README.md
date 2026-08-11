@@ -143,9 +143,10 @@ Team workspaces include:
 During active production, any current delivery-team Manager can send a recorded
 task hastener to one assigned Analyst or to the Lead and all Contributors
 assigned within that team. The reminder appears in each recipient's
-notifications and links back to the board item. It is an accountable follow-up,
-not a workflow command: it does not change the owner, assignments or Camunda
-stage.
+notifications even if general assignment notifications are disabled, and an
+exact-request link opens the board item regardless of filters or pagination. It
+is visible in the Customer's accountable request history but is not a workflow
+command: it does not change the owner, assignments or Camunda stage.
 
 ### Personal and team calendars
 

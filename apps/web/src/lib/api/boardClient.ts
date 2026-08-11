@@ -1,5 +1,6 @@
 import type {
   BoardFilters,
+  BoardItem,
   BoardMoveInput,
   BoardResult,
   Iteration,
@@ -32,6 +33,8 @@ export const boardApi = {
     if (page.limit) query.set("limit", String(page.limit));
     return apiRequest<BoardResult>(`${teamPath(teamId)}/board${query.size ? `?${query}` : ""}`);
   },
+  boardRequest: (teamId: string, requestId: string) =>
+    apiRequest<BoardItem>(`${teamPath(teamId)}/board/requests/${encodeURIComponent(requestId)}`),
   moveItem: (teamId: string, input: BoardMoveInput, csrfToken: string) =>
     apiRequest<WorkPackage>(`${teamPath(teamId)}/board/moves`, { body: input, csrfToken, method: "POST" }),
   configure: (teamId: string, input: { grantId: string; expectedVersion: number; wipLimits: Record<string, number> }, csrfToken: string) =>

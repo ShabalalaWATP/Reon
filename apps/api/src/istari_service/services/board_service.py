@@ -28,6 +28,7 @@ from istari_service.schemas.board import (
     BoardConfigurationCommand,
     BoardConfigurationResult,
     BoardFilters,
+    BoardItem,
     BoardItemType,
     BoardMoveAttempt,
     BoardResult,
@@ -97,6 +98,12 @@ class BoardService:
             saved_views=await self._board.saved_views(team_id, actor.id),
             generated_at=datetime.now(UTC),
         )
+
+    async def board_request(
+        self, actor: Actor, team_id: UUID, request_id: UUID
+    ) -> BoardItem:
+        await self._workspaces.require_read(actor.id, team_id)
+        return await self._board.request_item(team_id, request_id)
 
     async def packages(
         self, actor: Actor, team_id: UUID, limit: int

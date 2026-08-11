@@ -18,6 +18,7 @@ from istari_service.schemas.board import (
     BoardConfigurationCommand,
     BoardConfigurationResult,
     BoardFilters,
+    BoardItem,
     BoardItemType,
     BoardMoveAttempt,
     BoardResult,
@@ -80,6 +81,17 @@ async def get_board(
         cursor,
         limit,
     )
+
+
+@router.get("/{team_id}/board/requests/{request_id}", response_model=BoardItem)
+async def get_board_request(
+    team_id: UUID,
+    request_id: UUID,
+    actor: CurrentActor,
+    session: DatabaseSession,
+) -> BoardItem:
+    service, _ = _services(session)
+    return await service.board_request(actor, team_id, request_id)
 
 
 @router.post("/{team_id}/board/moves", response_model=WorkPackageResult)

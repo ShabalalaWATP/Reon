@@ -44,6 +44,8 @@ a link to the relevant board item so that I can act on it in context.
 - The link uses the exact team and account identifiers from the authorised
   People projection.
 - The profile page has a clear `Back to [team] people` action.
+- Loading and failure states retain a direct route back to the same team's
+  People register without depending on returned profile data.
 - The profile contains name, work email, representative role, team, effective
   workspace position, membership state, rank or grade, skills and account
   status.
@@ -60,6 +62,9 @@ a link to the relevant board item so that I can act on it in context.
 - The control appears only for a current Manager in an organisation unit of
   kind `TEAM` while the request is in active production.
 - The request must be assigned to the Manager's exact team.
+- Exact-team assignment and active production state are validated while holding
+  the request row lock. A concurrent transition or reassignment completes first
+  and the hastener then uses that resulting current state.
 - Active production means `In progress`, `Customer information required` or
   `Rework required`.
 - Eligible recipients are active Delivery Specialists with a current exact-team
@@ -70,16 +75,25 @@ a link to the relevant board item so that I can act on it in context.
 - Any current Manager of the exact delivery team can send the reminder. They do
   not need to be the Manager who originally assigned the request.
 - The message is mandatory, trimmed, normalised, between 10 and 500 characters,
-  and rejects control and bidirectional formatting characters.
+  and rejects control and bidirectional formatting characters. Length is
+  checked after Unicode normalisation and trimming.
 - A successful action appends a `task_hastener` event to the request's
   tamper-evident history, including the sender and resolved recipients.
-- Each recipient receives a content-minimised in-app notification with a deep
-  link to the relevant board item.
+- Each recipient receives a mandatory, content-minimised in-app notification
+  with a deep link to the relevant board item. Disabling general assignment
+  notifications does not suppress a direct Manager hastener.
+- The action is all-or-nothing. If every resolved recipient cannot be projected
+  safely, the event and partial notifications are rolled back and the Manager
+  is asked to refresh.
+- The board resolves a notification target through an authorised exact-request
+  read independent of filters, pagination, saved views and lane visibility. An
+  unavailable target produces an explicit message rather than opening an
+  unrelated item.
 - Sending a hastener does not claim the request, change ownership, alter the
   workflow stage, change assignments or send a command to Camunda.
-- Exact-team Managers and assigned Analysts can see the recorded hastener
-  history in the work-item inspector. Customer request history excludes these
-  internal reminders.
+- Hasteners form part of the accountable request history. Every user already
+  authorised to view the request, including its Customer, can see that history.
+  The notification itself remains limited to resolved assigned Analysts.
 - Analysts, routing-workspace Managers, sibling teams, inactive members,
   unassigned Analysts and Managers acting after production has ended are denied.
 
@@ -102,7 +116,8 @@ narrow contract designed for colleagues.
 The hastener is an application action, not a Camunda workflow transition. The
 FastAPI service authorises the Manager, resolves recipients and appends an
 existing request event. The existing notification projection creates the safe
-recipient notifications. No new table or database migration is required.
+recipient notifications and treats the direct `TASK_HASTENER` event type as
+mandatory. No new table or database migration is required.
 
 The durable boundaries remain governed by:
 
@@ -119,8 +134,11 @@ The durable boundaries remain governed by:
 - API tests for all-recipient and named-recipient reminders from a second
   Manager, plus Analyst, sibling-team, unassigned-recipient and closed-stage
   denials.
-- Evidence that notifications reach only resolved recipients and use the exact
-  board deep link.
+- Evidence that notifications reach all and only resolved recipients even when
+  general assignment notifications are disabled, and use the exact board deep
+  link.
+- Evidence that deep links open rework, filtered and later-page requests by
+  exact identifier, or report an explicit unavailable state.
 - Evidence that request status, ownership and assignment remain unchanged while
   the immutable history records the action.
 - Frontend tests for a deep-linked request, all-recipient and named-recipient

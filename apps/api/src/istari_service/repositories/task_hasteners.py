@@ -25,10 +25,13 @@ class SqlAlchemyTaskHastenerRepository:
         return cast(
             ServiceRequest | None,
             await self.session.scalar(
-                select(ServiceRequest).where(
+                select(ServiceRequest)
+                .where(
                     ServiceRequest.id == request_id,
                     ServiceRequest.assigned_delivery_team_id == team_id,
                 )
+                .with_for_update()
+                .execution_options(populate_existing=True)
             ),
         )
 

@@ -24,7 +24,10 @@ from istari_service.models import User, UserRole
 from istari_service.operational_analytics_projection import (
     project_notification_sent_fact,
 )
-from istari_service.repositories.notifications import MANDATORY_GROUPS
+from istari_service.repositories.notifications import (
+    MANDATORY_EVENT_TYPES,
+    MANDATORY_GROUPS,
+)
 from istari_service.team_models import TeamMembership
 
 
@@ -124,6 +127,7 @@ class SqlAlchemyNotificationProjectionRepository:
         disabled = await self._disabled_recipients(
             {rule.user_id for rule in current_rules},
             event.event_group,
+            event.event_type,
         )
         existing = await self._recipients_by_user(
             event.id,
@@ -280,8 +284,10 @@ class SqlAlchemyNotificationProjectionRepository:
         self,
         user_ids: set[UUID],
         group: NotificationEventGroup,
+        event_type: str,
     ) -> set[UUID]:
-        if not user_ids or group in MANDATORY_GROUPS:
+        mandatory = group in MANDATORY_GROUPS or event_type in MANDATORY_EVENT_TYPES
+        if not user_ids or mandatory:
             return set()
         return set(
             await self.session.scalars(

@@ -344,13 +344,19 @@ workspace access and the subject's membership history are checked before any
 profile is returned.
 
 Task hasteners reuse two durable projections. FastAPI first confirms a current
-Manager position in the exact assigned delivery team and resolves the active
-Lead and Contributors from PostgreSQL. It then appends an unchanged-status event
-to the request's tamper-evident history and projects content-minimal
-notifications to those Analysts. No Camunda command is emitted because a
-hastener communicates urgency without changing workflow state or ownership.
-The Customer request read model filters these internal reminder events, while
-the exact-team board retains the complete accountable history.
+Manager position, locks and refreshes the request, then confirms the exact
+assigned delivery team and resolves the active Lead and Contributors from
+PostgreSQL. It appends an unchanged-status event to the request's tamper-evident
+history and projects content-minimal notifications to those Analysts. The direct
+`TASK_HASTENER` event is mandatory even when a recipient has disabled general
+assignment notifications, and the transaction succeeds only when every resolved
+recipient is projected. No Camunda command is emitted because a hastener
+communicates urgency without changing workflow state or ownership.
+
+Hasteners are accountable request history, so every user already authorised for
+the request, including its Customer, sees the same event. Notification links use
+an exact-team board-request endpoint that bypasses list filters, pagination and
+hidden lanes while repeating object-level workspace authorisation.
 
 ## 9. Authentication and session controls
 

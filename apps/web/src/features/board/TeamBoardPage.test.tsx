@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { describe, expect, it } from "vitest";
 
-import type { BoardResult, WorkPackage } from "../../lib/api/boardTypes";
+import type { BoardItem, BoardResult, WorkPackage } from "../../lib/api/boardTypes";
 import type { RequestDetail, Session } from "../../lib/api/types";
 import type { TeamMember, TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import { requestDetail, requesterSession } from "../../test/fixtures";
@@ -102,10 +102,18 @@ describe("team workflow board", () => {
       contributors: [{ id: "analyst-two", displayName: "Nathan Patterson" }],
       events: [],
     };
-    mockBoard(managerSession, managerAccess, calls, board, false, assigned);
+    mockBoard(
+      managerSession,
+      managerAccess,
+      calls,
+      { ...board, items: [] },
+      false,
+      assigned,
+    );
     const user = userEvent.setup();
     const view = renderApp("/teams/team-ssg/board?itemId=request-one");
-    expect(await screen.findByRole("dialog", { name: "Work item details" })).toBeInTheDocument();
+    const dialog = await screen.findByRole("dialog", { name: "Work item details" });
+    expect(within(dialog).getByText("Rework", { selector: "dd" })).toBeInTheDocument();
     await user.click(await screen.findByRole("button", { name: "Send hastener" }));
     expect(await screen.findByLabelText(/^Recipients/)).toHaveValue("ALL_ASSIGNED");
     await user.type(screen.getByLabelText(/^Message/), "Please confirm progress before this afternoon's review.");
@@ -120,6 +128,17 @@ describe("team workflow board", () => {
     await user.click(screen.getByRole("button", { name: "Send and record hastener" }));
     await waitFor(() => expect(calls.some((call) => call.body.audience === "ONE_ASSIGNED" && call.body.recipientUserId === "analyst-two")).toBe(true));
     expect(await axe(view.container)).toHaveNoViolations();
+  });
+
+  it("reports an unavailable exact deep link without opening another item", async () => {
+    const calls: Array<{ path: string; method: string; body: Record<string, unknown> }> = [];
+    mockBoard(managerSession, managerAccess, calls, board, false, requestDetail, null);
+    renderApp("/teams/team-ssg/board?itemId=request-one");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The linked request could not be opened",
+    );
+    expect(screen.queryByRole("dialog", { name: "Work item details" })).not.toBeInTheDocument();
   });
 
   it("filters board views, pages results and updates WIP limits", async () => {
@@ -234,7 +253,7 @@ describe("team workflow board", () => {
   });
 });
 
-function mockBoard(session: Session, access: TeamWorkspaceAccess, calls: Array<{ path: string; method: string; body: Record<string, unknown> }>, value: BoardResult = board, failMutations = false, initialRequest: RequestDetail = { ...requestDetail, id: "request-one", title: "Customer request projection" }) {
+function mockBoard(session: Session, access: TeamWorkspaceAccess, calls: Array<{ path: string; method: string; body: Record<string, unknown> }>, value: BoardResult = board, failMutations = false, initialRequest: RequestDetail = { ...requestDetail, id: "request-one", title: "Customer request projection" }, deepLinkedItem: BoardItem | null = { ...board.items[0], column: "REWORK" }) {
   let requestValue = initialRequest;
   return mockFetch(async (url, init) => {
     const method = init.method ?? "GET";
@@ -245,6 +264,9 @@ function mockBoard(session: Session, access: TeamWorkspaceAccess, calls: Array<{
     if (url.pathname.endsWith("/people")) return json({ items: people });
     if (url.pathname.endsWith("/iterations")) return json({ items: iterations });
     if (url.pathname.endsWith("/board") && method === "GET") return json(value);
+    if (url.pathname.endsWith("/board/requests/request-one") && method === "GET") {
+      return deepLinkedItem ? json(deepLinkedItem) : json({ detail: "Not found" }, 404);
+    }
     if (url.pathname.endsWith("/packages") && method === "GET") return json({ items: [packageItem] });
     if (url.pathname.endsWith("/requests/request-one") && method === "GET") return json(requestValue);
     if (url.pathname.endsWith("/hasteners") && method === "POST") {

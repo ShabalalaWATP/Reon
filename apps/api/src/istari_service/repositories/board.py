@@ -17,9 +17,9 @@ from istari_service.board_models import (
     WorkPackage,
     WorkPackageContributor,
 )
-from istari_service.board_projection import ProjectedBoardItem
+from istari_service.board_projection import ProjectedBoardItem, request_projection
 from istari_service.errors import BoardItemNotFound, StaleVersion
-from istari_service.models import User
+from istari_service.models import ServiceRequest, User
 from istari_service.repositories.board_package_reads import (
     SqlAlchemyPackageReadRepository,
 )
@@ -61,6 +61,25 @@ class SqlAlchemyBoardRepository:
         self, team_id: UUID, filters: BoardFilters
     ) -> dict[BoardColumn, int]:
         return await self._page_reads.filtered_column_counts(team_id, filters)
+
+    async def request_item(self, team_id: UUID, request_id: UUID) -> BoardItem:
+        row = (
+            await self.session.execute(
+                select(ServiceRequest, User.display_name)
+                .outerjoin(User, User.id == ServiceRequest.assigned_specialist_id)
+                .where(
+                    ServiceRequest.id == request_id,
+                    ServiceRequest.assigned_delivery_team_id == team_id,
+                )
+            )
+        ).one_or_none()
+        if row is None:
+            raise BoardItemNotFound()
+        request, owner_name = row
+        projected = request_projection(request, owner_name)
+        if projected is None:
+            raise BoardItemNotFound()
+        return projected.item
 
     async def column_count(
         self,

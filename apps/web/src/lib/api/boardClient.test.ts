@@ -41,6 +41,7 @@ describe("board API client", () => {
 
     await boardApi.board("team one");
     await boardApi.board("team one", filters, { cursor: "cursor one", limit: 25 });
+    await boardApi.boardRequest("team one", "request one");
     await boardApi.moveItem("team one", { grantId: null, itemType: "WORK_PACKAGE", itemId: "package-one", target: "READY", expectedVersion: 1, reason: "Ready for delivery." }, "csrf");
     await boardApi.configure("team one", { grantId: "grant-one", expectedVersion: 1, wipLimits: { READY: 4 } }, "csrf");
     await boardApi.createView("team one", { name: "Urgent work", filters }, "csrf");
@@ -57,7 +58,7 @@ describe("board API client", () => {
     await boardApi.createIteration("team one", { grantId: "grant-one", name: "Pilot", goal: "Deliver the product.", startsOn: "2026-08-01", endsOn: "2026-08-14" }, "csrf");
     await boardApi.closeIteration("team one", "iteration one", { grantId: "grant-one", expectedVersion: 2, completionSummary: "The goal was achieved." }, "csrf");
 
-    expect(calls).toHaveLength(17);
+    expect(calls).toHaveLength(18);
     expect(calls[0].path).toBe("/api/v1/team-workspaces/team%20one/board");
     expect(calls[1].path).toContain("search=customer+%26+product");
     expect(calls[1].path).toContain("column=READY&column=IN_PROGRESS");
@@ -67,14 +68,15 @@ describe("board API client", () => {
     expect(calls[1].path).toContain("dueBefore=2026-08-31");
     expect(calls[1].path).toContain("cursor=cursor+one");
     expect(calls[1].path).toContain("limit=25");
-    expect(calls[2].init.method).toBe("POST");
-    expect(calls[3].init.method).toBe("PUT");
-    expect(calls[6].init.method).toBe("DELETE");
-    expect(calls[8].path).toContain("package%20one");
-    expect(calls[12].path).toContain("packageVersion=4");
-    expect(calls[13].path).toContain("reservation%20one/cancel?packageVersion=5");
-    expect(calls[16].path).toContain("iteration%20one/close");
-    expect(new Headers(calls[16].init.headers).get("X-CSRF-Token")).toBe("csrf");
+    expect(calls[2].path).toContain("board/requests/request%20one");
+    expect(calls[3].init.method).toBe("POST");
+    expect(calls[4].init.method).toBe("PUT");
+    expect(calls[7].init.method).toBe("DELETE");
+    expect(calls[9].path).toContain("package%20one");
+    expect(calls[13].path).toContain("packageVersion=4");
+    expect(calls[14].path).toContain("reservation%20one/cancel?packageVersion=5");
+    expect(calls[17].path).toContain("iteration%20one/close");
+    expect(new Headers(calls[17].init.headers).get("X-CSRF-Token")).toBe("csrf");
     expect(calls.every((call) => call.init.credentials === "include")).toBe(true);
   });
 });

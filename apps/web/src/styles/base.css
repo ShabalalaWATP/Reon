@@ -37,6 +37,7 @@ h1, h2, h3, p { margin-top: 0; }
 .page-state h2 { margin: 0; color: var(--text); font-size: 1rem; }
 .page-state p { margin: 5px 0 0; }
 .page-state > .button { margin-left: auto; }
+.page-state__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
 .page-state--error svg { color: var(--critical); }
 .spin { animation: spin 1s linear infinite; }
 .status-pill { display: inline-flex; align-items: center; gap: 7px; width: max-content; border: 1px solid currentcolor; border-radius: 99px; padding: 5px 9px; color: var(--muted); background: color-mix(in srgb, currentcolor 7%, var(--surface-muted)); font-size: .72rem; font-weight: 750; white-space: nowrap; }

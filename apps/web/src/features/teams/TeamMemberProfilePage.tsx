@@ -21,7 +21,7 @@ export function TeamMemberProfilePage() {
 
   if (profile.isPending) return <PageState kind="loading" title="Loading team member profile" />;
   if (profile.isError) {
-    return <PageState action={<button className="button" onClick={() => void profile.refetch()}>Try again</button>} kind="error" title="Team member profile could not be loaded">The person may no longer be visible in this workspace.</PageState>;
+    return <PageState action={<div className="page-state__actions"><Link className="button button--quiet" to={`/teams/${teamId}/people`}><ArrowLeft aria-hidden="true" size={16} />Back to team people</Link><button className="button" onClick={() => void profile.refetch()}>Try again</button></div>} kind="error" title="Team member profile could not be loaded">The person may no longer be visible in this workspace.</PageState>;
   }
 
   const member = profile.data;

@@ -28,6 +28,14 @@ async def test_any_exact_team_manager_can_hasten_one_or_all_assigned_analysts(
         },
     )
     team_id = str(await harness.unit_id("SSG_TEAM"))
+    await harness.login("admin12")
+    disabled = await harness.client.patch(
+        "/api/v1/me/notifications/preferences/ASSIGNMENT",
+        json={"enabled": False, "reminderDays": [], "expectedVersion": 0},
+        headers=harness.mutation_headers(),
+    )
+    assert disabled.status_code == 200, disabled.text
+    assert disabled.json()["enabled"] is False
     await harness.login("admin9")
 
     all_response = await harness.client.post(
@@ -114,9 +122,13 @@ async def test_any_exact_team_manager_can_hasten_one_or_all_assigned_analysts(
     await harness.login("admin2")
     customer_detail = await harness.client.get(f"/api/v1/requests/{request_id}")
     assert customer_detail.status_code == 200
-    assert all(
-        item["type"] != "task_hastener" for item in customer_detail.json()["events"]
-    )
+    customer_hasteners = [
+        item
+        for item in customer_detail.json()["events"]
+        if item["type"] == "task_hastener"
+    ]
+    assert len(customer_hasteners) == 2
+    assert any("Nathan Patterson" in item["message"] for item in customer_hasteners)
 
     await harness.login("admin12")
     notifications = await harness.client.get(
@@ -167,6 +179,39 @@ async def test_any_exact_team_manager_can_hasten_one_or_all_assigned_analysts(
     )
     assert inactive_stage.status_code == 409
 
+    await perform(
+        harness,
+        "admin8",
+        {"action": "changes_required", "reason": "Add a clearer conclusion."},
+    )
+    await harness.login("admin9")
+    rework_hastener = await harness.client.post(
+        f"/api/v1/team-workspaces/{team_id}/requests/{request_id}/hasteners",
+        json={
+            "audience": "ALL_ASSIGNED",
+            "message": "Please address the review changes before the next check.",
+        },
+        headers=harness.mutation_headers(),
+    )
+    assert rework_hastener.status_code == 200, rework_hastener.text
+
+    await harness.login("admin12")
+    filtered_board = await harness.client.get(
+        f"/api/v1/team-workspaces/{team_id}/board",
+        params={"column": "IN_PROGRESS"},
+    )
+    exact_item = await harness.client.get(
+        f"/api/v1/team-workspaces/{team_id}/board/requests/{request_id}"
+    )
+    missing_item = await harness.client.get(
+        f"/api/v1/team-workspaces/{team_id}/board/requests/{uuid4()}"
+    )
+    assert filtered_board.status_code == exact_item.status_code == 200
+    assert all(item["id"] != request_id for item in filtered_board.json()["items"])
+    assert exact_item.json()["id"] == request_id
+    assert exact_item.json()["column"] == "REWORK"
+    assert missing_item.status_code == 404
+
 
 async def test_sibling_team_manager_cannot_hasten_another_teams_request(
     api_harness: ApiHarness,
@@ -184,3 +229,7 @@ async def test_sibling_team_manager_cannot_hasten_another_teams_request(
         headers=harness.mutation_headers(),
     )
     assert response.status_code == 404
+    exact_item = await harness.client.get(
+        f"/api/v1/team-workspaces/{ssg_id}/board/requests/{request_id}"
+    )
+    assert exact_item.status_code == 404

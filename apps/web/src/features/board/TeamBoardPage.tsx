@@ -45,6 +45,7 @@ function AuthenticatedTeamBoard({ access, session }: { access: TeamWorkspaceAcce
   const [showExceptions, setShowExceptions] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
   const cursor = cursors.at(-1) ?? null;
+  const deepLinkedItemId = searchParams.get("itemId");
   const effectiveFilters = useMemo(() => ({
     ...filters,
     columns: filters.columns.length || mode === "table"
@@ -65,13 +66,24 @@ function AuthenticatedTeamBoard({ access, session }: { access: TeamWorkspaceAcce
     queryFn: () => planningEvolutionApi.cockpit(access.teamId),
     enabled: Boolean(access.views?.includes("PLANNING")),
   });
-  const deepLinkedItemId = searchParams.get("itemId");
+  const deepLinkedRequest = useQuery({
+    queryKey: protectedQueryKeys.teamBoardRequest(
+      userId,
+      access.teamId,
+      deepLinkedItemId,
+    ),
+    queryFn: () => boardApi.boardRequest(access.teamId, deepLinkedItemId!),
+    enabled: Boolean(deepLinkedItemId),
+  });
   useEffect(() => {
-    if (!deepLinkedItemId || handledDeepLink === deepLinkedItemId || !board.data) return;
-    const item = board.data.items.find((value) => value.id === deepLinkedItemId || value.linkedRequestId === deepLinkedItemId);
-    if (item) setSelected(item);
+    if (
+      !deepLinkedItemId
+      || handledDeepLink === deepLinkedItemId
+      || !deepLinkedRequest.data
+    ) return;
+    setSelected(deepLinkedRequest.data);
     setHandledDeepLink(deepLinkedItemId);
-  }, [board.data, deepLinkedItemId, handledDeepLink]);
+  }, [deepLinkedItemId, deepLinkedRequest.data, handledDeepLink]);
   const refresh = () => Promise.all([
     client.invalidateQueries({ queryKey: ["protected", userId, "team-board", access.teamId] }),
     client.invalidateQueries({ queryKey: protectedQueryKeys.teamPackages(userId, access.teamId) }),
@@ -112,6 +124,12 @@ function AuthenticatedTeamBoard({ access, session }: { access: TeamWorkspaceAcce
   const canManage = Boolean(access.grantId && access.permissions.includes("BOARD"));
   return (
     <div className="board-page page-stack">
+      {deepLinkedRequest.isError ? (
+        <p className="form-banner form-banner--error" role="alert">
+          The linked request could not be opened. It may no longer be available
+          to this team.
+        </p>
+      ) : null}
       <BoardToolbar
         canManage={canManage}
         filters={filters}

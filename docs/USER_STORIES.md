@@ -761,10 +761,16 @@ within my team so that follow-up is clear, targeted and accountable.
 
 - The server derives eligible active Leads and Contributors from the exact-team
   request assignment. A browser-supplied recipient cannot widen that set.
+- Team ownership and active production state are revalidated against a locked,
+  refreshed request before the event is appended.
 - The Manager selects one eligible Analyst or all eligible Analysts and enters
-  a mandatory 10 to 500 character message.
-- Each recipient receives a safe notification linking to the board item.
+  a mandatory 10 to 500 character message whose limit is applied after
+  normalisation and trimming.
+- Each recipient receives a mandatory safe notification linking to the exact
+  board request, independently of current filters, pagination or lane visibility.
 - The request history records the Manager, resolved recipients, message and time.
+- Every user authorised to view the request, including its Customer, can see the
+  accountable hastener history.
 - The reminder does not change ownership, assignment or Camunda workflow stage.
 - Analysts, routing-unit Managers, sibling teams and Managers outside active
   production cannot send the reminder.

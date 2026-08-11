@@ -87,7 +87,7 @@ class TaskHastenerService:
                 "recipientUserIds": [str(item.user_id) for item in recipients],
             },
         )
-        await self._notify(
+        notified_user_ids = await self._notify(
             request.reference,
             request.id,
             team_id,
@@ -96,6 +96,7 @@ class TaskHastenerService:
             recipients,
             event.created_at,
         )
+        _require_all_notified(recipients, notified_user_ids)
         return TaskHastenerResult(
             event_id=event.id,
             request_id=request.id,
@@ -114,7 +115,7 @@ class TaskHastenerService:
         source_version: int,
         recipients: list[TaskHastenerRecipient],
         occurred_at: datetime,
-    ) -> None:
+    ) -> frozenset[UUID]:
         projection = SqlAlchemyNotificationProjectionRepository(
             self._repository.session
         )
@@ -139,7 +140,10 @@ class TaskHastenerService:
             audience=[serialise_rule(rule) for rule in rules],
             occurred_at=occurred_at,
         )
-        await projection.project_event(event.id, rules, projected_at=occurred_at)
+        projected = await projection.project_event(
+            event.id, rules, projected_at=occurred_at
+        )
+        return frozenset(item.recipient_user_id for item in projected)
 
 
 def _select_recipients(
@@ -161,3 +165,13 @@ def _select_recipients(
 def _event_message(message: str, recipients: list[TaskHastenerRecipient]) -> str:
     names = ", ".join(item.display_name for item in recipients)
     return f"Hastener sent to {names}: {message}"
+
+
+def _require_all_notified(
+    recipients: list[TaskHastenerRecipient], notified_user_ids: frozenset[UUID]
+) -> None:
+    if notified_user_ids != frozenset(item.user_id for item in recipients):
+        raise InvalidAction(
+            "The assigned Analysts changed while the hastener was being sent. "
+            "Refresh the request and try again."
+        )

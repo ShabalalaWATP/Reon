@@ -23,9 +23,11 @@ class TaskHastenerCommand(StrictApiModel):
     recipient_user_id: UUID | None = None
     message: str = Field(min_length=10, max_length=500)
 
-    @field_validator("message")
+    @field_validator("message", mode="before")
     @classmethod
-    def safe_message(cls, value: str) -> str:
+    def safe_message(cls, value: object) -> object:
+        if not isinstance(value, str):
+            return value
         cleaned = unicodedata.normalize("NFKC", value).strip()
         if any(
             unicodedata.category(character) in {"Cc", "Cf"} for character in cleaned

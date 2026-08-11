@@ -37,6 +37,7 @@ from istari_service.schemas.actions import (
 MANDATORY_GROUPS = frozenset(
     {NotificationEventGroup.RELEASE, NotificationEventGroup.ACCOUNT_SECURITY}
 )
+MANDATORY_EVENT_TYPES = frozenset({"TASK_HASTENER"})
 
 
 class SqlAlchemyNotificationRepository:

@@ -1,5 +1,30 @@
 # Development Story
 
+## 11 August 2026: hastener review remediation and transparent history
+
+- Changed the product decision on hastener visibility: the reminder is part of
+  the accountable request history, so the Customer and every other user already
+  authorised for that request can see it. Notifications remain limited to the
+  active assigned Analysts.
+- Closed the stale-state race by locking and refreshing the exact assigned
+  request before checking its production state and resolving recipients.
+- Made the direct `TASK_HASTENER` event mandatory without forcing unrelated
+  assignment notifications, and made a successful transaction depend on every
+  resolved recipient receiving a projection.
+- Added an exact-team board-request read for notification links. It opens rework
+  and filtered or later-page requests without relying on the visible board page,
+  while inaccessible targets now produce an explicit message.
+- Applied message length limits after Unicode normalisation and trimming, and
+  retained the same-team People return route when a colleague profile fails to
+  load.
+- Added regression coverage for disabled notification preferences, exact-link
+  scope, hidden lanes, Customer-visible history, Unicode expansion and profile
+  error navigation. No database migration or Camunda change was required.
+- Closed the remediation with 963 backend tests at 98.89 per cent line and
+  95.03 per cent branch coverage, plus 386 frontend tests at 99.50 per cent
+  line and 95.00 per cent branch coverage. Repository quality, production
+  build, Ruff, MyPy, Bandit, documentation and source line-limit gates passed.
+
 ## 11 August 2026: team profiles and accountable task hasteners
 
 - Made every People-register name open a bounded team profile and added an

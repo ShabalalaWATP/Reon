@@ -85,6 +85,10 @@ describe("team member profile", () => {
     renderApp("/teams/team-ssg/people/analyst-ssg");
 
     expect(await screen.findByRole("heading", { name: "Team member profile could not be loaded" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to team people" })).toHaveAttribute(
+      "href",
+      "/teams/team-ssg/people",
+    );
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("Inactive account")).toBeInTheDocument();
     expect(screen.getByText("Manager")).toBeInTheDocument();

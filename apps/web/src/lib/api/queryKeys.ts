@@ -74,6 +74,8 @@ export const protectedQueryKeys = {
     ["protected", userId, "team-activity", teamId] as const,
   teamBoard: (userId: string, teamId: string, filtersKey: string) =>
     ["protected", userId, "team-board", teamId, filtersKey] as const,
+  teamBoardRequest: (userId: string, teamId: string, requestId: string | null) =>
+    ["protected", userId, "team-board-request", teamId, requestId] as const,
   teamCalendar: (userId: string, teamId: string | undefined, start: string, end: string) =>
     ["protected", userId, "team-calendar", teamId, start, end] as const,
   teamEligibleAnalysts: (userId: string, teamId: string | undefined) =>
