@@ -32,9 +32,9 @@ async def _complete(
     harness: ApiHarness, item: dict[str, Any], payload: dict[str, Any]
 ) -> None:
     code_by_action = {
-        "progress": "DIGOC",
-        "send_to_allocation": "NCGI_A_OPS",
-        "allocate": "OSG_TEAM",
+        "progress": "JOCK",
+        "send_to_allocation": "ACSA_B_OPS",
+        "allocate": "SSG_TEAM",
     }
     code = code_by_action.get(str(payload.get("action")))
     if code is not None:
@@ -92,7 +92,7 @@ async def test_complete_representative_workflow_and_feedback(
     await _complete(
         harness,
         item,
-        {"action": "progress", "category": "Research support", "priority": "HIGH"},
+        {"action": "progress", "priority": "HIGH"},
     )
 
     await harness.login("admin5")
@@ -113,18 +113,43 @@ async def test_complete_representative_workflow_and_feedback(
     )
 
     specialist_id = await harness.user_id("admin11")
+    first_contributor_id = await harness.user_id("admin12")
+    second_contributor_id = await harness.user_id("admin13")
     lead_session = await harness.login("admin8")
-    assert lead_session["user"]["scope"] == "OSG Team"
-    assert "OSG_TEAM" not in str(lead_session)
+    assert lead_session["user"]["scope"] == "SSG Team"
+    assert "SSG_TEAM" not in str(lead_session)
     await _complete(
         harness,
         await _claim_current(harness),
-        {"action": "assign", "specialistId": str(specialist_id)},
+        {
+            "action": "assign",
+            "specialistId": str(specialist_id),
+            "contributorIds": [
+                str(first_contributor_id),
+                str(second_contributor_id),
+            ],
+            "reason": "The Manager selected the Lead and supporting Contributors.",
+        },
     )
 
+    contributor_session = await harness.login("admin12")
+    assert contributor_session["user"]["role"] == "DELIVERY_SPECIALIST"
+    contributor_detail = await harness.client.get(f"/api/v1/requests/{request_id}")
+    assert contributor_detail.status_code == 200
+    assert contributor_detail.json()["contributors"] == [
+        {
+            "id": str(second_contributor_id),
+            "displayName": "Ben Doak",
+        },
+        {
+            "id": str(first_contributor_id),
+            "displayName": "Nathan Patterson",
+        },
+    ]
+
     specialist_session = await harness.login("admin11")
-    assert specialist_session["user"]["scope"] == "OSG Team"
-    assert "OSG_TEAM" not in str(specialist_session)
+    assert specialist_session["user"]["scope"] == "SSG Team"
+    assert "SSG_TEAM" not in str(specialist_session)
     item = await _claim_current(harness)
     assert item["assigneeId"] == str(specialist_id)
     transport = harness.client._transport
@@ -224,9 +249,9 @@ async def test_complete_representative_workflow_and_feedback(
     assert detail.status_code == 200
     assert detail.json()["status"] == "COMPLETED"
     assert detail.json()["deliverable"]["title"] == "Synthetic service summary"
-    assert detail.json()["assignedDeliveryTeam"] == "OSG Team"
+    assert detail.json()["assignedDeliveryTeam"] == "SSG Team"
     assert detail.json()["productAvailable"] is True
-    assert "OSG_TEAM" not in detail.text
+    assert "SSG_TEAM" not in detail.text
 
     await harness.login("admin3")
     assert (

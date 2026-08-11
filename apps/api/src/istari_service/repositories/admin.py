@@ -31,6 +31,7 @@ from istari_service.organisation_models import (
     UserOrganisationMembership,
 )
 from istari_service.repositories.admin_reads import AdminReadRepositoryMixin
+from istari_service.team_models import TeamMembership, WorkspacePosition
 
 ADMIN_USERNAME = re.compile(r"admin([1-9][0-9]*)")
 ACTIVE_WORK_STATUSES = {
@@ -98,6 +99,17 @@ class SqlAlchemyAdminRepository(AdminReadRepositoryMixin):
                 "Organisation names must be unique amongst siblings."
             )
 
+    async def ensure_unique_email(
+        self, email: str, *, excluding_user_id: UUID | None = None
+    ) -> None:
+        statement = select(User.id).where(User.email == email)
+        if excluding_user_id is not None:
+            statement = statement.where(User.id != excluding_user_id)
+        if await self.session.scalar(statement) is not None:
+            raise InvalidAdministrationChange(
+                "That email address is already assigned to another account."
+            )
+
     async def next_username(self) -> str:
         sequence = await self.lock_identity_sequence()
         usernames = await self.session.scalars(select(User.username))
@@ -128,6 +140,17 @@ class SqlAlchemyAdminRepository(AdminReadRepositoryMixin):
                 )
             )
         )
+
+    async def workspace_position(self, user_id: UUID) -> WorkspacePosition | None:
+        position = await self.session.scalar(
+            select(TeamMembership.workspace_position)
+            .where(
+                TeamMembership.user_id == user_id,
+                TeamMembership.effective_until.is_(None),
+            )
+            .limit(1)
+        )
+        return position
 
     async def replace_memberships(
         self, user_id: UUID, units: list[OrganisationUnit]

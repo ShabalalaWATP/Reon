@@ -34,7 +34,7 @@ export function WorkPackageFields({
   ) => onChange({ ...value, [name]: next });
   const selectedContributors = (event: ChangeEvent<HTMLSelectElement>) => {
     const selected = Array.from(event.target.selectedOptions, (option) => option.value);
-    update("contributorIds", mode === "create" ? selected.slice(0, 1) : selected);
+    update("contributorIds", selected.slice(0, 10));
   };
 
   return (
@@ -52,9 +52,8 @@ export function WorkPackageFields({
             {current.map((member) => <option key={member.accountId} value={member.accountId}>{member.displayName}</option>)}
           </select>
         </Field>
-        <Field label={label("Contributor", "Edit contributors")}>
-          <select multiple={mode === "edit"} onChange={selectedContributors} required value={mode === "create" ? value.contributorIds[0] ?? "" : value.contributorIds}>
-            {mode === "create" ? <option value="">Select a contributor</option> : null}
+        <Field label={label("Contributors", "Edit contributors")}>
+          <select multiple onChange={selectedContributors} required size={Math.min(7, Math.max(3, contributors.length))} value={value.contributorIds}>
             {contributors.map((member) => <option key={member.accountId} value={member.accountId}>{member.displayName}</option>)}
           </select>
         </Field>

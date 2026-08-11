@@ -7,9 +7,12 @@ import re
 from istari_service.errors import InvalidAction
 
 REFERENCE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,63}")
+ASSISTANCE_EVENT_LABEL = "password assistance requested"
+
 EVENT_LABELS = {
     "REQUEST_SUBMITTED": "request submitted",
     "REQUEST_WITHDRAWN": "request withdrawn",
+    "REQUEST_CANCELLED": "request cancelled",
     "REQUEST_CLOSED": "request closed",
     "REQUEST_HELD": "request held",
     "TASK_ASSIGNED": "action assigned",
@@ -39,6 +42,7 @@ EVENT_LABELS = {
     "CONFIGURATION_REJECTED": "configuration rejected",
     "CONFIGURATION_SUPERSEDED": "configuration superseded",
     "ACCOUNT_SECURITY_CHANGED": "account security changed",
+    "PASSWORD_ASSISTANCE_REQUESTED": ASSISTANCE_EVENT_LABEL,
 }
 
 

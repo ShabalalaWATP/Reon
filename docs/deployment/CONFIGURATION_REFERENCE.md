@@ -148,6 +148,22 @@ and outbound mirror access. No S3 or GCS runtime is present. Filesystem storage
 and ClamAV are local
 evaluation adapters, not a production product-protection architecture.
 
+## Related-request matching
+
+| Variable | Default | Meaning and constraint |
+|---|---|---|
+| `REQUEST_MATCHING_SEMANTIC_ENABLED` | `true` | Enables asynchronous semantic enrichment. Text matching and human routing continue when disabled. |
+| `REQUEST_EMBEDDING_THREADS` | `2` | Worker threads available to the local ONNX runtime, 1 to 8. |
+| `REQUEST_EMBEDDING_BATCH_SIZE` | `8` | Pending projections processed per fenced pass, 1 to 32. |
+| `REQUEST_EMBEDDING_CACHE_PATH` | `/app/.model-cache` in the image | Offline model cache. It must be absolute in production. |
+| `REQUEST_EMBEDDING_MODEL` | `BAAI/bge-small-en-v1.5` | Fixed accepted 384-dimension model. Changing it requires code, migration, provenance and re-index evidence. |
+
+The image build resolves the accepted model revision, verifies the revision and
+runtime-file SHA-256 values, then disables Hugging Face network access at
+runtime. Request content is never sent to the model host. Semantic failure leaves
+the transactionally created full-text projection usable and is not a routing
+failure.
+
 ## Feature flags
 
 | Variable | Secure default | Capability |

@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { ClipboardList } from "lucide-react";
 import { useState } from "react";
+import { Link, useSearchParams } from "react-router";
 
 import { PageState } from "../../components/PageState";
 import { api, ApiError } from "../../lib/api/client";
@@ -14,6 +15,7 @@ import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import { flattenUniquePages } from "../../lib/api/pagination";
 import type { ListResponse, WorkAction, WorkItem } from "../../lib/api/types";
 import { useAuth } from "../../lib/auth/AuthProvider";
+import { queueLabelForRole, roleRoutes } from "../../lib/routes";
 import type { SpecialistOptions } from "./EligibleSpecialistField";
 import type { RoutingOptions } from "./RoutingDestinationField";
 import { WorkQueueDetail } from "./WorkQueueDetail";
@@ -35,7 +37,14 @@ export function StaffQueuePage({
   title,
 }: StaffQueuePageProps) {
   const { session } = useAuth();
+  const [searchParams] = useSearchParams();
+  const requestId = searchParams.get("requestId")?.trim() || undefined;
   const userId = session?.user.id ?? "anonymous";
+  const queueQueryKey = protectedQueryKeys.workItems(
+    userId,
+    undefined,
+    requestId,
+  );
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedAction, setSelectedAction] = useState<{
@@ -43,8 +52,9 @@ export function StaffQueuePage({
     workItemId: string;
   } | null>(null);
   const listQuery = useInfiniteQuery({
-    queryKey: protectedQueryKeys.workItems(userId),
-    queryFn: ({ pageParam }) => api.workItems(pageParam ?? undefined),
+    queryKey: queueQueryKey,
+    queryFn: ({ pageParam }) =>
+      api.workItems(pageParam ?? undefined, undefined, requestId),
     initialPageParam: null as string | null,
     getNextPageParam: (page) => page.nextCursor ?? undefined,
     enabled: Boolean(session),
@@ -115,7 +125,7 @@ export function StaffQueuePage({
       setSelectedAction(null);
       queryClient.setQueryData<
         InfiniteData<ListResponse<WorkItem>, string | null>
-      >(protectedQueryKeys.workItems(userId), (current) =>
+      >(queueQueryKey, (current) =>
         current
           ? {
               ...current,
@@ -214,8 +224,14 @@ export function StaffQueuePage({
         </p>
       ) : null}
       {items.length === 0 ? (
-        <PageState kind="empty" title="No items waiting">
-          New work will appear here when it reaches your team.
+        <PageState
+          action={requestId ? <Link className="button" to={roleRoutes[session.user.role]}>Open {queueLabelForRole(session.user.role)}</Link> : undefined}
+          kind="empty"
+          title={requestId ? "This action is no longer available" : "No items waiting"}
+        >
+          {requestId
+            ? "It may have been completed, claimed by somebody else or removed from your authorised scope."
+            : "New work will appear here when it reaches your team."}
         </PageState>
       ) : (
         <div className="queue-layout">

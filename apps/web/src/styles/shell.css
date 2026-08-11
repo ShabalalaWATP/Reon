@@ -1,5 +1,5 @@
-.app-shell { display: grid; grid-template-columns: minmax(224px, 258px) minmax(0, 1fr); min-height: 100vh; background: linear-gradient(180deg, var(--bg), var(--surface-muted)); }
-.nav-rail { position: sticky; top: 0; display: flex; flex-direction: column; align-self: start; min-height: 100vh; border-right: 1px solid var(--border); padding: 22px 16px; background: linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 100% 36px, color-mix(in srgb, var(--surface) 80%, #000 20%); }
+.app-shell { display: grid; grid-template-columns: minmax(224px, 258px) minmax(0, 1fr); min-height: calc(100vh - var(--mark-height)); background: linear-gradient(180deg, var(--bg), var(--surface-muted)); }
+.nav-rail { position: sticky; top: var(--mark-height); display: flex; flex-direction: column; align-self: start; min-height: calc(100vh - var(--mark-height)); border-right: 1px solid var(--border); padding: 22px 16px; background: linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 100% 36px, color-mix(in srgb, var(--surface) 80%, #000 20%); }
 .shell-brand { display: grid; grid-template-columns: 42px 1fr; gap: 11px; align-items: center; min-height: 52px; margin-bottom: 28px; text-decoration: none; }
 .shell-brand img { display: block; border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 50%; box-shadow: var(--glow); }
 .shell-brand strong, .shell-brand small { display: block; }
@@ -19,7 +19,7 @@
 .nav-session-status strong { color: var(--text); font-size: .76rem; }
 .nav-session-status small { margin-top: 2px; color: var(--muted); font-size: .67rem; }
 .workspace { min-width: 0; }
-.top-bar { position: sticky; z-index: 20; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 66px; border-bottom: 1px solid var(--border); padding: 0 26px; background: color-mix(in srgb, var(--bg) 84%, transparent); backdrop-filter: blur(12px); }
+.top-bar { position: sticky; z-index: 20; top: var(--mark-height); display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 66px; border-bottom: 1px solid var(--border); padding: 0 26px; background: color-mix(in srgb, var(--bg) 84%, transparent); backdrop-filter: blur(12px); }
 .top-bar__context { color: var(--muted); font-family: var(--font-mono); font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
 .top-bar__actions { display: flex; align-items: center; gap: 8px; }
 .top-bar__error { position: absolute; top: calc(100% + 8px); right: 24px; margin: 0; border: 1px solid var(--critical); border-radius: var(--radius-md); padding: 9px 12px; background: var(--surface); color: var(--critical); font-size: .8rem; }
@@ -44,5 +44,7 @@
 .account-menu__popover dt { color: var(--muted); font-size: .68rem; }
 .account-menu__popover dd { margin: 0; overflow-wrap: anywhere; font-size: .74rem; font-weight: 650; }
 .account-menu__popover dd svg { margin-right: 4px; color: var(--success); vertical-align: -2px; }
-.account-menu__action { display: flex; align-items: center; gap: 9px; min-height: 40px; border: 1px solid transparent; border-radius: var(--radius-md); padding: 0 10px; background: transparent; color: var(--text); font-weight: 700; text-align: left; }
-.account-menu__action:hover, .account-menu__action:focus-visible { border-color: color-mix(in srgb, var(--critical) 30%, var(--border)); background: color-mix(in srgb, var(--critical) 7%, transparent); color: var(--critical); }
+.account-menu__action { display: flex; align-items: center; gap: 9px; min-height: 40px; border: 1px solid transparent; border-radius: var(--radius-md); padding: 0 10px; background: transparent; color: var(--text); font-weight: 700; text-align: left; text-decoration: none; }
+.account-menu__action--profile:hover, .account-menu__action--profile:focus-visible { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); background: color-mix(in srgb, var(--accent) 8%, transparent); color: var(--accent); }
+.account-menu__action--signout { margin-top: 2px; border-top-color: var(--border); border-radius: 0 0 var(--radius-md) var(--radius-md); }
+.account-menu__action--signout:hover, .account-menu__action--signout:focus-visible { border-color: color-mix(in srgb, var(--critical) 30%, var(--border)); background: color-mix(in srgb, var(--critical) 7%, transparent); color: var(--critical); }

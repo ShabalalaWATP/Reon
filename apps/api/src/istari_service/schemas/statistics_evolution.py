@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from typing import Literal
+from uuid import UUID
 
 from pydantic import Field, model_validator
 
@@ -13,6 +14,7 @@ from istari_service.schemas.statistics import (
     ProjectionFreshness,
     StatisticsRange,
     StatisticsScope,
+    StatisticsUnit,
 )
 
 
@@ -95,6 +97,8 @@ class ExportPolicies(ApiModel):
 
 class StatisticsEvolution(ApiModel):
     scope: StatisticsScope
+    selected_unit: StatisticsUnit
+    breadcrumb: list[StatisticsUnit]
     range: StatisticsRange
     freshness: ProjectionFreshness
     comparison: list[PeriodComparison]
@@ -109,6 +113,7 @@ class StatisticsEvolution(ApiModel):
 
 class StatisticsExportCommand(StrictApiModel):
     scope_id: str = Field(min_length=1, max_length=80)
+    unit_id: UUID | None = None
     from_date: date = Field(alias="from")
     to_date: date = Field(alias="to")
     time_zone: str = Field(min_length=1, max_length=64)

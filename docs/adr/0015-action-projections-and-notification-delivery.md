@@ -18,7 +18,7 @@ reconciliation.
 - Store action items as rebuildable PostgreSQL read projections. Every item
   identifies its authoritative source, source version, freshness and permitted
   deep link. Camunda remains authoritative for human-task lifecycle.
-- Assemble `My work` through source-specific adapters and apply current role,
+- Assemble `My actions` through source-specific adapters and apply current role,
   assignment, object and organisation policy on every query. Projection presence
   is never proof of access.
 - Permit action rows and notification links to invoke only named application use

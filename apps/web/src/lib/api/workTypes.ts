@@ -32,10 +32,30 @@ export type RelatedRecordCandidate = {
   productAvailable: boolean;
 };
 
+export type RelatedRecordEvidence = {
+  field: string;
+  reason: string;
+  excerpt: string;
+};
+
+export type RelatedRecordMatch = RelatedRecordCandidate & {
+  matchStrength: number;
+  matchBand: "STRONG" | "POSSIBLE" | "LIMITED";
+  methods: ("FULL_TEXT" | "SEMANTIC" | "STRUCTURED")[];
+  reasons: string[];
+  evidence: RelatedRecordEvidence[];
+};
+
+export type RelatedRecordSearchResult = {
+  mode: "HYBRID" | "TEXT_ONLY";
+  items: RelatedRecordMatch[];
+};
+
 export type RequestLinkType =
   | "POSSIBLE_DUPLICATE"
   | "RELATED_REQUEST"
-  | "EXISTING_OUTPUT";
+  | "EXISTING_OUTPUT"
+  | "NOT_RELEVANT";
 
 export type RequestLink = {
   id: string;
@@ -62,7 +82,6 @@ export type WorkAction =
   | { action: "request_information"; reason: string }
   | {
       action: "progress";
-      category: string;
       destinationUnitId: string;
       priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
     }
@@ -79,7 +98,7 @@ export type WorkAction =
       requiredCapabilities: string[];
     }
   | { action: "return_to_coordination"; reason: string }
-  | { action: "assign"; specialistId: string }
+  | { action: "assign"; specialistId: string; contributorIds: string[]; reason: string }
   | { action: "return_for_reallocation"; reason: string }
   | { action: "submit"; deliverableTitle: string; deliverableText: string }
   | {

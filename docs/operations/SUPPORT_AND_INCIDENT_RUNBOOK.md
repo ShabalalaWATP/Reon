@@ -2,7 +2,8 @@
 
 ## Pilot ownership
 
-Named people must be entered in the signed pilot record before service launch.
+Named people must be entered in the signed
+[acceptance record](../assurance/ACCEPTANCE_RECORD.md) before service launch.
 Until then, the role owner is accountable and the ownership status is explicitly
 `PENDING NOMINATION`.
 
@@ -17,7 +18,7 @@ Until then, the role owner is accountable and the ownership status is explicitly
 
 Supported pilot hours are Monday to Friday, 08:00 to 18:00 Europe/London,
 excluding public holidays. P1 security or data-loss concerns use the agreed
-out-of-hours escalation channel once named in the pilot record.
+out-of-hours escalation channel once named in the acceptance record.
 
 ## Severity and targets
 

@@ -145,6 +145,7 @@ async def test_pinning_requires_an_effective_active_configuration(
     async with sessions() as session, session.begin():
         requester = User(
             username="pin.requester@example.test",
+            email="pin.requester@example.test",
             display_name="Pin Requester",
             password_hash="$argon2id$synthetic",
             role=UserRole.REQUESTER,

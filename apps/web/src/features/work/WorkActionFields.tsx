@@ -2,24 +2,29 @@ import type { ReactNode } from "react";
 import type { useForm } from "react-hook-form";
 
 import { localDateInputValue } from "../../lib/dateInputs";
+import { ContributorPicker } from "./ContributorPicker";
 import { EligibleSpecialistField, type SpecialistOptions } from "./EligibleSpecialistField";
 import { RoutingDestinationField, type RoutingOptions } from "./RoutingDestinationField";
 import type { WorkActionName, WorkActionValues } from "./workActionModel";
 
 type Props = Pick<ReturnType<typeof useForm<WorkActionValues>>, "register"> & {
   action: WorkActionName;
+  contributorIds: string[];
   destinationUnitId?: string;
   errors: ReturnType<typeof useForm<WorkActionValues>>["formState"]["errors"];
   routingOptions: RoutingOptions;
+  specialistId?: string;
   specialistOptions: SpecialistOptions;
 };
 
 export function WorkActionFields({
   action,
+  contributorIds,
   destinationUnitId,
   errors,
   register,
   routingOptions,
+  specialistId,
   specialistOptions,
 }: Props) {
   const error = (name: keyof WorkActionValues) => errors[name]?.message;
@@ -39,7 +44,6 @@ export function WorkActionFields({
     return (
       <>
         <RoutingDestinationField error={error("destinationUnitId")} options={routingOptions} register={register} selectedId={destinationUnitId} />
-        {field("category", "Confirmed category", <input {...register("category")} />)}
         <label className="form-field">
           <span>Priority</span>
           <select defaultValue="" {...register("priority")}>
@@ -63,7 +67,17 @@ export function WorkActionFields({
     );
   }
   if (action === "assign") {
-    return <EligibleSpecialistField error={error("specialistId")} options={specialistOptions} register={register} />;
+    return <>
+      <EligibleSpecialistField error={error("specialistId")} options={specialistOptions} register={register} />
+      <ContributorPicker
+        error={error("contributorIds")}
+        items={specialistOptions.items}
+        leadAnalystId={specialistId}
+        register={register}
+        selectedIds={contributorIds}
+      />
+      {field("reason", "Assignment reason", <textarea rows={3} {...register("reason")} />)}
+    </>;
   }
   if (action === "submit") {
     return <>{field("deliverableTitle", "Product title", <input {...register("deliverableTitle")} />)}{field("deliverableText", "Product text", <textarea rows={9} {...register("deliverableText")} />)}</>;

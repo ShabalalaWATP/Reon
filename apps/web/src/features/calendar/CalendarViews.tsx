@@ -9,11 +9,13 @@ const clockTime = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2
 export function CalendarViews({
   anchor,
   items,
+  onCreate,
   onSelect,
   view,
 }: {
   anchor: Date;
   items: CalendarOccurrence[];
+  onCreate?: (day: Date) => void;
   onSelect: (item: CalendarOccurrence) => void;
   view: CalendarView;
 }) {
@@ -31,6 +33,7 @@ export function CalendarViews({
           items={itemsByDay.get(localDayKey(day)) ?? []}
           key={day.toISOString()}
           onSelect={onSelect}
+          onCreate={onCreate}
           view={view}
         />
       ))}
@@ -43,12 +46,14 @@ function Day({
   day,
   items,
   onSelect,
+  onCreate,
   view,
 }: {
   anchor: Date;
   day: Date;
   items: CalendarOccurrence[];
   onSelect: (item: CalendarOccurrence) => void;
+  onCreate?: (day: Date) => void;
   view: CalendarView;
 }) {
   const outside = view === "month" && day.getMonth() !== anchor.getMonth();
@@ -56,9 +61,10 @@ function Day({
   return (
     <article className={`calendar-day${outside ? " calendar-day--outside" : ""}${today ? " calendar-day--today" : ""}`}>
       <header><span>{shortWeekday.format(day)}</span><strong>{day.getDate()}</strong></header>
-      {items.length === 0 ? <span className="calendar-day__empty">Available</span> : (
+      {items.length === 0 ? <button aria-label={`Add event on ${longDate.format(day)}`} className="calendar-day__empty" onClick={() => onCreate?.(day)} type="button">Add event</button> : (
         <ol>{items.map((item) => <li key={`${item.eventId}-${item.occurrenceStart}`}><OccurrenceButton item={item} onSelect={onSelect} /></li>)}</ol>
       )}
+      {items.length > 0 && onCreate ? <button aria-label={`Add event on ${longDate.format(day)}`} className="calendar-day__add" onClick={() => onCreate(day)} type="button">+</button> : null}
     </article>
   );
 }

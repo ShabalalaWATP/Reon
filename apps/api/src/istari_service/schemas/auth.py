@@ -5,8 +5,9 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
+from istari_service.identity_validation import normalise_email
 from istari_service.models import UserRole
 from istari_service.schemas.common import ApiModel, StrictApiModel
 
@@ -14,6 +15,22 @@ from istari_service.schemas.common import ApiModel, StrictApiModel
 class LoginRequest(StrictApiModel):
     username: str = Field(min_length=3, max_length=254)
     password: str = Field(min_length=1, max_length=1024)
+
+
+class PasswordAssistanceRequest(StrictApiModel):
+    email: str = Field(min_length=3, max_length=254)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        return normalise_email(value)
+
+
+class PasswordAssistanceAccepted(ApiModel):
+    status: str = "accepted"
+    message: str = (
+        "If an active account matches that email, an administrator has been notified."
+    )
 
 
 class PasswordConfirmation(StrictApiModel):
@@ -30,6 +47,7 @@ class CurrentUser(ApiModel):
     display_name: str
     role: UserRole
     scope: str
+    organisation_unit_ids: list[UUID] = Field(default_factory=list)
 
 
 class SessionResponse(ApiModel):

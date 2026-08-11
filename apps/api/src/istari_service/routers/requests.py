@@ -20,6 +20,7 @@ from istari_service.repositories.requests import SqlAlchemyRequestRepository
 from istari_service.schemas.requests import (
     FeedbackCreate,
     FeedbackView,
+    RequestCancel,
     RequestCreate,
     RequestDetail,
     RequestList,
@@ -96,6 +97,17 @@ async def submit_feedback(
         request_id,
         command,
     )
+
+
+@router.post("/{request_id}/cancel", response_model=RequestDetail)
+async def cancel_request(
+    request_id: UUID,
+    command: RequestCancel,
+    actor: MutationActor,
+    session: DatabaseSession,
+    settings: AppSettings,
+) -> RequestDetail:
+    return await _service(session, settings).cancel(actor, request_id, command)
 
 
 @router.get("/{request_id}/product", response_class=PlainTextResponse)

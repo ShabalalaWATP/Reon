@@ -6,7 +6,7 @@ param(
     [string]$EvidenceDirectory,
     [Parameter(Mandatory = $true)]
     [string]$Confirmation,
-    [string]$ExpectedRevision = '0021_schema_metadata'
+    [string]$ExpectedRevision = '0032_coordination_language'
 )
 
 Set-StrictMode -Version Latest

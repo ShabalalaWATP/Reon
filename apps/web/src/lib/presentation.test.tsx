@@ -16,35 +16,65 @@ describe("presentation helpers", () => {
     expect(roleLabels).toEqual({
       PLATFORM_ADMIN: "Platform Administrator",
       REQUESTER: "Customer",
-      INTAKE_TRIAGE: "JIOC Routing User",
-      SERVICE_COORDINATION: "Command Routing User",
+      INTAKE_TRIAGE: "CRIOC Routing User",
+      SERVICE_COORDINATION: "Request Coordination User",
       OPERATIONS_ALLOCATION: "Ops Routing User",
       DELIVERY_TEAM_LEAD: "Team Manager",
       DELIVERY_SPECIALIST: "Team Analyst",
       QUALITY_RELEASE: "QC Manager",
     });
-    expect(navigationForRole("REQUESTER")).toHaveLength(3);
+    expect(navigationForRole("REQUESTER")).toHaveLength(4);
     expect(navigationForRole("PLATFORM_ADMIN")).toEqual([
       { label: "User accounts", path: "/admin/users" },
-      { label: "Organisation", path: "/organisation" },
+      { label: "Personal calendar", path: "/calendar/month" },
+      { label: "Organisation directory", path: "/organisation" },
     ]);
     expect(navigationForRole("INTAKE_TRIAGE")).toEqual([
-      { label: "Work queue", path: "/triage" },
-      { label: "Tracking", path: "/tracking" },
-      { label: "Organisation", path: "/organisation" },
+      { label: "CRIOC routing queue", path: "/triage" },
+      { label: "Personal calendar", path: "/calendar/month" },
+      { label: "Request tracking", path: "/tracking" },
+      { label: "Organisation directory", path: "/organisation" },
     ]);
-    expect(navigationForRole("DELIVERY_TEAM_LEAD")).not.toContainEqual({ label: "Tracking", path: "/tracking" });
-    const enabled = { ...disabledCapabilities, myWork: true, configuration: true, products: true };
+    expect(navigationForRole("DELIVERY_TEAM_LEAD")).not.toContainEqual({ label: "Request tracking", path: "/tracking" });
+    const enabled = {
+      ...disabledCapabilities,
+      myWork: true,
+      configuration: true,
+      products: true,
+      statistics: true,
+    };
     expect(homeRouteForRole("REQUESTER", disabledCapabilities)).toBe("/requests");
-    expect(homeRouteForRole("REQUESTER", enabled)).toBe("/my-work");
+    expect(homeRouteForRole("REQUESTER", enabled)).toBe("/requests");
+    expect(homeRouteForRole("PLATFORM_ADMIN", enabled)).toBe("/overview");
+    expect(homeRouteForRole("INTAKE_TRIAGE", enabled)).toBe("/overview");
+    expect(homeRouteForRole("DELIVERY_TEAM_LEAD", enabled)).toBe("/overview");
+    expect(homeRouteForRole("DELIVERY_SPECIALIST", enabled)).toBe("/my-work");
+    expect(homeRouteForRole("QUALITY_RELEASE", enabled)).toBe("/overview");
+    expect(navigationForRole("REQUESTER", enabled)).not.toContainEqual({ label: "My assigned actions", path: "/my-work" });
     expect(navigationForRole("PLATFORM_ADMIN", enabled)).toContainEqual({ label: "Configuration", path: "/admin/configuration" });
     expect(navigationForRole("DELIVERY_SPECIALIST", enabled)).toContainEqual({ label: "Product package", path: "/product-packages/new" });
+    for (const role of Object.keys(roleRoutes) as Array<keyof typeof roleRoutes>) {
+      expect(navigationForRole(role, enabled)).toContainEqual({ label: "Personal calendar", path: "/calendar/month" });
+    }
+    expect(navigationForRole("INTAKE_TRIAGE", enabled, {
+      statisticsAvailable: true,
+      workspace: { id: "crioc", name: "CRIOC" },
+    })).toEqual([
+      { label: "Home", path: "/overview" },
+      { label: "My assigned actions", path: "/my-work" },
+      { label: "CRIOC routing queue", path: "/triage" },
+      { label: "CRIOC workspace", path: "/teams/crioc/overview" },
+      { label: "Personal calendar", path: "/calendar/month" },
+      { label: "Request tracking", path: "/tracking" },
+      { label: "Operational statistics", path: "/statistics" },
+      { label: "Organisation directory", path: "/organisation" },
+    ]);
   });
 
   it("groups and labels statuses without exposing raw values", () => {
     expect(statusLabels).toMatchObject({
-      TRIAGE_REVIEW: "JIOC routing",
-      COORDINATION_REVIEW: "Command routing",
+      TRIAGE_REVIEW: "CRIOC routing",
+      COORDINATION_REVIEW: "Request coordination",
       ALLOCATION_REVIEW: "Ops routing",
       DELIVERY_PLANNING: "Team assignment",
       IN_PROGRESS: "Product development",
@@ -104,8 +134,8 @@ describe("presentation helpers", () => {
     expect(protectedQueryKeys.statisticsScopes("user-a")).not.toEqual(
       protectedQueryKeys.statisticsScopes("user-b"),
     );
-    expect(protectedQueryKeys.statistics("user-a", "scope", "from", "to", "UTC")).not.toEqual(
-      protectedQueryKeys.statistics("user-b", "scope", "from", "to", "UTC"),
+    expect(protectedQueryKeys.statistics("user-a", "scope", "unit", "from", "to", "UTC")).not.toEqual(
+      protectedQueryKeys.statistics("user-b", "scope", "unit", "from", "to", "UTC"),
     );
     expect(protectedQueryKeys.teamWorkspaces("user-a")).not.toEqual(
       protectedQueryKeys.teamWorkspaces("user-b"),

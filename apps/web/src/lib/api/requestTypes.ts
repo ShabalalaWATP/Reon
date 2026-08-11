@@ -25,6 +25,7 @@ export type RequestSummary = {
   requiredBy: string;
   createdAt: string;
   updatedAt: string;
+  version: number;
   needsRequesterInput: boolean;
   productAvailable: boolean;
   feedbackSubmitted: boolean;
@@ -77,18 +78,25 @@ export type ClarificationThread = {
 export type RequestDetail = RequestSummary & {
   serviceCategory: string;
   description: string;
+  questionToAnswer: string;
   desiredOutcome: string;
   backgroundContext: string;
+  subjectAreaOrLocation: string;
+  coverageStart: string;
+  coverageEnd: string;
+  customerUrgency: "ROUTINE" | "TIME_SENSITIVE" | "IMMEDIATE";
+  supportedActivityOrDecision: string;
   requiredByReason: string;
   preferredDeliverableType: string;
   successCriteria: string;
-  requestingBusinessArea: string;
-  intendedRecipients: string[];
+  constraintsOrCaveats: string;
+  supportingInformation: string;
   sensitivity: "STANDARD" | "SENSITIVE" | "RESTRICTED";
   handlingInstructions: string;
   requester: { id: string; displayName: string };
   assignedDeliveryTeam: string | null;
   assignedSpecialist: { id: string; displayName: string } | null;
+  contributors: { id: string; displayName: string }[];
   events: RequestEvent[];
   eventsNextCursor?: string | null;
   deliverable: Deliverable | null;
@@ -100,32 +108,42 @@ export type RequestDetail = RequestSummary & {
 export type RequestCreateInput = Pick<
   RequestDetail,
   | "title"
-  | "serviceCategory"
   | "description"
+  | "questionToAnswer"
   | "desiredOutcome"
   | "backgroundContext"
+  | "subjectAreaOrLocation"
+  | "coverageStart"
+  | "coverageEnd"
+  | "customerUrgency"
+  | "supportedActivityOrDecision"
   | "requiredBy"
   | "requiredByReason"
   | "preferredDeliverableType"
   | "successCriteria"
-  | "requestingBusinessArea"
-  | "intendedRecipients"
+  | "constraintsOrCaveats"
+  | "supportingInformation"
   | "sensitivity"
   | "handlingInstructions"
 > & { submissionKey?: string };
 
 export type RequestDraftInput = {
   title?: string | null;
-  serviceCategory?: string | null;
   description?: string | null;
+  questionToAnswer?: string | null;
   desiredOutcome?: string | null;
   backgroundContext?: string | null;
+  subjectAreaOrLocation?: string | null;
+  coverageStart?: string | null;
+  coverageEnd?: string | null;
+  customerUrgency?: "ROUTINE" | "TIME_SENSITIVE" | "IMMEDIATE" | null;
+  supportedActivityOrDecision?: string | null;
   requiredBy?: string | null;
   requiredByReason?: string | null;
   preferredDeliverableType?: string | null;
   successCriteria?: string | null;
-  requestingBusinessArea?: string | null;
-  intendedRecipients?: string[] | null;
+  constraintsOrCaveats?: string | null;
+  supportingInformation?: string | null;
   sensitivity?: "STANDARD" | "SENSITIVE" | "RESTRICTED" | null;
   handlingInstructions?: string | null;
 };
@@ -150,4 +168,9 @@ export type FeedbackInput = {
   submissionKey?: string;
   rating: number;
   comments: string;
+};
+
+export type RequestCancelInput = {
+  expectedVersion: number;
+  reason: string;
 };

@@ -25,7 +25,7 @@ from istari_service.models import (
     WorkflowTask,
     WorkflowTaskStatus,
 )
-from istari_service.organisation_models import RequestRouteSelection
+from istari_service.organisation_models import OrganisationUnit, RequestRouteSelection
 from istari_service.repositories.projection_pagination import (
     decode_cursor,
     encode_cursor,
@@ -99,6 +99,16 @@ class SqlAlchemyActionRepository:
             .all()
         )
         return dict(rows)
+
+    async def organisation_unit_names(self, unit_ids: set[UUID]) -> dict[UUID, str]:
+        if not unit_ids:
+            return {}
+        rows = await self.session.execute(
+            select(OrganisationUnit.id, OrganisationUnit.name).where(
+                OrganisationUnit.id.in_(unit_ids)
+            )
+        )
+        return dict(rows.tuples().all())
 
     async def saved_views(self, actor_id: UUID) -> list[SavedActionView]:
         return list(

@@ -6,7 +6,7 @@ Accepted locally for the MVP.
 
 ## Context
 
-JIOC intake needs to record possible duplication or related work without adding
+CRIOC intake needs to record possible duplication or related work without adding
 automated recommendations, exposing broad content or allowing the board to alter
 workflow state.
 
@@ -14,7 +14,7 @@ workflow state.
 
 Store an append-only typed relationship from the current service request to
 another authorised request. Candidate search is a bounded PostgreSQL query over
-reference and title and is available only to the actor who owns the active JIOC
+reference and title and is available only to the actor who owns the active CRIOC
 task. It uses the existing organisation-route membership as the scope boundary.
 
 Relationship creation is a separate application command. It locks the current

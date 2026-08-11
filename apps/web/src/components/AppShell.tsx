@@ -20,8 +20,13 @@ export function AppShell() {
   const location = useLocation();
   const [logoutError, setLogoutError] = useState(false);
   const { capabilities } = useCapabilities();
-  const hasTeamWorkspace = session?.user.role === "DELIVERY_TEAM_LEAD"
-    || session?.user.role === "DELIVERY_SPECIALIST";
+  const hasTeamWorkspace = Boolean(session && [
+    "INTAKE_TRIAGE",
+    "SERVICE_COORDINATION",
+    "OPERATIONS_ALLOCATION",
+    "DELIVERY_TEAM_LEAD",
+    "DELIVERY_SPECIALIST",
+  ].includes(session.user.role));
   const notificationCount = useQuery({
     queryKey: protectedQueryKeys.notificationCount(session?.user.id ?? "anonymous"),
     queryFn: actionNotificationApi.notificationCount,
@@ -45,22 +50,11 @@ export function AppShell() {
     staleTime: 60_000,
   });
   if (!session) return null;
-  const navigation = navigationForRole(session.user.role, capabilities);
-  if (["DELIVERY_TEAM_LEAD", "DELIVERY_SPECIALIST"].includes(session.user.role)) {
-    navigation.splice(1, 0, { label: "My calendar", path: "/calendar/month" });
-  }
-  if ((statisticsScopes.data?.items.length ?? 0) > 0) {
-    navigation.splice(navigation.length - 1, 0, {
-      label: "Statistics",
-      path: "/statistics",
-    });
-  }
-  if (teamWorkspaces.data?.items[0]) {
-    navigation.splice(navigation.length - 1, 0, {
-      label: "Team workspace",
-      path: `/teams/${teamWorkspaces.data.items[0].teamId}/overview`,
-    });
-  }
+  const workspace = teamWorkspaces.data?.items[0];
+  const navigation = navigationForRole(session.user.role, capabilities, {
+    statisticsAvailable: (statisticsScopes.data?.items.length ?? 0) > 0,
+    workspace: workspace ? { id: workspace.teamId, name: workspace.teamName } : undefined,
+  });
 
   async function signOut() {
     setLogoutError(false);
@@ -74,6 +68,7 @@ export function AppShell() {
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">Skip to main content</a>
       <aside aria-label="Account and navigation" className="nav-rail">
         <NavLink aria-label="ISTARI home" className="shell-brand" to="/">
           <img alt="" height="42" src="/istari-logo-64.png" width="42" />
@@ -102,11 +97,17 @@ export function AppShell() {
             >
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-            <AccountMenu onSignOut={signOut} pathname={location.pathname} session={session} />
+            <AccountMenu
+              onSignOut={signOut}
+              pathname={location.pathname}
+              session={session}
+              workspaceAccess={teamWorkspaces.data?.items ?? []}
+              workspaceAccessUnavailable={teamWorkspaces.isError}
+            />
           </div>
           {logoutError ? <p className="top-bar__error" role="alert">Sign out failed. Please try again.</p> : null}
         </header>
-        <div className="workspace__main"><Outlet /></div>
+        <div className="workspace__main" id="main-content" tabIndex={-1}><Outlet /></div>
       </div>
     </div>
   );

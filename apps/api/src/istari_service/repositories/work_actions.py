@@ -29,6 +29,9 @@ from istari_service.repositories.organisation import (
 from istari_service.repositories.product_workflow import (
     validate_product_workflow_effect,
 )
+from istari_service.repositories.request_participants import (
+    replace_request_participants,
+)
 from istari_service.schemas.work import (
     AllocateRequest,
     ApproveWork,
@@ -117,12 +120,19 @@ async def apply_work_effect(
     elif isinstance(payload, ReturnForReallocation):
         await clear_route_from(session, request, 3)
     if isinstance(payload, ProgressRequest):
-        request.triage_category = payload.category
         request.priority = payload.priority
     elif isinstance(payload, AllocateRequest):
         request.required_capabilities = payload.required_capabilities
     elif isinstance(payload, AssignSpecialist):
         request.assigned_specialist_id = payload.specialist_id
+        await replace_request_participants(
+            session,
+            request_id=request.id,
+            lead_id=payload.specialist_id,
+            contributor_ids=payload.contributor_ids,
+            actor_id=actor.id,
+            reason=payload.reason,
+        )
     elif isinstance(payload, SubmitDeliverable):
         latest_version = await session.scalar(
             select(func.max(Deliverable.version)).where(
@@ -177,7 +187,7 @@ def event_message(payload: CompletionPayload, current: RequestStatus) -> str:
         "send_to_allocation": "Request sent for allocation.",
         "resume": "Request resumed.",
         "allocate": "Delivery team allocated.",
-        "assign": "Delivery specialist assigned.",
+        "assign": "Lead Analyst and Contributors assigned.",
         "submit": "Deliverable submitted for review.",
         "request_clarification": "Additional information requested from Customer.",
         "provide_clarification": "Customer supplied additional information.",

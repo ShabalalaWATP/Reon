@@ -1,4 +1,5 @@
 import type {
+  AccountRequest,
   AdminUser,
   AdminUserStatusInput,
   AdminUserUpdateInput,
@@ -10,6 +11,15 @@ import type {
 import { apiRequest, pagedPath } from "./transport";
 
 export const adminApi = {
+  accountRequests: () => apiRequest<{ items: AccountRequest[] }>("/admin/account-requests"),
+  approveAccountRequest: (id: string, expectedVersion: number, csrfToken: string) =>
+    apiRequest<AccountRequest>(`/admin/account-requests/${encodeURIComponent(id)}/approve`, {
+      body: { expectedVersion }, csrfToken, method: "POST",
+    }),
+  rejectAccountRequest: (id: string, expectedVersion: number, decisionNote: string, csrfToken: string) =>
+    apiRequest<AccountRequest>(`/admin/account-requests/${encodeURIComponent(id)}/reject`, {
+      body: { decisionNote, expectedVersion }, csrfToken, method: "POST",
+    }),
   adminUsers: (query = "", cursor?: string) =>
     apiRequest<ListResponse<AdminUser>>(
       pagedPath("/admin/users", cursor, query ? { query } : {}),

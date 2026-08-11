@@ -20,6 +20,7 @@ x-runtime-environment: &runtime-environment
   MANAGED_PRODUCTS_ENABLED: ${MANAGED_PRODUCTS_ENABLED:-false}
   WORKER_HEALTH_REQUIRED: ${WORKER_HEALTH_REQUIRED:-true}
   WORKER_HEARTBEAT_STALE_SECONDS: ${WORKER_HEARTBEAT_STALE_SECONDS:-10}
+  REQUEST_MATCHING_SEMANTIC_ENABLED: ${REQUEST_MATCHING_SEMANTIC_ENABLED:-true}
   ALLOW_DEMO_USERS: ${ALLOW_DEMO_USERS:?Set ALLOW_DEMO_USERS in .env}
   AUDIT_HMAC_KEY: ${AUDIT_HMAC_KEY:?Set AUDIT_HMAC_KEY in .env}
 x-clamav-runtime: &clamav-runtime
@@ -35,7 +36,7 @@ x-clamav-runtime: &clamav-runtime
 services:
   postgres-data-init:
     <<: *runtime-security
-    image: istari/postgres-local:17.10-alpine3.23
+    image: istari/postgres-local:17.10-pgvector0.8.1-alpine3.23
     pull_policy: never
     user: "0:0"
     entrypoint:
@@ -54,13 +55,12 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     restart: "no"
-
   postgres:
     <<: *runtime-security
     build:
       context: .
       dockerfile: infra/postgres/Dockerfile
-    image: istari/postgres-local:17.10-alpine3.23
+    image: istari/postgres-local:17.10-pgvector0.8.1-alpine3.23
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Set POSTGRES_ADMIN_PASSWORD in .env}
@@ -97,7 +97,6 @@ services:
         condition: service_completed_successfully
     networks:
       - data
-
   camunda-data-init:
     <<: *runtime-security
     image: istari/camunda-local:8.9.14
@@ -119,7 +118,6 @@ services:
       - DAC_OVERRIDE
       - FOWNER
     restart: "no"
-
   orchestration:
     <<: *runtime-security
     build:
@@ -253,6 +251,8 @@ services:
       DATABASE_MAX_OVERFLOW: ${WORKER_DATABASE_MAX_OVERFLOW:-5}
       WORKER_INTERVAL_SECONDS: ${WORKER_INTERVAL_SECONDS:-0.5}
       WORKER_LEASE_SECONDS: ${WORKER_LEASE_SECONDS:-30}
+      REQUEST_EMBEDDING_THREADS: ${REQUEST_EMBEDDING_THREADS:-2}
+      REQUEST_EMBEDDING_BATCH_SIZE: ${REQUEST_EMBEDDING_BATCH_SIZE:-8}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,worker}
     depends_on:
       orchestration:

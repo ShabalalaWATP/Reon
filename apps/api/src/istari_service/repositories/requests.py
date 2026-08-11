@@ -22,7 +22,9 @@ from istari_service.repositories.configuration_pins import (
     SqlAlchemyConfigurationPinRepository,
 )
 from istari_service.repositories.event_store import append_request_event
+from istari_service.repositories.request_cancellation import cancel_request
 from istari_service.repositories.request_customer import RequestCustomerRepositoryMixin
+from istari_service.repositories.request_participants import active_participant_ids
 from istari_service.repositories.request_route_initialisation import (
     initialise_request_route,
 )
@@ -30,13 +32,18 @@ from istari_service.repositories.request_scope import scoped_request
 from istari_service.repositories.request_views import (
     build_request_detail,
 )
+from istari_service.request_search_projection import new_search_document
 from istari_service.schemas.requests import (
+    RequestCancel,
     RequestCreate,
     RequestDetail,
 )
 
 
-def record_from_request(request: ServiceRequest) -> RequestRecord:
+def record_from_request(
+    request: ServiceRequest,
+    participant_ids: frozenset[UUID] = frozenset(),
+) -> RequestRecord:
     return RequestRecord(
         id=request.id,
         requester_id=request.requester_id,
@@ -45,6 +52,7 @@ def record_from_request(request: ServiceRequest) -> RequestRecord:
         assigned_delivery_team_id=getattr(request, "assigned_delivery_team_id", None),
         assigned_specialist_id=request.assigned_specialist_id,
         version=request.version,
+        participant_ids=participant_ids,
     )
 
 
@@ -82,15 +90,18 @@ class SqlAlchemyRequestRepository(RequestCustomerRepositoryMixin):
             )
         request_id = uuid4()
         now = datetime.now(UTC)
+        values = command.model_dump()
+        values["service_category"] = command.service_category
         request = ServiceRequest(
             id=request_id,
             reference=f"SR-{now.year}-{request_id.hex[:8].upper()}",
             requester_id=actor.id,
             status=RequestStatus.ROUTING_PENDING,
-            current_owner="JIOC Routing",
-            **command.model_dump(),
+            current_owner="CRIOC Routing",
+            **values,
         )
         self._session.add(request)
+        self._session.add(new_search_document(request_id, command))
         await self._session.flush()
         pin = await self._configuration_pins.pin_request(request_id, now=now)
         pinned_process_id = pin.snapshot.get("processId")
@@ -172,7 +183,14 @@ class SqlAlchemyRequestRepository(RequestCustomerRepositoryMixin):
             actor,
             lock=lock,
         )
-        return record_from_request(request) if request else None
+        return (
+            record_from_request(
+                request,
+                await active_participant_ids(self._session, request.id),
+            )
+            if request
+            else None
+        )
 
     async def get_detail(
         self,
@@ -191,3 +209,11 @@ class SqlAlchemyRequestRepository(RequestCustomerRepositoryMixin):
             event_limit=event_limit,
             event_cursor=event_cursor,
         )
+
+    async def cancel(
+        self,
+        request_id: UUID,
+        actor: Actor,
+        command: RequestCancel,
+    ) -> RequestDetail:
+        return await cancel_request(self._session, request_id, actor, command)

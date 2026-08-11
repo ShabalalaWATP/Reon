@@ -46,6 +46,7 @@ class RequestRecord:
     assigned_specialist_id: UUID | None
     version: int
     assigned_delivery_team_id: UUID | None = None
+    participant_ids: frozenset[UUID] = frozenset()
 
 
 @dataclass(frozen=True, slots=True)

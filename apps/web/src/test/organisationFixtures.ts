@@ -13,9 +13,9 @@ type CommandDefinition = readonly [
 
 const hierarchy: readonly CommandDefinition[] = [
   [
-    "DIGOC",
+    "JOCK",
     [
-      ["NCGI_A_OPS", "NCGI-A Ops", [["OSG_TEAM", "OSG Team"], ["CEDAR_TEAM", "Cedar Team"], ["QUARTZ_TEAM", "Quartz Team"]]],
+      ["ACSA_B_OPS", "ACSA-B Ops", [["SSG_TEAM", "SSG Team"], ["CEDAR_TEAM", "Cedar Team"], ["QUARTZ_TEAM", "Quartz Team"]]],
       ["AURORA_OPS", "Aurora Ops", [["LANTERN_TEAM", "Lantern Team"], ["MOSAIC_TEAM", "Mosaic Team"], ["COMPASS_TEAM", "Compass Team"]]],
       ["VERTEX_OPS", "Vertex Ops", [["EMBER_TEAM", "Ember Team"], ["ATLAS_TEAM", "Atlas Team"], ["HARBOUR_TEAM", "Harbour Team"]]],
     ],
@@ -42,9 +42,9 @@ const unitId = (code: string) =>
   `unit-${code.toLowerCase().replace(/_(ops|team)$/, "").replaceAll("_", "-")}`;
 
 const root: OrganisationUnit = {
-  id: unitId("JIOC"),
-  code: "JIOC",
-  name: "JIOC",
+  id: unitId("CRIOC"),
+  code: "CRIOC",
+  name: "CRIOC",
   kind: "ROOT",
   parentId: null,
   staffingStatus: "ROUTING_POOL",

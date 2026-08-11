@@ -13,12 +13,21 @@ from istari_service.organisation_models import OrganisationKind
 from istari_service.schemas.common import ApiModel
 
 
+class StatisticsUnit(ApiModel):
+    id: UUID
+    parent_id: UUID | None
+    name: str
+    kind: OrganisationKind
+    depth: int = Field(ge=0)
+
+
 class StatisticsScope(ApiModel):
     id: str
     unit_id: UUID | None
     name: str
     kind: OrganisationKind | Literal["PLATFORM"]
     include_descendants: bool
+    units: list[StatisticsUnit] = Field(default_factory=list)
 
 
 class StatisticsScopeList(ApiModel):
@@ -88,6 +97,8 @@ class ChildUnitComparison(ApiModel):
 
 class StatisticsDashboard(ApiModel):
     scope: StatisticsScope
+    selected_unit: StatisticsUnit
+    breadcrumb: list[StatisticsUnit]
     range: StatisticsRange
     freshness: ProjectionFreshness
     definitions: list[MetricDefinition]
@@ -95,6 +106,7 @@ class StatisticsDashboard(ApiModel):
     status: list[CategoryCount]
     age: list[CategoryCount]
     due_risk: list[CategoryCount]
+    throughput_resolution: Literal["DAILY", "WEEKLY", "MONTHLY"]
     throughput: list[DailyThroughput]
     stage_durations: list[StageDuration]
     children: list[ChildUnitComparison]

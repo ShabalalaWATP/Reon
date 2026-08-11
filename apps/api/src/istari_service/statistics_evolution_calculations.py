@@ -57,6 +57,8 @@ def build_statistics_evolution(
     current = dataset.current
     common = {
         "scope": current.scope,
+        "selected_unit": current.selected_unit,
+        "breadcrumb": list(current.breadcrumb),
         "range": StatisticsRange(
             from_date=from_date,
             to_date=to_date,
@@ -69,7 +71,7 @@ def build_statistics_evolution(
         csv=ExportPolicy(state="DENIED", reason=EXPORT_REASON),
         pdf=ExportPolicy(state="DENIED", reason=EXPORT_REASON),
     )
-    if current.scope.kind == "PLATFORM":
+    if current.scope.kind == "PLATFORM" and current.selected_unit.depth == 0:
         return StatisticsEvolution(
             **common,
             comparison=[],
@@ -164,6 +166,8 @@ def _bottleneck_rows(
     facts = {fact.request_id: fact for fact in dataset.facts}
     rows: list[BottleneckMeasure] = []
     for status, intervals in sorted(grouped.items(), key=lambda item: item[0].value):
+        if status in TERMINAL_STATUSES:
+            continue
         suppressed = len(intervals) < MIN_COHORT
         seconds = sorted(_interval_seconds(item, now) for item in intervals)
         active = [item for item in intervals if item.ended_at is None]

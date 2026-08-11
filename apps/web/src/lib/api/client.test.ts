@@ -54,7 +54,7 @@ describe("API client", () => {
     await api.login({ username: "admin2", password: "admin" });
     await api.session();
     await api.statisticsScopes();
-    await api.statistics({ scopeId: "scope & one", from: "2026-08-01", to: "2026-08-07", timeZone: "Europe/London" });
+    await api.statistics({ scopeId: "scope & one", unitId: "unit/one", from: "2026-08-01", to: "2026-08-07", timeZone: "Europe/London" });
     await api.logout("token");
     await api.requests();
     await api.request("id with space");
@@ -69,8 +69,8 @@ describe("API client", () => {
     await api.completeWorkItem(workItem.id, { action: "approve" }, "token");
     await api.adminUsers("John & Erin");
     await api.adminUser("managed user");
-    await api.createAdminUser({ displayName: "New User", role: "REQUESTER", scope: "Area", organisationUnitIds: [] }, "token");
-    await api.updateAdminUser("managed user", { displayName: "New Name", role: "REQUESTER", scope: "Area", organisationUnitIds: [], expectedVersion: 2 }, "token");
+    await api.createAdminUser({ displayName: "New User", email: "new@example.test", role: "REQUESTER", scope: "Area", organisationUnitIds: [] }, "token");
+    await api.updateAdminUser("managed user", { displayName: "New Name", email: "new@example.test", role: "REQUESTER", scope: "Area", organisationUnitIds: [], expectedVersion: 2 }, "token");
     await api.updateAdminUserStatus("managed user", { isActive: false, expectedVersion: 3 }, "token");
     await api.renameOrganisationUnit("unit id", { name: "New name", expectedVersion: 4 }, "token");
     await api.drafts();
@@ -92,7 +92,7 @@ describe("API client", () => {
     await api.teamCalendar("team id", "2026-08-01T00:00:00Z", "2026-09-01T00:00:00Z");
     await api.createPersonalCalendarEvent(calendarInput, "token");
     await api.createTeamCalendarEvent("team id", { ...calendarInput, grantId: "grant" }, "token");
-    await api.createCalendarCommitment("team id", { ...calendarInput, grantId: "grant", subjectUserId: "analyst" }, "token");
+    await api.createCalendarCommitment("team id", { ...calendarInput, grantId: "grant", requestId: "request", subjectUserId: "analyst" }, "token");
     await api.updateCalendarEvent("event id", { ...calendarInput, expectedVersion: 1 }, "token");
     await api.cancelCalendarEvent("event id", { expectedVersion: 2, occurrenceStart: calendarInput.startsAt, reason: "A sufficiently long reason." }, "token");
     await api.cancelCalendarOccurrence("event id", { expectedVersion: 2, occurrenceStart: calendarInput.startsAt, reason: "A sufficiently long reason." }, "token");

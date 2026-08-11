@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable
-from typing import TypeVar
 
 import httpx
 from camunda_orchestration_sdk import CamundaAsyncClient, errors
 from camunda_orchestration_sdk.models import (
+    CancelProcessInstanceData,
     LimitBasedPagination,
     ProcessCreationById,
     ProcessInstanceCreationInstructionByIdVariables,
@@ -30,20 +30,19 @@ from camunda_orchestration_sdk.semantic_types import (
     UserTaskKey,
 )
 
+from istari_service.workflow.camunda_call import call_camunda
 from istari_service.workflow.errors import (
     AmbiguousWorkflowProcess,
     WorkflowConflict,
     WorkflowContractError,
-    WorkflowEngineUnavailable,
     WorkflowProcessNotVisible,
-    WorkflowRequestRejected,
-    WorkflowTaskNotFound,
 )
 from istari_service.workflow.projection import (
     ensure_action_matches_element,
 )
 from istari_service.workflow.types import (
     ActiveTaskQuery,
+    CancelProcessCommand,
     ClaimTaskCommand,
     CompleteTaskCommand,
     ProcessStateQuery,
@@ -58,12 +57,13 @@ from istari_service.workflow.types import (
 from istari_service.workflow.variables import completion_variables
 from istari_service.workflow_start_identity import returned_start_matches
 
-T = TypeVar("T")
 Sleep = Callable[[float], Awaitable[None]]
 
 
 class CamundaWorkflowEngine:
     """Translate the narrow application port to the official V2 SDK models."""
+
+    _call = staticmethod(call_camunda)
 
     def __init__(
         self,
@@ -258,6 +258,21 @@ class CamundaWorkflowEngine:
             ),
         )
 
+    async def cancel_process(self, command: CancelProcessCommand) -> None:
+        try:
+            process_key = ProcessInstanceKey(command.process_instance_key)
+        except ValueError as exc:
+            raise WorkflowContractError(
+                "process instance key is invalid for the Camunda V2 contract"
+            ) from exc
+        await self._call(
+            "cancel_process",
+            self._client.cancel_process_instance(
+                process_key,
+                data=CancelProcessInstanceData(),
+            ),
+        )
+
     @staticmethod
     def _map_task(task: UserTaskResult) -> WorkflowTask:
         try:
@@ -325,26 +340,3 @@ class CamundaWorkflowEngine:
         raise WorkflowProcessNotVisible(
             "conflicting process start was not visible within the recovery bound"
         ) from conflict
-
-    @staticmethod
-    async def _call(operation: str, request: Awaitable[T]) -> T:
-        try:
-            return await request
-        except errors.ConflictError as exc:
-            raise WorkflowConflict(operation, exc.status_code) from exc
-        except errors.NotFoundError as exc:
-            raise WorkflowTaskNotFound(operation, exc.status_code) from exc
-        except errors.ApiError as exc:
-            if exc.status_code == 429 or exc.status_code >= 500:
-                raise WorkflowEngineUnavailable(
-                    f"workflow operation {operation!r} is unavailable"
-                ) from exc
-            raise WorkflowRequestRejected(operation, exc.status_code) from exc
-        except httpx.HTTPError as exc:
-            raise WorkflowEngineUnavailable(
-                f"workflow operation {operation!r} is unavailable"
-            ) from exc
-        except (KeyError, TypeError, ValueError) as exc:
-            raise WorkflowContractError(
-                f"workflow operation {operation!r} returned an invalid response"
-            ) from exc
