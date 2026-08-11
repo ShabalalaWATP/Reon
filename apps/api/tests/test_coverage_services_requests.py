@@ -70,7 +70,7 @@ class FakeRequestRepository:
         self.reveal: bool | None = None
         self.includes_clarifications: list[bool] = []
         self.created = cast(RequestDetail, object())
-        self.detail = cast(RequestDetail, object())
+        self.detail = RequestDetail.model_construct(events=[])
         self.feedback = cast(FeedbackView, object())
         self.summaries = [cast(RequestSummary, object())]
         self.created_for: Actor | None = None

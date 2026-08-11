@@ -12,24 +12,31 @@ import type {
 } from "../../lib/api/boardTypes";
 import type { PlanningCockpit } from "../../lib/api/planningEvolutionTypes";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
+import type { TeamWorkspaceAccess } from "../../lib/api/teamTypes";
+import type { Session } from "../../lib/api/types";
 import { boardLabel, daysInState, dueSignal } from "./boardPresentation";
+import { TaskHastenerPanel } from "./TaskHastenerPanel";
 
 export function WorkItemInspector({
+  access,
   item,
   moving,
   packages,
   planning,
   teamId,
   userId,
+  session,
   onClose,
   onMove,
 }: {
+  access: TeamWorkspaceAccess;
   item: BoardItem | null;
   moving: boolean;
   packages: WorkPackage[];
   planning?: PlanningCockpit;
   teamId: string;
   userId: string;
+  session: Session;
   onClose: () => void;
   onMove: (item: BoardItem, target: BoardColumn, reason: string) => void;
 }) {
@@ -54,7 +61,7 @@ export function WorkItemInspector({
           {item.itemType === "SERVICE_REQUEST" ? (
             request.isPending ? <PageState kind="loading" title="Loading request context" />
               : request.isError ? <PageState action={<button className="button" onClick={() => void request.refetch()}>Try again</button>} kind="error" title="Request context is unavailable" />
-                : request.data ? <RequestContext value={request.data} /> : null
+                : request.data ? <><RequestContext value={request.data} /><TaskHastenerPanel access={access} request={request.data} session={session} /></> : null
           ) : packageItem ? <PackageContext packages={packages} planning={planning} value={packageItem} />
             : <PageState kind="empty" title="Package detail is not on this page">Open Planning to inspect the full package register.</PageState>}
           <InspectorActions item={item} moving={moving} onMove={onMove} teamId={teamId} />

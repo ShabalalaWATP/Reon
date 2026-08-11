@@ -134,10 +134,18 @@ Team workspaces include:
 - iteration and work-package planning;
 - workload, WIP, dependency and blocker information;
 - people and effective-dated membership history;
+- team-scoped colleague profiles with a direct return to the People register;
 - shared calendar and capacity view;
 - handover information and useful links;
 - current team activity; and
 - scoped team statistics.
+
+During active production, any current delivery-team Manager can send a recorded
+task hastener to one assigned Analyst or to the Lead and all Contributors
+assigned within that team. The reminder appears in each recipient's
+notifications and links back to the board item. It is an accountable follow-up,
+not a workflow command: it does not change the owner, assignments or Camunda
+stage.
 
 ### Personal and team calendars
 

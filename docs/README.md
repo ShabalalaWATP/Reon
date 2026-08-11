@@ -160,6 +160,7 @@ Key specifications include:
 - [Personalised overview and navigation](specs/personalised-overview-and-primary-navigation.md)
 - [Team-visible personal calendar events](specs/team-visible-personal-calendar-events.md)
 - [Team operations workspace](specs/team-operations-workspace-evolution.md)
+- [Team member profiles and task hasteners](specs/team-member-profiles-and-task-hasteners.md)
 - [Unified organisation workspaces](specs/unified-organisation-workspaces.md)
 - [Platform administration](specs/platform-administration-mvp.md)
 - [Configuration administration usability](specs/configuration-administration-usability.md)

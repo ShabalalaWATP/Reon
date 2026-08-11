@@ -136,3 +136,22 @@ export type ReservationInput = {
   endsAt: string;
   reason: string;
 };
+
+export type TaskHastenerInput = {
+  audience: "ONE_ASSIGNED" | "ALL_ASSIGNED";
+  recipientUserId?: string;
+  message: string;
+};
+
+export type TaskHastenerResult = {
+  eventId: string;
+  requestId: string;
+  message: string;
+  senderDisplayName: string;
+  recipients: Array<{
+    userId: string;
+    displayName: string;
+    assignmentRole: "LEAD" | "CONTRIBUTOR";
+  }>;
+  createdAt: string;
+};

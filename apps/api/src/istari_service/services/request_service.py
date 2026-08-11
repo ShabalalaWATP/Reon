@@ -20,6 +20,8 @@ from istari_service.schemas.requests import (
     RequestSummary,
 )
 
+REQUESTER_HIDDEN_EVENT_TYPES = frozenset({"task_hastener"})
+
 
 class RequestRepository(Protocol):
     async def create(
@@ -144,17 +146,30 @@ class RequestService:
             UserRole.DELIVERY_TEAM_LEAD,
         }
         if event_limit is None:
-            return await self._repository.get_detail(
+            detail = await self._repository.get_detail(
                 request_id,
                 reveal_unreleased_deliverable=reveal,
                 include_clarifications=clarifications,
             )
-        return await self._repository.get_detail(
-            request_id,
-            reveal_unreleased_deliverable=reveal,
-            include_clarifications=clarifications,
-            event_limit=event_limit,
-            event_cursor=event_cursor,
+        else:
+            detail = await self._repository.get_detail(
+                request_id,
+                reveal_unreleased_deliverable=reveal,
+                include_clarifications=clarifications,
+                event_limit=event_limit,
+                event_cursor=event_cursor,
+            )
+        if actor.role is not UserRole.REQUESTER:
+            return detail
+        visible_events = [
+            event
+            for event in detail.events
+            if event.type not in REQUESTER_HIDDEN_EVENT_TYPES
+        ]
+        if len(visible_events) == len(detail.events):
+            return detail
+        return detail.model_copy(
+            update={"events": visible_events}
         )
 
     async def add_feedback(

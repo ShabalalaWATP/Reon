@@ -5,6 +5,8 @@ import type {
   Iteration,
   ReservationInput,
   SavedBoardView,
+  TaskHastenerInput,
+  TaskHastenerResult,
   WorkPackage,
   WorkPackageInput,
   WorkPackageStatus,
@@ -57,4 +59,6 @@ export const boardApi = {
     apiRequest<Iteration>(`${teamPath(teamId)}/iterations`, { body: input, csrfToken, method: "POST" }),
   closeIteration: (teamId: string, iterationId: string, input: { grantId: string; expectedVersion: number; completionSummary: string }, csrfToken: string) =>
     apiRequest<Iteration>(`${teamPath(teamId)}/iterations/${encodeURIComponent(iterationId)}/close`, { body: input, csrfToken, method: "POST" }),
+  sendTaskHastener: (teamId: string, requestId: string, input: TaskHastenerInput, csrfToken: string) =>
+    apiRequest<TaskHastenerResult>(`${teamPath(teamId)}/requests/${encodeURIComponent(requestId)}/hasteners`, { body: input, csrfToken, method: "POST" }),
 };

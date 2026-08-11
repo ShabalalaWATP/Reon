@@ -120,6 +120,8 @@
 .membership-state::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentcolor; }
 .membership-state--current { color: var(--success); }
 .membership-state--scheduled { color: var(--warning); }
+.team-person-link { color: var(--text); font-weight: 760; text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); text-decoration-thickness: 1px; text-underline-offset: 4px; transition: color var(--speed-fast), text-decoration-color var(--speed-fast); }
+.team-person-link:hover, .team-person-link:focus-visible { color: var(--accent); text-decoration-color: var(--accent); }
 .roster-control { position: sticky; top: 20px; }
 .roster-control form { display: grid; gap: 15px; margin-top: 17px; }
 .roster-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 15px; border: 1px solid var(--border); border-radius: 10px; padding: 4px; background: color-mix(in srgb, var(--surface-muted) 70%, transparent); }

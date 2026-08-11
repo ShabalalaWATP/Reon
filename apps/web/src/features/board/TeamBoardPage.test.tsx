@@ -4,15 +4,15 @@ import { axe } from "jest-axe";
 import { describe, expect, it } from "vitest";
 
 import type { BoardResult, WorkPackage } from "../../lib/api/boardTypes";
-import type { Session } from "../../lib/api/types";
+import type { RequestDetail, Session } from "../../lib/api/types";
 import type { TeamMember, TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import { requestDetail, requesterSession } from "../../test/fixtures";
 import { json, mockFetch, renderApp } from "../../test/render";
 
 const managerSession: Session = { ...requesterSession, user: { ...requesterSession.user, id: "manager-ssg", username: "admin8", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", scope: "SSG Team" } };
 const analystSession: Session = { ...managerSession, user: { ...managerSession.user, id: "analyst-ssg", username: "admin11", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST" } };
-const managerAccess: TeamWorkspaceAccess = { teamId: "team-ssg", teamCode: "SSG_TEAM", teamName: "SSG Team", grantId: "grant-ssg", permissions: ["BOARD", "CALENDAR", "CAPACITY", "ROSTER", "STATISTICS"] };
-const analystAccess: TeamWorkspaceAccess = { ...managerAccess, grantId: null, permissions: [] };
+const managerAccess: TeamWorkspaceAccess = { teamId: "team-ssg", teamCode: "SSG_TEAM", teamName: "SSG Team", unitKind: "TEAM", workspacePosition: "MANAGER", grantId: "grant-ssg", permissions: ["BOARD", "CALENDAR", "CAPACITY", "ROSTER", "STATISTICS"] };
+const analystAccess: TeamWorkspaceAccess = { ...managerAccess, workspacePosition: "MEMBER", grantId: null, permissions: [] };
 const people: TeamMember[] = [
   { membershipId: "manager-membership", accountId: "manager-ssg", displayName: "Grant Hanley", role: "DELIVERY_TEAM_LEAD", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, skills: ["Delivery leadership"], startReason: null, endReason: null },
   { membershipId: "analyst-membership", accountId: "analyst-ssg", displayName: "Lewis Ferguson", role: "DELIVERY_SPECIALIST", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 1, skills: ["Research"], startReason: null, endReason: null },
@@ -91,6 +91,35 @@ describe("team workflow board", () => {
     await user.type(screen.getByLabelText(/^Reason/), "The package is ready for deliberate delivery work.");
     await user.click(screen.getByRole("button", { name: "Move package" }));
     await waitFor(() => expect(calls.some((call) => call.path.endsWith("/board/moves") && call.body.target === "IN_PROGRESS")).toBe(true));
+  });
+
+  it("deep-links to a request and lets a Manager hasten all or one assigned Analyst", async () => {
+    const calls: Array<{ path: string; method: string; body: Record<string, unknown> }> = [];
+    const assigned: RequestDetail = {
+      ...requestDetail,
+      id: "request-one",
+      title: "Customer request projection",
+      contributors: [{ id: "analyst-two", displayName: "Nathan Patterson" }],
+      events: [],
+    };
+    mockBoard(managerSession, managerAccess, calls, board, false, assigned);
+    const user = userEvent.setup();
+    const view = renderApp("/teams/team-ssg/board?itemId=request-one");
+    expect(await screen.findByRole("dialog", { name: "Work item details" })).toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: "Send hastener" }));
+    expect(await screen.findByLabelText(/^Recipients/)).toHaveValue("ALL_ASSIGNED");
+    await user.type(screen.getByLabelText(/^Message/), "Please confirm progress before this afternoon's review.");
+    await user.click(screen.getByRole("button", { name: "Send and record hastener" }));
+    await waitFor(() => expect(calls.some((call) => call.path.endsWith("/hasteners") && call.body.audience === "ALL_ASSIGNED" && !call.body.recipientUserId)).toBe(true));
+    expect(await screen.findByRole("status")).toHaveTextContent("Hastener sent and recorded");
+    expect(await screen.findByText(/Hastener sent to Lewis Ferguson, Nathan Patterson/)).toBeInTheDocument();
+
+    await user.click(await screen.findByRole("button", { name: "Send hastener" }));
+    await user.selectOptions(await screen.findByLabelText(/^Recipients/), "analyst-two");
+    await user.type(screen.getByLabelText(/^Message/), "Please update your assigned contribution before the review.");
+    await user.click(screen.getByRole("button", { name: "Send and record hastener" }));
+    await waitFor(() => expect(calls.some((call) => call.body.audience === "ONE_ASSIGNED" && call.body.recipientUserId === "analyst-two")).toBe(true));
+    expect(await axe(view.container)).toHaveNoViolations();
   });
 
   it("filters board views, pages results and updates WIP limits", async () => {
@@ -205,7 +234,8 @@ describe("team workflow board", () => {
   });
 });
 
-function mockBoard(session: Session, access: TeamWorkspaceAccess, calls: Array<{ path: string; method: string; body: Record<string, unknown> }>, value: BoardResult = board, failMutations = false) {
+function mockBoard(session: Session, access: TeamWorkspaceAccess, calls: Array<{ path: string; method: string; body: Record<string, unknown> }>, value: BoardResult = board, failMutations = false, initialRequest: RequestDetail = { ...requestDetail, id: "request-one", title: "Customer request projection" }) {
+  let requestValue = initialRequest;
   return mockFetch(async (url, init) => {
     const method = init.method ?? "GET";
     const body = init.body ? JSON.parse(String(init.body)) as Record<string, unknown> : {};
@@ -216,7 +246,12 @@ function mockBoard(session: Session, access: TeamWorkspaceAccess, calls: Array<{
     if (url.pathname.endsWith("/iterations")) return json({ items: iterations });
     if (url.pathname.endsWith("/board") && method === "GET") return json(value);
     if (url.pathname.endsWith("/packages") && method === "GET") return json({ items: [packageItem] });
-    if (url.pathname.endsWith("/requests/request-one") && method === "GET") return json({ ...requestDetail, id: "request-one", title: "Customer request projection" });
+    if (url.pathname.endsWith("/requests/request-one") && method === "GET") return json(requestValue);
+    if (url.pathname.endsWith("/hasteners") && method === "POST") {
+      const recipientNames = body.audience === "ALL_ASSIGNED" ? "Lewis Ferguson, Nathan Patterson" : "Nathan Patterson";
+      requestValue = { ...requestValue, events: [...requestValue.events, { id: `hastener-${requestValue.events.length}`, type: "task_hastener", message: `Hastener sent to ${recipientNames}: ${body.message}`, actorDisplayName: session.user.displayName, createdAt: "2026-08-11T10:00:00Z" }] };
+      return json({ eventId: "event-hastener", requestId: "request-one", message: body.message, senderDisplayName: session.user.displayName, recipients: [], createdAt: "2026-08-11T10:00:00Z" });
+    }
     if (failMutations && method !== "GET") return json({ detail: "Planning conflict" }, 409);
     if (url.pathname.includes("saved-views") && method === "DELETE") return new Response(null, { status: 204 });
     if (url.pathname.includes("saved-views")) return json(value.savedViews[0] ?? { id: "new-view", name: "Urgent work", filters: { search: "", columns: [], priorities: [], ownerUserId: null, itemTypes: [], dueBefore: null }, version: 1 });

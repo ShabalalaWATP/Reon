@@ -80,6 +80,8 @@ export const protectedQueryKeys = {
     ["protected", userId, "team-eligible-analysts", teamId] as const,
   teamPeople: (userId: string, teamId: string | undefined) =>
     ["protected", userId, "team-people", teamId] as const,
+  teamMemberProfile: (userId: string, teamId: string | undefined, memberId: string | undefined) =>
+    ["protected", userId, "team-member-profile", teamId, memberId] as const,
   teamPackages: (userId: string, teamId: string) =>
     ["protected", userId, "team-packages", teamId] as const,
   teamIterations: (userId: string, teamId: string) =>

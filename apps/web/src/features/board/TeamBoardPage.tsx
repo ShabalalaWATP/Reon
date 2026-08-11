@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type Dispatch, type SetStateAction, useMemo, useState } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 
 import { ModalDrawer } from "../../components/ModalDrawer";
@@ -41,6 +41,7 @@ function AuthenticatedTeamBoard({ access, session }: { access: TeamWorkspaceAcce
   const [selected, setSelected] = useState<BoardItem | null>(null);
   const [creating, setCreating] = useState(false);
   const [settings, setSettings] = useState(false);
+  const [handledDeepLink, setHandledDeepLink] = useState<string | null>(null);
   const [showExceptions, setShowExceptions] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
   const cursor = cursors.at(-1) ?? null;
@@ -64,6 +65,13 @@ function AuthenticatedTeamBoard({ access, session }: { access: TeamWorkspaceAcce
     queryFn: () => planningEvolutionApi.cockpit(access.teamId),
     enabled: Boolean(access.views?.includes("PLANNING")),
   });
+  const deepLinkedItemId = searchParams.get("itemId");
+  useEffect(() => {
+    if (!deepLinkedItemId || handledDeepLink === deepLinkedItemId || !board.data) return;
+    const item = board.data.items.find((value) => value.id === deepLinkedItemId || value.linkedRequestId === deepLinkedItemId);
+    if (item) setSelected(item);
+    setHandledDeepLink(deepLinkedItemId);
+  }, [board.data, deepLinkedItemId, handledDeepLink]);
   const refresh = () => Promise.all([
     client.invalidateQueries({ queryKey: ["protected", userId, "team-board", access.teamId] }),
     client.invalidateQueries({ queryKey: protectedQueryKeys.teamPackages(userId, access.teamId) }),
@@ -145,7 +153,7 @@ function AuthenticatedTeamBoard({ access, session }: { access: TeamWorkspaceAcce
       <ModalDrawer label="Board settings" onClose={() => setSettings(false)} open={settings}>
         <BoardSettings current={board.data.wipLimits} error={configure.error} onSave={(limits) => configure.mutate(limits)} pending={configure.isPending} />
       </ModalDrawer>
-      <WorkItemInspector item={selected} moving={move.isPending} onClose={() => setSelected(null)} onMove={(item, target, reason) => move.mutate({ item, target, reason })} packages={packages.data.items} planning={planning.data} teamId={access.teamId} userId={userId} />
+      <WorkItemInspector access={access} item={selected} moving={move.isPending} onClose={() => setSelected(null)} onMove={(item, target, reason) => move.mutate({ item, target, reason })} packages={packages.data.items} planning={planning.data} session={session} teamId={access.teamId} userId={userId} />
     </div>
   );
 }

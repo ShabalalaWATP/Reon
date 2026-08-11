@@ -6,6 +6,8 @@ import { describe, expect, it, vi } from "vitest";
 import { ModalDrawer } from "../../components/ModalDrawer";
 import type { BoardFilters, BoardItem, WorkPackage } from "../../lib/api/boardTypes";
 import type { PlanningCockpit } from "../../lib/api/planningEvolutionTypes";
+import type { TeamWorkspaceAccess } from "../../lib/api/teamTypes";
+import { requesterSession } from "../../test/fixtures";
 import { TestProviders } from "../../test/render";
 import {
   boardLabel,
@@ -25,6 +27,16 @@ const emptyBoardFilters: BoardFilters = {
   ownerUserId: null,
   itemTypes: [],
   dueBefore: null,
+};
+
+const access: TeamWorkspaceAccess = {
+  teamId: "team-one",
+  teamCode: "TEAM_ONE",
+  teamName: "Team One",
+  unitKind: "TEAM",
+  workspacePosition: "MEMBER",
+  grantId: null,
+  permissions: [],
 };
 
 const requestItem: BoardItem = {
@@ -188,11 +200,11 @@ describe("board operational components", () => {
     const move = vi.fn();
     const user = userEvent.setup();
     const wrapper = (children: React.ReactNode) => <TestProviders><MemoryRouter>{children}</MemoryRouter></TestProviders>;
-    const view = render(wrapper(<WorkItemInspector item={packageItem} moving packages={[]} teamId="team-one" userId="user-one" onClose={vi.fn()} onMove={move} />));
+    const view = render(wrapper(<WorkItemInspector access={access} item={packageItem} moving packages={[]} session={requesterSession} teamId="team-one" userId="user-one" onClose={vi.fn()} onMove={move} />));
     expect(screen.getByRole("heading", { name: "Package detail is not on this page" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open in Planning" })).toBeInTheDocument();
 
-    view.rerender(wrapper(<WorkItemInspector item={{ ...packageItem, linkedRequestId: "request-one" }} moving={false} packages={[richPackage, dependencyPackage]} planning={planning} teamId="team-one" userId="user-one" onClose={vi.fn()} onMove={move} />));
+    view.rerender(wrapper(<WorkItemInspector access={access} item={{ ...packageItem, linkedRequestId: "request-one" }} moving={false} packages={[richPackage, dependencyPackage]} planning={planning} session={requesterSession} teamId="team-one" userId="user-one" onClose={vi.fn()} onMove={move} />));
     expect(screen.getByText("Known dependency")).toBeInTheDocument();
     expect(screen.getByText("dependency-missing")).toBeInTheDocument();
     expect(screen.queryByText("No activity recorded.")).not.toBeInTheDocument();
@@ -208,7 +220,7 @@ describe("board operational components", () => {
   it("shows empty package facts without inventing operational context", () => {
     const emptyPackage: WorkPackage = { ...richPackage, id: "package-empty", iterationId: null, contributors: [], dependencyIds: [], activities: [], reservations: [] };
     const emptyItem = { ...packageItem, id: emptyPackage.id, availableColumns: [] };
-    render(<TestProviders><MemoryRouter><WorkItemInspector item={emptyItem} moving={false} packages={[emptyPackage]} teamId="team-one" userId="user-one" onClose={vi.fn()} onMove={vi.fn()} /></MemoryRouter></TestProviders>);
+    render(<TestProviders><MemoryRouter><WorkItemInspector access={access} item={emptyItem} moving={false} packages={[emptyPackage]} session={requesterSession} teamId="team-one" userId="user-one" onClose={vi.fn()} onMove={vi.fn()} /></MemoryRouter></TestProviders>);
     expect(screen.getByText("No dependencies recorded.")).toBeInTheDocument();
     expect(screen.getByText("No checklist is attached.")).toBeInTheDocument();
     expect(screen.getByText("No active reservations.")).toBeInTheDocument();

@@ -9,6 +9,9 @@ from istari_service.domain import Actor
 from istari_service.errors import InvalidRosterChange, TeamWorkspaceNotFound
 from istari_service.management_models import ManagementAction
 from istari_service.repositories.management import resolve_management_scope
+from istari_service.repositories.team_member_profiles import (
+    SqlAlchemyTeamMemberProfileRepository,
+)
 from istari_service.repositories.team_memberships import (
     SqlAlchemyTeamMembershipRepository,
 )
@@ -21,6 +24,7 @@ from istari_service.schemas.team_workspaces import (
     RosterCommand,
     TeamActivity,
     TeamMember,
+    TeamMemberProfile,
     TeamWorkspaceAccess,
     TeamWorkspaceOverview,
     TransferCommand,
@@ -33,9 +37,11 @@ class TeamWorkspaceService:
         self,
         views: SqlAlchemyTeamWorkspaceRepository,
         memberships: SqlAlchemyTeamMembershipRepository,
+        profiles: SqlAlchemyTeamMemberProfileRepository,
     ) -> None:
         self._views = views
         self._memberships = memberships
+        self._profiles = profiles
 
     async def list_access(self, actor: Actor) -> list[TeamWorkspaceAccess]:
         return await self._views.list_access(actor.id)
@@ -52,6 +58,11 @@ class TeamWorkspaceService:
         return await self._views.people(
             actor.id, team_id, reveal_reasons=reveal_reasons
         )
+
+    async def member_profile(
+        self, actor: Actor, team_id: UUID, member_id: UUID
+    ) -> TeamMemberProfile:
+        return await self._profiles.get(actor.id, team_id, member_id)
 
     async def eligible_analysts(
         self, actor: Actor, team_id: UUID, grant_id: UUID

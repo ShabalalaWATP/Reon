@@ -9,6 +9,8 @@ dependencies, iterations, handover previews and versioned capacity scenarios in
 the planning cockpit. Protected assets include private calendar text, staffing
 history, individual availability, workload, package notes and exact team
 boundaries. Self-declared operational skill labels are team-visible profile data.
+The model also covers narrow colleague-profile reads and Manager-sent task
+hasteners stored in request history.
 
 ## Trust boundaries
 
@@ -28,6 +30,7 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 | --- | --- |
 | Member uses a stale or misconfigured roster grant | Require both a current exact-unit `MANAGER` membership and the active exact-unit roster grant at the FastAPI use-case boundary; React suppression is usability only |
 | A broad role label conceals Manager authority from the account holder | Present the representative role and authoritative effective workspace position together in the account menu and separately in the profile; continue to authorise only from the server-side membership and grant |
+| A workspace user enumerates accounts or reads private profile fields | Require exact-workspace read access and exact-team membership history for the subject; return the same not-found result for absent and inaccessible records; expose only the bounded colleague contract and exclude service number and free-form personal notes |
 | Team Manager alters another roster | Require a current exact-team Manager position and active exact-team roster grant in the mutation transaction; restrict team controls to Member records |
 | Manager creates or promotes a global identity | Team roster commands accept existing active Analysts only; global identity and role stay administrator-only |
 | Concurrent transfers create two home teams | Exclusion constraint or serialised effective-range check plus one-winner concurrency tests |
@@ -42,6 +45,11 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 | Manager commitment impersonates consent | Record creator separately and require subject acknowledgement or reasoned dispute |
 | Stale calendar preview overwrites work | Bind commit token to event, membership, reservation and version snapshot; return conflict on drift |
 | Board drag skips workflow steps | Map source/target to a named application command and recheck task, assignment, state and version server-side |
+| A Manager sends a hastener to an unassigned or cross-team Analyst | Require a current exact-team Manager position, exact assigned-delivery-team ownership and active production state; derive active Lead and Contributor recipients on the server and validate every named recipient against that set |
+| A hastener becomes an untracked workflow shortcut | Append it to tamper-evident request history with unchanged prior and next status; keep ownership and assignment unchanged and send no Camunda command |
+| A reminder notification exposes request narrative to the wrong person | Project only to the resolved assigned Delivery Specialists through exact-team recipient rules; keep the subject content-minimal and link back to the authorised board endpoint where object access is rechecked |
+| Internal reminder text leaks through Customer request history | Filter `task_hastener` events from the Requester read model on the server; retain them for exact-team Managers and active assigned Analysts only |
+| A hostile reminder message manipulates rendering or logs | Normalise and bound the mandatory message, reject control and bidirectional formatting characters, escape it at render time and keep structured logs content-free |
 | Package link changes request state | Keep package aggregate and request commands separate; link is reference-only |
 | Large package history exhausts database connections | Bound package pages to 1–100 records and bulk-load contributors, dependencies, activity and reservations through a dedicated read projection |
 | Cross-team saved view leaks identifiers | Scope filters and returned rows on every execution, not only view creation |
@@ -89,6 +97,12 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 - Planning-notification recipient and content-minimisation tests.
 - Profile skill validation plus exact-team, sibling, revoked and expired people-
   projection tests.
+- Colleague-profile exact-team, privacy, missing-record and sibling-team tests,
+  plus keyboard navigation back to the same People register.
+- Hastener tests for any current exact-team Manager, one and all active assigned
+  Analysts, unassigned and cross-team denial, inactive production denial,
+  immutable history, Customer-history exclusion, notification recipients and
+  unchanged workflow state.
 - Fixed 5,000-occurrence and 2,500-package performance evidence with visible
   source freshness.
 - Keyboard alternatives for board and calendar, 200 per cent zoom and reduced

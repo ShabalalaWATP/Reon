@@ -65,6 +65,19 @@ export type TeamActivity = {
 
 export type TeamWorkspaceList = { items: TeamWorkspaceAccess[] };
 export type TeamPeople = { items: TeamMember[] };
+export type TeamMemberProfile = {
+  accountId: string;
+  name: string;
+  email: string;
+  role: TeamMember["role"];
+  teamId: string;
+  teamName: string;
+  workspacePosition: "MANAGER" | "MEMBER";
+  membershipState: MembershipState;
+  rankOrGrade: string | null;
+  skills: string[];
+  accountActive: boolean;
+};
 export type EligibleRosterAnalystList = { items: EligibleRosterAnalyst[] };
 export type TeamActivityList = { items: TeamActivity[] };
 

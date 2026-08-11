@@ -1,5 +1,28 @@
 # Development Story
 
+## 11 August 2026: team profiles and accountable task hasteners
+
+- Made every People-register name open a bounded team profile and added an
+  explicit route back to the same team's People tab.
+- Kept colleague profiles deliberately professional: name, work email, role,
+  team position, membership state, rank or grade, skills and account status are
+  visible, while service number and free-form personal notes remain private.
+- Added Manager-only task hasteners during active delivery. Any current Manager
+  in the exact assigned team can remind one active assigned Analyst or the Lead
+  and all active Contributors within that team.
+- Stored each hastener in tamper-evident request history and sent each recipient
+  a content-minimal notification linked to the board item, without changing
+  workflow stage, ownership or assignments and without issuing a Camunda
+  command. Customer request history filters the internal reminder and its
+  recipients on the server.
+- Added exact-team, privacy, recipient-resolution, authority, lifecycle,
+  notification, navigation and accessibility regression tests and updated the
+  current specification, user stories, architecture and threat model.
+- Closed the slice with 959 backend tests at 98.89 per cent line and 95.06 per
+  cent branch coverage, plus 385 frontend tests at 99.50 per cent line and
+  95.01 per cent branch coverage. Repository quality, production build, Ruff,
+  MyPy, Bandit, documentation and source line-limit gates all passed.
+
 ## 11 August 2026: accessibility navigation and assurance consolidation
 
 - Added a direct accessibility route from the documentation home and master

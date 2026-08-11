@@ -54,7 +54,7 @@ def member_view(
         display_name=user.display_name,
         role=user.role,
         workspace_position=membership.workspace_position,
-        state=_membership_state(membership, now),
+        state=membership_state(membership, now),
         effective_from=_as_utc(membership.effective_from),
         effective_until=(
             _as_utc(membership.effective_until)
@@ -100,7 +100,7 @@ def activity_view(row: Any) -> TeamActivity:
     )
 
 
-def _membership_state(membership: TeamMembership, now: datetime) -> MembershipState:
+def membership_state(membership: TeamMembership, now: datetime) -> MembershipState:
     effective_from = _as_utc(membership.effective_from)
     effective_until = (
         _as_utc(membership.effective_until)

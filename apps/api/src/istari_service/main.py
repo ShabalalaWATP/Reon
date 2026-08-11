@@ -55,6 +55,7 @@ from istari_service.routers import (
     requests,
     statistics,
     statistics_evolution,
+    task_hasteners,
     team_workspaces,
     work_items,
     workspace_collaboration,
@@ -262,6 +263,7 @@ def create_app(
     application.include_router(requests.router, prefix="/api/v1")
     application.include_router(statistics.router, prefix="/api/v1")
     application.include_router(team_workspaces.router, prefix="/api/v1")
+    application.include_router(task_hasteners.router, prefix="/api/v1")
     application.include_router(workspace_collaboration.router, prefix="/api/v1")
     application.include_router(board.router, prefix="/api/v1")
     application.include_router(calendar.router, prefix="/api/v1")

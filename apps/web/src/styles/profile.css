@@ -5,6 +5,13 @@
 .profile-identity h1 { margin: 4px 0 6px; font-size: clamp(1.8rem, 4vw, 2.7rem); }
 .profile-identity p { max-width: 680px; margin: 0; color: var(--muted); line-height: 1.6; }
 .profile-status { display: inline-flex; align-items: center; gap: 7px; color: var(--success); font-size: .78rem; white-space: nowrap; }
+.profile-status--inactive { color: var(--muted); }
+.team-profile-back { display: inline-flex; align-items: center; gap: 8px; width: max-content; color: var(--accent); font-size: .76rem; font-weight: 750; text-decoration: none; }
+.team-profile-back:hover, .team-profile-back:focus-visible { text-decoration: underline; text-underline-offset: 4px; }
+.team-member-profile__sections { padding-top: 0; }
+.team-member-profile__sections section:last-child { grid-column: auto; max-width: none; }
+.team-member-profile .profile-definition-list a { display: inline-flex; align-items: center; gap: 7px; color: var(--accent); }
+.team-member-profile__privacy { border-left: 2px solid var(--accent); padding-left: 12px; }
 .profile-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(28px, 5vw, 64px); row-gap: 38px; padding-top: 8px; }
 .profile-sections section { min-width: 0; }
 .profile-sections section:last-child { grid-column: 1 / -1; max-width: calc(50% - 32px); }

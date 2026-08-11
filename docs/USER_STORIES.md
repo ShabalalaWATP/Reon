@@ -736,6 +736,39 @@ that current stewardship is clear.
 - Members cannot end another person's membership.
 - Sorting defaults to Managers first and supports every column heading.
 
+### WS-04: View a team colleague's profile
+
+**Need:** As a current workspace user, I want to open a colleague's professional
+profile and return to the People register so that I can understand who works in
+the unit without losing my place.
+
+**Acceptance checks**
+
+- Every person name is a keyboard-accessible link to an exact-team profile.
+- A clear return action opens the same team's People tab.
+- The view includes professional team information but excludes service number
+  and free-form personal notes.
+- Exact-team access and membership history are checked on the server. An
+  unrelated or inaccessible identifier reveals nothing.
+
+### WS-05: Send a task hastener as a delivery-team Manager
+
+**Need:** As any current Manager of the assigned delivery team, I want to send a
+recorded reminder to one assigned Analyst or every Analyst assigned to the task
+within my team so that follow-up is clear, targeted and accountable.
+
+**Acceptance checks**
+
+- The server derives eligible active Leads and Contributors from the exact-team
+  request assignment. A browser-supplied recipient cannot widen that set.
+- The Manager selects one eligible Analyst or all eligible Analysts and enters
+  a mandatory 10 to 500 character message.
+- Each recipient receives a safe notification linking to the board item.
+- The request history records the Manager, resolved recipients, message and time.
+- The reminder does not change ownership, assignment or Camunda workflow stage.
+- Analysts, routing-unit Managers, sibling teams and Managers outside active
+  production cannot send the reminder.
+
 ## Runtime operator and support stories
 
 ### OP-01: Start a local synthetic environment

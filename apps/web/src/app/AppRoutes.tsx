@@ -41,6 +41,8 @@ const StatisticsPage = lazy(() => import("../features/statistics/StatisticsPage"
   .then(({ StatisticsPage: page }) => ({ default: page })));
 const TeamWorkspacePage = lazy(() => import("../features/teams/TeamWorkspacePage")
   .then(({ TeamWorkspacePage: page }) => ({ default: page })));
+const TeamMemberProfilePage = lazy(() => import("../features/teams/TeamMemberProfilePage")
+  .then(({ TeamMemberProfilePage: page }) => ({ default: page })));
 const StaffQueuePage = lazy(() => import("../features/work/StaffQueuePage")
   .then(({ StaffQueuePage: page }) => ({ default: page })));
 const ProfilePage = lazy(() => import("../features/profile/ProfilePage")
@@ -83,6 +85,7 @@ export function AppRoutes() {
             <Route element={<CapabilityGate capability="statistics" />}>
               <Route path="statistics" element={<StatisticsPage />} />
             </Route>
+            <Route path="teams/:teamId/people/:memberId" element={<TeamMemberProfilePage />} />
             <Route path="teams/:teamId/:view?" element={<TeamWorkspacePage />} />
             <Route path="calendar/:calendarView?" element={<CalendarPage />} />
             <Route element={<RoleGate allowed={["PLATFORM_ADMIN"]} />}>

@@ -1,7 +1,7 @@
 # Role and permission matrix
 
 Status: current application permissions with production boundary decisions identified
-Last reviewed: 10 August 2026
+Last reviewed: 11 August 2026
 
 ## Enforcement principles
 
@@ -26,9 +26,11 @@ Last reviewed: 10 August 2026
 | Request Coordination User | Choose an Ops group, return, hold or close | Active candidate group for the selected Command and personally claimed task | Destination must be an effective direct Ops-group child | Manager and Member use the same action; no team or Analyst selection |
 | Ops Routing User | Choose a delivery team or return | Active candidate group for the selected Ops group and personally claimed task | Destination must be an effective direct team child | Manager and Member use the same action; unstaffed choice remains explicit |
 | Workspace Member | Create, edit and cancel personal calendar activity | Current effective membership in the exact unit | Subject is always the authenticated user; no request link or alternate subject accepted | Private detail is redacted from shared views |
+| Workspace Member | View a colleague's bounded team profile | Authorised read access to the exact workspace; subject has membership history in that workspace | Exact team and subject relationship checked on every read | Service number and free-form personal notes are excluded; inaccessible records are not disclosed |
 | Routing Manager | Maintain exact-unit Members, unit events and shared handover context | Current Manager position and exact management grant | No parent, child or sibling management and no ticket commitment | Does not add routing approval or assign routing tasks |
 | Team Manager | Assign one Lead and up to ten Contributors and review submitted work | Exact active team membership and candidate group; claimed task | Every participant must be a current Member of that exact team | Assignment reason, history and approval/rework outcome audited |
 | Team Manager | Manage roster, board and team calendar | Current exact-team Manager position and exact active management grant | Position, grant, membership state and optimistic revision checked | Membership and planning events attributable and reversible |
+| Team Manager | Send a task hastener to one or all assigned Analysts | Current Manager position in the exact assigned delivery team; request is in active production | Recipients are server-resolved current Leads and Contributors who are active exact-team Delivery Specialists | Reminder is stored in tamper-evident request history and notified; ownership, assignments and Camunda state do not change |
 | Team Analyst, Lead | Produce, revise and submit a product package | Active Lead participation and active exact-team membership | Sole Camunda assignee; package state and expected revision checked | Immutable package and participation history retained |
 | Team Analyst, Contributor | Read and collaborate on an assigned request | Active Contributor participation and active exact-team membership | Cannot complete the Lead's parent Camunda task | Participation and linked work remain attributable |
 | QC Manager | Review, return, disseminate or withdraw a product | Active QC group and matching workflow/package state | Exact approved package and Customer request relationship | Manager approval cannot substitute for QC release |

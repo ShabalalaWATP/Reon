@@ -337,6 +337,21 @@ Current team membership exposes bounded, self-declared operational skill labels
 from the user's profile. These labels support human allocation only. They carry
 no proficiency, ranking, endorsement or automated assignment semantics.
 
+The People register links to a separate exact-team colleague projection. It
+combines professional account information with the relevant membership but
+deliberately omits service number and free-form profile notes. Both the viewer's
+workspace access and the subject's membership history are checked before any
+profile is returned.
+
+Task hasteners reuse two durable projections. FastAPI first confirms a current
+Manager position in the exact assigned delivery team and resolves the active
+Lead and Contributors from PostgreSQL. It then appends an unchanged-status event
+to the request's tamper-evident history and projects content-minimal
+notifications to those Analysts. No Camunda command is emitted because a
+hastener communicates urgency without changing workflow state or ownership.
+The Customer request read model filters these internal reminder events, while
+the exact-team board retains the complete accountable history.
+
 ## 9. Authentication and session controls
 
 The current application uses database accounts, Argon2 password hashes, opaque

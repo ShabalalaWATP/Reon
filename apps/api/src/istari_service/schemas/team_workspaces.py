@@ -67,6 +67,20 @@ class TeamPeople(ApiModel):
     items: list[TeamMember]
 
 
+class TeamMemberProfile(ApiModel):
+    account_id: UUID
+    name: str
+    email: str
+    role: UserRole
+    team_id: UUID
+    team_name: str
+    workspace_position: WorkspacePosition
+    membership_state: MembershipState
+    rank_or_grade: str | None
+    skills: list[str]
+    account_active: bool
+
+
 class EligibleRosterAnalyst(ApiModel):
     account_id: UUID
     display_name: str

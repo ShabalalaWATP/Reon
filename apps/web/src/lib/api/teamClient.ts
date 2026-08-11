@@ -4,6 +4,7 @@ import type {
   EndMembershipInput,
   TeamActivityList,
   TeamPeople,
+  TeamMemberProfile,
   TeamWorkspaceList,
   TeamWorkspaceOverview,
   TransferMemberInput,
@@ -21,6 +22,10 @@ export const teamApi = {
   teamPeople: (teamId: string) =>
     apiRequest<TeamPeople>(
       `/team-workspaces/${encodeURIComponent(teamId)}/people`,
+    ),
+  teamMemberProfile: (teamId: string, memberId: string) =>
+    apiRequest<TeamMemberProfile>(
+      `/team-workspaces/${encodeURIComponent(teamId)}/people/${encodeURIComponent(memberId)}/profile`,
     ),
   eligibleRosterAnalysts: (teamId: string, grantId: string) =>
     apiRequest<EligibleRosterAnalystList>(

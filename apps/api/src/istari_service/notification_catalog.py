@@ -18,6 +18,7 @@ EVENT_LABELS = {
     "TASK_ASSIGNED": "action assigned",
     "TASK_REASSIGNED": "action reassigned",
     "TASK_RETURNED": "action returned",
+    "TASK_HASTENER": "task reminder received",
     "CLARIFICATION_REQUESTED": "clarification requested",
     "CLARIFICATION_ANSWERED": "clarification answered",
     "CLARIFICATION_OVERDUE": "clarification overdue",
