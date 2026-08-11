@@ -2,7 +2,7 @@
 
 This file contains current visual orientation and dated assurance records. The
 source-controlled screenshots below were captured from the running synthetic
-local application on 9 and 10 August 2026. Screenshots are refreshed when their
+local application between 9 and 11 August 2026. Screenshots are refreshed when their
 surface changes materially. The latest Customer form, Customer register, team
 board, calendar, people, CRIOC workspace and administration captures use the
 current local source and produced no browser warning or error. The images prove
@@ -44,9 +44,11 @@ password action remains subordinate to sign-in.
 ### Password assistance
 
 The anonymous assistance state accepts a governed work email and returns the
-same non-disclosing response. This synthetic example notified all active
-Platform Administrators and exposed only account `admin2`, not the submitted
-email, in their mandatory account-security notification.
+same non-disclosing response whether or not an active account matches. A valid
+submission notifies all active Platform Administrators and exposes only the
+matching account identifier, not the submitted email, in the mandatory
+account-security notification. The screenshot shows the state before any
+notification is sent.
 
 ![Forgotten-password assistance](../assets/screenshots/password-assistance.png)
 
@@ -70,9 +72,10 @@ while private incomplete drafts remain possible.
 
 ### Customer request tracking
 
-Customer `admin2` on `My requests`. The synthetic in-progress row shows current
-stage, owner role, service age, required-date proximity and a direct request
-link. Authenticated product download and feedback appear here after
+Customer `admin2` on `My requests`. The summary separates requests needing the
+Customer's input from other in-progress and completed requests. Each visible row
+shows its title, status, current owner, age, required-date proximity and a direct
+request link. Authenticated product download and feedback appear here after
 dissemination; the historical completed-journey evidence below proves that
 separate state-changing path.
 
