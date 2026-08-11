@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
@@ -13,6 +13,27 @@ import {
 import { json, mockFetch, renderApp } from "../../test/render";
 
 describe("staff work queue", () => {
+  it("opens the exact request from an action link without falling back", async () => {
+    const requested: string[] = [];
+    mockFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(staffSession);
+      if (url.pathname.endsWith("/work-items")) {
+        requested.push(url.searchParams.get("requestId") ?? "");
+        return json({ items: url.searchParams.get("requestId") === workItem.requestId ? [workItem] : [] });
+      }
+      throw new Error(`Unexpected ${url.pathname}`);
+    });
+
+    const exact = renderApp(`/triage?requestId=${workItem.requestId}`);
+    expect(await screen.findAllByText(workItem.requestReference)).toHaveLength(2);
+    expect(requested).toEqual([workItem.requestId]);
+    exact.unmount();
+
+    renderApp("/triage?requestId=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+    expect(await screen.findByRole("heading", { name: "This action is no longer available" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open CRIOC routing queue" })).toHaveAttribute("href", "/triage");
+  });
+
   it("claims work and records a stage-specific human outcome", async () => {
     let item = workItem;
     let completeBody: unknown;
@@ -25,7 +46,7 @@ describe("staff work queue", () => {
         return json(item);
       }
       if (url.pathname.endsWith("/routing-options")) {
-        return json({ items: organisationChildren("JIOC") });
+        return json({ items: organisationChildren("CRIOC") });
       }
       if (url.pathname.endsWith("/complete")) {
         completeBody = JSON.parse(String(init.body));
@@ -40,7 +61,7 @@ describe("staff work queue", () => {
     });
     const user = userEvent.setup();
     renderApp("/triage");
-    expect(await screen.findByRole("heading", { name: "JIOC routing queue" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "CRIOC routing queue" })).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: "Claim work item" })).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Claim to view request context" }),
@@ -50,17 +71,16 @@ describe("staff work queue", () => {
     expect(await screen.findByRole("heading", { name: "Record outcome" })).toBeInTheDocument();
     await waitFor(() => expect(requestDetailCalls).toBe(1));
     await user.selectOptions(screen.getByLabelText("Outcome"), "progress");
-    await screen.findByRole("option", { name: /DIGOC/ });
+    await screen.findByRole("option", { name: /JOCK/ });
     await user.selectOptions(
       screen.getByLabelText("Destination unit"),
-      organisationUnit("DIGOC").id,
+      organisationUnit("JOCK").id,
     );
     await user.click(screen.getByRole("button", { name: "Route to command" }));
     expect(await screen.findByText("Choose a priority.")).toBeInTheDocument();
-    await user.type(screen.getByLabelText("Confirmed category"), "Advisory support");
     await user.selectOptions(screen.getByLabelText(/Priority/), "HIGH");
     await user.click(screen.getByRole("button", { name: "Route to command" }));
-    await waitFor(() => expect(completeBody).toEqual({ action: "progress", category: "Advisory support", destinationUnitId: "unit-digoc", priority: "HIGH" }));
+    await waitFor(() => expect(completeBody).toEqual({ action: "progress", destinationUnitId: "unit-jock", priority: "HIGH" }));
     expect(await screen.findByRole("heading", { name: "No items waiting" })).toBeInTheDocument();
     expect(requestDetailCalls).toBe(1);
   });
@@ -125,14 +145,18 @@ describe("staff work queue", () => {
       }),
     );
 
-    await screen.findByRole("option", { name: "Euan Fraser" });
-    const specialistSelect = screen.getByLabelText("Team Analyst");
+    const specialistSelect = await screen.findByLabelText("Lead Analyst");
+    await waitFor(() => expect(specialistSelect).toBeEnabled());
+    expect(within(specialistSelect).getByRole("option", { name: "Euan Fraser" })).toBeInTheDocument();
     await user.selectOptions(specialistSelect, "specialist-b");
-    await user.click(screen.getByRole("button", { name: "Assign Analyst" }));
+    await user.type(screen.getByLabelText(/^Assignment reason/), "Euan will lead this delivery request.");
+    await user.click(screen.getByRole("button", { name: "Assign Analysts" }));
 
     await waitFor(() =>
       expect(completeBody).toEqual({
         action: "assign",
+        contributorIds: [],
+        reason: "Euan will lead this delivery request.",
         specialistId: "specialist-b",
       }),
     );
@@ -218,7 +242,7 @@ describe("staff work queue", () => {
 
     const user = userEvent.setup();
     renderApp("/delivery/team");
-    expect(await screen.findByLabelText("Team Analyst")).toBeDisabled();
+    expect(await screen.findByLabelText("Lead Analyst")).toBeDisabled();
     expect(eligibleCalls).toBe(0);
     items = [otherOwnerItem];
     await user.click(screen.getAllByRole("button", { name: /Quarterly service readiness summary/ })[1]);
@@ -281,7 +305,7 @@ describe("staff work queue", () => {
   });
 
   it.each([
-    ["/coordination", "Command routing queue"],
+    ["/coordination", "Incoming requests"],
     ["/allocation", "Ops routing queue"],
     ["/delivery/team", "Team queue"],
     ["/delivery/my-work", "Production queue"],

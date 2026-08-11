@@ -17,8 +17,6 @@ from istari_service.repositories.auth import (
     actor_from_user,
 )
 
-TEST_TOKEN_HASH = "token-hash"
-
 
 @pytest_asyncio.fixture
 async def db_session() -> AsyncIterator[AsyncSession]:
@@ -42,8 +40,10 @@ async def add_user(
     credential_version: int = 1,
     locked_until: datetime | None = None,
 ) -> User:
+    username = f"requester.{uuid4().hex}@example.test"
     user = User(
-        username=f"requester.{uuid4().hex}@example.test",
+        username=username,
+        email=username,
         display_name="Synthetic Requester",
         password_hash="stored-hash",
         role=UserRole.REQUESTER,
@@ -61,7 +61,7 @@ async def add_session(
     session: AsyncSession,
     user: User,
     *,
-    token_hash: str = TEST_TOKEN_HASH,
+    token_hash: str = "token-hash",  # noqa: S107 - synthetic session hash
     now: datetime | None = None,
 ) -> Session:
     current = now or datetime.now(UTC)

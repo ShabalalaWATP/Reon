@@ -149,7 +149,11 @@ async def test_assignment_is_reauthorised_at_dispatch(
     valid_specialist: bool,
 ) -> None:
     specialist_id = uuid4()
-    payload = AssignSpecialist(action="assign", specialist_id=specialist_id)
+    payload = AssignSpecialist(
+        action="assign",
+        specialist_id=specialist_id,
+        reason="The Manager selected the accountable delivery Lead.",
+    )
     command, task, request, user, instance = _state(
         status=RequestStatus.DELIVERY_PLANNING,
         role=UserRole.DELIVERY_TEAM_LEAD,

@@ -6,6 +6,7 @@ import { MemoryRouter } from "react-router";
 import { vi } from "vitest";
 
 import { AppRoutes } from "../app/AppRoutes";
+import { ClassificationBanner } from "../components/ClassificationBanner";
 import { AuthProvider } from "../lib/auth/AuthProvider";
 import { ThemeProvider } from "../lib/theme/ThemeProvider";
 
@@ -26,10 +27,14 @@ export function mockFetch(
   useEmptyActionWorkspace = true,
   useEmptyNotificationWorkspace = true,
   useDisabledCapabilities = true,
+  useEmptyAccountRequests = true,
 ) {
   const mock = vi.fn((input: RequestInfo | URL, init: RequestInit = {}) => {
     const value = typeof input === "string" ? input : input.toString();
     const url = new URL(value, "http://localhost");
+    if (url.pathname.endsWith("/platform/classification") && (!init.method || init.method === "GET")) {
+      return Promise.resolve(json({ classification: "OFFICIAL", version: 1, updatedAt: "2026-08-10T00:00:00Z" }));
+    }
     if (useDisabledCapabilities && url.pathname.endsWith("/me/capabilities")) {
       return Promise.resolve(json({ myWork: false, notifications: false, configuration: false, products: false, planning: false, statistics: false }));
     }
@@ -38,6 +43,9 @@ export function mockFetch(
       && url.pathname.endsWith("/request-drafts")
       && (!init.method || init.method === "GET")
     ) return Promise.resolve(json({ items: [] }));
+    if (useEmptyAccountRequests && url.pathname.endsWith("/admin/account-requests") && (!init.method || init.method === "GET")) {
+      return Promise.resolve(json({ items: [] }));
+    }
     if (
       useEmptyTeamWorkspaces
       && url.pathname.endsWith("/team-workspaces")
@@ -115,7 +123,7 @@ export function renderApp(
   return render(
     <ThemeProvider>
       <QueryClientProvider client={client}>
-        <AuthProvider><MemoryRouter initialEntries={[path]}><AppRoutes /></MemoryRouter></AuthProvider>
+        <AuthProvider><MemoryRouter initialEntries={[path]}><div className="classified-app"><ClassificationBanner /><div className="classified-app__body"><AppRoutes /></div></div></MemoryRouter></AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>,
   );

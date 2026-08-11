@@ -9,7 +9,7 @@ import { json, mockFetch, renderApp } from "../../test/render";
 
 const notifications: NotificationList = {
   items: [
-    { id: "notice-1", eventType: "REQUEST_ASSIGNED", eventGroup: "WORK", subject: "Request assigned to OSG", occurredAt: "2026-08-07T09:00:00Z", deepLink: "/requests/request-1", isRead: false, isArchived: false, isActionCompleted: false, readAt: null, archivedAt: null, actionCompletedAt: null, version: 2 },
+    { id: "notice-1", eventType: "REQUEST_ASSIGNED", eventGroup: "WORK", subject: "Request assigned to SSG", occurredAt: "2026-08-07T09:00:00Z", deepLink: "/requests/request-1", isRead: false, isArchived: false, isActionCompleted: false, readAt: null, archivedAt: null, actionCompletedAt: null, version: 2 },
     { id: "notice-2", eventType: "PRODUCT_RELEASED", eventGroup: "RELEASE", subject: "Product ready", occurredAt: "2026-08-06T09:00:00Z", deepLink: "https://attacker.test/product", isRead: true, isArchived: false, isActionCompleted: true, readAt: "2026-08-06T10:00:00Z", archivedAt: null, actionCompletedAt: "2026-08-06T11:00:00Z", version: 4 },
     { id: "notice-3", eventType: "REQUEST_CLOSED", eventGroup: "WORK", subject: "Request archived", occurredAt: "2026-08-05T09:00:00Z", deepLink: null, isRead: true, isArchived: true, isActionCompleted: false, readAt: "2026-08-05T10:00:00Z", archivedAt: "2026-08-05T11:00:00Z", actionCompletedAt: null, version: 1 },
     { id: "notice-4", eventType: "REQUEST_UPDATED", eventGroup: "WORK", subject: "Request updated", occurredAt: "2026-08-04T09:00:00Z", deepLink: null, isRead: true, isArchived: false, isActionCompleted: false, readAt: "2026-08-04T10:00:00Z", archivedAt: null, actionCompletedAt: null, version: 1 },
@@ -52,9 +52,9 @@ describe("Notifications", () => {
     expect(screen.getAllByText("Archived")).toHaveLength(2);
     expect(await axe(view.container)).toHaveNoViolations();
 
-    await user.click(screen.getByLabelText("Select Request assigned to OSG"));
-    await user.click(screen.getByLabelText("Select Request assigned to OSG"));
-    await user.click(screen.getByLabelText("Select Request assigned to OSG"));
+    await user.click(screen.getByLabelText("Select Request assigned to SSG"));
+    await user.click(screen.getByLabelText("Select Request assigned to SSG"));
+    await user.click(screen.getByLabelText("Select Request assigned to SSG"));
     await user.click(screen.getByRole("button", { name: "Mark read" }));
     await waitFor(() => expect(calls.some(({ path }) => path === "/api/v1/me/notifications/state")).toBe(true));
     const stateCall = calls.filter(({ path }) => path === "/api/v1/me/notifications/state").at(-1)!;

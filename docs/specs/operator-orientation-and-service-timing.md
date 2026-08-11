@@ -39,8 +39,9 @@ Acceptance criteria:
 1. Exactly one primary navigation item is marked current, including request detail
    and new-request routes.
 2. Hover and keyboard focus remain visually distinct from the active state.
-3. The account menu identifies display name, account ID, role, scope and session
-   expiry, and contains the sign-out action.
+3. The account menu identifies display name, account ID, role and meaningful
+   workspace access, and links to a complete profile containing organisation
+   assignments and session expiry before the separate sign-out action.
 4. The menu closes on Escape, outside interaction and route change.
 5. Status colours retain readable text and do not communicate by colour alone.
 

@@ -1,4 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { ArrowUpRight } from "lucide-react";
+import { Link } from "react-router";
 
 import { LoadMoreButton } from "../../components/LoadMoreButton";
 import { PageState } from "../../components/PageState";
@@ -9,6 +11,7 @@ import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import type { TrackedRequest } from "../../lib/api/types";
 import { useAuth } from "../../lib/auth/AuthProvider";
 import { formatDate, trackingStatusLabel } from "../../lib/status";
+import { TrackingJourney } from "./TrackingJourney";
 
 export function TrackingPage() {
   const { session } = useAuth();
@@ -46,17 +49,17 @@ export function TrackingPage() {
     <main className="page-stack tracking-page">
       <header className="page-heading">
         <div>
-          <span>Progress metadata only</span>
+          <span>Authorised route view</span>
           <h1>Request tracking</h1>
           <p>
-            Monitor status, ownership and route progression without opening
-            Customer content or service products.
+            Follow requests your organisation has routed through delivery and
+            reopen their submitted detail without entering the action queue.
           </p>
         </div>
       </header>
       {requests.length === 0 ? (
         <PageState kind="empty" title="No requests to track">
-          Submitted requests will appear here as they enter JIOC routing.
+          Submitted requests will appear here as they enter CRIOC routing.
         </PageState>
       ) : (
         <section aria-label="Tracked requests" className="tracking-register">
@@ -78,32 +81,25 @@ function TrackedRequestRow({ request }: { request: TrackedRequest }) {
   return (
     <article className="tracking-row">
       <header>
-        <div>
-          <span>Request reference</span>
-          <h2 className="mono-ref">{request.reference}</h2>
+        <div className="tracking-row__identity">
+          <Link className="mono-ref" to={`/tracking/${request.id}`}>{request.reference}</Link>
+          <h2><Link to={`/tracking/${request.id}`}>{request.title}</Link></h2>
+          <span>Updated {formatDate(request.updatedAt, true)}</span>
         </div>
         <StatusPill label={trackingStatusLabel(request.status)} status={request.status} />
       </header>
       <dl>
         <div><dt>Current owner</dt><dd>{request.currentOwner ?? "Awaiting routing"}</dd></div>
         <div><dt>Required by</dt><dd>{formatDate(request.requiredBy)}</dd></div>
-        <div><dt>Last updated</dt><dd>{formatDate(request.updatedAt, true)}</dd></div>
+        <div><dt>Submitted</dt><dd>{formatDate(request.createdAt)}</dd></div>
       </dl>
-      <div className="tracking-route">
-        <span>Route</span>
-        {request.route.length > 0 ? (
-          <ol>
-            {request.route.map((unit) => <li key={unit.id}>{unit.name}</li>)}
-          </ol>
-        ) : (
-          <p>Route pending</p>
-        )}
-      </div>
+      <TrackingJourney request={request} />
       {request.awaitingTeamStaffing ? (
         <p className="staffing-warning" role="status">
           Awaiting team staffing
         </p>
       ) : null}
+      <Link className="tracking-open-link" to={`/tracking/${request.id}`}>Open request <ArrowUpRight aria-hidden="true" size={15} /></Link>
     </article>
   );
 }

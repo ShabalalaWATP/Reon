@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { describe, expect, it } from "vitest";
@@ -22,7 +22,10 @@ describe("requester experience", () => {
     const view = renderApp("/requests");
     expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
     expect(screen.getAllByText("Needs your input")[0].closest("div")).toHaveTextContent("1");
-    expect(screen.getByRole("heading", { name: "In progress" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Current requests" })).toBeInTheDocument();
+    expect(screen.getAllByRole("columnheader", { name: "Reference" })).not.toHaveLength(0);
+    expect(screen.getAllByRole("columnheader", { name: "Request" })).not.toHaveLength(0);
+    expect(screen.getAllByRole("columnheader", { name: "Status" })).not.toHaveLength(0);
     expect(screen.getByText("Awaiting assignment")).toBeInTheDocument();
     const history = screen.getByText("Completed history").closest("details")!;
     expect(within(history).queryByText("Completed request")).not.toBeInTheDocument();
@@ -67,19 +70,18 @@ describe("requester experience", () => {
     const user = userEvent.setup();
     renderApp("/requests/new");
     await screen.findByRole("heading", { name: "New service request" });
-    await user.click(screen.getByRole("button", { name: "Submit request" }));
-    expect(await screen.findByText("Enter a clear request title.")).toBeInTheDocument();
-    await fillRequestForm(user);
+    expect(screen.getByRole("button", { name: "Submit request" })).toBeDisabled();
+    fillRequestForm();
     await user.click(screen.getByRole("button", { name: "Submit request" }));
     expect(await screen.findByRole("heading", { name: requestDetail.title })).toBeInTheDocument();
     expect(submitted).toMatchObject({
       title: "Quarterly service readiness summary",
-      requestingBusinessArea: "Requesting Area A",
       sensitivity: "STANDARD",
-      intendedRecipients: ["Service leadership", "Operations lead"],
+      customerUrgency: "ROUTINE",
     });
     expect(submitted).not.toHaveProperty("assignedDeliveryTeam");
     expect(submitted).not.toHaveProperty("assignedSpecialist");
+    expect(submitted).not.toHaveProperty("serviceCategory");
   });
 
   it("reports request submission failures", async () => {
@@ -92,7 +94,7 @@ describe("requester experience", () => {
     const user = userEvent.setup();
     renderApp("/requests/new");
     await screen.findByRole("heading", { name: "New service request" });
-    await fillRequestForm(user);
+    fillRequestForm();
     await user.click(screen.getByRole("button", { name: "Submit request" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Request data was rejected");
   });
@@ -131,6 +133,59 @@ describe("requester experience", () => {
     expect(await screen.findByText("4 out of 5")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Send feedback" })).not.toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
+  });
+
+  it("requires a reason and closes a request through the cancellation control", async () => {
+    let cancellation: Record<string, unknown> | undefined;
+    const cancelled = {
+      ...requestDetail,
+      status: "CANCELLED" as const,
+      version: requestDetail.version + 1,
+      currentOwner: "Customer",
+    };
+    mockFeatureFetch((url, init) => {
+      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
+      if (url.pathname.endsWith("/cancel") && init.method === "POST") {
+        cancellation = JSON.parse(String(init.body)) as Record<string, unknown>;
+        return json(cancelled);
+      }
+      if (url.pathname.endsWith(`/requests/${requestDetail.id}`)) return json(requestDetail);
+      throw new Error(`Unexpected ${url.pathname}`);
+    });
+
+    const user = userEvent.setup();
+    renderApp(`/requests/${requestDetail.id}`);
+    await user.click(await screen.findByRole("button", { name: "Cancel request" }));
+    const confirm = screen.getByRole("button", { name: "Confirm cancellation" });
+    expect(confirm).toBeDisabled();
+    await user.type(screen.getByLabelText(/Cancellation reason/), "The requirement has been withdrawn.");
+    await user.click(confirm);
+
+    await waitFor(() => expect(cancellation).toEqual({
+      expectedVersion: requestDetail.version,
+      reason: "The requirement has been withdrawn.",
+    }));
+    expect(await screen.findByText("Cancelled")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cancel request" })).not.toBeInTheDocument();
+  });
+
+  it("keeps a request open when cancellation is rejected", async () => {
+    mockFeatureFetch((url, init) => {
+      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
+      if (url.pathname.endsWith("/cancel") && init.method === "POST") return json({ detail: "Cancellation conflict" }, 409);
+      if (url.pathname.endsWith(`/requests/${requestDetail.id}`)) return json(requestDetail);
+      throw new Error(`Unexpected ${url.pathname}`);
+    });
+    const user = userEvent.setup();
+    renderApp(`/requests/${requestDetail.id}`);
+    await user.click(await screen.findByRole("button", { name: "Cancel request" }));
+    await user.type(screen.getByLabelText(/Cancellation reason/), "The requirement may no longer be needed.");
+    await user.click(screen.getByRole("button", { name: "Confirm cancellation" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Cancellation conflict");
+    await user.click(screen.getByRole("button", { name: "Keep request open" }));
+    expect(screen.getByRole("button", { name: "Cancel request" })).toBeInTheDocument();
   });
 
   it("keeps a released legacy product downloadable when no managed package exists", async () => {
@@ -261,16 +316,25 @@ function releasedPackage(requestId: string) {
   };
 }
 
-async function fillRequestForm(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText(/Request title/), "Quarterly service readiness summary");
-  await user.selectOptions(screen.getByLabelText(/Service category/), "Advisory support");
-  await user.type(screen.getByLabelText(/Description of the need/), "Provide a clear summary of current service readiness.");
-  await user.type(screen.getByLabelText(/Desired outcome/), "Leaders can make the next quarterly decision.");
-  await user.type(screen.getByLabelText(/Background and known context/), "Quarterly review context.");
-  await user.type(screen.getByLabelText(/Required-by date/), "2026-09-10");
-  await user.selectOptions(screen.getByLabelText(/Preferred product type/), "Briefing note");
-  await user.type(screen.getByLabelText(/Why the date matters/), "The review is scheduled the following day.");
-  await user.type(screen.getByLabelText(/Success criteria/), "All agreed measures and next steps are covered.");
-  await user.type(screen.getByLabelText(/Intended recipients/), "Service leadership\nOperations lead");
-  await user.type(screen.getByLabelText(/Handling instructions/), "Standard handling applies.");
+function fillRequestForm() {
+  setField(/Request title/, "Quarterly service readiness summary");
+  setField(/Description of the need/, "Provide a clear summary of current service readiness.");
+  setField(/Specific question to answer/, "What does the evidence show about readiness?");
+  setField(/Desired outcome/, "Leaders can make the next quarterly decision.");
+  setField(/Background and known context/, "Quarterly review context.");
+  setField(/Subject area or location/, "Synthetic service area");
+  setField(/Relevant period starts/, "2026-09-01");
+  setField(/Relevant period ends/, "2026-09-05");
+  setField(/Activity, project or decision supported/, "The quarterly planning decision.");
+  setField(/Latest useful delivery date/, "2026-09-10");
+  setField(/Preferred product type/, "Briefing note");
+  setField(/Why this date matters/, "The review is scheduled the following day.");
+  setField(/Success criteria/, "All agreed measures and next steps are covered.");
+  setField(/Constraints or caveats/, "No known constraints.");
+  setField(/Supporting information available/, "No supporting material is available.");
+  setField(/Handling instructions/, "Standard handling applies.");
+}
+
+function setField(label: RegExp, value: string) {
+  fireEvent.change(screen.getByLabelText(label), { target: { value } });
 }

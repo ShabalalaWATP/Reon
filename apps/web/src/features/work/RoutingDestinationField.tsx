@@ -19,9 +19,9 @@ type Props = {
 };
 
 const optionSuffix: Record<OrganisationUnit["staffingStatus"], string> = {
-  ROUTING_POOL: "routing pool",
-  STAFFED: "staffed",
-  UNSTAFFED: "awaiting staffing",
+  ROUTING_POOL: "routing function",
+  STAFFED: "team staffed",
+  UNSTAFFED: "team awaiting staffing",
 };
 
 export function RoutingDestinationField({

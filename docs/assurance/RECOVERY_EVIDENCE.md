@@ -42,10 +42,10 @@ integrity verification in 1.22 seconds. These interruption exercises completed
 inside the 15-minute dependency-recovery target with no lost committed request,
 duplicate task or invented transition.
 
-## Product Evolution rehearsal, 8 August 2026
+## Expanded-capability rehearsal, 8 August 2026
 
-The PostgreSQL-backed Camunda 8.9.14 local topology completed both the DIGOC,
-NCGI-A Ops and OSG Team path, including two clarification loops, and the SYGOC,
+The PostgreSQL-backed Camunda 8.9.14 local topology completed both the JOCK,
+ACSA-B Ops and SSG Team path, including two clarification loops, and the SYGOC,
 Nimbus Ops and Beacon Team path. Both process instances reached `COMPLETED` and
 business-ID uniqueness remained enforced.
 
@@ -68,6 +68,6 @@ failed readiness after the current image was applied. It was not rewritten or
 backdated. A separate empty target project then migrated to 0018, seeded through
 the governed configuration lifecycle, received explicit workflow availability
 attestation and completed `SR-2026-2E06B694` through the alternative route. A
-second request returned the current route as `JIOC [JIOC]` and exactly `DIGOC`,
+second request returned the current route as `CRIOC [CRIOC]` and exactly `JOCK`,
 `SYGOC` and `MYGOC` as direct destinations. The isolated containers, networks and
 volumes were removed after the rehearsal; the long-lived QA data was retained.

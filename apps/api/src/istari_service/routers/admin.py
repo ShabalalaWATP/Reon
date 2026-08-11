@@ -14,7 +14,16 @@ from istari_service.dependencies import (
     DatabaseSession,
     ElevatedMutationActor,
 )
+from istari_service.repositories.account_requests import (
+    SqlAlchemyAccountRequestRepository,
+)
 from istari_service.repositories.admin import SqlAlchemyAdminRepository
+from istari_service.schemas.account_requests import (
+    AccountRequestApprove,
+    AccountRequestList,
+    AccountRequestReject,
+    AccountRequestView,
+)
 from istari_service.schemas.admin import (
     AdminOrganisationRename,
     AdminStatusPatch,
@@ -24,6 +33,7 @@ from istari_service.schemas.admin import (
     AdminUserPatch,
 )
 from istari_service.schemas.organisation import OrganisationUnitView
+from istari_service.services.account_request_service import AccountRequestService
 from istari_service.services.admin_service import AdminService
 
 router = APIRouter(prefix="/admin", tags=["platform-administration"])
@@ -38,6 +48,64 @@ def _service(
         SqlAlchemyAdminRepository(session),
         settings,
         cast(PasswordHasher, request.app.state.password_hasher),
+    )
+
+
+def _account_service(
+    request: Request,
+    session: DatabaseSession,
+    settings: AppSettings,
+) -> AccountRequestService:
+    return AccountRequestService(
+        SqlAlchemyAccountRequestRepository(session),
+        settings,
+        _service(request, session, settings),
+    )
+
+
+@router.get("/account-requests", response_model=AccountRequestList)
+async def list_account_requests(
+    request: Request,
+    actor: CurrentActor,
+    session: DatabaseSession,
+    settings: AppSettings,
+) -> AccountRequestList:
+    return AccountRequestList(
+        items=await _account_service(request, session, settings).list(actor)
+    )
+
+
+@router.post(
+    "/account-requests/{account_request_id}/approve",
+    response_model=AccountRequestView,
+)
+async def approve_account_request(
+    account_request_id: UUID,
+    payload: AccountRequestApprove,
+    request: Request,
+    actor: ElevatedMutationActor,
+    session: DatabaseSession,
+    settings: AppSettings,
+) -> AccountRequestView:
+    return await _account_service(request, session, settings).approve(
+        actor, account_request_id, payload.expected_version
+    )
+
+
+@router.post(
+    "/account-requests/{account_request_id}/reject",
+    response_model=AccountRequestView,
+)
+async def reject_account_request(
+    account_request_id: UUID,
+    payload: AccountRequestReject,
+    request: Request,
+    actor: ElevatedMutationActor,
+    session: DatabaseSession,
+    settings: AppSettings,
+) -> AccountRequestView:
+    return await _account_service(request, session, settings).reject(
+        actor, account_request_id, payload
     )
 
 

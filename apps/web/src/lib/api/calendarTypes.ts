@@ -17,6 +17,7 @@ export interface CalendarOccurrence {
   subjectUserId: string;
   subjectDisplayName: string;
   teamId: string | null;
+  requestId?: string | null;
   allDay: boolean;
   timeZone: string;
   recurrence: RecurrenceFrequency;
@@ -41,7 +42,7 @@ export interface CalendarEventInput {
 
 export interface CalendarEventResult { eventId: string; version: number }
 export interface TeamCalendarEventInput extends CalendarEventInput { grantId: string }
-export interface CommitmentInput extends TeamCalendarEventInput { subjectUserId: string }
+export interface CommitmentInput extends TeamCalendarEventInput { subjectUserId: string; requestId: string }
 export interface CalendarEventUpdateInput extends CalendarEventInput { expectedVersion: number }
 export interface OccurrenceCancelInput { expectedVersion: number; occurrenceStart: string; reason: string }
 export interface OccurrenceEditInput extends OccurrenceCancelInput { title: string; notes: string; replacementStart: string; replacementEnd: string }

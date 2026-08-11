@@ -6,6 +6,7 @@ export const statisticsApi = {
     apiRequest<StatisticsScopeList>("/statistics/scopes"),
   statistics: (input: {
     scopeId: string;
+    unitId: string;
     from: string;
     to: string;
     timeZone: string;

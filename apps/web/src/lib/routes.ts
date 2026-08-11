@@ -22,11 +22,20 @@ const queueRoutes: Partial<Record<UserRole, string>> = {
   QUALITY_RELEASE: "/quality-release",
 };
 
+const queueLabels: Partial<Record<UserRole, string>> = {
+  INTAKE_TRIAGE: "CRIOC routing queue",
+  SERVICE_COORDINATION: "Incoming requests",
+  OPERATIONS_ALLOCATION: "Ops routing queue",
+  DELIVERY_TEAM_LEAD: "Team work queue",
+  DELIVERY_SPECIALIST: "Production queue",
+  QUALITY_RELEASE: "Quality and release queue",
+};
+
 export const roleLabels: Record<UserRole, string> = {
   PLATFORM_ADMIN: "Platform Administrator",
   REQUESTER: "Customer",
-  INTAKE_TRIAGE: "JIOC Routing User",
-  SERVICE_COORDINATION: "Command Routing User",
+  INTAKE_TRIAGE: "CRIOC Routing User",
+  SERVICE_COORDINATION: "Request Coordination User",
   OPERATIONS_ALLOCATION: "Ops Routing User",
   DELIVERY_TEAM_LEAD: "Team Manager",
   DELIVERY_SPECIALIST: "Team Analyst",
@@ -34,6 +43,15 @@ export const roleLabels: Record<UserRole, string> = {
 };
 
 export type NavigationItem = { label: string; path: string };
+
+export type NavigationContext = {
+  statisticsAvailable?: boolean;
+  workspace?: { id: string; name: string };
+};
+
+export function queueLabelForRole(role: UserRole) {
+  return queueLabels[role] ?? "Work queue";
+}
 
 export function isNavigationItemActive(pathname: string, path: string) {
   if (path === "/requests") {
@@ -47,38 +65,60 @@ export const trackingRoles: UserRole[] = [
   "OPERATIONS_ALLOCATION",
 ];
 
-const organisationLink = { label: "Organisation", path: "/organisation" };
+const organisationLink = { label: "Organisation directory", path: "/organisation" };
+const personalCalendarLink = { label: "Personal calendar", path: "/calendar/month" };
 
 export function homeRouteForRole(role: UserRole, capabilities: ServerCapabilities) {
+  if (role === "REQUESTER") return roleRoutes.REQUESTER;
+  if (
+    capabilities.statistics
+    && ["PLATFORM_ADMIN", "INTAKE_TRIAGE", "SERVICE_COORDINATION", "OPERATIONS_ALLOCATION", "DELIVERY_TEAM_LEAD", "QUALITY_RELEASE"].includes(role)
+  ) return "/overview";
   return capabilities.myWork ? "/my-work" : roleRoutes[role];
 }
 
-export function navigationForRole(role: UserRole, capabilities = disabledCapabilities): NavigationItem[] {
+export function navigationForRole(
+  role: UserRole,
+  capabilities = disabledCapabilities,
+  context: NavigationContext = {},
+): NavigationItem[] {
   if (role === "REQUESTER") {
     return [
-      ...(capabilities.myWork ? [{ label: "My work", path: "/my-work" }] : []),
       { label: "My requests", path: "/requests" },
       { label: "New request", path: "/requests/new" },
+      personalCalendarLink,
       organisationLink,
     ];
   }
   if (role === "PLATFORM_ADMIN") {
     return [
-      ...(capabilities.myWork ? [{ label: "My work", path: "/my-work" }] : []),
+      ...(capabilities.statistics ? [{ label: "Home", path: "/overview" }] : []),
+      ...(capabilities.myWork ? [{ label: "My assigned actions", path: "/my-work" }] : []),
       { label: "User accounts", path: "/admin/users" },
       ...(capabilities.configuration ? [{ label: "Configuration", path: "/admin/configuration" }] : []),
+      ...(context.statisticsAvailable ? [{ label: "Operational statistics", path: "/statistics" }] : []),
+      personalCalendarLink,
       organisationLink,
     ];
   }
   const navigation = [
-    ...(capabilities.myWork ? [{ label: "My work", path: "/my-work" }] : []),
-    { label: role === "DELIVERY_SPECIALIST" ? "Production queue" : "Work queue", path: queueRoutes[role]! },
+    ...(role !== "DELIVERY_SPECIALIST" && capabilities.statistics ? [{ label: "Home", path: "/overview" }] : []),
+    ...(capabilities.myWork ? [{ label: "My assigned actions", path: "/my-work" }] : []),
+    { label: queueLabelForRole(role), path: queueRoutes[role]! },
+    ...(context.workspace ? [{
+      label: `${context.workspace.name} workspace`,
+      path: `/teams/${context.workspace.id}/overview`,
+    }] : []),
   ];
+  navigation.push(personalCalendarLink);
   if (role === "DELIVERY_SPECIALIST" && capabilities.products) {
     navigation.push({ label: "Product package", path: "/product-packages/new" });
   }
   if (trackingRoles.includes(role)) {
-    navigation.push({ label: "Tracking", path: "/tracking" });
+    navigation.push({ label: "Request tracking", path: "/tracking" });
+  }
+  if (context.statisticsAvailable) {
+    navigation.push({ label: "Operational statistics", path: "/statistics" });
   }
   navigation.push(organisationLink);
   return navigation;

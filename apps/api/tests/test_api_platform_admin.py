@@ -68,6 +68,7 @@ async def test_admin_access_search_shape_and_request_content_denial(
     assert set(body["items"][0]) == {
         "id",
         "username",
+        "email",
         "displayName",
         "role",
         "scope",
@@ -101,7 +102,8 @@ async def test_admin_crud_contract_version_validation_and_session_revocation(
     )
     assert created.status_code == 201, created.text
     account = created.json()
-    assert account["username"] == "admin74"
+    assert account["username"] == "admin100"
+    assert account["email"] == "admin100@istari.example.test"
     assert account["displayName"] == "Fictional New User"
     assert account["scope"] == "Requesting Area C"
     assert account["isActive"] is True
@@ -112,7 +114,7 @@ async def test_admin_crud_contract_version_validation_and_session_revocation(
     assert logged_in["user"]["role"] == "REQUESTER"
     target_cookie = harness.client.cookies.get(harness.settings.session_cookie_name)
     await _admin_login(harness)
-    osg_id = str(await harness.unit_id("OSG_TEAM"))
+    ssg_id = str(await harness.unit_id("SSG_TEAM"))
     updated = await harness.client.patch(
         f"/api/v1/admin/users/{account['id']}",
         json={
@@ -120,7 +122,7 @@ async def test_admin_crud_contract_version_validation_and_session_revocation(
                 name="Fictional Analyst",
                 role="DELIVERY_SPECIALIST",
                 scope="ignored by team policy",
-                units=[osg_id],
+                units=[ssg_id],
             ),
             "expectedVersion": account["version"],
         },
@@ -128,7 +130,7 @@ async def test_admin_crud_contract_version_validation_and_session_revocation(
     )
     assert updated.status_code == 200, updated.text
     changed = updated.json()
-    assert changed["scope"] == "OSG Team"
+    assert changed["scope"] == "SSG Team"
     assert changed["version"] == 2
     assert changed["memberships"][0]["organisationUnitKind"] == "TEAM"
 
@@ -200,7 +202,7 @@ async def test_admin_managed_team_manager_receives_and_loses_exact_authority(
 ) -> None:
     harness = api_harness
     await _admin_login(harness)
-    team_id = await harness.unit_id("OSG_TEAM")
+    team_id = await harness.unit_id("SSG_TEAM")
     created = await harness.client.post(
         "/api/v1/admin/users",
         json=_profile(
@@ -262,10 +264,10 @@ async def test_membership_compatibility_missing_objects_and_audit_integrity(
 ) -> None:
     harness = api_harness
     await _admin_login(harness)
-    osg_id = str(await harness.unit_id("OSG_TEAM"))
+    ssg_id = str(await harness.unit_id("SSG_TEAM"))
     invalid = await harness.client.post(
         "/api/v1/admin/users",
-        json=_profile(role="REQUESTER", units=[osg_id]),
+        json=_profile(role="REQUESTER", units=[ssg_id]),
         headers=harness.mutation_headers(),
     )
     assert invalid.status_code == 409
@@ -273,7 +275,7 @@ async def test_membership_compatibility_missing_objects_and_audit_integrity(
         "/api/v1/admin/users",
         json=_profile(
             role="DELIVERY_TEAM_LEAD",
-            units=[osg_id, str(await harness.unit_id("CEDAR_TEAM"))],
+            units=[ssg_id, str(await harness.unit_id("CEDAR_TEAM"))],
         ),
         headers=harness.mutation_headers(),
     )

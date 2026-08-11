@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Query
@@ -69,9 +70,15 @@ async def list_work_items(
     settings: AppSettings,
     limit: int = Query(default=50, ge=1, le=100),
     cursor: str | None = Query(default=None, max_length=500),
+    unit_id: Annotated[UUID | None, Query(alias="unitId")] = None,
+    request_id: Annotated[UUID | None, Query(alias="requestId")] = None,
 ) -> WorkItemList:
     items, next_cursor = await _service(session, engine, sessions, settings).list_page(
-        actor, limit=limit, cursor=cursor
+        actor,
+        limit=limit,
+        cursor=cursor,
+        unit_id=unit_id,
+        request_id=request_id,
     )
     return WorkItemList(items=items, next_cursor=next_cursor)
 
@@ -116,11 +123,10 @@ async def search_related_records(
     work_id: UUID,
     actor: CurrentActor,
     session: DatabaseSession,
-    query: str = Query(min_length=2, max_length=120),
-    limit: int = Query(default=20, ge=1, le=20),
+    query: str | None = Query(default=None, min_length=2, max_length=240),
+    limit: int = Query(default=10, ge=1, le=20),
 ) -> RelatedRecordCandidateList:
-    items = await _related_service(session).search(actor, work_id, query, limit)
-    return RelatedRecordCandidateList(items=items)
+    return await _related_service(session).search(actor, work_id, query, limit)
 
 
 @router.get("/{work_id}/request-links", response_model=RequestLinkWorkspace)

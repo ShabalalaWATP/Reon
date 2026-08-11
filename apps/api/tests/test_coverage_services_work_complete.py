@@ -60,7 +60,6 @@ async def test_complete_conceals_missing_and_rejects_invalid_states() -> None:
     service = WorkService(repository, dispatcher)
     progress = ProgressRequest(
         action="progress",
-        category="Research",
         priority="LOW",
         destination_unit_id=uuid4(),
     )
@@ -101,13 +100,30 @@ async def test_assignment_validation_rejects_invalid_specialists() -> None:
         value.record,
         ProgressRequest(
             action="progress",
-            category="Research",
             priority="LOW",
             destination_unit_id=uuid4(),
         ),
     )
-    payload = AssignSpecialist(action="assign", specialist_id=uuid4())
-    with pytest.raises(InvalidAction, match="outside this delivery team"):
+    duplicate_assignment = uuid4()
+    with pytest.raises(
+        InvalidAction,
+        match="Lead Analyst cannot also be a Contributor",
+    ):
+        await service._validate_assignment(
+            value.record,
+            AssignSpecialist(
+                action="assign",
+                specialist_id=duplicate_assignment,
+                contributor_ids=[duplicate_assignment],
+                reason="The same person cannot hold both assignment positions.",
+            ),
+        )
+    payload = AssignSpecialist(
+        action="assign",
+        specialist_id=uuid4(),
+        reason="The Manager selected the accountable delivery Lead.",
+    )
+    with pytest.raises(InvalidAction, match="active member of this team"):
         await service._validate_assignment(value.record, payload)
     repository.found_specialist = actor(UserRole.DELIVERY_TEAM_LEAD)
     with pytest.raises(InvalidAction):
@@ -146,7 +162,6 @@ async def test_complete_maps_dispatch_failures_after_committed_intent(
             repository.value.record.id,
             ProgressRequest(
                 action="progress",
-                category="Research",
                 priority="HIGH",
                 destination_unit_id=uuid4(),
             ),
@@ -163,7 +178,6 @@ async def test_complete_returns_projected_detail_and_handles_missing_dispatch() 
         repository.value.record.id,
         ProgressRequest(
             action="progress",
-            category="Research",
             priority="HIGH",
             destination_unit_id=uuid4(),
         ),

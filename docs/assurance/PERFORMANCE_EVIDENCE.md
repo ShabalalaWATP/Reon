@@ -1,7 +1,7 @@
 # Performance evidence
 
-> Historical MVP evidence. Its workload and thresholds do not establish
-> Product Evolution capacity, search, managed-product or recovery performance.
+> Dated performance evidence. Its workload and thresholds do not establish
+> current search, managed-product or recovery performance.
 
 ## Environment and thresholds
 
@@ -42,7 +42,7 @@ The report is `output/load/formal-baseline-read-load.json`, SHA-256
 ## Agreed-scale fixture
 
 `scripts/seed-performance-data.py` deterministically created a temporary,
-non-sensitive OSG Team fixture with:
+non-sensitive SSG Team fixture with:
 
 - 250 active users in the database;
 - 5,000 non-recurring calendar events, each producing one occurrence in the
@@ -103,9 +103,8 @@ Before seeding, PostgreSQL was captured as a custom-format dump, SHA-256
 After the run, the API was stopped, that dump was restored with fail-fast clean
 replacement, and the API returned healthy. Read-only verification found 71
 active demo users, four retained service requests and zero performance package
-or calendar records. The temporary performance accounts were therefore not part
-of the then-current 72-account MVP organisation. Product Evolution later added
-the independent configuration approver `admin73`.
+or calendar records. The temporary performance accounts were not part of the
+72-account fixture dataset used by this dated run.
 
 DOD-32 is evidence ready for the local MVP. Production sizing, representative
 network latency and an externally accepted capacity model remain deployment

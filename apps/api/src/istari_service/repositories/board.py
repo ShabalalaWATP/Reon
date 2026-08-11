@@ -57,6 +57,11 @@ class SqlAlchemyBoardRepository:
     ) -> tuple[list[BoardItem], str | None]:
         return await self._page_reads.page(team_id, filters, cursor, limit)
 
+    async def board_column_counts(
+        self, team_id: UUID, filters: BoardFilters
+    ) -> dict[BoardColumn, int]:
+        return await self._page_reads.filtered_column_counts(team_id, filters)
+
     async def column_count(
         self,
         team_id: UUID,

@@ -10,6 +10,7 @@ from istari_service.calendar_capacity import CalendarCapacityService
 from istari_service.calendar_models import (
     CalendarEvent,
     CalendarEventKind,
+    CalendarVisibility,
     CommitmentStatus,
     RecurrenceFrequency,
 )
@@ -21,7 +22,7 @@ from istari_service.errors import (
     TeamWorkspaceNotFound,
 )
 from istari_service.management_models import ManagementAction
-from istari_service.models import UserRole
+from istari_service.organisation_models import OrganisationKind
 from istari_service.repositories.calendar import SqlAlchemyCalendarRepository
 from istari_service.repositories.management import resolve_management_scope
 from istari_service.repositories.team_workspaces import (
@@ -72,15 +73,19 @@ class CalendarService:
     async def create_personal(
         self, actor: Actor, command: PersonalEventCommand
     ) -> CalendarEventResult:
-        _require(
-            actor.role in {UserRole.DELIVERY_TEAM_LEAD, UserRole.DELIVERY_SPECIALIST},
-            CalendarItemNotFound(),
-        )
         _command(command)
+        _require(
+            command.visibility
+            in {CalendarVisibility.TEAM_DETAIL, CalendarVisibility.PRIVATE},
+            InvalidCalendarChange(
+                "Choose team-visible detail or select Private appointment."
+            ),
+        )
         event = await self._calendar.create_event(
             actor_id=actor.id,
             subject_id=actor.id,
             team_id=None,
+            request_id=None,
             kind=CalendarEventKind.PERSONAL,
             commitment_status=CommitmentStatus.NOT_REQUIRED,
             command=command,
@@ -98,6 +103,7 @@ class CalendarService:
             actor_id=actor.id,
             subject_id=actor.id,
             team_id=team_id,
+            request_id=None,
             kind=CalendarEventKind.TEAM,
             commitment_status=CommitmentStatus.NOT_REQUIRED,
             command=command,
@@ -107,16 +113,23 @@ class CalendarService:
     async def create_commitment(
         self, actor: Actor, team_id: UUID, command: CommitmentCommand
     ) -> CalendarEventResult:
+        access = await self._workspaces.require_read(actor.id, team_id)
+        _require(access.unit_kind is OrganisationKind.TEAM, CalendarItemNotFound())
         await self._authorise(
             actor, team_id, command.grant_id, ManagementAction.CALENDAR
         )
         _command(command)
         members = await self._calendar.current_team_members(team_id)
         _require(command.subject_user_id in members, CalendarItemNotFound())
+        _require(
+            await self._calendar.request_belongs_to_team(command.request_id, team_id),
+            CalendarItemNotFound(),
+        )
         event = await self._calendar.create_event(
             actor_id=actor.id,
             subject_id=command.subject_user_id,
             team_id=team_id,
+            request_id=command.request_id,
             kind=CalendarEventKind.COMMITMENT,
             commitment_status=CommitmentStatus.PENDING,
             command=command,
@@ -181,6 +194,7 @@ class CalendarService:
             actor_id=actor.id,
             subject_id=event.subject_user_id,
             team_id=event.team_id,
+            request_id=event.request_id,
             kind=event.kind,
             commitment_status=event.commitment_status,
             command=CalendarEventCommand.model_validate(command.model_dump()),
@@ -262,7 +276,6 @@ class CalendarService:
     async def _authorise(
         self, actor: Actor, team_id: UUID, grant_id: UUID, action: ManagementAction
     ) -> None:
-        _require(actor.role is UserRole.DELIVERY_TEAM_LEAD, TeamWorkspaceNotFound())
         scope = await resolve_management_scope(
             self._calendar.session,
             subject_user_id=actor.id,

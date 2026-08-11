@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, time, timedelta
+from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from istari_service.domain import Actor
@@ -35,6 +36,7 @@ class StatisticsEvolutionService:
         from_date: date,
         to_date: date,
         time_zone_name: str,
+        selected_unit_id: UUID | None = None,
         now: datetime | None = None,
     ) -> StatisticsEvolution:
         time_zone = _validate_range(from_date, to_date, time_zone_name)
@@ -55,6 +57,7 @@ class StatisticsEvolutionService:
         dataset = await self._repository.load(
             actor,
             scope_id=scope_id,
+            selected_unit_id=selected_unit_id,
             start=start,
             end=end,
             previous_start=previous_start,
@@ -79,17 +82,19 @@ class StatisticsEvolutionService:
         result = await self.dashboard(
             actor,
             scope_id=command.scope_id,
+            selected_unit_id=command.unit_id,
             from_date=command.from_date,
             to_date=command.to_date,
             time_zone_name=command.time_zone,
             now=now,
         )
-        if result.scope.unit_id is None:
+        selected_unit = getattr(result, "selected_unit", None)
+        if selected_unit is None:
             raise StatisticsQueryInvalid("The statistics scope is unavailable.")
         await self._repository.record_denied_export(
             actor=actor,
             command=command,
-            scope_unit_id=result.scope.unit_id,
+            scope_unit_id=selected_unit.id,
             row_count=_visible_row_count(result),
             cohort_suppressed=_has_suppression(result),
             reason=EXPORT_REASON,

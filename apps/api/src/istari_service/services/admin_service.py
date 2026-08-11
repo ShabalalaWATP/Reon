@@ -1,5 +1,3 @@
-"""Bounded administrator use cases."""
-
 from __future__ import annotations
 
 from uuid import UUID
@@ -9,6 +7,7 @@ from anyio import to_thread
 from istari_service.admin_audit import append_admin_event
 from istari_service.admin_management_grants import synchronise_admin_manager_grant
 from istari_service.admin_policy import is_security_change, membership_error
+from istari_service.admin_workspace_policy import workspace_position_for
 from istari_service.auth_service import PasswordHasher
 from istari_service.config import Environment, Settings
 from istari_service.domain import Actor
@@ -28,7 +27,8 @@ from istari_service.schemas.admin import (
     AdminUserPatch,
 )
 from istari_service.schemas.organisation import OrganisationUnitView
-from istari_service.team_membership_admin import align_admin_team_membership
+from istari_service.team_membership_admin import align_admin_workspace_memberships
+from istari_service.team_models import WorkspacePosition
 
 
 class AdminService:
@@ -81,8 +81,12 @@ class AdminService:
         self._validate_memberships(payload.role, units)
         password = self._demo_password()
         password_hash = await to_thread.run_sync(self._hasher.hash, password)
+        username = await self._repository.next_username()
+        email = payload.email or f"{username}@istari.example.test"
+        await self._repository.ensure_unique_email(email)
         user = User(
-            username=await self._repository.next_username(),
+            username=username,
+            email=email,
             display_name=payload.display_name,
             password_hash=password_hash,
             role=payload.role,
@@ -91,17 +95,12 @@ class AdminService:
         )
         self._repository.session.add(user)
         await self._repository.session.flush()
-        await align_admin_team_membership(
+        position = workspace_position_for(payload)
+        await align_admin_workspace_memberships(
             self._repository.session,
             user=user,
-            next_team_id=units[0].id
-            if units
-            and payload.role
-            in {
-                UserRole.DELIVERY_TEAM_LEAD,
-                UserRole.DELIVERY_SPECIALIST,
-            }
-            else None,
+            next_unit_ids={unit.id for unit in units},
+            workspace_position=position,
             actor_id=actor.id,
         )
         await self._repository.replace_memberships(user.id, units)
@@ -110,17 +109,19 @@ class AdminService:
             actor_user_id=actor.id,
             subject_user_id=user.id,
             role=user.role,
-            team_id=units[0].id if units else None,
+            unit_ids={unit.id for unit in units},
+            workspace_position=position,
             is_active=user.is_active,
         )
         await self._repository.recalculate_teams({unit.id for unit in units})
-        await self._audit(
-            actor,
-            "USER_CREATED",
-            "USER",
-            user.id,
-            ["displayName", "role", "scope", "memberships"],
-            "Synthetic account created.",
+        await append_admin_event(
+            self._repository.session,
+            actor_id=actor.id,
+            action="USER_CREATED",
+            target_type="USER",
+            target_id=user.id,
+            changed_fields=["displayName", "email", "role", "scope", "memberships"],
+            summary="Synthetic account created.",
         )
         await self._repository.session.refresh(user)
         return (await self._repository.views([user]))[0]
@@ -135,14 +136,24 @@ class AdminService:
         self._validate_memberships(payload.role, units)
         old_ids = await self._repository.membership_ids(user.id)
         next_ids = {unit.id for unit in units}
+        old_position = await self._repository.workspace_position(user.id)
+        next_position = workspace_position_for(payload)
         next_scope = self._effective_scope(payload.role, payload.scope, units)
-        security_change = is_security_change(
-            current_role=user.role,
-            next_role=payload.role,
-            current_scope=user.scope,
-            next_scope=next_scope,
-            current_unit_ids=set(old_ids),
-            next_unit_ids=set(next_ids),
+        next_email = payload.email or user.email
+        await self._repository.ensure_unique_email(
+            next_email,
+            excluding_user_id=user.id,
+        )
+        security_change = (
+            is_security_change(
+                current_role=user.role,
+                next_role=payload.role,
+                current_scope=user.scope,
+                next_scope=next_scope,
+                current_unit_ids=set(old_ids),
+                next_unit_ids=set(next_ids),
+            )
+            or old_position is not next_position
         )
         if actor.id == user.id and payload.role is not UserRole.PLATFORM_ADMIN:
             raise InvalidAdministrationChange(
@@ -152,22 +163,29 @@ class AdminService:
             await self._repository.require_another_admin(user.id)
         if security_change:
             await self._repository.reject_active_work(user.id)
-        changed = self._changed_fields(user, payload, next_scope, old_ids)
-        if old_ids != next_ids or user.role is not payload.role:
-            await align_admin_team_membership(
+        changed = self._changed_fields(
+            user,
+            payload,
+            next_email,
+            next_scope,
+            old_ids,
+            old_position,
+            next_position,
+        )
+        if (
+            old_ids != next_ids
+            or user.role is not payload.role
+            or old_position is not next_position
+        ):
+            await align_admin_workspace_memberships(
                 self._repository.session,
                 user=user,
-                next_team_id=units[0].id
-                if units
-                and payload.role
-                in {
-                    UserRole.DELIVERY_TEAM_LEAD,
-                    UserRole.DELIVERY_SPECIALIST,
-                }
-                else None,
+                next_unit_ids=next_ids,
+                workspace_position=next_position,
                 actor_id=actor.id,
             )
         user.display_name = payload.display_name
+        user.email = next_email
         user.role = payload.role
         user.scope = next_scope
         user.version += 1
@@ -180,17 +198,19 @@ class AdminService:
             actor_user_id=actor.id,
             subject_user_id=user.id,
             role=user.role,
-            team_id=units[0].id if units else None,
+            unit_ids=next_ids,
+            workspace_position=next_position,
             is_active=user.is_active,
         )
         await self._repository.recalculate_teams(old_ids | next_ids)
-        await self._audit(
-            actor,
-            "USER_UPDATED",
-            "USER",
-            user.id,
-            changed,
-            "Synthetic account metadata updated.",
+        await append_admin_event(
+            self._repository.session,
+            actor_id=actor.id,
+            action="USER_UPDATED",
+            target_type="USER",
+            target_id=user.id,
+            changed_fields=changed,
+            summary="Synthetic account metadata updated.",
         )
         await self._repository.session.refresh(user)
         return (await self._repository.views([user]))[0]
@@ -222,17 +242,19 @@ class AdminService:
             actor_user_id=actor.id,
             subject_user_id=user.id,
             role=user.role,
-            team_id=next(iter(team_ids), None),
+            unit_ids=team_ids,
+            workspace_position=await self._repository.workspace_position(user.id),
             is_active=user.is_active,
         )
         await self._repository.recalculate_teams(team_ids)
-        await self._audit(
-            actor,
-            "USER_ACTIVATED" if payload.is_active else "USER_DEACTIVATED",
-            "USER",
-            user.id,
-            ["isActive"],
-            "Synthetic account access status updated.",
+        await append_admin_event(
+            self._repository.session,
+            actor_id=actor.id,
+            action="USER_ACTIVATED" if payload.is_active else "USER_DEACTIVATED",
+            target_type="USER",
+            target_id=user.id,
+            changed_fields=["isActive"],
+            summary="Synthetic account access status updated.",
         )
         await self._repository.session.refresh(user)
         return (await self._repository.views([user]))[0]
@@ -258,13 +280,14 @@ class AdminService:
         await self._repository.cascade_unit_rename(
             unit, old_name=old_name, new_name=payload.name
         )
-        await self._audit(
-            actor,
-            "ORGANISATION_UNIT_RENAMED",
-            "ORGANISATION_UNIT",
-            unit.id,
-            ["name"],
-            "Organisation display name updated.",
+        await append_admin_event(
+            self._repository.session,
+            actor_id=actor.id,
+            action="ORGANISATION_UNIT_RENAMED",
+            target_type="ORGANISATION_UNIT",
+            target_id=unit.id,
+            changed_fields=["name"],
+            summary="Organisation display name updated.",
         )
         await self._repository.session.refresh(unit)
         return OrganisationUnitView.model_validate(unit)
@@ -293,35 +316,23 @@ class AdminService:
     def _changed_fields(
         user: User,
         payload: AdminUserPatch,
+        next_email: str,
         next_scope: str,
         old_ids: set[UUID],
+        old_position: WorkspacePosition | None,
+        next_position: WorkspacePosition | None,
     ) -> list[str]:
         fields: list[str] = []
         if user.display_name != payload.display_name:
             fields.append("displayName")
+        if user.email != next_email:
+            fields.append("email")
         if user.role is not payload.role:
             fields.append("role")
         if user.scope != next_scope:
             fields.append("scope")
         if old_ids != set(payload.organisation_unit_ids):
             fields.append("memberships")
+        if old_position is not next_position:
+            fields.append("workspacePosition")
         return fields
-
-    async def _audit(
-        self,
-        actor: Actor,
-        action: str,
-        target_type: str,
-        target_id: UUID,
-        changed_fields: list[str],
-        summary: str,
-    ) -> None:
-        await append_admin_event(
-            self._repository.session,
-            actor_id=actor.id,
-            action=action,
-            target_type=target_type,
-            target_id=target_id,
-            changed_fields=changed_fields,
-            summary=summary,
-        )

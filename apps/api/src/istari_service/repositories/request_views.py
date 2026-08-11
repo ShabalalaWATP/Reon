@@ -22,6 +22,7 @@ from istari_service.repositories.projection_pagination import (
     decode_cursor,
     encode_cursor,
 )
+from istari_service.repositories.request_participants import active_contributor_views
 from istari_service.schemas.requests import (
     DeliverableView,
     FeedbackView,
@@ -48,6 +49,7 @@ def summary_from_request(
         required_by=request.required_by,
         created_at=request.created_at,
         updated_at=request.updated_at,
+        version=request.version,
         needs_requester_input=request.status
         in {
             RequestStatus.INFORMATION_REQUIRED,
@@ -137,13 +139,19 @@ async def build_request_detail(
         **summary.model_dump(),
         service_category=request.service_category,
         description=request.description,
+        question_to_answer=request.question_to_answer,
         desired_outcome=request.desired_outcome,
         background_context=request.background_context,
+        subject_area_or_location=request.subject_area_or_location,
+        coverage_start=request.coverage_start,
+        coverage_end=request.coverage_end,
+        customer_urgency=request.customer_urgency,
+        supported_activity_or_decision=request.supported_activity_or_decision,
         required_by_reason=request.required_by_reason,
         preferred_deliverable_type=request.preferred_deliverable_type,
         success_criteria=request.success_criteria,
-        requesting_business_area=request.requesting_business_area,
-        intended_recipients=request.intended_recipients,
+        constraints_or_caveats=request.constraints_or_caveats,
+        supporting_information=request.supporting_information,
         sensitivity=Sensitivity(request.sensitivity),
         handling_instructions=request.handling_instructions,
         requester=RequesterView(
@@ -156,6 +164,7 @@ async def build_request_detail(
             if specialist
             else None
         ),
+        contributors=await active_contributor_views(session, request_id),
         events=[
             RequestEventView(
                 id=event.id,

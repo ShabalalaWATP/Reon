@@ -36,7 +36,7 @@ function Invoke-WorkflowAvailabilityAttestation {
         }
     }
     else {
-        $apiDirectory = Join-Path $RepositoryRoot "apps\api"
+        $apiDirectory = Join-Path $RepositoryRoot "apps/api"
         & uv run --directory $apiDirectory python -m istari_service.maintenance `
             @maintenanceArguments
     }

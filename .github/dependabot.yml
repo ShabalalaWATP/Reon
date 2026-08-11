@@ -117,4 +117,12 @@ updates:
       timezone: Europe/London
     cooldown:
       default-days: 7
+    # These names are outputs of local Dockerfile builds, not registry inputs.
+    # Their real upstream dependencies are managed by the Docker ecosystems above.
+    ignore:
+      - dependency-name: istari-service-local-api
+      - dependency-name: istari-service-local-web
+      - dependency-name: istari/camunda-local
+      - dependency-name: istari/clamav-local
+      - dependency-name: istari/postgres-local
     open-pull-requests-limit: 5

@@ -40,6 +40,12 @@ async def perform(
     username: str,
     payload: dict[str, Any],
 ) -> dict[str, Any]:
+    if payload.get("action") == "assign" and "reason" not in payload:
+        payload = {
+            **payload,
+            "contributorIds": payload.get("contributorIds", []),
+            "reason": "The Manager selected this accountable delivery team.",
+        }
     await harness.login(username)
     item = await current_item(harness)
     payload = await _with_routing_destination(harness, item["id"], payload)
@@ -58,9 +64,9 @@ async def _with_routing_destination(
     payload: dict[str, Any],
 ) -> dict[str, Any]:
     code_by_action = {
-        "progress": "DIGOC",
-        "send_to_allocation": "NCGI_A_OPS",
-        "allocate": "OSG_TEAM",
+        "progress": "JOCK",
+        "send_to_allocation": "ACSA_B_OPS",
+        "allocate": "SSG_TEAM",
     }
     code = code_by_action.get(str(payload.get("action")))
     if code is None or "destinationUnitId" in payload:
@@ -78,7 +84,7 @@ async def reach_coordination(harness: ApiHarness) -> str:
     await perform(
         harness,
         "admin4",
-        {"action": "progress", "category": "Research support", "priority": "MEDIUM"},
+        {"action": "progress", "priority": "MEDIUM"},
     )
     return request_id
 

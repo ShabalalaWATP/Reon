@@ -31,7 +31,7 @@ async def test_real_activity_populates_only_the_exact_statistics_scope(
     await _respond_to_notification(harness)
     team_id, grant_id = await _close_iteration_and_commit_capacity(harness)
     await _backfill_access_and_prove_idempotency(harness, request_id)
-    root_id = await harness.unit_id("JIOC")
+    root_id = await harness.unit_id("CRIOC")
 
     async with harness.sessions() as session:
         facts = list(
@@ -166,8 +166,8 @@ async def _close_iteration_and_commit_capacity(
     harness: ApiHarness,
 ) -> tuple[UUID, str]:
     await harness.login("admin8")
-    team_id = await harness.unit_id("OSG_TEAM")
-    grant_id = str(management_grant_id("admin8", "OSG_TEAM"))
+    team_id = await harness.unit_id("SSG_TEAM")
+    grant_id = str(management_grant_id("admin8", "SSG_TEAM"))
     owner_id = str(await harness.user_id("admin11"))
     contributor_id = str(await harness.user_id("admin12"))
     today = datetime.now(UTC).date()

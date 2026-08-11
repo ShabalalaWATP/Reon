@@ -1,5 +1,6 @@
 @import "./tokens.css";
 @import "./base.css";
+@import "./classification.css";
 @import "./login.css";
 @import "./shell.css";
 @import "./requests.css";
@@ -7,11 +8,10 @@
 @import "./operations.css";
 @import "./admin.css";
 @import "./statistics.css";
-@import "./teams.css";
-@import "./calendar.css";
-@import "./board.css";
 @import "./my-work.css";
 @import "./notifications.css";
 @import "./products.css";
 @import "./configuration.css";
+@import "./profile.css";
+@import "./overview.css";
 @import "./responsive.css";

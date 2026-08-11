@@ -51,11 +51,11 @@ export function RequestDashboardPage() {
   return (
     <main className="page-stack">
       <header className="page-heading">
-        <div><span>Customer request register</span><h1>My requests</h1><p>Follow current work, respond when needed and download released products.</p></div>
+        <div><span>Customer request register</span><h1>My requests</h1><p>Track progress, respond to information requests and download released products. New actions also appear in notifications.</p></div>
         <Link className="button button--primary" to="/requests/new"><Plus aria-hidden="true" size={17} />New request</Link>
       </header>
       <section className="status-ledger" aria-label="Request summary">
-        <div className="status-ledger__attention"><span>Needs your input</span><strong>{needsInput.length}</strong><small>Waiting for a response from you</small></div>
+        <div className="status-ledger__attention"><span>Needs your input</span><strong>{needsInput.length}</strong><small>{needsInput.length > 0 ? "Open the request to respond" : "Nothing is waiting for you"}</small></div>
         <dl><div><dt>In progress</dt><dd>{inProgress.length}</dd></div><div><dt>Completed</dt><dd>{completed.length}</dd></div><div><dt>Total requests</dt><dd>{requests.length}</dd></div></dl>
       </section>
       <DraftRegister items={drafts} />
@@ -71,7 +71,7 @@ export function RequestDashboardPage() {
       ) : (
         <>
           {needsInput.length > 0 ? <RequestSection eyebrow="Action required" items={needsInput} title="Needs your input" /> : null}
-          <RequestSection eyebrow="Current work" items={inProgress} title="In progress" />
+          <RequestSection eyebrow="Request register" items={inProgress} title="Current requests" />
           {completed.length > 0 ? <CompletedHistory items={completed} /> : null}
           <LoadMoreButton
             hasMore={query.hasNextPage}

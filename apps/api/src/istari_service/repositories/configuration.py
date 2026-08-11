@@ -315,6 +315,10 @@ class SqlAlchemyConfigurationRepository:
         version.version += 1
         registry.active_version_id = version.id
         registry.version += 1
+        # PostgreSQL validates the activation evidence against the persisted
+        # candidate and registry state. Flush those changes before inserting
+        # the evidence row so the trigger observes the approved transition.
+        await self.session.flush()
         self.session.add(
             ConfigurationActivation(
                 configuration_version_id=version.id,
