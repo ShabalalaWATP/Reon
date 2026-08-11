@@ -24,6 +24,21 @@
 .action-panel { position: sticky; top: 90px; align-self: start; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; background: var(--surface-raised); }
 .action-panel h2 { margin: 0 0 7px; font-size: 1.05rem; }
 .action-panel > p { color: var(--muted); font-size: .84rem; line-height: 1.5; }
+.action-panel__header { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.action-panel__header .section-heading { margin-bottom: 0; }
+.action-panel__header h2 { margin-bottom: 0; }
+.action-panel__toggle { display: grid; flex: 0 0 auto; place-items: center; width: 32px; height: 32px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: transparent; color: var(--muted); transition: border-color var(--speed-fast), color var(--speed-fast), background var(--speed-fast); }
+.action-panel__toggle:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); background: color-mix(in srgb, var(--accent) 7%, transparent); color: var(--text); }
+.action-panel__toggle svg { transition: transform var(--speed-fast); }
+.action-panel__toggle--collapsed svg { transform: rotate(-90deg); }
+.action-panel__collapsed-note { margin: 10px 0 0; }
+.action-panel__body { display: grid; gap: 15px; margin-top: 14px; }
+.action-panel__body[hidden] { display: none; }
+.action-context { display: grid; gap: 7px; border: 1px solid color-mix(in srgb, var(--warning) 34%, var(--border)); border-left: 3px solid var(--warning); border-radius: var(--radius-md); padding: 13px 15px; background: color-mix(in srgb, var(--warning) 6%, transparent); }
+.action-context > span { color: var(--warning); font-family: var(--font-mono); font-size: .64rem; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
+.action-context__question { margin: 0; font-size: .92rem; font-weight: 680; line-height: 1.5; white-space: pre-wrap; }
+.action-context__reason { margin: 0; color: var(--muted); font-size: .78rem; line-height: 1.5; white-space: pre-wrap; }
+.action-context > small { color: var(--muted); font-family: var(--font-mono); font-size: .68rem; }
 .work-action-form { display: grid; gap: 14px; }
 .contributor-picker { display: grid; min-width: 0; margin: 0; border: 0; padding: 0; gap: 8px; }
 .contributor-picker legend { padding: 0; color: var(--text); font-size: .87rem; font-weight: 680; }
