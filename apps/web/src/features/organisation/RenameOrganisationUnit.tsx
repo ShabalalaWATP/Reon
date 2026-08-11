@@ -23,7 +23,7 @@ export function RenameOrganisationUnit({ unit }: { unit: OrganisationUnit }) {
     event.preventDefault();
     if (name.trim().length >= 2) mutation.mutate();
   };
-  if (!editing) return <button className="button button--quiet organisation-rename-trigger" onClick={() => { setName(unit.name); mutation.reset(); setEditing(true); }} type="button">Rename<span className="sr-only"> {unit.name}</span></button>;
+  if (!editing) return <button aria-label={`Rename ${unit.name}`} className="button button--quiet organisation-rename-trigger" onClick={() => { setName(unit.name); mutation.reset(); setEditing(true); }} type="button">Rename</button>;
   const invalid = name.trim().length < 2;
   return (
     <form className="organisation-rename" onSubmit={submit}>

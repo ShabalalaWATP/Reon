@@ -17,7 +17,7 @@ export function AdminUserRegister({ users }: { users: AdminUser[] }) {
               <td>{user.scope}</td>
               <td>{user.memberships.length ? user.memberships.map((membership) => membership.organisationUnitName).join(", ") : "None"}</td>
               <td><span className={`status-pill status-pill--${user.isActive ? "success" : "attention"}`}>{user.isActive ? "Active" : "Inactive"}</span></td>
-              <td><Link className="button button--quiet" to={`/admin/users/${user.id}`}>Manage<span className="sr-only"> {user.displayName}</span></Link></td>
+              <td><Link aria-label={`Manage ${user.displayName}`} className="button button--quiet" to={`/admin/users/${user.id}`}>Manage</Link></td>
             </tr>
           ))}
         </tbody>

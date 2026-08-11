@@ -296,7 +296,7 @@ describe("authentication and route policy", () => {
           typeof handler === "function"
           && Number(timeout) >= 4_000
           && Number(timeout) <= 6_000
-        ) expire = handler;
+        ) expire = () => handler();
         return nativeSetTimeout(
           handler,
           timeout,

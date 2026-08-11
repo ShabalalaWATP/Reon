@@ -23,6 +23,6 @@ function ActionRow({ columns, item }: { columns: ActionColumn[]; item: PersonalA
     {columns.includes("REQUIRED_BY") ? <td>{formatActionDate(item.requiredBy)}</td> : null}
     {columns.includes("AGE") ? <td>{item.ageDays === 0 ? "Today" : `${item.ageDays}d`}</td> : null}
     {columns.includes("LAST_CHANGED") ? <td>{formatActionDate(item.lastChangedAt)}</td> : null}
-    <td>{item.isStale ? <span className="status-pill status-pill--attention">Refreshing</span> : href ? <Link className="button button--quiet" to={href}>Open<span className="sr-only"> {item.reference}</span></Link> : <span className="work-link-ended">Access ended</span>}</td>
+    <td>{item.isStale ? <span className="status-pill status-pill--attention">Refreshing</span> : href ? <Link aria-label={`Open ${item.reference}`} className="button button--quiet" to={href}>Open</Link> : <span className="work-link-ended">Access ended</span>}</td>
   </tr>;
 }
