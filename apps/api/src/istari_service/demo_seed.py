@@ -11,8 +11,8 @@ from istari_service.auth_service import PasswordHasher
 from istari_service.demo_membership_seed import seed_demo_memberships
 from istari_service.demo_workspace_fixtures import (
     DELIVERY_IDENTITY_FIXTURES,
-    SSG_IDENTITY_FIXTURES,
     ROUTING_IDENTITY_FIXTURES,
+    SSG_IDENTITY_FIXTURES,
 )
 from istari_service.management_seed import seed_management_grants
 from istari_service.models import User, UserRole

@@ -315,9 +315,8 @@ class WorkService:
         ):
             return False
         if bundle.record.task_status is WorkflowTaskStatus.OPEN:
-            return (
-                bundle.record.assignee_id is None
-                and may_claim(actor, bundle.record.request)
+            return bundle.record.assignee_id is None and may_claim(
+                actor, bundle.record.request
             )
         return bundle.record.assignee_id == actor.id
 
