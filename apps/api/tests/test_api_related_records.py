@@ -1,4 +1,4 @@
-"""Scoped manual related-record checks through the public API."""
+"""Scoped explainable related-request matching through the public API."""
 
 from __future__ import annotations
 
@@ -10,11 +10,11 @@ from conftest import ApiHarness, request_payload
 from istari_service.models import Deliverable, DeliverableStatus
 
 
-async def _submit(harness: ApiHarness, title: str) -> dict[str, Any]:
+async def _submit(harness: ApiHarness, title: str, **updates: Any) -> dict[str, Any]:
     await harness.login("admin2")
     response = await harness.client.post(
         "/api/v1/requests",
-        json=request_payload(title=title),
+        json=request_payload(title=title, **updates),
         headers=harness.mutation_headers(),
     )
     assert response.status_code == 201, response.text
@@ -43,6 +43,11 @@ async def test_intake_search_and_append_only_link_lifecycle(
 ) -> None:
     harness = api_harness
     candidate = await _submit(harness, "Northern readiness assessment")
+    field_match = await _submit(
+        harness,
+        "A title without the searched phrase",
+        supportingInformation="A distinctive orrery-cadence supporting record.",
+    )
     source = await _submit(harness, "Southern readiness assessment")
     item = await _claim(harness, source["id"])
     root = f"/api/v1/work-items/{item['id']}"
@@ -56,16 +61,26 @@ async def test_intake_search_and_append_only_link_lifecycle(
         f"{root}/related-records", params={"query": "Northern", "limit": 20}
     )
     assert search.status_code == 200
-    assert search.json()["items"] == [
-        {
-            "id": candidate["id"],
-            "reference": candidate["reference"],
-            "title": "Northern readiness assessment",
-            "status": "TRIAGE_REVIEW",
-            "requiredBy": candidate["requiredBy"],
-            "productAvailable": False,
-        }
-    ]
+    assert search.json()["mode"] == "TEXT_ONLY"
+    match = search.json()["items"][0]
+    assert match["id"] == candidate["id"]
+    assert match["reference"] == candidate["reference"]
+    assert match["matchStrength"] > 0
+    assert match["methods"] == ["FULL_TEXT", "STRUCTURED"]
+    assert match["evidence"][0]["field"] == "Title"
+
+    automatic = await harness.client.get(f"{root}/related-records")
+    assert automatic.status_code == 200
+    assert automatic.json()["items"][0]["id"] == candidate["id"]
+
+    field_search = await harness.client.get(
+        f"{root}/related-records", params={"query": "orrery-cadence"}
+    )
+    assert field_search.status_code == 200
+    assert field_search.json()["items"][0]["id"] == field_match["id"]
+    assert field_search.json()["items"][0]["evidence"][0]["field"] == (
+        "Supporting information"
+    )
     literal_wildcard = await harness.client.get(
         f"{root}/related-records", params={"query": "%_"}
     )
@@ -112,6 +127,21 @@ async def test_intake_search_and_append_only_link_lifecycle(
         },
     )
     assert duplicate.status_code == 409
+
+    not_relevant = await harness.client.post(
+        f"{root}/request-links",
+        headers=harness.mutation_headers(),
+        json={
+            "expectedVersion": body["sourceVersion"],
+            "targetRequestId": field_match["id"],
+            "linkType": "NOT_RELEVANT",
+            "reason": "The wording matched, but the underlying customer need differs.",
+        },
+    )
+    assert not_relevant.status_code == 200
+    assert any(
+        item["linkType"] == "NOT_RELEVANT" for item in not_relevant.json()["items"]
+    )
 
 
 async def test_related_record_scope_validation_and_released_output(
@@ -200,7 +230,7 @@ async def test_related_record_input_bounds(api_harness: ApiHarness) -> None:
         await harness.client.get(f"{root}/related-records", params={"query": "x"})
     ).status_code == 422
     assert (
-        await harness.client.get(f"{root}/related-records", params={"query": "x" * 121})
+        await harness.client.get(f"{root}/related-records", params={"query": "x" * 241})
     ).status_code == 422
     workspace = await harness.client.get(f"{root}/request-links")
     invalid_reason = await harness.client.post(

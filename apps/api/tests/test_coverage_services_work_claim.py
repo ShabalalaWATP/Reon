@@ -297,3 +297,21 @@ async def test_claim_defensively_rejects_a_preassigned_visible_bundle(
     monkeypatch.setattr(WorkService, "_visible", staticmethod(lambda *_args: True))
     with pytest.raises(ObjectNotFound):
         await service.claim(triage, value.record.id)
+
+
+@pytest.mark.asyncio
+async def test_analyst_cannot_claim_an_open_task_even_if_it_is_projected() -> None:
+    specialist = actor(UserRole.DELIVERY_SPECIALIST, scope="SSG Team")
+    value = bundle(
+        specialist,
+        status=RequestStatus.IN_PROGRESS,
+        specialist_id=specialist.id,
+        team="SSG Team",
+    )
+    repository = FakeWorkRepository(value)
+    repository.bundles = [value]
+    service = WorkService(repository, FakeCommandDispatcher(repository))
+
+    assert await service.list_items(specialist) == []
+    with pytest.raises(ObjectNotFound):
+        await service.claim(specialist, value.record.id)

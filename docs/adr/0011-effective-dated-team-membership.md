@@ -23,7 +23,9 @@ team history. Keep the existing account team fields and organisation membership
 rows as a compatibility projection of the one membership effective now.
 
 - Lock the subject account before any membership mutation.
-- Permit roster mutations only through an active exact-team `ROSTER` grant.
+- Permit roster queries and mutations only when the actor has both a current
+  exact-team `MANAGER` membership and an active exact-team `ROSTER` grant. This
+  defence-in-depth rule rejects stale or manually misconfigured Member grants.
 - Accept existing, active Analysts only. Identity and role management stay in
   the Platform Administrator service.
 - Require a bounded reason and expected version for every end or transfer.
@@ -54,4 +56,5 @@ reservation guards remain explicit prerequisites of their later phases.
 
 Migration `0006_team_memberships`, exact and cross-team API tests, scheduled
 one-winner and activation tests, active-work blocking tests, Administrator
-timeline-alignment tests and the team People workspace.
+timeline-alignment tests, a misconfigured-Member-grant denial and the sortable
+team People workspace.

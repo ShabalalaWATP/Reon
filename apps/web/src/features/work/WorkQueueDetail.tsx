@@ -70,12 +70,13 @@ export function WorkQueueDetail({
             />
             <div className="queue-detail__decision">
               {canLoadDetail ? <StaffProductAction requestId={item.requestId} requestVersion={item.requestVersion} stage={item.stage} /> : null}
-              {canLoadDetail && item.stage === "TRIAGE_REVIEW" ? (
+              {detail && item.stage === "TRIAGE_REVIEW" ? (
                 <RelatedRecordPanel csrfToken={session.csrfToken} userId={session.user.id} workItemId={item.id} />
               ) : null}
               {canLoadDetail ? <StaffDeliverableSection deliverable={detail?.deliverable} stage={item.stage} state={detailState} /> : null}
               {!canLoadDetail || detail ? (
                 <WorkActionPanel
+                  claimAllowed={session.user.role !== "DELIVERY_SPECIALIST"}
                   currentUserId={session.user.id}
                   disabled={disabled}
                   item={item}
@@ -103,7 +104,9 @@ function RequestContext({ detail, error, item, loading, onRetry, session }: {
   session: Session;
 }) {
   if (!item.assigneeId) {
-    return <PageState kind="empty" title="Claim to view request context">Request details remain protected until you take ownership.</PageState>;
+    return session.user.role === "DELIVERY_SPECIALIST"
+      ? <PageState kind="empty" title="Manager assignment required">This request must be assigned to you by a Team Manager.</PageState>
+      : <PageState kind="empty" title="Claim to view request context">Request details remain protected until you take ownership.</PageState>;
   }
   if (item.assigneeId !== session.user.id) {
     return <PageState kind="empty" title="Request context restricted">Only the current owner can view this request.</PageState>;

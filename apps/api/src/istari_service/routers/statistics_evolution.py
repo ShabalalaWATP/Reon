@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime, timedelta
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Query
 
@@ -32,6 +33,7 @@ async def get_statistics_evolution(
     actor: CurrentActor,
     session: DatabaseSession,
     scope_id: Annotated[str, Query(alias="scopeId", min_length=1, max_length=80)],
+    unit_id: Annotated[UUID | None, Query(alias="unitId")] = None,
     from_date: Annotated[date | None, Query(alias="from")] = None,
     to_date: Annotated[date | None, Query(alias="to")] = None,
     time_zone: Annotated[
@@ -43,6 +45,7 @@ async def get_statistics_evolution(
     return await _service(session).dashboard(
         actor,
         scope_id=scope_id,
+        selected_unit_id=unit_id,
         from_date=from_date or today - timedelta(days=89),
         to_date=to_date or today,
         time_zone_name=time_zone,

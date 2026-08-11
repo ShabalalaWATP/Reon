@@ -6,7 +6,7 @@ from datetime import date
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import JSON, Date, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Date, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from istari_service.models import Base, TimestampMixin
@@ -32,14 +32,20 @@ class RequestDraft(TimestampMixin, Base):
     title: Mapped[str | None] = mapped_column(String(160))
     service_category: Mapped[str | None] = mapped_column(String(80))
     description: Mapped[str | None] = mapped_column(Text)
+    question_to_answer: Mapped[str | None] = mapped_column(Text)
     desired_outcome: Mapped[str | None] = mapped_column(Text)
     background_context: Mapped[str | None] = mapped_column(Text)
+    subject_area_or_location: Mapped[str | None] = mapped_column(Text)
+    coverage_start: Mapped[date | None] = mapped_column(Date)
+    coverage_end: Mapped[date | None] = mapped_column(Date)
+    customer_urgency: Mapped[str | None] = mapped_column(String(20))
+    supported_activity_or_decision: Mapped[str | None] = mapped_column(Text)
     required_by: Mapped[date | None] = mapped_column(Date)
     required_by_reason: Mapped[str | None] = mapped_column(Text)
     preferred_deliverable_type: Mapped[str | None] = mapped_column(String(80))
     success_criteria: Mapped[str | None] = mapped_column(Text)
-    requesting_business_area: Mapped[str | None] = mapped_column(String(120))
-    intended_recipients: Mapped[list[str] | None] = mapped_column(JSON)
+    constraints_or_caveats: Mapped[str | None] = mapped_column(Text)
+    supporting_information: Mapped[str | None] = mapped_column(Text)
     sensitivity: Mapped[str | None] = mapped_column(String(20))
     handling_instructions: Mapped[str | None] = mapped_column(Text)
     version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")

@@ -93,6 +93,9 @@ class CalendarEvent(TimestampMixin, Base):
     team_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("organisation_units.id", ondelete="RESTRICT"), index=True
     )
+    request_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("service_requests.id", ondelete="RESTRICT"), index=True
+    )
     created_by_user_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id", ondelete="RESTRICT")
     )

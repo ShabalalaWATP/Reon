@@ -3,11 +3,11 @@
 from istari_service.models import RequestStatus
 
 OWNER_BY_STATUS = {
-    RequestStatus.ROUTING_PENDING: "JIOC Routing",
-    RequestStatus.TRIAGE_REVIEW: "JIOC Routing",
+    RequestStatus.ROUTING_PENDING: "CRIOC Routing",
+    RequestStatus.TRIAGE_REVIEW: "CRIOC Routing",
     RequestStatus.INFORMATION_REQUIRED: "Customer",
-    RequestStatus.COORDINATION_REVIEW: "Command Routing",
-    RequestStatus.ON_HOLD: "Command Routing",
+    RequestStatus.COORDINATION_REVIEW: "Request Coordination",
+    RequestStatus.ON_HOLD: "Request Coordination",
     RequestStatus.ALLOCATION_REVIEW: "Ops Routing",
     RequestStatus.DELIVERY_PLANNING: "Team Manager",
     RequestStatus.IN_PROGRESS: "Team Analyst",

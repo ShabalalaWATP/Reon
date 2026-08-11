@@ -42,7 +42,7 @@ async def test_restore_verification_reports_only_counts_revision_and_integrity(
 
     assert report.valid
     assert report.schema_revision == revision
-    assert report.users == 73
+    assert report.users == 99
     assert report.requests == 1
     assert report.request_events == 1
     assert report.pending_commands == 1

@@ -2,7 +2,7 @@ import type { ActionColumn, ActionSection, ProjectionFreshness } from "../../lib
 
 export const actionSections: ActionSection[] = ["NEEDS_MY_ACTION", "WAITING", "DUE_SOON", "RECENTLY_COMPLETED"];
 export const sectionLabels: Record<ActionSection, string> = {
-  NEEDS_MY_ACTION: "Needs my action",
+  NEEDS_MY_ACTION: "Needs attention",
   WAITING: "Waiting",
   DUE_SOON: "Due soon",
   RECENTLY_COMPLETED: "Recently completed",
@@ -35,6 +35,18 @@ export function safeWorkspaceHref(value: string | null) {
 
 export function humaniseCode(value: string) {
   return value.toLowerCase().replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
+}
+
+const actionTypeLabels: Partial<Record<string, string>> = {
+  CHOOSE_OPS_GROUP: "New request requires attention",
+};
+
+export function actionTypeLabel(value: string) {
+  return actionTypeLabels[value] ?? humaniseCode(value);
+}
+
+export function availableToLabel(value: string | null) {
+  return value?.replace(/ · Awaiting owner$/u, "") ?? "your unit";
 }
 
 export function formatActionDate(value: string | null) {

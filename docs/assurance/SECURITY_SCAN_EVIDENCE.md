@@ -1,11 +1,57 @@
 # Security scan evidence
 
+## Unified workspace source verification, 10 August 2026
+
+The complete current source passed Ruff formatting and lint across 485 Python
+files, MyPy across 290 source files, Bandit across 43,405 lines with zero low,
+medium or high finding, and the repository's Knip and Vulture dead-code gates.
+Strict `pip-audit` of the lock-derived third-party dependency export and
+`pnpm audit --audit-level=high` both reported no known vulnerability. The
+936-test backend suite passed at 98.85 per cent line and 95.03 per cent branch
+coverage; the 327-test frontend suite passed at 99.41 per cent line and 95.03
+per cent branch coverage.
+
+Trivy 0.69.3, using its refreshed 10 August database, reported zero High or
+Critical findings in each finished local image: API, web, PostgreSQL 17.10,
+Camunda 8.9.14 and ClamAV 1.5.3. No ignore file or vulnerability exception was
+used. The relevant final image identities were:
+
+| Image | Local image identity | High | Critical |
+|---|---|---:|---:|
+| API | `sha256:4da1772874878f163db8aeea5e8f8c630302ae0c02c05d24b5398ac8d71d5ee7` | 0 | 0 |
+| Web | `sha256:44bc3f3d339453e080e0a98e6580d05ce7c2b0cee984bb171740b77f667803ee` | 0 | 0 |
+| PostgreSQL | `sha256:df0ccbdf138bbef48d80b43aae6dde1002a92b272801880327a5746485d9de6d` | 0 | 0 |
+| Camunda | `sha256:f521ca02d756763c8eb65b60ccfedf9694756112216e78983e0e7793963ce1ab` | 0 | 0 |
+| ClamAV | `sha256:7f48a18200a481016b882dbca2e25cd0742f3fdd2f84f1e4524b44cb400cf63e` | 0 | 0 |
+
+The API runtime moved from an unfixed Debian 12 base to digest-pinned Ubuntu
+24.04 and runs Python 3.12.3 as UID 10001. PostgreSQL now uses a digest-pinned
+Alpine 3.23 runtime as the image's real `postgres` identity (UID/GID 70), with
+checksum-pinned pgvector 0.8.1 compiled in a discarded build stage; the unused
+`gosu` helper is absent. The live retained-data stack was recreated on those
+images and remained healthy at migration 0029, with all ten request-search
+projections in `READY` state. This current evidence covers
+the explainable request-matching capability and controlled intake contract. The
+dated SBOM, secret, Semgrep and ZAP records below were not regenerated and remain
+tied to their stated candidates.
+
+The retained development volume predates the final Alpine runtime and still
+records a glibc collation version. All collation-dependent indexes were rebuilt,
+but a logical dump and restore into a fresh Alpine volume remains a documented
+release-evidence gate. This does not affect fresh installations or the clean
+component and migration rehearsals, and no unsupported system-catalog edit was
+used to hide the warning.
+
 ## Current remediation candidate, 9 August 2026
 
-This section applies to the current `codex/product-evolution` working tree. It is
-local evidence, not an immutable hosted-CI or production assessment. The product
-owner excluded replacement of the synthetic MVP authentication model and GitHub
-branch protection. Neither exclusion was changed or counted as remediated.
+This section applies to the current `codex/product-evolution` and `main` source.
+Local evidence is supplemented by the successful hosted
+[CI run](https://github.com/ShabalalaWATP/Reon/actions/runs/31320684197),
+[container-validation run](https://github.com/ShabalalaWATP/Reon/actions/runs/31320684213)
+and [root-Compose Dependabot run](https://github.com/ShabalalaWATP/Reon/actions/runs/31320687116).
+It is not a production assessment. The product owner excluded replacement of the
+synthetic MVP authentication model and GitHub branch protection. Neither
+exclusion was changed or counted as remediated.
 
 ### Source, dependency and secret controls
 
@@ -19,7 +65,7 @@ branch protection. Neither exclusion was changed or counted as remediated.
 | Package resolution policy | A frozen pnpm 10.34.5 installation verified the existing lock against seven-day age, trust-downgrade and transitive-source controls. uv locks with a seven-day cutoff; Dependabot applies the same cooldown to all ten configured ecosystems without delaying security updates |
 | Current-source secret scan | Digest-pinned Gitleaks 8.30.0 scanned the exact staged tracked-file inventory with no leak; the inventory is retained beside the redacted report |
 | Reachable-history secret scan | Digest-pinned TruffleHog 3.96.0 reported one unknown synthetic historical URI fixture. The gate accepted only its stable SHA-256 fingerprint, reason and 9 February 2027 expiry; verified findings can never be excepted and stale exceptions fail |
-| Repository automation | Dependabot alerts, automated security updates, secret scanning, push protection and private vulnerability reporting are enabled. Scheduled npm, native uv, GitHub Actions, eight-Dockerfile and root-Compose updates are source controlled |
+| Repository automation | Dependabot alerts, automated security updates, secret scanning, push protection and private vulnerability reporting are enabled. Scheduled npm, native uv, GitHub Actions, eight-Dockerfile and root-Compose updates are source controlled. The root-Compose updater ignores only five locally built output tags and continues to manage the external Python image; a contract test protects this boundary |
 | Workflow validation | Digest-pinned Actionlint passed the GitHub workflows. Weekly execution, explicit deadlines, OpenAPI contract validation, current-source and reachable-history secret gates, and bounded evidence uploads are source controlled |
 
 ### Application quality gates
@@ -103,7 +149,7 @@ The fresh QA runtime then proved:
 - PostgreSQL reached `0021_schema_metadata`; `alembic check` reported no model
   drift. The constraint-name alignment migration downgraded to 0020 and upgraded
   to head again while the application was stopped, then remained drift-free.
-- Camunda completed the staffed DIGOC → NCGI-A Ops → OSG Team route, including
+- Camunda completed the staffed JOCK → ACSA-B Ops → SSG Team route, including
   two clarification loops, and the selectable SYGOC → Nimbus Ops → Beacon Team
   route. Both finished at release.
 - API and Nginx returned opener, embedder and resource isolation headers. API

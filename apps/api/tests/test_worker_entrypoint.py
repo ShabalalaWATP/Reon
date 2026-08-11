@@ -30,19 +30,23 @@ def settings(*, notifications_enabled: bool = False) -> Settings:
             False,
             {
                 "workflow-start-dispatch",
+                "workflow-cancellation-dispatch",
                 "workflow-command-dispatch",
                 "workflow-reconciliation",
                 "membership-projection",
+                "request-search-index",
             },
         ),
         (
             True,
             {
                 "workflow-start-dispatch",
+                "workflow-cancellation-dispatch",
                 "workflow-command-dispatch",
                 "workflow-reconciliation",
                 "notification-projection",
                 "membership-projection",
+                "request-search-index",
             },
         ),
     ],

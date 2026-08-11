@@ -23,7 +23,7 @@ describe("request branch states", () => {
       ? json(requesterSession)
       : json({ items: [requestSummary] }));
     renderApp("/requests");
-    expect(await screen.findByRole("heading", { name: "In progress" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Current requests" })).toBeInTheDocument();
     expect(screen.queryByText("Completed history")).not.toBeInTheDocument();
   });
 
@@ -47,7 +47,7 @@ describe("request branch states", () => {
   });
 
   it("renders a disabled request submission control", () => {
-    render(<RequestForm businessArea="Requesting Area A" disabled onSubmit={vi.fn()} />);
+    render(<RequestForm disabled onSubmit={vi.fn()} />);
     expect(screen.getByRole("button", { name: "Submitting…" })).toBeDisabled();
   });
 

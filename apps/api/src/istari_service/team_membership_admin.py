@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.errors import InvalidAdministrationChange
@@ -13,7 +13,83 @@ from istari_service.models import User
 from istari_service.repositories.team_memberships import (
     SqlAlchemyTeamMembershipRepository,
 )
-from istari_service.team_models import TeamActivityType, TeamMembership
+from istari_service.team_models import (
+    TeamActivityType,
+    TeamMembership,
+    WorkspacePosition,
+)
+
+
+async def align_admin_workspace_memberships(
+    session: AsyncSession,
+    *,
+    user: User,
+    next_unit_ids: set[UUID],
+    workspace_position: WorkspacePosition | None,
+    actor_id: UUID,
+    at: datetime | None = None,
+) -> None:
+    """Align authoritative effective histories with an Administrator change."""
+
+    effective_at = at or datetime.now(UTC)
+    memberships = list(
+        await session.scalars(
+            select(TeamMembership)
+            .where(
+                TeamMembership.user_id == user.id,
+                TeamMembership.effective_until.is_(None),
+            )
+            .order_by(TeamMembership.effective_from, TeamMembership.id)
+            .with_for_update()
+        )
+    )
+    _require(
+        not any(_as_utc(item.effective_from) > effective_at for item in memberships),
+        InvalidAdministrationChange(
+            "Resolve this account's scheduled workspace transfer first."
+        ),
+    )
+    position = workspace_position or WorkspacePosition.MEMBER
+    retained: set[UUID] = set()
+    reason = "Platform Administrator updated the account workspace membership."
+    repository = SqlAlchemyTeamMembershipRepository(session)
+    for membership in memberships:
+        keep = (
+            membership.team_id in next_unit_ids
+            and membership.workspace_position is position
+        )
+        if keep:
+            retained.add(membership.team_id)
+            continue
+        membership.effective_until = effective_at
+        membership.ended_by_user_id = actor_id
+        membership.end_reason = reason
+        membership.end_projected_at = effective_at
+        membership.version += 1
+        repository._activity(
+            membership,
+            actor_id,
+            TeamActivityType.MEMBERSHIP_ENDED,
+            "An account membership was ended by a Platform Administrator.",
+        )
+    for unit_id in sorted(next_unit_ids - retained, key=str):
+        membership = TeamMembership(
+            user_id=user.id,
+            team_id=unit_id,
+            workspace_position=position,
+            effective_from=effective_at,
+            started_by_user_id=actor_id,
+            start_reason=reason,
+            start_projected_at=effective_at,
+        )
+        session.add(membership)
+        await session.flush()
+        repository._activity(
+            membership,
+            actor_id,
+            TeamActivityType.MEMBER_ADDED,
+            "An account joined the workspace through Platform Administration.",
+        )
 
 
 async def align_admin_team_membership(
@@ -24,67 +100,15 @@ async def align_admin_team_membership(
     actor_id: UUID,
     at: datetime | None = None,
 ) -> None:
-    """Preserve the timeline while the established admin projection is replaced."""
+    """Compatibility wrapper for callers that manage one delivery team."""
 
-    effective_at = at or datetime.now(UTC)
-    memberships = list(
-        await session.scalars(
-            select(TeamMembership)
-            .where(
-                TeamMembership.user_id == user.id,
-                or_(
-                    TeamMembership.effective_until.is_(None),
-                    TeamMembership.effective_until > effective_at,
-                ),
-            )
-            .order_by(TeamMembership.effective_from)
-            .with_for_update()
-        )
-    )
-    scheduled_id = await session.scalar(
-        select(TeamMembership.id).where(
-            TeamMembership.user_id == user.id,
-            TeamMembership.effective_from > effective_at,
-        )
-    )
-    _require(
-        scheduled_id is None,
-        InvalidAdministrationChange(
-            "Resolve this account's scheduled team transfer first."
-        ),
-    )
-    current = next(iter(memberships), None)
-    reason = "Platform Administrator updated the account team membership."
-    repository = SqlAlchemyTeamMembershipRepository(session)
-    if current is not None:
-        current.effective_until = effective_at
-        current.ended_by_user_id = actor_id
-        current.end_reason = reason
-        current.end_projected_at = effective_at
-        current.version += 1
-        repository._activity(
-            current,
-            actor_id,
-            TeamActivityType.MEMBERSHIP_ENDED,
-            "An account membership was ended by a Platform Administrator.",
-        )
-    if next_team_id is None:
-        return
-    next_membership = TeamMembership(
-        user_id=user.id,
-        team_id=next_team_id,
-        effective_from=effective_at,
-        started_by_user_id=actor_id,
-        start_reason=reason,
-        start_projected_at=effective_at,
-    )
-    session.add(next_membership)
-    await session.flush()
-    repository._activity(
-        next_membership,
-        actor_id,
-        TeamActivityType.MEMBER_ADDED,
-        "An account joined the team through Platform Administration.",
+    await align_admin_workspace_memberships(
+        session,
+        user=user,
+        next_unit_ids={next_team_id} if next_team_id else set(),
+        workspace_position=WorkspacePosition.MEMBER,
+        actor_id=actor_id,
+        at=at,
     )
 
 
@@ -92,3 +116,7 @@ def _require(condition: bool, error: Exception) -> None:
     if condition:
         return
     raise error
+
+
+def _as_utc(value: datetime) -> datetime:
+    return value if value.tzinfo else value.replace(tzinfo=UTC)

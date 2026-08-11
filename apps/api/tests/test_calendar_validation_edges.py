@@ -236,6 +236,7 @@ def test_capacity_helpers_clip_overlap_and_version_the_source() -> None:
         subjectUserId=uuid4(),
         subjectDisplayName="Synthetic User",
         teamId=None,
+        requestId=None,
         allDay=False,
         timeZone="Europe/London",
         recurrence="NONE",

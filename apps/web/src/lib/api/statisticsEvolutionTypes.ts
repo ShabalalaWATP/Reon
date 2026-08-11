@@ -2,6 +2,7 @@ import type {
   ProjectionFreshness,
   StatisticsRange,
   StatisticsScope,
+  StatisticsUnit as OrganisationStatisticsUnit,
 } from "./statisticsTypes";
 
 export type StatisticsUnit = "count" | "percentage" | "hours";
@@ -74,6 +75,8 @@ export type ExportPolicy = {
 
 export type StatisticsEvolution = {
   scope: StatisticsScope;
+  selectedUnit: OrganisationStatisticsUnit;
+  breadcrumb: OrganisationStatisticsUnit[];
   range: StatisticsRange;
   freshness: ProjectionFreshness;
   comparison: PeriodComparison[];
@@ -95,6 +98,7 @@ export type StatisticsEvolution = {
 
 export type StatisticsEvolutionFilters = {
   scopeId: string;
+  unitId: string;
   from: string;
   to: string;
   timeZone: string;

@@ -1,3 +1,9 @@
+.account-request-list { display: grid; gap: 12px; }
+.account-request-list article { display: grid; gap: 12px; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; background: var(--surface-raised); }
+.account-request-list header { display: flex; justify-content: space-between; gap: 16px; }
+.account-request-list header strong, .account-request-list header a { display: block; }
+.account-request-list header a, .account-request-list time { margin-top: 4px; color: var(--muted); font-size: .76rem; }
+.account-request-list p { margin: 0; color: var(--muted); line-height: 1.55; }
 .admin-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; border-block: 1px solid var(--border); }
 .admin-summary div { display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 15px 20px; border-right: 1px solid var(--border); }
 .admin-summary div:last-child { border-right: 0; }
@@ -16,6 +22,12 @@
 .admin-step-up--ready div { display: grid; gap: 3px; }
 .admin-step-up--ready small { color: var(--muted); }
 .admin-search .form-field { min-width: min(360px, 42vw); }
+.classification-control { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 28px; align-items: end; border-block: 1px solid var(--border); padding: 18px 0; }
+.classification-control__copy { display: flex; gap: 12px; }
+.classification-control__copy > svg { margin-top: 3px; color: var(--accent); }
+.classification-control form { display: grid; grid-template-columns: minmax(210px, 1fr) auto; gap: 8px; align-items: end; }
+.admin-account-identity strong, .admin-account-identity small { display: block; }
+.admin-account-identity small { margin-top: 3px; color: var(--muted); font-size: .68rem; }
 .admin-table-scroll { overflow-x: auto; border-block: 1px solid var(--border); }
 .admin-table { width: 100%; border-collapse: collapse; font-size: .8rem; text-align: left; }
 .admin-table th { padding: 10px 12px; color: var(--muted); font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; }
@@ -56,4 +68,6 @@
   .admin-confirm strong { text-align: left; }
   .organisation-unit:has(.organisation-rename-trigger), .organisation-unit:has(.organisation-rename) { grid-template-columns: 1fr auto; }
   .organisation-rename { grid-template-columns: 1fr; }
+  .classification-control { grid-template-columns: 1fr; }
+  .classification-control form { grid-template-columns: 1fr; }
 }

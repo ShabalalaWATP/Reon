@@ -15,6 +15,7 @@ class RequestLinkType(StrEnum):
     POSSIBLE_DUPLICATE = "POSSIBLE_DUPLICATE"
     RELATED_REQUEST = "RELATED_REQUEST"
     EXISTING_OUTPUT = "EXISTING_OUTPUT"
+    NOT_RELEVANT = "NOT_RELEVANT"
 
 
 class RequestLink(CreatedMixin, Base):

@@ -1,6 +1,7 @@
 """Register persistence modules with the shared SQLAlchemy metadata."""
 
 from istari_service import (
+    account_request_models,
     action_notification_models,
     admin_models,
     analytics_evolution_models,
@@ -18,10 +19,14 @@ from istari_service import (
     organisation_models,
     outbox_model,
     planning_analytics_models,
+    platform_security_models,
     product_models,
     related_record_models,
     request_draft_models,
+    request_participant_models,
+    request_search_models,
     team_models,
+    workspace_collaboration_models,
 )
 
 # Importing every module registers its ORM tables with the shared metadata. Keeping
@@ -29,6 +34,7 @@ from istari_service import (
 # intentional registration from accidental unused imports.
 REGISTERED_MODEL_MODULES = (
     action_notification_models,
+    account_request_models,
     admin_models,
     analytics_evolution_models,
     analytics_models,
@@ -45,8 +51,12 @@ REGISTERED_MODEL_MODULES = (
     organisation_models,
     outbox_model,
     planning_analytics_models,
+    platform_security_models,
     product_models,
     related_record_models,
     request_draft_models,
+    request_participant_models,
+    request_search_models,
     team_models,
+    workspace_collaboration_models,
 )

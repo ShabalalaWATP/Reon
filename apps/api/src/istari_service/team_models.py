@@ -1,4 +1,4 @@
-"""Effective-dated team membership and immutable workspace activity."""
+"""Effective-dated organisation membership and immutable workspace activity."""
 
 from __future__ import annotations
 
@@ -29,7 +29,18 @@ class TeamActivityType(StrEnum):
     TRANSFER_ACTIVATED = "TRANSFER_ACTIVATED"
 
 
+class WorkspacePosition(StrEnum):
+    MANAGER = "MANAGER"
+    MEMBER = "MEMBER"
+
+
 class TeamMembership(TimestampMixin, Base):
+    """Authoritative workspace membership for every organisation-unit kind.
+
+    The legacy table and ``team_id`` column names are retained for a safe rolling
+    migration. They now contain any organisation unit, not only delivery teams.
+    """
+
     __tablename__ = "team_memberships"
     __table_args__ = (
         CheckConstraint(
@@ -40,6 +51,7 @@ class TeamMembership(TimestampMixin, Base):
         Index(
             "uq_team_memberships_one_open",
             "user_id",
+            "team_id",
             unique=True,
             sqlite_where=text("effective_until IS NULL"),
             postgresql_where=text("effective_until IS NULL"),
@@ -75,6 +87,12 @@ class TeamMembership(TimestampMixin, Base):
     )
     team_id: Mapped[UUID] = mapped_column(
         ForeignKey("organisation_units.id", ondelete="RESTRICT"), index=True
+    )
+    workspace_position: Mapped[WorkspacePosition] = mapped_column(
+        _enum(WorkspacePosition, "workspace_position"),
+        default=WorkspacePosition.MEMBER,
+        server_default=WorkspacePosition.MEMBER.value,
+        index=True,
     )
     effective_from: Mapped[datetime] = mapped_column(UTC_TS)
     effective_until: Mapped[datetime | None] = mapped_column(UTC_TS)

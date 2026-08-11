@@ -27,6 +27,11 @@ class ActionColumn(StrEnum):
     LAST_CHANGED = "LAST_CHANGED"
 
 
+class ActionAccess(StrEnum):
+    PERSONAL = "PERSONAL"
+    SHARED = "SHARED"
+
+
 class ActionFilters(StrictApiModel):
     sections: Annotated[list[ActionSection], Field(max_length=4)] = Field(
         default_factory=list
@@ -58,6 +63,7 @@ class ProjectionFreshness(ApiModel):
 class ActionItem(ApiModel):
     id: UUID
     section: ActionSection
+    action_access: ActionAccess
     action_type: str
     source_type: ActionSourceType
     reference: str

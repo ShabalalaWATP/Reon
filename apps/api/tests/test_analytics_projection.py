@@ -99,9 +99,9 @@ async def test_projection_is_idempotent_scoped_and_content_free(
         headers=harness.mutation_headers(),
     )
     assert feedback.status_code == 200
-    digoc_id = await harness.unit_id("DIGOC")
-    ncgi_id = await harness.unit_id("NCGI_A_OPS")
-    osg_id = await harness.unit_id("OSG_TEAM")
+    jock_id = await harness.unit_id("JOCK")
+    ncgi_id = await harness.unit_id("ACSA_B_OPS")
+    ssg_id = await harness.unit_id("SSG_TEAM")
 
     async with harness.sessions() as session, session.begin():
         first = await project_request_analytics(session, UUID(request_id))
@@ -115,9 +115,9 @@ async def test_projection_is_idempotent_scoped_and_content_free(
         assert second.rework_count == 1
         assert (second.feedback_received, second.feedback_rating) == (True, 5)
         assert second.released_at is not None
-        assert second.command_unit_id == digoc_id
+        assert second.command_unit_id == jock_id
         assert second.ops_unit_id == ncgi_id
-        assert second.team_unit_id == osg_id
+        assert second.team_unit_id == ssg_id
         stage_units = {status: unit_id for _sequence, status, unit_id in repeated_rows}
         assert stage_units[RequestStatus.COORDINATION_REVIEW] == second.command_unit_id
         assert stage_units[RequestStatus.ALLOCATION_REVIEW] == second.ops_unit_id

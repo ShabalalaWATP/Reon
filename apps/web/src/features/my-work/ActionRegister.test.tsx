@@ -8,6 +8,7 @@ import { ActionRegister } from "./ActionRegister";
 const action: PersonalAction = {
   id: "action",
   section: "WAITING",
+  actionAccess: "PERSONAL",
   actionType: "CUSTOMER_INPUT",
   sourceType: "REQUEST",
   reference: "ISR-200",
@@ -30,5 +31,17 @@ describe("ActionRegister", () => {
     expect(screen.getByText("Access ended")).toBeInTheDocument();
     expect(screen.queryByText("ISR-200")).not.toBeInTheDocument();
     expect(screen.queryByText("Waiting for response")).not.toBeInTheDocument();
+  });
+
+  it("distinguishes shared unit responsibility from personal ownership", () => {
+    render(<MemoryRouter><ActionRegister columns={["TITLE", "CURRENT_OWNER"]} items={[{
+      ...action,
+      actionAccess: "SHARED",
+      actionType: "CHOOSE_OPS_GROUP",
+      currentOwner: "JOCK · Awaiting owner",
+    }]} label="Incoming request register" /></MemoryRouter>);
+    expect(screen.getByText("New request requires attention")).toBeInTheDocument();
+    expect(screen.getByText("Available to JOCK")).toBeInTheDocument();
+    expect(screen.getByText("JOCK · Awaiting owner")).toBeInTheDocument();
   });
 });

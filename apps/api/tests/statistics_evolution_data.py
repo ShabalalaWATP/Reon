@@ -30,10 +30,10 @@ async def seed_evolution_statistics(harness: ApiHarness) -> None:
     units = {
         code: await harness.unit_id(code)
         for code in (
-            "JIOC",
-            "DIGOC",
-            "NCGI_A_OPS",
-            "OSG_TEAM",
+            "CRIOC",
+            "JOCK",
+            "ACSA_B_OPS",
+            "SSG_TEAM",
             "SYGOC",
             "NIMBUS_OPS",
             "BEACON_TEAM",
@@ -124,9 +124,9 @@ def _request_fact(
         **command,
     )
     request.title = f"PROHIBITED CONTENT MARKER {index}"
-    command_id = units["SYGOC"] if small else units["DIGOC"]
-    ops_id = units["NIMBUS_OPS"] if small else units["NCGI_A_OPS"]
-    team_id = units["BEACON_TEAM"] if small else units["OSG_TEAM"]
+    command_id = units["SYGOC"] if small else units["JOCK"]
+    ops_id = units["NIMBUS_OPS"] if small else units["ACSA_B_OPS"]
+    team_id = units["BEACON_TEAM"] if small else units["SSG_TEAM"]
     completed_at = (
         received_at + timedelta(hours=8) if status is RequestStatus.COMPLETED else None
     )
@@ -135,7 +135,7 @@ def _request_fact(
             request,
             RequestAnalyticsFact(
                 request_id=request_id,
-                root_unit_id=units["JIOC"],
+                root_unit_id=units["CRIOC"],
                 command_unit_id=command_id,
                 ops_unit_id=ops_id,
                 team_unit_id=team_id,
@@ -170,9 +170,9 @@ def _operational_facts(
     *,
     small: bool,
 ) -> None:
-    command_id = units["SYGOC"] if small else units["DIGOC"]
-    ops_id = units["NIMBUS_OPS"] if small else units["NCGI_A_OPS"]
-    team_id = units["BEACON_TEAM"] if small else units["OSG_TEAM"]
+    command_id = units["SYGOC"] if small else units["JOCK"]
+    ops_id = units["NIMBUS_OPS"] if small else units["ACSA_B_OPS"]
+    team_id = units["BEACON_TEAM"] if small else units["SSG_TEAM"]
     cohort = 2 if small else 5
     prefix = "small" if small else "large"
     for index in range(cohort + (0 if small else 1)):
@@ -285,7 +285,7 @@ def _fact(
     return OperationalAnalyticsFact(
         source_key=key,
         type=fact_type,
-        root_unit_id=units["JIOC"],
+        root_unit_id=units["CRIOC"],
         command_unit_id=command_id,
         ops_unit_id=ops_id,
         team_unit_id=team_id,

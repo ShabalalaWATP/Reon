@@ -16,6 +16,14 @@ $reviewedUnknown = @{
     'camunda-orchestration-sdk' = 'Camunda License 1.0, selected workflow dependency'
     'istari-service-api' = 'Private first-party application'
 }
+# These two locked wheels publish incomplete licence metadata. Their installed
+# licence files were reviewed as Apache-2.0 (fastembed) and MIT
+# (py-rust-stemmers). Match the reported value exactly so a metadata change
+# returns the package to manual review instead of silently widening policy.
+$reviewedMetadata = @{
+    'fastembed' = 'Other/Proprietary License'
+    'py_rust_stemmers' = 'UNKNOWN'
+}
 
 function Test-ApprovedLicence([string]$Licence) {
     foreach ($pattern in $approvedPatterns) {
@@ -26,7 +34,7 @@ function Test-ApprovedLicence([string]$Licence) {
     return $false
 }
 
-$nodeRaw = & pnpm licenses list --prod --json
+$nodeRaw = & corepack pnpm licenses list --prod --json
 if ($LASTEXITCODE -ne 0) {
     throw 'Could not enumerate production Node licences.'
 }
@@ -50,6 +58,12 @@ foreach ($package in $python) {
         continue
     }
     if ($licence -eq 'UNKNOWN' -and $reviewedUnknown.ContainsKey($name)) {
+        continue
+    }
+    if (
+        $reviewedMetadata.ContainsKey($name) -and
+        $licence -eq $reviewedMetadata[$name]
+    ) {
         continue
     }
     $failures.Add("Python package $name has unapproved licence: $licence")

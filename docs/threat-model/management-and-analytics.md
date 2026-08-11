@@ -27,6 +27,7 @@ analytics repository.
 | --- | --- |
 | Client supplies a sibling or ancestor unit ID | Load the active grant and derive allowable units from closure inside the final repository query |
 | Broad role grants unintended access | Keep action-specific management grants independent of role labels and membership |
+| A workspace Member's Home page implies or acquires Manager reporting access | Render personal actions and exact-unit workspace links only when no statistics grant exists; omit aggregate measures and statistics navigation, while every reporting API continues to require its active grant |
 | Expired or revoked authority remains cached | Validate grant dates and version on every request; use short content-free client caching only |
 | Organisation cycle expands scope | Enforce cycle-free parent mutations and closure-table constraints transactionally |
 | Administrator reporting exposes request content | Serve aggregates from content-free facts only and retain request-repository denial |
@@ -38,6 +39,8 @@ analytics repository.
 | Stale projection misleads a manager | Return freshness and degraded state; alert on lag instead of presenting it as current |
 | Large ranges cause denial of service | Limit date range, dimensions and page size; use statement timeout and indexed closure joins |
 | CSV or table export bypasses scope | Use the same scoped query and suppression service; no separate unrestricted export path |
+| A decorative chart diverges from the authorised measure or hides meaning | Derive every donut, range graphic, legend and accessible table from the same response rows; keep graphics non-interactive and decorative so they cannot become a second filtering or authorisation path |
+| Combined organisation metrics are mistaken for an individual's workload or performance | Put personal action counts and aggregate organisation measures in separately named regions, state the selected organisation scope and explicitly say aggregate values are not personal workload; never add person ranking dimensions |
 | PDF export renders a broader dataset than the screen | Generate CSV, PDF, chart, table and textual summary from the same authorised, bounded and suppressed tabular rows |
 | Dissemination facts reveal product or Customer identity | Record event type, authorised organisation key and timing only; omit product labels, filenames, destinations, request IDs and Customer identifiers |
 | Notification measures expose message content | Project event group, safe timing and resolution state only; never ingest notification subject or protected source fields |

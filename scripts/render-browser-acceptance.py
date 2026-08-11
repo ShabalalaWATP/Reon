@@ -126,7 +126,7 @@ th{{background:#eef3f6}} code{{overflow-wrap:anywhere}} .meta{{color:#425466}}
 <table><thead><tr><th>Browser</th><th>Request</th><th>Route</th><th>Analyst</th><th>Clarification messages</th><th>Feedback</th><th>Result</th></tr></thead>
 <tbody>{"".join(rows)}</tbody></table>
 <h2>Actions proved in each complete journey</h2>
-<ol><li>Mandatory Customer submission and tracking.</li><li>JIOC, command and Ops routing with named claims and decisions.</li><li>Team Manager assignment to the selected team's Analyst.</li><li>Analyst clarification, Customer response and same-Analyst return.</li><li>Product submission, Manager approval, independent QC and dissemination.</li><li>Authenticated product download and one-time required feedback.</li></ol>
+<ol><li>Mandatory Customer submission and tracking.</li><li>CRIOC, command and Ops routing with named claims and decisions.</li><li>Team Manager assignment to the selected team's Analyst.</li><li>Analyst clarification, Customer response and same-Analyst return.</li><li>Product submission, Manager approval, independent QC and dissemination.</li><li>Authenticated product download and one-time required feedback.</li></ol>
 <h2>Combined acceptance suite</h2><ul>{scenarios}</ul>
 <h2>Integrity</h2>
 <p>Every trace, completion screenshot and downloaded product was SHA-256 verified before this report was generated. Exact values are retained in <code>browser-acceptance.json</code>.</p>
