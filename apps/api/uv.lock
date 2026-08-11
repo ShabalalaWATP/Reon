@@ -13,7 +13,7 @@ exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for 
 exclude-newer-span = "P7D"
 
 [manifest]
-build-constraints = [{ name = "hatchling", specifier = "==1.27.0" }]
+build-constraints = [{ name = "hatchling", specifier = "==1.31.0" }]
 
 [[package]]
 name = "aiosqlite"
