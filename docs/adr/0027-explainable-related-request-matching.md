@@ -4,14 +4,11 @@ Status: accepted, 10 August 2026.
 
 ## Context
 
-The original intake control searched only request references and titles. It did
-not inspect the submitted requirement, calculate relevance or automatically
-surface candidates. Calling that control related-record search overstated its
-decision value and required a JIOC user to guess a useful term.
-
-The replacement must search all submitted request content, remain useful when a
-semantic model is unavailable and preserve the existing human-led workflow and
-organisation scope. Request content must not be disclosed to an external model.
+CRIOC reviewers need an authorised comparison across all Customer-submitted
+request content, with a meaningful relevance order and understandable evidence.
+The capability must remain useful when a semantic model is unavailable, preserve
+the human-led workflow and organisation scope, and keep request content away from
+external model providers.
 
 ## Decision
 
@@ -33,14 +30,9 @@ deterministic field-level explanations and bounded excerpts. Retain append-only
 human decisions, including a new not-relevant outcome, without changing
 Camunda state.
 
-Remove the free-text confirmed-category value from the JIOC progress command.
-It had no controlled taxonomy and did not influence routing, permissions or
-statistics. Keep the nullable historical database column until a later bounded
-cleanup migration.
-
 ## Consequences
 
-- JIOC receives automatic, explainable candidates without guessing a title.
+- CRIOC receives automatic, explainable candidates without guessing a title.
 - Every submitted request is searchable immediately through text ranking and
   gains semantic ranking asynchronously.
 - PostgreSQL remains the only request and search datastore.

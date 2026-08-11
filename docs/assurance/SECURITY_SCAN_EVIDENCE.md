@@ -31,7 +31,7 @@ checksum-pinned pgvector 0.8.1 compiled in a discarded build stage; the unused
 `gosu` helper is absent. The live retained-data stack was recreated on those
 images and remained healthy at migration 0029, with all ten request-search
 projections in `READY` state. This current evidence covers
-the explainable request-matching change and removal of Confirmed category. The
+the explainable request-matching capability and controlled intake contract. The
 dated SBOM, secret, Semgrep and ZAP records below were not regenerated and remain
 tied to their stated candidates.
 
@@ -149,7 +149,7 @@ The fresh QA runtime then proved:
 - PostgreSQL reached `0021_schema_metadata`; `alembic check` reported no model
   drift. The constraint-name alignment migration downgraded to 0020 and upgraded
   to head again while the application was stopped, then remained drift-free.
-- Camunda completed the staffed DIGOC → NCGI-A Ops → OSG Team route, including
+- Camunda completed the staffed JOCK → ACSA-B Ops → SSG Team route, including
   two clarification loops, and the selectable SYGOC → Nimbus Ops → Beacon Team
   route. Both finished at release.
 - API and Nginx returned opener, embedder and resource isolation headers. API

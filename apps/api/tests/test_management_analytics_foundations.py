@@ -56,31 +56,31 @@ async def test_seeded_closure_and_grants_match_exact_management_authority(
             .select_from(OrganisationClosure)
             .where(OrganisationClosure.depth == 0)
         )
-        osg_id = await harness.unit_id("OSG_TEAM")
-        jioc_id = await harness.unit_id("JIOC")
-        ncgi_id = await harness.unit_id("NCGI_A_OPS")
+        ssg_id = await harness.unit_id("SSG_TEAM")
+        crioc_id = await harness.unit_id("CRIOC")
+        ncgi_id = await harness.unit_id("ACSA_B_OPS")
         depths = dict(
             (
                 await session.execute(
                     select(OrganisationClosure.ancestor_id, OrganisationClosure.depth)
-                    .where(OrganisationClosure.descendant_id == osg_id)
+                    .where(OrganisationClosure.descendant_id == ssg_id)
                     .order_by(OrganisationClosure.depth)
                 )
             ).all()
         )
         assert self_rows == 40
-        assert depths[osg_id] == 0
+        assert depths[ssg_id] == 0
         assert depths[ncgi_id] == 1
-        assert depths[jioc_id] == 3
+        assert depths[crioc_id] == 3
         assert await session.scalar(select(func.count(ManagementGrant.id))) == 78
 
         qc_grant = await session.get(
             ManagementGrant,
-            management_grant_id("admin15", "JIOC"),
+            management_grant_id("admin15", "CRIOC"),
         )
         assert qc_grant is not None
         assert qc_grant.subject_user_id == await harness.user_id("admin15")
-        assert qc_grant.root_unit_id == jioc_id
+        assert qc_grant.root_unit_id == crioc_id
         assert qc_grant.include_descendants is True
         qc_actions = set(
             await session.scalars(
@@ -92,7 +92,7 @@ async def test_seeded_closure_and_grants_match_exact_management_authority(
         assert qc_actions == {ManagementAction.STATISTICS}
 
         manager_id = await harness.user_id("admin8")
-        manager_grant_id = management_grant_id("admin8", "OSG_TEAM")
+        manager_grant_id = management_grant_id("admin8", "SSG_TEAM")
         actions = set(
             await session.scalars(
                 select(ManagementGrantAction.action).where(
@@ -105,46 +105,46 @@ async def test_seeded_closure_and_grants_match_exact_management_authority(
             session,
             subject_user_id=manager_id,
             grant_id=manager_grant_id,
-            target_unit_id=osg_id,
+            target_unit_id=ssg_id,
             action=ManagementAction.ROSTER,
         )
         assert exact is not None
-        assert await scoped_unit_ids(session, exact) == (osg_id,)
+        assert await scoped_unit_ids(session, exact) == (ssg_id,)
 
 
 async def test_management_scope_denies_ancestor_sibling_action_and_inactive_grants(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    admin5_id, digoc_id = await _user_and_unit(harness, "admin5", "DIGOC")
-    grant_id = management_grant_id("admin5", "DIGOC")
-    osg_id = await harness.unit_id("OSG_TEAM")
+    admin5_id, jock_id = await _user_and_unit(harness, "admin5", "JOCK")
+    grant_id = management_grant_id("admin5", "JOCK")
+    ssg_id = await harness.unit_id("SSG_TEAM")
     syogc_id = await harness.unit_id("SYGOC")
-    jioc_id = await harness.unit_id("JIOC")
+    crioc_id = await harness.unit_id("CRIOC")
     async with harness.sessions() as session, session.begin():
         root_scope = await resolve_management_scope(
             session,
             subject_user_id=admin5_id,
             grant_id=grant_id,
-            target_unit_id=digoc_id,
+            target_unit_id=jock_id,
             action=ManagementAction.STATISTICS,
         )
         assert root_scope is not None
-        assert osg_id in await scoped_unit_ids(session, root_scope)
+        assert ssg_id in await scoped_unit_ids(session, root_scope)
         assert (
             await resolve_management_scope(
                 session,
                 subject_user_id=admin5_id,
                 grant_id=grant_id,
-                target_unit_id=osg_id,
+                target_unit_id=ssg_id,
                 action=ManagementAction.STATISTICS,
             )
             is not None
         )
         for target, action in (
             (syogc_id, ManagementAction.STATISTICS),
-            (jioc_id, ManagementAction.STATISTICS),
-            (osg_id, ManagementAction.ROSTER),
+            (crioc_id, ManagementAction.STATISTICS),
+            (ssg_id, ManagementAction.ROSTER),
         ):
             assert (
                 await resolve_management_scope(
@@ -165,7 +165,7 @@ async def test_management_scope_denies_ancestor_sibling_action_and_inactive_gran
                 session,
                 subject_user_id=admin5_id,
                 grant_id=grant_id,
-                target_unit_id=osg_id,
+                target_unit_id=ssg_id,
                 action=ManagementAction.STATISTICS,
             )
             is None
@@ -177,8 +177,8 @@ async def test_expired_revoked_and_cycle_cases_fail_closed(
 ) -> None:
     harness = api_harness
     subject_id = await harness.user_id("admin6")
-    target_id = await harness.unit_id("OSG_TEAM")
-    grant_id = management_grant_id("admin6", "NCGI_A_OPS")
+    target_id = await harness.unit_id("SSG_TEAM")
+    grant_id = management_grant_id("admin6", "ACSA_B_OPS")
     now = datetime.now(UTC)
     async with harness.sessions() as session, session.begin():
         grant = await session.get(ManagementGrant, grant_id)
@@ -196,14 +196,14 @@ async def test_expired_revoked_and_cycle_cases_fail_closed(
             is None
         )
     async with harness.sessions() as session, session.begin():
-        digoc = await session.scalar(
-            select(OrganisationUnit).where(OrganisationUnit.code == "DIGOC")
+        jock = await session.scalar(
+            select(OrganisationUnit).where(OrganisationUnit.code == "JOCK")
         )
         ncgi = await session.scalar(
-            select(OrganisationUnit).where(OrganisationUnit.code == "NCGI_A_OPS")
+            select(OrganisationUnit).where(OrganisationUnit.code == "ACSA_B_OPS")
         )
-        assert digoc is not None and ncgi is not None
-        digoc.parent_id = ncgi.id
+        assert jock is not None and ncgi is not None
+        jock.parent_id = ncgi.id
         with pytest.raises(ValueError, match="cycle"):
             await rebuild_organisation_closure(session)
 
@@ -215,7 +215,7 @@ async def test_grant_lifecycle_requires_admin_version_reason_and_audit(
     administrator_id = await harness.user_id("admin1")
     subject_id = await harness.user_id("admin4")
     analyst_id = await harness.user_id("admin11")
-    unit_id = await harness.unit_id("NCGI_A_OPS")
+    unit_id = await harness.unit_id("ACSA_B_OPS")
     definition = GrantDefinition(
         subject_user_id=subject_id,
         root_unit_id=unit_id,

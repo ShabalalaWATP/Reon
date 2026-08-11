@@ -9,9 +9,16 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from conftest import ApiHarness
-from istari_service.action_notification_models import ActionSection, ActionSourceType
+from istari_service.action_notification_models import (
+    ActionProjection,
+    ActionSection,
+    ActionSourceType,
+)
+from istari_service.domain import Actor
 from istari_service.models import RequestStatus, ServiceRequest, UserRole
 from istari_service.request_action_projection import (
+    ActionAudience,
+    _action_link,
     _action_type,
     _section,
     _source_type,
@@ -19,6 +26,7 @@ from istari_service.request_action_projection import (
     as_utc,
     waiting_analyst,
 )
+from istari_service.services.action_service import _current_owner
 
 
 def _request(status: RequestStatus, *, assigned: UUID | None = None) -> ServiceRequest:
@@ -33,6 +41,102 @@ def _request(status: RequestStatus, *, assigned: UUID | None = None) -> ServiceR
         assigned_specialist_id=assigned,
         awaiting_team_staffing=False,
     )
+
+
+def test_action_owner_falls_back_if_a_unit_name_is_unavailable() -> None:
+    actor = Actor(
+        id=uuid4(),
+        username="fallback",
+        display_name="Fallback User",
+        role=UserRole.DELIVERY_TEAM_LEAD,
+        scope="Fallback scope",
+    )
+    action = ActionProjection(
+        recipient_user_id=None,
+        organisation_unit_id=uuid4(),
+        current_owner="Stored owner",
+    )
+    assert _current_owner(action, actor, {}) == "Stored owner"
+
+
+@pytest.mark.parametrize(
+    ("status", "role", "path"),
+    [
+        (RequestStatus.TRIAGE_REVIEW, UserRole.INTAKE_TRIAGE, "/triage"),
+        (
+            RequestStatus.COORDINATION_REVIEW,
+            UserRole.SERVICE_COORDINATION,
+            "/coordination",
+        ),
+        (
+            RequestStatus.ALLOCATION_REVIEW,
+            UserRole.OPERATIONS_ALLOCATION,
+            "/allocation",
+        ),
+        (
+            RequestStatus.DELIVERY_PLANNING,
+            UserRole.DELIVERY_TEAM_LEAD,
+            "/delivery/team",
+        ),
+        (
+            RequestStatus.IN_PROGRESS,
+            UserRole.DELIVERY_SPECIALIST,
+            "/delivery/my-work",
+        ),
+        (
+            RequestStatus.QUALITY_REVIEW,
+            UserRole.QUALITY_RELEASE,
+            "/quality-release",
+        ),
+    ],
+)
+def test_staff_action_links_target_the_role_queue(
+    status: RequestStatus, role: UserRole, path: str
+) -> None:
+    request = _request(status)
+    assert (
+        _action_link(
+            request,
+            ActionAudience(recipient_user_id=uuid4(), recipient_role=role),
+        )
+        == f"{path}?requestId={request.id}"
+    )
+
+
+def test_customer_action_links_target_the_customer_request() -> None:
+    request = _request(RequestStatus.INFORMATION_REQUIRED)
+    assert (
+        _action_link(
+            request,
+            ActionAudience(
+                recipient_user_id=request.requester_id,
+                recipient_role=UserRole.REQUESTER,
+            ),
+        )
+        == f"/requests/{request.id}"
+    )
+
+
+@pytest.mark.parametrize(
+    ("status", "expected_path"),
+    [
+        (RequestStatus.TRIAGE_REVIEW, "/triage"),
+        (RequestStatus.QUALITY_REVIEW, "/quality-release"),
+        (RequestStatus.IN_PROGRESS, "/delivery/my-work"),
+    ],
+)
+def test_action_links_fail_safe_to_the_status_queue_for_legacy_audiences(
+    status: RequestStatus, expected_path: str
+) -> None:
+    request = _request(status)
+    assert _action_link(request, ActionAudience()) == (
+        f"{expected_path}?requestId={request.id}"
+    )
+
+
+def test_action_links_fall_back_to_the_request_for_unknown_legacy_audiences() -> None:
+    request = _request(RequestStatus.COMPLETED)
+    assert _action_link(request, ActionAudience()) == f"/requests/{request.id}"
 
 
 @pytest.mark.asyncio

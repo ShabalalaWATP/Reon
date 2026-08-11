@@ -11,7 +11,7 @@ from sqlalchemy.orm import InstrumentedAttribute
 from sqlalchemy.sql.elements import ColumnElement
 
 from istari_service.analytics_models import RequestAnalyticsFact
-from istari_service.board_models import BoardColumn, WorkPackage
+from istari_service.board_models import BoardColumn, WorkPackage, WorkPackageStatus
 from istari_service.board_projection import (
     PACKAGE_COLUMNS,
     REQUEST_COLUMNS,
@@ -114,6 +114,54 @@ class SqlAlchemyBoardPageRepository:
             )
         return request_count + package_count
 
+    async def filtered_column_counts(
+        self, team_id: UUID, filters: BoardFilters
+    ) -> dict[BoardColumn, int]:
+        """Count each column after non-status filters and before cursor pagination."""
+        counts = dict.fromkeys(BoardColumn, 0)
+        completed_cutoff = datetime.now(UTC) - timedelta(days=30)
+        if self._includes(filters, BoardItemType.SERVICE_REQUEST):
+            request_statuses = list(REQUEST_COLUMNS)
+            if request_statuses:
+                request_rows = (
+                    await self._session.execute(
+                        select(ServiceRequest.status, func.count(ServiceRequest.id))
+                        .join(
+                            RequestAnalyticsFact,
+                            RequestAnalyticsFact.request_id == ServiceRequest.id,
+                        )
+                        .where(
+                            RequestAnalyticsFact.team_unit_id == team_id,
+                            ServiceRequest.status.in_(request_statuses),
+                            or_(
+                                ServiceRequest.status.not_in(TERMINAL_REQUEST_STATUSES),
+                                ServiceRequest.updated_at >= completed_cutoff,
+                            ),
+                            *self._request_filters(filters),
+                        )
+                        .group_by(ServiceRequest.status)
+                    )
+                ).all()
+                for status, count in request_rows:
+                    counts[REQUEST_COLUMNS[status]] += int(count)
+        if self._includes(filters, BoardItemType.WORK_PACKAGE):
+            package_statuses = list(PACKAGE_COLUMNS)
+            if package_statuses:
+                package_rows = (
+                    await self._session.execute(
+                        select(WorkPackage.status, func.count(WorkPackage.id))
+                        .where(
+                            WorkPackage.team_id == team_id,
+                            WorkPackage.status.in_(package_statuses),
+                            *self._package_filters(filters),
+                        )
+                        .group_by(WorkPackage.status)
+                    )
+                ).all()
+                for status, count in package_rows:
+                    counts[PACKAGE_COLUMNS[status]] += int(count)
+        return counts
+
     async def _requests(
         self,
         team_id: UUID,
@@ -121,11 +169,7 @@ class SqlAlchemyBoardPageRepository:
         cursor: tuple[datetime, str, str] | None,
         fetch_limit: int,
     ) -> list[ProjectedBoardItem]:
-        statuses = [
-            status
-            for status, column in REQUEST_COLUMNS.items()
-            if not filters.columns or column in filters.columns
-        ]
+        statuses = self._request_statuses(filters)
         if not statuses:
             return []
         completed_cutoff = datetime.now(UTC) - timedelta(days=30)
@@ -175,11 +219,7 @@ class SqlAlchemyBoardPageRepository:
         cursor: tuple[datetime, str, str] | None,
         fetch_limit: int,
     ) -> list[ProjectedBoardItem]:
-        statuses = [
-            status
-            for status, column in PACKAGE_COLUMNS.items()
-            if not filters.columns or column in filters.columns
-        ]
+        statuses = self._package_statuses(filters)
         if not statuses:
             return []
         statement = (
@@ -212,6 +252,22 @@ class SqlAlchemyBoardPageRepository:
     @staticmethod
     def _includes(filters: BoardFilters, item_type: BoardItemType) -> bool:
         return not filters.item_types or item_type in filters.item_types
+
+    @staticmethod
+    def _request_statuses(filters: BoardFilters) -> list[RequestStatus]:
+        return [
+            status
+            for status, column in REQUEST_COLUMNS.items()
+            if not filters.columns or column in filters.columns
+        ]
+
+    @staticmethod
+    def _package_statuses(filters: BoardFilters) -> list[WorkPackageStatus]:
+        return [
+            status
+            for status, column in PACKAGE_COLUMNS.items()
+            if not filters.columns or column in filters.columns
+        ]
 
     @staticmethod
     def _request_filters(filters: BoardFilters) -> list[ColumnElement[bool]]:

@@ -2,7 +2,7 @@
 [CmdletBinding()]
 param(
     [Uri]$BaseUri = "http://127.0.0.1:8080",
-    [string]$BpmnPath = (Join-Path $PSScriptRoot "..\workflow\service-request.bpmn"),
+    [string]$BpmnPath = (Join-Path $PSScriptRoot "../workflow/service-request.bpmn"),
     [string]$TenantId,
     [string]$ExpectedProcessId = "service-request-v1",
     [string]$OperatorSubject,
@@ -30,7 +30,7 @@ if ([IO.Path]::GetExtension($resolvedBpmnPath) -ne ".bpmn") {
     throw "BpmnPath must reference a .bpmn file."
 }
 
-& (Join-Path $PSScriptRoot "..\workflow\validate-bpmn.ps1") -BpmnPath $resolvedBpmnPath
+& (Join-Path $PSScriptRoot "../workflow/validate-bpmn.ps1") -BpmnPath $resolvedBpmnPath
 
 $deploymentUri = [Uri]::new($BaseUri, "/v2/deployments")
 $form = @{ resources = Get-Item -LiteralPath $resolvedBpmnPath }

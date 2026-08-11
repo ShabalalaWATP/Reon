@@ -97,7 +97,7 @@ class SqlAlchemyRequestRepository(RequestCustomerRepositoryMixin):
             reference=f"SR-{now.year}-{request_id.hex[:8].upper()}",
             requester_id=actor.id,
             status=RequestStatus.ROUTING_PENDING,
-            current_owner="JIOC Routing",
+            current_owner="CRIOC Routing",
             **values,
         )
         self._session.add(request)

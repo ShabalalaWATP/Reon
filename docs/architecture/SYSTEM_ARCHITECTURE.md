@@ -1,6 +1,6 @@
 # ISTARI Service system architecture
 
-Status: current implementation architecture and unimplemented target boundaries
+Status: current executable architecture and explicit deployment boundaries
 Last reviewed: 10 August 2026
 
 ## 1. Purpose and scope
@@ -8,42 +8,60 @@ Last reviewed: 10 August 2026
 ISTARI Service is a human-led service-request application. A Customer submits a
 structured request, authorised routing users select each organisational
 destination, a Team Manager assigns one Lead Analyst and optional Contributors,
-and QC releases a product for
-authenticated download. Camunda coordinates human user tasks. It does not make
+and QC releases a product for authenticated download. Camunda coordinates human user tasks. It does not make
 priority, route, assignment, approval or release decisions.
 
 This document describes the executable React, FastAPI, PostgreSQL and Camunda
 system. The organisation model is in
 [Organisation and routing](ORGANISATION_AND_ROUTING.md). Detailed decisions are
-in [ADRs 0001 to 0027](../adr/). Production gaps remain authoritative in the
+in [ADRs 0001 to 0029](../adr/). The complete process is explained in
+[Workflow and Camunda](WORKFLOW_AND_BPMN.md). Production gaps remain authoritative in the
 [gap register](../ENTERPRISE_READINESS_GAP_REGISTER.md).
+
+This guide can be read at two levels. Sections 2 to 4 explain the shape of the
+system in language suitable for product and delivery stakeholders. Sections 5
+onwards give developers, security reviewers and operators the transaction,
+failure, trust and scaling detail needed to change or run it safely.
+
+## Contents
+
+1. [Purpose and scope](#1-purpose-and-scope)
+2. [System context](#2-system-context)
+3. [Executable components](#3-executable-components)
+4. [Authorities and consistency](#4-authorities-and-consistency)
+5. [Core data flows](#5-core-data-flows)
+6. [Configuration sealing and routing](#6-configuration-sealing-and-routing)
+7. [Startup and background processing](#7-startup-and-background-processing)
+8. [Bounded read projections](#8-bounded-read-projections)
+9. [Authentication and session controls](#9-authentication-and-session-controls)
+10. [Trust boundaries](#10-trust-boundaries)
+11. [Health, failure and recovery](#11-health-failure-and-recovery)
+12. [Scaling and capacity](#12-scaling-and-capacity)
+13. [Backup and disaster recovery](#13-backup-and-disaster-recovery)
+14. [Deployment boundaries](#14-deployment-boundaries)
+15. [Design and quality principles](#15-design-and-quality-principles)
 
 ## 2. System context
 
-```mermaid
-flowchart LR
-    Human["Authenticated human user"] -->|HTTPS target; HTTP loopback locally| Web["React web application"]
-    Web -->|Same-origin /api requests, cookie and CSRF token| API["FastAPI application"]
-    API -->|SQL transactions| DB["Product PostgreSQL"]
-    API -->|Camunda V2 API| Camunda["Camunda 8.9 Orchestration Cluster"]
-    Worker["Fenced maintenance worker"] -->|Short SQL transactions| DB
-    Worker -->|Camunda V2 API outside SQL transactions| Camunda
-    API -->|Quarantine, scan, promote, stream| Products["Private product storage"]
-    API -->|INSTREAM scan protocol| Scanner["Internal-only clamd"]
-    Updater["ClamAV signature updater"] -->|HTTPS on isolated egress network| Mirrors["ClamAV signature mirror"]
-    Updater -->|Writable signature volume| Definitions["Verified definitions"]
-    Definitions -->|Read-only mount and reload| Scanner
-    Operator["Authorised operator"] -->|Migrate, deploy BPMN, attest, back up, restore| API
-    Operator --> Camunda
-    Operator --> DB
-```
+![ISTARI Service system context](../assets/architecture/01-system-context.svg)
 
 The browser calls FastAPI only. It never calls Camunda or PostgreSQL. Application
 code never reads Camunda-owned database tables. The local Compose deployment
 shares one PostgreSQL server but creates separately owned application and
 Camunda databases; that co-location is not a production recommendation.
 
+The people on the left use one product. They do not need separate Camunda,
+database or storage accounts to perform ordinary application work. The services
+on the right sit behind the application boundary and are reached only through
+supported, validated interfaces.
+
 ## 3. Executable components
+
+![ISTARI Service container view](../assets/architecture/02-container-view.svg)
+
+The word **container** here means a separately running application or data
+service, not simply a Docker image. The same logical boundaries must remain when
+the deployment technology changes.
 
 ### React web application
 
@@ -121,6 +139,9 @@ Compose forces `NONE` and publishes the API to host loopback. This is acceptable
 only for isolated development. Production OIDC integration and application
 bootstrap are not implemented.
 
+See [Workflow and Camunda](WORKFLOW_AND_BPMN.md) for every human task, outcome,
+information loop, rework loop and end state.
+
 ### Product storage and malware scanning
 
 In local mode, a private named volume backs a filesystem object-storage adapter.
@@ -182,6 +203,31 @@ therefore favours durable intent and convergence over a distributed transaction.
 5. If Camunda is unavailable or its search view lags, leases expire safely and
    reconciliation proves the actual task/process state before recovery.
 
+### Action links and operational navigation
+
+PostgreSQL projects a content-minimised **My actions** register from the
+authoritative request event chain. The projection is a locator, not a workflow
+authority. Unclaimed candidate work is marked `SHARED`; a successful Camunda
+claim causes the next atomic request-event projection to address only the named
+assignee and mark it `PERSONAL`.
+
+Customer actions link to the Customer request page. Staff actions link to the
+appropriate CRIOC, command, Ops, Team Manager, Team Analyst or QC queue with the
+request UUID as a selector. `GET /work-items?requestId=...` applies that selector
+inside the existing actor-scoped task query. A copied UUID therefore cannot
+broaden access. A missing, completed or differently assigned task returns no
+row, and the frontend reports that the action ended instead of selecting the
+first item in the queue.
+
+The navigation separates three concerns:
+
+- **My assigned actions** is the sidebar route to the personal and explicitly
+  shared action register;
+- the purpose-named queue, such as **CRIOC routing queue**, is where human workflow decisions
+  are claimed and recorded;
+- the organisation-named workspace, such as **CRIOC workspace**, contains people,
+  calendar, handover and other unit collaboration features.
+
 ### Clarification
 
 An assigned Analyst may request information from the Customer. PostgreSQL stores
@@ -204,6 +250,12 @@ Participant history remains in PostgreSQL. Only the active Lead is sent to
 Camunda as the task assignee. Contributors gain object-level read and
 collaboration access through the FastAPI policy boundary, not through broader
 organisation scope or a second Camunda task.
+
+The same policy boundary permits a current Manager membership to read active and
+terminal requests assigned to that exact delivery team. This keeps the team's
+Board history inspectable without extending visibility to ancestors, siblings or
+other teams. PostgreSQL membership, effective dates and assigned-team identity
+are rechecked for every detail read.
 
 ### Product lifecycle
 
@@ -267,9 +319,27 @@ in SQL, with each applicable source reading at most `limit + 1` candidates
 before a bounded merge. The browser appends pages and resets the cursor when a
 filter changes. Cursors contain ordering keys only and never grant authority.
 
+Team workspaces compose several independently authorised bounded projections.
+Delivery-team Overview combines exact-team Board totals, planning freshness,
+capacity, current membership, calendar occurrences, collaboration records and
+recent activity. Routing-unit Overview combines a unit-scoped human decision
+queue with its calendar, handover and activity. A failed source is labelled and
+does not widen another source's scope.
+
+The delivery Board returns two distinct facts: a cursor-bounded item page and
+complete per-column aggregates for the same search, type, priority, owner and
+due-date predicates. Active delivery lanes are shown first. Downstream,
+exception and terminal lanes remain explicitly expandable. Request cards are
+workflow projections and can change stage only through named Camunda actions;
+work packages use their own reasoned, versioned planning transitions.
+
+Current team membership exposes bounded, self-declared operational skill labels
+from the user's profile. These labels support human allocation only. They carry
+no proficiency, ranking, endorsement or automated assignment semantics.
+
 ## 9. Authentication and session controls
 
-The implemented MVP uses database accounts, Argon2 password hashes, opaque
+The current application uses database accounts, Argon2 password hashes, opaque
 server-side sessions in an HttpOnly cookie, CSRF binding, absolute and idle
 expiry, active-account checks and a short session-bound step-up window for
 privileged administration. The shared `admin` password is allowed only for
@@ -383,3 +453,78 @@ patterns using encrypted management tunnels, not production designs. The
 [Kubernetes target](../deployment/KUBERNETES_TARGET.md) is explicitly
 unimplemented: there are no application manifests, Helm values, infrastructure
 as code, OIDC bootstrap, production object-storage adapter or validated topology.
+
+## 15. Design and quality principles
+
+### Dependency direction
+
+The delivery technologies depend on application rules. Application rules do not
+depend on React, FastAPI, SQLAlchemy or Camunda.
+
+```text
+React features → typed API client → FastAPI routes
+                                      ↓
+                              application services
+                                      ↓
+                              domain policy and rules
+                                      ↑
+                     ports ← PostgreSQL and Camunda adapters
+```
+
+This is pragmatic SOLID design rather than a requirement to create a class or
+interface for every function:
+
+- routes translate HTTP and delegate;
+- services coordinate one use case and its transactions;
+- policy modules answer permission and transition questions;
+- repositories translate between application concepts and PostgreSQL;
+- adapters isolate external systems whose contracts can fail or change; and
+- React components focus on rendering and interaction while API clients and
+  hooks own server communication.
+
+An abstraction is introduced when it protects a real boundary, such as storage,
+workflow, identity, scanning or persistence. It is not introduced merely to make
+the directory tree look layered.
+
+### Interface principles
+
+- Use a calm, readable operational layout with clear status and ownership.
+- Separate personal workload from organisation workload.
+- Name navigation by the task a user is trying to perform.
+- Show loading, empty, success, denied, conflict and recoverable-error states.
+- Keep keyboard focus, labels, contrast and reduced motion at WCAG 2.2 AA.
+- Use charts only when the visual adds meaning, and provide an accessible table
+  with the same facts.
+- Do not expose engine identifiers or implementation terms where plain English
+  explains the action.
+
+### Data and audit principles
+
+- Drafts remain private and do not start Camunda.
+- Submission creates an immutable revision and durable process-start intent.
+- Later information appends history rather than rewriting submitted evidence.
+- Expected versions reject stale or duplicate mutations.
+- Workflow and administrative changes record attributable, prior-hash-linked
+  audit events.
+- Pending external work stays explicitly pending. The application never guesses
+  a successful workflow position.
+
+### Quality principles
+
+- Backend and frontend application code each maintain at least 95 per cent line
+  and branch coverage.
+- Hand-written source files remain at or below 350 lines. Markdown documentation
+  is exempt so one coherent authority does not become several fragments.
+- Static typing, lint, formatting, dead-code, dependency, licence, secret,
+  container and documentation checks run in CI.
+- Security-sensitive work updates the applicable threat model.
+- Material architecture changes update or add an ADR.
+- Operational procedures are tested on synthetic environments and their dated
+  result is stored separately from the current procedure.
+
+### Change rule
+
+Add a dependency or layer only when it materially improves correctness,
+security, maintainability or delivery risk. Keep the current guides factual and
+plain. Put chronology in the [development story](../DEVELOPMENT_STORY.md),
+decision context in an ADR and executed evidence in `docs/assurance/`.

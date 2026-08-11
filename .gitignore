@@ -25,6 +25,7 @@ output/
 Thumbs.db
 .idea/
 .vscode/
+.claude/
 *.egg-info/
 apps/api/.data/
 .local/

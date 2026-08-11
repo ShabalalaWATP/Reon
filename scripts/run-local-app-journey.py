@@ -96,7 +96,7 @@ async def exercise(args: argparse.Namespace) -> dict[str, object]:
         username: await login(args.base_url, args.origin, username, password)
         for username in usernames
     }
-    customer, jioc, command, ops, manager, analyst, qc = (
+    customer, crioc, command, ops, manager, analyst, qc = (
         actors[username] for username in usernames
     )
     required_by = (datetime.now(UTC).date() + timedelta(days=14)).isoformat()
@@ -126,7 +126,7 @@ async def exercise(args: argparse.Namespace) -> dict[str, object]:
             "requiredByReason": "The local assurance review follows this date.",
             "preferredDeliverableType": "Written response",
             "successCriteria": (
-                "The complete non-OSG route is recorded without fallback."
+                "The complete non-SSG route is recorded without fallback."
             ),
             "constraintsOrCaveats": "No known constraints.",
             "supportingInformation": "No supporting material is available.",
@@ -136,15 +136,15 @@ async def exercise(args: argparse.Namespace) -> dict[str, object]:
     )
     request_id = str(request["id"])
 
-    item = await claim(jioc, await wait_for_item(jioc, request_id, "TRIAGE_REVIEW"))
+    item = await claim(crioc, await wait_for_item(crioc, request_id, "TRIAGE_REVIEW"))
     await complete(
-        jioc,
+        crioc,
         item,
         {
             "action": "progress",
             "category": "Research support",
             "priority": "MEDIUM",
-            "destinationUnitId": await destination(jioc, item, "SYGOC"),
+            "destinationUnitId": await destination(crioc, item, "SYGOC"),
         },
     )
     item = await claim(
@@ -192,7 +192,7 @@ async def exercise(args: argparse.Namespace) -> dict[str, object]:
             "deliverableTitle": "Alternative route service summary",
             "deliverableText": (
                 "This synthetic product proves the complete SYGOC, Nimbus Ops and "
-                "Beacon Team route without OSG fallback."
+                "Beacon Team route without SSG fallback."
             ),
         },
     )

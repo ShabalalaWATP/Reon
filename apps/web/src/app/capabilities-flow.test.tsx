@@ -29,7 +29,7 @@ describe("server capabilities", () => {
     renderApp("/");
 
     expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "My work" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "My assigned actions" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /unread notifications/ })).not.toBeInTheDocument();
     const paths = fetchMock.mock.calls.map(([input]) => new URL(String(input), "http://localhost").pathname);
     expect(paths).toContain("/api/v1/me/capabilities");
@@ -62,7 +62,7 @@ describe("server capabilities", () => {
     renderApp("/");
 
     expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "My work" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "My assigned actions" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /unread notifications/ })).not.toBeInTheDocument();
     const paths = fetchMock.mock.calls.map(([input]) => new URL(String(input), "http://localhost").pathname);
     expect(paths).not.toContain("/api/v1/me/actions");
@@ -85,7 +85,7 @@ describe("server capabilities", () => {
     renderApp("/my-work");
 
     expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "My work" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "My assigned actions" })).not.toBeInTheDocument();
     expect(screen.getByText(/New actions also appear in notifications/)).toBeInTheDocument();
     await user.click(screen.getByRole("link", { name: "2 unread notifications" }));
     expect(await screen.findByRole("heading", { name: "Notifications" })).toBeInTheDocument();

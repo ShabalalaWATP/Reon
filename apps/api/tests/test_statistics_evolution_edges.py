@@ -97,21 +97,21 @@ def test_statistics_hierarchy_selects_only_members_and_builds_a_trail() -> None:
     root = StatisticsUnit(
         id=root_id,
         parent_id=None,
-        name="JIOC",
+        name="CRIOC",
         kind=OrganisationKind.ROOT,
         depth=0,
     )
     child = StatisticsUnit(
         id=child_id,
         parent_id=root_id,
-        name="DIGOC",
+        name="JOCK",
         kind=OrganisationKind.COMMAND,
         depth=1,
     )
     scope = StatisticsScope(
-        id="jioc",
+        id="crioc",
         unit_id=root_id,
-        name="JIOC",
+        name="CRIOC",
         kind=OrganisationKind.ROOT,
         include_descendants=True,
         units=[root, child],

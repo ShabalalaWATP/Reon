@@ -35,6 +35,8 @@ const RequestDetailPage = lazy(() => import("../features/requests/RequestDetailP
   .then(({ RequestDetailPage: page }) => ({ default: page })));
 const TrackingPage = lazy(() => import("../features/tracking/TrackingPage")
   .then(({ TrackingPage: page }) => ({ default: page })));
+const TrackingDetailPage = lazy(() => import("../features/tracking/TrackingDetailPage")
+  .then(({ TrackingDetailPage: page }) => ({ default: page })));
 const StatisticsPage = lazy(() => import("../features/statistics/StatisticsPage")
   .then(({ StatisticsPage: page }) => ({ default: page })));
 const TeamWorkspacePage = lazy(() => import("../features/teams/TeamWorkspacePage")
@@ -82,9 +84,7 @@ export function AppRoutes() {
               <Route path="statistics" element={<StatisticsPage />} />
             </Route>
             <Route path="teams/:teamId/:view?" element={<TeamWorkspacePage />} />
-            <Route element={<RoleGate allowed={["DELIVERY_TEAM_LEAD", "DELIVERY_SPECIALIST"]} />}>
-              <Route path="calendar/:calendarView?" element={<CalendarPage />} />
-            </Route>
+            <Route path="calendar/:calendarView?" element={<CalendarPage />} />
             <Route element={<RoleGate allowed={["PLATFORM_ADMIN"]} />}>
               <Route path="admin/users" element={<AdminUsersPage />} />
               <Route path="admin/users/new" element={<AdminUserPage create />} />
@@ -100,6 +100,7 @@ export function AppRoutes() {
             </Route>
             <Route element={<RoleGate allowed={trackingRoles} />}>
               <Route path="tracking" element={<TrackingPage />} />
+              <Route path="tracking/:requestId" element={<TrackingDetailPage />} />
             </Route>
             <Route element={<RoleGate allowed={["REQUESTER"]} />}>
               <Route path="requests" element={<RequestDashboardPage />} />
@@ -110,13 +111,13 @@ export function AppRoutes() {
             <Route element={<RoleGate allowed={["INTAKE_TRIAGE"]} />}>
               <Route
                 path="triage"
-                element={<StaffQueuePage description="Review new Customer demand, request information or route it to the appropriate command." eyebrow="JIOC routing" title="JIOC routing queue" />}
+                element={<StaffQueuePage description="Review new Customer demand, request information or route it to the appropriate command." eyebrow="CRIOC routing" title="CRIOC routing queue" />}
               />
             </Route>
             <Route element={<RoleGate allowed={["SERVICE_COORDINATION"]} />}>
               <Route
                 path="coordination"
-                element={<StaffQueuePage description="Oversee command routing, holds and onward hand-offs to operations." eyebrow="Command routing" title="Command routing queue" />}
+                element={<StaffQueuePage description="A new request has been submitted and requires your attention. Claim it to review the details and choose the next organisation." eyebrow="Request coordination" title="Incoming requests" />}
               />
             </Route>
             <Route element={<RoleGate allowed={["OPERATIONS_ALLOCATION"]} />}>

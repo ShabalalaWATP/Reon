@@ -31,8 +31,8 @@ async def test_reassignment_preserves_history_and_one_active_lead(
             reference="SR-PARTICIPANT-HISTORY-001",
             requester_id=requester_id,
             status=RequestStatus.IN_PROGRESS,
-            current_owner="OSG Team",
-            assigned_delivery_team="OSG Team",
+            current_owner="SSG Team",
+            assigned_delivery_team="SSG Team",
             **RequestCreate.model_validate(request_payload()).model_dump(),
         )
         session.add(request)

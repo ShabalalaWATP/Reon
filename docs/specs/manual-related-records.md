@@ -2,11 +2,11 @@
 
 ## Outcome
 
-During an actively claimed JIOC intake task, ISTARI automatically compares the
+During an actively claimed CRIOC intake task, ISTARI automatically compares the
 new request with every previous submitted request the actor is authorised to
 see. It ranks strong candidates using the complete Customer-submitted
 requirement, explains the fields that contributed to each match and lets the
-named JIOC user record a possible duplicate, related request, existing released
+named CRIOC user record a possible duplicate, related request, existing released
 product or not-relevant decision.
 
 Matching remains advisory. It never closes, merges, prioritises or routes a
@@ -79,7 +79,7 @@ worker or model outage cannot block submission, routing or text search.
 
 ## Users and permissions
 
-- Only an active JIOC Routing User who owns the current `TRIAGE_REVIEW` task may
+- Only an active CRIOC Routing User who owns the current `TRIAGE_REVIEW` task may
   retrieve suggestions, search or add decisions for that request.
 - Every lexical query, vector query, comparison and save re-applies the actor's
   route-membership condition before content or scores leave persistence.
@@ -117,11 +117,15 @@ not-relevant decision only when each decision type is unique and attributable.
 
 ## Accessibility and interaction
 
-The intake detail opens with automatic suggestions. Each result has a labelled
-match band, visible score, matched-field reasons and an expandable comparison.
-The accessible table-equivalent text is present without relying on colour.
-Advanced search, comparison and decision controls are keyboard-operable and
-include loading, empty, partial-index, error, conflict and success states.
+The intake detail loads the automatic comparison but presents it as a compact,
+collapsed summary so lower-confidence suggestions do not dominate the routing
+decision. The summary distinguishes strong matches from optional suggestions.
+Expanding it reveals manual search and a keyboard-focusable, fixed-height result
+region with its own vertical scroll. Each result retains a labelled match band,
+visible score, matched-field reasons and an expandable comparison without
+relying on colour. Search, disclosure, scrolling, comparison and decision
+controls are keyboard-operable and include loading, empty, partial-index, error,
+conflict and success states.
 
 ## Acceptance criteria
 
@@ -133,15 +137,18 @@ include loading, empty, partial-index, error, conflict and success states.
    field-level explanations on a fixed synthetic relevance corpus.
 4. Text ranking remains usable when every embedding is absent or the indexer is
    unavailable.
-5. Another JIOC user without ownership, every other role and users outside the
+5. Another CRIOC user without ownership, every other role and users outside the
    route receive no candidate content or score.
 6. Search and comparison cannot leak sibling or unrelated route content through
    results, timing-sensitive counts, excerpts or errors.
-7. A named JIOC user can record each decision type; the action remains
+7. A named CRIOC user can record each decision type; the action remains
    informational and cannot change workflow state.
 8. PostgreSQL full-text and vector indexes, empty upgrade, downgrade, re-upgrade
    and drift checks pass.
 9. Backend and frontend retain at least 95 per cent line and branch coverage.
+10. Automatic results are collapsed by default, their summary does not describe
+    lower-confidence suggestions as strong matches, and expansion cannot make
+    the result list exceed its bounded scroll region.
 
 ## Non-goals
 

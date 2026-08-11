@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 
 import type { ActionColumn, PersonalAction } from "../../lib/api/actionNotificationTypes";
-import { actionColumns, columnLabels, formatActionDate, humaniseCode, safeWorkspaceHref } from "./myWorkModel";
+import { actionColumns, actionTypeLabel, availableToLabel, columnLabels, formatActionDate, safeWorkspaceHref } from "./myWorkModel";
 
 export function ActionRegister({ columns, items, label }: { columns: ActionColumn[]; items: PersonalAction[]; label: string }) {
   return (
@@ -18,7 +18,7 @@ function ActionRow({ columns, item }: { columns: ActionColumn[]; item: PersonalA
   const href = safeWorkspaceHref(item.deepLink);
   return <tr>
     {columns.includes("REFERENCE") ? <td className="mono-ref">{item.reference}</td> : null}
-    {columns.includes("TITLE") ? <td><strong>{item.title ?? "Restricted item"}</strong><small>{humaniseCode(item.actionType)}</small></td> : null}
+    {columns.includes("TITLE") ? <td><strong>{item.title ?? "Restricted item"}</strong><small>{actionTypeLabel(item.actionType)}</small><small>{item.actionAccess === "PERSONAL" ? "Assigned to you" : `Available to ${availableToLabel(item.currentOwner)}`}</small></td> : null}
     {columns.includes("CURRENT_OWNER") ? <td>{item.currentOwner ?? "Unassigned"}</td> : null}
     {columns.includes("REQUIRED_BY") ? <td>{formatActionDate(item.requiredBy)}</td> : null}
     {columns.includes("AGE") ? <td>{item.ageDays === 0 ? "Today" : `${item.ageDays}d`}</td> : null}

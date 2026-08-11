@@ -20,6 +20,7 @@ from istari_service.errors import InvalidAction
 from istari_service.models import UserRole
 from istari_service.repositories.actions import SqlAlchemyActionRepository, utc
 from istari_service.schemas.actions import (
+    ActionAccess,
     ActionColumn,
     ActionCounts,
     ActionFilters,
@@ -75,12 +76,22 @@ class ActionService:
         actions, next_cursor = await self._repository.list_actions(
             actor, filters, limit=limit, cursor=cursor
         )
+        unit_names = await self._repository.organisation_unit_names(
+            {
+                action.organisation_unit_id
+                for action in actions
+                if action.organisation_unit_id is not None
+            }
+        )
         counts = await self._repository.counts(actor)
         views = await self._repository.saved_views(actor.id)
         checkpoint = await self._repository.checkpoint("actions")
         freshness = _freshness(checkpoint, current)
         return ActionWorkspaceResult(
-            items=[_action_item(item, freshness, current) for item in actions],
+            items=[
+                _action_item(item, actor, freshness, current, unit_names)
+                for item in actions
+            ],
             counts=ActionCounts(
                 needs_my_action=counts.get(ActionSection.NEEDS_MY_ACTION, 0),
                 waiting=counts.get(ActionSection.WAITING, 0),
@@ -116,8 +127,10 @@ class ActionService:
 
 def _action_item(
     action: ActionProjection,
+    actor: Actor,
     freshness: ProjectionFreshness,
     now: datetime,
+    unit_names: dict[UUID, str],
 ) -> ActionItem:
     changed_at = utc(action.last_changed_at)
     projected_at = utc(action.projected_at)
@@ -128,11 +141,16 @@ def _action_item(
     return ActionItem(
         id=action.id,
         section=action.section,
+        action_access=(
+            ActionAccess.PERSONAL
+            if action.recipient_user_id == actor.id
+            else ActionAccess.SHARED
+        ),
         action_type=action.action_type,
         source_type=action.source_type,
         reference=action.reference,
         title=action.safe_title,
-        current_owner=action.current_owner,
+        current_owner=_current_owner(action, actor, unit_names),
         required_by=action.required_by,
         age_days=max(0, (utc(now) - changed_at).days),
         last_changed_at=action.last_changed_at,
@@ -140,6 +158,20 @@ def _action_item(
         source_version=action.source_version,
         is_stale=stale,
     )
+
+
+def _current_owner(
+    action: ActionProjection,
+    actor: Actor,
+    unit_names: dict[UUID, str],
+) -> str:
+    if action.recipient_user_id == actor.id:
+        return actor.display_name
+    if action.organisation_unit_id is not None:
+        unit_name = unit_names.get(action.organisation_unit_id)
+        if unit_name is not None:
+            return f"{unit_name} · Awaiting owner"
+    return action.current_owner
 
 
 def _saved_view(view: SavedActionView) -> SavedActionViewResult:

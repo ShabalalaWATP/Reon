@@ -103,7 +103,7 @@ describe("authentication and route policy", () => {
     });
     renderApp("/requests");
     expect(await screen.findByRole("heading", { name: "No items waiting" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "JIOC routing queue" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "CRIOC routing queue" })).toBeInTheDocument();
   });
 
   it("signs out from the shell and reports logout failures", async () => {
@@ -141,6 +141,23 @@ describe("authentication and route policy", () => {
     await user.click(screen.getByRole("button", { name: /Open account menu/ }));
     await user.click(screen.getByRole("button", { name: "Sign out" }));
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+  });
+
+  it("provides a keyboard bypass for repeated authenticated navigation", async () => {
+    mockFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/requests")) return json({ items: [] });
+      throw new Error(`Unexpected ${url.pathname}`);
+    });
+    const view = renderApp("/requests");
+    expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Skip to main content" })).toHaveAttribute(
+      "href",
+      "#main-content",
+    );
+    const target = view.container.querySelector("#main-content");
+    expect(target).toHaveAttribute("tabindex", "-1");
+    expect(await axe(view.container)).toHaveNoViolations();
   });
 
   it("never renders one requester's cached data after another requester signs in", async () => {

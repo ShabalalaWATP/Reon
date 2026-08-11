@@ -34,7 +34,7 @@ async def test_missing_wrong_and_duplicate_memberships_are_rejected(
 ) -> None:
     harness = api_harness
     await _admin(harness)
-    osg = str(await harness.unit_id("OSG_TEAM"))
+    ssg = str(await harness.unit_id("SSG_TEAM"))
     missing = await harness.client.post(
         "/api/v1/admin/users",
         json=_body(role="INTAKE_TRIAGE", units=[]),
@@ -43,13 +43,13 @@ async def test_missing_wrong_and_duplicate_memberships_are_rejected(
     assert missing.status_code == 409
     wrong = await harness.client.post(
         "/api/v1/admin/users",
-        json=_body(role="INTAKE_TRIAGE", units=[osg]),
+        json=_body(role="INTAKE_TRIAGE", units=[ssg]),
         headers=harness.mutation_headers(),
     )
     assert wrong.status_code == 409
     duplicate = await harness.client.post(
         "/api/v1/admin/users",
-        json=_body(role="DELIVERY_SPECIALIST", units=[osg, osg]),
+        json=_body(role="DELIVERY_SPECIALIST", units=[ssg, ssg]),
         headers=harness.mutation_headers(),
     )
     assert duplicate.status_code == 422
@@ -60,10 +60,10 @@ async def test_valid_routing_membership_and_display_only_update(
 ) -> None:
     harness = api_harness
     await _admin(harness)
-    jioc = str(await harness.unit_id("JIOC"))
+    crioc = str(await harness.unit_id("CRIOC"))
     created = await harness.client.post(
         "/api/v1/admin/users",
-        json=_body(role="INTAKE_TRIAGE", units=[jioc], scope="JIOC"),
+        json=_body(role="INTAKE_TRIAGE", units=[crioc], scope="CRIOC"),
         headers=harness.mutation_headers(),
     )
     assert created.status_code == 201, created.text
@@ -73,8 +73,8 @@ async def test_valid_routing_membership_and_display_only_update(
         json={
             **_body(
                 role="INTAKE_TRIAGE",
-                units=[jioc],
-                scope="JIOC",
+                units=[crioc],
+                scope="CRIOC",
                 name="Renamed Branch Account",
             ),
             "expectedVersion": account["version"],

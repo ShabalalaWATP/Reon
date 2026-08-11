@@ -1,10 +1,11 @@
 import type { User } from "../../lib/api/types";
+import type { TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 
 const accessLabels: Record<User["role"], string> = {
   PLATFORM_ADMIN: "Platform administration",
   REQUESTER: "Own requests and released products",
-  INTAKE_TRIAGE: "JIOC routing",
-  SERVICE_COORDINATION: "Command routing",
+  INTAKE_TRIAGE: "CRIOC routing",
+  SERVICE_COORDINATION: "Request coordination",
   OPERATIONS_ALLOCATION: "Ops routing",
   DELIVERY_TEAM_LEAD: "Team management",
   DELIVERY_SPECIALIST: "Assigned product work",
@@ -14,7 +15,7 @@ const accessLabels: Record<User["role"], string> = {
 const roleDescriptions: Record<User["role"], string> = {
   PLATFORM_ADMIN: "Maintains accounts and governed platform configuration.",
   REQUESTER: "Submits requests, tracks progress, responds when needed and receives released products.",
-  INTAKE_TRIAGE: "Routes new requests from JIOC to the appropriate command.",
+  INTAKE_TRIAGE: "Routes new requests from CRIOC to the appropriate command.",
   SERVICE_COORDINATION: "Coordinates requests within the selected command.",
   OPERATIONS_ALLOCATION: "Routes requests from an Ops group to a delivery team.",
   DELIVERY_TEAM_LEAD: "Plans team work, assigns Analysts and reviews products.",
@@ -22,8 +23,16 @@ const roleDescriptions: Record<User["role"], string> = {
   QUALITY_RELEASE: "Completes quality checks and releases products to Customers.",
 };
 
-export function profileAccessLabel(user: User) {
-  return accessLabels[user.role];
+export function profileAccessLabel(
+  user: User,
+  workspaces: TeamWorkspaceAccess[] = [],
+) {
+  const managed = workspaces
+    .filter((item) => item.workspacePosition === "MANAGER")
+    .map((item) => item.teamName);
+  return managed.length > 0
+    ? `${accessLabels[user.role]}; Manager controls for ${managed.join(", ")}`
+    : accessLabels[user.role];
 }
 
 export function profileRoleDescription(user: User) {
@@ -48,4 +57,29 @@ export function profileMembershipText(expected: number, names: string[], failed:
   if (expected === 0) return "No organisation unit assignment required";
   if (names.length === 0) return "Loading organisation assignments…";
   return names.join(", ");
+}
+
+export function profilePositionLabel(workspaces: TeamWorkspaceAccess[]) {
+  const positions = new Set(
+    workspaces.map((item) => item.workspacePosition).filter(Boolean),
+  );
+  if (positions.size !== 1) return positions.size > 1 ? "Mixed positions" : null;
+  return sentenceCase([...positions][0]!);
+}
+
+export function profileWorkspacePositionText(
+  expected: number,
+  workspaces: TeamWorkspaceAccess[],
+  failed: boolean,
+) {
+  if (failed) return "Workspace positions unavailable";
+  if (expected === 0) return "No workspace position required";
+  if (workspaces.length === 0) return "Loading workspace positions…";
+  return workspaces
+    .map((item) => `${sentenceCase(item.workspacePosition ?? "MEMBER")} in ${item.teamName}`)
+    .join("; ");
+}
+
+function sentenceCase(value: string) {
+  return `${value.slice(0, 1)}${value.slice(1).toLocaleLowerCase("en-GB")}`;
 }

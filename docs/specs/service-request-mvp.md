@@ -1,24 +1,22 @@
-# Structured Service Request MVP
+# Structured Service Request Product
 
 ## Status
 
-Approved as the pilot-MVP scope, 6 August 2026. The initial vertical slice is an
-implementation milestone, not completion of every capability in this spec.
+Current product contract. Last reviewed 10 August 2026.
 
 ## Objective
 
-Create a deliberately limited second ISTARI product that retains the established
-login and application-shell design while replacing conversational intake with a
-structured form and the representative routing and delivery language agreed for
-this MVP.
+Provide a focused ISTARI service-request product with a structured Customer
+form, clear human-led routing, accountable production, quality review and secure
+release.
 
-The MVP must let a Customer submit, follow and complete a service request. Every
+The product must let a Customer submit, follow and complete a service request. Every
 routing, assignment, review and dissemination choice is made by a named person through
 an executable Camunda workflow.
 
 It must also support save-and-resume drafts, recorded manual checks for duplicate
 or related records, time-stamped operational notes, workload visibility and a
-supporting Platform Administrator. These additions remain human-led and must not
+supporting Platform Administrator. These capabilities remain human-led and must not
 create broad access to request content.
 
 ## Visual thesis
@@ -52,8 +50,8 @@ language.
 | Role | Objective | MVP activity | Value |
 | --- | --- | --- | --- |
 | Customer | Receive a timely response | Submit, track, download and give feedback | Complete requests and visible progress |
-| JIOC Routing User | Understand and direct incoming demand | Review, categorise, request information or select a command | One source of truth and less administration |
-| Command Routing User | Direct work to the appropriate Ops group | Hold, resume, track and select a direct Ops group | Visible demand, ownership and progress |
+| CRIOC Routing User | Understand and direct incoming demand | Review, categorise, request information or select a command | One source of truth and less administration |
+| Request Coordination User | Direct work to the appropriate Ops group | Hold, resume, track and select a direct Ops group | Visible demand, ownership and progress |
 | Ops Routing User | Direct work to the appropriate team | Select any direct team and track progress | Clear demand and workload ownership |
 | Team Manager | Assign and oversee delivery | Assign Analysts and check their service product | One view of origin, ownership and delivery |
 | Team Analyst | Produce the service product | Manage assigned work and submit the product | Visible workload, status and history |
@@ -67,9 +65,21 @@ metadata, and cannot browse request content by default.
 
 The local/test seed contains 73 Scottish-football display names. Logons are
 `admin1` through `admin99`, with the local-only shared password `admin`.
-Every team has at least one Manager and one Analyst. OSG has three Managers and
+Every team has at least one Manager and one Analyst. SSG has three Managers and
 seven Analysts. The complete traceable roster is maintained in
 `docs/architecture/ORGANISATION_AND_ROUTING.md`.
+
+Team Analysts never claim an unassigned workflow task. A Team Manager selects
+the Lead Analyst and any Contributors; Camunda then creates the production task
+for the named Lead Analyst. The Analyst sees only work assigned to them and the
+claim endpoint rejects an Analyst even if a malformed or stale open-task
+projection is presented.
+
+The assignment form presents Contributors as independent, ordinary checkbox
+choices rather than a browser-native multi-select. A Manager can select up to ten
+Contributing Analysts without modifier keys. The selected Lead is visibly
+excluded from the Contributor choices and is removed automatically if the Lead
+selection changes.
 
 ## Form contract
 
@@ -112,16 +122,16 @@ and download authorisation.
 
 ```text
 Submit request
-  -> JIOC routing
-     -> Information required -> Customer response -> JIOC routing
+  -> CRIOC routing
+     -> Information required -> Customer response -> CRIOC routing
      -> Closed without delivery
      -> Select command
-        -> Command routing
-           -> On hold -> Command routing
-           -> Return to JIOC
+        -> Request coordination
+           -> On hold -> Request coordination
+           -> Return to CRIOC
            -> Select direct Ops group
               -> Ops routing
-                 -> Return to command routing
+                 -> Return to request coordination
                  -> Select direct team
                     -> Team Manager assignment
                        -> Return to Ops routing
@@ -147,9 +157,13 @@ task. Camunda must not infer or recommend a route.
 The Customer dashboard groups these into Needs your input, In progress and
 Completed without exposing engine terminology.
 
-JIOC, Command Routing and Ops Routing Users retain a separate metadata-only
-tracker after their routing action. They do not approve the service product
-and cannot use tracking access to open unreleased content.
+CRIOC, Request Coordination and Ops Routing Users retain a separate route-scoped,
+read-only tracker after their routing action. It shows title, reference,
+ownership and lifecycle and permits an exact-route member to reopen the original
+submitted request. It excludes actions, clarification, feedback and product
+content or links. These users do not approve the service product and cannot use
+tracking access to open unreleased content. The detailed amendment and acceptance
+criteria are in `tracking-lifecycle-and-analytical-visuals.md`.
 
 ## Pages and routes
 
@@ -185,8 +199,8 @@ query scope remain role-specific.
   destination for the applicable routing user, with no demonstration-only choice.
 - Every seeded team has its own active Manager and Analyst membership. A later
   administrative change may make it unstaffed, which shows `Awaiting staffing`
-  and never assigns OSG users.
-- OSG is the initial operational team, with additional Manager and Analyst users.
+  and never assigns SSG users.
+- SSG is the initial operational team, with additional Manager and Analyst users.
 - A Platform Administrator can provision, edit, deactivate and reactivate users
   and rename organisation display names without accessing request content.
 - Camunda 8.9.14 is pinned locally and accessed only through FastAPI.

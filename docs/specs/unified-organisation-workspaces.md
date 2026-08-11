@@ -14,13 +14,20 @@ the routing decision themselves.
 
 | Unit kind | Required views | Manager-only controls |
 | --- | --- | --- |
-| JIOC root | Overview, Queue, Calendar, People, Statistics, Handover, Activity | Membership, team events, workspace metadata |
+| CRIOC root | Overview, Queue, Calendar, People, Statistics, Handover, Activity | Membership, team events, workspace metadata |
 | Command | Overview, Queue, Calendar, People, Statistics, Handover, Activity | Membership, team events, workspace metadata |
 | Ops group | Overview, Queue, Calendar, People, Statistics, Handover, Activity | Membership, team events, workspace metadata |
 | Delivery team | Overview, Board, Calendar, People, Planning, Statistics, Activity | Membership, request assignment, commitments, WIP and capacity |
 
 The server returns capabilities for the selected unit. React does not infer
 authority from a role name, navigation item or organisation kind.
+
+The account menu and personal profile must present the representative workflow
+role and the effective workspace position as separate facts. For example, a
+CRIOC Manager is a `CRIOC Routing User` by representative role and a `Manager` in
+the CRIOC workspace. The compact account identity combines both labels, while
+the expanded profile names the organisation attached to each position. Neither
+label is an authorisation source.
 
 ## Membership and management
 
@@ -33,6 +40,15 @@ Managers may add an existing compatible account, schedule a transfer and end a
 Member assignment in their exact unit. They cannot create accounts, change a
 global role, deactivate an account, appoint or remove another Manager, or cross
 a parent or sibling boundary. Platform Administrators retain those powers.
+
+The People register is a sortable operational ledger. Every visible column can
+be sorted in either direction, with an accessible sort state and deterministic
+tie-breaking. Its initial order places Managers first, then Members, while
+retaining current, scheduled and ended history. Roster controls are available
+only when the authenticated person has both a current `MANAGER` membership in
+the exact unit and its active exact-unit `ROSTER` grant. React hides those
+controls for Members, but FastAPI independently enforces the same rule for every
+roster mutation.
 
 An active delivery assignment, capacity reservation or ticket leadership must
 be handed over before membership can end. All changes are immutable activity.
@@ -50,9 +66,16 @@ one or more current members. A linked commitment is valid only when the request
 or work package belongs to the Manager's exact delivery team. Routing Managers
 may create team events but cannot create ticket commitments.
 
-Leave and appointments default to availability-only. Private notes are redacted
-before a shared response leaves the backend. Existing events are clickable and
-empty calendar slots support keyboard-accessible quick creation. Dragging is an
+Personal events default to showing their title, category and notes to the
+member's current exact unit. The creation form provides one unchecked `Private
+appointment` control; selecting it redacts the title and notes before a shared
+response leaves the backend and shows colleagues only `Busy` and the event time.
+New availability-only personal events are not accepted, while existing records
+retain that projection. Existing events are clickable and empty calendar slots
+support keyboard-accessible quick creation. A single prominent Add event button
+and every calendar-slot creation affordance open the same modal form. Selecting
+a day pre-fills that date, successful creation closes the modal and returns
+focus, and validation or API errors preserve entered values. Dragging is an
 enhancement to the same commands, never a separate authority path.
 
 ## Multiple Analysts on one request
@@ -72,7 +95,7 @@ assignments are backfilled as Lead participation.
 
 ## Routing workspaces
 
-JIOC, Command and Ops work remains claim-based. A routing Manager has the same
+CRIOC, Command and Ops work remains claim-based. A routing Manager has the same
 routing action as a Member only after personally claiming the relevant task.
 Manager status adds staffing, calendar, metadata and oversight powers, not an
 approval gate or authority to allocate a routing decision to someone else.
@@ -92,6 +115,8 @@ authoritative operational records.
 ## Security and acceptance
 
 - Authorise every read and write by active membership, exact unit and action.
+- Require current exact-unit Manager position as well as the roster action for
+  add, transfer, eligible-person and end-membership operations.
 - Deny parent, sibling, expired, revoked and cross-unit access without revealing
   object existence.
 - Use CSRF protection, optimistic versions, mandatory reasons and immutable
@@ -102,3 +127,7 @@ authoritative operational records.
 - Notify only authorised current recipients with content-free summaries.
 - Maintain at least 95 per cent line and branch coverage independently in the
   backend and frontend, including negative authorisation and concurrency tests.
+- Verify every People column sort in both directions, Manager-first initial
+  ordering, Member read-only behaviour, Add event modal focus and day pre-fill.
+- Verify that Manager and Member accounts see their effective workspace
+  position alongside, rather than hidden behind, their representative role.

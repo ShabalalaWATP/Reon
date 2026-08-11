@@ -13,7 +13,7 @@ import {
 import { RenameOrganisationUnit } from "./RenameOrganisationUnit";
 
 const kindLabels: Record<OrganisationUnit["kind"], string> = {
-  ROOT: "JIOC root",
+  ROOT: "CRIOC root",
   COMMAND: "Command",
   OPS_GROUP: "Operations group",
   TEAM: "Team",
@@ -72,9 +72,9 @@ export function OrganisationPage() {
       <header className="page-heading">
         <div>
           <span>Organisation reference</span>
-          <h1>JIOC routing hierarchy</h1>
+          <h1>CRIOC routing hierarchy</h1>
           <p>
-            Browse routing responsibility and delivery-team staffing. JIOC,
+            Browse routing responsibility and delivery-team staffing. CRIOC,
             command and Ops units are staffed routing functions; team badges
             show whether Manager and Analyst roles are currently covered.
           </p>
