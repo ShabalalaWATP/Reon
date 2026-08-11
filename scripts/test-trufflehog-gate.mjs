@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const gate = join(scriptDirectory, "check-trufflehog-findings.mjs");
+const dockerfile = join(scriptDirectory, "trufflehog-scan.Dockerfile");
 const root = await mkdtemp(join(tmpdir(), "istari-trufflehog-gate-"));
 const findingsPath = join(root, "findings.jsonl");
 const allowlistPath = join(root, "allowlist.json");
@@ -56,6 +57,13 @@ const approved = {
   reason: "Synthetic exact test fixture with no external value.",
 };
 try {
+  const dockerfileSource = await readFile(dockerfile, "utf8");
+  assert.match(
+    dockerfileSource,
+    /FROM scratch AS evidence\s+COPY --from=gate /u,
+    "the evidence target must depend on the policy gate",
+  );
+
   await write([finding], [approved]);
   assert.equal(run().status, 0);
 

@@ -11,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from istari_service.action_notification_models import (
     NotificationAccessKind,
     NotificationEvent,
-    NotificationEventGroup,
 )
 from istari_service.models import (
     RequestEvent,
@@ -21,78 +20,21 @@ from istari_service.models import (
     UserRole,
 )
 from istari_service.notification_catalog import render_subject
-from istari_service.organisation_models import UserOrganisationMembership
+from istari_service.notification_event_types import notification_spec
+from istari_service.notification_rule_serialisation import (
+    deserialise_rule,
+    serialise_rule,
+)
+from istari_service.organisation_models import (
+    RequestRouteSelection,
+)
 from istari_service.repositories.notification_projection import (
     RecipientRule,
     SqlAlchemyNotificationProjectionRepository,
 )
+from istari_service.repositories.request_participants import active_participant_ids
 from istari_service.request_action_projection import action_audiences, as_utc
-
-NotificationSpec = tuple[str, NotificationEventGroup]
-
-_DIRECT_NOTIFICATION_SPECS: dict[str, NotificationSpec] = {
-    "request_submitted": (
-        "REQUEST_SUBMITTED",
-        NotificationEventGroup.REQUEST_LIFECYCLE,
-    ),
-    "workflow_withdraw": (
-        "REQUEST_WITHDRAWN",
-        NotificationEventGroup.REQUEST_LIFECYCLE,
-    ),
-    "product_withdrawn": ("PRODUCT_WITHDRAWN", NotificationEventGroup.RELEASE),
-    "workflow_close": (
-        "REQUEST_CLOSED",
-        NotificationEventGroup.REQUEST_LIFECYCLE,
-    ),
-    "workflow_hold": (
-        "REQUEST_HELD",
-        NotificationEventGroup.REQUEST_LIFECYCLE,
-    ),
-    "workflow_request_information": (
-        "CLARIFICATION_REQUESTED",
-        NotificationEventGroup.CLARIFICATION,
-    ),
-    "workflow_request_clarification": (
-        "CLARIFICATION_REQUESTED",
-        NotificationEventGroup.CLARIFICATION,
-    ),
-    "workflow_provide_information": (
-        "CLARIFICATION_ANSWERED",
-        NotificationEventGroup.CLARIFICATION,
-    ),
-    "workflow_provide_clarification": (
-        "CLARIFICATION_ANSWERED",
-        NotificationEventGroup.CLARIFICATION,
-    ),
-    "workflow_submit": (
-        "MANAGER_REVIEW_REQUESTED",
-        NotificationEventGroup.REVIEW,
-    ),
-    "product_package_submitted": (
-        "MANAGER_REVIEW_REQUESTED",
-        NotificationEventGroup.REVIEW,
-    ),
-    "workflow_release": (
-        "PRODUCT_DISSEMINATED",
-        NotificationEventGroup.RELEASE,
-    ),
-    "product_disseminated": (
-        "PRODUCT_DISSEMINATED",
-        NotificationEventGroup.RELEASE,
-    ),
-    "feedback_submitted": (
-        "FEEDBACK_RECEIVED",
-        NotificationEventGroup.FEEDBACK,
-    ),
-}
-
-_REVIEW_NOTIFICATION_SPECS: dict[str, tuple[str, str]] = {
-    "workflow_approve": ("MANAGER_REVIEW_APPROVED", "QC_REVIEW_APPROVED"),
-    "workflow_changes_required": (
-        "MANAGER_REVIEW_RETURNED",
-        "QC_REVIEW_RETURNED",
-    ),
-}
+from istari_service.team_models import TeamMembership
 
 
 async def publish_request_notification(
@@ -103,7 +45,11 @@ async def publish_request_notification(
         return
     event_type, group = notification
     normalised, subject = render_subject(event_type, request.reference)
-    rules = await recipient_rules_for(session, normalised, request)
+    rules = (
+        await cancellation_recipient_rules(session, event, request)
+        if normalised == "REQUEST_CANCELLED"
+        else await recipient_rules_for(session, normalised, request)
+    )
     await SqlAlchemyNotificationProjectionRepository(session).publish_event(
         stable_key=f"request-event:{event.event_hash}",
         event_type=normalised,
@@ -178,7 +124,13 @@ async def recipient_rules_for(
     rules: list[RecipientRule] = []
     for audience in await action_audiences(session, request):
         if audience.recipient_user_id is not None:
-            rules.append(_direct_rule(request, audience.recipient_user_id))
+            rules.append(
+                _direct_rule(
+                    request,
+                    audience.recipient_user_id,
+                    audience.recipient_role,
+                )
+            )
         elif audience.organisation_unit_id is not None and audience.candidate_role:
             rules.extend(
                 await _route_rules(
@@ -191,33 +143,61 @@ async def recipient_rules_for(
                     session, audience.required_scope, audience.candidate_role
                 )
             )
+    if event_type in {"TASK_ASSIGNED", "TASK_REASSIGNED", "TASK_RETURNED"}:
+        rules.extend(
+            _participant_rule(user_id)
+            for user_id in await active_participant_ids(session, request.id)
+        )
     return rules
 
 
-def serialise_rule(rule: RecipientRule) -> dict[str, str | None]:
-    return {
-        "userId": str(rule.user_id),
-        "accessKind": rule.access_kind.value,
-        "requiredRole": rule.required_role.value,
-        "requiredScope": rule.required_scope,
-        "organisationUnitId": (
-            str(rule.organisation_unit_id) if rule.organisation_unit_id else None
-        ),
-    }
-
-
-def deserialise_rule(value: dict[str, str | None]) -> RecipientRule:
-    return RecipientRule(
-        user_id=UUID(value["userId"] or ""),
-        access_kind=NotificationAccessKind(value["accessKind"] or ""),
-        required_role=UserRole(value["requiredRole"] or ""),
-        required_scope=value.get("requiredScope"),
-        organisation_unit_id=(
-            UUID(value["organisationUnitId"])
-            if value.get("organisationUnitId")
-            else None
-        ),
+async def cancellation_recipient_rules(
+    session: AsyncSession,
+    event: RequestEvent,
+    request: ServiceRequest,
+) -> list[RecipientRule]:
+    rules = [_requester_rule(request)]
+    selections = list(
+        (
+            await session.execute(
+                select(RequestRouteSelection.position, RequestRouteSelection.unit_id)
+                .where(RequestRouteSelection.request_id == request.id)
+                .order_by(RequestRouteSelection.position)
+            )
+        ).tuples()
     )
+    roles_by_position: dict[int, tuple[UserRole, ...]] = {
+        0: (UserRole.INTAKE_TRIAGE,),
+        1: (UserRole.SERVICE_COORDINATION,),
+        2: (UserRole.OPERATIONS_ALLOCATION,),
+        3: (UserRole.DELIVERY_TEAM_LEAD, UserRole.DELIVERY_SPECIALIST),
+    }
+    for position, unit_id in selections:
+        for role in roles_by_position.get(position, ()):
+            rules.extend(await _route_rules(session, unit_id, role))
+    if request.assigned_specialist_id is not None:
+        rules.append(_assignee_rule(request))
+    rules.extend(
+        _participant_rule(user_id)
+        for user_id in await active_participant_ids(session, request.id)
+    )
+    if event.prior_status in {
+        RequestStatus.QUALITY_REVIEW,
+        RequestStatus.READY_FOR_RELEASE,
+    }:
+        scopes = list(
+            await session.scalars(
+                select(User.scope)
+                .where(
+                    User.role == UserRole.QUALITY_RELEASE,
+                    User.is_active.is_(True),
+                )
+                .distinct()
+            )
+        )
+        for scope in scopes:
+            rules.extend(await _scope_rules(session, scope, UserRole.QUALITY_RELEASE))
+    return rules
 
 
 async def _route_rules(
@@ -228,11 +208,16 @@ async def _route_rules(
             await session.execute(
                 select(User.id, User.scope)
                 .join(
-                    UserOrganisationMembership,
-                    UserOrganisationMembership.user_id == User.id,
+                    TeamMembership,
+                    TeamMembership.user_id == User.id,
                 )
                 .where(
-                    UserOrganisationMembership.unit_id == unit_id,
+                    TeamMembership.team_id == unit_id,
+                    TeamMembership.effective_from <= datetime.now(UTC),
+                    (
+                        TeamMembership.effective_until.is_(None)
+                        | (TeamMembership.effective_until > datetime.now(UTC))
+                    ),
                     User.role == role,
                     User.is_active.is_(True),
                 )
@@ -290,27 +275,21 @@ def _assignee_rule(request: ServiceRequest) -> RecipientRule:
     )
 
 
-def _direct_rule(request: ServiceRequest, user_id: UUID) -> RecipientRule:
-    return (
-        _requester_rule(request)
-        if user_id == request.requester_id
-        else _assignee_rule(request)
+def _participant_rule(user_id: UUID) -> RecipientRule:
+    return RecipientRule(
+        user_id,
+        NotificationAccessKind.ASSIGNEE,
+        UserRole.DELIVERY_SPECIALIST,
     )
 
 
-def notification_spec(
-    event: RequestEvent,
-) -> NotificationSpec | None:
-    raw = event.type.lower()
-    direct = _DIRECT_NOTIFICATION_SPECS.get(raw)
-    if direct is not None:
-        return direct
-    review = _REVIEW_NOTIFICATION_SPECS.get(raw)
-    if review is not None:
-        event_type = (
-            review[0] if event.prior_status is RequestStatus.LEAD_REVIEW else review[1]
-        )
-        return event_type, NotificationEventGroup.REVIEW
-    if raw.startswith("workflow_"):
-        return "TASK_ASSIGNED", NotificationEventGroup.ASSIGNMENT
-    return None
+def _direct_rule(
+    request: ServiceRequest, user_id: UUID, role: UserRole | None
+) -> RecipientRule:
+    if user_id == request.requester_id:
+        return _requester_rule(request)
+    if user_id == request.assigned_specialist_id:
+        return _assignee_rule(request)
+    if role is None:
+        raise ValueError("a direct notification recipient role is required")
+    return RecipientRule(user_id, NotificationAccessKind.ASSIGNEE, role)

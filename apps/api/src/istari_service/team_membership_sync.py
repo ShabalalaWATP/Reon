@@ -8,7 +8,7 @@ from uuid import UUID
 from sqlalchemy import ColumnElement, and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from istari_service.models import User, UserRole
+from istari_service.models import User
 from istari_service.organisation_models import (
     OrganisationUnit,
     UserOrganisationMembership,
@@ -61,14 +61,7 @@ async def synchronise_due_team_memberships(
     user_ids = {row.user_id for row in due_rows}
     users = {
         user.id: user
-        for user in await session.scalars(
-            select(User).where(
-                User.id.in_(user_ids),
-                User.role.in_(
-                    [UserRole.DELIVERY_TEAM_LEAD, UserRole.DELIVERY_SPECIALIST]
-                ),
-            )
-        )
+        for user in await session.scalars(select(User).where(User.id.in_(user_ids)))
     }
     current_rows = list(
         await session.scalars(
@@ -111,13 +104,15 @@ async def synchronise_due_team_memberships(
         user = users.get(user_id)
         if user is not None and previous_ids != next_ids:
             team = teams.get(current.team_id) if current is not None else None
-            await repository._set_projection(user, team, previous_ids | next_ids)
+            await repository._set_projection(
+                user, team, previous_ids | next_ids, at=effective_at
+            )
             if current is not None and current.start_projected_at is None:
                 repository._activity(
                     current,
                     None,
                     TeamActivityType.TRANSFER_ACTIVATED,
-                    "A scheduled Analyst transfer became effective.",
+                    "A scheduled workspace transfer became effective.",
                 )
         _mark_projected(boundaries, effective_at)
     return len(due_by_user)

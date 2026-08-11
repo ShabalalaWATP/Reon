@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.action_notification_models import (
@@ -24,8 +24,8 @@ from istari_service.models import User, UserRole
 from istari_service.operational_analytics_projection import (
     project_notification_sent_fact,
 )
-from istari_service.organisation_models import UserOrganisationMembership
 from istari_service.repositories.notifications import MANDATORY_GROUPS
+from istari_service.team_models import TeamMembership
 
 
 @dataclass(frozen=True, slots=True)
@@ -241,11 +241,16 @@ class SqlAlchemyNotificationProjectionRepository:
                 (
                     await self.session.execute(
                         select(
-                            UserOrganisationMembership.user_id,
-                            UserOrganisationMembership.unit_id,
+                            TeamMembership.user_id,
+                            TeamMembership.team_id,
                         ).where(
-                            UserOrganisationMembership.user_id.in_(membership_users),
-                            UserOrganisationMembership.unit_id.in_(membership_units),
+                            TeamMembership.user_id.in_(membership_users),
+                            TeamMembership.team_id.in_(membership_units),
+                            TeamMembership.effective_from <= datetime.now(UTC),
+                            or_(
+                                TeamMembership.effective_until.is_(None),
+                                TeamMembership.effective_until > datetime.now(UTC),
+                            ),
                         )
                     )
                 )

@@ -6,7 +6,7 @@ Accepted for implementation.
 
 ## Context
 
-Managers need statistics and selected workspace actions at JIOC, command, Ops and
+Managers need statistics and selected workspace actions at CRIOC, command, Ops and
 team levels. Product roles describe workflow duties, but do not safely express
 which organisational branch a person manages. Inferring authority from a role or
 from a current membership would overexpose siblings and make temporary or
@@ -27,7 +27,7 @@ delegated authority difficult to audit.
   path or descendant list.
 - Require an expected version and mandatory reason to add, alter, revoke or
   expire a grant. Keep historical grants.
-- Seed explicit local grants for the named JIOC, command, Ops and Team Manager
+- Seed explicit local grants for the named CRIOC, command, Ops and Team Manager
   fixtures. Multiple explicit grants are permitted.
 - Keep Platform Administrator identity governance separate. Administration does
   not imply service-request content access.

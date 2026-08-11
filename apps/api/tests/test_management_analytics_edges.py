@@ -94,8 +94,8 @@ async def test_grant_validation_and_exact_scope_fail_closed(
     harness = api_harness
     administrator_id = await harness.user_id("admin1")
     subject_id = await harness.user_id("admin4")
-    root_id = await harness.unit_id("NCGI_A_OPS")
-    child_id = await harness.unit_id("OSG_TEAM")
+    root_id = await harness.unit_id("ACSA_B_OPS")
+    child_id = await harness.unit_id("SSG_TEAM")
     base = GrantDefinition(
         subject_user_id=subject_id,
         root_unit_id=root_id,

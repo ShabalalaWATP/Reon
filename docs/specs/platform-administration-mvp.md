@@ -5,7 +5,7 @@
 Give a synthetic Platform Administrator a bounded workspace for maintaining MVP
 accounts and organisation labels without granting service-request content access.
 Every configured delivery team starts with at least one Team Manager and one Team
-Analyst. OSG Team starts with three Managers and seven Analysts.
+Analyst. SSG Team starts with three Managers and seven Analysts.
 
 ## Local identity convention
 
@@ -35,7 +35,7 @@ The Platform Administrator may not:
 - edit stable organisation codes, candidate groups, hierarchy or workflow state;
 - use these local administration endpoints outside local/test demo mode.
 
-JIOC Routing Users continue to accept and triage Customer service requests.
+CRIOC Routing Users continue to accept and triage Customer service requests.
 
 ## Validation and security rules
 
@@ -80,7 +80,7 @@ time.
 - All active seeded accounts authenticate with their documented sequential
   username and local password; inactive accounts remain denied.
 - All 27 delivery teams have an active Manager and Analyst.
-- OSG Team has three active Managers and seven active Analysts.
+- SSG Team has three active Managers and seven active Analysts.
 - An Administrator can create, edit, deactivate and reactivate a user.
 - Every administration mutation is denied before password confirmation and
   succeeds only during the five-minute elevation window.

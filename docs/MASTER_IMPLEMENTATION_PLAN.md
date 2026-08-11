@@ -1,22 +1,98 @@
 # ISTARI Service Master Implementation Plan
 
+## Current documentation authority, 10 August 2026
+
+- [x] Present the running product, active terminology and available interface
+  directly.
+- [x] Keep development chronology in `DEVELOPMENT_STORY.md`; keep current
+  product behaviour in the README, architecture, workflow, user stories,
+  specifications and operating guides.
+- [x] Maintain one complete synthetic account directory containing all 99
+  accounts, usernames, roles, memberships and Manager or Member positions.
+- [x] Provide separate readable views for system context, containers, routing,
+  delivery, durable workflow commands and the organisation hierarchy, together
+  with an editable Structurizr DSL model.
+- [x] Document the complete human-led Camunda BPMN path, clarification and
+  rework loops, Lead and Contributor assignment, product release and feedback.
+- [x] Keep current application screenshots alongside browser evidence and
+  refresh them whenever the corresponding surface changes materially.
+- [x] Enforce documentation links, duplication, current terminology and image
+  validity through repository checks.
+
+## Accessibility plan and evidence, 11 August 2026
+
+- [x] Design towards WCAG 2.2 Level AA with semantic structure, keyboard
+  operation, visible focus, reduced-motion support, accessible chart-table
+  parity and reflow down to 320 CSS pixels.
+- [x] Maintain one current technical authority in the
+  [accessibility and WCAG 2.2 evidence](assurance/ACCESSIBILITY_EVIDENCE.md).
+- [x] Make accessibility discoverable from the root README, documentation home,
+  [programme Definition of Done](PROGRAMME_DEFINITIONS_OF_DONE.md#user-experience-and-accessibility),
+  [completion matrix](assurance/DEFINITION_OF_DONE_MATRIX.md#accessibility-compatibility-and-performance-gates)
+  and [production gates](deployment/PRODUCTION_GATES.md).
+- [x] Keep automated component, contrast, axe, keyboard, focus and reflow checks
+  as release evidence without treating automation as human acceptance.
+- [ ] Complete named keyboard, screen-reader, zoom, text-spacing,
+  forced-colours, cognitive and representative-user reviews before claiming
+  WCAG conformance or production acceptance.
+
+## Route lifecycle tracking and analytical presentation, 10 August 2026
+
+- [x] Make request title the primary tracking identity while retaining linked
+  references, ownership, required date and submission date.
+- [x] Show the selected organisation route and delivery lifecycle for every
+  request visible to an exact CRIOC, command or Ops route member.
+- [x] Add a direct, read-only historical detail route whose backend query repeats
+  route membership and whose schema excludes actions, clarification, feedback
+  and product content.
+- [x] Add current-status, due-risk and active-age donut charts and a median-to-
+  90th-percentile stage-duration graphic without creating a new analytics or
+  authorisation path.
+- [x] Retain labelled legends, content-free summaries, accessible table parity,
+  keyboard focus and reduced-motion behaviour.
+- [x] Pass backend and frontend coverage gates, repository quality gates,
+  production build, live CRIOC link navigation and browser console review.
+
+## GitHub quality and dependency automation, 9 August 2026
+
+- [x] Replace the Windows-only secure-production test path with a portable
+  absolute temporary path so the Linux backend gate exercises the intended rules.
+- [x] Align the repository with Dependabot's native `uv` ecosystem and supported
+  pnpm 10 lockfile processing.
+- [x] Add Dependabot coverage for security-tool Dockerfiles and root Compose
+  references.
+- [x] Run Actionlint, the OpenAPI consumer contract, current-source Gitleaks and
+  gated reachable-history scanning in GitHub Actions.
+- [x] Stage Gitleaks input from the exact tracked-file inventory so force-added
+  files cannot be hidden by Docker ignore rules.
+- [x] Add weekly execution, explicit job deadlines and retained coverage and
+  secret-scan evidence.
+- [x] Put Actionlint under Docker dependency automation and protect the split
+  container workflow with a semantic image, migration, SBOM and teardown contract.
+- [x] Exclude locally built Compose output tags from registry lookups while
+  retaining update coverage for the external Compose bootstrap image.
+- [x] Extend source line enforcement to custom Dockerfiles and the workspace
+  manifest, and audit locked development/test tooling as well as runtime packages.
+- [x] Confirm the repaired workflow and all Dependabot update jobs on GitHub
+  after the change reaches `main`.
+
 ## Operational assurance and documentation maintenance, 8 August 2026
 
 - [x] Exercise all privileged maintenance command dispatch branches.
 - [x] Exercise PostgreSQL role validation, reviewed grant execution, dialect
   rejection and guaranteed engine disposal.
-- [x] Establish one authoritative complete mock-user directory and test it
-  against all 73 seeded identities.
-- [x] Remove the duplicate roster and add an automated long-form documentation
+- [x] Establish one authoritative complete synthetic-account directory and test
+  it against all 99 seeded identities.
+- [x] Maintain one roster authority and an automated long-form documentation
   duplication gate.
 - [x] Prove that Markdown documentation is exempt from the hand-written source
   line limit.
 
 ## Outcome
 
-Deliver a secure, deliberately limited service-request product outside Coeus. It
-retains ISTARI's visual character while replacing conversational intake with a
-structured form, a Customer-owned status dashboard and a named human workflow.
+Deliver a secure, deliberately limited service-request product outside Coeus.
+It uses ISTARI's visual character, a structured mandatory request form, a
+Customer-owned status dashboard and a named human workflow.
 
 This plan distinguishes the foundational vertical slice from the complete pilot
 MVP. Working screens are not the exit condition. The pilot MVP is complete only
@@ -34,7 +110,7 @@ phase result cannot substitute for a current aggregate gate.
 
 The plan combines:
 
-- the existing ISTARI visual system, interaction patterns and synthetic users;
+- the ISTARI visual system, interaction patterns and synthetic users;
 - the supplied MVP definition, reviewed as a sensitive source;
 - current official Camunda release and integration guidance;
 - secure-by-design, SOLID and repository quality requirements.
@@ -58,9 +134,9 @@ requirements are retained.
 - One structured record is the source of truth from draft through dissemination.
 - All categorisation, priority, routing, allocation, acceptance, approval and
   dissemination decisions are made by named people.
-- The first operational path is JIOC → DIGOC → NCGI-A Ops → OSG Team. Every
+- The first operational path is CRIOC → JOCK → ACSA-B Ops → SSG Team. Every
   synthetic sibling is staffed, selectable and receives its own Camunda task.
-  Later staffing gaps wait visibly instead of borrowing OSG users.
+  Later staffing gaps wait visibly instead of borrowing SSG users.
 - Customers see only their records. Staff see only records within their role,
   scope and assignment.
 - The Platform Administrator manages identity, role and safe configuration
@@ -87,7 +163,7 @@ flowchart LR
 
 Dependencies point towards domain rules. FastAPI, SQLAlchemy, Camunda and React
 are replaceable delivery or infrastructure details. The concrete rules are in
-[Product Foundations](architecture/FOUNDATIONS.md) and
+[System architecture](architecture/SYSTEM_ARCHITECTURE.md) and
 [ADR 0002](adr/0002-secure-modular-foundations.md). The recoverable boundary for
 claims and completions is fixed by
 [ADR 0003](adr/0003-durable-human-workflow-commands.md).
@@ -105,10 +181,10 @@ pilot:
 | Release | Explicit human action makes an approved output visible to authorised recipients |
 | Scope | Customer area for Customers; delivery team or shared queue for staff |
 | Intake schema | The thirteen fields in the approved product spec are mandatory |
-| Priority and dates | JIOC sets priority; Customer gives required date and reason; no automatic service target |
+| Priority and dates | CRIOC sets priority; Customer gives required date and reason; no automatic service target |
 | Notifications | In-app states only for MVP |
 | Related work | People search and record links; no automated matching |
-| Organisation | JIOC is the root; all configured children route and every team has a synthetic Manager and Analyst; OSG has three Managers and seven Analysts |
+| Organisation | CRIOC is the root; all configured children route and every team has a synthetic Manager and Analyst; SSG has three Managers and seven Analysts |
 
 The hierarchy, post-delivery assurance path and safe activation rules are defined in
 [Organisation and Routing](architecture/ORGANISATION_AND_ROUTING.md) and
@@ -140,8 +216,8 @@ Exit: vocabulary, scope, authorities, risks and product decisions are traceable.
   owner and insert-only audit role remain a pilot-hardening item.
 - [x] Add Argon2id credentials, opaque server-side sessions, CSRF, trusted origins,
   expiry, logout, generic failures, disabled accounts and bounded login attempts.
-- [x] Preserve the original 72 Scottish-player identities and add the independent
-  configuration approver as `admin73`; all local logons remain sequential and
+- [x] Maintain the complete Scottish-player identity directory, including the
+  independent configuration approver; all local logons remain sequential and
   clearly marked as fictional.
 - [x] Add liveness, dependency-aware readiness and correlation identifiers without
   logging content.
@@ -166,14 +242,15 @@ gates pass; non-local insecure configuration fails closed.
 Exit: draft and submission journeys survive refresh and retry; list, detail and
 mutation tests prove ownership and scope isolation.
 
-## Phase 3: JIOC and command routing
+## Phase 3: CRIOC and request coordination
 
-- [x] JIOC Routing Users claim and review submitted demand.
-- [x] Record category, priority, completeness outcome and reasons.
-- [x] Provide a manual search of authorised MVP records and record links to
-  duplicate, related request or existing output candidates.
+- [x] CRIOC Routing Users claim and review submitted demand.
+- [x] Record priority, completeness outcome, routing destination and reasons.
+- [x] Automatically compare all submitted request fields across the authorised
+  historical corpus, explain ranked matches and record duplicate, related
+  request, existing output or not-relevant decisions.
 - [x] Request clarification, close with reason or select any configured command.
-- [x] Command Routing Users return, hold, resume, close or select any direct Ops
+- [x] Request Coordination Users return, hold, resume, close or select any direct Ops
   group with an append-only decision note.
 - [x] Show time-stamped notes and activity to authorised participants only.
 
@@ -222,8 +299,9 @@ stale, duplicate, cross-team and invalid-transition actions are denied.
   their own output.
 - [x] Show disseminated content through an authenticated application-owned
   download only to its originating Customer.
-- [x] Keep JIOC, command and Ops trackers metadata-only and remove them from the
-  approval path after routing.
+- [x] Keep CRIOC, command and Ops trackers read-only and remove them from the
+  approval path after routing. Exact-route members may reopen the original
+  submission, but not actions, clarification, feedback or product content.
 - [x] Record Customer dissemination and permit one feedback response after completion.
 - [x] Reconstruct the full request, decision, rework, approval and dissemination history.
 
@@ -277,7 +355,7 @@ measures are captured; no data loss or unresolved severe security finding remain
 | Customer accesses another request or product | Denied |
 | Analyst approves or disseminates own output | Denied |
 | Non-child or skipped organisation selection | Denied |
-| Unstaffed destination selected | Real waiting task; no OSG fallback |
+| Unstaffed destination selected | Real waiting task; no SSG fallback |
 | Tracker opens unreleased product content | Denied |
 | Platform Administrator opens request content | Denied |
 | Missing or reused CSRF token | Denied |
@@ -296,10 +374,11 @@ authorisation become mandatory only if files are approved in a later specificati
 1. Save, resume, submit and track a complete request.
 2. Request and answer clarification without losing the original revision.
 3. Search authorised records and link a possible duplicate or related item.
-4. Route through DIGOC → NCGI-A Ops → OSG Team, assign an Analyst and query work.
+4. Route through JOCK → ACSA-B Ops → SSG Team, assign an Analyst and query work.
 5. Complete a route through an alternative command, Ops group and staffed team;
-   prove distinct Manager and Analyst candidate groups with no OSG fallback.
-6. Record time-stamped progress notes and observe metadata-only routing trackers.
+   prove distinct Manager and Analyst candidate groups with no SSG fallback.
+6. Record time-stamped progress notes and observe route-scoped, read-only
+   routing trackers through the full lifecycle.
 7. Submit the service product, complete Manager and QC rework, disseminate, download and
    give feedback without routing approval back up the hierarchy.
 8. Attempt every cross-role, cross-scope, identifier and transition abuse case.
@@ -325,20 +404,19 @@ This workstream extends the bounded workflow MVP without changing its human-led
 routing principle. The Customer supplies structured demand. Routing levels track
 and direct it. A delivery-team Analyst produces the service product, the Team
 Manager checks it, and the Quality and Release Manager disseminates it. Work does
-not travel back through JIOC, command or Ops for approval.
+not travel back through CRIOC, command or Ops for approval.
 
 ### Expansion 0: Rebaseline and authority
 
 - [x] Define global and phase-specific completion gates.
-- [x] Correct the original MVP baseline to 72 synthetic accounts and fully
-  staffed teams. Product Evolution subsequently added the independent
-  configuration approver `admin73`; the current directory is maintained in
+- [x] Keep every configured unit staffed and document the complete synthetic
+  account directory, including the independent configuration approver, in
   [Organisation and Routing](architecture/ORGANISATION_AND_ROUTING.md).
 - [x] Accept the expansion product specification.
 - [x] Accept management-grant, analytics, calendar and workflow-derived board
   decisions.
 - [x] Update workflow, analytics and team-workspace threat models.
-- [x] Seed exact management grants for JIOC, command, Ops and team managers.
+- [x] Seed exact management grants for CRIOC, command, Ops and team managers.
 
 Evidence: expansion specification, ADRs, threat models, organisation fixtures and
 scope-policy tests.
@@ -390,20 +468,24 @@ reconciliation evidence.
 
 ### Expansion 4: Scope-aware statistics workspaces
 
-- [x] Provide JIOC managers with authorised JIOC and descendant statistics.
-- [x] Provide DIGOC, SYGOC and MYGOC managers only their command and descendant
+- [x] Provide CRIOC managers with authorised CRIOC and descendant statistics.
+- [x] Provide JOCK, SYGOC and MYGOC managers only their command and descendant
   statistics.
-- [x] Provide NCGI-A Ops, Aurora Ops, Nimbus Ops and other Ops managers only their
+- [x] Provide ACSA-B Ops, Aurora Ops, Nimbus Ops and other Ops managers only their
   own group and direct-team statistics.
 - [x] Provide Team Managers only their exact-team statistics and Platform
-  Administrators whole-platform aggregates without request content.
+  Administrators selectable content-free aggregates from the configured root.
+- [x] Authorise drill-down from each grant root to its descendants while denying
+  every parent, sibling and unit belonging only to another grant.
+- [x] Add role-specific operational, team, quality and administration overviews
+  without merging personal work or Customer requests into statistics.
 - [x] Show bounded traffic, WIP, age, due risk, throughput, stage duration,
   clarification, rework, feedback and child-unit comparisons.
 - [x] Provide accessible table equivalents and suppress unsafe small feedback
   cohorts.
 
 Evidence: the cross-branch API matrix and aggregate fixture oracle cover Platform,
-JIOC, command, Ops and Team boundaries. The React dashboard provides grant-aware
+CRIOC, command, Ops and Team boundaries. The React dashboard provides grant-aware
 navigation, bounded date and time-zone controls, freshness state, chart/table
 parity and small-cohort suppression. The full gates pass at 474 backend tests
 (98.75% line, 95.51% branch) and 161 frontend tests (99.37% line, 95.52%
@@ -421,6 +503,9 @@ branch). Performance and live-browser evidence are consolidated in Expansion 8.
   packages, commitments and reservations before a move.
 - [x] Preserve membership history and prevent sibling, ancestor and unrelated-team
   changes.
+- [x] Make every People column keyboard-sortable, default Managers first and
+  require current exact-unit Manager position as well as roster authority for
+  every local membership operation.
 
 Evidence: the membership timeline migration, scheduled one-winner tests,
 authority matrix, active-request, package, commitment and reservation guards and
@@ -441,6 +526,8 @@ membership action became available.
 - [x] Let authorised Managers create team events and personal commitments, with
   acknowledgement or reasoned dispute by the subject.
 - [x] Apply versioned preview and commit to calendar-backed capacity.
+- [x] Use one accessible calendar-event modal opened by the Add event control or
+  a selected calendar day.
 
 Evidence: migration `0007_canonical_calendar` passed empty upgrade, drift,
 downgrade to `0006`, re-upgrade and second drift. Recurrence, DST, privacy,
@@ -467,7 +554,7 @@ Evidence: migration `0008_team_agile_planning`, workflow-projection and transiti
 tests, WIP and concurrency tests, package history, saved-view and keyset tests,
 keyboard-accessible board actions and calendar capacity reconciliation. The real
 React and FastAPI browser journey created and moved a package, reassigned it from
-one OSG Analyst to another, and verified the roster workload and removal guard
+one SSG Analyst to another, and verified the roster workload and removal guard
 followed the new owner. Final aggregate coverage is 513 backend tests at 99.59%
 line and 97.48% branch, and 183 frontend tests at 99.41% line and 95.15% branch.
 
@@ -484,10 +571,11 @@ line and 97.48% branch, and 183 frontend tests at 99.41% line and 95.15% branch.
   calendar and Kanban Playwright journeys against PostgreSQL and Camunda.
 - [ ] Obtain product, security, operational and user-acceptance sign-off.
 
-Evidence: the programme evidence ledger and signed pilot record.
+Evidence: the [Definition of Done matrix](assurance/DEFINITION_OF_DONE_MATRIX.md)
+and signed [acceptance record](assurance/ACCEPTANCE_RECORD.md).
 
 Evidence to date: migrations and a clean PostgreSQL restore pass. The complete
-Customer, clarification, OSG delivery and alternative-team journeys pass against
+Customer, clarification, SSG delivery and alternative-team journeys pass against
 PostgreSQL and Camunda 8.9.14. Current Chrome, Edge and Firefox render and operate
 critical authenticated pages; named pages have zero axe violations and keyboard,
 narrow-width and reduced-motion checks pass. Controlled database and Camunda
@@ -513,9 +601,9 @@ product links, effective-dated organisation and bounded workflow configuration,
 team-planning enhancements and further scoped operational statistics.
 
 This work is specified in
-[Operational Product Evolution](specs/operational-product-evolution.md) and its
+[Operational product capabilities](specs/operational-product-evolution.md) and its
 completion state is tracked in the
-[Product Evolution Definition of Done](assurance/PRODUCT_EVOLUTION_DEFINITION_OF_DONE_MATRIX.md).
+[detailed capability gates](assurance/DEFINITION_OF_DONE_MATRIX.md#detailed-current-capability-gates).
 A local release candidate is implemented behind disabled-by-default production
 flags, but it is not part of the accepted MVP baseline. No phase is accepted
 until its own
@@ -575,9 +663,9 @@ working Camunda path alone is not sufficient.
 Status: local implementation evidence ready on 7 August 2026; live and named
 acceptance gates remain open.
 
-- [x] Replace configuration lifecycle jargon in the administrator interface with
-  current configuration, proposed changes, review and activation language while
-  retaining immutable revisions internally.
+- [x] Use current configuration, proposed changes, review and activation
+  language in the administrator interface while retaining immutable revisions
+  internally.
 - [x] Refresh configuration history before navigating to newly created proposed
   changes so the selector and working record cannot disagree.
 - [x] Add literal name/code/kind hierarchy search, ancestor context, accessible
@@ -585,8 +673,8 @@ acceptance gates remain open.
 - [x] Add a keyboard-operable selected-unit breadcrumb.
 - [x] Filter create and move parents by effective time, routing state and exact
   hierarchy kind, excluding self and the unchanged current parent.
-- [x] Remove provisional same-effective-time move edges instead of producing an
-  invalid zero-length interval.
+- [x] Reject provisional same-effective-time move edges so an invalid
+  zero-length interval cannot be produced.
 - [x] Canonicalise reminder schedules and report staffing preview impact only
   when the proposal introduces or raises the shortfall.
 - [x] Add the complex configuration and human-routing user stories, ADR 0018,
@@ -604,9 +692,9 @@ acceptance gates remain open.
 - [x] Prove an empty PostgreSQL 17 migration and first-start baseline at 0018,
   plus runtime-role denials for sealed component reassignment and approved
   workflow identity mutation.
-- [x] Add requirement traceability, enterprise documentation index, continuity
-  framework, detailed configuration permission matrix and unsigned Product
-  Evolution acceptance record.
+- [x] Add requirement traceability, the current documentation home, continuity
+  framework, detailed configuration permission matrix and one unsigned
+  acceptance record.
 - [ ] Record live browser, narrow-width, 200% zoom, three-browser, large-tree
   performance, forged-parent, PostgreSQL concurrency and Camunda route evidence.
 - [ ] Obtain named product, security, operational and representative-user
@@ -633,7 +721,7 @@ Status: local implementation and focused browser evidence ready on 8 August
   and popover containment.
 - [x] Complete the full repository gates and target PostgreSQL/Camunda recovery
   rehearsal, including a fresh-stack alternative route and breadcrumb payload.
-- [ ] Obtain representative JIOC, Command, Ops, Customer and accessibility
+- [ ] Obtain representative CRIOC, Command, Ops, Customer and accessibility
   acceptance.
 
 ## Maintainability and portable evaluation milestone
@@ -643,12 +731,13 @@ connected production remains blocked by the enterprise gap register.
 
 - [x] Add recurring frontend and backend dead-code gates, including a
   production-only frontend export check.
-- [x] Remove confirmed dead service, database-helper and product-availability
-  paths without removing migration, decision or assurance history.
+- [x] Keep production services, database helpers and product-availability paths
+  free of confirmed dead code while retaining migration, decision and assurance
+  history.
 - [x] Batch immutable request-policy projection, bound broad query parameter
   sets and avoid mutable organisation lookups for fully pinned requests.
-- [x] Remove redundant completion validation while retaining checks at both
-  authoritative transaction boundaries.
+- [x] Validate completion at both authoritative transaction boundaries without
+  redundant intermediate checks.
 - [x] Avoid eager hidden completed-product panels, retry all request/draft and
   team-planning dependencies coherently, and reduce calendar/date allocation.
 - [x] Correct local workflow attestation to run inside Compose and test its
@@ -692,8 +781,8 @@ product owner's direction.
   organisation-closure rows.
 - [x] Keep routing-filter selection, calendar occurrence editor identity and
   local browser date values coherent.
-- [x] Remove the unused planning-event port, unused repository methods and the
-  production-packaged in-memory storage test adapter.
+- [x] Keep unused planning ports, repository methods and in-memory test adapters
+  out of the production package.
 - [x] Move scheduled membership compatibility projection out of every request,
   with a due-transition index/checkpoint, worker health and fail-closed
   authorisation tests.
@@ -720,9 +809,9 @@ Status: implementation complete on 9 August 2026; final automated evidence is
 recorded. MVP identity replacement and GitHub branch protection are excluded by
 product-owner direction.
 
-- [x] Move PostgreSQL to 17.10 and remove `gosu` from its non-root runtime.
-- [x] Remove Python build tooling from the API runtime, run Nginx as non-root on
-  port 8080 and remove unused vulnerable packages from the Camunda image.
+- [x] Run PostgreSQL 17.10 as non-root without `gosu`.
+- [x] Keep Python build tooling out of the API runtime, run Nginx as non-root on
+  port 8080 and keep unused vulnerable packages out of the Camunda image.
 - [x] Separate ClamAV update egress from the internal-only non-root daemon and
   fail health from signed definition age or loaded/on-disk version mismatch.
 - [x] Add short-transaction atomic PostgreSQL global/source login budgets, safe
@@ -733,11 +822,270 @@ product-owner direction.
 - [x] Build and scan API, web, PostgreSQL, Camunda and ClamAV images in CI and
   produce a CycloneDX SBOM for each.
 - [x] Add scheduled npm, Python, GitHub Actions and Docker dependency updates.
-- [x] Replace broad Git-history exceptions with one exact hashed, expiring
-  synthetic-fixture exception that can never cover a verified finding.
+- [x] Permit only one exact hashed, expiring synthetic-fixture Git-history
+  exception, which can never cover a verified finding.
 - [x] Add the security specification, ADR 0021, threat-model changes, private
   reporting policy and deployment guidance.
 - [x] Attach final current-candidate test, scan, image and fresh-readiness
   results to the security evidence record.
 - [ ] Obtain security-owner acceptance and any independent penetration-test
   evidence required by the target environment.
+
+## Unified organisation workspace milestone
+
+Status: implemented locally on 9 August 2026. Final repository and live-runtime
+evidence is recorded in the assurance documents. Connected-environment rollout
+remains subject to the enterprise gap register.
+
+- [x] Make effective-dated Manager and Member membership authoritative for every
+  CRIOC, command, Ops and delivery-team workspace.
+- [x] Seed one named Manager and Member in every routing unit, preserve all
+  existing identities and extend the sequential local directory to `admin99`.
+- [x] Give every current workspace member calendar self-service for leave,
+  courses, training, duty, appointments and availability.
+- [x] Use one date-aware Add event modal from both the calendar toolbar and day
+  cells, preserving errors and returning focus after close.
+- [x] Limit unit events to exact-unit Managers and request-linked commitments to
+  delivery-team Managers, current Analysts and work owned by that exact team.
+- [x] Allocate one accountable Lead and up to ten Contributors, retaining
+  effective history, mandatory evidence and optimistic version checks.
+- [x] Keep the Lead as the sole Camunda assignee and deny Contributors the parent
+  task outcome while granting bounded request collaboration access.
+- [x] Provide routing workspaces with Overview, Queue, Calendar, People,
+  Statistics, Handover and Activity without introducing Manager approval.
+- [x] Provide delivery workspaces with Overview, Board, Calendar, People,
+  Planning, Statistics and Activity.
+- [x] Add bounded description, handover, risk, blocker, decision and HTTPS-link
+  records with immutable create and resolve events.
+- [x] Keep statistics inside each explicit unit-and-descendant grant, excluding
+  parent and sibling branches.
+- [x] Add migrations 0024 to 0027, update restore expectations, threat modelling,
+  architecture, user directory and operational documentation.
+- [x] Add positive, negative, cross-unit, effective-date, assignment-history,
+  calendar, collaboration, accessibility and workflow regression tests.
+- [x] Prove Manager-first and seven-column roster sorting plus a fail-closed
+  deliberately misconfigured Member roster grant.
+- [x] Pass 922 backend tests at 98.26 per cent coverage and 321 frontend tests
+  at 99.40 per cent line and 95.03 per cent branch coverage.
+- [x] Pass repository policy, formatting, lint, type, dead-code, line-limit,
+  documentation, licence, dependency-audit, Bandit, build and bundle gates.
+- [x] Rebuild the local Compose application, confirm all services healthy,
+  exercise the Camunda route contract and inspect CRIOC and SSG workspaces in
+  Chromium with no unexpected authenticated-page console error.
+- [x] Upgrade a disposable PostgreSQL database from empty to revision 0027,
+  downgrade to 0023, re-upgrade and confirm no model drift.
+- [ ] Obtain representative user acceptance from CRIOC, command, Ops, SSG and QC
+  users before connected-environment rollout.
+
+## Access assistance and global classification milestone
+
+Status: implemented and assured locally on 10 August 2026. Connected-environment
+rollout remains subject to the enterprise gap register.
+
+- [x] Add a secondary forgotten-password journey to the existing sign-in panel,
+  using mandatory, validated work email and a deliberately non-disclosing result.
+- [x] Notify every active Platform Administrator when an active account matches,
+  while suppressing duplicates and applying shared source and global limits.
+- [x] Persist no submitted email in assistance-attempt records and retain only a
+  one-way source key, optional internal account identifier and timestamps.
+- [x] Add unique normalised account email to the governed identity directory,
+  Customer profile and Administrator create/edit surfaces.
+- [x] Add a versioned, audited PostgreSQL singleton for `OFFICIAL`,
+  `OFFICIAL-SENSITIVE`, `SECRET` and `TOP-SECRET`, defaulting to `OFFICIAL`.
+- [x] Require Platform Administrator role, CSRF, fresh step-up and expected
+  version for global classification changes.
+- [x] Add a 22-pixel persistent, accessible classification strip above every
+  anonymous and authenticated page, with restrained green, blue and red states.
+- [x] Add the feature specification, ADR 0026, architecture, permission and
+  threat-model changes without duplicating operational procedures.
+- [x] Prove empty-to-0028 PostgreSQL upgrade, downgrade to 0027, re-upgrade and
+  drift-free metadata, correcting the UUID bind defect exposed by PostgreSQL.
+- [x] Pass 926 backend tests at 98.84 per cent line and 95.08 per cent branch
+  coverage, plus 326 frontend tests at 99.41 per cent line and 95.01 per cent
+  branch coverage.
+- [x] Complete full repository gates and live Chromium visual/accessibility
+  evidence.
+
+## Explainable related-request matching milestone
+
+- [x] Keep the CRIOC progress API and interface free from uncontrolled category
+  input while retaining safe compatibility with stored records.
+- [x] Create one all-field search projection atomically with every submitted
+  request and backfill the existing corpus through migration 0029.
+- [x] Add indexed PostgreSQL full-text, trigram and pgvector retrieval without a
+  second search datastore.
+- [x] Generate embeddings asynchronously with a fenced worker and an offline,
+  revision and checksum-verified FastEmbed model cache.
+- [x] Reapply claimed-task and route-membership authorisation to source,
+  candidates, explanations and recorded decisions.
+- [x] Show automatic top matches, match strength, contributing methods, bounded
+  field evidence and optional all-field search in the CRIOC workspace.
+- [x] Keep matching advisory and store possible duplicate, related request,
+  existing released product and not-relevant human decisions without changing
+  workflow position.
+- [x] Prove the live PostgreSQL extensions, indexes, ten-record backfill and
+  complete semantic projection, plus hybrid API and browser behaviour.
+- [x] Complete the disposable PostgreSQL 0029 downgrade/re-upgrade and drift
+  rehearsal.
+- [ ] Complete a coordinated current-candidate backup/restore before release
+  acceptance.
+
+## Action-oriented team workspace milestone
+
+Status: implemented and assured locally on 10 August 2026. Representative-user
+acceptance remains required.
+
+- [x] Present linked overdue, assignment, clarification, review, capacity,
+  calendar, people, handover and activity signals on the delivery overview.
+- [x] Give routing units a separately designed, unit-scoped decision home without
+  delivery allocation or a Manager approval stage.
+- [x] Return complete filtered Board column aggregates independently of the
+  cursor-bounded item page.
+- [x] Focus the default Kanban on active delivery, with expandable downstream,
+  exception and terminal groups plus an equivalent table presentation.
+- [x] Add built-in and saved views, WIP signals, compact filters, a focused work-
+  package drawer and an accessible request/package inspector.
+- [x] Keep request movement behind named Camunda workflow actions and package
+  movement behind explicit, reasoned, versioned commands.
+- [x] Surface customer clarification, Lead review, blockers, dependency warnings,
+  capacity reservations, calendar availability, iteration progress and handover
+  context at the point of work.
+- [x] Add up to twelve normalised, unique, self-declared operational skill labels
+  to Profile and the authorised exact-team people view without scoring or
+  automated assignment.
+- [x] Scope every routing queue read to the selected organisation unit.
+- [x] Complete full backend and frontend coverage, policy, migration and live-
+  browser assurance for the current candidate. The final evidence is 940
+  backend tests at 98.88 per cent statement and 95.06 per cent branch coverage,
+  plus 337 frontend tests at 99.46 per cent line and 95.03 per cent branch
+  coverage.
+- [ ] Obtain representative acceptance from a routing Manager, routing Member,
+  delivery Team Manager and delivery Analyst.
+
+## Role-aware action navigation milestone
+
+Status: implemented and assured locally on 10 August 2026. Representative-user
+acceptance remains required.
+
+- [x] Use role-specific action, queue and workspace labels, including `My
+  assigned actions`, `CRIOC routing queue` and `CRIOC workspace`.
+- [x] Project every operational action to its role-owned queue with an exact,
+  server-authorised `requestId` selector instead of a Customer-only detail URL.
+- [x] Keep shared, unclaimed work visible to the authorised unit while making a
+  claimed action personal to the assignee and removing it from peer registers.
+- [x] Refuse to substitute another queue item when a linked action was completed,
+  claimed by somebody else or left the actor's scope.
+- [x] Backfill existing active actions through migration 0031, preserving the
+  safer personal audience on downgrade and repairing the reported Russian Troop
+  Movements card.
+- [x] Add positive role-route, exact-selection, claim-isolation, empty-state and
+  legacy-projection regression coverage.
+- [x] Record the access-control analysis in the workflow threat model and the
+  projection, selection and navigation boundaries in system architecture.
+- [x] Exercise admin4 in the local browser and prove that Open selects Russian
+  Troop Movements in the CRIOC routing queue rather than redirecting to Overview.
+- [x] Pass 951 backend tests at 98.88 per cent statement and 95.06 per cent
+  branch coverage, plus 338 frontend tests at 99.46 per cent line and 95.00 per
+  cent branch coverage.
+- [x] Pass formatting, Ruff, MyPy, Bandit, ESLint, TypeScript, dead-code,
+  line-limit, documentation, licence, OpenAPI, Dependabot, secret-scan contract,
+  dependency-audit, production-build and PostgreSQL schema-drift gates.
+- [ ] Obtain acceptance from representative CRIOC, command, Ops, delivery and QC
+  users for the final labels and linked-action recovery message.
+
+## Compact previous-request evidence milestone
+
+Status: implemented and assured locally on 10 August 2026. Representative CRIOC
+acceptance remains required.
+
+- [x] Keep automatic comparison running without automatically exposing a long
+  list of advisory results in the routing form.
+- [x] Show a compact collapsed summary that distinguishes strong matches from
+  lower-confidence suggestions and does not imply a weak score is a match.
+- [x] Reveal manual history search, match evidence and human-decision controls
+  through a labelled, keyboard-operable disclosure.
+- [x] Bound expanded results to a keyboard-focusable scrolling region of at most
+  330 px or 42 per cent of viewport height.
+- [x] Retain existing request-scope authorisation and advisory-only routing
+  semantics without changing the API or workflow.
+- [x] Pass the complete 339-test frontend suite at 99.46 per cent line and 95.02
+  per cent branch coverage, plus TypeScript, ESLint and line-limit checks.
+- [ ] Obtain representative CRIOC acceptance for the summary wording and expanded
+  result height at normal operational display sizes.
+
+## Workspace-authority identity milestone
+
+Status: implemented and assured locally on 10 August 2026.
+
+- [x] Preserve `CRIOC Routing User` as the representative workflow role while
+  displaying the independent, permission-bearing Manager or Member position.
+- [x] Combine role and position in the compact account identity and name each
+  organisation-position pair explicitly in the account details and profile.
+- [x] Keep the effective server-side membership and grant as the sole
+  authorisation source; presentation remains explanatory only.
+- [x] Cover Manager, Member, mixed, loading, unavailable and no-position states.
+- [x] Pass 367 frontend tests at 99.51 per cent line and 95.03 per cent branch
+  coverage, all repository gates and the production bundle budget.
+
+## Personalised overview and primary-navigation milestone
+
+Status: implemented and assured locally on 10 August 2026. Representative-user
+acceptance remains required.
+
+- [x] Greet routing, quality and administration users by first name.
+- [x] Separate personal assigned-action measures from explicitly named aggregate
+  organisation workload and explain that aggregate values are not personal.
+- [x] Keep direct-child organisation drill-down on Operational statistics and
+  use explanatory staff Home tiles for every other authorised
+  primary-navigation destination.
+- [x] Order navigation deterministically as Home, assigned actions, role queue,
+  named workspace, role tools, request tracking, operational statistics and
+  organisation directory, omitting destinations the account cannot use.
+- [x] Rename ambiguous sidebar destinations without changing routes or
+  authorisation.
+- [x] Pass 368 frontend tests at 99.52 per cent line and 95.06 per cent branch
+  coverage, including accessible tile navigation, capability-derived links,
+  zero states and reduced-motion styling.
+- [ ] Obtain representative CRIOC, command, Ops, QC and Administrator acceptance
+  for the final wording and information hierarchy.
+
+## Explicit personal-calendar visibility milestone
+
+Status: implemented and assured locally on 10 August 2026. Representative-user
+acceptance remains required.
+
+- [x] Default new personal activity to exact-unit detail from My calendar and
+  the shared organisation calendar.
+- [x] Use one unchecked, accessible `Private appointment` choice with immediate
+  plain-language audience guidance.
+- [x] Keep personal sharing context separate from Manager-only unit-event and
+  ticket-commitment authority.
+- [x] Reject new availability-only personal writes at the FastAPI use-case
+  boundary while retaining existing canonical records and projection redaction.
+- [x] Update the feature specification, calendar ADR, workspace specification,
+  threat model and development record.
+- [x] Pass 953 backend tests at 98.87 per cent statement and 95.00 per cent
+  branch coverage, plus 368 frontend tests at 99.52 per cent line and 95.03 per
+  cent branch coverage, including the unit-name failure path.
+- [ ] Obtain representative routing and delivery-user acceptance for the final
+  checkbox wording and default audience.
+
+## Plain-language request coordination milestone
+
+Status: implemented and assured locally on 10 August 2026. Representative-user
+acceptance remains required.
+
+- [x] Label the coordination queue `Incoming requests` and explain the required
+  human action in plain language.
+- [x] Use the current coordination wording consistently across the UI, workflow
+  task metadata, smoke contracts and current reference documentation.
+- [x] Resolve shared action ownership from the pinned organisation route and
+  distinguish `<unit> · Awaiting owner` from personal assignment.
+- [x] Preserve stable internal role, status, action and BPMN element identifiers.
+- [x] Migrate existing presentation values without deleting or rebuilding local
+  request data.
+- [x] Pass 953 backend tests plus the defensive ownership regression at 98.87
+  per cent line and 95.02 per cent branch coverage, 369 frontend tests at 99.52
+  per cent line and 95.06 per cent branch coverage, and all repository checks.
+- [ ] Obtain representative JOCK, SYGOC and MYGOC acceptance for the final
+  queue and ownership wording.

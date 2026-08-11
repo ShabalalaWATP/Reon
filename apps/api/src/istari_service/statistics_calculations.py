@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, timedelta
 from math import ceil
 from statistics import median
 from typing import Literal
@@ -18,7 +18,6 @@ from istari_service.models import RequestStatus
 from istari_service.repositories.statistics import StatisticsDataset
 from istari_service.schemas.statistics import (
     CategoryCount,
-    DailyThroughput,
     MetricDefinition,
     ProjectionFreshness,
     StageDuration,
@@ -27,6 +26,11 @@ from istari_service.schemas.statistics import (
     SummaryMetric,
 )
 from istari_service.statistics_children import child_comparisons
+from istari_service.statistics_throughput import (
+    local_date,
+    throughput_resolution,
+    throughput_rows,
+)
 
 RATING_COHORT = 5
 MetricUnit = Literal["count", "percentage", "rating", "hours"]
@@ -91,6 +95,7 @@ def build_statistics_dashboard(
     ]
     rating_suppressed = len(ratings) < RATING_COHORT
     overdue = sum(fact.required_by < as_of_date for fact in active)
+    resolution = throughput_resolution(from_date, to_date)
     summary = _summary_metrics(
         facts,
         active_count=len(active),
@@ -101,6 +106,8 @@ def build_statistics_dashboard(
     freshness = dataset.freshness
     return StatisticsDashboard(
         scope=dataset.scope,
+        selected_unit=dataset.selected_unit,
+        breadcrumb=list(dataset.breadcrumb),
         range=StatisticsRange(
             from_date=from_date,
             to_date=to_date,
@@ -120,10 +127,17 @@ def build_statistics_dashboard(
         status=_status_rows(facts),
         age=_age_rows(active, as_of_date, time_zone),
         due_risk=_due_rows(active, as_of_date),
-        throughput=_throughput_rows(facts, from_date, to_date, time_zone),
+        throughput_resolution=resolution,
+        throughput=throughput_rows(
+            facts,
+            from_date,
+            to_date,
+            time_zone,
+            resolution,
+        ),
         stage_durations=_stage_rows(dataset.intervals),
         children=child_comparisons(
-            dataset.scope.kind,
+            dataset.selected_unit.kind,
             facts,
             dataset.children,
             as_of_date,
@@ -228,7 +242,7 @@ def _age_rows(
 ) -> list[CategoryCount]:
     counts = [0, 0, 0, 0]
     for fact in facts:
-        age = max(0, (as_of_date - _local_date(fact.received_at, time_zone)).days)
+        age = max(0, (as_of_date - local_date(fact.received_at, time_zone)).days)
         index = 0 if age <= 2 else 1 if age <= 7 else 2 if age <= 14 else 3
         counts[index] += 1
     labels = ("0-2 days", "3-7 days", "8-14 days", "15+ days")
@@ -257,29 +271,6 @@ def _due_rows(
     ]
 
 
-def _throughput_rows(
-    facts: tuple[RequestAnalyticsFact, ...],
-    from_date: date,
-    to_date: date,
-    time_zone: ZoneInfo,
-) -> list[DailyThroughput]:
-    received = Counter(_local_date(fact.received_at, time_zone) for fact in facts)
-    completed = Counter(
-        _local_date(fact.completed_at, time_zone)
-        for fact in facts
-        if fact.completed_at is not None
-    )
-    days = (to_date - from_date).days
-    return [
-        DailyThroughput(
-            date=from_date + timedelta(days=offset),
-            received=received[from_date + timedelta(days=offset)],
-            completed=completed[from_date + timedelta(days=offset)],
-        )
-        for offset in range(days + 1)
-    ]
-
-
 def _stage_rows(
     intervals: tuple[RequestStageInterval, ...],
 ) -> list[StageDuration]:
@@ -303,8 +294,3 @@ def _stage_rows(
             )
         )
     return rows
-
-
-def _local_date(value: datetime, time_zone: ZoneInfo) -> date:
-    aware = value if value.tzinfo else value.replace(tzinfo=UTC)
-    return aware.astimezone(time_zone).date()

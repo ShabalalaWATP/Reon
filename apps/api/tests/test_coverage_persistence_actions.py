@@ -63,8 +63,10 @@ async def database() -> AsyncIterator[
 
 
 def make_user(role: UserRole, scope: str) -> User:
+    username = f"user.{uuid4().hex}@example.test"
     return User(
-        username=f"user.{uuid4().hex}@example.test",
+        username=username,
+        email=username,
         display_name="Synthetic User",
         password_hash="$argon2id$synthetic",
         role=role,
@@ -79,14 +81,20 @@ def make_request(requester_id: UUID) -> ServiceRequest:
         title="Synthetic service request",
         service_category="Research",
         description="A sufficiently detailed synthetic request description.",
+        question_to_answer="What does the synthetic evidence show?",
         desired_outcome="A useful fictional written response.",
         background_context="Synthetic context only.",
+        subject_area_or_location="Synthetic subject area",
+        coverage_start=datetime.now(UTC).date(),
+        coverage_end=datetime.now(UTC).date() + timedelta(days=1),
+        customer_urgency="ROUTINE",
+        supported_activity_or_decision="A fictional planning decision.",
         required_by=datetime.now(UTC).date() + timedelta(days=7),
         required_by_reason="Needed for a fictional planning exercise.",
         preferred_deliverable_type="Plain text",
         success_criteria="The synthetic question is answered clearly.",
-        requesting_business_area="Area A",
-        intended_recipients=["Synthetic recipient"],
+        constraints_or_caveats="No known constraints.",
+        supporting_information="No supporting material is available.",
         sensitivity="STANDARD",
         handling_instructions="Retain synthetic content only.",
         status=RequestStatus.QUALITY_REVIEW,
@@ -116,7 +124,6 @@ async def test_validation_and_every_persisted_work_effect(
 
         progress = ProgressRequest(
             action="progress",
-            category="Research",
             priority="HIGH",
             destination_unit_id=uuid4(),
         )
@@ -146,7 +153,8 @@ async def test_validation_and_every_persisted_work_effect(
             )
 
         await apply_work_effect(session, request, reviewer_actor, progress)
-        assert (request.triage_category, request.priority) == ("Research", "HIGH")
+        assert request.triage_category is None
+        assert request.priority == "HIGH"
         allocation = AllocateRequest(
             action="allocate",
             destination_unit_id=uuid4(),
@@ -157,7 +165,11 @@ async def test_validation_and_every_persisted_work_effect(
             session,
             request,
             reviewer_actor,
-            AssignSpecialist(action="assign", specialist_id=author.id),
+            AssignSpecialist(
+                action="assign",
+                specialist_id=author.id,
+                reason="The Manager selected the accountable delivery Lead.",
+            ),
         )
         assert request.required_capabilities == ["Writing"]
         assert request.assigned_specialist_id == author.id

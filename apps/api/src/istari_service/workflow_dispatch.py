@@ -236,6 +236,7 @@ class WorkflowOutboxDispatcher:
             instance.current_element_id = task.element_id if task else None
             instance.last_reconciled_at = now if task else None
             instance.last_error = None
+            cancelled = request.status is RequestStatus.CANCELLED
             if request.status == RequestStatus.ROUTING_PENDING:
                 request.status = RequestStatus.TRIAGE_REVIEW
                 request.current_owner = OWNER_BY_STATUS[RequestStatus.TRIAGE_REVIEW]
@@ -252,8 +253,10 @@ class WorkflowOutboxDispatcher:
                     prior_status=RequestStatus.ROUTING_PENDING,
                     next_status=RequestStatus.TRIAGE_REVIEW,
                 )
-            if task is not None:
+            if task is not None and not cancelled:
                 await self._add_projection(session, request, instance, task)
+            if cancelled:
+                instance.current_element_id = None
             outbox.status = OutboxStatus.SENT
             outbox.lease_owner = None
             outbox.sent_at = now
@@ -330,6 +333,7 @@ class WorkflowOutboxDispatcher:
                 assignee_id = UUID(task.assignee)
             except ValueError:
                 assignee_id = None
+        status = WorkflowTaskStatus.CLAIMED if assignee_id else WorkflowTaskStatus.OPEN
         session.add(
             StoredWorkflowTask(
                 request_id=request.id,
@@ -339,11 +343,7 @@ class WorkflowOutboxDispatcher:
                 name=task.element_id.replace("_", " ").title(),
                 candidate_role=ROLE_BY_STAGE[request.status],
                 expected_status=request.status,
-                status=(
-                    WorkflowTaskStatus.CLAIMED
-                    if assignee_id
-                    else WorkflowTaskStatus.OPEN
-                ),
+                status=status,
                 assignee_user_id=assignee_id,
                 claimed_at=datetime.now(UTC) if assignee_id else None,
             )

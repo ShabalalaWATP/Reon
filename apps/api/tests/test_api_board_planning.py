@@ -14,7 +14,7 @@ async def workspace(harness: ApiHarness, username: str = "admin8") -> dict[str, 
     await harness.login(username)
     response = await harness.client.get("/api/v1/team-workspaces")
     assert response.status_code == 200
-    team_id = str(await harness.unit_id("OSG_TEAM"))
+    team_id = str(await harness.unit_id("SSG_TEAM"))
     return next(item for item in response.json()["items"] if item["teamId"] == team_id)
 
 
@@ -48,8 +48,8 @@ async def test_manager_board_package_iteration_and_capacity_lifecycle(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    osg = await workspace(harness)
-    team_id, grant_id = osg["teamId"], osg["grantId"]
+    ssg = await workspace(harness)
+    team_id, grant_id = ssg["teamId"], ssg["grantId"]
     owner_id = str(await harness.user_id("admin11"))
     contributor_id = str(await harness.user_id("admin12"))
     today = datetime.now(UTC).date()
@@ -236,8 +236,8 @@ async def test_personal_saved_views_wip_and_exact_team_security(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    osg = await workspace(harness)
-    team_id, grant_id = osg["teamId"], osg["grantId"]
+    ssg = await workspace(harness)
+    team_id, grant_id = ssg["teamId"], ssg["grantId"]
     owner_id = str(await harness.user_id("admin11"))
     contributor_id = str(await harness.user_id("admin12"))
 

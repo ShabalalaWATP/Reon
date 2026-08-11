@@ -16,7 +16,7 @@ from istari_service.services.draft_service import DraftService
 
 
 @pytest.mark.asyncio
-async def test_customer_draft_lifecycle_scope_and_idempotent_submission(
+async def test_customer_draft_lifecycle_and_idempotent_submission(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
@@ -25,12 +25,12 @@ async def test_customer_draft_lifecycle_scope_and_idempotent_submission(
     assert empty.status_code == 200
     assert empty.json() == {"items": [], "nextCursor": None}
 
-    mismatch = await harness.client.post(
+    internal_route_field = await harness.client.post(
         "/api/v1/request-drafts",
         json={"requestingBusinessArea": "Requesting Area B"},
         headers=harness.mutation_headers(),
     )
-    assert mismatch.status_code == 404
+    assert internal_route_field.status_code == 422
 
     created = await harness.client.post(
         "/api/v1/request-drafts",
@@ -40,7 +40,7 @@ async def test_customer_draft_lifecycle_scope_and_idempotent_submission(
     assert created.status_code == 201, created.text
     draft = created.json()
     draft_id = draft["id"]
-    assert draft["requestingBusinessArea"] == "Requesting Area A"
+    assert "requestingBusinessArea" not in draft
     assert draft["version"] == 1
 
     listed = await harness.client.get("/api/v1/request-drafts")
@@ -62,15 +62,15 @@ async def test_customer_draft_lifecycle_scope_and_idempotent_submission(
     ).status_code == 404
 
     await harness.login("admin2")
-    invalid_recipients = await harness.client.patch(
+    invalid_supporting_information = await harness.client.patch(
         f"/api/v1/request-drafts/{draft_id}",
         json={
             "expectedVersion": 1,
-            "intendedRecipients": ["Same group", "Same group"],
+            "supportingInformation": "x" * 2001,
         },
         headers=harness.mutation_headers(),
     )
-    assert invalid_recipients.status_code == 422
+    assert invalid_supporting_information.status_code == 422
     stale = await harness.client.patch(
         f"/api/v1/request-drafts/{draft_id}",
         json={"expectedVersion": 9, "title": "Stale edit"},
@@ -84,8 +84,7 @@ async def test_customer_draft_lifecycle_scope_and_idempotent_submission(
             "expectedVersion": 1,
             "title": "",
             "description": "An incomplete private draft.",
-            "intendedRecipients": [],
-            "requestingBusinessArea": "Requesting Area A",
+            "supportingInformation": "",
         },
         headers=harness.mutation_headers(),
     )
@@ -112,12 +111,12 @@ async def test_customer_draft_lifecycle_scope_and_idempotent_submission(
         headers=harness.mutation_headers(),
     )
     assert stale_submission.status_code == 409
-    wrong_area = await harness.client.post(
+    internal_route_field = await harness.client.post(
         f"/api/v1/request-drafts/{draft_id}/submit",
         json={**submission, "requestingBusinessArea": "Requesting Area B"},
         headers=harness.mutation_headers(),
     )
-    assert wrong_area.status_code == 404
+    assert internal_route_field.status_code == 422
     submitted = await harness.client.post(
         f"/api/v1/request-drafts/{draft_id}/submit",
         json=submission,
@@ -190,7 +189,7 @@ async def test_submission_key_is_owned_and_retries_one_request(
     await harness.login("admin3")
     concealed = await harness.client.post(
         "/api/v1/requests",
-        json={**payload, "requestingBusinessArea": "Requesting Area B"},
+        json=payload,
         headers=harness.mutation_headers(),
     )
     assert concealed.status_code == 404
@@ -198,16 +197,17 @@ async def test_submission_key_is_owned_and_retries_one_request(
 
 @pytest.mark.asyncio
 async def test_draft_schema_and_non_customer_service_edges() -> None:
-    assert RequestDraftCreate(intended_recipients=None).intended_recipients is None
+    draft = RequestDraftCreate(supporting_information=None)
+    assert draft.supporting_information is None
     with pytest.raises(ValidationError):
-        RequestDraftCreate(intended_recipients=["x" * 121])
+        RequestDraftCreate(supporting_information="x" * 2001)
 
     staff = Actor(
         uuid4(),
         "staff@example.test",
         "Synthetic Staff",
         UserRole.INTAKE_TRIAGE,
-        "JIOC",
+        "CRIOC",
     )
     service = DraftService(object())  # type: ignore[arg-type]
     with pytest.raises(ObjectNotFound):

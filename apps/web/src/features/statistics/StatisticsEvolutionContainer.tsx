@@ -17,6 +17,7 @@ export function StatisticsEvolutionContainer({
     queryKey: protectedQueryKeys.statisticsEvolution(
       session.user.id,
       filters.scopeId,
+      filters.unitId,
       filters.from,
       filters.to,
       filters.timeZone,

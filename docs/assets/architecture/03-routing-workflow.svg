@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="760" viewBox="0 0 1600 760" role="img" aria-labelledby="title desc">
+  <title id="title">Request submission and organisational routing</title>
+  <desc id="desc">A plain-English process diagram from Customer submission through CRIOC, command, Ops and delivery-team assignment.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071018"/><stop offset="1" stop-color="#0c1923"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#000" flood-opacity=".25"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64c9ed"/></marker>
+    <style>.title{font:700 30px Inter,Segoe UI,sans-serif;fill:#f4f8fb}.subtitle{font:400 15px Inter,Segoe UI,sans-serif;fill:#91a9b8}.eyebrow{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:2px;fill:#36c7ff}.phase{font:700 11px ui-monospace,Consolas,monospace;letter-spacing:1.3px;fill:#7dd7ff}.name{font:700 17px Inter,Segoe UI,sans-serif;fill:#f4f8fb}.copy{font:400 12.5px Inter,Segoe UI,sans-serif;fill:#aebfca}.step{fill:#10222e;stroke:#36718d;stroke-width:1.5}.decision{fill:#182335;stroke:#718bc8;stroke-width:1.5}.customer{fill:#14261f;stroke:#43c98b;stroke-width:1.5}.return{fill:#211d18;stroke:#d7a54b;stroke-width:1.5}.line{fill:none;stroke:#64c9ed;stroke-width:2.2;marker-end:url(#arrow)}.loop{fill:none;stroke:#d7a54b;stroke-width:1.8;stroke-dasharray:7 6;marker-end:url(#arrow)}.label{font:600 11px Inter,Segoe UI,sans-serif;fill:#8bc9df}.loop-label{font:600 11px Inter,Segoe UI,sans-serif;fill:#e2b760}</style>
+  </defs>
+  <rect width="1600" height="760" rx="24" fill="url(#bg)"/>
+  <text x="64" y="60" class="eyebrow">HUMAN-LED WORKFLOW · PART 1</text><text x="64" y="101" class="title">From a Customer request to the right delivery team</text>
+  <text x="64" y="132" class="subtitle">Camunda holds the sequence. The named person at each stage chooses the next valid organisation.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="238" width="220" height="154" rx="18" class="customer"/>
+    <text x="96" y="270" class="phase">CUSTOMER</text><text x="96" y="304" class="name">Submit request</text>
+    <text x="96" y="333" class="copy">Completes every required field</text><text x="96" y="357" class="copy">and receives a reference</text>
+
+    <rect x="350" y="238" width="220" height="154" rx="18" class="step"/>
+    <text x="376" y="270" class="phase">CRIOC</text><text x="376" y="304" class="name">Review and direct</text>
+    <text x="376" y="333" class="copy">May request information, close</text><text x="376" y="357" class="copy">or choose a direct command</text>
+
+    <rect x="630" y="238" width="220" height="154" rx="18" class="decision"/>
+    <text x="656" y="270" class="phase">SELECTED COMMAND</text><text x="656" y="304" class="name">Coordinate request</text>
+    <text x="656" y="333" class="copy">May hold, return, close or</text><text x="656" y="357" class="copy">choose a direct Ops group</text>
+
+    <rect x="910" y="238" width="220" height="154" rx="18" class="step"/>
+    <text x="936" y="270" class="phase">SELECTED OPS GROUP</text><text x="936" y="304" class="name">Route to team</text>
+    <text x="936" y="333" class="copy">Chooses one current direct team</text><text x="936" y="357" class="copy">or returns to coordination</text>
+
+    <rect x="1190" y="238" width="250" height="154" rx="18" class="decision"/>
+    <text x="1216" y="270" class="phase">SELECTED DELIVERY TEAM</text><text x="1216" y="304" class="name">Assign Analysts</text>
+    <text x="1216" y="333" class="copy">Manager names one Lead and up</text><text x="1216" y="357" class="copy">to ten Contributors</text>
+
+    <rect x="316" y="520" width="288" height="110" rx="16" class="return"/>
+    <text x="340" y="550" class="phase">INFORMATION LOOP</text><text x="340" y="582" class="name">Customer provides details</text>
+    <text x="340" y="608" class="copy">The same request returns to CRIOC</text>
+
+    <rect x="1212" y="520" width="206" height="110" rx="16" class="return"/>
+    <text x="1236" y="550" class="phase">RETURN PATH</text><text x="1236" y="582" class="name">Re-route safely</text>
+    <text x="1236" y="608" class="copy">Manager may return to Ops</text>
+  </g>
+
+  <path d="M290 315H350" class="line"/><text x="302" y="300" class="label">start</text>
+  <path d="M570 315H630" class="line"/><text x="582" y="300" class="label">command</text>
+  <path d="M850 315H910" class="line"/><text x="872" y="300" class="label">Ops</text>
+  <path d="M1130 315H1190" class="line"/><text x="1146" y="300" class="label">team</text>
+  <path d="M460 392V520" class="loop"/><text x="475" y="458" class="loop-label">more information</text>
+  <path d="M316 576C240 576 244 424 380 392" class="loop"/><text x="220" y="510" class="loop-label">respond</text>
+  <path d="M1315 392V520" class="loop"/><text x="1330" y="458" class="loop-label">return</text>
+  <path d="M1212 575C1100 575 1060 456 1050 392" class="loop"/>
+
+  <line x1="70" y1="678" x2="1440" y2="678" stroke="#203746"/>
+  <text x="70" y="711" class="copy">Visibility after routing:</text><text x="212" y="711" class="label">CRIOC, command and Ops can track progress, but they do not approve the delivered product.</text>
+</svg>

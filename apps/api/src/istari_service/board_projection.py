@@ -86,6 +86,7 @@ def request_projection(
             version=request.version,
             linked_request_id=request.id,
             available_columns=[],
+            changed_at=_utc(request.updated_at),
         ),
         changed_at=_utc(request.updated_at),
     )
@@ -108,6 +109,7 @@ def package_projection(package: WorkPackage, owner_name: str) -> ProjectedBoardI
             available_columns=[
                 PACKAGE_COLUMNS[item] for item in PACKAGE_TRANSITIONS[package.status]
             ],
+            changed_at=_utc(package.updated_at),
         ),
         changed_at=_utc(package.updated_at),
     )

@@ -1,17 +1,42 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-image="postgres:17.9-bookworm@sha256:47f917f7409eacd22fc5dfb1dee634e1b55cf0c01d1a7eb701be2227a03e0641"
+image="istari/postgres-component:17.10-pgvector0.8.1"
 suffix="${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-0}-$$"
 container_name="istari-postgres-component-${suffix}"
+volume_name="${container_name}-data"
+
+docker build --file infra/postgres/Dockerfile --tag "$image" . >/dev/null
 
 cleanup() {
   docker rm --force --volumes "$container_name" >/dev/null 2>&1 || true
+  docker volume rm --force "$volume_name" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
+docker volume create "$volume_name" >/dev/null
+docker run --rm \
+  --network none \
+  --user 0:0 \
+  --cap-drop ALL \
+  --cap-add CHOWN \
+  --cap-add DAC_OVERRIDE \
+  --cap-add FOWNER \
+  --read-only \
+  --volume "${volume_name}:/var/lib/postgresql/data" \
+  --entrypoint sh \
+  "$image" \
+  -c 'chown -R 70:70 /var/lib/postgresql/data && chmod 0700 /var/lib/postgresql/data'
+
 docker create \
   --name "$container_name" \
+  --network none \
+  --read-only \
+  --cap-drop ALL \
+  --security-opt no-new-privileges=true \
+  --tmpfs /tmp:mode=1777 \
+  --tmpfs /var/run/postgresql:uid=70,gid=70,mode=3775 \
+  --volume "${volume_name}:/var/lib/postgresql/data" \
   --env POSTGRES_USER=postgres \
   --env POSTGRES_PASSWORD=validation-admin-password \
   --env POSTGRES_DB=postgres \
@@ -26,9 +51,6 @@ docker create \
   --env CAMUNDA_DATABASE_USER=camunda_validation \
   --env CAMUNDA_DATABASE_PASSWORD=validation-camunda-password \
   "$image" >/dev/null
-docker cp \
-  infra/postgres/init-databases.sh \
-  "${container_name}:/docker-entrypoint-initdb.d/10-init-databases.sh"
 docker start "$container_name" >/dev/null
 
 ready=false

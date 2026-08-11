@@ -119,6 +119,11 @@ class Settings(BaseSettings):
     worker_interval_seconds: float = Field(default=0.5, ge=0.05, le=30)
     worker_lease_seconds: float = Field(default=30, ge=5, le=300)
     worker_heartbeat_stale_seconds: float = Field(default=10, ge=2, le=600)
+    request_matching_semantic_enabled: bool = True
+    request_embedding_model: str = "BAAI/bge-small-en-v1.5"
+    request_embedding_cache_path: Path = Path(".local/request-embedding-cache")
+    request_embedding_threads: int = Field(default=2, ge=1, le=8)
+    request_embedding_batch_size: int = Field(default=8, ge=1, le=32)
 
     @field_validator("trusted_origins", mode="before")
     @classmethod
@@ -250,6 +255,13 @@ class Settings(BaseSettings):
             if not self.product_storage_path.is_absolute():
                 raise ValueError(
                     "production product storage must use an absolute private path"
+                )
+            if (
+                self.request_matching_semantic_enabled
+                and not self.request_embedding_cache_path.is_absolute()
+            ):
+                raise ValueError(
+                    "the production request embedding cache must use an absolute path"
                 )
         return self
 

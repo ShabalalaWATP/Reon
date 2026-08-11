@@ -9,7 +9,7 @@ import {
 
 const cases: Array<[WorkActionValues, unknown]> = [
   [{ action: "request_information", reason: "Need a clearer deadline." }, { action: "request_information", reason: "Need a clearer deadline." }],
-  [{ action: "progress", category: "Advisory", destinationUnitId: "command-id", priority: "HIGH" }, { action: "progress", category: "Advisory", destinationUnitId: "command-id", priority: "HIGH" }],
+  [{ action: "progress", destinationUnitId: "command-id", priority: "HIGH" }, { action: "progress", destinationUnitId: "command-id", priority: "HIGH" }],
   [{ action: "close", reason: "Outside scope." }, { action: "close", reason: "Outside scope." }],
   [{ action: "provide_information", information: "The meeting is on Friday." }, { action: "provide_information", information: "The meeting is on Friday." }],
   [{ action: "withdraw", reason: "No longer required." }, { action: "withdraw", reason: "No longer required." }],
@@ -19,7 +19,7 @@ const cases: Array<[WorkActionValues, unknown]> = [
   [{ action: "resume", note: "Decision received." }, { action: "resume", note: "Decision received." }],
   [{ action: "allocate", destinationUnitId: "team-id", requiredCapabilities: "Writing\nData review\n" }, { action: "allocate", destinationUnitId: "team-id", requiredCapabilities: ["Writing", "Data review"] }],
   [{ action: "return_to_coordination", reason: "Needs service decision." }, { action: "return_to_coordination", reason: "Needs service decision." }],
-  [{ action: "assign", specialistId: "specialist-id" }, { action: "assign", specialistId: "specialist-id" }],
+  [{ action: "assign", specialistId: "specialist-id", contributorIds: [], reason: "Accountable assignment." }, { action: "assign", specialistId: "specialist-id", contributorIds: [], reason: "Accountable assignment." }],
   [{ action: "return_for_reallocation", reason: "Capability unavailable." }, { action: "return_for_reallocation", reason: "Capability unavailable." }],
   [{ action: "submit", deliverableTitle: "Readiness note", deliverableText: "Complete result." }, { action: "submit", deliverableTitle: "Readiness note", deliverableText: "Complete result." }],
   [{ action: "request_clarification", question: "Which region?", reason: "Needed for scope.", responseDeadline: "2026-09-10" }, { action: "request_clarification", question: "Which region?", reason: "Needed for scope.", responseDeadline: "2026-09-10" }],
@@ -42,10 +42,10 @@ describe("work action model", () => {
   });
 
   it.each([
-    [{ action: "progress" }, 3],
+    [{ action: "progress" }, 2],
     [{ action: "send_to_allocation" }, 2],
     [{ action: "allocate" }, 2],
-    [{ action: "assign" }, 1],
+    [{ action: "assign" }, 2],
     [{ action: "submit" }, 2],
     [{ action: "provide_information" }, 1],
     [{ action: "request_clarification" }, 3],

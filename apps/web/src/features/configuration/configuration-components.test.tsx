@@ -244,6 +244,40 @@ describe("configuration presentation model", () => {
     expect(localDateTimeValue(localDate)).toBe("2026-08-07T13:34");
   });
 
+  it("upgrades historical fixed intake fields when preparing a successor", () => {
+    const historical = {
+      ...configurationVersion,
+      workflowTemplate: {
+        ...configurationVersion.workflowTemplate,
+        coreFields: ["title", "requesting_business_area", "intended_recipients"],
+      },
+    };
+
+    expect(draftFrom(historical).workflowTemplate.coreFields).toEqual(
+      [
+        "title",
+        "service_category",
+        "description",
+        "question_to_answer",
+        "desired_outcome",
+        "background_context",
+        "subject_area_or_location",
+        "coverage_start",
+        "coverage_end",
+        "customer_urgency",
+        "supported_activity_or_decision",
+        "required_by",
+        "required_by_reason",
+        "preferred_deliverable_type",
+        "success_criteria",
+        "constraints_or_caveats",
+        "supporting_information",
+        "sensitivity",
+        "handling_instructions",
+      ],
+    );
+  });
+
   it("filters the hierarchy with ancestor context and builds cycle-safe breadcrumbs", () => {
     const rows = configurationRows(configurationVersion.units, configurationVersion.edges, configurationVersion.effectiveFrom);
     expect(filterConfigurationRows(rows, "")).toBe(rows);

@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { describe, expect, it } from "vitest";
@@ -9,24 +9,33 @@ import type {
 } from "../../lib/api/statisticsTypes";
 import { adminSession, enabledCapabilities } from "../../test/fixtures";
 import { json, mockFeatureFetch, renderApp } from "../../test/render";
+import { CategoryPanel } from "./StatisticsVisuals";
 
 const platformScope: StatisticsScope = {
   id: "platform",
-  unitId: null,
+  unitId: "00000000-0000-4000-8000-000000000001",
   name: "Whole platform",
   kind: "PLATFORM",
   includeDescendants: true,
+  units: [
+    { id: "00000000-0000-4000-8000-000000000001", parentId: null, name: "CRIOC", kind: "ROOT", depth: 0 },
+    { id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", parentId: "00000000-0000-4000-8000-000000000001", name: "JOCK", kind: "COMMAND", depth: 1 },
+    { id: "ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee", parentId: "00000000-0000-4000-8000-000000000001", name: "SYGOC", kind: "COMMAND", depth: 1 },
+  ],
 };
 const commandScope: StatisticsScope = {
-  id: "command-digoc",
+  id: "command-jock",
   unitId: "11111111-2222-4333-8444-555555555555",
-  name: "DIGOC",
-  kind: "COMMAND",
+  name: "ACSA-B Ops",
+  kind: "OPS_GROUP",
   includeDescendants: true,
+  units: [{ id: "11111111-2222-4333-8444-555555555555", parentId: null, name: "ACSA-B Ops", kind: "OPS_GROUP", depth: 0 }],
 };
 
 const dashboard: StatisticsDashboard = {
   scope: platformScope,
+  selectedUnit: platformScope.units[0],
+  breadcrumb: platformScope.units,
   range: {
     fromDate: "2026-08-01",
     toDate: "2026-08-07",
@@ -62,6 +71,7 @@ const dashboard: StatisticsDashboard = {
     { key: "overdue", label: "Overdue", count: 1 },
     { key: "on-track", label: "On track", count: 5 },
   ],
+  throughputResolution: "DAILY",
   throughput: [
     { date: "2026-08-06", received: 3, completed: 1 },
     { date: "2026-08-07", received: 1, completed: 2 },
@@ -72,7 +82,7 @@ const dashboard: StatisticsDashboard = {
   children: [
     {
       unitId: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
-      name: "DIGOC",
+      name: "JOCK",
       kind: "COMMAND",
       received: 6,
       active: 4,
@@ -98,8 +108,20 @@ const dashboard: StatisticsDashboard = {
 };
 
 describe("operational statistics", () => {
+  it("renders a neutral donut when a populated category set totals zero", () => {
+    const view = render(
+      <CategoryPanel rows={[{ key: "none", label: "No overdue work", count: 0 }]} title="Due-date risk" />,
+    );
+
+    expect(view.container.querySelector(".donut-chart")).toHaveStyle({
+      background: "var(--surface-strong)",
+    });
+    expect(screen.getByRole("table", { name: "Due-date risk data" })).toHaveTextContent("No overdue work");
+  });
+
   it("shows only granted scopes with accessible chart-table parity", async () => {
     const requestedScopes: string[] = [];
+    const requestedUnits: string[] = [];
     mockFeatureFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(adminSession);
       if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
@@ -108,27 +130,40 @@ describe("operational statistics", () => {
       }
       if (url.pathname.endsWith("/statistics")) {
         requestedScopes.push(url.searchParams.get("scopeId") ?? "");
-        return json({ ...dashboard, scope: requestedScopes.at(-1) === commandScope.id ? commandScope : platformScope });
+        requestedUnits.push(url.searchParams.get("unitId") ?? "");
+        const selectedScope = requestedScopes.at(-1) === commandScope.id ? commandScope : platformScope;
+        const selectedUnit = selectedScope.units.find((unit) => unit.id === requestedUnits.at(-1)) ?? selectedScope.units[0];
+        return json({
+          ...dashboard,
+          scope: selectedScope,
+          selectedUnit,
+          breadcrumb: selectedUnit.parentId ? [selectedScope.units[0], selectedUnit] : [selectedUnit],
+        });
       }
       throw new Error(`Unexpected ${url.pathname}`);
     }, true, false);
     const user = userEvent.setup();
-    const view = renderApp("/statistics");
+    const view = renderApp(`/statistics?scopeId=platform&unitId=${platformScope.units[2].id}`);
 
     expect(await screen.findByRole("heading", { name: "Statistics" })).toBeInTheDocument();
     expect(await screen.findByText("Projection current")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Statistics" })).toBeInTheDocument();
-    expect(screen.getByText("4.6 / 5")).toBeInTheDocument();
-    expect(screen.getAllByText("Suppressed")).not.toHaveLength(0);
-    expect(screen.getByText("Not available")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Operational statistics" })).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "Summary measures" })).getByText("8")).toBeInTheDocument();
+    expect(screen.getByLabelText("Organisation")).toHaveValue(platformScope.units[2].id);
     expect(screen.getByRole("table", { name: "Current status data" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Daily throughput data" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Direct child unit comparison data" })).toHaveTextContent("SYGOC");
+    expect(view.container.querySelectorAll(".donut-chart")).toHaveLength(3);
+    expect(view.container.querySelector(".duration-range-chart")).toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
 
-    await user.selectOptions(screen.getByLabelText("Scope"), commandScope.id);
+    await user.click(screen.getByRole("button", { name: "View JOCK statistics" }));
+    await waitFor(() => expect(requestedUnits).toContain("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"));
+    expect(screen.getByLabelText("Organisation")).toHaveValue("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee");
+
+    await user.selectOptions(screen.getByLabelText("Reporting root"), commandScope.id);
     await waitFor(() => expect(requestedScopes).toContain(commandScope.id));
-    expect(await screen.findByText("DIGOC", { selector: ".statistics-filters option" })).toBeInTheDocument();
+    expect(await screen.findByText("ACSA-B Ops", { selector: ".statistics-filters option" })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("From"), { target: { value: "2099-12-31" } });
     expect(screen.getByRole("alert")).toHaveTextContent("start date");
@@ -149,7 +184,7 @@ describe("operational statistics", () => {
     renderApp("/statistics");
     await user.click(await screen.findByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("heading", { name: "No statistics scope assigned" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Statistics" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Operational statistics" })).not.toBeInTheDocument();
   });
 
   it("reports dashboard failures and renders an empty degraded projection", async () => {
@@ -163,6 +198,7 @@ describe("operational statistics", () => {
         if (dashboardAttempts === 1) return json({ detail: "Unavailable" }, 503);
         return json({
           ...dashboard,
+          summary: dashboard.summary.map((metric) => metric.key === "received" ? { ...metric, value: null } : metric),
           freshness: { health: "REBUILDING", lastProjectedAt: null, sourceEventCount: 0, projectedRequestCount: 0 },
           status: [],
           age: [],

@@ -55,26 +55,6 @@ class DraftService:
         if actor.role is not UserRole.REQUESTER:
             raise ObjectNotFound()
 
-    @staticmethod
-    def _validate_scope(actor: Actor, supplied_scope: str | None) -> None:
-        if supplied_scope is not None and supplied_scope != actor.scope:
-            raise ObjectNotFound()
-
-    @classmethod
-    def _scope_create(
-        cls, actor: Actor, command: RequestDraftCreate
-    ) -> RequestDraftCreate:
-        cls._validate_scope(actor, command.requesting_business_area)
-        return command.model_copy(update={"requesting_business_area": actor.scope})
-
-    @classmethod
-    def _scope_update(
-        cls, actor: Actor, command: RequestDraftUpdate
-    ) -> RequestDraftUpdate:
-        supplied = command.requesting_business_area
-        cls._validate_scope(actor, supplied)
-        return command.model_copy(update={"requesting_business_area": actor.scope})
-
     async def list(self, actor: Actor) -> list[RequestDraftView]:
         self._require_customer(actor)
         return await self._repository.list_for_requester(actor.id)
@@ -102,16 +82,14 @@ class DraftService:
         self, actor: Actor, command: RequestDraftCreate
     ) -> RequestDraftView:
         self._require_customer(actor)
-        scoped = self._scope_create(actor, command)
-        return await self._repository.create(actor, scoped)
+        return await self._repository.create(actor, command)
 
     async def update(
         self, actor: Actor, draft_id: UUID, command: RequestDraftUpdate
     ) -> RequestDraftView:
         self._require_customer(actor)
-        scoped = self._scope_update(actor, command)
         return await self._repository.update(
-            actor=actor, draft_id=draft_id, command=scoped
+            actor=actor, draft_id=draft_id, command=command
         )
 
     async def delete(self, actor: Actor, draft_id: UUID, expected_version: int) -> None:
@@ -122,6 +100,4 @@ class DraftService:
         self, actor: Actor, draft_id: UUID, command: RequestDraftSubmit
     ) -> RequestDetail:
         self._require_customer(actor)
-        if command.requesting_business_area != actor.scope:
-            raise ObjectNotFound()
         return await self._repository.submit(draft_id, actor, command)

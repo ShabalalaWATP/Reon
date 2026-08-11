@@ -281,14 +281,14 @@ assert.notEqual(starts[0].body.businessId, starts[1].body.businessId);
 assert.equal(
   states.get(staffedScenario.processInstanceKey).routeStage,
   staffedScenario.route.length,
-  "staffed OSG path did not complete",
+  "staffed SSG path did not complete",
 );
 assert.equal(
   states.get(alternativeStaffedScenario.processInstanceKey).routeStage,
   alternativeStaffedScenario.route.length,
   "staffed Beacon path did not complete",
 );
-assert.match(output, /DIGOC -> NCGI-A Ops -> OSG Team/u);
+assert.match(output, /JOCK -> ACSA-B Ops -> SSG Team/u);
 assert.match(output, /COMPLETED/u);
 assert.match(output, /SYGOC -> Nimbus Ops -> Beacon Team/u);
 assert.match(output, /beacon-team-managers/u);
@@ -323,4 +323,4 @@ assert.deepEqual(calls, [
   ...completedRouteCalls(alternativeStaffedScenario),
   `GET /v2/process-instances/${alternativeStaffedScenario.processInstanceKey}`,
 ]);
-console.log("Camunda OSG and alternative-team V2 smoke contract passed.");
+console.log("Camunda SSG and alternative-team V2 smoke contract passed.");

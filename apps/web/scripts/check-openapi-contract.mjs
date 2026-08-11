@@ -116,18 +116,39 @@ requireFields(
   [
     "id",
     "reference",
+    "title",
     "status",
     "currentOwner",
     "requiredBy",
+    "createdAt",
     "updatedAt",
     "route",
     "awaitingTeamStaffing",
   ],
   "TrackedRequest",
 );
-assert.equal(trackedRequest.properties.title, undefined, "TrackedRequest must not expose title.");
 const trackedRouteUnit = resolveSchema(trackedRequest.properties.route.items);
 requireFields(trackedRouteUnit, ["id", "name", "kind"], "TrackedRouteUnit");
+
+const trackingDetailOperation = getPath(
+  /\/tracked-requests\/\{[^}]+\}$/,
+  "GET /tracked-requests/{id}",
+);
+const trackedDetail = resolveSchema(
+  trackingDetailOperation.responses?.["200"]?.content?.["application/json"]?.schema,
+);
+requireFields(
+  trackedDetail,
+  ["id", "reference", "title", "requesterDisplayName", "description", "questionToAnswer", "route"],
+  "TrackedRequestDetail",
+);
+for (const field of ["deliverable", "product", "clarifications", "feedback", "availableActions"]) {
+  assert.equal(
+    trackedDetail.properties[field],
+    undefined,
+    `TrackedRequestDetail must not expose ${field}.`,
+  );
+}
 
 for (const name of ["ProgressRequest", "SendToAllocation", "AllocateRequest"]) {
   requireFields(schemas?.[name], ["action", "destinationUnitId"], name);

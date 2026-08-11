@@ -131,6 +131,8 @@ psql \
   --set=app_user="$APP_DATABASE_USER" \
   --set=runtime_user="$APP_RUNTIME_DATABASE_USER" \
   --set=backup_user="$APP_BACKUP_DATABASE_USER" <<'SQL'
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 GRANT USAGE ON SCHEMA public TO :"runtime_user", :"backup_user";
 ALTER DEFAULT PRIVILEGES FOR ROLE :"app_user" IN SCHEMA public

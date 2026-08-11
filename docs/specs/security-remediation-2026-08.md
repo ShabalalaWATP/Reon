@@ -35,6 +35,11 @@ Existing production validation must continue to reject them.
   vulnerability database. High or critical findings are not silently ignored.
 - CI produces machine-readable SBOMs for every deployed image.
 - uv, pnpm and Dependabot defer ordinary newly published versions for seven days.
+  Dependabot uses its native `uv` ecosystem, a supported pnpm 10 lockfile, and
+  covers root Compose references plus every deployed and security-tool Dockerfile.
+  Root Compose ignores only locally built output tags whose upstream inputs are
+  already managed through their Dockerfiles; external image references remain
+  updateable.
   Exact bootstrap exceptions can cover only versions already locked, audited and
   scanned; they do not bypass security updates or authorise later versions.
 - pnpm rejects transitive exotic sources and package trust downgrades, apart from
@@ -86,6 +91,21 @@ Existing production validation must continue to reject them.
 
 ### Security gates and operational readiness
 
+- GitHub Actions runs weekly as well as on pull requests and pushes to `main`,
+  applies explicit job deadlines and retains bounded coverage, secret-scan and
+  SBOM evidence.
+- Digest-pinned Actionlint validates workflow syntax through a Dockerfile covered
+  by dependency automation. The OpenAPI consumer contract runs in CI rather than
+  remaining a release-runbook-only command.
+- Node and Python audits include build, test and analysis tooling as well as
+  deployed runtime packages, because CI dependencies are part of the supply chain.
+- Current-source Gitleaks and reachable-history TruffleHog both run in CI. The
+  exported TruffleHog evidence target depends on the policy gate, preventing
+  BuildKit from pruning the allow-list evaluation stage.
+- Gitleaks receives an exact staged `git ls-files` inventory. Docker ignore
+  controls are retained as scanned evidence under inert names, so a force-added
+  tracked environment file cannot disappear from the scan while untracked local
+  credentials remain outside the build context.
 - The deliberate historical URI test fixture has one exact, hashed, expiring
   TruffleHog exception. Verified findings can never be allow-listed.
 - The current fixture no longer contains a literal credential-bearing URI.
@@ -128,6 +148,14 @@ Existing production validation must continue to reject them.
 12. Alembic reports no difference between current ORM metadata and a database at
     migration head, and the metadata-alignment migration downgrades and upgrades
     without changing business data.
+13. A clean Linux runner passes the production-settings tests using an
+    operating-system-neutral absolute product path.
+14. Actionlint, the OpenAPI contract, Gitleaks and the gated history scan execute
+    from the source-controlled GitHub workflow, with bounded evidence retained.
+15. High-severity Node and strict Python vulnerability audits cover every locked
+    runtime, development and test dependency.
+16. A source-controlled contract protects all five container builds, vulnerability
+    gates and SBOM entries, migration reversal and unconditional teardown.
 
 ## Non-goals
 

@@ -2,7 +2,8 @@
 [CmdletBinding()]
 param(
     [switch]$NoBuild,
-    [switch]$SkipWorkflowDeployment
+    [switch]$SkipWorkflowDeployment,
+    [switch]$SeedDemoData
 )
 
 $ErrorActionPreference = "Stop"
@@ -144,6 +145,33 @@ try {
             -AttestWithCompose
         if ($LASTEXITCODE -ne 0) {
             throw "Workflow deployment failed."
+        }
+    }
+
+    if ($SeedDemoData) {
+        Write-Host "Seeding the demo request portfolio (idempotent; reruns resume)."
+        $planPath = Join-Path $repositoryRoot "output/demo-portfolio-plan.json"
+        Push-Location (Join-Path $repositoryRoot "apps/api")
+        try {
+            $env:DEMO_USER_PASSWORD = $settings.DEMO_USER_PASSWORD
+            & uv run python ../../scripts/seed-demo-portfolio.py --plan-output $planPath
+            if ($LASTEXITCODE -ne 0) {
+                throw "Demo portfolio seeding did not complete; rerun with -SeedDemoData to resume."
+            }
+        }
+        finally {
+            Pop-Location
+        }
+        Write-Host "Spreading seeded history across recent weeks for statistics."
+        $apiContainer = "istari-service-local-api-1"
+        Get-Content -Raw (Join-Path $repositoryRoot "scripts/lib/demo_portfolio_backdate.py") |
+            & docker exec -i $apiContainer sh -c 'cat > /tmp/backdate.py'
+        Get-Content -Raw $planPath |
+            & docker exec -i $apiContainer sh -c 'cat > /tmp/plan.json'
+        & docker exec -e ("DATABASE_URL={0}" -f $settings.MIGRATION_DATABASE_URL) `
+            $apiContainer python /tmp/backdate.py /tmp/plan.json
+        if ($LASTEXITCODE -ne 0) {
+            throw "Demo history backdating failed."
         }
     }
 }

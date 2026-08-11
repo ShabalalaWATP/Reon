@@ -46,11 +46,11 @@ export const configurationVersion: ConfigurationVersion = {
     notificationPolicyVersion: "notice.v1",
     organisationRootId: "unit-root",
     routeDepth: 3,
-    coreFields: ["title", "service_category", "description", "desired_outcome", "background_context", "required_by", "required_by_reason", "preferred_deliverable_type", "success_criteria", "requesting_business_area", "intended_recipients", "sensitivity", "handling_instructions"],
+    coreFields: ["title", "service_category", "description", "question_to_answer", "desired_outcome", "background_context", "subject_area_or_location", "coverage_start", "coverage_end", "customer_urgency", "supported_activity_or_decision", "required_by", "required_by_reason", "preferred_deliverable_type", "success_criteria", "constraints_or_caveats", "supporting_information", "sensitivity", "handling_instructions"],
     serviceCategories: ["Advisory support"],
     productTypes: ["Briefing note"],
     taskLabels: {
-      intake_review: "JIOC review", requester_response: "Customer response", coordination_review: "Command review", on_hold: "On hold", allocation_review: "Ops allocation", delivery_planning: "Delivery planning", delivery_work: "Product development", lead_review: "Manager review", quality_review: "Quality review", release: "Release",
+      intake_review: "CRIOC review", requester_response: "Customer response", coordination_review: "Command review", on_hold: "On hold", allocation_review: "Ops allocation", delivery_planning: "Delivery planning", delivery_work: "Product development", lead_review: "Manager review", quality_review: "Quality review", release: "Release",
     },
     allowedOutcomes: {
       intake_review: ["request_information", "progress", "close"], requester_response: ["provide_information", "withdraw"], coordination_review: ["send_to_allocation", "return_to_triage", "hold", "close"], on_hold: ["resume", "close"], allocation_review: ["allocate", "return_to_coordination"], delivery_planning: ["assign", "return_for_reallocation"], delivery_work: ["submit"], lead_review: ["approve", "changes_required"], quality_review: ["approve", "changes_required"], release: ["release"],

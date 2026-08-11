@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -32,6 +33,17 @@ from istari_service.workflow_dispatch import WorkflowOutboxDispatcher
 DEMO_PASSWORD = "Synthetic-demo-passphrase-42"
 ORIGIN = "http://test.local"
 COVERAGE_GATE = 95.0
+
+
+@pytest.fixture(scope="session", autouse=True)
+def isolate_tests_from_local_dotenv() -> Iterator[None]:
+    """Keep developer runtime features out of deterministic test settings."""
+    original_env_file = Settings.model_config.get("env_file")
+    Settings.model_config["env_file"] = None
+    try:
+        yield
+    finally:
+        Settings.model_config["env_file"] = original_env_file
 
 
 def _percentage(covered: int, total: int) -> float:
@@ -69,18 +81,23 @@ def pytest_runtestloop(session: pytest.Session) -> Any:
 def request_payload(**updates: Any) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "title": "Prepare a synthetic service summary",
-        "serviceCategory": "Research support",
         "description": (
             "Provide a structured summary for a fictional planning exercise."
         ),
+        "questionToAnswer": "What does the synthetic evidence show?",
         "desiredOutcome": "A clear summary that supports a synthetic decision.",
         "backgroundContext": "All context is fictional and suitable for this demo.",
+        "subjectAreaOrLocation": "Synthetic subject area",
+        "coverageStart": (datetime.now(UTC).date() + timedelta(days=1)).isoformat(),
+        "coverageEnd": (datetime.now(UTC).date() + timedelta(days=7)).isoformat(),
+        "customerUrgency": "ROUTINE",
+        "supportedActivityOrDecision": "A fictional planning decision.",
         "requiredBy": (datetime.now(UTC).date() + timedelta(days=14)).isoformat(),
         "requiredByReason": "The fictional review takes place after this date.",
         "preferredDeliverableType": "Written summary",
         "successCriteria": "The summary addresses every stated point clearly.",
-        "requestingBusinessArea": "Requesting Area A",
-        "intendedRecipients": ["Fictional service owner"],
+        "constraintsOrCaveats": "No known constraints.",
+        "supportingInformation": "No supporting material is available.",
         "sensitivity": "STANDARD",
         "handlingInstructions": "Use only within this synthetic demonstration.",
     }

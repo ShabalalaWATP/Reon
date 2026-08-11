@@ -16,21 +16,21 @@ import type { RoutingOptions } from "./RoutingDestinationField";
 import { WorkActionForm } from "./WorkActionForm";
 
 const teamOptions: RoutingOptions = {
-  items: organisationChildren("NCGI_A_OPS").map((unit) => unit.code === "CEDAR_TEAM" ? { ...unit, staffingStatus: "UNSTAFFED" } : unit),
+  items: organisationChildren("ACSA_B_OPS").map((unit) => unit.code === "CEDAR_TEAM" ? { ...unit, staffingStatus: "UNSTAFFED" } : unit),
   onRetry: vi.fn(),
   status: "ready",
 };
 
-const commandRoute = ["JIOC", "DIGOC"].map((code) => {
+const commandRoute = ["CRIOC", "JOCK"].map((code) => {
   const { id, kind, name } = organisationUnit(code);
   return { id, code, kind, name };
 });
 
 describe("dynamic routing destinations", () => {
   it.each([
-    ["progress", "JIOC", ["DIGOC", "SYGOC", "MYGOC"]],
-    ["send_to_allocation", "DIGOC", ["NCGI-A Ops", "Aurora Ops", "Vertex Ops"]],
-    ["allocate", "NCGI_A_OPS", ["OSG Team", "Cedar Team", "Quartz Team"]],
+    ["progress", "CRIOC", ["JOCK", "SYGOC", "MYGOC"]],
+    ["send_to_allocation", "JOCK", ["ACSA-B Ops", "Aurora Ops", "Vertex Ops"]],
+    ["allocate", "ACSA_B_OPS", ["SSG Team", "Cedar Team", "Quartz Team"]],
   ] as const)(
     "keeps every direct child enabled for %s",
     (action, parentCode, expectedNames) => {
@@ -66,7 +66,7 @@ describe("dynamic routing destinations", () => {
         disabled={false}
         onSubmit={vi.fn()}
         routingOptions={{
-          items: organisationChildren("DIGOC"),
+          items: organisationChildren("JOCK"),
           onRetry: vi.fn(),
           status: "ready",
         }}
@@ -88,7 +88,7 @@ describe("dynamic routing destinations", () => {
       "id",
       error.id,
     );
-    await user.selectOptions(destination, organisationUnit("NCGI_A_OPS").id);
+    await user.selectOptions(destination, organisationUnit("ACSA_B_OPS").id);
     expect(destination).toHaveAttribute("aria-invalid", "false");
     expect(destination).not.toHaveAttribute("aria-describedby");
   });
@@ -102,7 +102,7 @@ describe("dynamic routing destinations", () => {
         disabled={false}
         onSubmit={submit}
         routingOptions={{
-          items: organisationChildren("DIGOC"),
+          items: organisationChildren("JOCK"),
           onRetry: vi.fn(),
           route: commandRoute,
           status: "ready",
@@ -111,8 +111,8 @@ describe("dynamic routing destinations", () => {
     );
 
     const path = screen.getByRole("navigation", { name: "Current routing path" });
-    expect(path).toHaveTextContent("JIOC");
-    expect(path).toHaveTextContent("DIGOC");
+    expect(path).toHaveTextContent("CRIOC");
+    expect(path).toHaveTextContent("JOCK");
     const search = screen.getByRole("searchbox", { name: "Find destination" });
     const destination = screen.getByLabelText("Destination unit");
     await user.selectOptions(destination, organisationUnit("AURORA_OPS").id);
@@ -131,7 +131,7 @@ describe("dynamic routing destinations", () => {
     await user.clear(search);
     expect(screen.getByText("3 of 3 destinations shown")).toBeInTheDocument();
     expect(screen.getByText(/Selected route:/)).toHaveTextContent(
-      "JIOC › DIGOC › Aurora Ops (AURORA_OPS)",
+      "CRIOC › JOCK › Aurora Ops (AURORA_OPS)",
     );
     expect(await axe(view.container)).toHaveNoViolations();
   });
@@ -148,7 +148,7 @@ describe("dynamic routing destinations", () => {
       />,
     );
 
-    const staffed = screen.getByRole("option", { name: /OSG Team/ });
+    const staffed = screen.getByRole("option", { name: /SSG Team/ });
     const unstaffed = screen.getByRole("option", { name: /Cedar Team/ });
     expect(staffed).toBeEnabled();
     expect(unstaffed).toBeEnabled();
@@ -226,8 +226,8 @@ describe("dynamic routing destinations", () => {
       if (url.pathname.endsWith("/routing-options")) {
         routingCalls += 1;
         return json({
-          items: organisationChildren("JIOC"),
-          route: [organisationUnit("JIOC")],
+          items: organisationChildren("CRIOC"),
+          route: [organisationUnit("CRIOC")],
         });
       }
       if (url.pathname.includes("/requests/")) return json(requestDetail);
@@ -239,10 +239,10 @@ describe("dynamic routing destinations", () => {
     expect(routingCalls).toBe(0);
     await user.click(screen.getByRole("button", { name: "Claim work item" }));
     await user.selectOptions(await screen.findByLabelText("Outcome"), "progress");
-    expect(await screen.findByRole("option", { name: /DIGOC/ })).toBeEnabled();
+    expect(await screen.findByRole("option", { name: /JOCK/ })).toBeEnabled();
     expect(screen.getByRole("option", { name: /SYGOC/ })).toBeEnabled();
     expect(screen.getByRole("option", { name: /MYGOC/ })).toBeEnabled();
-    expect(screen.getByRole("navigation", { name: "Current routing path" })).toHaveTextContent("JIOC");
+    expect(screen.getByRole("navigation", { name: "Current routing path" })).toHaveTextContent("CRIOC");
     expect(routingCalls).toBe(1);
   });
 

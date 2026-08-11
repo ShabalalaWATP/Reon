@@ -10,10 +10,10 @@ from conftest import ApiHarness
 from istari_service.models import Session
 
 
-async def _osg(harness: ApiHarness) -> dict[str, object]:
+async def _ssg(harness: ApiHarness) -> dict[str, object]:
     response = await harness.client.get("/api/v1/organisation/units")
     assert response.status_code == 200
-    return next(item for item in response.json()["items"] if item["code"] == "OSG_TEAM")
+    return next(item for item in response.json()["items"] if item["code"] == "SSG_TEAM")
 
 
 async def _rename_noop(harness: ApiHarness, unit: dict[str, object]):
@@ -30,7 +30,7 @@ async def test_admin_mutations_require_fresh_password_confirmation(
     harness = api_harness
     login = await harness.login("admin1")
     assert login["elevatedUntil"] is None
-    unit = await _osg(harness)
+    unit = await _ssg(harness)
 
     denied = await _rename_noop(harness, unit)
     assert denied.status_code == 403
@@ -51,7 +51,7 @@ async def test_expired_elevation_is_rejected_and_is_bound_to_the_session(
     harness = api_harness
     await harness.login("admin1")
     await harness.elevate()
-    unit = await _osg(harness)
+    unit = await _ssg(harness)
     async with harness.sessions() as session, session.begin():
         active = await session.scalar(
             select(Session).where(Session.revoked_at.is_(None))

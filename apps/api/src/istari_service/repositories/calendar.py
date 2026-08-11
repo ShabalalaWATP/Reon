@@ -26,7 +26,7 @@ from istari_service.errors import (
     InvalidCalendarChange,
     StaleVersion,
 )
-from istari_service.models import User
+from istari_service.models import ServiceRequest, User
 from istari_service.schemas.calendar import (
     CalendarEventCommand,
     CalendarOccurrence,
@@ -108,6 +108,7 @@ class SqlAlchemyCalendarRepository:
         actor_id: UUID,
         subject_id: UUID,
         team_id: UUID | None,
+        request_id: UUID | None,
         kind: CalendarEventKind,
         commitment_status: CommitmentStatus,
         command: CalendarEventCommand,
@@ -115,6 +116,7 @@ class SqlAlchemyCalendarRepository:
         event = CalendarEvent(
             subject_user_id=subject_id,
             team_id=team_id,
+            request_id=request_id,
             created_by_user_id=actor_id,
             kind=kind,
             status=CalendarEventStatus.ACTIVE,
@@ -126,6 +128,17 @@ class SqlAlchemyCalendarRepository:
         self.session.add(event)
         await self.session.flush()
         return event
+
+    async def request_belongs_to_team(self, request_id: UUID, team_id: UUID) -> bool:
+        return (
+            await self.session.scalar(
+                select(ServiceRequest.id).where(
+                    ServiceRequest.id == request_id,
+                    ServiceRequest.assigned_delivery_team_id == team_id,
+                )
+            )
+            is not None
+        )
 
     async def locked_event(
         self, event_id: UUID, expected_version: int
@@ -303,6 +316,7 @@ def _view(
         subject_user_id=event.subject_user_id,
         subject_display_name=display_name,
         team_id=event.team_id,
+        request_id=event.request_id,
         all_day=event.all_day,
         time_zone=event.time_zone,
         recurrence=event.recurrence,

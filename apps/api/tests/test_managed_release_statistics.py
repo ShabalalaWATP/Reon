@@ -165,7 +165,7 @@ async def _set_request_status(
 
 async def _complete_route(harness: ApiHarness, request_id: UUID) -> None:
     unit_ids = [
-        await harness.unit_id(code) for code in ("DIGOC", "NCGI_A_OPS", "OSG_TEAM")
+        await harness.unit_id(code) for code in ("JOCK", "ACSA_B_OPS", "SSG_TEAM")
     ]
     async with harness.sessions() as session, session.begin():
         session.add_all(
@@ -226,7 +226,7 @@ def _command(version: int, **extra: object) -> dict[str, object]:
 def _statistics_params() -> dict[str, str]:
     today = datetime.now(UTC).date()
     return {
-        "scopeId": str(management_grant_id("admin8", "OSG_TEAM")),
+        "scopeId": str(management_grant_id("admin8", "SSG_TEAM")),
         "from": (today - timedelta(days=1)).isoformat(),
         "to": (today + timedelta(days=1)).isoformat(),
         "timeZone": "Europe/London",

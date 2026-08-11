@@ -35,14 +35,29 @@ const RequestDetailPage = lazy(() => import("../features/requests/RequestDetailP
   .then(({ RequestDetailPage: page }) => ({ default: page })));
 const TrackingPage = lazy(() => import("../features/tracking/TrackingPage")
   .then(({ TrackingPage: page }) => ({ default: page })));
+const TrackingDetailPage = lazy(() => import("../features/tracking/TrackingDetailPage")
+  .then(({ TrackingDetailPage: page }) => ({ default: page })));
 const StatisticsPage = lazy(() => import("../features/statistics/StatisticsPage")
   .then(({ StatisticsPage: page }) => ({ default: page })));
 const TeamWorkspacePage = lazy(() => import("../features/teams/TeamWorkspacePage")
   .then(({ TeamWorkspacePage: page }) => ({ default: page })));
 const StaffQueuePage = lazy(() => import("../features/work/StaffQueuePage")
   .then(({ StaffQueuePage: page }) => ({ default: page })));
+const ProfilePage = lazy(() => import("../features/profile/ProfilePage")
+  .then(({ ProfilePage: page }) => ({ default: page })));
+const RoleOverviewPage = lazy(() => import("../features/overview/RoleOverviewPage")
+  .then(({ RoleOverviewPage: page }) => ({ default: page })));
 
 type CapabilityName = keyof ServerCapabilities;
+const staffMyWorkRoles: UserRole[] = [
+  "PLATFORM_ADMIN",
+  "INTAKE_TRIAGE",
+  "SERVICE_COORDINATION",
+  "OPERATIONS_ALLOCATION",
+  "DELIVERY_TEAM_LEAD",
+  "DELIVERY_SPECIALIST",
+  "QUALITY_RELEASE",
+];
 
 export function AppRoutes() {
   return (
@@ -53,7 +68,13 @@ export function AppRoutes() {
           <Route element={<AppShell />}>
             <Route index element={<RoleHome />} />
             <Route element={<CapabilityGate capability="myWork" />}>
-              <Route path="my-work" element={<MyWorkPage />} />
+              <Route element={<RoleGate allowed={staffMyWorkRoles} />}>
+                <Route path="my-work" element={<MyWorkPage />} />
+              </Route>
+            </Route>
+            <Route path="profile" element={<ProfilePage />} />
+            <Route element={<CapabilityGate capability="statistics" />}>
+              <Route path="overview" element={<RoleOverviewPage />} />
             </Route>
             <Route element={<CapabilityGate capability="notifications" />}>
               <Route path="notifications" element={<NotificationsPage />} />
@@ -63,9 +84,7 @@ export function AppRoutes() {
               <Route path="statistics" element={<StatisticsPage />} />
             </Route>
             <Route path="teams/:teamId/:view?" element={<TeamWorkspacePage />} />
-            <Route element={<RoleGate allowed={["DELIVERY_TEAM_LEAD", "DELIVERY_SPECIALIST"]} />}>
-              <Route path="calendar/:calendarView?" element={<CalendarPage />} />
-            </Route>
+            <Route path="calendar/:calendarView?" element={<CalendarPage />} />
             <Route element={<RoleGate allowed={["PLATFORM_ADMIN"]} />}>
               <Route path="admin/users" element={<AdminUsersPage />} />
               <Route path="admin/users/new" element={<AdminUserPage create />} />
@@ -81,6 +100,7 @@ export function AppRoutes() {
             </Route>
             <Route element={<RoleGate allowed={trackingRoles} />}>
               <Route path="tracking" element={<TrackingPage />} />
+              <Route path="tracking/:requestId" element={<TrackingDetailPage />} />
             </Route>
             <Route element={<RoleGate allowed={["REQUESTER"]} />}>
               <Route path="requests" element={<RequestDashboardPage />} />
@@ -91,13 +111,13 @@ export function AppRoutes() {
             <Route element={<RoleGate allowed={["INTAKE_TRIAGE"]} />}>
               <Route
                 path="triage"
-                element={<StaffQueuePage description="Review new Customer demand, request information or route it to the appropriate command." eyebrow="JIOC routing" title="JIOC routing queue" />}
+                element={<StaffQueuePage description="Review new Customer demand, request information or route it to the appropriate command." eyebrow="CRIOC routing" title="CRIOC routing queue" />}
               />
             </Route>
             <Route element={<RoleGate allowed={["SERVICE_COORDINATION"]} />}>
               <Route
                 path="coordination"
-                element={<StaffQueuePage description="Oversee command routing, holds and onward hand-offs to operations." eyebrow="Command routing" title="Command routing queue" />}
+                element={<StaffQueuePage description="A new request has been submitted and requires your attention. Claim it to review the details and choose the next organisation." eyebrow="Request coordination" title="Incoming requests" />}
               />
             </Route>
             <Route element={<RoleGate allowed={["OPERATIONS_ALLOCATION"]} />}>
@@ -155,13 +175,12 @@ function HomeRedirect() {
   const { session } = useAuth();
   const { capabilities, isPending } = useCapabilities();
   if (isPending) return <PageState kind="loading" title="Opening ISTARI" />;
-  return <Navigate replace to={session ? homeRouteForRole(session.user.role, capabilities) : "/login"} />;
+  return <Navigate replace to={homeRouteForRole(session!.user.role, capabilities)} />;
 }
 
 function RoleHome() {
   const { session } = useAuth();
   const { capabilities, isPending } = useCapabilities();
-  if (!session) return null;
   if (isPending) return <PageState kind="loading" title="Opening ISTARI" />;
-  return <Navigate replace to={homeRouteForRole(session.user.role, capabilities)} />;
+  return <Navigate replace to={homeRouteForRole(session!.user.role, capabilities)} />;
 }

@@ -31,12 +31,12 @@ def package_body(grant: str | None, owner: str, contributor: str) -> dict[str, A
 async def manager_context(harness: ApiHarness) -> tuple[str, str, str, str]:
     await harness.login("admin8")
     response = await harness.client.get("/api/v1/team-workspaces")
-    osg_id = str(await harness.unit_id("OSG_TEAM"))
+    ssg_id = str(await harness.unit_id("SSG_TEAM"))
     workspace = next(
-        item for item in response.json()["items"] if item["teamId"] == osg_id
+        item for item in response.json()["items"] if item["teamId"] == ssg_id
     )
     return (
-        osg_id,
+        ssg_id,
         workspace["grantId"],
         str(await harness.user_id("admin11")),
         str(await harness.user_id("admin12")),
