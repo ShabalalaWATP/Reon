@@ -1082,3 +1082,7 @@ gates remain above 95 per cent for both lines and branches.
   at 98.87 per cent line and 95.02 per cent branch coverage. All 369 frontend
   tests passed at 99.52 per cent line and 95.06 per cent branch coverage, and
   every repository quality gate passed.
+- Corrected long workflow status presentation on 11 August 2026. Status pills
+  now size to their available column, wrap long text and keep the state marker
+  stable instead of covering the current-owner field. The shared component rule
+  protects request registers and every other status-pill use consistently.

@@ -18,7 +18,6 @@
 .request-register__header span:last-child { justify-self: end; }
 .request-row { position: relative; display: grid; grid-template-columns: minmax(108px, .5fr) minmax(180px, 1.5fr) minmax(150px, .95fr) minmax(140px, .85fr) minmax(120px, .6fr) auto; gap: 12px; align-items: center; min-height: 70px; border-bottom: 1px solid var(--border); padding: 12px 14px; text-decoration: none; transition: background var(--speed-fast), padding-left var(--speed-fast); }
 .request-row > * { min-width: 0; }
-.request-row__status .status-pill { max-width: 100%; white-space: normal; line-height: 1.35; text-align: left; }
 .request-row:hover { padding-left: 18px; background: color-mix(in srgb, var(--accent) 6%, transparent); }
 .request-row:focus-within { padding-left: 18px; background: color-mix(in srgb, var(--accent) 9%, transparent); outline: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: -2px; }
 .request-row__indicator { position: absolute; inset: 13px auto 13px 0; width: 2px; border-radius: 9px; background: transparent; transform: scaleY(.35); transition: background var(--speed-fast), transform var(--speed-fast); }

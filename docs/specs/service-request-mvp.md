@@ -2,7 +2,7 @@
 
 ## Status
 
-Current product contract. Last reviewed 10 August 2026.
+Current product contract. Last reviewed 11 August 2026.
 
 ## Objective
 
@@ -35,6 +35,10 @@ language.
 5. Staff work: one role-filtered queue with request context and human actions.
 6. Administration: identity, role, team and safe reference-data maintenance with
    no implicit access to requests.
+
+Workflow status labels must remain fully readable within their containing column.
+Long labels wrap without covering the current owner or another request field at
+desktop and narrow-screen widths.
 
 ## Interaction thesis
 
