@@ -27,6 +27,8 @@ from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.orm import relationship as rel
 
+from istari_service.profile_models import ProfileFieldsMixin
+
 
 class UserRole(StrEnum):
     PLATFORM_ADMIN = "PLATFORM_ADMIN"
@@ -124,11 +126,11 @@ def _enum(enum_type: type[StrEnum], name: str) -> SqlEnum:
     return SqlEnum(enum_type, name=name, native_enum=False, create_constraint=True)
 
 
-class User(TimestampMixin, Base):
+class User(ProfileFieldsMixin, TimestampMixin, Base):
     __tablename__ = "users"
     __table_args__ = (Index("ix_users_updated_id", "updated_at", "id"),)
-
     username: Mapped[str] = mapped_column(String(254), unique=True, index=True)
+    email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(120))
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[UserRole] = mapped_column(_enum(UserRole, "user_role"), index=True)
@@ -190,7 +192,9 @@ class ServiceRequest(TimestampMixin, Base):
         ForeignKey("users.id", ondelete="RESTRICT"), index=True
     )
     title: Mapped[str] = mapped_column(String(160))
-    service_category: Mapped[str] = mapped_column(String(80))
+    service_category: Mapped[str] = mapped_column(
+        String(80), default="General service request"
+    )
     description: Mapped[str] = mapped_column(Text)
     question_to_answer: Mapped[str] = mapped_column(Text)
     desired_outcome: Mapped[str] = mapped_column(Text)

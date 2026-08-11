@@ -31,7 +31,10 @@ def parser() -> argparse.ArgumentParser:
     retention.add_argument("--confirm")
     retention.add_argument("--batch-size", type=int, default=1_000)
     verification = subcommands.add_parser("verify-restore")
-    verification.add_argument("--expected-revision", default="0022_customer_intake")
+    verification.add_argument(
+        "--expected-revision",
+        default="0032_coordination_language",
+    )
     snapshot = subcommands.add_parser("health-snapshot")
     snapshot.add_argument("--max-command-age-seconds", type=int, default=300)
     snapshot.add_argument("--max-projection-age-seconds", type=int, default=600)

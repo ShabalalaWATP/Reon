@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import re
 from datetime import datetime
 from uuid import UUID
 
 from pydantic import Field, field_validator
 
 from istari_service.account_request_models import AccountRequestStatus
+from istari_service.identity_validation import normalise_email
 from istari_service.schemas.common import ApiModel, StrictApiModel
 
 
@@ -28,10 +28,7 @@ class AccountRequestCreate(StrictApiModel):
     @field_validator("contact_email")
     @classmethod
     def validate_contact_email(cls, value: str) -> str:
-        cleaned = value.strip().lower()
-        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", cleaned):
-            raise ValueError("enter a valid email address")
-        return cleaned
+        return normalise_email(value)
 
 
 class AccountRequestAccepted(ApiModel):

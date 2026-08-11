@@ -15,7 +15,12 @@ from istari_service.errors import (
     WorkflowUnavailable,
 )
 from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
-from istari_service.policies import allowed_actions, can_access_work, may_complete
+from istari_service.policies import (
+    allowed_actions,
+    can_access_work,
+    may_claim,
+    may_complete,
+)
 from istari_service.schemas.organisation import RoutingOptionsWorkspace
 from istari_service.schemas.requests import RequestDetail
 from istari_service.schemas.work import (
@@ -48,6 +53,8 @@ class WorkRepository(Protocol):
         *,
         limit: int = 50,
         cursor: str | None = None,
+        unit_id: UUID | None = None,
+        request_id: UUID | None = None,
     ) -> tuple[list[WorkBundle], str | None]: ...
 
     async def get(
@@ -115,9 +122,15 @@ class WorkService:
         *,
         limit: int = 50,
         cursor: str | None = None,
+        unit_id: UUID | None = None,
+        request_id: UUID | None = None,
     ) -> tuple[list[WorkItem], str | None]:
         bundles, next_cursor = await self._repository.page_for_actor(
-            actor, limit=limit, cursor=cursor
+            actor,
+            limit=limit,
+            cursor=cursor,
+            unit_id=unit_id,
+            request_id=request_id,
         )
         visible = [bundle for bundle in bundles if self._visible(actor, bundle)]
         return [self._with_actions(actor, bundle) for bundle in visible], next_cursor
@@ -172,7 +185,11 @@ class WorkService:
 
     async def claim(self, actor: Actor, work_id: UUID) -> WorkItem:
         bundle = await self._repository.get(work_id, actor)
-        if bundle is None or not self._visible(actor, bundle):
+        if (
+            bundle is None
+            or not self._visible(actor, bundle)
+            or not may_claim(actor, bundle.record.request)
+        ):
             raise ObjectNotFound()
         if bundle.record.task_status in {
             WorkflowTaskStatus.CLAIM_PENDING,
@@ -264,24 +281,31 @@ class WorkService:
         if not isinstance(payload, AssignSpecialist):
             return
         team_id = work.request.assigned_delivery_team_id
-        specialist = (
-            await self._repository.find_specialist(payload.specialist_id)
-            if team_id is None
-            else await self._repository.find_specialist(
-                payload.specialist_id,
-                delivery_team_id=team_id,
+        selected_ids = [payload.specialist_id, *payload.contributor_ids]
+        if len(set(selected_ids)) != len(selected_ids):
+            raise InvalidAction("The Lead Analyst cannot also be a Contributor.")
+        specialists = [
+            (
+                await self._repository.find_specialist(user_id)
+                if team_id is None
+                else await self._repository.find_specialist(
+                    user_id,
+                    delivery_team_id=team_id,
+                )
             )
-        )
-        if (
+            for user_id in selected_ids
+        ]
+        if any(
             specialist is None
             or specialist.role != UserRole.DELIVERY_SPECIALIST
             or (
                 team_id is None
                 and specialist.scope != work.request.assigned_delivery_team
             )
+            for specialist in specialists
         ):
             raise InvalidAction(
-                "The selected specialist is outside this delivery team."
+                "Every selected Analyst must be an active member of this team."
             )
 
     @staticmethod
@@ -291,7 +315,10 @@ class WorkService:
         ):
             return False
         if bundle.record.task_status is WorkflowTaskStatus.OPEN:
-            return bundle.record.assignee_id is None
+            return (
+                bundle.record.assignee_id is None
+                and may_claim(actor, bundle.record.request)
+            )
         return bundle.record.assignee_id == actor.id
 
     @staticmethod

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import unicodedata
 from datetime import UTC, date, datetime
 from enum import StrEnum
+from typing import ClassVar
 from uuid import UUID, uuid4
 
 from pydantic import Field, field_validator, model_validator
@@ -27,7 +29,9 @@ class CustomerUrgency(StrEnum):
 class RequestCreate(StrictApiModel):
     submission_key: UUID = Field(default_factory=uuid4)
     title: str = Field(min_length=3, max_length=160)
-    service_category: str = Field(min_length=2, max_length=80)
+    # Retained as server-owned persistence metadata for sealed historical
+    # records. Customers no longer classify their own request.
+    service_category: ClassVar[str] = "General service request"
     description: str = Field(min_length=20, max_length=5000)
     question_to_answer: str = Field(min_length=10, max_length=2000)
     desired_outcome: str = Field(min_length=10, max_length=2000)
@@ -86,6 +90,24 @@ class FeedbackCreate(StrictApiModel):
     comments: str = Field(min_length=3, max_length=2000)
 
 
+class RequestCancel(StrictApiModel):
+    expected_version: int = Field(ge=1)
+    reason: str = Field(min_length=10, max_length=1000)
+
+    @field_validator("reason")
+    @classmethod
+    def safe_reason(cls, value: str) -> str:
+        cleaned = unicodedata.normalize("NFKC", value).strip()
+        unsafe = any(
+            unicodedata.category(character) in {"Cc", "Cf"} for character in cleaned
+        )
+        if unsafe:
+            raise ValueError(
+                "reason cannot contain control or bidirectional characters"
+            )
+        return cleaned
+
+
 class FeedbackView(ApiModel):
     id: UUID
     rating: int
@@ -124,6 +146,7 @@ class RequestSummary(ApiModel):
     required_by: date
     created_at: datetime
     updated_at: datetime
+    version: int
     needs_requester_input: bool
     product_available: bool = False
     feedback_submitted: bool = False
@@ -150,6 +173,7 @@ class RequestDetail(RequestSummary):
     requester: RequesterView
     assigned_delivery_team: str | None
     assigned_specialist: RequesterView | None
+    contributors: list[RequesterView] = Field(default_factory=list)
     events: list[RequestEventView]
     events_next_cursor: str | None = None
     deliverable: DeliverableView | None

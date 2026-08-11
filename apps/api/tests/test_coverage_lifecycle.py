@@ -39,6 +39,7 @@ def disable_organisation_seed(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(main_module, "restore_active_configuration_projection", no_seed)
     monkeypatch.setattr(main_module, "initialise_admin_identity_sequence", no_seed)
     monkeypatch.setattr(main_module, "initialise_admin_audit_anchor", no_seed)
+    monkeypatch.setattr(main_module, "initialise_platform_classification", no_seed)
 
 
 def make_settings(**updates: Any) -> Settings:
@@ -146,6 +147,7 @@ def test_production_disables_interactive_api_schema_surfaces(tmp_path: Path) -> 
             camunda_password=SecretStr("synthetic-secret"),
             audit_hmac_key=SecretStr("a" * 32),
             product_storage_path=str(tmp_path / "istari-products"),
+            request_embedding_cache_path=str(tmp_path / "model-cache"),
             worker_health_required=True,
         ),
         workflow_engine=FakeWorkflowEngine(),

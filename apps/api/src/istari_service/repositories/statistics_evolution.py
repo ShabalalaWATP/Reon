@@ -51,18 +51,30 @@ class SqlAlchemyStatisticsEvolutionRepository:
         previous_start: datetime,
         previous_end: datetime,
         at: datetime,
+        selected_unit_id: UUID | None = None,
     ) -> StatisticsEvolutionDataset:
         current = await self._base.load_dataset(
-            actor, scope_id=scope_id, start=start, end=end, at=at
+            actor,
+            scope_id=scope_id,
+            selected_unit_id=selected_unit_id,
+            start=start,
+            end=end,
+            at=at,
         )
         previous = await self._base.load_dataset(
             actor,
             scope_id=scope_id,
+            selected_unit_id=selected_unit_id,
             start=previous_start,
             end=previous_end,
             at=at,
         )
-        _, unit = await self._base.authorised_scope(actor, scope_id=scope_id, at=at)
+        _, unit = await self._base.authorised_scope(
+            actor,
+            scope_id=scope_id,
+            selected_unit_id=selected_unit_id,
+            at=at,
+        )
         unit_column = _operational_unit_column(unit.kind)
         facts = tuple(
             await self.session.scalars(
@@ -97,6 +109,7 @@ class SqlAlchemyStatisticsEvolutionRepository:
             "|".join(
                 (
                     command.scope_id,
+                    str(command.unit_id or "root"),
                     command.from_date.isoformat(),
                     command.to_date.isoformat(),
                     command.time_zone,

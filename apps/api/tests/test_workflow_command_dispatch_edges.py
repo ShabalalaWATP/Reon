@@ -166,7 +166,6 @@ async def test_completion_success_outage_and_recovered_proof(
         command,
         completion=ProgressRequest(
             action="progress",
-            category="Synthetic category",
             priority="MEDIUM",
             destination_unit_id=uuid4(),
         ),

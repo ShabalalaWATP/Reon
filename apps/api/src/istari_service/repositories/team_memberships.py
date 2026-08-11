@@ -6,27 +6,33 @@ from datetime import UTC, datetime, timedelta
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import delete, or_, select, update
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.errors import InvalidRosterChange, ObjectNotFound, StaleVersion
 from istari_service.models import (
-    Session,
     User,
     UserRole,
 )
 from istari_service.organisation_models import (
     OrganisationKind,
     OrganisationUnit,
-    UserOrganisationMembership,
 )
-from istari_service.repositories.admin import SqlAlchemyAdminRepository
 from istari_service.roster_disposition import reject_active_roster_assignments
+from istari_service.team_membership_projection import refresh_membership_projection
 from istari_service.team_models import (
     TeamActivityEvent,
     TeamActivityType,
     TeamMembership,
+    WorkspacePosition,
 )
+
+MEMBER_ROLE_BY_KIND = {
+    OrganisationKind.ROOT: UserRole.INTAKE_TRIAGE,
+    OrganisationKind.COMMAND: UserRole.SERVICE_COORDINATION,
+    OrganisationKind.OPS_GROUP: UserRole.OPERATIONS_ALLOCATION,
+    OrganisationKind.TEAM: UserRole.DELIVERY_SPECIALIST,
+}
 
 
 class SqlAlchemyTeamMembershipRepository:
@@ -43,8 +49,8 @@ class SqlAlchemyTeamMembershipRepository:
         at: datetime | None = None,
     ) -> TeamMembership:
         effective_at = _effective_at(at)
-        analyst = await self._locked_analyst(analyst_id)
-        team = await self._team(team_id)
+        team = await self._unit(team_id)
+        analyst = await self._locked_member(analyst_id, team.kind)
         _require(
             not await self._has_membership_after(analyst.id, effective_at),
             InvalidRosterChange(
@@ -54,6 +60,7 @@ class SqlAlchemyTeamMembershipRepository:
         membership = TeamMembership(
             user_id=analyst.id,
             team_id=team.id,
+            workspace_position=WorkspacePosition.MEMBER,
             effective_from=effective_at,
             started_by_user_id=actor_id,
             start_reason=reason.strip(),
@@ -66,7 +73,7 @@ class SqlAlchemyTeamMembershipRepository:
             membership,
             actor_id,
             TeamActivityType.MEMBER_ADDED,
-            "An Analyst joined the team.",
+            "A Member joined the workspace.",
         )
         return membership
 
@@ -90,7 +97,8 @@ class SqlAlchemyTeamMembershipRepository:
         await reject_active_roster_assignments(
             self.session, membership.user_id, effective_at
         )
-        analyst = await self._locked_analyst(membership.user_id)
+        unit = await self._unit(team_id)
+        analyst = await self._locked_member(membership.user_id, unit.kind)
         membership.effective_until = effective_at
         membership.ended_by_user_id = actor_id
         membership.end_reason = reason.strip()
@@ -102,7 +110,7 @@ class SqlAlchemyTeamMembershipRepository:
             membership,
             actor_id,
             TeamActivityType.MEMBERSHIP_ENDED,
-            "An Analyst left the team.",
+            "A Member left the workspace.",
         )
         return membership
 
@@ -118,19 +126,19 @@ class SqlAlchemyTeamMembershipRepository:
         reason: str,
     ) -> TeamMembership:
         now = datetime.now(UTC)
-        analyst = await self._locked_analyst(analyst_id)
-        target_team = await self._team(target_team_id)
+        target_team = await self._unit(target_team_id)
+        analyst = await self._locked_member(analyst_id, target_team.kind)
         current = await self._locked_membership_for_user(
             current_membership_id, analyst.id
         )
         _require(current.version == expected_version, StaleVersion())
         _require(
             self._is_effective(current, now),
-            InvalidRosterChange("Select the Analyst's current membership."),
+            InvalidRosterChange("Select the Member's current membership."),
         )
         _require(
             current.team_id != target_team.id,
-            InvalidRosterChange("The Analyst already belongs to this team."),
+            InvalidRosterChange("The Member already belongs to this workspace."),
         )
         _require(
             effective_from >= now - timedelta(minutes=1),
@@ -139,7 +147,7 @@ class SqlAlchemyTeamMembershipRepository:
         effective_start = max(effective_from, now)
         _require(
             not await self._has_scheduled_membership(analyst.id, now),
-            InvalidRosterChange("This Analyst already has a scheduled move."),
+            InvalidRosterChange("This Member already has a scheduled move."),
         )
         await reject_active_roster_assignments(
             self.session, analyst.id, effective_start
@@ -151,6 +159,7 @@ class SqlAlchemyTeamMembershipRepository:
         next_membership = TeamMembership(
             user_id=analyst.id,
             team_id=target_team.id,
+            workspace_position=WorkspacePosition.MEMBER,
             effective_from=effective_start,
             started_by_user_id=actor_id,
             start_reason=reason.strip(),
@@ -167,35 +176,34 @@ class SqlAlchemyTeamMembershipRepository:
             current,
             actor_id,
             TeamActivityType.TRANSFER_SCHEDULED,
-            "An Analyst transfer was scheduled from this team.",
+            "A Member transfer was scheduled from this workspace.",
             {"effectiveFrom": effective_start.isoformat()},
         )
         self._activity(
             next_membership,
             actor_id,
             TeamActivityType.TRANSFER_SCHEDULED,
-            "An Analyst transfer was scheduled into this team.",
+            "A Member transfer was scheduled into this workspace.",
             {"effectiveFrom": effective_start.isoformat()},
         )
         return next_membership
 
-    async def _locked_analyst(self, user_id: UUID) -> User:
+    async def _locked_member(self, user_id: UUID, unit_kind: OrganisationKind) -> User:
         analyst = await self.session.scalar(
             select(User).where(User.id == user_id).with_for_update()
         )
         _require(analyst is not None, ObjectNotFound())
         found = cast(User, analyst)
         _require(
-            found.is_active and found.role is UserRole.DELIVERY_SPECIALIST,
-            InvalidRosterChange("Select an active Team Analyst account."),
+            found.is_active and found.role is MEMBER_ROLE_BY_KIND[unit_kind],
+            InvalidRosterChange("Select an active compatible workspace Member."),
         )
         return found
 
-    async def _team(self, team_id: UUID) -> OrganisationUnit:
+    async def _unit(self, team_id: UUID) -> OrganisationUnit:
         team = await self.session.scalar(
             select(OrganisationUnit).where(
                 OrganisationUnit.id == team_id,
-                OrganisationUnit.kind == OrganisationKind.TEAM,
                 OrganisationUnit.is_configured.is_(True),
             )
         )
@@ -260,28 +268,14 @@ class SqlAlchemyTeamMembershipRepository:
         analyst: User,
         team: OrganisationUnit | None,
         affected_team_ids: set[UUID],
+        at: datetime | None = None,
     ) -> None:
-        await self.session.execute(
-            delete(UserOrganisationMembership).where(
-                UserOrganisationMembership.user_id == analyst.id
-            )
-        )
-        self.session.add_all(
-            []
-            if team is None
-            else [UserOrganisationMembership(user_id=analyst.id, unit_id=team.id)]
-        )
-        analyst.scope = getattr(team, "name", "Unassigned Team Analyst")
-        analyst.version += 1
-        analyst.credential_version += 1
-        await self.session.execute(
-            update(Session)
-            .where(Session.user_id == analyst.id, Session.revoked_at.is_(None))
-            .values(revoked_at=datetime.now(UTC))
-        )
-        await self.session.flush()
-        await SqlAlchemyAdminRepository(self.session).recalculate_teams(
-            affected_team_ids
+        await refresh_membership_projection(
+            self.session,
+            user=analyst,
+            preferred_unit=team,
+            affected_unit_ids=affected_team_ids,
+            at=at,
         )
 
     def _activity(

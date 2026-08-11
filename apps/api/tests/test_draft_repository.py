@@ -50,7 +50,6 @@ def submission(expected_version: int) -> RequestDraftSubmit:
     return RequestDraftSubmit(
         expected_version=expected_version,
         title="Synthetic service request",
-        service_category="Research",
         description="A sufficiently detailed synthetic request description.",
         question_to_answer="What does the synthetic evidence show?",
         desired_outcome="A useful fictional written response.",
@@ -79,6 +78,7 @@ async def test_repository_covers_draft_lock_and_submission_branches(
     async with factory() as session:
         user = User(
             username="draft.owner@example.test",
+            email="draft.owner@example.test",
             display_name="Draft Owner",
             password_hash="$argon2id$synthetic",
             role=UserRole.REQUESTER,

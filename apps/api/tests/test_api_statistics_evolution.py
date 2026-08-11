@@ -34,7 +34,7 @@ async def test_evolution_metrics_and_fail_closed_export_audit(
     harness = api_harness
     await seed_evolution_statistics(harness)
     await harness.login("admin6")
-    params = _params(str(management_grant_id("admin6", "NCGI_A_OPS")))
+    params = _params(str(management_grant_id("admin6", "ACSA_B_OPS")))
     response = await harness.client.get("/api/v1/statistics/evolution", params=params)
     assert response.status_code == 200, response.text
     body = response.json()
@@ -112,7 +112,7 @@ async def test_small_cohorts_platform_health_scope_and_invalid_queries(
     await harness.login("admin10")
     sibling = await harness.client.get(
         "/api/v1/statistics/evolution",
-        params=_params(str(management_grant_id("admin6", "NCGI_A_OPS"))),
+        params=_params(str(management_grant_id("admin6", "ACSA_B_OPS"))),
     )
     assert sibling.status_code == 404
     await harness.login("admin2")

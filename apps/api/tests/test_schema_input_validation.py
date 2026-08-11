@@ -21,7 +21,6 @@ from istari_service.schemas.work import (
 def _request_create(**overrides: object) -> RequestCreate:
     values: dict[str, object] = {
         "title": "Synthetic request",
-        "service_category": "Research",
         "description": "A synthetic description long enough for validation.",
         "question_to_answer": "What does the synthetic evidence show?",
         "desired_outcome": "A synthetic outcome for validation.",
@@ -75,6 +74,16 @@ def test_request_coverage_period_must_be_ordered() -> None:
             coverage_start=datetime.now(UTC).date() + timedelta(days=2),
             coverage_end=datetime.now(UTC).date(),
         )
+
+
+def test_request_required_date_cannot_be_in_the_past() -> None:
+    with pytest.raises(ValidationError, match="must not be in the past"):
+        _request_create(required_by=datetime.now(UTC).date() - timedelta(days=1))
+
+
+def test_customer_cannot_classify_the_internal_service_category() -> None:
+    with pytest.raises(ValidationError, match="service_category"):
+        _request_create(service_category="Customer-selected category")
 
 
 @pytest.mark.parametrize(

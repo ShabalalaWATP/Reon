@@ -1,8 +1,7 @@
 # Final completion audit
 
-> Historical MVP record. This document proves the accepted local MVP baseline,
-> not the later Product Evolution release candidate. Current capability and open
-> gates are recorded in the Product Evolution Definition of Done matrix.
+> Dated local baseline audit. Current open gates are recorded in the
+> [Definition of Done matrix](DEFINITION_OF_DONE_MATRIX.md).
 
 ## Audit result
 
@@ -26,8 +25,8 @@ implementation defects or self-approve them.
 | Team shared workspace | Overview, People, Calendar, Board, Planning and Activity | Implemented and proved |
 | Manager adds or ends Analysts | Effective-dated membership with reason, history and workload guard | Implemented and proved |
 | Account for each Manager and Analyst | 72 documented Scottish-football identities | Implemented and proved |
-| Selectable organisation routes | Data-driven JIOC, command, Ops and team hierarchy | Implemented and proved |
-| OSG operational path | JIOC, DIGOC, NCGI-A Ops, OSG Team | Implemented and proved |
+| Selectable organisation routes | Data-driven CRIOC, command, Ops and team hierarchy | Implemented and proved |
+| SSG operational path | CRIOC, JOCK, ACSA-B Ops, SSG Team | Implemented and proved |
 | Alternative path | SYGOC, Nimbus Ops, Beacon Team | Implemented and proved |
 | Human-led Camunda workflow | Camunda 8.9.14 user tasks and application outbox | Implemented and proved |
 | Manager and QC review | Separate Analyst, Team Manager and QC identities | Implemented and proved |

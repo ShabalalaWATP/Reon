@@ -61,6 +61,7 @@ class AccountRequestService:
             actor,
             AdminUserCreate(
                 display_name=row.display_name,
+                email=row.contact_email,
                 role=UserRole.REQUESTER,
                 scope="Customer",
                 organisation_unit_ids=[],

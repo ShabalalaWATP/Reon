@@ -63,8 +63,10 @@ async def database() -> AsyncIterator[
 
 
 def make_user(role: UserRole, scope: str) -> User:
+    username = f"user.{uuid4().hex}@example.test"
     return User(
-        username=f"user.{uuid4().hex}@example.test",
+        username=username,
+        email=username,
         display_name="Synthetic User",
         password_hash="$argon2id$synthetic",
         role=role,
@@ -122,7 +124,6 @@ async def test_validation_and_every_persisted_work_effect(
 
         progress = ProgressRequest(
             action="progress",
-            category="Research",
             priority="HIGH",
             destination_unit_id=uuid4(),
         )
@@ -152,7 +153,8 @@ async def test_validation_and_every_persisted_work_effect(
             )
 
         await apply_work_effect(session, request, reviewer_actor, progress)
-        assert (request.triage_category, request.priority) == ("Research", "HIGH")
+        assert request.triage_category is None
+        assert request.priority == "HIGH"
         allocation = AllocateRequest(
             action="allocate",
             destination_unit_id=uuid4(),
@@ -163,7 +165,11 @@ async def test_validation_and_every_persisted_work_effect(
             session,
             request,
             reviewer_actor,
-            AssignSpecialist(action="assign", specialist_id=author.id),
+            AssignSpecialist(
+                action="assign",
+                specialist_id=author.id,
+                reason="The Manager selected the accountable delivery Lead.",
+            ),
         )
         assert request.required_capabilities == ["Writing"]
         assert request.assigned_specialist_id == author.id

@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -22,9 +22,13 @@ from istari_service.models import (
 from istari_service.models import (
     WorkflowTask as StoredWorkflowTask,
 )
+from istari_service.organisation_models import RequestRouteSelection
 from istari_service.ownership import OWNER_BY_STATUS
 from istari_service.repositories.event_store import append_request_event
-from istari_service.repositories.organisation import SqlAlchemyOrganisationRepository
+from istari_service.repositories.organisation import (
+    ROUTE_POSITION_BY_ROLE,
+    SqlAlchemyOrganisationRepository,
+)
 from istari_service.repositories.product_workflow import product_workflow_details
 from istari_service.repositories.projection_pagination import (
     decode_cursor,
@@ -75,6 +79,8 @@ class SqlAlchemyWorkRepository(WorkStaffingRepositoryMixin):
         *,
         limit: int = 50,
         cursor: str | None = None,
+        unit_id: UUID | None = None,
+        request_id: UUID | None = None,
     ) -> tuple[list[WorkBundle], str | None]:
         statement = (
             select(StoredWorkflowTask, ServiceRequest, WorkflowInstance)
@@ -89,19 +95,45 @@ class SqlAlchemyWorkRepository(WorkStaffingRepositoryMixin):
             )
             .where(*work_scope_conditions(actor))
         )
+        if unit_id is not None:
+            position = ROUTE_POSITION_BY_ROLE.get(actor.role)
+            statement = statement.where(
+                ServiceRequest.id.is_(None)
+                if position is None
+                else select(RequestRouteSelection.id)
+                .where(
+                    RequestRouteSelection.request_id == ServiceRequest.id,
+                    RequestRouteSelection.position == position,
+                    RequestRouteSelection.unit_id == unit_id,
+                )
+                .exists()
+            )
+        if request_id is not None:
+            statement = statement.where(StoredWorkflowTask.request_id == request_id)
         if cursor is not None:
             changed_at, work_id = decode_cursor(
                 cursor, message="The work-item filters are invalid."
             )
-            statement = statement.where(
-                or_(
+            if self._session.get_bind().dialect.name == "sqlite":
+                # SQLite's CURRENT_TIMESTAMP omits fractional seconds while a bound
+                # datetime includes them, so raw text ordering can repeat the cursor.
+                changed_column = func.julianday(StoredWorkflowTask.updated_at)
+                changed_value = func.julianday(changed_at)
+                cursor_filter = or_(
+                    changed_column < changed_value,
+                    and_(
+                        changed_column == changed_value, StoredWorkflowTask.id < work_id
+                    ),
+                )
+            else:
+                cursor_filter = or_(
                     StoredWorkflowTask.updated_at < changed_at,
                     and_(
                         StoredWorkflowTask.updated_at == changed_at,
                         StoredWorkflowTask.id < work_id,
                     ),
                 )
-            )
+            statement = statement.where(cursor_filter)
         rows = (
             await self._session.execute(
                 statement.order_by(

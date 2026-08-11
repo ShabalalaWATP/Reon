@@ -1,4 +1,4 @@
-import type { RequestStatus } from "./requestTypes";
+import type { RequestDetail, RequestStatus } from "./requestTypes";
 
 export type OrganisationUnit = {
   id: string;
@@ -28,10 +28,32 @@ export type TrackedRequestRouteUnit = Pick<
 export type TrackedRequest = {
   id: string;
   reference: string;
+  title: string;
   status: RequestStatus;
   currentOwner: string | null;
   requiredBy: string;
+  createdAt: string;
   updatedAt: string;
   route: TrackedRequestRouteUnit[];
   awaitingTeamStaffing: boolean;
 };
+
+export type TrackedRequestDetail = TrackedRequest & Pick<
+  RequestDetail,
+  | "description"
+  | "questionToAnswer"
+  | "desiredOutcome"
+  | "backgroundContext"
+  | "subjectAreaOrLocation"
+  | "coverageStart"
+  | "coverageEnd"
+  | "customerUrgency"
+  | "supportedActivityOrDecision"
+  | "requiredByReason"
+  | "preferredDeliverableType"
+  | "successCriteria"
+  | "constraintsOrCaveats"
+  | "supportingInformation"
+  | "sensitivity"
+  | "handlingInstructions"
+> & { requesterDisplayName: string };

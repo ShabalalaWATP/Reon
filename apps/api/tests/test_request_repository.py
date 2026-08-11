@@ -63,7 +63,6 @@ async def database() -> AsyncIterator[
 def request_command() -> RequestCreate:
     return RequestCreate(
         title="Synthetic service request",
-        service_category="Research",
         description="A sufficiently detailed synthetic request description.",
         question_to_answer="What does the synthetic evidence show?",
         desired_outcome="A useful fictional written response.",

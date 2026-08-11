@@ -22,6 +22,12 @@
 .admin-step-up--ready div { display: grid; gap: 3px; }
 .admin-step-up--ready small { color: var(--muted); }
 .admin-search .form-field { min-width: min(360px, 42vw); }
+.classification-control { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 28px; align-items: end; border-block: 1px solid var(--border); padding: 18px 0; }
+.classification-control__copy { display: flex; gap: 12px; }
+.classification-control__copy > svg { margin-top: 3px; color: var(--accent); }
+.classification-control form { display: grid; grid-template-columns: minmax(210px, 1fr) auto; gap: 8px; align-items: end; }
+.admin-account-identity strong, .admin-account-identity small { display: block; }
+.admin-account-identity small { margin-top: 3px; color: var(--muted); font-size: .68rem; }
 .admin-table-scroll { overflow-x: auto; border-block: 1px solid var(--border); }
 .admin-table { width: 100%; border-collapse: collapse; font-size: .8rem; text-align: left; }
 .admin-table th { padding: 10px 12px; color: var(--muted); font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; }
@@ -62,4 +68,6 @@
   .admin-confirm strong { text-align: left; }
   .organisation-unit:has(.organisation-rename-trigger), .organisation-unit:has(.organisation-rename) { grid-template-columns: 1fr auto; }
   .organisation-rename { grid-template-columns: 1fr; }
+  .classification-control { grid-template-columns: 1fr; }
+  .classification-control form { grid-template-columns: 1fr; }
 }

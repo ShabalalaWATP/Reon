@@ -1,10 +1,10 @@
-"""Canonical calendar API, privacy, commitments, recurrence and capacity."""
-
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, timedelta
 
-from conftest import ApiHarness
+from conftest import ApiHarness, request_payload
+from istari_service.models import RequestStatus, ServiceRequest
+from istari_service.schemas.requests import RequestCreate
 
 
 def _event(
@@ -49,7 +49,7 @@ async def test_personal_recurrence_preserves_wall_time_and_team_privacy(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    osg = await _workspace(harness, "admin11", "OSG_TEAM")
+    ssg = await _workspace(harness, "admin11", "SSG_TEAM")
     created = await harness.client.post(
         "/api/v1/calendar/events",
         json=_event(
@@ -69,7 +69,7 @@ async def test_personal_recurrence_preserves_wall_time_and_team_privacy(
 
     await harness.login("admin8")
     shared = await harness.client.get(
-        f"/api/v1/team-workspaces/{osg['teamId']}/calendar",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/calendar",
         params={"from": "2026-03-21T00:00:00Z", "to": "2026-04-06T00:00:00Z"},
     )
     assert shared.status_code == 200
@@ -78,7 +78,7 @@ async def test_personal_recurrence_preserves_wall_time_and_team_privacy(
 
     await harness.login("admin24")
     denied = await harness.client.get(
-        f"/api/v1/team-workspaces/{osg['teamId']}/calendar",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/calendar",
         params={"from": "2026-03-21T00:00:00Z", "to": "2026-04-06T00:00:00Z"},
     )
     assert denied.status_code == 404
@@ -88,32 +88,48 @@ async def test_manager_team_events_and_subject_commitment_decisions(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    osg = await _workspace(harness, "admin8", "OSG_TEAM")
+    ssg = await _workspace(harness, "admin8", "SSG_TEAM")
     lewis_id = str(await harness.user_id("admin11"))
+    requester_id = await harness.user_id("admin2")
+    ssg_unit_id = await harness.unit_id("SSG_TEAM")
+    async with harness.sessions() as session, session.begin():
+        request = ServiceRequest(
+            reference="SR-CALENDAR-001",
+            requester_id=requester_id,
+            status=RequestStatus.IN_PROGRESS,
+            current_owner="SSG Team",
+            assigned_delivery_team="SSG Team",
+            assigned_delivery_team_id=ssg_unit_id,
+            **RequestCreate.model_validate(request_payload()).model_dump(),
+        )
+        session.add(request)
+        await session.flush()
+        request_id = str(request.id)
     commitment_start = datetime(2026, 9, 1, 9, tzinfo=UTC)
     team_event = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/calendar/events",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/calendar/events",
         json={
             **_event(
-                title="OSG service planning",
+                title="SSG service planning",
                 start=commitment_start,
                 visibility="TEAM_DETAIL",
             ),
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
         },
         headers=harness.mutation_headers(),
     )
     assert team_event.status_code == 200, team_event.text
     commitment = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/calendar/commitments",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/calendar/commitments",
         json={
             **_event(
                 title="Delivery commitment",
                 start=commitment_start,
                 visibility="TEAM_DETAIL",
             ),
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
             "subjectUserId": lewis_id,
+            "requestId": request_id,
         },
         headers=harness.mutation_headers(),
     )
@@ -140,16 +156,16 @@ async def test_manager_team_events_and_subject_commitment_decisions(
     assert repeated.status_code == 409
 
     await harness.login("admin8")
-    people = await harness.client.get(f"/api/v1/team-workspaces/{osg['teamId']}/people")
+    people = await harness.client.get(f"/api/v1/team-workspaces/{ssg['teamId']}/people")
     lewis = next(
         item
         for item in people.json()["items"]
         if item["displayName"] == "Lewis Ferguson"
     )
     blocked = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/memberships/{lewis['membershipId']}/end",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/memberships/{lewis['membershipId']}/end",
         json={
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
             "expectedVersion": lewis["version"],
             "reason": "Attempting removal while a calendar commitment remains active.",
         },
@@ -233,60 +249,60 @@ async def test_capacity_preview_commit_and_stale_snapshot(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    osg = await _workspace(harness, "admin8", "OSG_TEAM")
+    ssg = await _workspace(harness, "admin8", "SSG_TEAM")
     payload = {
-        "grantId": osg["grantId"],
+        "grantId": ssg["grantId"],
         "dateFrom": date(2026, 6, 1).isoformat(),
         "dateTo": date(2026, 6, 5).isoformat(),
         "timeZone": "Europe/London",
     }
     preview = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/capacity/previews",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/capacity/previews",
         json=payload,
         headers=harness.mutation_headers(),
     )
     assert preview.status_code == 200, preview.text
     assert len(preview.json()["days"]) == 5
     committed = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/capacity/commits",
-        json={"grantId": osg["grantId"], "token": preview.json()["token"]},
+        f"/api/v1/team-workspaces/{ssg['teamId']}/capacity/commits",
+        json={"grantId": ssg["grantId"], "token": preview.json()["token"]},
         headers=harness.mutation_headers(),
     )
     assert committed.status_code == 200, committed.text
     repeated = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/capacity/commits",
-        json={"grantId": osg["grantId"], "token": preview.json()["token"]},
+        f"/api/v1/team-workspaces/{ssg['teamId']}/capacity/commits",
+        json={"grantId": ssg["grantId"], "token": preview.json()["token"]},
         headers=harness.mutation_headers(),
     )
     assert repeated.status_code == 409
 
     stale_preview = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/capacity/previews",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/capacity/previews",
         json=payload,
         headers=harness.mutation_headers(),
     )
     await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/calendar/events",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/calendar/events",
         json={
             **_event(
                 title="Capacity changing duty",
                 start=datetime(2026, 6, 2, 8, tzinfo=UTC),
                 visibility="TEAM_DETAIL",
             ),
-            "grantId": osg["grantId"],
+            "grantId": ssg["grantId"],
         },
         headers=harness.mutation_headers(),
     )
     stale = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/capacity/commits",
-        json={"grantId": osg["grantId"], "token": stale_preview.json()["token"]},
+        f"/api/v1/team-workspaces/{ssg['teamId']}/capacity/commits",
+        json={"grantId": ssg["grantId"], "token": stale_preview.json()["token"]},
         headers=harness.mutation_headers(),
     )
     assert stale.status_code == 409
 
     await harness.login("admin11")
     denied = await harness.client.post(
-        f"/api/v1/team-workspaces/{osg['teamId']}/capacity/previews",
+        f"/api/v1/team-workspaces/{ssg['teamId']}/capacity/previews",
         json=payload,
         headers=harness.mutation_headers(),
     )

@@ -170,12 +170,12 @@ async def test_sequence_reconciles_upward_and_is_monotonic(
         assert sequence is not None
         sequence.next_value = 1
         await initialise_admin_identity_sequence(session)
-        assert sequence.next_value == 74
+        assert sequence.next_value == 100
         repository = SqlAlchemyAdminRepository(session)
-        assert await repository.next_username() == "admin74"
-        assert await repository.next_username() == "admin75"
+        assert await repository.next_username() == "admin100"
+        assert await repository.next_username() == "admin101"
         await initialise_admin_identity_sequence(session)
-        assert sequence.next_value == 76
+        assert sequence.next_value == 102
 
 
 async def test_initialisers_create_absent_rows(api_harness: ApiHarness) -> None:
@@ -242,4 +242,4 @@ async def test_command_rename_does_not_rewrite_shared_user_scope_or_session(
     harness.client.cookies.set(harness.settings.session_cookie_name, shared_cookie)
     current = await harness.client.get("/api/v1/auth/me")
     assert current.status_code == 200
-    assert current.json()["user"]["scope"] == "Shared command routing"
+    assert current.json()["user"]["scope"] == "Shared request coordination"

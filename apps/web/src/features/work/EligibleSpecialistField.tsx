@@ -27,12 +27,12 @@ export function EligibleSpecialistField({ error, options, register }: Props) {
         ? "Eligible Analysts unavailable"
         : options.items.length === 0
           ? "No eligible Analysts available"
-          : "Select an Analyst";
+          : "Select a Lead Analyst";
 
   return (
     <>
       <div className="form-field">
-        <label htmlFor={selectId}>Team Analyst</label>
+        <label htmlFor={selectId}>Lead Analyst</label>
         <select
           aria-describedby={error ? errorId : undefined}
           aria-invalid={Boolean(error)}

@@ -1,6 +1,8 @@
-"""Authenticated organisation and metadata-only tracking routes."""
+"""Authenticated organisation and route-scoped tracking routes."""
 
 from __future__ import annotations
+
+from uuid import UUID
 
 from fastapi import APIRouter, Query
 
@@ -8,6 +10,7 @@ from istari_service.dependencies import CurrentActor, DatabaseSession
 from istari_service.repositories.organisation import SqlAlchemyOrganisationRepository
 from istari_service.schemas.organisation import (
     OrganisationUnitList,
+    TrackedRequestDetail,
     TrackedRequestList,
 )
 from istari_service.services.organisation_service import OrganisationService
@@ -41,3 +44,12 @@ async def list_tracked_requests(
         items=items,
         next_cursor=next_cursor,
     )
+
+
+@router.get("/tracked-requests/{request_id}", response_model=TrackedRequestDetail)
+async def get_tracked_request_detail(
+    request_id: UUID,
+    actor: CurrentActor,
+    session: DatabaseSession,
+) -> TrackedRequestDetail:
+    return await _service(session).get_tracked_request_detail(actor, request_id)

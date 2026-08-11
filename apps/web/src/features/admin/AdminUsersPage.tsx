@@ -11,6 +11,7 @@ import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import { useAuth } from "../../lib/auth/AuthProvider";
 import { AdminUserRegister } from "./AdminUserRegister";
 import { AccountRequestRegister } from "./AccountRequestRegister";
+import { ClassificationControl } from "./ClassificationControl";
 import { StepUpPanel } from "./StepUpPanel";
 
 export function AdminUsersPage() {
@@ -38,6 +39,7 @@ export function AdminUsersPage() {
     <main className="page-stack admin-users-page">
       <header className="page-heading"><div><span>Platform administration</span><h1>User accounts</h1><p>Maintain synthetic account metadata and organisation access. Request content is not available here.</p></div><Link className="button button--primary" to="/admin/users/new"><Plus aria-hidden="true" size={16} />Create user</Link></header>
       <StepUpPanel />
+      <ClassificationControl />
       <AccountRequestRegister />
       <dl className="admin-summary" aria-label="Account summary"><div><dt>Active loaded</dt><dd>{active}</dd></div><div><dt>Inactive loaded</dt><dd>{items.length - active}</dd></div><div><dt>Total loaded</dt><dd>{items.length}</dd></div></dl>
       <section aria-labelledby="account-register-title">

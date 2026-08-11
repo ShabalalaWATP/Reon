@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted for implementation.
+Accepted for implementation. Analytical presentation amended on 10 August 2026.
 
 ## Context
 
@@ -30,6 +30,9 @@ to reproduce.
   metadata with every response.
 - Provide tabular values as the API contract. Charts are accessible renderings of
   the same rows, not separate calculations.
+- Use distribution and percentile-range graphics only for measures already in
+  the authorised response, and retain labelled legends, textual summaries and
+  table parity for interpretation without colour or motion.
 
 ## Consequences
 

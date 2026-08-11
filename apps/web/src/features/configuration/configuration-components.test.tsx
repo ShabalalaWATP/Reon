@@ -9,7 +9,7 @@ import { ConfigurationBreadcrumbs } from "./ConfigurationBreadcrumbs";
 import { ConfigurationTree } from "./ConfigurationTree";
 import { ConfigurationUnitForm } from "./ConfigurationUnitForm";
 import { WorkflowTemplateForm } from "./WorkflowTemplateForm";
-import { commaSeparatedNumbers, configurationPath, configurationRows, currentCoreRequestFields, draftFrom, filterConfigurationRows, lines, localDateTimeValue, unitState, validParentUnits } from "./configurationModel";
+import { commaSeparatedNumbers, configurationPath, configurationRows, draftFrom, filterConfigurationRows, lines, localDateTimeValue, unitState, validParentUnits } from "./configurationModel";
 
 describe("configuration draft editors", () => {
   it("creates a team with bounded staffing and a stable parent edge", async () => {
@@ -254,7 +254,27 @@ describe("configuration presentation model", () => {
     };
 
     expect(draftFrom(historical).workflowTemplate.coreFields).toEqual(
-      currentCoreRequestFields,
+      [
+        "title",
+        "service_category",
+        "description",
+        "question_to_answer",
+        "desired_outcome",
+        "background_context",
+        "subject_area_or_location",
+        "coverage_start",
+        "coverage_end",
+        "customer_urgency",
+        "supported_activity_or_decision",
+        "required_by",
+        "required_by_reason",
+        "preferred_deliverable_type",
+        "success_criteria",
+        "constraints_or_caveats",
+        "supporting_information",
+        "sensitivity",
+        "handling_instructions",
+      ],
     );
   });
 

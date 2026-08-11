@@ -22,10 +22,15 @@ from istari_service.management_models import (
     ManagementAction,
     ManagementGrant,
     ManagementGrantAction,
+    OrganisationClosure,
 )
 from istari_service.models import User, UserRole
 from istari_service.organisation_models import OrganisationKind, OrganisationUnit
-from istari_service.schemas.statistics import StatisticsScope
+from istari_service.schemas.statistics import StatisticsScope, StatisticsUnit
+from istari_service.statistics_hierarchy import (
+    selected_statistics_unit,
+    statistics_breadcrumb,
+)
 
 MAX_FACT_ROWS = 50_000
 STATEMENT_TIMEOUT_MS = 2_000
@@ -35,6 +40,8 @@ PLATFORM_SCOPE_ID = "platform"
 @dataclass(frozen=True, slots=True)
 class StatisticsDataset:
     scope: StatisticsScope
+    selected_unit: StatisticsUnit
+    breadcrumb: tuple[StatisticsUnit, ...]
     facts: tuple[RequestAnalyticsFact, ...]
     intervals: tuple[RequestStageInterval, ...]
     children: tuple[OrganisationUnit, ...]
@@ -54,7 +61,7 @@ class SqlAlchemyStatisticsRepository:
         effective_at = at or datetime.now(UTC)
         if actor.role is UserRole.PLATFORM_ADMIN:
             root = await self._root_unit()
-            return [self._platform_scope(root)]
+            return [await self._platform_scope(root)]
         rows = (
             await self._session.execute(
                 self._active_scope_query(actor.id, effective_at).order_by(
@@ -63,13 +70,14 @@ class SqlAlchemyStatisticsRepository:
                 )
             )
         ).all()
-        return [self._grant_scope(grant, unit) for grant, unit in rows]
+        return [await self._grant_scope(grant, unit) for grant, unit in rows]
 
     async def load_dataset(
         self,
         actor: Actor,
         *,
         scope_id: str,
+        selected_unit_id: UUID | None,
         start: datetime,
         end: datetime,
         at: datetime | None = None,
@@ -78,6 +86,7 @@ class SqlAlchemyStatisticsRepository:
         scope, unit = await self._resolve_scope(
             actor,
             scope_id=scope_id,
+            selected_unit_id=selected_unit_id,
             at=at or datetime.now(UTC),
         )
         unit_column = self._unit_column(unit.kind)
@@ -125,13 +134,24 @@ class SqlAlchemyStatisticsRepository:
             AnalyticsProjectionState,
             PROJECTION_NAME,
         )
-        return StatisticsDataset(scope, facts, intervals, children, freshness)
+        selected = selected_statistics_unit(scope, unit.id)
+        breadcrumb = statistics_breadcrumb(scope, selected)
+        return StatisticsDataset(
+            scope,
+            selected,
+            breadcrumb,
+            facts,
+            intervals,
+            children,
+            freshness,
+        )
 
     async def authorised_scope(
         self,
         actor: Actor,
         *,
         scope_id: str,
+        selected_unit_id: UUID | None = None,
         at: datetime | None = None,
     ) -> tuple[StatisticsScope, OrganisationUnit]:
         """Resolve the same active scope used by screen and export queries."""
@@ -140,6 +160,7 @@ class SqlAlchemyStatisticsRepository:
         return await self._resolve_scope(
             actor,
             scope_id=scope_id,
+            selected_unit_id=selected_unit_id,
             at=at or datetime.now(UTC),
         )
 
@@ -148,13 +169,15 @@ class SqlAlchemyStatisticsRepository:
         actor: Actor,
         *,
         scope_id: str,
+        selected_unit_id: UUID | None,
         at: datetime,
     ) -> tuple[StatisticsScope, OrganisationUnit]:
         if scope_id == PLATFORM_SCOPE_ID:
             if actor.role is not UserRole.PLATFORM_ADMIN:
                 raise ObjectNotFound()
             root = await self._root_unit()
-            return self._platform_scope(root), root
+            scope = await self._platform_scope(root)
+            return scope, await self._select_unit(scope, root, selected_unit_id)
         try:
             grant_id = UUID(scope_id)
         except ValueError as error:
@@ -169,7 +192,8 @@ class SqlAlchemyStatisticsRepository:
         if row is None:
             raise ObjectNotFound()
         grant, unit = row
-        return self._grant_scope(grant, unit), unit
+        scope = await self._grant_scope(grant, unit)
+        return scope, await self._select_unit(scope, unit, selected_unit_id)
 
     @staticmethod
     def _active_scope_query(
@@ -236,18 +260,18 @@ class SqlAlchemyStatisticsRepository:
                 )
             )
 
-    @staticmethod
-    def _platform_scope(root: OrganisationUnit) -> StatisticsScope:
+    async def _platform_scope(self, root: OrganisationUnit) -> StatisticsScope:
         return StatisticsScope(
             id=PLATFORM_SCOPE_ID,
             unit_id=root.id,
             name="Whole platform",
             kind="PLATFORM",
             include_descendants=True,
+            units=await self._scope_units(root, include_descendants=True),
         )
 
-    @staticmethod
-    def _grant_scope(
+    async def _grant_scope(
+        self,
         grant: ManagementGrant,
         unit: OrganisationUnit,
     ) -> StatisticsScope:
@@ -257,4 +281,57 @@ class SqlAlchemyStatisticsRepository:
             name=unit.name,
             kind=unit.kind,
             include_descendants=grant.include_descendants,
+            units=await self._scope_units(
+                unit,
+                include_descendants=grant.include_descendants,
+            ),
         )
+
+    async def _scope_units(
+        self,
+        root: OrganisationUnit,
+        *,
+        include_descendants: bool,
+    ) -> list[StatisticsUnit]:
+        query = (
+            select(OrganisationUnit, OrganisationClosure.depth)
+            .join(
+                OrganisationClosure,
+                OrganisationClosure.descendant_id == OrganisationUnit.id,
+            )
+            .where(
+                OrganisationClosure.ancestor_id == root.id,
+                OrganisationUnit.is_configured.is_(True),
+            )
+            .order_by(
+                OrganisationClosure.depth,
+                OrganisationUnit.sort_order,
+                OrganisationUnit.id,
+            )
+        )
+        if not include_descendants:
+            query = query.where(OrganisationClosure.depth == 0)
+        return [
+            StatisticsUnit(
+                id=unit.id,
+                parent_id=unit.parent_id,
+                name=unit.name,
+                kind=unit.kind,
+                depth=depth,
+            )
+            for unit, depth in (await self._session.execute(query)).all()
+        ]
+
+    async def _select_unit(
+        self,
+        scope: StatisticsScope,
+        root: OrganisationUnit,
+        selected_unit_id: UUID | None,
+    ) -> OrganisationUnit:
+        target_id = selected_unit_id or root.id
+        if not any(unit.id == target_id for unit in scope.units):
+            raise ObjectNotFound()
+        selected = await self._session.get(OrganisationUnit, target_id)
+        if selected is None or not selected.is_configured:
+            raise ObjectNotFound()
+        return selected

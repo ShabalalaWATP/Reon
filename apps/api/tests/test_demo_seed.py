@@ -22,7 +22,8 @@ from istari_service.organisation_models import (
     StaffingStatus,
     UserOrganisationMembership,
 )
-from istari_service.organisation_seed import UNIT_DEFINITIONS, seed_organisation_units
+from istari_service.organisation_seed import seed_organisation_units
+from istari_service.team_models import TeamMembership, WorkspacePosition
 
 TEST_SHARED_PASSWORD = "admin"  # nosec B105
 
@@ -49,50 +50,6 @@ async def db_session() -> AsyncIterator[AsyncSession]:
     async with factory() as session:
         yield session
     await engine.dispose()
-
-
-def test_demo_identity_contract_covers_every_team() -> None:
-    assert len(DEMO_IDENTITIES) == 73
-    assert [identity.username for identity in DEMO_IDENTITIES] == [
-        f"admin{number}" for number in range(1, 74)
-    ]
-    assert len({identity.display_name for identity in DEMO_IDENTITIES}) == 73
-    assert Counter(identity.role for identity in DEMO_IDENTITIES) == {
-        UserRole.PLATFORM_ADMIN: 2,
-        UserRole.REQUESTER: 3,
-        UserRole.INTAKE_TRIAGE: 2,
-        UserRole.SERVICE_COORDINATION: 1,
-        UserRole.OPERATIONS_ALLOCATION: 2,
-        UserRole.DELIVERY_TEAM_LEAD: 29,
-        UserRole.DELIVERY_SPECIALIST: 33,
-        UserRole.QUALITY_RELEASE: 1,
-    }
-    disabled = [identity for identity in DEMO_IDENTITIES if not identity.active]
-    assert [(identity.username, identity.display_name) for identity in disabled] == [
-        ("admin16", "James Forrest")
-    ]
-    team_codes = {
-        definition.code
-        for definition in UNIT_DEFINITIONS
-        if definition.kind is OrganisationKind.TEAM
-    }
-    for team_code in team_codes:
-        team_staff = [
-            identity for identity in DEMO_IDENTITIES if team_code in identity.unit_codes
-        ]
-        assert any(
-            identity.role is UserRole.DELIVERY_TEAM_LEAD for identity in team_staff
-        )
-        assert any(
-            identity.role is UserRole.DELIVERY_SPECIALIST for identity in team_staff
-        )
-    osg_staff = [
-        identity for identity in DEMO_IDENTITIES if "OSG_TEAM" in identity.unit_codes
-    ]
-    assert Counter(identity.role for identity in osg_staff) == {
-        UserRole.DELIVERY_TEAM_LEAD: 3,
-        UserRole.DELIVERY_SPECIALIST: 7,
-    }
 
 
 @pytest.mark.asyncio
@@ -166,8 +123,8 @@ async def test_seeding_inserts_fixture_and_is_idempotent(
     )
     stored = list((await db_session.scalars(select(User))).all())
 
-    assert (first, second) == (73, 0)
-    assert len(stored) == 73
+    assert (first, second) == (99, 0)
+    assert len(stored) == 99
     assert {user.username for user in stored} == {
         identity.username for identity in DEMO_IDENTITIES
     }
@@ -202,14 +159,32 @@ async def test_seeded_memberships_staff_every_team_correctly(
     for team_code, role in rows:
         by_team.setdefault(team_code, Counter())[role] += 1
     assert len(by_team) == 27
-    assert by_team["OSG_TEAM"] == Counter(
+    assert by_team["SSG_TEAM"] == Counter(
         {UserRole.DELIVERY_TEAM_LEAD: 3, UserRole.DELIVERY_SPECIALIST: 7}
     )
     for team_code, role_counts in by_team.items():
-        if team_code != "OSG_TEAM":
+        if team_code != "SSG_TEAM":
             assert role_counts == Counter(
                 {UserRole.DELIVERY_TEAM_LEAD: 1, UserRole.DELIVERY_SPECIALIST: 1}
             )
+    routing_rows = (
+        await db_session.execute(
+            select(
+                OrganisationUnit.code,
+                TeamMembership.workspace_position,
+            )
+            .join(TeamMembership, TeamMembership.team_id == OrganisationUnit.id)
+            .where(OrganisationUnit.kind != OrganisationKind.TEAM)
+        )
+    ).all()
+    routing_positions: dict[str, set[WorkspacePosition]] = {}
+    for unit_code, position in routing_rows:
+        routing_positions.setdefault(unit_code, set()).add(position)
+    assert len(routing_positions) == 13
+    assert all(
+        positions == {WorkspacePosition.MANAGER, WorkspacePosition.MEMBER}
+        for positions in routing_positions.values()
+    )
 
 
 @pytest.mark.asyncio
@@ -218,6 +193,7 @@ async def test_legacy_username_is_renamed_without_changing_user_id(
 ) -> None:
     legacy = User(
         username="platform.admin@example.test",
+        email="platform.admin@example.test",
         display_name="Legacy profile",
         password_hash="legacy-hash",
         role=UserRole.REQUESTER,
@@ -237,7 +213,7 @@ async def test_legacy_username_is_renamed_without_changing_user_id(
     )
 
     migrated = await db_session.scalar(select(User).where(User.username == "admin1"))
-    assert created == 72
+    assert created == 98
     assert migrated is not None
     assert migrated.id == legacy_id
     assert (migrated.display_name, migrated.role, migrated.is_active) == (

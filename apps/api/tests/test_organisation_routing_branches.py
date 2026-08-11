@@ -47,7 +47,6 @@ def _payload(status: RequestStatus, destination_id: UUID) -> CompletionPayload:
     if status is RequestStatus.TRIAGE_REVIEW:
         return ProgressRequest(
             action="progress",
-            category="Research",
             priority="HIGH",
             destination_unit_id=destination_id,
         )
@@ -201,7 +200,7 @@ async def test_apply_routing_selection_replaces_downstream_state(position: int) 
 
     await apply_routing_selection(session, request, routing)
 
-    session.execute.assert_awaited_once()
+    assert session.execute.await_count == 2
     added = session.add.call_args.args[0]
     assert isinstance(added, RequestRouteSelection)
     assert (added.request_id, added.unit_id, added.position) == (
@@ -245,7 +244,7 @@ async def test_clear_route_only_clears_state_at_or_after_position(
 
     await clear_route_from(session, request, position)
 
-    session.execute.assert_awaited_once()
+    assert session.execute.await_count == (2 if position <= 3 else 1)
     assert (request.command_group is None) is cleared[0]
     assert (request.ops_group is None) is cleared[1]
     assert (request.assigned_delivery_team is None) is cleared[2]

@@ -10,6 +10,7 @@ def make_user(role: UserRole, *, scope: str = "Area A") -> User:
     suffix = uuid4().hex
     return User(
         username=f"user.{suffix}@example.test",
+        email=f"user.{suffix}@example.test",
         display_name=f"Synthetic {role.value.title()}",
         password_hash="$argon2id$synthetic",
         role=role,

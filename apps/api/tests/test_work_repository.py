@@ -66,6 +66,7 @@ def make_user(role: UserRole, scope: str = "Shared queue") -> User:
     suffix = uuid4().hex
     return User(
         username=f"user.{suffix}@example.test",
+        email=f"user.{suffix}@example.test",
         display_name=f"Synthetic {role.value.title()}",
         password_hash="$argon2id$synthetic",
         role=role,
@@ -128,7 +129,7 @@ async def seed_work(
         session.add(worker)
     await session.flush()
     request = make_request(requester.id, status)
-    delivery_team_id = organisation_id("OSG_TEAM")
+    delivery_team_id = organisation_id("SSG_TEAM")
     if role is UserRole.DELIVERY_TEAM_LEAD:
         request.assigned_delivery_team = worker.scope
         request.assigned_delivery_team_id = delivery_team_id
@@ -138,7 +139,7 @@ async def seed_work(
         request.assigned_specialist_id = worker.id
     session.add(request)
     await session.flush()
-    route_codes = ["JIOC", "DIGOC", "NCGI_A_OPS", "OSG_TEAM"]
+    route_codes = ["CRIOC", "JOCK", "ACSA_B_OPS", "SSG_TEAM"]
     session.add_all(
         [
             RequestRouteSelection(
@@ -221,7 +222,7 @@ async def test_queue_get_claim_and_specialist_lookup(
         )
         completed.status = WorkflowTaskStatus.COMPLETED
         repository = SqlAlchemyWorkRepository(session)
-        actor = actor_from(worker, organisation_id("JIOC"))
+        actor = actor_from(worker, organisation_id("CRIOC"))
         bundles = await repository.list_for_actor(actor)
         assert [bundle.record.id for bundle in bundles] == [task.id]
         assert await repository.get(uuid4()) is None
@@ -275,10 +276,9 @@ async def test_apply_completion_projects_next_and_terminal_stages(
         )
         detail = await repository.apply_completion(
             bundle.record,
-            actor_from(worker, organisation_id("JIOC")),
+            actor_from(worker, organisation_id("CRIOC")),
             ProgressRequest(
                 action="progress",
-                category="Research",
                 priority="MEDIUM",
                 destination_unit_id=uuid4(),
             ),
@@ -295,10 +295,9 @@ async def test_apply_completion_projects_next_and_terminal_stages(
         with pytest.raises(InvalidAction):
             await repository.apply_completion(
                 bundle.record,
-                actor_from(worker, organisation_id("JIOC")),
+                actor_from(worker, organisation_id("CRIOC")),
                 ProgressRequest(
                     action="progress",
-                    category="Research",
                     priority="LOW",
                     destination_unit_id=uuid4(),
                 ),

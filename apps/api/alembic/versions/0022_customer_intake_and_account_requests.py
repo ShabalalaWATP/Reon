@@ -24,6 +24,8 @@ _NEW_FIELDS = (
     ("constraints_or_caveats", sa.Text()),
     ("supporting_information", sa.Text()),
 )
+
+
 def upgrade() -> None:
     for table in ("service_requests", "request_drafts"):
         with op.batch_alter_table(table) as batch:
@@ -114,6 +116,8 @@ def upgrade() -> None:
     op.create_index(
         op.f("ix_account_requests_status"), "account_requests", ["status"], unique=False
     )
+
+
 def downgrade() -> None:
     op.drop_index(op.f("ix_account_requests_status"), table_name="account_requests")
     op.drop_index(

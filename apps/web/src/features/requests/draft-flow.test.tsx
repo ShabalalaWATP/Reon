@@ -10,7 +10,6 @@ const fullDraft: RequestDraft = {
   id: "draft-1",
   requesterId: requesterSession.user.id,
   title: requestDetail.title,
-  serviceCategory: requestDetail.serviceCategory,
   description: requestDetail.description,
   questionToAnswer: requestDetail.questionToAnswer,
   desiredOutcome: requestDetail.desiredOutcome,
