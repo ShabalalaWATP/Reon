@@ -2,8 +2,8 @@
 
 ## 12 August 2026: calmer assigned-actions view
 
-- Collapsed the My assigned actions filter and visible-column controls by
-  default, while keeping saved views and the authorised action register visible.
+- Collapsed the complete My assigned actions saved-view, filter and visible-column
+  control panel by default, while keeping the authorised action register visible.
 - Added focused accessibility coverage for the disclosure's initial and expanded
   states without changing any action-query or authorisation boundary.
 

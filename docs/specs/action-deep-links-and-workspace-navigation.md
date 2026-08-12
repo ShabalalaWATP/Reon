@@ -61,8 +61,8 @@ inbox, routing decisions and unit collaboration.
 10. Staff navigation uses **My assigned actions**, a purpose-specific routing or
     delivery queue label and the configured organisation name followed by
     **workspace**.
-11. The action filter and visible-column controls are collapsed by default, while
-    saved views and the action register remain immediately available.
+11. Saved-view, action-filter and visible-column controls are collapsed together
+    by default, while the action register remains immediately available.
 
 ## Security requirements
 
