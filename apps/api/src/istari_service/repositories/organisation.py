@@ -22,17 +22,14 @@ from istari_service.organisation_models import (
 from istari_service.repositories.configuration_policies import (
     load_request_configuration_policy,
 )
-from istari_service.repositories.organisation_tracking import (
-    tracked_request_detail,
-    tracked_requests,
+from istari_service.repositories.organisation_tracking_repository import (
+    OrganisationTrackingRepositoryMixin,
 )
 from istari_service.repositories.routing_options import routing_workspace
 from istari_service.request_participant_models import RequestParticipant
 from istari_service.schemas.organisation import (
     OrganisationUnitView,
     RoutingOptionsWorkspace,
-    TrackedRequest,
-    TrackedRequestDetail,
 )
 from istari_service.schemas.work import (
     AllocateRequest,
@@ -60,7 +57,7 @@ class RoutingSpec:
     destination_id: UUID
 
 
-class SqlAlchemyOrganisationRepository:
+class SqlAlchemyOrganisationRepository(OrganisationTrackingRepositoryMixin):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -87,31 +84,6 @@ class SqlAlchemyOrganisationRepository:
         status: RequestStatus,
     ) -> RoutingOptionsWorkspace:
         return await routing_workspace(self._session, request_id, status)
-
-    async def page_tracked_requests(
-        self,
-        actor: Actor,
-        *,
-        limit: int = 50,
-        cursor: str | None = None,
-    ) -> tuple[list[TrackedRequest], str | None]:
-        membership = route_membership_condition(actor)
-        if membership is None:
-            return [], None
-        return await tracked_requests(
-            self._session, membership, limit=limit, cursor=cursor
-        )
-
-    async def get_tracked_request_detail(
-        self,
-        actor: Actor,
-        request_id: UUID,
-    ) -> TrackedRequestDetail | None:
-        membership = route_membership_condition(actor)
-        if membership is None:
-            return None
-        return await tracked_request_detail(self._session, membership, request_id)
-
 
 async def resolve_routing_selection(
     session: AsyncSession,

@@ -54,6 +54,17 @@ class TrackedRequest(ApiModel):
     updated_at: datetime
     route: list[TrackedRouteUnit]
     awaiting_team_staffing: bool
+    age_days: int
+
+
+class TrackedRequestEvent(ApiModel):
+    id: UUID
+    type: str
+    message: str
+    actor_display_name: str | None
+    prior_status: RequestStatus | None
+    next_status: RequestStatus | None
+    created_at: datetime
 
 
 class TrackedRequestDetail(TrackedRequest):
@@ -74,6 +85,8 @@ class TrackedRequestDetail(TrackedRequest):
     supporting_information: str
     sensitivity: Sensitivity
     handling_instructions: str
+    events: list[TrackedRequestEvent]
+    events_next_cursor: str | None = None
 
 
 class TrackedRequestList(ApiModel):

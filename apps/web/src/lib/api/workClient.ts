@@ -1,5 +1,6 @@
 import type {
   EligibleSpecialist,
+  CoordinationResult,
   ListResponse,
   OrganisationUnit,
   RelatedRecordSearchResult,
@@ -9,6 +10,7 @@ import type {
   RoutingOptionsWorkspace,
   TrackedRequest,
   TrackedRequestDetail,
+  TrackedRequestFilters,
   WorkAction,
   WorkItem,
 } from "./types";
@@ -22,10 +24,36 @@ export const workApi = {
     })),
   organisationUnits: () =>
     apiRequest<ListResponse<OrganisationUnit>>("/organisation/units"),
-  trackedRequests: (cursor?: string) =>
-    apiRequest<ListResponse<TrackedRequest>>(pagedPath("/tracked-requests", cursor)),
-  trackedRequest: (requestId: string) =>
-    apiRequest<TrackedRequestDetail>(`/tracked-requests/${encodeURIComponent(requestId)}`),
+  trackedRequests: (cursor?: string, filters?: TrackedRequestFilters) =>
+    apiRequest<ListResponse<TrackedRequest>>(pagedPath("/tracked-requests", cursor, {
+      ...(filters?.search ? { search: filters.search } : {}),
+      ...(filters?.status ? { status: filters.status } : {}),
+      ...(filters?.currentOwner ? { currentOwner: filters.currentOwner } : {}),
+      ...(filters?.routeUnitId ? { routeUnitId: filters.routeUnitId } : {}),
+      ...(filters?.minimumAgeDays ? { minimumAgeDays: filters.minimumAgeDays } : {}),
+    })),
+  trackedRequest: (requestId: string, eventCursor?: string) =>
+    apiRequest<TrackedRequestDetail>(pagedPath(
+      `/tracked-requests/${encodeURIComponent(requestId)}`,
+      undefined,
+      eventCursor ? { eventCursor } : {},
+    )),
+  postRequestCoordination: (
+    requestId: string,
+    input: { audience: "CUSTOMER" | "CURRENT_OWNER"; body: string },
+    csrfToken: string,
+  ) => apiRequest<CoordinationResult>(
+    `/requests/${encodeURIComponent(requestId)}/coordination`,
+    { body: input, csrfToken, method: "POST" },
+  ),
+  requestOwnershipReturn: (
+    requestId: string,
+    input: { targetUnitId: string; reason: string },
+    csrfToken: string,
+  ) => apiRequest<CoordinationResult>(
+    `/requests/${encodeURIComponent(requestId)}/return-requests`,
+    { body: input, csrfToken, method: "POST" },
+  ),
   routingOptions: (workItemId: string) =>
     apiRequest<RoutingOptionsWorkspace>(`/work-items/${encodeURIComponent(workItemId)}/routing-options`),
   eligibleSpecialists: (workItemId: string) =>

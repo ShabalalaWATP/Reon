@@ -36,7 +36,28 @@ export type TrackedRequest = {
   updatedAt: string;
   route: TrackedRequestRouteUnit[];
   awaitingTeamStaffing: boolean;
+  ageDays: number;
 };
+
+export type TrackedRequestFilters = {
+  search: string;
+  status: RequestStatus | "";
+  currentOwner: string;
+  routeUnitId: string;
+  minimumAgeDays: string;
+};
+
+export type TrackedRequestEvent = {
+  id: string;
+  type: string;
+  message: string;
+  actorDisplayName: string | null;
+  priorStatus: RequestStatus | null;
+  nextStatus: RequestStatus | null;
+  createdAt: string;
+};
+
+export type CoordinationResult = { event: TrackedRequestEvent };
 
 export type TrackedRequestDetail = TrackedRequest & Pick<
   RequestDetail,
@@ -56,4 +77,8 @@ export type TrackedRequestDetail = TrackedRequest & Pick<
   | "supportingInformation"
   | "sensitivity"
   | "handlingInstructions"
-> & { requesterDisplayName: string };
+> & {
+  requesterDisplayName: string;
+  events: TrackedRequestEvent[];
+  eventsNextCursor?: string | null;
+};

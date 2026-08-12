@@ -5,6 +5,7 @@ import { elapsedTime } from "../../lib/serviceTiming";
 import { formatDate, statusLabels } from "../../lib/status";
 import { StaffProductAction } from "../products/StaffProductAction";
 import { RequestOverview } from "../requests/RequestOverview";
+import { RequestMessageForm } from "../requests/RequestMessageForm";
 import type { SpecialistOptions } from "./EligibleSpecialistField";
 import { RelatedRecordPanel } from "./RelatedRecordPanel";
 import type { RoutingOptions } from "./RoutingDestinationField";
@@ -69,6 +70,7 @@ export function WorkQueueDetail({
               session={session}
             />
             <div className="queue-detail__decision">
+              {detail ? <RequestMessageForm audience="CUSTOMER" requestId={item.requestId} /> : null}
               {canLoadDetail ? <StaffProductAction requestId={item.requestId} requestVersion={item.requestVersion} stage={item.stage} /> : null}
               {detail && item.stage === "TRIAGE_REVIEW" ? (
                 <RelatedRecordPanel csrfToken={session.csrfToken} userId={session.user.id} workItemId={item.id} />

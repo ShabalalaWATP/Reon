@@ -1,5 +1,6 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { ArrowUpRight } from "lucide-react";
+import { useState } from "react";
 import { Link } from "react-router";
 
 import { LoadMoreButton } from "../../components/LoadMoreButton";
@@ -8,21 +9,32 @@ import { StatusPill } from "../../components/StatusPill";
 import { api } from "../../lib/api/client";
 import { flattenUniquePages } from "../../lib/api/pagination";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
-import type { TrackedRequest } from "../../lib/api/types";
+import type { TrackedRequest, TrackedRequestFilters } from "../../lib/api/types";
 import { useAuth } from "../../lib/auth/AuthProvider";
 import { formatDate, trackingStatusLabel } from "../../lib/status";
 import { TrackingJourney } from "./TrackingJourney";
+import { TrackingFilters } from "./TrackingFilters";
+
+const emptyFilters: TrackedRequestFilters = { search: "", status: "", currentOwner: "", routeUnitId: "", minimumAgeDays: "" };
 
 export function TrackingPage() {
   const { session } = useAuth();
   const userId = session?.user.id ?? "anonymous";
+  const [filters, setFilters] = useState(emptyFilters);
+  const [draftFilters, setDraftFilters] = useState(emptyFilters);
+  const filterKey = JSON.stringify(filters);
   const query = useInfiniteQuery({
-    queryKey: protectedQueryKeys.trackedRequests(userId),
-    queryFn: ({ pageParam }) => api.trackedRequests(pageParam ?? undefined),
+    queryKey: protectedQueryKeys.trackedRequests(userId, filterKey),
+    queryFn: ({ pageParam }) => api.trackedRequests(pageParam ?? undefined, filters),
     initialPageParam: null as string | null,
     getNextPageParam: (page) => page.nextCursor ?? undefined,
     enabled: Boolean(session),
     refetchInterval: 30_000,
+  });
+  const units = useQuery({
+    queryKey: protectedQueryKeys.organisationUnits(userId),
+    queryFn: api.organisationUnits,
+    enabled: Boolean(session),
   });
 
   if (query.isPending) {
@@ -57,6 +69,7 @@ export function TrackingPage() {
           </p>
         </div>
       </header>
+      <TrackingFilters applied={filters} draft={draftFilters} onApply={() => setFilters({ ...draftFilters, search: draftFilters.search.trim(), currentOwner: draftFilters.currentOwner.trim() })} onChange={setDraftFilters} onClear={() => { setDraftFilters(emptyFilters); setFilters(emptyFilters); }} units={units.data?.items ?? []} />
       {requests.length === 0 ? (
         <PageState kind="empty" title="No requests to track">
           Submitted requests will appear here as they enter CRIOC routing.
@@ -92,6 +105,7 @@ function TrackedRequestRow({ request }: { request: TrackedRequest }) {
         <div><dt>Current owner</dt><dd>{request.currentOwner ?? "Awaiting routing"}</dd></div>
         <div><dt>Required by</dt><dd>{formatDate(request.requiredBy)}</dd></div>
         <div><dt>Submitted</dt><dd>{formatDate(request.createdAt)}</dd></div>
+        <div><dt>Age</dt><dd>{request.ageDays} day{request.ageDays === 1 ? "" : "s"}</dd></div>
       </dl>
       <TrackingJourney request={request} />
       {request.awaitingTeamStaffing ? (

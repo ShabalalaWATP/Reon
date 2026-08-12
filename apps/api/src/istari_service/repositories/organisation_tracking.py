@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, and_, or_, select
+from sqlalchemy import ColumnElement, and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from istari_service.models import ServiceRequest
+from istari_service.models import RequestEvent, RequestStatus, ServiceRequest
 from istari_service.organisation_models import OrganisationUnit, RequestRouteSelection
 from istari_service.repositories.configuration_policies import (
     load_request_configuration_policies,
@@ -21,6 +22,7 @@ from istari_service.repositories.projection_pagination import (
 from istari_service.schemas.organisation import (
     TrackedRequest,
     TrackedRequestDetail,
+    TrackedRequestEvent,
     TrackedRouteUnit,
 )
 from istari_service.schemas.requests import Sensitivity
@@ -32,6 +34,11 @@ async def tracked_requests(
     *,
     limit: int,
     cursor: str | None,
+    search: str | None = None,
+    statuses: tuple[RequestStatus, ...] = (),
+    current_owner: str | None = None,
+    route_unit_id: UUID | None = None,
+    minimum_age_days: int | None = None,
 ) -> tuple[list[TrackedRequest], str | None]:
     statement = select(
         ServiceRequest.id,
@@ -44,6 +51,31 @@ async def tracked_requests(
         ServiceRequest.updated_at,
         ServiceRequest.awaiting_team_staffing,
     ).where(membership)
+    if search:
+        term = f"%{search.casefold()}%"
+        statement = statement.where(
+            or_(
+                func.lower(ServiceRequest.reference).like(term),
+                func.lower(ServiceRequest.title).like(term),
+            )
+        )
+    if statuses:
+        statement = statement.where(ServiceRequest.status.in_(statuses))
+    if current_owner:
+        statement = statement.where(
+            func.lower(ServiceRequest.current_owner).like(
+                f"%{current_owner.casefold()}%"
+            )
+        )
+    if route_unit_id:
+        statement = statement.where(
+            exists_route_selection(route_unit_id)
+        )
+    if minimum_age_days is not None:
+        statement = statement.where(
+            ServiceRequest.created_at
+            <= datetime.now(UTC) - timedelta(days=minimum_age_days)
+        )
     if cursor is not None:
         changed_at, request_id = decode_cursor(
             cursor, message="The tracking filters are invalid."
@@ -82,6 +114,7 @@ async def tracked_requests(
             updated_at=row.updated_at,
             route=routes[row.id],
             awaiting_team_staffing=row.awaiting_team_staffing,
+            age_days=_age_days(row.created_at),
         )
         for row in request_rows
     ]
@@ -97,6 +130,9 @@ async def tracked_request_detail(
     session: AsyncSession,
     membership: ColumnElement[bool],
     request_id: UUID,
+    *,
+    event_limit: int = 50,
+    event_cursor: str | None = None,
 ) -> TrackedRequestDetail | None:
     request = await session.scalar(
         select(ServiceRequest)
@@ -106,6 +142,33 @@ async def tracked_request_detail(
     if request is None:
         return None
     route = (await _tracked_routes(session, {request.id}))[request.id]
+    event_statement = (
+        select(RequestEvent)
+        .options(selectinload(RequestEvent.actor))
+        .where(RequestEvent.request_id == request.id)
+    )
+    if event_cursor is not None:
+        changed_at, event_id = decode_cursor(
+            event_cursor, message="The tracking history filters are invalid."
+        )
+        event_statement = event_statement.where(
+            or_(
+                RequestEvent.created_at < changed_at,
+                and_(
+                    RequestEvent.created_at == changed_at,
+                    RequestEvent.id < event_id,
+                ),
+            )
+        )
+    event_rows = list(
+        await session.scalars(
+            event_statement.order_by(
+                RequestEvent.created_at.desc(), RequestEvent.id.desc()
+            ).limit(event_limit + 1)
+        )
+    )
+    has_more_events = len(event_rows) > event_limit
+    event_page = event_rows[:event_limit]
     return TrackedRequestDetail(
         id=request.id,
         reference=request.reference,
@@ -117,6 +180,7 @@ async def tracked_request_detail(
         updated_at=request.updated_at,
         route=route,
         awaiting_team_staffing=request.awaiting_team_staffing,
+        age_days=_age_days(request.created_at),
         requester_display_name=request.requester.display_name,
         description=request.description,
         question_to_answer=request.question_to_answer,
@@ -134,7 +198,38 @@ async def tracked_request_detail(
         supporting_information=request.supporting_information,
         sensitivity=Sensitivity(request.sensitivity),
         handling_instructions=request.handling_instructions,
+        events=[
+            TrackedRequestEvent(
+                id=event.id,
+                type=event.type,
+                message=event.message,
+                actor_display_name=(
+                    event.actor.display_name if event.actor else None
+                ),
+                prior_status=event.prior_status,
+                next_status=event.next_status,
+                created_at=event.created_at,
+            )
+            for event in reversed(event_page)
+        ],
+        events_next_cursor=(
+            encode_cursor(event_page[-1].created_at, event_page[-1].id)
+            if has_more_events and event_page
+            else None
+        ),
     )
+
+
+def exists_route_selection(unit_id: UUID) -> ColumnElement[bool]:
+    return select(RequestRouteSelection.id).where(
+        RequestRouteSelection.request_id == ServiceRequest.id,
+        RequestRouteSelection.unit_id == unit_id,
+    ).exists()
+
+
+def _age_days(created_at: datetime) -> int:
+    aware = created_at if created_at.tzinfo else created_at.replace(tzinfo=UTC)
+    return max((datetime.now(UTC) - aware).days, 0)
 
 
 async def _tracked_routes(

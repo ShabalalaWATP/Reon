@@ -155,4 +155,5 @@ export const trackedRequest: TrackedRequest = {
     organisationUnit("CEDAR_TEAM"),
   ].map(({ id, kind, name }) => ({ id, kind, name })),
   awaitingTeamStaffing: false,
+  ageDays: 6,
 };

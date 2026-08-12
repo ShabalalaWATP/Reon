@@ -15,6 +15,7 @@ import { RequestActivity } from "./RequestActivity";
 import { RequestCancellation } from "./RequestCancellation";
 import { RequesterAction } from "./RequesterAction";
 import { RequestOverview } from "./RequestOverview";
+import { RequestMessageForm } from "./RequestMessageForm";
 import { requestDetailPollInterval } from "./requestPolling";
 import { CustomerProductPanel } from "../products/CustomerProductPanel";
 
@@ -64,6 +65,7 @@ export function RequestDetailPage() {
       <div className="detail-layout">
         <RequestOverview request={request} />
         <aside aria-label="Activity, released product and feedback" className="detail-aside">
+          <RequestMessageForm audience="CURRENT_OWNER" requestId={request.id} />
           <RequestActivity
             initialCursor={request.eventsNextCursor}
             initialEvents={request.events}

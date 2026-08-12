@@ -217,12 +217,19 @@ async def test_organisation_service_hides_tracking_from_non_routing_roles() -> N
     )
     assert await service.page_tracked_requests(triage_user) == ([], None)
     repository.page_tracked_requests.assert_awaited_once_with(
-        triage_user, limit=50, cursor=None
+        triage_user,
+        limit=50,
+        cursor=None,
+        search=None,
+        statuses=(),
+        current_owner=None,
+        route_unit_id=None,
+        minimum_age_days=None,
     )
     request_id = uuid4()
     assert await service.get_tracked_request_detail(triage_user, request_id) is not None
     repository.get_tracked_request_detail.assert_awaited_once_with(
-        triage_user, request_id
+        triage_user, request_id, event_limit=50, event_cursor=None
     )
 
 

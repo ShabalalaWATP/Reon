@@ -10,6 +10,8 @@ import type { TrackedRequestDetail } from "../../lib/api/types";
 import { useAuth } from "../../lib/auth/AuthProvider";
 import { formatDate } from "../../lib/status";
 import { TrackingJourney } from "./TrackingJourney";
+import { TrackingActivity } from "./TrackingActivity";
+import { TrackingCoordination } from "./TrackingCoordination";
 
 export function TrackingDetailPage() {
   const { requestId = "" } = useParams();
@@ -34,6 +36,8 @@ export function TrackingDetailPage() {
       <div className="tracking-read-only"><strong>Read-only lifecycle view</strong><span>Return to the role queue to take an action.</span></div>
       <TrackingJourney request={request} />
       <TrackingRequestOverview request={request} />
+      <TrackingCoordination request={request} />
+      <TrackingActivity initialCursor={request.eventsNextCursor} initialEvents={request.events} key={`${request.updatedAt}-${request.events.length}`} requestId={request.id} />
     </main>
   );
 }
