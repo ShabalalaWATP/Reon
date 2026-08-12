@@ -20,9 +20,9 @@ const kindLabels: Record<OrganisationUnit["kind"], string> = {
 };
 
 const staffingLabels: Record<OrganisationUnit["staffingStatus"], string> = {
-  ROUTING_POOL: "Routing function",
-  STAFFED: "Team staffed",
-  UNSTAFFED: "Team awaiting staffing",
+  ROUTING_POOL: "Routing",
+  STAFFED: "Analysis Team",
+  UNSTAFFED: "Analysis Team · Awaiting staffing",
 };
 
 export function OrganisationPage() {
@@ -74,9 +74,9 @@ export function OrganisationPage() {
           <span>Organisation reference</span>
           <h1>CRIOC routing hierarchy</h1>
           <p>
-            Browse routing responsibility and delivery-team staffing. CRIOC,
-            command and Ops units are staffed routing functions; team badges
-            show whether Manager and Analyst roles are currently covered.
+            Browse routing responsibility and analysis-team staffing. QC is a
+            shared function across the hierarchy. Analysis Team badges identify
+            delivery units and show when staffing is still awaited.
           </p>
         </div>
       </header>
@@ -87,11 +87,14 @@ export function OrganisationPage() {
         </PageState>
       ) : (
         <>
-          <dl className="organisation-summary" aria-label="Staffing summary">
-            <div><dt>Routing functions</dt><dd>{routingUnits}</dd></div>
-            <div><dt>Staffed teams</dt><dd>{staffedTeams}</dd></div>
-            <div><dt>Awaiting staffing</dt><dd>{unstaffedTeams}</dd></div>
-          </dl>
+          <section aria-label="Organisation function summary">
+            <dl className="organisation-summary">
+              <div><dt>Routing</dt><dd>{routingUnits}</dd></div>
+              <div><dt>Analysis Teams</dt><dd>{staffedTeams}</dd></div>
+              <div><dt>QC</dt><dd>Shared</dd></div>
+              <div><dt>Analysis Teams awaiting staffing</dt><dd>{unstaffedTeams}</dd></div>
+            </dl>
+          </section>
           <section aria-labelledby="organisation-tree-title">
             <div className="section-heading">
               <span>Current structure</span>

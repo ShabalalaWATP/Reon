@@ -1,5 +1,13 @@
 # Development Story
 
+## 12 August 2026: clearer organisation function labels
+
+- Replaced the directory's `Routing function` and `Team staffed` wording with
+  `Routing` and `Analysis Team` while retaining an explicit awaiting-staffing
+  state.
+- Identified QC as a shared function in the directory summary without changing
+  organisation, routing, staffing or authorisation data.
+
 ## 12 August 2026: calmer assigned-actions view
 
 - Collapsed the complete My assigned actions saved-view, filter and visible-column
