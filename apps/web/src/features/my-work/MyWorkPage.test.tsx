@@ -44,6 +44,9 @@ describe("My actions", () => {
     expect(screen.getByText(/2 updates are still being applied/)).toBeInTheDocument();
     expect(screen.getByText("Refreshing")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Open ISR-101/ })).toHaveAttribute("href", "/triage?requestId=request-1");
+    const filterDisclosure = screen.getByText("Filters and visible columns").closest("details");
+    expect(filterDisclosure).not.toHaveAttribute("open");
+    expect(screen.getByLabelText("Action type")).not.toBeVisible();
     expect(await axe(view.container)).toHaveNoViolations();
 
     await user.selectOptions(screen.getByLabelText("Saved view"), "view-1");
@@ -57,6 +60,8 @@ describe("My actions", () => {
     await user.type(screen.getByLabelText("Save current view"), "Fresh view");
     await user.click(screen.getByRole("button", { name: "Save view" }));
     await waitFor(() => expect(calls.some(({ init }) => init.method === "POST")).toBe(true));
+    await user.click(screen.getByText("Filters and visible columns"));
+    expect(screen.getByText("Filters and visible columns").closest("details")).toHaveAttribute("open");
     await user.selectOptions(screen.getByLabelText("Action type"), "QUALITY_REVIEW");
     await user.selectOptions(screen.getByLabelText("Action type"), "");
     await user.selectOptions(screen.getByLabelText("Action type"), "QUALITY_REVIEW");
@@ -88,6 +93,7 @@ describe("My actions", () => {
     expect(await screen.findByRole("link", { name: "Open ISR-104" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /Waiting 1/ }));
     await user.click(screen.getByRole("button", { name: /Waiting 1/ }));
+    await user.click(screen.getByText("Filters and visible columns"));
     const picker = screen.getByRole("group", { name: "Visible columns" });
     await user.click(within(picker).getByLabelText("Current owner"));
     expect(screen.queryByRole("columnheader", { name: "Current owner" })).not.toBeInTheDocument();

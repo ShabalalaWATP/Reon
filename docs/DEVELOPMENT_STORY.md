@@ -1,5 +1,12 @@
 # Development Story
 
+## 12 August 2026: calmer assigned-actions view
+
+- Collapsed the My assigned actions filter and visible-column controls by
+  default, while keeping saved views and the authorised action register visible.
+- Added focused accessibility coverage for the disclosure's initial and expanded
+  states without changing any action-query or authorisation boundary.
+
 ## 11 August 2026: one focused team workspace
 
 - Consolidated the role queue and named unit workspace into one primary
