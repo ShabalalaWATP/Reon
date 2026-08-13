@@ -117,8 +117,9 @@ class QuarantineIndex:
         if os.name == "nt":
             import msvcrt
 
+            module = cast(Any, msvcrt)
             handle.seek(0)
-            msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+            module.locking(handle.fileno(), module.LK_LOCK, 1)
         else:
             import fcntl
 
@@ -130,8 +131,9 @@ class QuarantineIndex:
         if os.name == "nt":
             import msvcrt
 
+            module = cast(Any, msvcrt)
             handle.seek(0)
-            msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+            module.locking(handle.fileno(), module.LK_UNLCK, 1)
         else:
             import fcntl
 

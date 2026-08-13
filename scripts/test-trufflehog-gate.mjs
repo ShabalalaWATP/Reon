@@ -71,6 +71,12 @@ try {
   assert.notEqual(run().status, 0);
 
   await write(
+    [{ ...finding, SourceMetadata: { Data: { Filesystem: { file: "fixture.ts", line: 4 } } } }],
+    [approved],
+  );
+  assert.notEqual(run().status, 0);
+
+  await write(
     [
       {
         ...finding,

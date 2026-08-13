@@ -22,7 +22,7 @@ describe("RouteErrorBoundary", () => {
   });
 
   it("renders healthy routes normally", () => {
-    render(<RouteErrorBoundary><p>Profile ready</p></RouteErrorBoundary>);
+    render(<RouteErrorBoundary onReload={vi.fn()}><p>Profile ready</p></RouteErrorBoundary>);
     expect(screen.getByText("Profile ready")).toBeVisible();
   });
 });

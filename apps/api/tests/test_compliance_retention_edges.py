@@ -196,7 +196,7 @@ async def test_clarification_disposal_uses_parent_cascade(
 
 
 async def test_security_event_hashes_identifiers(api_harness: ApiHarness) -> None:
-    recorder = SecurityEventRecorder(api_harness.sessions, pseudonym_key=b"s" * 32)
+    recorder = SecurityEventRecorder(api_harness.sessions, pseudonym_key=bytes(32))
     await recorder.record(
         SecurityEventCommand(
             "LOGIN",
@@ -216,7 +216,7 @@ async def test_security_event_hashes_identifiers(api_harness: ApiHarness) -> Non
 async def test_authenticated_denial_deduplicates_across_sources(
     api_harness: ApiHarness,
 ) -> None:
-    recorder = SecurityEventRecorder(api_harness.sessions, pseudonym_key=b"s" * 32)
+    recorder = SecurityEventRecorder(api_harness.sessions, pseudonym_key=bytes(32))
     actor_id = await api_harness.user_id("admin3")
     common = {
         "event_type": "AUTHORIZATION_DENIAL",
@@ -249,7 +249,7 @@ async def test_authenticated_denial_deduplicates_across_sources(
 
 def test_security_event_rejects_short_key(api_harness: ApiHarness) -> None:
     with pytest.raises(ValueError, match="32 bytes"):
-        SecurityEventRecorder(api_harness.sessions, pseudonym_key=b"short")
+        SecurityEventRecorder(api_harness.sessions, pseudonym_key=bytes(5))
 
 
 @pytest.mark.parametrize(
@@ -271,6 +271,6 @@ def test_security_event_rejects_short_key(api_harness: ApiHarness) -> None:
 async def test_security_event_rejects_invalid_command(
     api_harness: ApiHarness, command: SecurityEventCommand
 ) -> None:
-    recorder = SecurityEventRecorder(api_harness.sessions, pseudonym_key=b"s" * 32)
+    recorder = SecurityEventRecorder(api_harness.sessions, pseudonym_key=bytes(32))
     with pytest.raises(ValueError, match="security-event"):
         await recorder.record(command)
