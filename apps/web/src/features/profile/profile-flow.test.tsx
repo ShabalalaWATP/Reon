@@ -189,6 +189,34 @@ describe("personal profile", () => {
       expectedVersion: 1,
     }));
     expect(screen.getByRole("status")).toHaveTextContent("Personal details saved");
+
+    expect(await screen.findByRole("button", { name: "Edit personal details" })).toBeInTheDocument();
+    expect(screen.getByText("SYN-1042")).toBeInTheDocument();
+    expect(screen.getByText("Data analysis")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Team or business area/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Edit personal details" }));
+    expect(await screen.findByLabelText(/Rank or grade/)).toHaveValue("Grade 7");
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByLabelText(/Rank or grade/)).not.toBeInTheDocument();
+    expect(screen.getByText("Grade 7")).toBeInTheDocument();
+  });
+
+  it("presents saved personal details as page content until Edit is chosen", async () => {
+    mockFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/profile")) return json({ ...personalProfile, profileTeam: "Synthetic Customer Team", skills: ["Research"] });
+      throw new Error(`Unexpected ${url.pathname}`);
+    });
+
+    const user = userEvent.setup();
+    renderApp("/profile");
+    expect(await screen.findByText("Synthetic Customer Team")).toBeInTheDocument();
+    expect(screen.getByText("Research")).toBeInTheDocument();
+    expect(screen.getAllByText("Not provided")).toHaveLength(3);
+    expect(screen.queryByLabelText(/Service number/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Edit personal details" }));
+    expect(await screen.findByLabelText(/Team or business area/)).toHaveValue("Synthetic Customer Team");
   });
 
   it("sends blank optional fields as null and reports a save conflict", async () => {

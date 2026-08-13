@@ -64,6 +64,10 @@ describe("canonical workforce calendar", () => {
     expect(await screen.findByText("Protected planning time")).toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
 
+    await user.click(screen.getAllByRole("button", { name: /^Add event on/ })[0]);
+    expect(await screen.findByRole("heading", { name: "Add personal event" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Close Add calendar event" }));
+
     await user.click(screen.getByRole("button", { name: "week" }));
     expect(screen.getByRole("region", { name: "week calendar" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "agenda" }));

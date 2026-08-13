@@ -20,10 +20,12 @@ type Values = z.infer<typeof schema>;
 
 export function PersonalProfileForm({
   disabled,
+  onCancel,
   onSubmit,
   profile,
 }: {
   disabled: boolean;
+  onCancel?: () => void;
   onSubmit: (value: PersonalProfileUpdate) => void;
   profile: PersonalProfile;
 }) {
@@ -54,7 +56,10 @@ export function PersonalProfileForm({
     </div>
     <label className="form-field"><span>Operational skills</span><input aria-invalid={Boolean(errors.skills)} placeholder="Research, data analysis, briefing" {...register("skills")} />{errors.skills ? <small role="alert">{errors.skills.message}</small> : <small>Optional comma-separated labels for human team allocation. They are not scores or endorsements.</small>}</label>
     <label className="form-field"><span>Additional information</span><textarea aria-invalid={Boolean(errors.additionalInformation)} rows={5} {...register("additionalInformation")} />{errors.additionalInformation ? <small role="alert">{errors.additionalInformation.message}</small> : <small>Add any context that helps colleagues understand who you are. Do not enter passwords or sensitive operational content.</small>}</label>
-    <button className="button button--primary" disabled={disabled || !isDirty || !isValid} type="submit">{disabled ? "Saving…" : "Save personal details"}</button>
+    <div className="profile-form__actions">
+      <button className="button button--primary" disabled={disabled || !isDirty || !isValid} type="submit">{disabled ? "Saving…" : "Save personal details"}</button>
+      {onCancel ? <button className="button button--quiet" disabled={disabled} onClick={onCancel} type="button">Cancel</button> : null}
+    </div>
   </form>;
 }
 

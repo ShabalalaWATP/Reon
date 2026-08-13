@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2, CheckCircle2, FilePenLine, ShieldCheck, UserRound } from "lucide-react";
+import { useState } from "react";
 
 import { PageState } from "../../components/PageState";
 import { api } from "../../lib/api/client";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
+import type { PersonalProfile, PersonalProfileUpdate } from "../../lib/api/types";
 import { useAuth } from "../../lib/auth/AuthProvider";
 import { roleLabels } from "../../lib/routes";
 import { formatDate } from "../../lib/status";
@@ -15,12 +17,14 @@ import {
   profileScopeLabel,
   profileWorkspacePositionText,
 } from "./profileModel";
+import { PersonalProfileDetails } from "./PersonalProfileDetails";
 import { PersonalProfileForm } from "./PersonalProfileForm";
 
 export function ProfilePage() {
   const { session } = useAuth();
   const user = session!.user;
   const queryClient = useQueryClient();
+  const [editingPersonal, setEditingPersonal] = useState(false);
   const profile = useQuery({
     queryKey: protectedQueryKeys.profile(user.id),
     queryFn: api.profile,
@@ -41,7 +45,10 @@ export function ProfilePage() {
     user.organisationUnitIds.includes(unit.id));
   const update = useMutation({
     mutationFn: (input: Parameters<typeof api.updateProfile>[0]) => api.updateProfile(input, session!.csrfToken),
-    onSuccess: (saved) => queryClient.setQueryData(protectedQueryKeys.profile(user.id), saved),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(protectedQueryKeys.profile(user.id), saved);
+      setEditingPersonal(false);
+    },
   });
 
   if (profile.isPending) return <PageState kind="loading" title="Loading your profile" />;
@@ -71,13 +78,16 @@ export function ProfilePage() {
           </dl>
         </section>
 
-        <section aria-labelledby="profile-personal-title" className="profile-personal-section">
-          <header><FilePenLine aria-hidden="true" size={19} /><div><span>About you</span><h2 id="profile-personal-title">Personal details</h2></div></header>
-          <p className="profile-note">Add optional information about yourself. These details do not change your ISTARI access or where requests are routed.</p>
-          <PersonalProfileForm disabled={update.isPending} key={profile.data.version} onSubmit={update.mutate} profile={profile.data} />
-          {update.isSuccess ? <p className="form-banner form-banner--success" role="status">Personal details saved.</p> : null}
-          {update.isError ? <p className="form-banner form-banner--error" role="alert">Your personal details could not be saved. Refresh and try again.</p> : null}
-        </section>
+        <PersonalDetailsSection
+          editing={editingPersonal}
+          failed={update.isError}
+          onCancel={() => setEditingPersonal(false)}
+          onEdit={() => setEditingPersonal(true)}
+          onSubmit={update.mutate}
+          profile={profile.data}
+          saved={update.isSuccess}
+          saving={update.isPending}
+        />
 
         <section aria-labelledby="profile-organisation-title">
           <header><Building2 aria-hidden="true" size={19} /><div><span>Access boundary</span><h2 id="profile-organisation-title">Organisation and scope</h2></div></header>
@@ -99,5 +109,37 @@ export function ProfilePage() {
         </section>
       </div>
     </main>
+  );
+}
+
+function PersonalDetailsSection({ editing, failed, onCancel, onEdit, onSubmit, profile, saved, saving }: {
+  editing: boolean;
+  failed: boolean;
+  onCancel: () => void;
+  onEdit: () => void;
+  onSubmit: (value: PersonalProfileUpdate) => void;
+  profile: PersonalProfile;
+  saved: boolean;
+  saving: boolean;
+}) {
+  const hasDetails = Boolean(profile.profileTeam || profile.rankOrGrade || profile.serviceNumber
+    || profile.skills.length > 0 || profile.additionalInformation);
+  const showForm = editing || !hasDetails;
+  return (
+    <section aria-labelledby="profile-personal-title" className="profile-personal-section">
+      <header>
+        <FilePenLine aria-hidden="true" size={19} />
+        <div><span>About you</span><h2 id="profile-personal-title">Personal details</h2></div>
+        {!showForm ? <button aria-label="Edit personal details" className="button button--quiet profile-personal-edit" onClick={onEdit} type="button">Edit</button> : null}
+      </header>
+      {showForm ? (
+        <>
+          <p className="profile-note">Add optional information about yourself. These details do not change your ISTARI access or where requests are routed.</p>
+          <PersonalProfileForm disabled={saving} key={profile.version} onCancel={hasDetails ? onCancel : undefined} onSubmit={onSubmit} profile={profile} />
+        </>
+      ) : <PersonalProfileDetails profile={profile} />}
+      {saved ? <p className="form-banner form-banner--success" role="status">Personal details saved.</p> : null}
+      {failed ? <p className="form-banner form-banner--error" role="alert">Your personal details could not be saved. Refresh and try again.</p> : null}
+    </section>
   );
 }

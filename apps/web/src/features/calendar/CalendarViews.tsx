@@ -58,13 +58,14 @@ function Day({
 }) {
   const outside = view === "month" && day.getMonth() !== anchor.getMonth();
   const today = sameDay(day, new Date());
+  const free = items.length === 0;
   return (
-    <article className={`calendar-day${outside ? " calendar-day--outside" : ""}${today ? " calendar-day--today" : ""}`}>
+    <article className={`calendar-day${outside ? " calendar-day--outside" : ""}${today ? " calendar-day--today" : ""}${free ? " calendar-day--free" : ""}`}>
+      {onCreate ? <button aria-label={`Add event on ${longDate.format(day)}`} className="calendar-day__create" onClick={() => onCreate(day)} type="button" /> : null}
       <header><span>{shortWeekday.format(day)}</span><strong>{day.getDate()}</strong></header>
-      {items.length === 0 ? <button aria-label={`Add event on ${longDate.format(day)}`} className="calendar-day__empty" onClick={() => onCreate?.(day)} type="button">Add event</button> : (
+      {free ? null : (
         <ol>{items.map((item) => <li key={`${item.eventId}-${item.occurrenceStart}`}><OccurrenceButton item={item} onSelect={onSelect} /></li>)}</ol>
       )}
-      {items.length > 0 && onCreate ? <button aria-label={`Add event on ${longDate.format(day)}`} className="calendar-day__add" onClick={() => onCreate(day)} type="button">+</button> : null}
     </article>
   );
 }
