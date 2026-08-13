@@ -5,7 +5,12 @@ import { requesterSession } from "../test/fixtures";
 import { json, mockFetch, renderApp } from "../test/render";
 
 describe("Customer route policy", () => {
-  it.each(["/calendar/month", "/organisation"])(
+  it.each([
+    "/calendar/month",
+    "/organisation",
+    "/teams/team-ssg/overview",
+    "/teams/team-ssg/people/member-1",
+  ])(
     "keeps Customer navigation focused when opening %s directly",
     async (path) => {
       mockFetch((url) => {

@@ -28,11 +28,13 @@ describe("presentation helpers", () => {
       { label: "New request", path: "/requests/new" },
     ]);
     expect(navigationForRole("PLATFORM_ADMIN")).toEqual([
+      { label: "Home", path: "/overview" },
       { label: "User accounts", path: "/admin/users" },
       { label: "Personal calendar", path: "/calendar/month" },
       { label: "Organisation directory", path: "/organisation" },
     ]);
     expect(navigationForRole("INTAKE_TRIAGE")).toEqual([
+      { label: "Home", path: "/overview" },
       { label: "CRIOC routing queue", path: "/triage" },
       { label: "Personal calendar", path: "/calendar/month" },
       { label: "Request tracking", path: "/tracking" },
@@ -47,16 +49,15 @@ describe("presentation helpers", () => {
       products: true,
       statistics: true,
     };
-    expect(homeRouteForRole("REQUESTER", disabledCapabilities)).toBe("/requests");
-    expect(homeRouteForRole("REQUESTER", enabled)).toBe("/requests");
-    expect(homeRouteForRole("PLATFORM_ADMIN", enabled)).toBe("/overview");
-    expect(homeRouteForRole("INTAKE_TRIAGE", enabled)).toBe("/overview");
-    expect(homeRouteForRole("DELIVERY_TEAM_LEAD", enabled)).toBe("/overview");
-    expect(homeRouteForRole("DELIVERY_SPECIALIST", enabled)).toBe("/my-work");
-    expect(homeRouteForRole("QUALITY_RELEASE", enabled)).toBe("/overview");
+    expect(homeRouteForRole("REQUESTER")).toBe("/requests");
+    for (const role of (Object.keys(roleRoutes) as Array<keyof typeof roleRoutes>)
+      .filter((candidate) => candidate !== "REQUESTER")) {
+      expect(homeRouteForRole(role)).toBe("/overview");
+    }
     expect(navigationForRole("REQUESTER", enabled)).not.toContainEqual({ label: "My assigned actions", path: "/my-work" });
     expect(navigationForRole("PLATFORM_ADMIN", enabled)).toContainEqual({ label: "Configuration", path: "/admin/configuration" });
     expect(navigationForRole("DELIVERY_SPECIALIST", enabled)).toContainEqual({ label: "Product package", path: "/product-packages/new" });
+    expect(navigationForRole("DELIVERY_SPECIALIST", enabled)).toContainEqual({ label: "Home", path: "/overview" });
     for (const role of (Object.keys(roleRoutes) as Array<keyof typeof roleRoutes>)
       .filter((candidate) => candidate !== "REQUESTER")) {
       expect(navigationForRole(role, enabled)).toContainEqual({ label: "Personal calendar", path: "/calendar/month" });

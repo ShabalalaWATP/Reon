@@ -118,14 +118,17 @@ describe("role-specific operational overview", () => {
     expect(within(destinations).getByRole("link", { name: /Personal calendar/ })).toHaveAttribute("href", "/calendar/month");
   });
 
-  it("keeps Customer and Analyst home destinations transactional", async () => {
+  it("keeps the Customer in My requests and gives an Analyst a personal Home", async () => {
     mockOverview(requesterSession);
     renderApp("/overview");
     expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
 
     mockOverview(asRole("DELIVERY_SPECIALIST", "Team Analyst"));
     renderApp("/overview");
-    expect(await screen.findByRole("heading", { name: "My actions" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Welcome, Scott" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Your workload" })).toHaveTextContent("Needs your action3");
+    expect(within(screen.getByRole("navigation", { name: "Home destinations" }))
+      .getByRole("link", { name: /My assigned actions/ })).toHaveAttribute("href", "/my-work");
   });
 
   it("gives a workspace Member a personal home without broadening statistics access", async () => {

@@ -33,7 +33,6 @@ export function RoleOverviewPage() {
   const { session } = useAuth();
   const role = session!.user.role;
   if (role === "REQUESTER") return <Navigate replace to="/requests" />;
-  if (role === "DELIVERY_SPECIALIST") return <Navigate replace to="/my-work" />;
   if (role === "QUALITY_RELEASE") return <QualityOverview />;
   return <ScopedOverview administrator={role === "PLATFORM_ADMIN"} />;
 }
@@ -45,10 +44,12 @@ function ScopedOverview({ administrator }: { administrator: boolean }) {
   const scopes = useQuery({
     queryKey: protectedQueryKeys.statisticsScopes(userId),
     queryFn: api.statisticsScopes,
+    enabled: capabilities.statistics,
   });
   const actions = useQuery({
     queryKey: protectedQueryKeys.actions(userId, "overview"),
     queryFn: () => actionNotificationApi.actions(emptyFilters),
+    enabled: capabilities.myWork,
   });
   const scope = scopes.data?.items[0];
   const statistics = useQuery({
@@ -67,7 +68,7 @@ function ScopedOverview({ administrator }: { administrator: boolean }) {
       to: today,
       timeZone: "Europe/London",
     }),
-    enabled: Boolean(scope?.unitId),
+    enabled: capabilities.statistics && Boolean(scope?.unitId),
   });
   const workspaces = useQuery({
     queryKey: protectedQueryKeys.teamWorkspaces(userId),
@@ -75,19 +76,24 @@ function ScopedOverview({ administrator }: { administrator: boolean }) {
     enabled: !administrator,
   });
   const workspace = workspaces.data?.items[0];
-  if (capabilitiesPending || scopes.isPending || actions.isPending || (Boolean(scope?.unitId) && statistics.isPending) || (!administrator && workspaces.isPending)) {
+  const statisticsPending = capabilities.statistics
+    && (scopes.isPending || (Boolean(scope?.unitId) && statistics.isPending));
+  if (capabilitiesPending || (capabilities.myWork && actions.isPending) || statisticsPending || (!administrator && workspaces.isPending)) {
     return <PageState kind="loading" title="Opening your overview" />;
   }
-  const memberWithoutStatistics = !administrator
+  const memberWithoutStatistics = capabilities.statistics
+    && !administrator
     && workspace?.workspacePosition === "MEMBER"
     && !scope?.unitId;
   if (
-    scopes.isError
-    || actions.isError
+    (capabilities.myWork && actions.isError)
     || workspaces.isError
-    || statistics.isError
     || (!administrator && !workspace)
-    || (!memberWithoutStatistics && (!scope?.unitId || !statistics.data))
+    || (capabilities.statistics && (
+      scopes.isError
+      || statistics.isError
+      || (!memberWithoutStatistics && (!scope?.unitId || !statistics.data))
+    ))
   ) {
     return <PageState kind="error" title="Your overview could not be loaded">Refresh the page or ask an Administrator to review your reporting access.</PageState>;
   }
@@ -121,7 +127,7 @@ function OverviewWorkloads({
   data,
   organisationName,
 }: {
-  actions: Awaited<ReturnType<typeof actionNotificationApi.actions>>;
+  actions?: Awaited<ReturnType<typeof actionNotificationApi.actions>>;
   data?: StatisticsDashboard;
   organisationName: string;
 }) {
@@ -135,9 +141,9 @@ function OverviewWorkloads({
         description="Actions assigned to you, including work waiting for somebody else to respond."
         title="Your workload"
         values={[
-          ["Needs your action", actions.counts.needsMyAction],
-          ["Waiting on others", actions.counts.waiting],
-          ["Due soon", actions.counts.dueSoon],
+          ["Needs your action", actions?.counts.needsMyAction ?? 0],
+          ["Waiting on others", actions?.counts.waiting ?? 0],
+          ["Due soon", actions?.counts.dueSoon ?? 0],
         ]}
       />
       {data ? <WorkloadRegion

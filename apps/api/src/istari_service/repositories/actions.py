@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, date, datetime
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, Select, and_, exists, false, func, or_, select
+from sqlalchemy import Select, and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.action_notification_models import (
@@ -18,19 +18,16 @@ from istari_service.action_notification_models import (
 )
 from istari_service.domain import Actor
 from istari_service.errors import ObjectNotFound, StaleVersion
-from istari_service.models import (
-    ServiceRequest,
-    User,
-    UserRole,
-    WorkflowTask,
-    WorkflowTaskStatus,
+from istari_service.models import User, UserRole
+from istari_service.organisation_models import OrganisationUnit
+from istari_service.repositories.action_scope import (
+    candidate_access,
+    direct_request_access,
 )
-from istari_service.organisation_models import OrganisationUnit, RequestRouteSelection
 from istari_service.repositories.projection_pagination import (
     decode_cursor,
     encode_cursor,
 )
-from istari_service.request_participant_models import RequestParticipant
 from istari_service.schemas.actions import (
     ActionFilters,
     SavedActionViewCommand,
@@ -273,87 +270,14 @@ class SqlAlchemyActionRepository:
     def _visible_query(self, actor: Actor) -> Select[tuple[ActionProjection]]:
         direct = and_(
             ActionProjection.recipient_user_id == actor.id,
-            _direct_request_access(actor),
+            direct_request_access(actor),
         )
         candidate = and_(
             ActionProjection.candidate_role == actor.role,
-            _candidate_access(actor),
+            candidate_access(actor),
         )
         return select(ActionProjection).where(
             ActionProjection.is_active.is_(True), or_(direct, candidate)
         )
-
-
-def _direct_request_access(actor: Actor) -> ColumnElement[bool]:
-    no_request = ActionProjection.request_id.is_(None)
-    if actor.role is UserRole.REQUESTER:
-        access = exists().where(
-            ServiceRequest.id == ActionProjection.request_id,
-            ServiceRequest.requester_id == actor.id,
-        )
-    elif actor.role is UserRole.DELIVERY_SPECIALIST:
-        participant = exists().where(
-            RequestParticipant.request_id == ActionProjection.request_id,
-            RequestParticipant.user_id == actor.id,
-            RequestParticipant.ended_at.is_(None),
-        )
-        access = exists().where(
-            ServiceRequest.id == ActionProjection.request_id,
-            or_(
-                ServiceRequest.assigned_specialist_id == actor.id,
-                participant,
-            ),
-        )
-    else:
-        access = exists().where(
-            WorkflowTask.request_id == ActionProjection.request_id,
-            WorkflowTask.assignee_user_id == actor.id,
-            WorkflowTask.candidate_role == actor.role,
-            WorkflowTask.status.in_(
-                [
-                    WorkflowTaskStatus.CLAIM_PENDING,
-                    WorkflowTaskStatus.CLAIMED,
-                    WorkflowTaskStatus.COMPLETION_PENDING,
-                    WorkflowTaskStatus.ERROR,
-                ]
-            ),
-        )
-    return or_(no_request, access)
-
-
-def _candidate_access(actor: Actor) -> ColumnElement[bool]:
-    platform = (
-        and_(
-            ActionProjection.organisation_unit_id.is_(None),
-            ActionProjection.request_id.is_(None),
-        )
-        if actor.role is UserRole.PLATFORM_ADMIN
-        else false()
-    )
-    membership = exists().where(
-        ActionProjection.organisation_unit_id.in_(actor.organisation_unit_ids),
-    )
-    routed = or_(
-        ActionProjection.request_id.is_(None),
-        exists().where(
-            RequestRouteSelection.request_id == ActionProjection.request_id,
-            RequestRouteSelection.unit_id == ActionProjection.organisation_unit_id,
-        ),
-    )
-    scoped = and_(
-        ActionProjection.organisation_unit_id.is_(None),
-        ActionProjection.required_scope == actor.scope,
-        or_(
-            ActionProjection.request_id.is_(None),
-            exists().where(
-                WorkflowTask.request_id == ActionProjection.request_id,
-                WorkflowTask.candidate_role == actor.role,
-                WorkflowTask.completed_at.is_(None),
-            ),
-        ),
-    )
-    return or_(platform, scoped, and_(membership, routed))
-
-
 def utc(value: datetime) -> datetime:
     return value if value.tzinfo else value.replace(tzinfo=UTC)

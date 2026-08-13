@@ -33,6 +33,10 @@ than appearing directly on an individual's home page.
 Team Managers use this same personal Home. Home must not redirect to the shared
 team workspace: it separates the Manager's assigned actions from the authorised
 team workload, then links to the team workspace as a distinct destination.
+The same default applies to every staff representative type, including Platform
+Administrators and Team Analysts. After a normal sign-in they land on Home,
+while Customers continue to land on `My requests`. Authorised deep links remain
+available when a user intentionally opens a specific destination.
 
 ## Primary navigation
 
@@ -47,10 +51,10 @@ Staff navigation follows the operating sequence:
 7. `Organisation directory`
 
 Customer navigation is intentionally shorter. It contains only `My requests`
-and `New request`. Calendar and organisation-directory destinations are staff
-operational tools and add no value to the Customer request journey. A Customer
-opening either staff URL directly returns to `My requests`; the hidden link is
-not treated as the authorisation control.
+and `New request`. Calendar, organisation-directory, team-workspace and team-
+member-profile destinations are staff operational tools and add no value to the
+Customer request journey. A Customer opening any staff URL directly returns to
+`My requests`; the hidden link is not treated as the authorisation control.
 
 Legacy role queue labels name their purpose, for example `CRIOC routing queue`,
 `Incoming requests` and `Ops routing queue`. They remain available for deep
@@ -62,6 +66,8 @@ role, object or action authorisation.
 - A routing overview greets the user by first name.
 - A Team Manager's Home is a personal landing page and does not redirect to the
   shared team workspace.
+- Every staff representative type defaults to Home after sign-in; Customers
+  default to `My requests`.
 - Personal and organisation metrics are in separately named regions with short
   scope explanations.
 - The organisation explanation states that it is not personal workload.
@@ -74,8 +80,9 @@ role, object or action authorisation.
   page and cannot see organisation measures or a statistics destination.
 - Active, hover and keyboard-focus navigation styling remains unchanged.
 - Customer navigation contains only `My requests` and `New request`.
-- Customer direct access to the personal calendar or organisation directory is
-  redirected to `My requests` without loading either staff page.
+- Customer direct access to the personal calendar, organisation directory,
+  team workspace or team-member profile is redirected to `My requests` without
+  loading the staff page or its protected data.
 - Analyst, Manager, QC and Administrator destinations remain authorised exactly
   as before.
 - WCAG 2.2 AA semantics, responsive layout and reduced-motion behaviour remain

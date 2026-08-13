@@ -7,7 +7,7 @@ import { z } from "zod";
 
 import { ApiError, api } from "../../lib/api/client";
 import { useAuth } from "../../lib/auth/AuthProvider";
-import { roleRoutes } from "../../lib/routes";
+import { homeRouteForRole } from "../../lib/routes";
 import { useTheme } from "../../lib/theme/ThemeProvider";
 import { ParticleField } from "./ParticleField";
 
@@ -56,14 +56,14 @@ export function LoginPage() {
   const requestedPath = (location.state as { from?: string } | null)?.from;
 
   if (status === "authenticated" && session) {
-    return <Navigate replace to={requestedPath ?? roleRoutes[session.user.role]} />;
+    return <Navigate replace to={requestedPath ?? homeRouteForRole(session.user.role)} />;
   }
 
   async function submit(values: FormValues) {
     setAuthError(null);
     try {
       const nextSession = await login(values);
-      void navigate(requestedPath ?? roleRoutes[nextSession.user.role], { replace: true });
+      void navigate(requestedPath ?? homeRouteForRole(nextSession.user.role), { replace: true });
     } catch (error) {
       setAuthError(error instanceof ApiError ? error.message : "Unable to sign in. Try again.");
     }

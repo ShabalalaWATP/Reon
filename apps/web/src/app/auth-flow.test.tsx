@@ -12,7 +12,7 @@ import { SESSION_EXPIRED_EVENT } from "../lib/api/client";
 import { useAuth, AuthProvider } from "../lib/auth/AuthProvider";
 import { useTheme } from "../lib/theme/ThemeProvider";
 import { json, mockFetch, renderApp, TestProviders } from "../test/render";
-import { adminSession, requesterSession, staffSession } from "../test/fixtures";
+import { requesterSession } from "../test/fixtures";
 
 describe("authentication and route policy", () => {
   it("renders an accessible login, validates input and signs in", async () => {
@@ -82,28 +82,6 @@ describe("authentication and route policy", () => {
       displayName: "Synthetic Customer",
       reason: "I need access for a fictional request.",
     });
-  });
-
-  it("isolates platform administration from request content", async () => {
-    mockFetch((url) => {
-      if (url.pathname.endsWith("/auth/me")) return json(adminSession);
-      if (url.pathname.endsWith("/admin/users")) return json({ items: [] });
-      throw new Error("Request content must not be fetched");
-    }, true, true, false);
-    renderApp("/");
-    expect(await screen.findByRole("heading", { name: "User accounts" })).toBeInTheDocument();
-    expect(screen.queryByText("My requests")).not.toBeInTheDocument();
-  });
-
-  it("redirects a role away from another role's route", async () => {
-    mockFetch((url) => {
-      if (url.pathname.endsWith("/auth/me")) return json(staffSession);
-      if (url.pathname.endsWith("/work-items")) return json({ items: [] });
-      throw new Error(`Unexpected ${url.pathname}`);
-    });
-    renderApp("/requests");
-    expect(await screen.findByRole("heading", { name: "No items waiting" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "CRIOC routing queue" })).toBeInTheDocument();
   });
 
   it("signs out from the shell and reports logout failures", async () => {

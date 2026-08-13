@@ -1,5 +1,4 @@
 import { disabledCapabilities } from "./api/capabilityClient";
-import type { ServerCapabilities } from "./api/capabilityClient";
 import type { UserRole } from "./api/types";
 
 export const roleRoutes: Record<UserRole, string> = {
@@ -68,13 +67,9 @@ export const trackingRoles: UserRole[] = [
 const organisationLink = { label: "Organisation directory", path: "/organisation" };
 const personalCalendarLink = { label: "Personal calendar", path: "/calendar/month" };
 
-export function homeRouteForRole(role: UserRole, capabilities: ServerCapabilities) {
+export function homeRouteForRole(role: UserRole) {
   if (role === "REQUESTER") return roleRoutes.REQUESTER;
-  if (
-    capabilities.statistics
-    && ["PLATFORM_ADMIN", "INTAKE_TRIAGE", "SERVICE_COORDINATION", "OPERATIONS_ALLOCATION", "DELIVERY_TEAM_LEAD", "QUALITY_RELEASE"].includes(role)
-  ) return "/overview";
-  return capabilities.myWork ? "/my-work" : roleRoutes[role];
+  return "/overview";
 }
 
 export function navigationForRole(
@@ -90,7 +85,7 @@ export function navigationForRole(
   }
   if (role === "PLATFORM_ADMIN") {
     return [
-      ...(capabilities.statistics ? [{ label: "Home", path: "/overview" }] : []),
+      { label: "Home", path: "/overview" },
       ...(capabilities.myWork ? [{ label: "My assigned actions", path: "/my-work" }] : []),
       { label: "User accounts", path: "/admin/users" },
       ...(capabilities.configuration ? [{ label: "Configuration", path: "/admin/configuration" }] : []),
@@ -100,7 +95,7 @@ export function navigationForRole(
     ];
   }
   const navigation = [
-    ...(role !== "DELIVERY_SPECIALIST" && capabilities.statistics ? [{ label: "Home", path: "/overview" }] : []),
+    { label: "Home", path: "/overview" },
     ...(capabilities.myWork ? [{ label: "My assigned actions", path: "/my-work" }] : []),
     ...(context.workspace ? [{
       label: `${context.workspace.name} workspace`,

@@ -75,9 +75,7 @@ export function AppRoutes() {
               </Route>
             </Route>
             <Route path="profile" element={<ProfilePage />} />
-            <Route element={<CapabilityGate capability="statistics" />}>
-              <Route path="overview" element={<RoleOverviewPage />} />
-            </Route>
+            <Route path="overview" element={<RoleOverviewPage />} />
             <Route element={<CapabilityGate capability="notifications" />}>
               <Route path="notifications" element={<NotificationsPage />} />
             </Route>
@@ -88,8 +86,10 @@ export function AppRoutes() {
             <Route element={<CapabilityGate capability="statistics" />}>
               <Route path="statistics" element={<StatisticsPage />} />
             </Route>
-            <Route path="teams/:teamId/people/:memberId" element={<TeamMemberProfilePage />} />
-            <Route path="teams/:teamId/:view?" element={<TeamWorkspacePage />} />
+            <Route element={<RoleGate allowed={staffMyWorkRoles} />}>
+              <Route path="teams/:teamId/people/:memberId" element={<TeamMemberProfilePage />} />
+              <Route path="teams/:teamId/:view?" element={<TeamWorkspacePage />} />
+            </Route>
             <Route element={<RoleGate allowed={["PLATFORM_ADMIN"]} />}>
               <Route path="admin/users" element={<AdminUsersPage />} />
               <Route path="admin/users/new" element={<AdminUserPage create />} />
@@ -178,14 +178,10 @@ function CapabilityGate({ capability }: { capability: CapabilityName }) {
 
 function HomeRedirect() {
   const { session } = useAuth();
-  const { capabilities, isPending } = useCapabilities();
-  if (isPending) return <PageState kind="loading" title="Opening ISTARI" />;
-  return <Navigate replace to={homeRouteForRole(session!.user.role, capabilities)} />;
+  return <Navigate replace to={homeRouteForRole(session!.user.role)} />;
 }
 
 function RoleHome() {
   const { session } = useAuth();
-  const { capabilities, isPending } = useCapabilities();
-  if (isPending) return <PageState kind="loading" title="Opening ISTARI" />;
-  return <Navigate replace to={homeRouteForRole(session!.user.role, capabilities)} />;
+  return <Navigate replace to={homeRouteForRole(session!.user.role)} />;
 }
