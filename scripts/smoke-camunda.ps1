@@ -16,7 +16,8 @@ Assert-SmokeEndpoint -Endpoint $BaseUri
 
 $topologyUri = [Uri]::new($BaseUri, "/v2/topology")
 $restReady = $false
-for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+$readinessAttempts = [Math]::Max($MaxAttempts, 30)
+for ($attempt = 1; $attempt -le $readinessAttempts; $attempt++) {
     try {
         $null = Invoke-RestMethod `
             -Method Get `
@@ -27,7 +28,7 @@ for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
         break
     }
     catch {
-        if ($attempt -eq $MaxAttempts) { throw }
+        if ($attempt -eq $readinessAttempts) { throw }
         Start-Sleep -Seconds $RetryDelaySeconds
     }
 }
