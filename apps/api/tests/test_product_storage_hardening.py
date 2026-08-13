@@ -124,6 +124,11 @@ async def test_document_scanner_bounds_concurrent_work() -> None:
     assert maximum == 2
 
 
+def test_document_scanner_rejects_an_empty_worker_pool() -> None:
+    with pytest.raises(ValueError, match="must be positive"):
+        SafeDocumentScanner(maximum_concurrent_scans=0)
+
+
 @pytest.mark.parametrize(
     ("mutation", "reason"),
     [
