@@ -150,6 +150,10 @@ function findTaskState(body) {
 async function handle(request, response) {
   calls.push(`${request.method} ${request.url}`);
   const rawBody = await readBody(request);
+  if (request.method === "GET" && request.url === "/v2/topology") {
+    sendJson(response, { brokers: [], clusterSize: 1, partitionsCount: 1 });
+    return;
+  }
   if (request.url === "/v2/deployments") {
     assert.match(request.headers["content-type"], /^multipart\/form-data;/u);
     assert.match(rawBody, /service-request\.bpmn/u);
@@ -314,6 +318,7 @@ function completedRouteCalls(scenario, count = scenario.route.length) {
 }
 
 assert.deepEqual(calls, [
+  "GET /v2/topology",
   "POST /v2/deployments",
   "POST /v2/process-instances",
   "POST /v2/process-instances",

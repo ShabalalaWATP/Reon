@@ -35,9 +35,11 @@ async def test_maintenance_role_can_apply_and_release_legal_hold() -> None:
             await owner.execute(
                 text(
                     "CREATE TABLE IF NOT EXISTS legal_holds ("
-                    "id uuid PRIMARY KEY, created_at timestamptz NOT NULL DEFAULT now(), "
+                    "id uuid PRIMARY KEY, "
+                    "created_at timestamptz NOT NULL DEFAULT now(), "
                     "target_type varchar(40) NOT NULL, target_id varchar(64) NOT NULL, "
-                    "reason_code varchar(80) NOT NULL, authorised_by varchar(160) NOT NULL, "
+                    "reason_code varchar(80) NOT NULL, "
+                    "authorised_by varchar(160) NOT NULL, "
                     "released_at timestamptz, released_by varchar(160))"
                 )
             )

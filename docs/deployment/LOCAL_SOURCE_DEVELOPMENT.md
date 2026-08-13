@@ -6,7 +6,7 @@ easiest way to supply PostgreSQL, Camunda and ClamAV.
 ## Prerequisites
 
 - Python 3.12 or later and `uv`
-- Node.js 22 or later and pnpm 10.34.5 through Corepack. pnpm 10 is retained
+- Node.js 22 or later and pnpm 11.21.0 through Corepack. pnpm 11 is retained
   because it is the newest major version supported by Dependabot for pnpm lockfiles.
 - Docker Compose v2
 - PowerShell 7.4 or later

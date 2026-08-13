@@ -13,6 +13,26 @@ Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot "camunda-smoke-support.ps1")
 
 Assert-SmokeEndpoint -Endpoint $BaseUri
+
+$topologyUri = [Uri]::new($BaseUri, "/v2/topology")
+$restReady = $false
+for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+    try {
+        $null = Invoke-RestMethod `
+            -Method Get `
+            -Uri $topologyUri `
+            -Headers @{ Accept = "application/json" } `
+            -TimeoutSec 10
+        $restReady = $true
+        break
+    }
+    catch {
+        if ($attempt -eq $MaxAttempts) { throw }
+        Start-Sleep -Seconds $RetryDelaySeconds
+    }
+}
+Assert-SmokeResult $restReady "Camunda REST API did not become ready."
+
 $deploymentOutput = @(
     & (Join-Path $PSScriptRoot "deploy-workflow.ps1") `
         -BaseUri $BaseUri `

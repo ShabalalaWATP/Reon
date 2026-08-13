@@ -1,6 +1,10 @@
 packages:
   - apps/*
 
+confirmModulesPurge: false
+overrides:
+  "nanoid@<3.3.18": "3.3.18"
+
 minimumReleaseAge: 10080
 minimumReleaseAgeIgnoreMissingTime: false
 minimumReleaseAgeStrict: true
@@ -21,7 +25,8 @@ minimumReleaseAgeExclude:
   - "baseline-browser-mapping@2.11.12"
   - "electron-to-chromium@1.5.401"
   - "knip@6.32.0"
-  - "nanoid@3.3.17"
+  # Security fix for GHSA-2v37-7h3g-55p8, reviewed and pinned exactly.
+  - "nanoid@3.3.18"
   - "node-releases@2.0.52"
   - "typescript-eslint@8.66.0"
   - "unbash@4.0.7"

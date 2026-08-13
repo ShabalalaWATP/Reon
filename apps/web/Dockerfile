@@ -4,7 +4,11 @@ FROM node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a5
 WORKDIR /workspace
 # Install the package manager directly because newer Node.js images do not
 # consistently bundle Corepack and may retain conflicting legacy shims.
-RUN npm install --global pnpm@10.34.5
+RUN npm install --global pnpm@11.21.0 \
+    && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+        /opt/yarn-v1.22.22 \
+    && rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+        /usr/local/bin/yarn /usr/local/bin/yarnpkg
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json apps/web/package.json
 RUN pnpm install --filter @istari-service/web... --frozen-lockfile
