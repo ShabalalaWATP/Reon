@@ -55,7 +55,7 @@ async def test_maintenance_role_can_apply_and_release_legal_hold() -> None:
             role_created = True
             statements = permission_statements("unused_runtime", "unused_backup", role)
             for statement in statements:
-                if f'"{role}"' in statement:
+                if f'"{role}"' in statement and "legal_holds" in statement:
                     await owner.execute(text(statement))
 
         async with engine.connect() as connection:

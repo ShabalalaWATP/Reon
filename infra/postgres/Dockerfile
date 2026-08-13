@@ -13,7 +13,8 @@ RUN apk add --no-cache --virtual .vector-build-deps \
     && make -C /tmp/pgvector OPTFLAGS="" with_llvm=no \
     && make -C /tmp/pgvector install with_llvm=no \
     && mkdir -p /usr/share/doc/pgvector \
-    && cp /tmp/pgvector/LICENSE /tmp/pgvector/README.md /usr/share/doc/pgvector/
+    && cp /tmp/pgvector/LICENSE /tmp/pgvector/README.md /usr/share/doc/pgvector/ \
+    && rm -f /usr/local/bin/gosu
 
 FROM postgres:17.10-alpine3.23@sha256:8189a1f6e40904781fc9e2612687877791d21679866db58b1de996b31fc312e4
 

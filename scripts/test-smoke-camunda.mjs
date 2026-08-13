@@ -37,6 +37,8 @@ assert.match(
   smokeCompose,
   /CAMUNDA_PROCESSINSTANCECREATION_BUSINESSIDUNIQUENESSENABLED:\s*"true"/u,
 );
+assert.match(smokeCompose, /CAMUNDA_HOST_PORT:-18080\}:8080/u);
+assert.match(smokeCompose, /CAMUNDA_MANAGEMENT_HOST_PORT:-19600\}:9600/u);
 
 async function readBody(request) {
   const chunks = [];

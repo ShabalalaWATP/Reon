@@ -14,6 +14,10 @@ const workflowPath = join(
 const workflow = await readFile(workflowPath, "utf8");
 const repositoryRoot = join(scriptDirectory, "..");
 const compose = await readFile(join(repositoryRoot, "docker-compose.yml"), "utf8");
+const postgresDockerfile = await readFile(
+  join(repositoryRoot, "infra", "postgres", "Dockerfile"),
+  "utf8",
+);
 const canary = await readFile(
   join(repositoryRoot, "scripts", "canary-built-containers.sh"),
   "utf8",
@@ -103,6 +107,11 @@ assert.match(
   normalisedWorkflow,
   /timeout-minutes: 45/u,
   "cold container validation needs a conservative measured deadline",
+);
+assert.match(
+  postgresDockerfile,
+  /AS vector-build[\s\S]*?rm -f \/usr\/local\/bin\/gosu[\s\S]*?FROM postgres:/u,
+  "the scanned PostgreSQL builder must remove its unused privilege helper",
 );
 
 for (const required of [
