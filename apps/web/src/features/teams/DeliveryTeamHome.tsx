@@ -51,7 +51,7 @@ export function DeliveryTeamHome({ access, overview, userId }: { access: TeamWor
           {calendar.isError ? <li><InlineUnavailable label="Calendar" /></li> : null}
         </HomeList>
         <HomeList heading="People and current load" link={`/teams/${access.teamId}/people`} linkLabel="Open People">
-          {currentPeople.slice(0, 7).map((item) => <li key={item.membershipId}><strong>{item.displayName}</strong><small>{item.workspacePosition?.toLowerCase() ?? "member"} · {item.activeWorkCount} active work item{item.activeWorkCount === 1 ? "" : "s"}{item.skills.length ? ` · ${item.skills.slice(0, 3).join(", ")}` : ""}</small></li>)}
+          {currentPeople.slice(0, 7).map((item) => <li key={item.membershipId}><strong>{item.displayName}</strong><small>{item.workspacePosition?.toLowerCase() ?? "member"} · {item.activeWorkCount} active work item{item.activeWorkCount === 1 ? "" : "s"}{item.skills?.length ? ` · ${item.skills.slice(0, 3).join(", ")}` : ""}</small></li>)}
           {people.isError ? <li><InlineUnavailable label="People" /></li> : null}
         </HomeList>
       </div>

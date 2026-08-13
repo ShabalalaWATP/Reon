@@ -5,12 +5,15 @@ import type {
   SavedBoardView,
 } from "../../lib/api/boardTypes";
 import type { TeamMember } from "../../lib/api/teamTypes";
+import { profileInitials } from "../profile/profileModel";
 import {
   allBoardColumns,
   boardLabel,
   builtInBoardViews,
   filtersActive,
 } from "./boardPresentation";
+
+const OWNER_STRIP_LIMIT = 12;
 
 type Props = {
   filters: BoardFilters;
@@ -72,6 +75,12 @@ export function BoardToolbar(props: Props) {
         ))}
       </nav>
 
+      <OwnerStrip
+        onSelect={(ownerUserId) => props.onChange({ ...props.filters, ownerUserId })}
+        ownerUserId={props.filters.ownerUserId}
+        people={props.people}
+      />
+
       <div className="board-disclosure-row">
         <details className="board-disclosure">
           <summary>Filters{activeCount ? ` · ${activeCount} active` : ""}</summary>
@@ -126,4 +135,26 @@ export function BoardToolbar(props: Props) {
 
 function SelectFilter({ emptyLabel, label, onChange, options, value }: { emptyLabel: string; label: string; onChange: (value: string) => void; options: string[][]; value: string }) {
   return <label className="form-field">{label}<select onChange={(event) => onChange(event.target.value)} value={value}><option value="">{emptyLabel}</option>{options.map(([key, name]) => <option key={key} value={key}>{name}</option>)}</select></label>;
+}
+
+function OwnerStrip({ onSelect, ownerUserId, people }: { onSelect: (ownerUserId: string | null) => void; ownerUserId: string | null; people: TeamMember[] }) {
+  const current = people.filter((item) => item.state === "CURRENT").slice(0, OWNER_STRIP_LIMIT);
+  if (current.length < 2) return null;
+  return (
+    <nav aria-label="Filter by owner" className="board-owner-strip">
+      <span className="board-owner-strip__label">Owner</span>
+      <button aria-pressed={ownerUserId === null} className="board-owner-strip__all" onClick={() => onSelect(null)} type="button">All</button>
+      {current.map((member) => (
+        <button
+          aria-label={`Show work owned by ${member.displayName}`}
+          aria-pressed={ownerUserId === member.accountId}
+          className="board-owner-strip__person"
+          key={member.membershipId}
+          onClick={() => onSelect(ownerUserId === member.accountId ? null : member.accountId)}
+          title={member.displayName}
+          type="button"
+        >{profileInitials(member.displayName)}</button>
+      ))}
+    </nav>
+  );
 }

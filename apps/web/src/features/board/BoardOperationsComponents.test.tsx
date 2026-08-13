@@ -17,6 +17,7 @@ import {
   filtersActive,
 } from "./boardPresentation";
 import { BoardSurface } from "./BoardSurface";
+import { BoardToolbar } from "./BoardToolbar";
 import { WorkItemInspector } from "./WorkItemInspector";
 
 const emptyBoardFilters: BoardFilters = {
@@ -191,6 +192,7 @@ describe("board operational components", () => {
     const inProgress = screen.getByRole("heading", { name: "In Progress" }).closest(".kanban-column") as HTMLElement;
 
     fireEvent.dragStart(packageCard);
+    expect(screen.getAllByText("Drop here to move")).toHaveLength(2);
     fireEvent.dragOver(inProgress);
     fireEvent.drop(inProgress);
 
@@ -201,6 +203,51 @@ describe("board operational components", () => {
     await user.type(within(dialog).getByLabelText(/^Reason/), "Sources are gathered so this is ready for active work.");
     await user.click(within(dialog).getByRole("button", { name: "Move to In Progress" }));
     expect(move).toHaveBeenCalledWith(packageItem, "IN_PROGRESS", "Sources are gathered so this is ready for active work.");
+  });
+
+  it("moves a work package from the card menu with the same recorded reason", async () => {
+    const move = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    render(<BoardSurface
+      columnCounts={{ READY: 1 }}
+      context={{ packages: [richPackage] }}
+      filteredColumns={[]}
+      items={[packageItem]}
+      mode="board"
+      moving={false}
+      onInspect={vi.fn()}
+      onMove={move}
+      showArchive={false}
+      showExceptions={false}
+      totalCount={1}
+      wipLimits={{}}
+      onShowArchive={vi.fn()}
+      onShowExceptions={vi.fn()}
+    />);
+    const toggle = screen.getByRole("button", { name: "Move Rich work package" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await user.click(toggle);
+    await user.click(screen.getByRole("button", { name: "Move to Blocked" }));
+    const dialog = await screen.findByRole("dialog", { name: "Confirm package move" });
+    await user.type(within(dialog).getByLabelText(/^Reason/), "The dependency is outstanding so this work is blocked.");
+    await user.click(within(dialog).getByRole("button", { name: "Move to Blocked" }));
+    expect(move).toHaveBeenCalledWith(packageItem, "BLOCKED", "The dependency is outstanding so this work is blocked.");
+  });
+
+  it("toggles the owner filter strip between one owner and everyone", async () => {
+    const change = vi.fn();
+    const user = userEvent.setup();
+    const member = (accountId: string, displayName: string) => ({ membershipId: `membership-${accountId}`, accountId, displayName, role: "DELIVERY_SPECIALIST" as const, state: "CURRENT" as const, effectiveFrom: "2026-01-01T00:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, skills: [], startReason: null, endReason: null });
+    const props = { canManage: false, filters: emptyBoardFilters, mode: "board" as const, people: [member("owner-one", "Owner One"), member("owner-two", "Owner Two")], savedViews: [], saving: false, userId: "owner-one", viewName: "", onChange: change, onDeleteView: vi.fn(), onModeChange: vi.fn(), onOpenSettings: vi.fn(), onSaveView: vi.fn(), onViewNameChange: vi.fn() };
+    const view = render(<BoardToolbar {...props} />);
+    await user.click(screen.getByRole("button", { name: "Show work owned by Owner Two" }));
+    expect(change).toHaveBeenLastCalledWith({ ...emptyBoardFilters, ownerUserId: "owner-two" });
+    view.rerender(<BoardToolbar {...props} filters={{ ...emptyBoardFilters, ownerUserId: "owner-two" }} />);
+    expect(screen.getByRole("button", { name: "Show work owned by Owner Two" })).toHaveAttribute("aria-pressed", "true");
+    await user.click(screen.getByRole("button", { name: "Show work owned by Owner Two" }));
+    expect(change).toHaveBeenLastCalledWith({ ...emptyBoardFilters, ownerUserId: null });
+    await user.click(screen.getByRole("button", { name: "All" }));
+    expect(change).toHaveBeenLastCalledWith({ ...emptyBoardFilters, ownerUserId: null });
   });
 
   it("supports drawer cancellation, backdrop close and focus return", () => {

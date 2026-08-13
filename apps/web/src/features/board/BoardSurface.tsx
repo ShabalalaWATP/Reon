@@ -3,8 +3,10 @@ import { useState } from "react";
 import type {
   BoardColumn,
   BoardItem,
+  Iteration,
   WorkPackage,
 } from "../../lib/api/boardTypes";
+import { formatDate } from "../../lib/status";
 import {
   activeBoardColumns,
   archiveBoardColumns,
@@ -12,11 +14,17 @@ import {
   daysInState,
   dueSignal,
   exceptionBoardColumns,
+  stateAgeDays,
 } from "./boardPresentation";
+
+const STALE_AFTER_DAYS = 5;
 
 type Context = {
   packages?: WorkPackage[];
+  iterations?: Iteration[];
 };
+
+type MenuMove = (item: BoardItem, target: BoardColumn) => void;
 
 type DragState = {
   dragging: BoardItem | null;
@@ -28,7 +36,7 @@ type DragState = {
 export function BoardSurface({
   activeColumns = activeBoardColumns,
   ariaLabel = "Team Kanban board",
-  columnCounts,
+  columnCounts = {},
   columnDescriptions = {},
   columnFilterActive = false,
   context,
@@ -88,6 +96,9 @@ export function BoardSurface({
       setDragging(null);
     },
   };
+  const menuMove: MenuMove | undefined = onMove
+    ? (item, target) => setPending({ item, target })
+    : undefined;
   return (
     <div className="board-flow">
       <BoardColumns
@@ -99,6 +110,7 @@ export function BoardSurface({
         drag={drag}
         items={items}
         onInspect={onInspect}
+        onMenuMove={menuMove}
         wipLimits={wipLimits}
       />
       {!customSelection ? (
@@ -119,8 +131,8 @@ export function BoardSurface({
           /> : null}
         </div>
       ) : null}
-      {!customSelection && showExceptions && exceptionColumns.length ? <BoardColumns ariaLabel={`${ariaLabel}, exceptions`} columnCounts={columnCounts} columnDescriptions={columnDescriptions} columns={exceptionColumns} context={context} drag={drag} items={items} onInspect={onInspect} wipLimits={wipLimits} /> : null}
-      {!customSelection && showArchive && archiveColumns.length ? <BoardColumns ariaLabel={`${ariaLabel}, archive`} columnCounts={columnCounts} columnDescriptions={columnDescriptions} columns={archiveColumns} context={context} drag={drag} items={items} onInspect={onInspect} wipLimits={wipLimits} /> : null}
+      {!customSelection && showExceptions && exceptionColumns.length ? <BoardColumns ariaLabel={`${ariaLabel}, exceptions`} columnCounts={columnCounts} columnDescriptions={columnDescriptions} columns={exceptionColumns} context={context} drag={drag} items={items} onInspect={onInspect} onMenuMove={menuMove} wipLimits={wipLimits} /> : null}
+      {!customSelection && showArchive && archiveColumns.length ? <BoardColumns ariaLabel={`${ariaLabel}, archive`} columnCounts={columnCounts} columnDescriptions={columnDescriptions} columns={archiveColumns} context={context} drag={drag} items={items} onInspect={onInspect} onMenuMove={menuMove} wipLimits={wipLimits} /> : null}
       <p className="board-result-note">Showing {items.length} of {totalCount} matching work items. Column totals cover the complete filtered result. {resultNote}</p>
       {pending ? <PackageMoveDialog item={pending.item} moving={moving} onCancel={() => setPending(null)} onConfirm={async (reason) => { await onMove?.(pending.item, pending.target, reason); setPending(null); }} target={pending.target} /> : null}
     </div>
@@ -136,6 +148,7 @@ function BoardColumns({
   drag,
   items,
   onInspect,
+  onMenuMove,
   wipLimits,
 }: {
   ariaLabel: string;
@@ -146,6 +159,7 @@ function BoardColumns({
   drag: DragState;
   items: BoardItem[];
   onInspect: (item: BoardItem) => void;
+  onMenuMove?: MenuMove;
   wipLimits: Record<string, number>;
 }) {
   const [over, setOver] = useState<BoardColumn | null>(null);
@@ -163,18 +177,21 @@ function BoardColumns({
         if (breached) classes.push("kanban-column--breached");
         if (canDrop) classes.push("kanban-column--droppable");
         if (over === column && canDrop) classes.push("kanban-column--over");
+        if (drag.dragging && !canDrop && drag.dragging.column !== column) classes.push("kanban-column--dimmed");
         return (
           <section
             className={classes.join(" ")}
             key={column}
-            onDragLeave={() => setOver((value) => (value === column ? null : value))}
+            onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOver((value) => (value === column ? null : value)); }}
             onDragOver={(event) => { if (canDrop) { event.preventDefault(); setOver(column); } }}
             onDrop={(event) => { if (canDrop) { event.preventDefault(); drag.onDropColumn(column); } setOver(null); }}
           >
             <header><div><h3>{boardLabel(column)}</h3>{columnDescriptions[column] ? <p className="kanban-column__meaning">({columnDescriptions[column]})</p> : null}{limit ? <small>Limit {limit}</small> : null}</div><span aria-label={`${count} total`}>{count}</span></header>
+            {limit ? <span aria-hidden="true" className="kanban-column__meter"><i style={{ width: `${Math.min(100, Math.round((count / limit) * 100))}%` }} /></span> : null}
             {breached ? <p className="kanban-warning" role="status">WIP limit exceeded by {count - limit}</p> : null}
-            {cards.map((item) => <BoardCard context={context} drag={drag} item={item} key={`${item.itemType}-${item.id}`} onInspect={onInspect} />)}
+            {cards.map((item) => <BoardCard context={context} drag={drag} item={item} key={`${item.itemType}-${item.id}`} onInspect={onInspect} onMenuMove={onMenuMove} />)}
             {cards.length === 0 ? <p className="kanban-empty">{canDrop ? "Drop here to move" : "No items on this page."}</p> : null}
+            {canDrop && cards.length > 0 ? <p className="kanban-dropzone">Drop here to move</p> : null}
           </section>
         );
       })}
@@ -182,34 +199,54 @@ function BoardColumns({
   );
 }
 
-function BoardCard({ context, drag, item, onInspect }: { context: Context; drag: DragState; item: BoardItem; onInspect: (item: BoardItem) => void }) {
+function BoardCard({ context, drag, item, onInspect, onMenuMove }: { context: Context; drag: DragState; item: BoardItem; onInspect: (item: BoardItem) => void; onMenuMove?: MenuMove }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const signal = dueSignal(item.dueOn);
   const packageItem = context.packages?.find((value) => value.id === item.id);
+  const iteration = packageItem?.iterationId ? context.iterations?.find((value) => value.id === packageItem.iterationId) : undefined;
   const reserved = packageItem?.reservations.filter((value) => value.status === "ACTIVE").reduce((total, value) => total + value.minutes, 0) ?? 0;
   const draggable = item.itemType === "WORK_PACKAGE" && item.availableColumns.length > 0;
+  const movable = draggable && Boolean(onMenuMove);
+  const stale = stateAgeDays(item.changedAt) >= STALE_AFTER_DAYS && !archiveBoardColumns.includes(item.column);
   const signals = [
     item.itemType === "SERVICE_REQUEST" && item.column === "BLOCKED" ? "Waiting for customer" : null,
     !item.ownerUserId ? "Unassigned" : null,
     reserved ? `${Math.round(reserved / 60 * 10) / 10}h reserved` : null,
+    iteration ? iteration.name : null,
   ].filter((value): value is string => Boolean(value));
   const isDragging = drag.dragging?.id === item.id && drag.dragging.itemType === item.itemType;
   return (
     <article
-      className={`board-card board-card--${signal.tone}${draggable ? " board-card--draggable" : ""}${isDragging ? " board-card--dragging" : ""}`}
+      className={`board-card board-card--${signal.tone}${draggable ? " board-card--draggable" : ""}${movable ? " board-card--actions" : ""}${isDragging ? " board-card--dragging" : ""}`}
       draggable={draggable}
       onDragEnd={draggable ? drag.onDragEnd : undefined}
       onDragStart={draggable ? (event) => { if (event.dataTransfer) event.dataTransfer.effectAllowed = "move"; drag.onDragStart(item); } : undefined}
     >
       {draggable ? <span aria-hidden="true" className="board-card__grip">⠿</span> : null}
+      {movable ? (
+        <div
+          className="board-card__menu"
+          onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setMenuOpen(false); }}
+          onKeyDown={(event) => { if (event.key === "Escape") setMenuOpen(false); }}
+        >
+          <button aria-expanded={menuOpen} aria-label={`Move ${item.title}`} className="board-card__menu-toggle" onClick={() => setMenuOpen((value) => !value)} type="button">⋯</button>
+          {menuOpen ? (
+            <div aria-label={`Move ${item.title} to`} className="board-card__menu-list">
+              {item.availableColumns.map((column) => (
+                <button key={column} onClick={() => { setMenuOpen(false); onMenuMove?.(item, column); }} type="button">Move to {boardLabel(column)}</button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       <button className="board-card__open" onClick={() => onInspect(item)} type="button">
         <span>{item.itemType === "SERVICE_REQUEST" ? "Service request" : "Work package"} · {item.reference}</span>
         <h4>{item.title}</h4>
-        <div className="board-card__meta"><strong>{boardLabel(item.priority)}</strong><span>{signal.label}</span></div>
-        <dl><div><dt>Owner</dt><dd>{item.ownerDisplayName ?? "Unassigned"}</dd></div><div><dt>Due</dt><dd>{item.dueOn}</dd></div></dl>
-        <small>{daysInState(item.changedAt)}</small>
+        <div className="board-card__meta"><strong className={`board-card__priority board-card__priority--${item.priority.toLowerCase()}`}>{boardLabel(item.priority)}</strong><span>{signal.label}</span></div>
+        <dl><div><dt>Owner</dt><dd>{item.ownerDisplayName ?? "Unassigned"}</dd></div><div><dt>Due</dt><dd>{formatDate(item.dueOn)}</dd></div></dl>
+        <small className={stale ? "board-card__age board-card__age--stale" : "board-card__age"}>{daysInState(item.changedAt)}</small>
         {packageItem?.contributors.length ? <p>With {packageItem.contributors.map((value) => value.displayName).join(", ")}</p> : null}
         {signals.length ? <ul className="board-card__signals">{signals.map((value) => <li key={value}>{value}</li>)}</ul> : null}
-        <em>{item.itemType === "WORK_PACKAGE" ? "Inspect or move" : "Inspect work"}</em>
       </button>
     </article>
   );

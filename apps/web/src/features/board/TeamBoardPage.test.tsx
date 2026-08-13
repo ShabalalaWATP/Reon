@@ -19,7 +19,7 @@ const people: TeamMember[] = [
   { membershipId: "ended-membership", accountId: "former", displayName: "Former Analyst", role: "DELIVERY_SPECIALIST", state: "ENDED", effectiveFrom: "2025-01-01T09:00:00Z", effectiveUntil: "2026-01-01T09:00:00Z", version: 2, activeWorkCount: 0, skills: [], startReason: null, endReason: null },
 ];
 const packageItem: WorkPackage = {
-  id: "package-one", teamId: "team-ssg", linkedRequestId: null, iterationId: null,
+  id: "package-one", teamId: "team-ssg", linkedRequestId: null, iterationId: "iteration-active",
   title: "Prepare synthetic product", description: "Complete fictional planning detail.",
   ownerUserId: "analyst-ssg", ownerDisplayName: "Lewis Ferguson",
   contributors: [{ userId: "analyst-ssg", displayName: "Lewis Ferguson" }],
@@ -53,9 +53,12 @@ describe("team workflow board", () => {
     expect(packageBoard).not.toHaveAttribute("open");
     expect(screen.queryByText("Prepare synthetic product")).not.toBeInTheDocument();
     await user.click(screen.getByText("Work package Kanban"));
-    expect(await screen.findByText("Prepare synthetic product")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Prepare synthetic product" })).toBeInTheDocument();
     expect(screen.getByText("Customer request projection")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Quality Review" })).not.toBeInTheDocument();
+
+    expect(screen.getByRole("heading", { name: "Recent internal card activity" }).closest("section")).toHaveTextContent("Work package created.");
+    expect(within(screen.getByRole("heading", { name: "Prepare synthetic product" }).closest("article") as HTMLElement).getByText("Pilot iteration")).toBeInTheDocument();
     const requestCard = screen.getByRole("heading", { name: "Customer request projection" }).closest("article");
     await user.click(within(requestCard as HTMLElement).getByRole("button"));
     expect(await screen.findByRole("dialog", { name: "Work item details" })).toBeInTheDocument();
@@ -92,8 +95,7 @@ describe("team workflow board", () => {
     await user.click(await screen.findByRole("button", { name: "Delete My delivery" }));
     await waitFor(() => expect(calls.some((call) => call.path.includes("saved-views") && call.method === "DELETE")).toBe(true));
 
-    const packageCard = (await screen.findByRole("heading", { name: "Prepare synthetic product" })).closest("article");
-    await user.click(within(packageCard as HTMLElement).getByRole("button"));
+    await user.click(within((await screen.findByRole("heading", { name: "Prepare synthetic product" })).closest("article") as HTMLElement).getByRole("button", { name: /Work package · WP-PACKAGE/ }));
     await user.selectOptions(await screen.findByLabelText(/Move package to/), "IN_PROGRESS");
     await user.type(screen.getByLabelText(/^Reason/), "The package is ready for deliberate delivery work.");
     await user.click(screen.getByRole("button", { name: "Move package" }));
@@ -262,13 +264,12 @@ describe("team workflow board", () => {
     renderApp("/teams/team-ssg/board");
     await screen.findByRole("heading", { name: "Service request board" });
     await user.click(screen.getByText("Work package Kanban"));
-    expect(await screen.findByText("Prepare synthetic product")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Prepare synthetic product" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Board settings" }));
     await user.click(screen.getByRole("button", { name: "Save limits" }));
     expect((await screen.findAllByRole("alert")).some((alert) => alert.textContent?.includes("Planning conflict"))).toBe(true);
     await user.click(screen.getByRole("button", { name: "Close Board settings" }));
-    const packageCard = screen.getByRole("heading", { name: "Prepare synthetic product" }).closest("article");
-    await user.click(within(packageCard as HTMLElement).getByRole("button"));
+    await user.click(within(screen.getByRole("heading", { name: "Prepare synthetic product" }).closest("article") as HTMLElement).getByRole("button", { name: /Work package · WP-PACKAGE/ }));
     await user.selectOptions(screen.getByLabelText(/Move package to/), "IN_PROGRESS");
     await user.type(screen.getByLabelText(/^Reason/), "The package is ready for deliberate delivery work.");
     await user.click(screen.getByRole("button", { name: "Move package" }));
@@ -295,7 +296,7 @@ describe("team workflow board", () => {
     await user.click(screen.getByText("Work package Kanban"));
     expect(await screen.findByRole("heading", { name: "Work package Kanban could not be loaded" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
-    expect(await screen.findByText("Prepare synthetic product")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Prepare synthetic product" })).toBeInTheDocument();
     expect(packageBoardAttempts).toBe(2);
   });
   it("fails closed and recovers all required queries after an outage", async () => {

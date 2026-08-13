@@ -72,10 +72,14 @@ export function boardLabel(value: string) {
     .replace(/(^| )\w/g, (letter) => letter.toUpperCase());
 }
 
-export function daysInState(changedAt: string, now = new Date()) {
+export function stateAgeDays(changedAt: string, now = new Date()) {
   const changed = new Date(changedAt);
   const elapsed = Math.max(0, now.getTime() - changed.getTime());
-  const days = Math.floor(elapsed / 86_400_000);
+  return Math.floor(elapsed / 86_400_000);
+}
+
+export function daysInState(changedAt: string, now = new Date()) {
+  const days = stateAgeDays(changedAt, now);
   return days === 0 ? "Changed today" : `${days} day${days === 1 ? "" : "s"} in state`;
 }
 

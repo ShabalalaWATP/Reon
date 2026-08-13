@@ -5,8 +5,9 @@ import { useSearchParams } from "react-router";
 import { ModalDrawer } from "../../components/ModalDrawer";
 import { PageState } from "../../components/PageState";
 import { boardApi } from "../../lib/api/boardClient";
-import type { BoardColumn, BoardFilters, BoardItem } from "../../lib/api/boardTypes";
+import type { BoardColumn, BoardFilters, BoardItem, WorkPackage } from "../../lib/api/boardTypes";
 import { ApiError, api } from "../../lib/api/client";
+import { formatDate } from "../../lib/status";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import type { TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import type { Session } from "../../lib/api/types";
@@ -214,7 +215,7 @@ function AuthenticatedTeamBoard({ access, session }: { access: TeamWorkspaceAcce
               archiveColumns={archiveBoardColumns}
               columnCounts={packageBoard.data.columnCounts}
               columnFilterActive={filters.columns.length > 0}
-              context={{ packages: packages.data.items }}
+              context={{ packages: packages.data.items, iterations: iterations.data.items }}
               exceptionColumns={[]}
               filteredColumns={filters.columns.filter((column) => [...workPackageBoardColumns, ...archiveBoardColumns].includes(column))}
               items={packageBoard.data.items.filter((item) => item.itemType === "WORK_PACKAGE")}
@@ -232,6 +233,7 @@ function AuthenticatedTeamBoard({ access, session }: { access: TeamWorkspaceAcce
             />
             <BoardPagination ariaLabel="Work package pages" cursors={packageCursors} nextCursor={packageBoard.data.nextCursor} onChange={setPackageCursors} />
             {packageBoard.data.totalCount === 0 ? <PageState kind="empty" title="No work packages match this view">Clear or change the current filters.</PageState> : null}
+            <PackageActivityFeed packages={packages.data.items} />
           </> : null}
         </div>
       </details> : null}
@@ -243,6 +245,27 @@ function AuthenticatedTeamBoard({ access, session }: { access: TeamWorkspaceAcce
       </ModalDrawer>
       <WorkItemInspector access={access} item={selected} moving={move.isPending} onClose={() => setSelected(null)} onMove={(item, target, reason) => move.mutate({ item, target, reason })} packages={packages.data.items} session={session} userId={userId} />
     </div>
+  );
+}
+
+function PackageActivityFeed({ packages }: { packages: WorkPackage[] }) {
+  const recent = packages
+    .flatMap((item) => item.activities.map((activity) => ({ ...activity, packageTitle: item.title })))
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+    .slice(0, 5);
+  if (recent.length === 0) return null;
+  return (
+    <section aria-labelledby="package-activity-title" className="board-activity">
+      <h3 id="package-activity-title">Recent internal card activity</h3>
+      <ol>
+        {recent.map((activity) => (
+          <li key={activity.id}>
+            <time dateTime={activity.createdAt}>{formatDate(activity.createdAt, true)}</time>
+            <div><strong>{activity.packageTitle}</strong><span>{activity.summary} · {activity.actorDisplayName}</span></div>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 
