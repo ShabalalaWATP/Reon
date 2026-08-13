@@ -29,7 +29,12 @@ async def test_maintenance_role_can_apply_and_release_legal_hold() -> None:
                 text(
                     "CREATE TABLE IF NOT EXISTS security_events ("
                     "id uuid PRIMARY KEY, event_type varchar(80) NOT NULL, "
-                    "outcome varchar(20) NOT NULL, reason_code varchar(80) NOT NULL)"
+                    "outcome varchar(20) NOT NULL, actor_user_id uuid, "
+                    "subject_hash varchar(64), source_hash varchar(64), "
+                    "reason_code varchar(80) NOT NULL, correlation_id varchar(80), "
+                    "request_method varchar(10), route_template varchar(160), "
+                    "deduplication_key varchar(64), "
+                    "created_at timestamptz NOT NULL DEFAULT now())"
                 )
             )
             await owner.execute(

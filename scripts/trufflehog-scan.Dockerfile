@@ -11,7 +11,8 @@ RUN /usr/bin/trufflehog git file:///repo \
     --json \
     > /tmp/trufflehog-git.json
 
-FROM node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43 AS gate
+FROM alpine:3.23@sha256:fd791d74b68913cbb027c6546007b3f0d3bc45125f797758156952bc2d6daf40 AS gate
+RUN apk add --no-cache nodejs=24.18.1-r0
 WORKDIR /gate
 COPY scripts/check-trufflehog-findings.mjs scripts/trufflehog-allowlist.json ./
 COPY --from=scan /tmp/trufflehog-git.json ./trufflehog-git.json

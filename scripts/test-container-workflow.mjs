@@ -167,11 +167,20 @@ assert.match(gitleaksDockerfile, /zricethezav\/gitleaks\/v8@v8\.30\.1/u);
 assert.match(gitleaksDockerfile, /golang\.org\/x\/crypto@v0\.52\.0/u);
 assert.match(gitleaksDockerfile, /golang\.org\/x\/text@v0\.39\.0/u);
 
-for (const dockerfile of ["apps/web/Dockerfile", "scripts/trufflehog-scan.Dockerfile"]) {
-  const source = await readFile(join(repositoryRoot, dockerfile), "utf8");
-  assert.match(source, /FROM node:24-alpine@sha256:[a-f0-9]{64}/u);
-  assert.ok(!source.includes("node:25"), `${dockerfile} still uses unsupported Node 25`);
-}
+const webDockerfile = await readFile(join(repositoryRoot, "apps/web/Dockerfile"), "utf8");
+assert.match(webDockerfile, /FROM node:24-alpine@sha256:[a-f0-9]{64}/u);
+assert.ok(!webDockerfile.includes("node:25"), "apps/web/Dockerfile still uses unsupported Node 25");
+
+const trufflehogDockerfile = await readFile(
+  join(repositoryRoot, "scripts/trufflehog-scan.Dockerfile"),
+  "utf8",
+);
+assert.match(trufflehogDockerfile, /FROM alpine:3\.23@sha256:[a-f0-9]{64} AS gate/u);
+assert.match(trufflehogDockerfile, /apk add --no-cache nodejs=24\.18\.1-r0/u);
+assert.ok(
+  !trufflehogDockerfile.includes("FROM node:"),
+  "the TruffleHog gate must not carry npm package metadata",
+);
 for (const required of [
   "trap cleanup EXIT INT TERM",
   "docker network create --internal",
