@@ -2,9 +2,50 @@
   "version": 1,
   "entries": [
     {
-      "fingerprint": "acba305b4b1213d180f7c21caf1bd3ac5b2b4f6153a9aebf5ae3ea910c49d7e6",
-      "expiresOn": "2027-02-09",
-      "reason": "Synthetic negative URL-validation fixture in historical commit b655315; no real host or credential."
+      "fingerprint": "16e2c0c1308275484cf55b24459bc33a1c65ca0ffed637bf24bf03c63896a790",
+      "expiresOn": "2027-02-13",
+      "reason": "Synthetic example.test URL-validation fixture in historical commit 9562c14; no real account or credential."
+    },
+    {
+      "fingerprint": "99a344f919d6a063656d72b9b54562778a05f5b4223c45c9fc72e3438a99a353",
+      "expiresOn": "2027-02-13",
+      "reason": "Synthetic example.test PostgreSQL recovery-policy fixture in historical commit 89532e2."
+    },
+    {
+      "fingerprint": "0cab82a040b055e2f0bea74ecb93c6be5df1b142c6eebf748e7e5f19e0228380",
+      "expiresOn": "2027-02-13",
+      "reason": "Synthetic example.test PostgreSQL recovery-policy fixture in historical commit 89532e2."
+    },
+    {
+      "fingerprint": "6867c958f073e8a0e2e48a6205a207760e6fd51f584389e7d9257582d40958f7",
+      "expiresOn": "2027-02-13",
+      "reason": "Synthetic example.test PostgreSQL recovery-policy fixture in historical commit 89532e2."
+    },
+    {
+      "fingerprint": "5d47b7f3d5901e86e8ba137a82855cf877b3e8f5be5d33556c5329fb2e296349",
+      "expiresOn": "2027-02-13",
+      "reason": "Synthetic parameterised PostgreSQL recovery-policy fixture in historical commit 9562c14."
+    },
+    {
+      "fingerprint": "520939f347f3b56f1915480b3137266fc1b0b33c7037f1d06032612c3e11552f",
+      "expiresOn": "2027-02-13",
+      "reason": "Synthetic example.test PostgreSQL recovery-policy fixture in historical commit 9562c14."
+    },
+    {
+      "fingerprint": "67c07b6049796efcb7406662fa2aca715fca84c82732c1330a75d344094321bc",
+      "expiresOn": "2027-02-13",
+      "reason": "Synthetic example.test PostgreSQL recovery-policy fixture in historical commit 9562c14."
+    },
+    {
+      "fingerprint": "a876676153d60aa617a1ab2dd9c30cc5838aed8a7537f1ffe8474d396288aa55",
+      "expiresOn": "2027-02-13",
+      "reason": "Synthetic example.test PostgreSQL recovery-policy fixture in historical commit 9562c14."
+    },
+    {
+      "fingerprint": "e55b8624d53a7eb4ff5f0d03781ae0d24337073a555624e9690f242bc6042502",
+      "expiresOn": "2027-02-13",
+      "reason": "False-positive Lob detector match on a test function name in historical commit 9562c14.",
+      "allowVerifiedFalsePositive": true
     }
   ]
 }

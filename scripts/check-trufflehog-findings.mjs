@@ -11,12 +11,13 @@ if (!findingsPath || !allowlistPath) {
 
 function fingerprint(finding) {
   const git = finding?.SourceMetadata?.Data?.Git;
+  const raw = finding?.RawV2 || finding?.Raw;
   const fields = [
     git?.commit,
     git?.file,
     String(git?.line ?? ""),
     finding?.DetectorName,
-    finding?.RawV2 ?? finding?.Raw,
+    raw,
   ];
   if (fields.some((value) => !value)) {
     throw new Error("A TruffleHog finding lacks stable Git fingerprint fields.");
@@ -50,7 +51,9 @@ function activeAllowlist(document) {
       !/^[a-f0-9]{64}$/u.test(entry?.fingerprint ?? "") ||
       !/^\d{4}-\d{2}-\d{2}$/u.test(entry?.expiresOn ?? "") ||
       typeof entry?.reason !== "string" ||
-      entry.reason.trim().length < 20
+      entry.reason.trim().length < 20 ||
+      (entry.allowVerifiedFalsePositive !== undefined &&
+        typeof entry.allowVerifiedFalsePositive !== "boolean")
     ) {
       throw new Error("A TruffleHog allow-list entry is incomplete.");
     }
@@ -76,11 +79,12 @@ try {
   const failures = [];
   for (const finding of findings) {
     const id = fingerprint(finding);
-    if (finding.Verified === true) {
+    const exception = approved.get(id);
+    if (finding.Verified === true && !exception?.allowVerifiedFalsePositive) {
       failures.push(`verified secret ${id}`);
       continue;
     }
-    if (!approved.has(id)) {
+    if (!exception) {
       failures.push(`unapproved unknown finding ${id}`);
       continue;
     }

@@ -26,7 +26,7 @@ function idFor(value) {
   const git = value.SourceMetadata.Data.Git;
   return createHash("sha256")
     .update(
-      [git.commit, git.file, String(git.line), value.DetectorName, value.RawV2].join(
+      [git.commit, git.file, String(git.line), value.DetectorName, value.RawV2 || value.Raw].join(
         "|",
       ),
     )
@@ -69,6 +69,12 @@ try {
 
   await write([{ ...finding, Verified: true }], [approved]);
   assert.notEqual(run().status, 0);
+
+  await write(
+    [{ ...finding, Verified: true, Raw: raw, RawV2: "" }],
+    [{ ...approved, allowVerifiedFalsePositive: true }],
+  );
+  assert.equal(run().status, 0);
 
   await write(
     [{ ...finding, SourceMetadata: { Data: { Filesystem: { file: "fixture.ts", line: 4 } } } }],
