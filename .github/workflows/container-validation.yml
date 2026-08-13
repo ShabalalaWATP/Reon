@@ -131,6 +131,9 @@ jobs:
           image-ref: istari-tool-actionlint:ci
           severity: HIGH,CRITICAL
           exit-code: "1"
+          # Built with the newest patched Go release. Only upstream findings
+          # without an available Go fix are excluded from this tool-only scan.
+          ignore-unfixed: true
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: istari-tool-gitleaks:ci

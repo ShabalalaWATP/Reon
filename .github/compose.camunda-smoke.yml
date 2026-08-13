@@ -13,6 +13,13 @@ services:
     ports:
       - "127.0.0.1:${CAMUNDA_HOST_PORT:-18080}:8080"
       - "127.0.0.1:${CAMUNDA_MANAGEMENT_HOST_PORT:-19600}:9600"
+    networks:
+      - data
+      - workflow
+      - smoke-host
     environment:
       JAVA_TOOL_OPTIONS: -Xms512m -Xmx3g
       CAMUNDA_PROCESSINSTANCECREATION_BUSINESSIDUNIQUENESSENABLED: "true"
+
+networks:
+  smoke-host: {}

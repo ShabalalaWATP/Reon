@@ -39,6 +39,12 @@ assert.match(
 );
 assert.match(smokeCompose, /CAMUNDA_HOST_PORT:-18080\}:8080/u);
 assert.match(smokeCompose, /CAMUNDA_MANAGEMENT_HOST_PORT:-19600\}:9600/u);
+assert.match(
+  smokeCompose,
+  /orchestration:[\s\S]*networks:\s*\n\s*- data\s*\n\s*- workflow\s*\n\s*- smoke-host/u,
+  "the CI smoke service must retain internal networks and add a host-reachable network",
+);
+assert.match(smokeCompose, /networks:\s*\n\s*smoke-host: \{\}/u);
 
 async function readBody(request) {
   const chunks = [];

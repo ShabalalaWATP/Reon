@@ -143,6 +143,17 @@ for (const dockerfile of [
   );
 }
 
+const actionlintDockerfile = await readFile(
+  join(repositoryRoot, "scripts/actionlint.Dockerfile"),
+  "utf8",
+);
+assert.match(actionlintDockerfile, /FROM golang:1\.26\.5-alpine3\.23@sha256:/u);
+assert.match(
+  actionlintDockerfile,
+  /go install github\.com\/rhysd\/actionlint\/cmd\/actionlint@v1\.7\.12/u,
+);
+assert.match(actionlintDockerfile, /FROM alpine:3\.23@sha256:/u);
+
 for (const dockerfile of ["apps/web/Dockerfile", "scripts/trufflehog-scan.Dockerfile"]) {
   const source = await readFile(join(repositoryRoot, dockerfile), "utf8");
   assert.match(source, /FROM node:24-alpine@sha256:[a-f0-9]{64}/u);
