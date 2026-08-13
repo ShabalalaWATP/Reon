@@ -11,6 +11,7 @@ from istari_service.domain import Actor
 from istari_service.models import ServiceRequest, User
 from istari_service.organisation_models import RequestRouteSelection
 from istari_service.product_types import ProductRequestRecord
+from istari_service.repositories.request_participants import active_participant_ids
 
 
 class ProductRequestRepositoryMixin:
@@ -48,6 +49,7 @@ class ProductRequestRepositoryMixin:
             assigned_team_id=request.assigned_delivery_team_id,
             assigned_specialist_id=request.assigned_specialist_id,
             version=request.version,
+            participant_ids=await active_participant_ids(self.session, request.id),
         )
 
     async def active_actor(self, actor: Actor) -> bool:

@@ -105,6 +105,14 @@ function RequestContext({ detail, error, item, loading, onRetry, session }: {
   onRetry: () => void;
   session: Session;
 }) {
+  const assignedToCurrentUser = item.assignedToCurrentUser || item.assigneeId === session.user.id;
+  if (assignedToCurrentUser) {
+    if (loading) return <PageState kind="loading" title="Loading request context" />;
+    if (error) {
+      return <PageState action={<button className="button" onClick={onRetry}>Try again</button>} kind="error" title="Request context could not be loaded" />;
+    }
+    return detail ? <RequestOverview request={detail} /> : null;
+  }
   if (!item.assigneeId) {
     return session.user.role === "DELIVERY_SPECIALIST"
       ? <PageState kind="empty" title="Manager assignment required">This request must be assigned to you by a Team Manager.</PageState>
@@ -113,9 +121,5 @@ function RequestContext({ detail, error, item, loading, onRetry, session }: {
   if (item.assigneeId !== session.user.id) {
     return <PageState kind="empty" title="Request context restricted">Only the current owner can view this request.</PageState>;
   }
-  if (loading) return <PageState kind="loading" title="Loading request context" />;
-  if (error) {
-    return <PageState action={<button className="button" onClick={onRetry}>Try again</button>} kind="error" title="Request context could not be loaded" />;
-  }
-  return detail ? <RequestOverview request={detail} /> : null;
+  return null;
 }

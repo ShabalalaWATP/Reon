@@ -17,6 +17,8 @@ export type WorkItem = {
   assigneeDisplayName: string | null;
   deliveryTeam: string | null;
   availableActions: WorkAction["action"][];
+  assignedToCurrentUser?: boolean;
+  assignmentRole?: "LEAD_ANALYST" | "ANALYST" | null;
   createdAt: string;
   updatedAt: string;
 };

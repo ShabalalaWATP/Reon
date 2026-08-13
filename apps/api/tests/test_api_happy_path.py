@@ -147,11 +147,44 @@ async def test_complete_representative_workflow_and_feedback(
         },
     ]
 
+    contributor_work = (await harness.client.get("/api/v1/work-items")).json()[
+        "items"
+    ]
+    assert len(contributor_work) == 1
+    assert contributor_work[0]["assigneeId"] == str(specialist_id)
+    assert contributor_work[0]["assignedToCurrentUser"] is True
+    assert contributor_work[0]["assignmentRole"] == "ANALYST"
+    assert contributor_work[0]["availableActions"] == [
+        "submit",
+        "request_clarification",
+    ]
+    contributor_actions = (await harness.client.get("/api/v1/me/actions")).json()
+    assert contributor_actions["counts"]["needsMyAction"] == 1
+    assert contributor_actions["items"][0]["reference"] == created.json()["reference"]
+    assert contributor_actions["items"][0]["deepLink"] == (
+        f"/delivery/my-work?requestId={request_id}"
+    )
+
+    ben_actions = await harness.login("admin13")
+    assert ben_actions["user"]["displayName"] == "Ben Doak"
+    ben_workspace = (await harness.client.get("/api/v1/me/actions")).json()
+    assert ben_workspace["counts"]["needsMyAction"] == 1
+    assert ben_workspace["items"][0]["actionAccess"] == "PERSONAL"
+
     specialist_session = await harness.login("admin11")
     assert specialist_session["user"]["scope"] == "SSG Team"
     assert "SSG_TEAM" not in str(specialist_session)
+    lead_item = await _claim_current(harness)
+    assert lead_item["assigneeId"] == str(specialist_id)
+    assert lead_item["assignedToCurrentUser"] is True
+    assert lead_item["assignmentRole"] == "LEAD_ANALYST"
+
+    ben_session = await harness.login("admin13")
+    assert ben_session["user"]["displayName"] == "Ben Doak"
     item = await _claim_current(harness)
     assert item["assigneeId"] == str(specialist_id)
+    assert item["assignedToCurrentUser"] is True
+    assert item["assignmentRole"] == "ANALYST"
     transport = harness.client._transport
     app = transport.app  # type: ignore[attr-defined]
     runtime: ProductRuntime = app.state.product_runtime

@@ -26,6 +26,7 @@ from istari_service.models import (
 )
 from istari_service.organisation_models import RequestRouteSelection
 from istari_service.repositories.actions import SqlAlchemyActionRepository
+from istari_service.repositories.request_participants import active_participant_ids
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,8 +106,17 @@ async def project_request_action(
             deep_link=_action_link(request, audience),
             projected_at=projected_at,
         )
-    waiting = waiting_analyst(request)
-    if waiting is not None:
+    waiting_ids = (
+        set(await active_participant_ids(session, request.id))
+        if request.status is RequestStatus.CUSTOMER_INFORMATION_REQUIRED
+        else set()
+    )
+    if (
+        request.status is RequestStatus.CUSTOMER_INFORMATION_REQUIRED
+        and request.assigned_specialist_id is not None
+    ):
+        waiting_ids.add(request.assigned_specialist_id)
+    for waiting in waiting_ids:
         key = f"request:{request.id}:waiting:{waiting}"
         active_keys.append(key)
         await actions.project_action(
@@ -168,16 +178,17 @@ async def action_audiences(
             )
         ]
     if status in {RequestStatus.IN_PROGRESS, RequestStatus.REWORK_REQUIRED}:
-        return (
-            [
-                ActionAudience(
-                    recipient_user_id=request.assigned_specialist_id,
-                    recipient_role=UserRole.DELIVERY_SPECIALIST,
-                )
-            ]
-            if request.assigned_specialist_id
-            else []
-        )
+        participant_ids = set(await active_participant_ids(session, request.id))
+        if request.assigned_specialist_id is not None:
+            participant_ids.add(request.assigned_specialist_id)
+        return [
+            ActionAudience(
+                recipient_user_id=user_id,
+                recipient_role=UserRole.DELIVERY_SPECIALIST,
+                suffix=f"analyst:{user_id}",
+            )
+            for user_id in sorted(participant_ids, key=str)
+        ]
     if status in {RequestStatus.QUALITY_REVIEW, RequestStatus.READY_FOR_RELEASE}:
         assignee_id = await _active_assignee(
             session, request.id, UserRole.QUALITY_RELEASE

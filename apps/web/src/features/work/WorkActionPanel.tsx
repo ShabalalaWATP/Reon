@@ -33,13 +33,14 @@ export function WorkActionPanel({
   specialistOptions,
 }: Props) {
   const [collapsed, setCollapsed] = useState(false);
-  if (!item.assigneeId) {
+  const assignedToCurrentUser = item.assignedToCurrentUser || item.assigneeId === currentUserId;
+  if (!assignedToCurrentUser && !item.assigneeId) {
     if (!claimAllowed) {
       return <section className="action-panel"><h2>Manager assignment required</h2><p>A Team Manager must assign this request before an Analyst can work on it.</p></section>;
     }
     return <section className="action-panel"><h2>Take ownership</h2><p>Claim this item before recording a decision.</p><button className="button button--primary" disabled={disabled} onClick={onClaim} type="button">{disabled ? "Claiming…" : "Claim work item"}</button></section>;
   }
-  if (item.assigneeId !== currentUserId) {
+  if (!assignedToCurrentUser) {
     return <section className="action-panel"><h2>Assigned to {item.assigneeDisplayName ?? "another team member"}</h2><p>This item can only be completed by its current owner.</p></section>;
   }
   const bodyId = `action-panel-body-${item.id}`;

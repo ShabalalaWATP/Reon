@@ -1,5 +1,7 @@
 """Presentation mapping for persisted work-queue records."""
 
+from uuid import UUID
+
 from istari_service.domain import WorkRecord
 from istari_service.models import (
     ServiceRequest,
@@ -18,6 +20,8 @@ def build_work_bundle(
     task: WorkflowTask,
     request: ServiceRequest,
     instance: WorkflowInstance,
+    *,
+    participant_ids: frozenset[UUID] = frozenset(),
 ) -> WorkBundle:
     """Map one persisted task and request to the application work bundle."""
     process_key = instance.process_instance_key
@@ -25,7 +29,7 @@ def build_work_bundle(
         raise ValueError("active work requires a process instance key")
     record = WorkRecord(
         id=task.id,
-        request=record_from_request(request),
+        request=record_from_request(request, participant_ids),
         engine_task_key=task.task_key,
         process_instance_key=process_key,
         element_id=task.element_id,
@@ -51,6 +55,8 @@ def build_work_bundle(
             and request.assigned_delivery_team_id is None
         )
         else [],
+        assigned_to_current_user=False,
+        assignment_role=None,
         created_at=task.created_at,
         updated_at=task.updated_at,
     )

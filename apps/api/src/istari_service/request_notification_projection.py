@@ -118,9 +118,11 @@ async def recipient_rules_for(
             "MANAGER_REVIEW_RETURNED",
             "QC_REVIEW_RETURNED",
         }
-        and request.assigned_specialist_id
     ):
-        return [_assignee_rule(request)]
+        participant_ids = set(await active_participant_ids(session, request.id))
+        if request.assigned_specialist_id is not None:
+            participant_ids.add(request.assigned_specialist_id)
+        return [_participant_rule(user_id) for user_id in participant_ids]
     rules: list[RecipientRule] = []
     for audience in await action_audiences(session, request):
         if audience.recipient_user_id is not None:

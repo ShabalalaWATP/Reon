@@ -105,6 +105,7 @@ class ProductRequestRecord:
     assigned_specialist_id: UUID | None
     version: int
     assigned_team_id: UUID | None = None
+    participant_ids: frozenset[UUID] = frozenset()
 
 
 @dataclass(frozen=True, slots=True)

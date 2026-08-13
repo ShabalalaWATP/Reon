@@ -176,7 +176,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | A routing Manager assigns or approves work outside the human-led route | Routing workspace capabilities exclude ticket assignment; the user must claim the Camunda task before recording a routing decision. |
 | A Delivery Manager assigns an outsider or expired member | Assignment locks the request and resolves every participant against current exact-team membership at the command time. |
 | An Analyst claims an unassigned production task instead of receiving a Manager assignment | Restrict claim commands to the explicit shared-decision role allowlist, exclude open Analyst tasks from projections and require Camunda production tasks to name the Manager-selected Lead Analyst. |
-| Several Analysts produce conflicting workflow outcomes | One Lead remains the Camunda assignee; Contributors cannot complete the parent workflow task. |
+| Several assigned Analysts produce conflicting workflow outcomes | All active assigned Analysts share production authority, but one locked request version and one shared Camunda task produce a single winner; stale or later outcomes fail closed. |
 | Concurrent handovers leave PostgreSQL and Camunda with different Leads | Optimistic request and participation versions select one winner; durable fenced commands reconcile Camunda and retain prior state. |
 | Removing membership leaves request or cache access behind | Active leadership, participation and reservations require handover; membership and assignment mutations invalidate user-scoped protected caches. |
 | A local Manager promotes a peer or crosses a unit boundary | Local administration accepts only compatible Member accounts in the exact unit; Manager appointment and global identity changes remain Platform Administrator actions. |
@@ -248,6 +248,9 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 - Engine outage, database rollback, outbox retry and duplicate-command tests.
 - Analyst clarification scope, repeated-loop, same-assignment, competing-open and
   process-version tests.
+- Lead and additional Analyst parity tests proving active roster membership at
+  list, detail, intent, dispatch, product and clarification boundaries, plus
+  immediate denial after assignment or team membership ends.
 - Action-source, stale-state, pagination and cross-scope deep-link tests proving
   that action projections cannot change workflow state directly.
 - Notification event-recipient, replay, content-minimisation, revoked-access,

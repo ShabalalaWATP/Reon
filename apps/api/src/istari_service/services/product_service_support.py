@@ -80,7 +80,7 @@ class ProductServiceSupport:
             package.status is not PackageStatus.DRAFT
             or package.author_user_id != actor.id
             or actor.role is not UserRole.DELIVERY_SPECIALIST
-            or request.assigned_specialist_id != actor.id
+            or not ProductServiceSupport._assigned_analyst(actor, request)
             or not ProductServiceSupport._assigned_team(actor, request)
             or request.status
             not in {
@@ -95,6 +95,12 @@ class ProductServiceSupport:
         if request.assigned_team_id is not None:
             return request.assigned_team_id in actor.organisation_unit_ids
         return request.assigned_team == actor.scope
+
+    @staticmethod
+    def _assigned_analyst(actor: Actor, request: ProductRequestRecord) -> bool:
+        return request.assigned_specialist_id == actor.id or (
+            actor.id in request.participant_ids
+        )
 
     async def _authorised_package(
         self, actor: Actor, package_id: UUID, *, lock: bool

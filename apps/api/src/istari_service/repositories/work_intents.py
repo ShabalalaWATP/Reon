@@ -15,6 +15,7 @@ from istari_service.models import (
     ServiceRequest,
     WorkflowOutbox,
     WorkflowTaskStatus,
+    UserRole,
 )
 from istari_service.models import WorkflowTask as StoredWorkflowTask
 from istari_service.policies import can_access_work, may_complete
@@ -22,6 +23,8 @@ from istari_service.repositories.organisation import (
     has_route_membership,
     resolve_routing_selection,
 )
+from istari_service.repositories.request_participants import active_participant_ids
+from istari_service.repositories.requests import record_from_request
 from istari_service.repositories.work_actions import validate_work_effect
 from istari_service.schemas.work import CompletionPayload
 from istari_service.work_command_types import (
@@ -72,10 +75,16 @@ async def prepare_completion_intent(
 ) -> UUID:
     task, request = await _locked_state(session, work)
     action = WorkflowAction(payload.action)
+    participant_ids = frozenset({actor.id})
+    if (
+        actor.role is UserRole.DELIVERY_SPECIALIST
+        and task.assignee_user_id != actor.id
+    ):
+        participant_ids = await active_participant_ids(session, request.id)
+    request_record = record_from_request(request, participant_ids)
     if (
         task.status is not WorkflowTaskStatus.CLAIMED
-        or task.assignee_user_id != actor.id
-        or not may_complete(actor, request, action.value, task.assignee_user_id)
+        or not may_complete(actor, request_record, action.value, task.assignee_user_id)
         or not await has_route_membership(session, actor, request.id)
     ):
         raise InvalidAction()

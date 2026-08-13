@@ -53,7 +53,11 @@ function QueueRow({
   onSelect: () => void;
   selected: boolean;
 }) {
-  const ownership = !item.assigneeId
+  const assignedToCurrentUser = Boolean(item.assignedToCurrentUser) || item.assigneeId === currentUserId;
+  const analystLabel = item.assignmentRole === "LEAD_ANALYST" ? "Lead Analyst" : "Assigned Analyst";
+  const ownership = assignedToCurrentUser
+    ? `Assigned to you${item.assignmentRole ? ` · ${analystLabel}` : ""}`
+    : !item.assigneeId
     ? "Available"
     : item.assigneeId === currentUserId
       ? "Assigned to you"

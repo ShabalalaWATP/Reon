@@ -16,8 +16,8 @@ export function RequestOverview({ request }: { request: RequestDetail }) {
         <div><dt>Product format</dt><dd>{request.preferredDeliverableType}</dd></div>
         <div><dt>Current owner</dt><dd>{request.currentOwner ?? "Awaiting assignment"}</dd></div>
         <div><dt>Assigned team</dt><dd>{request.assignedDeliveryTeam ?? "Not allocated"}</dd></div>
-        <div><dt>Lead Analyst</dt><dd>{request.assignedSpecialist?.displayName ?? "Not assigned"}</dd></div>
-        <div><dt>Contributors</dt><dd>{request.contributors.length ? request.contributors.map((item) => item.displayName).join(", ") : "None assigned"}</dd></div>
+        <div><dt>Lead Analyst</dt><dd>{request.assignedSpecialist?.displayName ?? "Not assigned"}<small>Same working controls as every assigned Analyst</small></dd></div>
+        <div><dt>Assigned Analysts</dt><dd>{request.contributors.length ? request.contributors.map((item) => item.displayName).join(", ") : "No additional Analysts"}</dd></div>
         <div><dt>Sensitivity</dt><dd>{request.sensitivity.toLowerCase()}</dd></div>
         <div><dt>Service age</dt><dd>{completed ? elapsedTime(request.createdAt, new Date(request.updatedAt)) : elapsedTime(request.createdAt)}</dd></div>
         <div><dt>{completed ? "Service completed" : "With current owner"}</dt><dd>{completed ? formatDate(request.updatedAt, true) : elapsedTime(request.updatedAt)}</dd></div>

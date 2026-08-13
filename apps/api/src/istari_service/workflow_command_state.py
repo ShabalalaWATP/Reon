@@ -24,6 +24,7 @@ from istari_service.repositories.organisation import (
     resolve_routing_selection,
 )
 from istari_service.repositories.requests import record_from_request
+from istari_service.repositories.request_participants import active_participant_ids
 from istari_service.repositories.work_actions import validate_work_effect
 from istari_service.schemas.work import AssignSpecialist
 from istari_service.work_command_types import PendingWorkCommand, WorkCommandType
@@ -73,7 +74,10 @@ async def validated_command_state(
         or task.task_key != command.task_key
         or task.element_id != command.element_id
         or task.status is not expected_task_status
-        or task.assignee_user_id != user.id
+        or (
+            task.assignee_user_id != user.id
+            and user.role is not UserRole.DELIVERY_SPECIALIST
+        )
         or task.candidate_role is not user.role
         or task.expected_status is not request.status
         or request.status is not command.request_status
@@ -82,13 +86,16 @@ async def validated_command_state(
     ):
         raise InvalidAction()
     actor = await actor_from_user_with_memberships(session, user)
-    if not can_access_work(actor, request) or not await has_route_membership(
+    request_record = record_from_request(
+        request, await active_participant_ids(session, request.id)
+    )
+    if not can_access_work(actor, request_record) or not await has_route_membership(
         session, actor, request.id, lock=True
     ):
         raise InvalidAction()
     work = WorkRecord(
         id=task.id,
-        request=record_from_request(request),
+        request=request_record,
         engine_task_key=task.task_key,
         process_instance_key=command.process_instance_key,
         element_id=task.element_id,
@@ -98,7 +105,7 @@ async def validated_command_state(
     )
     if command.completion is not None:
         action = WorkflowAction(command.completion.action)
-        if not may_complete(actor, request, action.value, task.assignee_user_id):
+        if not may_complete(actor, request_record, action.value, task.assignee_user_id):
             raise InvalidAction()
         await _validate_assignment(session, request, command)
         resolved_routing = await resolve_routing_selection(

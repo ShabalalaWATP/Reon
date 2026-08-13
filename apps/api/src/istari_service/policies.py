@@ -52,6 +52,9 @@ class RequestLike(Protocol):
     @property
     def assigned_specialist_id(self) -> UUID | None: ...
 
+    @property
+    def participant_ids(self) -> frozenset[UUID]: ...
+
 
 class WorkLike(Protocol):
     @property
@@ -144,7 +147,9 @@ def is_object_scoped(actor: ActorLike, request: RequestLike) -> bool:
             else request.assigned_delivery_team == actor.scope
         )
     if actor.role == UserRole.DELIVERY_SPECIALIST:
-        return request.assigned_specialist_id == actor.id
+        return actor.id in getattr(request, "participant_ids", frozenset()) or (
+            request.assigned_specialist_id == actor.id
+        )
     return actor.role in {
         UserRole.INTAKE_TRIAGE,
         UserRole.SERVICE_COORDINATION,
@@ -272,7 +277,10 @@ def decide_work_access(
     if work.task_status is WorkflowTaskStatus.OPEN:
         visible = work.assignee_id is None and may_claim(actor, work.request)
     else:
-        visible = work.assignee_id == actor.id
+        visible = work.assignee_id == actor.id or (
+            actor.role is UserRole.DELIVERY_SPECIALIST
+            and actor.id in getattr(work.request, "participant_ids", frozenset())
+        )
     if not visible:
         return deny(PolicyDenial.ASSIGNMENT)
     if operation in {WorkOperation.VIEW, WorkOperation.COMPLETE}:
@@ -306,7 +314,11 @@ def decide_work_completion(
 
     if not can_access_work(actor, request):
         return deny(PolicyDenial.OBJECT_SCOPE)
-    if assignee_id != actor.id:
+    shared_analyst_assignment = (
+        actor.role is UserRole.DELIVERY_SPECIALIST
+        and actor.id in getattr(request, "participant_ids", frozenset())
+    )
+    if assignee_id != actor.id and not shared_analyst_assignment:
         return deny(PolicyDenial.ASSIGNMENT)
     return (
         ALLOW

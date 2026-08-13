@@ -23,6 +23,7 @@ from istari_service.operational_analytics_projection import (
     project_notification_response_fact,
 )
 from istari_service.organisation_models import RequestRouteSelection
+from istari_service.request_participant_models import RequestParticipant
 from istari_service.repositories.projection_pagination import (
     decode_cursor,
     encode_cursor,
@@ -243,6 +244,11 @@ def _access_condition(actor: Actor) -> ColumnElement[bool]:
             exists().where(
                 ServiceRequest.id == NotificationEvent.request_id,
                 ServiceRequest.assigned_specialist_id == actor.id,
+            ),
+            exists().where(
+                RequestParticipant.request_id == NotificationEvent.request_id,
+                RequestParticipant.user_id == actor.id,
+                RequestParticipant.ended_at.is_(None),
             ),
             exists().where(
                 WorkflowTask.request_id == NotificationEvent.request_id,

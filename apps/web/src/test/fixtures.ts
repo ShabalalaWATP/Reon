@@ -135,6 +135,8 @@ export const workItem: WorkItem = {
   assigneeDisplayName: null,
   deliveryTeam: null,
   availableActions: ["request_information", "progress", "close"],
+  assignedToCurrentUser: false,
+  assignmentRole: null,
   createdAt: "2026-08-06T09:01:00Z",
   updatedAt: "2026-08-06T09:02:00Z",
 };

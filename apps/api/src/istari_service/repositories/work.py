@@ -144,7 +144,16 @@ class SqlAlchemyWorkRepository(WorkStaffingRepositoryMixin):
         ).all()
         page = rows[:limit]
         items = [
-            build_work_bundle(task, request, instance)
+            build_work_bundle(
+                task,
+                request,
+                instance,
+                participant_ids=(
+                    frozenset({actor.id})
+                    if actor.role is UserRole.DELIVERY_SPECIALIST
+                    else frozenset()
+                ),
+            )
             for task, request, instance in page
             if instance.process_instance_key is not None
         ]
@@ -177,7 +186,14 @@ class SqlAlchemyWorkRepository(WorkStaffingRepositoryMixin):
         ).one_or_none()
         if row is None or row[2].process_instance_key is None:
             return None
-        return build_work_bundle(*row)
+        return build_work_bundle(
+            *row,
+            participant_ids=(
+                frozenset({actor.id})
+                if actor is not None and actor.role is UserRole.DELIVERY_SPECIALIST
+                else frozenset()
+            ),
+        )
 
     async def routing_options(
         self,
@@ -258,7 +274,10 @@ class SqlAlchemyWorkRepository(WorkStaffingRepositoryMixin):
             or request is None
             or instance is None
             or task.status != WorkflowTaskStatus.COMPLETION_PENDING
-            or task.assignee_user_id != actor.id
+            or (
+                task.assignee_user_id != actor.id
+                and actor.id not in work.request.participant_ids
+            )
             or request.status != work.request.status
             or request.version != work.request.version
         ):

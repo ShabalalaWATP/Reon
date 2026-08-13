@@ -183,6 +183,8 @@ class WorkItem(ApiModel):
     assignee_display_name: str | None
     delivery_team: str | None
     available_actions: list[str]
+    assigned_to_current_user: bool = False
+    assignment_role: Literal["LEAD_ANALYST", "ANALYST"] | None = None
     created_at: datetime
     updated_at: datetime
 

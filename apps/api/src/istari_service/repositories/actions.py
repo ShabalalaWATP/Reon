@@ -30,6 +30,7 @@ from istari_service.repositories.projection_pagination import (
     decode_cursor,
     encode_cursor,
 )
+from istari_service.request_participant_models import RequestParticipant
 from istari_service.schemas.actions import (
     ActionFilters,
     SavedActionViewCommand,
@@ -291,9 +292,17 @@ def _direct_request_access(actor: Actor) -> ColumnElement[bool]:
             ServiceRequest.requester_id == actor.id,
         )
     elif actor.role is UserRole.DELIVERY_SPECIALIST:
+        participant = exists().where(
+            RequestParticipant.request_id == ActionProjection.request_id,
+            RequestParticipant.user_id == actor.id,
+            RequestParticipant.ended_at.is_(None),
+        )
         access = exists().where(
             ServiceRequest.id == ActionProjection.request_id,
-            ServiceRequest.assigned_specialist_id == actor.id,
+            or_(
+                ServiceRequest.assigned_specialist_id == actor.id,
+                participant,
+            ),
         )
     else:
         access = exists().where(

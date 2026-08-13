@@ -74,11 +74,16 @@ export function StaffQueuePage({
     selected.availableActions.includes(selectedAction.action)
       ? selectedAction.action
       : selected?.availableActions[0];
+  const selectedIsAssigned = Boolean(
+    selected && session && (
+      selected.assignedToCurrentUser || selected.assigneeId === session.user.id
+    ),
+  );
   const shouldLoadEligibleSpecialists = Boolean(
     selected &&
     session &&
     selected.stage === "DELIVERY_PLANNING" &&
-    selected.assigneeId === session.user.id &&
+    selectedIsAssigned &&
     activeAction === "assign",
   );
   const eligibleSpecialistsQuery = useQuery({
@@ -89,11 +94,11 @@ export function StaffQueuePage({
   const shouldLoadRoutingOptions = Boolean(
     selected &&
     session &&
-    selected.assigneeId === session.user.id &&
+    selectedIsAssigned &&
     actionRequiresDestination(activeAction),
   );
   const canLoadDetail = Boolean(
-    selected && session && selected.assigneeId === session.user.id,
+    selectedIsAssigned,
   );
   const routingOptionsQuery = useQuery({
     queryKey: protectedQueryKeys.routingOptions(userId, selected?.id),

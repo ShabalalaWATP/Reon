@@ -93,7 +93,7 @@ class ProductService(ProductUploadOperations, ProductReleaseOperations):
             request is None
             or not await self._repository.active_actor(actor)
             or actor.role is not UserRole.DELIVERY_SPECIALIST
-            or request.assigned_specialist_id != actor.id
+            or not self._assigned_analyst(actor, request)
             or not self._assigned_team(actor, request)
             or request.status
             not in {
@@ -111,11 +111,17 @@ class ProductService(ProductUploadOperations, ProductReleaseOperations):
             (
                 actor.role is UserRole.DELIVERY_SPECIALIST
                 and package.author_user_id == actor.id
-                and request.assigned_specialist_id == actor.id
+                and self._assigned_analyst(actor, request)
             )
             or (
                 actor.role is UserRole.DELIVERY_TEAM_LEAD
                 and self._assigned_team(actor, request)
             )
             or actor.role is UserRole.QUALITY_RELEASE
+        )
+
+    @staticmethod
+    def _assigned_analyst(actor: Actor, request: ProductRequestRecord) -> bool:
+        return request.assigned_specialist_id == actor.id or (
+            actor.id in request.participant_ids
         )

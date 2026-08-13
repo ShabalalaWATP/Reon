@@ -315,10 +315,28 @@ class WorkService:
 
     @staticmethod
     def _with_actions(actor: Actor, bundle: WorkBundle) -> WorkItem:
+        assigned_to_actor = bundle.record.assignee_id == actor.id or (
+            actor.role is UserRole.DELIVERY_SPECIALIST
+            and actor.id in bundle.record.request.participant_ids
+        )
         actions = (
             list(allowed_actions(actor, bundle.record.request))
             if bundle.record.task_status is WorkflowTaskStatus.CLAIMED
-            and bundle.record.assignee_id == actor.id
+            and assigned_to_actor
             else []
         )
-        return bundle.view.model_copy(update={"available_actions": actions})
+        return bundle.view.model_copy(
+            update={
+                "available_actions": actions,
+                "assigned_to_current_user": assigned_to_actor,
+                "assignment_role": (
+                    "LEAD_ANALYST"
+                    if actor.role is UserRole.DELIVERY_SPECIALIST
+                    and bundle.record.request.assigned_specialist_id == actor.id
+                    else "ANALYST"
+                    if actor.role is UserRole.DELIVERY_SPECIALIST
+                    and actor.id in bundle.record.request.participant_ids
+                    else None
+                ),
+            }
+        )
