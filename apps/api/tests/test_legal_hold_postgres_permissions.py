@@ -60,7 +60,15 @@ async def test_maintenance_role_can_apply_and_release_legal_hold() -> None:
             role_created = True
             statements = permission_statements("unused_runtime", "unused_backup", role)
             for statement in statements:
-                if f'"{role}"' in statement and "legal_holds" in statement:
+                maintenance_grant = f'"{role}"' in statement and any(
+                    grant in statement
+                    for grant in (
+                        "GRANT USAGE ON SCHEMA",
+                        "GRANT SELECT ON ALL TABLES",
+                        "legal_holds",
+                    )
+                )
+                if maintenance_grant:
                     await owner.execute(text(statement))
 
         async with engine.connect() as connection:
