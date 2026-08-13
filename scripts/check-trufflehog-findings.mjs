@@ -78,11 +78,11 @@ try {
     const id = fingerprint(finding);
     const exception = approved.get(id);
     if (finding.Verified === true && !exception?.allowVerifiedFalsePositive) {
-      failures.push(`verified secret ${id}`);
+      failures.push(`verified secret ${id} (${finding.DetectorName} ${gitLocation(finding)})`);
       continue;
     }
     if (!exception) {
-      failures.push(`unapproved unknown finding ${id}`);
+      failures.push(`unapproved unknown finding ${id} (${finding.DetectorName} ${gitLocation(finding)})`);
       continue;
     }
     observed.add(id);
@@ -101,4 +101,9 @@ try {
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
+}
+
+function gitLocation(finding) {
+  const git = finding?.SourceMetadata?.Data?.Git;
+  return `${git?.commit ?? "missing-commit"}:${git?.file ?? "missing-file"}`;
 }
