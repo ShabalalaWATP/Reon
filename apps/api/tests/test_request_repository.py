@@ -295,7 +295,7 @@ async def test_request_detail_controls_deliverable_visibility(
         )
         await session.flush()
         detail = await repository.get_detail(
-            request_id, False, include_staff_events=True
+            request_id, reveal_unreleased_deliverable=False, include_staff_events=True
         )
         assert detail.deliverable is not None
         assert detail.deliverable.title == "Released response"
