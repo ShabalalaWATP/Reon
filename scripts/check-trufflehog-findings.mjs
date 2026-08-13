@@ -14,7 +14,6 @@ function fingerprint(finding) {
   const fields = [
     git?.commit,
     git?.file,
-    String(git?.line ?? ""),
     finding?.DetectorName,
   ];
   if (fields.some((value) => !value)) {
@@ -74,6 +73,7 @@ try {
   const findings = parseFindings(findingText);
   const approved = activeAllowlist(JSON.parse(allowlistText));
   const observed = new Set();
+  const observedFindings = new Set();
   const failures = [];
   for (const finding of findings) {
     const id = fingerprint(finding);
@@ -86,6 +86,12 @@ try {
       failures.push(`unapproved unknown finding ${id}`);
       continue;
     }
+    const findingIdentity = [id, finding?.RawV2 || finding?.Raw].join("|");
+    if (observedFindings.has(findingIdentity)) {
+      failures.push(`duplicate finding ${id}`);
+      continue;
+    }
+    observedFindings.add(findingIdentity);
     observed.add(id);
   }
   for (const id of approved.keys()) {
