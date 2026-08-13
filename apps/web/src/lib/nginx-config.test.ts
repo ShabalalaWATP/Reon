@@ -59,7 +59,7 @@ describe("local web container boundary", () => {
     expect(dockerfile).toMatch(/FROM node:24-alpine@sha256:[a-f0-9]{64} AS build/u);
     expect(dockerfile).not.toContain("node:25");
     expect(dockerfile).toMatch(
-      /^# syntax=docker\/dockerfile:1\.7@sha256:[a-f0-9]{64}$/mu,
+      /^# syntax=docker\/dockerfile-upstream:master@sha256:[a-f0-9]{64}$/mu,
     );
   });
 
