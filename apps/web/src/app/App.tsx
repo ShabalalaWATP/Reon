@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router";
 import { AuthProvider } from "../lib/auth/AuthProvider";
 import { ThemeProvider } from "../lib/theme/ThemeProvider";
 import { ClassificationBanner } from "../components/ClassificationBanner";
+import { MistReveal } from "../components/MistReveal";
 import { AppRoutes } from "./AppRoutes";
 
 const queryClient = new QueryClient({
@@ -14,7 +15,7 @@ export function App() {
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider><BrowserRouter><div className="classified-app"><ClassificationBanner /><div className="classified-app__body"><AppRoutes /></div></div></BrowserRouter></AuthProvider>
+        <AuthProvider><BrowserRouter><div className="classified-app"><ClassificationBanner /><div className="classified-app__body"><AppRoutes /></div><MistReveal /></div></BrowserRouter></AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );
