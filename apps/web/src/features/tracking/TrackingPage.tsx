@@ -102,7 +102,6 @@ function TrackedRequestRow({ request }: { request: TrackedRequest }) {
         <StatusPill label={trackingStatusLabel(request.status)} status={request.status} />
       </header>
       <dl>
-        <div><dt>Current owner</dt><dd>{request.currentOwner ?? "Awaiting routing"}</dd></div>
         <div><dt>Required by</dt><dd>{formatDate(request.requiredBy)}</dd></div>
         <div><dt>Submitted</dt><dd>{formatDate(request.createdAt)}</dd></div>
         <div><dt>Age</dt><dd>{request.ageDays} day{request.ageDays === 1 ? "" : "s"}</dd></div>

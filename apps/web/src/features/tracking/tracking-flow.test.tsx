@@ -69,6 +69,8 @@ describe("route-scoped request tracking", () => {
     const routedRow = screen
       .getByRole("heading", { name: trackedRequest.title })
       .closest("article")!;
+    expect(within(routedRow).getByText("The destination and ownership are being agreed.")).toBeInTheDocument();
+    expect(within(routedRow).getAllByText("Routing").map((element) => element.closest("li")).find(Boolean)).toHaveAttribute("aria-current", "step");
     expect(within(routedRow).getAllByText("Cedar Team")).not.toHaveLength(0);
     expect(within(routedRow).queryByText("Awaiting team staffing")).not.toBeInTheDocument();
     const staffedRow = screen

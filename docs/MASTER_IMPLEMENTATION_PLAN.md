@@ -1161,3 +1161,25 @@ acceptance remains required.
   and terminology checks.
 - [ ] Obtain representative Team Manager and Analyst acceptance for the board
   separation, collapsed default and lane wording.
+
+## Request-tracking journey milestone
+
+Status: implemented and assured locally on 13 August 2026. Representative-user
+acceptance remains required.
+
+- [x] Lead each tracked request with its current stage, current owner and next
+  stage rather than requiring users to interpret two equal-weight timelines.
+- [x] Present the selected organisation route as compact travel history with
+  passed, current and selected-next states.
+- [x] Give all five delivery stages a plain-language meaning and an explicit
+  `Complete`, `Now` or `Next` label, with the current stage exposed through
+  `aria-current="step"`.
+- [x] Use a vertical route and delivery journey on narrow screens without
+  horizontal scrolling, and respect reduced-motion preferences.
+- [x] Preserve exact-route visibility and the existing read-only tracking
+  boundary without adding workflow actions or new backend data.
+- [x] Verify desktop and 390-pixel browser layouts with a clean console, pass
+  all 394 frontend tests at 99.42 per cent line and 95.03 per cent branch
+  coverage, and pass the build, bundle-budget and repository quality gates.
+- [ ] Obtain representative CRIOC, JOCK and ACSA-B Ops acceptance for the new
+  tracking hierarchy and stage wording.

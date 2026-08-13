@@ -31,14 +31,23 @@ data but relies heavily on small horizontal bars and tables.
    and a five-stage lifecycle: routing, production, team check, quality and
    release, and Customer delivery. Cancelled or not-progressed requests end in a
    clearly labelled closed state.
-4. The detail route returns the submitted request fields and lifecycle metadata
+4. Each journey leads with a current-position summary containing the active
+   delivery stage, current owner and next stage.
+5. The selected organisation route is presented as compact travel history,
+   visually subordinate to the delivery lifecycle but with current, passed and
+   selected-next states preserved.
+6. Every delivery stage includes a concise explanation and an explicit
+   `Complete`, `Now` or `Next` label. The current stage is exposed with
+   `aria-current="step"`, and narrow screens use a vertical journey rather than
+   a horizontally scrolling diagram.
+7. The detail route returns the submitted request fields and lifecycle metadata
    through a dedicated read-only endpoint.
-5. The detail endpoint repeats the same exact route-membership predicate as the
+8. The detail endpoint repeats the same exact route-membership predicate as the
    register. It returns concealed not-found for non-routing roles, removed
    memberships, sibling units and requests outside the actor's route.
-6. The tracking detail excludes workflow actions, clarification conversations,
+9. The tracking detail excludes workflow actions, clarification conversations,
    feedback, product content and product download links.
-7. No tracking route permits a mutation. Current operational work remains in
+10. No tracking route permits a mutation. Current operational work remains in
    the role-owned queue.
 
 ## Statistics behaviour
@@ -62,6 +71,9 @@ data but relies heavily on small horizontal bars and tables.
 - A sibling command user receives a concealed denial for the same detail.
 - Both register and detail show an understandable organisation route and
   lifecycle graphic.
+- A user can identify the current owner, active stage, meaning and next stage
+  without interpreting connector colours.
+- The journey remains readable without horizontal scrolling on a narrow screen.
 - Three distribution donuts and a stage-duration range chart render for every
   role using the shared, server-scoped Statistics dashboard.
 - Chart tables contain the same labels and values as the visual presentation.

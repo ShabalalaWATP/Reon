@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   journeyState,
+  lifecycleDescription,
   lifecycleLabels,
   lifecyclePhase,
   routePosition,
@@ -39,5 +40,8 @@ describe("tracking lifecycle presentation", () => {
     expect(lifecycleLabels("CANCELLED").at(-1)).toBe("Closed");
     expect(lifecycleLabels("CLOSED_NOT_PROGRESSED").at(-1)).toBe("Closed");
     expect(lifecycleLabels("COMPLETED").at(-1)).toBe("Customer delivery");
+    expect(lifecycleDescription("CANCELLED", 4)).toBe("The request ended before Customer delivery.");
+    expect(lifecycleDescription("COMPLETED", 4)).toBe("The response has reached the Customer.");
+    expect(lifecycleDescription("COMPLETED", 99)).toBe("Delivery progress is being recorded.");
   });
 });

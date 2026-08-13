@@ -1187,3 +1187,14 @@ gates remain above 95 per cent for both lines and branches.
   serialised complete frontend suite passed 394 tests at 99.41 per cent line
   and 95.01 per cent branch coverage, followed by the production build, ESLint,
   line-limit, documentation and terminology checks.
+- Reworked Request tracking on 13 August 2026 around one clear operational
+  journey. Each request now leads with its current delivery stage, owner and
+  next stage; presents the selected route as compact travel history; and gives
+  every delivery stage an explicit meaning and `Complete`, `Now` or `Next`
+  state without changing the authorised read-only boundary.
+- Verified the journey in a real browser at 1720 by 1080 and 390 by 844. The
+  narrow view becomes vertical without horizontal scrolling, the browser
+  console remained clean, and reduced-motion behaviour is preserved. All 394
+  frontend tests passed at 99.42 per cent line and 95.03 per cent branch
+  coverage, followed by the build, bundle-budget, ESLint, line-limit,
+  documentation and terminology gates.

@@ -2,6 +2,14 @@ import type { RequestStatus } from "../../lib/api/types";
 
 export type JourneyState = "complete" | "current" | "upcoming";
 
+const lifecycleDescriptions = [
+  "The destination and ownership are being agreed.",
+  "Assigned Analysts are producing the response.",
+  "The team is checking the response before QC.",
+  "QC and release checks are being completed.",
+  "The response has reached the Customer.",
+] as const;
+
 const routingStatuses = new Set<RequestStatus>([
   "ROUTING_PENDING",
   "TRIAGE_REVIEW",
@@ -44,4 +52,11 @@ export function lifecycleLabels(status: RequestStatus): string[] {
     ? "Closed"
     : "Customer delivery";
   return ["Routing", "Production", "Team check", "Quality and release", finalLabel];
+}
+
+export function lifecycleDescription(status: RequestStatus, index: number): string {
+  if (index === 4 && (status === "CANCELLED" || status === "CLOSED_NOT_PROGRESSED")) {
+    return "The request ended before Customer delivery.";
+  }
+  return lifecycleDescriptions[index] ?? "Delivery progress is being recorded.";
 }
