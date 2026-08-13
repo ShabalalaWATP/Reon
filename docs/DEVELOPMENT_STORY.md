@@ -1226,3 +1226,43 @@ gates remain above 95 per cent for both lines and branches.
   reached 98.81 per cent line and 95.03 per cent branch coverage. The complete
   repository static, OpenAPI, operations, documentation and security-oriented
   quality gates also passed.
+- Fixed deterministic post-login landing on 13 August 2026. The login boundary
+  no longer resumes the protected route that originally opened the sign-in
+  screen: every internal role starts at personal Home and Customers start at
+  `My requests`. Already authenticated deep links remain available.
+- Reproduced the old behaviour with regression tests, then verified admin4 from
+  `/tracking` landed on `/overview` and admin2 from `/requests/new` landed on
+  `/requests` in the real local browser. A clean authenticated session reported
+  no console errors or warnings.
+- Polished three workspace surfaces on 13 August 2026. Saved personal profile
+  details now render as read-only page content, matching the account details
+  section, with an explicit Edit action and a Cancel path back to the saved
+  view; the form only appears while the profile is empty or being edited.
+  The calendar lost its per-day "Add event" and "+" buttons: each day cell is
+  now a single full-cell click target with a hover "+ Add" hint, and the month
+  grid is more compact. The work-package Kanban gained a visual refresh with
+  rounded columns, count pills and WIP-limit meters, plus clearer drag and
+  drop: every valid destination shows a "Drop here to move" zone during a
+  drag, invalid columns dim, and hover flicker over child elements was fixed.
+  Reasoned move confirmation and the recorded audit trail are unchanged.
+- Upgraded the internal work-package Kanban on 13 August 2026. Cards gained a
+  quick move menu that reuses the reasoned confirmation dialog, priority
+  colouring, formatted due dates, an amber highlight after five days in the
+  same state and an iteration chip. The toolbar gained an owner avatar strip
+  that toggles the existing owner filter, and a recent internal card activity
+  feed now surfaces the audited package history under the board.
+- Surfaced the dormant workspace collaboration records API as a team
+  noticeboard with pinned links on every workspace Overview. Reads follow
+  workspace access; posting and archiving require the existing ROSTER
+  management grant and the recorded reasons flow through the unchanged
+  audit trail. No backend change was needed; the decision is recorded in
+  docs/specs/team-noticeboard-and-pinned-links.md.
+- Added a cinematic mist sign-in transition on 13 August 2026, ready for the
+  planned rename. Successful sign-in rolls dense white mist over a fixed dark
+  backdrop with layered drifting clouds, an animated turbulence wisp filter
+  and a centred wordmark, holds while the destination loads, then parts over
+  roughly six seconds to reveal the role home or the Customer request
+  register. The overlay never covers the classification marking, announces
+  "Signing you in" to assistive technology, blocks no input, and collapses to
+  a half-second fade when reduced motion is preferred. Verified live against
+  the dev stack with the mist clearing onto the Customer's My requests page.
