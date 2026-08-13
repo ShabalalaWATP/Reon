@@ -30,6 +30,9 @@ topology. It does not turn the local Compose stack into a production template.
 - The Camunda data initialiser has no network and a read-only container root. The
   runtime joins only internal data and workflow networks, separate from the web
   proxy network.
+- The web proxy alone joins a non-internal front-door network so its loopback
+  port remains reachable. API traffic stays on the separate internal service
+  network, which the worker and API use without joining the front door.
 
 ## Acceptance criteria
 

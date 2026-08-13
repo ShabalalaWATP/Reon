@@ -158,7 +158,6 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
     networks: [data, workflow]
-
   product-storage-init:
     <<: *runtime-security
     image: python:3.13-alpine3.23@sha256:9fdbf2e3e82628351513560b121e2ee6ce31cac212be9e070c5a5e2769fb5e76
@@ -254,17 +253,21 @@ services:
       REQUEST_EMBEDDING_THREADS: ${REQUEST_EMBEDDING_THREADS:-2}
       REQUEST_EMBEDDING_BATCH_SIZE: ${REQUEST_EMBEDDING_BATCH_SIZE:-8}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,worker}
+      PRODUCT_STORAGE_PATH: ${PRODUCT_STORAGE_PATH:-/var/lib/istari-products}
     depends_on:
       orchestration:
         condition: service_healthy
       migrator:
         condition: service_completed_successfully
+      product-storage-init:
+        condition: service_completed_successfully
     restart: unless-stopped
     read_only: true
     tmpfs:
       - /tmp:mode=1777
+    volumes:
+      - product-storage:/var/lib/istari-products
     networks: [data, workflow]
-
   clamav-updater:
     <<: [*runtime-security, *clamav-runtime]
     environment:
@@ -276,7 +279,6 @@ services:
       - clamav-data:/var/lib/clamav
     networks:
       - signature-updates
-
   clamav:
     <<: [*runtime-security, *clamav-runtime]
     environment:
@@ -331,20 +333,17 @@ services:
     read_only: true
     tmpfs:
       - /tmp:uid=101,gid=101,mode=1777
-    networks:
-      - service
+    networks: [front-door, service]
 volumes:
   postgres-data:
   camunda-primary-data:
   camunda-runtime-data:
   clamav-data:
   product-storage:
-
 networks:
-  data:
-    internal: true
-  scanner:
-    internal: true
+  data: {internal: true}
+  front-door:
+  scanner: {internal: true}
   signature-updates:
   service: {internal: true}
   workflow: {internal: true}

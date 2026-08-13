@@ -109,6 +109,8 @@ for (const required of [
   "network_mode: none",
   "networks: [data, workflow]",
   "networks: [data, scanner, service, workflow]",
+  "networks: [front-door, service]",
+  "front-door:",
   "service: {internal: true}",
   "workflow: {internal: true}",
 ]) {

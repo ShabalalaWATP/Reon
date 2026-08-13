@@ -41,6 +41,7 @@ jobs:
       ALLOW_DEMO_USERS: "true"
       DEMO_USER_PASSWORD: ci-demo-validation-only
       AUDIT_HMAC_KEY: ci-audit-validation-only-at-least-32-bytes
+      SECURITY_PSEUDONYM_KEY: ci-pseudonym-validation-separate-at-least-32-bytes
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: timeout --signal=TERM --kill-after=10s 2m docker compose config --quiet

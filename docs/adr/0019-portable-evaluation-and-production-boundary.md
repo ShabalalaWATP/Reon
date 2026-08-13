@@ -20,6 +20,11 @@ for time-bounded synthetic evaluation. All published ports stay on host
 loopback. Operators reach the browser through SSM, IAP plus SSH forwarding, or
 Azure Bastion plus SSH forwarding.
 
+The web proxy joins a dedicated non-internal `front-door` network for its
+loopback publication and the internal `service` network for API traffic. The
+API and worker do not join `front-door`, so browser reachability does not grant
+those runtimes a general outbound network path.
+
 Kubernetes with managed PostgreSQL, a supported Camunda Helm deployment,
 enterprise identity, private object storage, approved scanning and managed
 observability is the production direction. It remains a target until versioned
