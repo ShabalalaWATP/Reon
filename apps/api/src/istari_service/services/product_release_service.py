@@ -24,6 +24,7 @@ from istari_service.product_types import (
     ReleaseAccessRecord,
 )
 from istari_service.schemas.products import (
+    AcceptanceCommand,
     CustomerReleaseView,
     DisseminationCommand,
     PackageView,
@@ -103,6 +104,28 @@ class ProductReleaseOperations(ProductServiceSupport):
         if view is None:
             raise ProductNotFound()
         return view
+
+    async def accept_product(
+        self, actor: Actor, request_id: UUID, command: AcceptanceCommand
+    ) -> CustomerReleaseView:
+        if (
+            actor.role is not UserRole.REQUESTER
+            or not await self._repository.active_actor(actor)
+        ):
+            raise ProductNotFound()
+        view = await self._repository.release_view(request_id, actor.id)
+        if view is None:
+            raise ProductNotFound()
+        await self._repository.accept(
+            view.package_id,
+            actor.id,
+            command.idempotency_key,
+            now=datetime.now(UTC),
+        )
+        accepted = await self._repository.release_view(request_id, actor.id)
+        if accepted is None:
+            raise ProductNotFound()
+        return accepted
 
     async def download(
         self, actor: Actor, artefact_id: UUID, correlation_id: str | None

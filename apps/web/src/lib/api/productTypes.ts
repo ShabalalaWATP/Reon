@@ -74,6 +74,7 @@ export interface ProductRelease {
   status: "DISSEMINATED" | "WITHDRAWN" | "REPLACED";
   releasedAt: string;
   releasedBy: string;
+  acceptedAt: string | null;
   artefacts: ProductArtefact[];
 }
 

@@ -9,7 +9,7 @@ import { StatusPill } from "../../components/StatusPill";
 import { api } from "../../lib/api/client";
 import { flattenUniquePages } from "../../lib/api/pagination";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
-import type { TrackedRequest, TrackedRequestFilters } from "../../lib/api/types";
+import type { TrackedRequest, TrackedRequestFilters, User } from "../../lib/api/types";
 import { useAuth } from "../../lib/auth/AuthProvider";
 import { formatDate, trackingStatusLabel } from "../../lib/status";
 import { TrackingJourney } from "./TrackingJourney";
@@ -77,7 +77,7 @@ export function TrackingPage() {
       ) : (
         <section aria-label="Tracked requests" className="tracking-register">
           {requests.map((request) => (
-            <TrackedRequestRow key={request.id} request={request} />
+            <TrackedRequestRow key={request.id} request={request} viewer={session?.user} />
           ))}
           <LoadMoreButton
             hasMore={query.hasNextPage}
@@ -90,7 +90,7 @@ export function TrackingPage() {
   );
 }
 
-function TrackedRequestRow({ request }: { request: TrackedRequest }) {
+function TrackedRequestRow({ request, viewer }: { request: TrackedRequest; viewer?: User }) {
   return (
     <article className="tracking-row">
       <header>
@@ -106,7 +106,7 @@ function TrackedRequestRow({ request }: { request: TrackedRequest }) {
         <div><dt>Submitted</dt><dd>{formatDate(request.createdAt)}</dd></div>
         <div><dt>Age</dt><dd>{request.ageDays} day{request.ageDays === 1 ? "" : "s"}</dd></div>
       </dl>
-      <TrackingJourney request={request} />
+      <TrackingJourney request={request} viewer={viewer} />
       {request.awaitingTeamStaffing ? (
         <p className="staffing-warning" role="status">
           Awaiting team staffing

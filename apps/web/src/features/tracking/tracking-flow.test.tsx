@@ -12,12 +12,14 @@ import {
 } from "../../test/fixtures";
 import { json, mockFetch, renderApp } from "../../test/render";
 
+const routeViewerSession = { ...staffSession, user: { ...staffSession.user, organisationUnitIds: [trackedRequest.route[0].id] } };
+
 describe("route-scoped request tracking", () => {
   it("shows titles, lifecycle graphics and links without loading request content", async () => {
     const paths: string[] = [];
     mockFetch((url) => {
       paths.push(url.pathname);
-      if (url.pathname.endsWith("/auth/me")) return json(staffSession);
+      if (url.pathname.endsWith("/auth/me")) return json(routeViewerSession);
       if (url.pathname.endsWith("/organisation/units")) return json({ items: [] });
       if (url.pathname.endsWith("/tracked-requests")) {
         return json({
@@ -71,6 +73,10 @@ describe("route-scoped request tracking", () => {
       .closest("article")!;
     expect(within(routedRow).getByText("The destination and ownership are being agreed.")).toBeInTheDocument();
     expect(within(routedRow).getAllByText("Routing").map((element) => element.closest("li")).find(Boolean)).toHaveAttribute("aria-current", "step");
+    expect(within(routedRow).getByText("Customer", { selector: "strong" })).toBeInTheDocument();
+    expect(within(routedRow).getByText("Viewing as Scott McTominay")).toBeInTheDocument();
+    expect(within(routedRow).getByText("Your unit").closest("li")).toHaveAttribute("data-viewer", "true");
+    expect(within(routedRow).getByText("Now · Current owner").closest("li")).toHaveAttribute("aria-current", "location");
     expect(within(routedRow).getAllByText("Cedar Team")).not.toHaveLength(0);
     expect(within(routedRow).queryByText("Awaiting team staffing")).not.toBeInTheDocument();
     const staffedRow = screen
@@ -78,7 +84,7 @@ describe("route-scoped request tracking", () => {
       .closest("article")!;
     expect(within(staffedRow).getAllByText("SSG Team")).not.toHaveLength(0);
     expect(within(staffedRow).queryByText("Awaiting team staffing")).not.toBeInTheDocument();
-    expect(screen.getByText("Awaiting routing")).toBeInTheDocument();
+    expect(screen.getAllByText("Awaiting routing")).not.toHaveLength(0);
     expect(screen.getByText("Waiting for the first routing decision.")).toBeInTheDocument();
     expect(screen.queryByText(requestDetail.description)).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Service product" })).not.toBeInTheDocument();
@@ -90,7 +96,6 @@ describe("route-scoped request tracking", () => {
     ]));
     expect(await axe(view.container)).toHaveNoViolations();
   });
-
   it("opens an authorised historical request as a read-only lifecycle view", async () => {
     const detail = {
       ...trackedRequest,
@@ -140,7 +145,6 @@ describe("route-scoped request tracking", () => {
     expect(screen.queryByRole("heading", { name: "Service product" })).not.toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
   });
-
   it("records route-scoped questions and return requests without claiming work", async () => {
     const commands: unknown[] = [];
     let rejectMessage = false;
@@ -213,7 +217,6 @@ describe("route-scoped request tracking", () => {
       "The message could not be recorded.",
     );
   });
-
   it("filters monitored work independently from the action queue", async () => {
     const trackingQueries: URLSearchParams[] = [];
     mockFetch((url) => {
@@ -250,7 +253,6 @@ describe("route-scoped request tracking", () => {
     await user.click(screen.getByRole("button", { name: "Clear" }));
     expect(screen.getByLabelText("Reference or title")).toHaveValue("");
   });
-
   it("pages through older immutable ticket history", async () => {
     const detail = {
       ...trackedRequest,
@@ -280,7 +282,6 @@ describe("route-scoped request tracking", () => {
     await user.click(await screen.findByRole("button", { name: "Load more" }));
     expect(await screen.findByText("Earlier routing decision")).toBeInTheDocument();
   });
-
   it("reports an unavailable older history page without losing the request", async () => {
     const detail = {
       ...trackedRequest,
@@ -316,7 +317,6 @@ describe("route-scoped request tracking", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Older ticket history could not be loaded.");
     expect(screen.getByRole("heading", { name: trackedRequest.title })).toBeInTheDocument();
   });
-
   it("redirects a Customer without fetching tracking metadata", async () => {
     let trackingCalls = 0;
     mockFetch((url) => {

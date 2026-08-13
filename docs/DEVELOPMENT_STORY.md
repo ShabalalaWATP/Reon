@@ -1198,3 +1198,31 @@ gates remain above 95 per cent for both lines and branches.
   frontend tests passed at 99.42 per cent line and 95.03 per cent branch
   coverage, followed by the build, bundle-budget, ESLint, line-limit,
   documentation and terminology gates.
+- Extended the selected route on 13 August 2026 so its journey begins with the
+  Customer submission and ends at a larger, dominant `Now · Current owner`
+  point. The page names the signed-in viewer and marks `Your unit` only when an
+  exact session organisation-unit identifier occurs in the route, without
+  inferring membership from display names or changing permissions.
+- Rechecked the revised hierarchy in a real browser at desktop and mobile
+  widths with a clean console. The complete frontend suite passed 395 tests,
+  alongside the build, bundle-budget, ESLint and file-size gates.
+- Separated routing-unit obligations from oversight on 13 August 2026. CRIOC,
+  JOCK, ACSA-B Ops and every other routing workspace now lead with work that
+  needs a routing action, followed by independently collapsed registers for
+  active requests routed onwards and completed requests. Passive rows expose
+  operational status, owner, required date, age and read-only history without
+  granting claim or workflow controls.
+- Made Customer acceptance explicit for managed products. Dissemination,
+  authenticated artefact access, acceptance and optional feedback are now
+  distinct evidence. Only the active originating Customer can accept, retries
+  are idempotent, and the hash-linked request history records one attributable
+  `PRODUCT_ACCEPTED` event. Approved external HTTPS links remain valid sole
+  product artefacts behind existing QC, allow-list, expiry and withdrawal
+  controls.
+- Verified the routing register in the real local stack at desktop and 390
+  pixels with no document overflow and a clean browser console. All 399
+  frontend tests passed at 99.42 per cent line and 95.00 per cent branch
+  coverage. All 1,022 API tests passed, and the combined coverage confirmation
+  reached 98.81 per cent line and 95.03 per cent branch coverage. The complete
+  repository static, OpenAPI, operations, documentation and security-oriented
+  quality gates also passed.

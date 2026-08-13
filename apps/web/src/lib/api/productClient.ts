@@ -94,6 +94,12 @@ export const productApi = {
   }),
   releaseForRequest: (requestId: string) =>
     apiRequest<ProductRelease>(`/releases/requests/${encodeURIComponent(requestId)}`),
+  acceptRelease: (requestId: string, idempotencyKey: string, csrfToken: string) =>
+    apiRequest<ProductRelease>(`/releases/requests/${encodeURIComponent(requestId)}/accept`, {
+      body: { idempotencyKey },
+      csrfToken,
+      method: "POST",
+    }),
 };
 
 export const productArtefactUrl = (artefactId: string, kind: ProductRelease["artefacts"][number]["kind"]) =>

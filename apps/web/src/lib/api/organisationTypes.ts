@@ -37,6 +37,8 @@ export type TrackedRequest = {
   route: TrackedRequestRouteUnit[];
   awaitingTeamStaffing: boolean;
   ageDays: number;
+  customerAcceptanceRequired: boolean;
+  customerAcceptedAt: string | null;
 };
 
 export type TrackedRequestFilters = {

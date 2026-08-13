@@ -12,6 +12,8 @@ from sqlalchemy.orm import selectinload
 
 from istari_service.models import RequestEvent, RequestStatus, ServiceRequest
 from istari_service.organisation_models import OrganisationUnit, RequestRouteSelection
+from istari_service.product_models import ProductDissemination, ProductPackage
+from istari_service.product_types import PackageStatus
 from istari_service.repositories.configuration_policies import (
     load_request_configuration_policies,
 )
@@ -102,6 +104,7 @@ async def tracked_requests(
     if not visible_ids:
         return [], None
     routes = await _tracked_routes(session, visible_ids)
+    acceptances = await _customer_acceptances(session, visible_ids)
     items = [
         TrackedRequest(
             id=row.id,
@@ -115,6 +118,8 @@ async def tracked_requests(
             route=routes[row.id],
             awaiting_team_staffing=row.awaiting_team_staffing,
             age_days=_age_days(row.created_at),
+            customer_acceptance_required=row.id in acceptances,
+            customer_accepted_at=acceptances.get(row.id),
         )
         for row in request_rows
     ]
@@ -142,6 +147,7 @@ async def tracked_request_detail(
     if request is None:
         return None
     route = (await _tracked_routes(session, {request.id}))[request.id]
+    acceptances = await _customer_acceptances(session, {request.id})
     event_statement = (
         select(RequestEvent)
         .options(selectinload(RequestEvent.actor))
@@ -181,6 +187,8 @@ async def tracked_request_detail(
         route=route,
         awaiting_team_staffing=request.awaiting_team_staffing,
         age_days=_age_days(request.created_at),
+        customer_acceptance_required=request.id in acceptances,
+        customer_accepted_at=acceptances.get(request.id),
         requester_display_name=request.requester.display_name,
         description=request.description,
         question_to_answer=request.question_to_answer,
@@ -230,6 +238,29 @@ def exists_route_selection(unit_id: UUID) -> ColumnElement[bool]:
 def _age_days(created_at: datetime) -> int:
     aware = created_at if created_at.tzinfo else created_at.replace(tzinfo=UTC)
     return max((datetime.now(UTC) - aware).days, 0)
+
+
+async def _customer_acceptances(
+    session: AsyncSession,
+    request_ids: set[UUID],
+) -> dict[UUID, datetime | None]:
+    rows = (
+        await session.execute(
+            select(ProductPackage.request_id, ProductDissemination.accepted_at)
+            .join(
+                ProductDissemination,
+                ProductDissemination.package_id == ProductPackage.id,
+            )
+            .where(
+                ProductPackage.request_id.in_(request_ids),
+                ProductPackage.status == PackageStatus.DISSEMINATED,
+                ProductDissemination.withdrawn_at.is_(None),
+                ProductDissemination.package_checksum
+                == ProductPackage.package_checksum,
+            )
+        )
+    ).all()
+    return dict(rows)
 
 
 async def _tracked_routes(

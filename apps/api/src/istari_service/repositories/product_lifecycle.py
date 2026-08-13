@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.models import ServiceRequest
-from istari_service.product_errors import ProductNotFound
+from istari_service.product_errors import ProductConflict, ProductNotFound
 from istari_service.product_models import (
     ExternalProductLink,
     ProductArtefact,
@@ -156,6 +156,51 @@ class ProductLifecycleMixin(ProductAccessRepositoryMixin):
             )
         )
         return match is not None
+
+    async def accept(
+        self,
+        package_id: UUID,
+        recipient_id: UUID,
+        idempotency_key: UUID,
+        *,
+        now: datetime,
+    ) -> PackageRecord:
+        package = await self.session.get(ProductPackage, package_id)
+        dissemination = await self.session.scalar(
+            select(ProductDissemination)
+            .where(
+                ProductDissemination.package_id == package_id,
+                ProductDissemination.recipient_user_id == recipient_id,
+                ProductDissemination.withdrawn_at.is_(None),
+            )
+            .with_for_update()
+        )
+        if (
+            package is None
+            or package.status is not PackageStatus.DISSEMINATED
+            or dissemination is None
+        ):
+            raise ProductNotFound()
+        if dissemination.accepted_at is not None:
+            if dissemination.acceptance_key != idempotency_key:
+                raise ProductConflict("The product has already been accepted.")
+            return _package_record(package)
+        reused = await self.session.scalar(
+            select(ProductDissemination.id).where(
+                ProductDissemination.acceptance_key == idempotency_key
+            )
+        )
+        if reused is not None:
+            raise ProductNotFound()
+        dissemination.accepted_at = now
+        dissemination.acceptance_key = idempotency_key
+        await self._event(
+            package,
+            "PRODUCT_ACCEPTED",
+            "Customer accepted the disseminated product.",
+            recipient_id,
+        )
+        return _package_record(package)
 
     async def attest_links(
         self, package_id: UUID, actor_id: UUID, *, now: datetime

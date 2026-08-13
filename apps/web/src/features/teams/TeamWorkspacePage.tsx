@@ -13,6 +13,7 @@ import { StaffQueuePage } from "../work/StaffQueuePage";
 import { TeamActivityPanel } from "./TeamActivityPanel";
 import { TeamOverviewPage, TeamStatisticsStrip } from "./TeamOverviewPage";
 import { TeamPeoplePanel } from "./TeamPeoplePanel";
+import { RoutingRequestRegisters } from "./RoutingRequestRegisters";
 
 const CalendarPage = lazy(() => import("../calendar/CalendarPage")
   .then(({ CalendarPage: page }) => ({ default: page })));
@@ -58,6 +59,7 @@ export function TeamWorkspacePage() {
     return <PageState kind="empty" title="Team workspace unavailable">This team is outside your current workspace access.</PageState>;
   }
   const baseViews = selected.unitKind && selected.unitKind !== "TEAM" ? routingViews : deliveryViews;
+  const isRoutingWorkspace = selected.unitKind !== undefined && selected.unitKind !== "TEAM";
   const availableViews = baseViews.filter(([key]) => key === "queue" || !selected.views || selected.views.includes(key.toUpperCase()));
   if (!availableViews.some(([key]) => key === view)) {
     return <Navigate replace to={`/teams/${selected.teamId}/overview`} />;
@@ -83,7 +85,7 @@ export function TeamWorkspacePage() {
         {view === "activity" ? <TeamActivityPanel teamId={selected.teamId} userId={userId} /> : null}
         {view === "board" ? <TeamBoardPage access={selected} /> : null}
         {view === "calendar" ? <CalendarPage access={selected} /> : null}
-        {view === "queue" ? <StaffQueuePage description="Review and complete work currently assigned or available to this unit." embedded eyebrow="Team work" teamId={selected.teamId} title="Work queue" /> : null}
+        {view === "queue" ? <StaffQueuePage afterQueue={isRoutingWorkspace ? (actionRequestIds) => <RoutingRequestRegisters actionRequestIds={actionRequestIds} teamId={selected.teamId} userId={userId} /> : undefined} description={isRoutingWorkspace ? "Claim and complete routing decisions currently assigned or available to this unit." : "Review and complete work currently assigned or available to this unit."} embedded eyebrow={isRoutingWorkspace ? "Action required" : "Team work"} teamId={selected.teamId} title={isRoutingWorkspace ? "Needs routing action" : "Work queue"} /> : null}
         {view === "statistics" ? <WorkspaceStatistics access={selected} userId={userId} /> : null}
       </Suspense>
     </main>

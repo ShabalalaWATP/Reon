@@ -55,6 +55,8 @@ class TrackedRequest(ApiModel):
     route: list[TrackedRouteUnit]
     awaiting_team_staffing: bool
     age_days: int
+    customer_acceptance_required: bool = False
+    customer_accepted_at: datetime | None = None
 
 
 class TrackedRequestEvent(ApiModel):

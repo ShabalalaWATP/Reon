@@ -54,6 +54,10 @@ class DisseminationCommand(ApprovalCommand):
     external_link_attested: bool
 
 
+class AcceptanceCommand(StrictApiModel):
+    idempotency_key: UUID
+
+
 class WithdrawalCommand(VersionCommand):
     reason: str = Field(min_length=8, max_length=500)
 
@@ -116,6 +120,7 @@ class CustomerReleaseView(ApiModel):
     status: PackageStatus
     released_at: datetime
     released_by: str
+    accepted_at: datetime | None = None
     artefacts: list[ArtefactView]
 
 

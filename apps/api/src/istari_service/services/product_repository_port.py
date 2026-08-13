@@ -147,6 +147,15 @@ class ProductRepository(Protocol):
         self, package_id: UUID, recipient_id: UUID, idempotency_key: UUID
     ) -> bool: ...
 
+    async def accept(
+        self,
+        package_id: UUID,
+        recipient_id: UUID,
+        idempotency_key: UUID,
+        *,
+        now: datetime,
+    ) -> PackageRecord: ...
+
     async def withdraw(
         self,
         package_id: UUID,

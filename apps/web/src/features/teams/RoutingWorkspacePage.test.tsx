@@ -3,10 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { describe, expect, it } from "vitest";
 
-import type { Session } from "../../lib/api/types";
+import type { Session, TrackedRequest } from "../../lib/api/types";
 import type { TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import type { WorkItem } from "../../lib/api/workTypes";
-import { enabledCapabilities, requesterSession } from "../../test/fixtures";
+import { enabledCapabilities, requesterSession, trackedRequest } from "../../test/fixtures";
 import { json, mockFeatureFetch, renderApp } from "../../test/render";
 
 const routingManager: Session = {
@@ -41,7 +41,7 @@ describe("routing organisation workspace", () => {
     });
     const view = renderApp("/teams/crioc/queue");
 
-    expect(await screen.findByRole("heading", { name: "Work queue" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Needs routing action" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Claim work item" })).toBeInTheDocument();
     expect(requestedUnit).toBe("crioc");
     const tabs = screen.getByRole("navigation", { name: "Organisation workspace views" });
@@ -52,6 +52,72 @@ describe("routing organisation workspace", () => {
     expect(within(tabs).queryByRole("link", { name: "Planning" })).not.toBeInTheDocument();
     expect(within(tabs).queryByRole("link", { name: "Handover" })).not.toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
+  });
+
+  it("separates action work from collapsed active and completed route monitoring", async () => {
+    let trackedUnit: string | null = null;
+    const passed = tracked({ ageDays: 2, currentOwner: null, id: "passed", status: "IN_PROGRESS", title: "Passed to production" });
+    const awaitingAcceptance = tracked({
+      customerAcceptanceRequired: true,
+      id: "awaiting-acceptance",
+      status: "COMPLETED",
+      title: "Awaiting Customer acceptance",
+    });
+    const accepted = tracked({
+      customerAcceptanceRequired: true,
+      customerAcceptedAt: "2026-08-12T15:00:00Z",
+      id: "accepted",
+      status: "COMPLETED",
+      title: "Customer accepted product",
+    });
+    mockRoutingApi({
+      onTrackedRequests: (url) => { trackedUnit = url.searchParams.get("routeUnitId"); },
+      trackedItems: [tracked({ id: "request-1", title: "Current routing action" }), passed, awaitingAcceptance, accepted, tracked({ id: "closed", status: "CANCELLED", title: "Closed request" })],
+      workItems: [routingWork({ id: "available", requestId: "request-1" })],
+    });
+    const user = userEvent.setup();
+    renderApp("/teams/crioc/queue");
+
+    expect(await screen.findByRole("heading", { name: "Needs routing action" })).toBeInTheDocument();
+    const activeSummary = await screen.findByText("Active requests routed onwards");
+    const activeDetails = activeSummary.closest("details")!;
+    const completedDetails = screen.getByText("Completed requests").closest("details")!;
+    expect(activeDetails).not.toHaveAttribute("open");
+    expect(completedDetails).not.toHaveAttribute("open");
+    expect(activeSummary.closest("summary")).toHaveTextContent("2");
+    expect(completedDetails.querySelector("summary")).toHaveTextContent("2");
+    expect(trackedUnit).toBe("crioc");
+
+    await user.click(activeSummary.closest("summary")!);
+    expect(activeDetails).toHaveAttribute("open");
+    expect(within(activeDetails).getByText("Passed to production")).toBeInTheDocument();
+    expect(within(activeDetails).getByText("Awaiting routing")).toBeInTheDocument();
+    expect(within(activeDetails).getByText("2 days")).toBeInTheDocument();
+    expect(within(activeDetails).getByText("Awaiting Customer acceptance", { selector: "a" })).toBeInTheDocument();
+    expect(within(activeDetails).queryByText("Current routing action", { selector: "a" })).not.toBeInTheDocument();
+
+    await user.click(completedDetails.querySelector("summary")!);
+    expect(within(completedDetails).getByText("Customer accepted product")).toBeInTheDocument();
+    expect(within(completedDetails).getByText("Closed request")).toBeInTheDocument();
+  });
+
+  it("reports failed monitoring and leaves both disclosures safely empty", async () => {
+    mockRoutingApi({
+      trackedItemFailures: 1,
+      trackedItems: [tracked({
+        ageDays: 2,
+        currentOwner: null,
+        id: "recovered",
+        title: "Recovered monitored request",
+      })],
+    });
+    const user = userEvent.setup();
+    renderApp("/teams/crioc/queue");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Monitored requests could not be loaded");
+    const activeDetails = screen.getByText("Active requests routed onwards").closest("details")!;
+    await user.click(activeDetails.querySelector("summary")!);
+    expect(within(activeDetails).getByText("No requests in this section.")).toBeInTheDocument();
   });
 
   it.each(["planning", "handover"])("returns the old %s view to the workspace overview", async (legacyView) => {
@@ -113,12 +179,16 @@ type RoutingMockOptions = {
   access?: Partial<TeamWorkspaceAccess>;
   omitMemberCount?: boolean;
   onWorkItems?: (url: URL) => void;
+  onTrackedRequests?: (url: URL) => void;
   statisticsSummary?: Array<{ key: string; label: string; value: number; unit: string; suppressed: boolean }>;
+  trackedItemFailures?: number;
   workItemFailures?: number;
   workItems?: WorkItem[];
+  trackedItems?: TrackedRequest[];
 };
 
 function mockRoutingApi(options: RoutingMockOptions = {}) {
+  let trackedItemReads = 0;
   let workItemReads = 0;
   const access = { ...managerAccess, ...options.access };
   return mockFeatureFetch((url) => {
@@ -128,6 +198,12 @@ function mockRoutingApi(options: RoutingMockOptions = {}) {
     if (url.pathname.endsWith("/team-workspaces/crioc")) return json({ access, managerCount: 1, ...(options.omitMemberCount ? {} : { memberCount: 1 }), analystCount: 0, activeWorkCount: 2, dueSoonCount: 1, overdueCount: 0 });
     if (url.pathname.endsWith("/statistics/scopes")) return json({ items: [{ id: "scope-crioc", unitId: "crioc", name: "CRIOC", kind: "ROOT", includeDescendants: true, units: [{ id: "crioc", parentId: null, name: "CRIOC", kind: "ROOT", depth: 0 }] }] });
     if (url.pathname.endsWith("/statistics")) return json({ summary: options.statisticsSummary ?? [{ key: "received", label: "Received", value: 8, unit: "count", suppressed: false }, { key: "completed", label: "Completed", value: 3, unit: "count", suppressed: false }, { key: "released", label: "Released", value: 2, unit: "count", suppressed: false }] });
+    if (url.pathname.endsWith("/tracked-requests")) {
+      options.onTrackedRequests?.(url);
+      trackedItemReads += 1;
+      if (trackedItemReads <= (options.trackedItemFailures ?? 0)) return json({ detail: "Unavailable" }, 503);
+      return json({ items: options.trackedItems ?? [], nextCursor: null });
+    }
     if (url.pathname.endsWith("/work-items")) {
       options.onWorkItems?.(url);
       workItemReads += 1;
@@ -138,6 +214,10 @@ function mockRoutingApi(options: RoutingMockOptions = {}) {
     if (url.pathname.endsWith("/activity")) return json({ items: [] });
     throw new Error(`Unexpected ${url.pathname}`);
   }, true, false, false);
+}
+
+function tracked(overrides: Partial<TrackedRequest>): TrackedRequest {
+  return { ...trackedRequest, id: "tracked-1", ...overrides };
 }
 
 function routingWork(overrides: Partial<WorkItem>): WorkItem {

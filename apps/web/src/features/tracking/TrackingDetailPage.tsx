@@ -34,7 +34,7 @@ export function TrackingDetailPage() {
         <StatusPill status={request.status} />
       </header>
       <div className="tracking-read-only"><strong>Read-only lifecycle view</strong><span>Return to the role queue to take an action.</span></div>
-      <TrackingJourney request={request} />
+      <TrackingJourney request={request} viewer={session?.user} />
       <TrackingRequestOverview request={request} />
       <TrackingCoordination request={request} />
       <TrackingActivity initialCursor={request.eventsNextCursor} initialEvents={request.events} key={`${request.updatedAt}-${request.events.length}`} requestId={request.id} />

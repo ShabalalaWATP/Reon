@@ -1171,6 +1171,10 @@ acceptance remains required.
   stage rather than requiring users to interpret two equal-weight timelines.
 - [x] Present the selected organisation route as compact travel history with
   passed, current and selected-next states.
+- [x] Begin the selected route with the Customer submission and finish it with
+  a larger, visually dominant point for the current owner.
+- [x] Name the signed-in viewer and mark `Your unit` only for exact route-unit
+  identifiers in their authenticated session.
 - [x] Give all five delivery stages a plain-language meaning and an explicit
   `Complete`, `Now` or `Next` label, with the current stage exposed through
   `aria-current="step"`.
@@ -1179,7 +1183,31 @@ acceptance remains required.
 - [x] Preserve exact-route visibility and the existing read-only tracking
   boundary without adding workflow actions or new backend data.
 - [x] Verify desktop and 390-pixel browser layouts with a clean console, pass
-  all 394 frontend tests at 99.42 per cent line and 95.03 per cent branch
-  coverage, and pass the build, bundle-budget and repository quality gates.
+  all 395 frontend tests, and pass the build, bundle-budget and repository
+  quality gates.
 - [ ] Obtain representative CRIOC, JOCK and ACSA-B Ops acceptance for the new
   tracking hierarchy and stage wording.
+
+## Routing workspace monitoring and Customer acceptance milestone
+
+Status: implemented and assured locally on 13 August 2026. Representative-user
+acceptance remains required.
+
+- [x] Keep exact-unit routing actions in the dominant `Needs routing action`
+  queue without granting authority through passive monitoring.
+- [x] Add separate `Active requests routed onwards` and `Completed requests`
+  registers to every routing workspace, both collapsed by default.
+- [x] Show reference, title, status, current owner, required date, age and a
+  read-only history link for monitored requests.
+- [x] Keep disseminated managed products active for routing oversight until the
+  originating Customer explicitly accepts them.
+- [x] Store idempotent acceptance on the exact dissemination and append one
+  attributable, hash-linked `PRODUCT_ACCEPTED` event.
+- [x] Preserve approved external HTTPS links as valid product-only artefacts
+  behind QC attestation, authenticated redirect, allow-list, expiry and
+  withdrawal controls.
+- [x] Verify desktop and 390-pixel browser layouts with a clean console, pass
+  all 399 frontend tests and all 1,022 API tests, and pass the repository quality
+  gates at or above 95 per cent line and branch coverage.
+- [ ] Obtain representative routing-unit and Customer acceptance for the new
+  separation and explicit acceptance wording.

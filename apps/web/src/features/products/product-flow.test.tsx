@@ -24,6 +24,7 @@ const basePackage: ProductPackage = {
 const release: ProductRelease = {
   packageId: basePackage.id, requestId: requestSummary.id, packageVersion: 2,
   status: "DISSEMINATED", releasedAt: "2026-08-07T10:00:00Z", releasedBy: "QC Manager",
+  acceptedAt: null,
   artefacts: artefacts.map((item) => ({ ...item, lifecycle: "RELEASED", releasedAt: "2026-08-07T10:00:00Z" })),
 };
 
@@ -186,10 +187,17 @@ describe("managed product package journey", () => {
   });
 
   it("shows released file and link actions in Customer register and detail views", async () => {
-    mockFeatureFetch((url) => {
+    let currentRelease = release;
+    let acceptanceBody: Record<string, unknown> | undefined;
+    mockFeatureFetch((url, init) => {
       if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
       if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
-      if (url.pathname.endsWith(`/releases/requests/${requestSummary.id}`)) return json(release);
+      if (url.pathname.endsWith(`/releases/requests/${requestSummary.id}/accept`) && init.method === "POST") {
+        acceptanceBody = JSON.parse(String(init.body));
+        currentRelease = { ...currentRelease, acceptedAt: "2026-08-07T11:00:00Z" };
+        return json(currentRelease);
+      }
+      if (url.pathname.endsWith(`/releases/requests/${requestSummary.id}`)) return json(currentRelease);
       if (url.pathname.endsWith(`/requests/${requestSummary.id}`)) return json({ ...requestDetail, productAvailable: true, status: "COMPLETED" });
       if (url.pathname.endsWith("/requests")) return json({ items: [{ ...requestSummary, productAvailable: true, status: "COMPLETED" }] });
       throw new Error(url.pathname);
@@ -204,7 +212,49 @@ describe("managed product package journey", () => {
     const detail = renderApp(`/requests/${requestSummary.id}`);
     expect(await screen.findByRole("heading", { name: "Product available" })).toBeInTheDocument();
     expect(screen.getByText(/Released by QC Manager/)).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Accept product" }));
+    expect(await screen.findByText(/Accepted 07 Aug 2026/)).toBeInTheDocument();
+    expect(acceptanceBody?.idempotencyKey).toEqual(expect.any(String));
     expect(await axe(detail.container)).toHaveNoViolations();
+    detail.unmount();
+    renderApp("/requests");
+    await userEvent.setup().click(await screen.findByText("Completed history"));
+    expect(await screen.findByText(/Accepted 07 Aug 2026/)).toBeInTheDocument();
+  });
+
+  it("keeps Customer acceptance pending and reports a rejected write", async () => {
+    let resolveAcceptance: (response: Response) => void = () => undefined;
+    mockFeatureFetch((url, init) => {
+      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
+      if (url.pathname.endsWith(`/releases/requests/${requestSummary.id}/accept`) && init.method === "POST") {
+        return new Promise<Response>((resolve) => { resolveAcceptance = resolve; });
+      }
+      if (url.pathname.endsWith(`/releases/requests/${requestSummary.id}`)) return json(release);
+      if (url.pathname.endsWith(`/requests/${requestSummary.id}`)) return json({ ...requestDetail, productAvailable: true, status: "COMPLETED" });
+      throw new Error(url.pathname);
+    });
+    const user = userEvent.setup();
+    renderApp(`/requests/${requestSummary.id}`);
+
+    await user.click(await screen.findByRole("button", { name: "Accept product" }));
+    expect(screen.getByRole("button", { name: "Recording acceptance…" })).toBeDisabled();
+    resolveAcceptance(json({ detail: "Unavailable" }, 503));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Product acceptance could not be recorded");
+  });
+
+  it("does not expose artefacts before a release is disseminated", async () => {
+    mockFeatureFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
+      if (url.pathname.endsWith(`/releases/requests/${requestSummary.id}`)) return json({ ...release, status: "READY_FOR_RELEASE" });
+      if (url.pathname.endsWith(`/requests/${requestSummary.id}`)) return json({ ...requestDetail, productAvailable: true, status: "COMPLETED" });
+      throw new Error(url.pathname);
+    });
+    renderApp(`/requests/${requestSummary.id}`);
+
+    expect(await screen.findByText("Product ready_for_release")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Open product" })).not.toBeInTheDocument();
   });
 
   it("links an Analyst work item to a prefilled package draft", async () => {

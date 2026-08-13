@@ -21,6 +21,7 @@ from istari_service.product_access_audit import SqlAlchemyProductAccessAudit
 from istari_service.product_dependencies import ProductRuntimeDependency
 from istari_service.repositories.products import SqlAlchemyProductRepository
 from istari_service.schemas.products import (
+    AcceptanceCommand,
     ApprovalCommand,
     CustomerReleaseView,
     DisseminationCommand,
@@ -234,6 +235,23 @@ async def customer_release(
 ) -> CustomerReleaseView:
     return await _service(session, sessions, runtime).customer_release(
         actor, request_id
+    )
+
+
+@release_router.post(
+    "/requests/{request_id}/accept",
+    response_model=CustomerReleaseView,
+)
+async def accept_customer_product(
+    request_id: UUID,
+    command: AcceptanceCommand,
+    actor: MutationActor,
+    session: DatabaseSession,
+    sessions: SessionFactoryDependency,
+    runtime: ProductRuntimeDependency,
+) -> CustomerReleaseView:
+    return await _service(session, sessions, runtime).accept_product(
+        actor, request_id, command
     )
 
 

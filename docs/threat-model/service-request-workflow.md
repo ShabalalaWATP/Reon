@@ -156,6 +156,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | A withdrawn managed package falls back to an older product endpoint | Treat the existence of any managed package as authoritative and forbid legacy availability or download fallback |
 | Synthetic identity confusion | Display one environment-level mock-data notice and document that identities and public-safe sibling names are fictional; do not mark valid routes as demonstration-only |
 | Product link is guessed or shared | Serve through an authenticated, no-store application endpoint; require the originating Customer, completed state and dissemination record on every request |
+| Product acceptance is forged, replayed or inferred from access | Permit only the active originating Customer to accept the current non-withdrawn dissemination; require a unique idempotency key, append one hash-linked ticket event and never infer acceptance from download, redirect or feedback evidence |
 | Product response causes active-content execution | Return UTF-8 plain text with safe reference-derived attachment filename, `nosniff` and restrictive security headers |
 | Analyst clarification exposes product work to trackers | Store a structured thread in PostgreSQL; expose messages only to the Customer, assigned Analyst and authorised Team Manager; project state and timing metadata only to routing trackers |
 | Clarification response loses the delivery assignment | Persist the team and Analyst on the thread, validate them on response and route the versioned workflow loop back to that Analyst |

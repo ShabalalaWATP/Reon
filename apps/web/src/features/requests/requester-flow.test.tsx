@@ -306,6 +306,7 @@ function releasedPackage(requestId: string) {
   return {
     packageId: "released-package", requestId, packageVersion: 1, status: "DISSEMINATED",
     releasedAt: "2026-08-06T11:00:00Z", releasedBy: "QC Manager",
+    acceptedAt: null,
     artefacts: [{
       id: "released-file", packageId: "released-package", position: 1, kind: "MANAGED_FILE",
       lifecycle: "RELEASED", label: "Readiness summary", filename: "readiness.pdf",

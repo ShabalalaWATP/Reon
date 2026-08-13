@@ -6,7 +6,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { ClipboardList } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 
 import { PageState } from "../../components/PageState";
@@ -26,6 +26,7 @@ import {
 } from "./workActionModel";
 
 type StaffQueuePageProps = {
+  afterQueue?: (actionRequestIds: ReadonlySet<string>) => ReactNode;
   description: string;
   embedded?: boolean;
   eyebrow: string;
@@ -34,6 +35,7 @@ type StaffQueuePageProps = {
 };
 
 export function StaffQueuePage({
+  afterQueue,
   description,
   embedded = false,
   eyebrow,
@@ -273,6 +275,7 @@ export function StaffQueuePage({
           />
         </div>
       )}
+      {afterQueue?.(new Set(items.map((item) => item.requestId)))}
     </Container>
   );
 }

@@ -36,18 +36,23 @@ data but relies heavily on small horizontal bars and tables.
 5. The selected organisation route is presented as compact travel history,
    visually subordinate to the delivery lifecycle but with current, passed and
    selected-next states preserved.
-6. Every delivery stage includes a concise explanation and an explicit
+6. The selected route starts with `Customer` and `Submitted request`, then shows
+   every selected organisation unit and ends with a larger `Now` destination
+   naming the current owner. The signed-in viewer is named above the route and
+   each exact matching route membership is labelled `Your unit`; no match is
+   inferred from a role name or display text.
+7. Every delivery stage includes a concise explanation and an explicit
    `Complete`, `Now` or `Next` label. The current stage is exposed with
    `aria-current="step"`, and narrow screens use a vertical journey rather than
    a horizontally scrolling diagram.
-7. The detail route returns the submitted request fields and lifecycle metadata
+8. The detail route returns the submitted request fields and lifecycle metadata
    through a dedicated read-only endpoint.
-8. The detail endpoint repeats the same exact route-membership predicate as the
+9. The detail endpoint repeats the same exact route-membership predicate as the
    register. It returns concealed not-found for non-routing roles, removed
    memberships, sibling units and requests outside the actor's route.
-9. The tracking detail excludes workflow actions, clarification conversations,
+10. The tracking detail excludes workflow actions, clarification conversations,
    feedback, product content and product download links.
-10. No tracking route permits a mutation. Current operational work remains in
+11. No tracking route permits a mutation. Current operational work remains in
    the role-owned queue.
 
 ## Statistics behaviour
@@ -73,6 +78,9 @@ data but relies heavily on small horizontal bars and tables.
   lifecycle graphic.
 - A user can identify the current owner, active stage, meaning and next stage
   without interpreting connector colours.
+- The selected route visibly starts with Customer submission, ends with a
+  standout current-owner destination and identifies the viewer's exact route
+  unit where one exists.
 - The journey remains readable without horizontal scrolling on a narrow screen.
 - Three distribution donuts and a stage-duration range chart render for every
   role using the shared, server-scoped Statistics dashboard.

@@ -158,4 +158,6 @@ export const trackedRequest: TrackedRequest = {
   ].map(({ id, kind, name }) => ({ id, kind, name })),
   awaitingTeamStaffing: false,
   ageDays: 6,
+  customerAcceptanceRequired: false,
+  customerAcceptedAt: null,
 };

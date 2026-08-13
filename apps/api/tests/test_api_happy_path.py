@@ -314,7 +314,6 @@ async def test_complete_representative_workflow_and_feedback(
     assert managed_product.json()["artefacts"][0]["destinationDomain"] == (
         "products.example.test"
     )
-
     feedback = await harness.client.post(
         f"/api/v1/requests/{request_id}/feedback",
         json={"rating": 5, "comments": "Clear and useful."},

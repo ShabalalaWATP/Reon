@@ -11,6 +11,7 @@ from istari_service.models import ServiceRequest, User
 from istari_service.product_models import (
     ExternalProductLink,
     ProductArtefact,
+    ProductDissemination,
     ProductPackage,
     ProductScan,
 )
@@ -112,6 +113,11 @@ async def customer_release_view(
     )
     if package.disseminated_at is None or releasing_name is None:
         raise LookupError("release evidence is incomplete")
+    accepted_at = await session.scalar(
+        select(ProductDissemination.accepted_at).where(
+            ProductDissemination.package_id == package.id
+        )
+    )
     return CustomerReleaseView(
         package_id=package.id,
         request_id=package.request_id,
@@ -119,5 +125,6 @@ async def customer_release_view(
         status=package.status,
         released_at=package.disseminated_at,
         released_by=releasing_name,
+        accepted_at=accepted_at,
         artefacts=await artefact_views(session, package.id),
     )

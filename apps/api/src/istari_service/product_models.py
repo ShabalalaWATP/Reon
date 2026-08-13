@@ -194,6 +194,8 @@ class ProductDissemination(CreatedMixin, Base):
     idempotency_key: Mapped[UUID] = mapped_column(UUID_TYPE)
     package_checksum: Mapped[str] = mapped_column(String(64))
     withdrawn_at: Mapped[datetime | None] = mapped_column(UTC_TS)
+    accepted_at: Mapped[datetime | None] = mapped_column(UTC_TS)
+    acceptance_key: Mapped[UUID | None] = mapped_column(UUID_TYPE, unique=True)
 
 
 class ProductAccessEvent(CreatedMixin, Base):

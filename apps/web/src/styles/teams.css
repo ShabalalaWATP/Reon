@@ -10,7 +10,7 @@
 .team-heading .form-field { min-width: 230px; }
 
 /* View tabs */
-.team-tabs { display: flex; gap: 5px; width: max-content; max-width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; padding: 5px; background: linear-gradient(180deg, color-mix(in srgb, var(--surface-raised) 88%, transparent), color-mix(in srgb, var(--surface) 72%, transparent)); box-shadow: var(--shadow-soft); }
+.team-tabs { display: flex; gap: 5px; width: 100%; max-width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; padding: 5px; background: linear-gradient(180deg, color-mix(in srgb, var(--surface-raised) 88%, transparent), color-mix(in srgb, var(--surface) 72%, transparent)); box-shadow: var(--shadow-soft); }
 .team-tab { min-width: max-content; border: 1px solid transparent; border-radius: 10px; padding: 9px 15px; color: var(--muted); font-size: .78rem; font-weight: 720; text-decoration: none; transition: color var(--speed-fast), background var(--speed-fast), border-color var(--speed-fast), box-shadow var(--speed-fast); }
 .team-tab:hover { color: var(--text); background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .team-tab--active { border-color: color-mix(in srgb, var(--accent) 38%, transparent); background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 20%, transparent), color-mix(in srgb, var(--accent) 9%, transparent)); color: var(--text); box-shadow: var(--glow); }
@@ -98,6 +98,37 @@
 .inline-unavailable { display: inline-block; margin-top: 10px; color: var(--warning); font-size: .7rem; }
 .routing-home__actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 16px; }
 
+/* Routing oversight remains visually subordinate to the action queue. */
+.routing-monitor { display: grid; gap: 10px; border-top: 1px solid var(--border); padding-top: 24px; }
+.routing-monitor > header { max-width: 760px; margin-bottom: 4px; }
+.routing-monitor > header span { color: var(--teal); font-family: var(--font-mono); font-size: .66rem; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+.routing-monitor > header h2 { margin: 6px 0; font-size: 1.15rem; }
+.routing-monitor > header p { margin: 0; color: var(--muted); font-size: .75rem; line-height: 1.5; }
+.routing-monitor__group { border-top: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 42%, transparent); }
+.routing-monitor__group:last-of-type { border-bottom: 1px solid var(--border); }
+.routing-monitor__group summary { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; min-height: 70px; padding: 12px 16px; cursor: pointer; list-style: none; transition: background var(--speed-fast), color var(--speed-fast); }
+.routing-monitor__group summary::-webkit-details-marker { display: none; }
+.routing-monitor__group summary:hover, .routing-monitor__group summary:focus-visible { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.routing-monitor__group summary svg { color: var(--muted); transition: transform var(--speed-fast); }
+.routing-monitor__group[open] summary svg { transform: rotate(90deg); }
+.routing-monitor__group summary span, .routing-monitor__group summary strong, .routing-monitor__group summary small { display: block; }
+.routing-monitor__group summary strong { font-size: .82rem; }
+.routing-monitor__group summary small { margin-top: 4px; color: var(--muted); font-size: .66rem; font-weight: 450; }
+.routing-monitor__group summary b { min-width: 34px; color: var(--accent); font-family: var(--font-mono); font-size: 1rem; text-align: right; }
+.routing-monitor__content { border-top: 1px solid color-mix(in srgb, var(--border) 65%, transparent); padding: 4px 16px 18px 46px; }
+.routing-monitor__content ol { margin: 0; padding: 0; list-style: none; }
+.routing-monitor__content li { display: grid; grid-template-columns: minmax(180px, 1.4fr) minmax(150px, auto); gap: 10px 18px; border-top: 1px solid color-mix(in srgb, var(--border) 62%, transparent); padding: 16px 0; }
+.routing-monitor__content li:first-child { border-top: 0; }
+.routing-monitor__content li > div span, .routing-monitor__content li > div a { display: block; }
+.routing-monitor__content li > div span { color: var(--accent); font-family: var(--font-mono); font-size: .61rem; }
+.routing-monitor__content li > div a { margin-top: 4px; color: var(--text); font-size: .8rem; font-weight: 760; }
+.routing-monitor__content .status-pill { justify-self: end; }
+.routing-monitor__content dl { display: flex; grid-column: 1 / -1; flex-wrap: wrap; gap: 8px 24px; margin: 0; }
+.routing-monitor__content dl div { display: flex; gap: 6px; font-size: .65rem; }
+.routing-monitor__content dt { color: var(--muted); }
+.routing-monitor__content dd { margin: 0; color: var(--text); }
+.routing-monitor__open { grid-column: 1 / -1; width: fit-content; color: var(--accent); font-size: .67rem; font-weight: 720; }
+
 /* People */
 .team-people-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; align-items: start; }
 .team-register > header { margin-bottom: 18px; }
@@ -162,5 +193,5 @@
 
 @media (max-width: 1050px) { .team-attention-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } .team-home__measures { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .team-people-layout, .workspace-collaboration, .team-home__columns { grid-template-columns: 1fr; } .roster-control, .workspace-record-form { position: static; } .team-metrics { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 620px) { .team-heading { align-items: stretch; flex-direction: column; } .team-heading .form-field { min-width: 0; } .team-metrics, .team-service-strip, .team-home__identity, .team-attention-list, .team-home__measures, .team-home__planning-alerts ul { grid-template-columns: 1fr; } .team-activity-list li { grid-template-columns: 1fr; gap: 5px; } .end-membership-row form { grid-template-columns: 1fr; } .team-home__iteration, .team-home__planning-alerts > p { flex-direction: column; } }
-@media (prefers-reduced-motion: reduce) { .team-attention, .team-metric, .team-tab, .team-service-strip > a, .team-attention em::after, .team-service-strip > a::after { transition: none; } }
+@media (max-width: 620px) { .team-heading { align-items: stretch; flex-direction: column; } .team-heading .form-field { min-width: 0; } .team-metrics, .team-service-strip, .team-home__identity, .team-attention-list, .team-home__measures, .team-home__planning-alerts ul { grid-template-columns: 1fr; } .team-activity-list li, .routing-monitor__content li { grid-template-columns: 1fr; gap: 5px; } .routing-monitor__content { padding-left: 16px; } .routing-monitor__content .status-pill { justify-self: start; } .end-membership-row form { grid-template-columns: 1fr; } .team-home__iteration, .team-home__planning-alerts > p { flex-direction: column; } }
+@media (prefers-reduced-motion: reduce) { .team-attention, .team-metric, .team-tab, .team-service-strip > a, .team-attention em::after, .team-service-strip > a::after, .routing-monitor__group summary, .routing-monitor__group summary svg { transition: none; } }

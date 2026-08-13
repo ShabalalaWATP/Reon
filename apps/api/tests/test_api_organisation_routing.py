@@ -167,6 +167,8 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
         "route",
             "awaitingTeamStaffing",
             "ageDays",
+            "customerAcceptanceRequired",
+            "customerAcceptedAt",
         }
     assert tracked["title"] == request_payload()["title"]
     assert tracked["currentOwner"] == "Team Manager"

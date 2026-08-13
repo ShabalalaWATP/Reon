@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PackageCheck } from "lucide-react";
+import { useRef } from "react";
 
 import { PageState } from "../../components/PageState";
 import { ApiError, productDownloadUrl } from "../../lib/api/client";
@@ -18,16 +19,26 @@ export function CustomerProductPanel({ compact = false, requestId }: { compact?:
 
 function EnabledCustomerProductPanel({ compact, requestId }: { compact: boolean; requestId: string }) {
   const { session } = useAuth();
+  const client = useQueryClient();
+  const queryKey = ["protected", session!.user.id, "request-release", requestId] as const;
+  const acceptanceKey = useRef(globalThis.crypto.randomUUID());
   const release = useQuery({
     queryFn: () => productApi.releaseForRequest(requestId),
-    queryKey: ["protected", session!.user.id, "request-release", requestId],
+    queryKey,
+  });
+  const acceptance = useMutation({
+    mutationFn: () => productApi.acceptRelease(requestId, acceptanceKey.current, session!.csrfToken),
+    onSuccess: (accepted) => client.setQueryData(queryKey, accepted),
   });
   if (release.isPending) return compact ? <span className="product-inline-state">Checking product…</span> : <PageState kind="loading" title="Loading released product" />;
   if (release.isError && release.error instanceof ApiError && release.error.status === 404) return <LegacyProductLink compact={compact} requestId={requestId} />;
   if (release.isError) return compact ? <span className="product-inline-state product-inline-state--error">Product temporarily unavailable</span> : <PageState action={<button className="button" onClick={() => void release.refetch()}>Try again</button>} kind="error" title="Released product is temporarily unavailable" />;
   if (release.data.status !== "DISSEMINATED") return <span className="product-inline-state">Product {release.data.status.toLowerCase()}</span>;
-  if (compact) return <div className="customer-product-actions"><strong><PackageCheck aria-hidden="true" size={15} />Product available</strong><PackageArtefactList artefacts={release.data.artefacts} customerAccess /></div>;
-  return <section className="customer-product-panel" aria-labelledby="released-products-title"><header className="product-section-heading"><div><span>Disseminated package v{release.data.packageVersion}</span><h2 id="released-products-title">Product available</h2></div><p>Released by {release.data.releasedBy} · {formatDate(release.data.releasedAt, true)}</p></header><PackageArtefactList artefacts={release.data.artefacts} customerAccess /></section>;
+  const acceptanceControl = release.data.acceptedAt
+    ? <p className="product-acceptance product-acceptance--complete"><PackageCheck aria-hidden="true" size={16} />Accepted {formatDate(release.data.acceptedAt, true)}</p>
+    : <div className="product-acceptance"><p>Confirm that this product has been received and accepted. Opening it does not accept it automatically.</p>{acceptance.isError ? <p className="form-banner form-banner--error" role="alert">Product acceptance could not be recorded.</p> : null}<button className="button button--primary" disabled={acceptance.isPending} onClick={() => acceptance.mutate()} type="button">{acceptance.isPending ? "Recording acceptance…" : "Accept product"}</button></div>;
+  if (compact) return <div className="customer-product-actions"><strong><PackageCheck aria-hidden="true" size={15} />Product available</strong><PackageArtefactList artefacts={release.data.artefacts} customerAccess />{acceptanceControl}</div>;
+  return <section className="customer-product-panel" aria-labelledby="released-products-title"><header className="product-section-heading"><div><span>Disseminated package v{release.data.packageVersion}</span><h2 id="released-products-title">Product available</h2></div><p>Released by {release.data.releasedBy} · {formatDate(release.data.releasedAt, true)}</p></header><PackageArtefactList artefacts={release.data.artefacts} customerAccess />{acceptanceControl}</section>;
 }
 
 function LegacyProductLink({ compact, requestId }: { compact: boolean; requestId: string }) {

@@ -50,6 +50,7 @@
 .tracking-journey__label { display: grid; gap: 3px; }
 .tracking-journey__label strong { font-size: .7rem; }
 .tracking-journey__label span { color: var(--muted); font-size: .61rem; line-height: 1.4; }
+.tracking-journey__label em { width: fit-content; margin-top: 5px; border-left: 2px solid var(--accent); padding-left: 7px; color: var(--text); font-size: .61rem; font-style: normal; font-weight: 700; }
 .tracking-journey ol { margin: 0; padding: 0; list-style: none; }
 .tracking-journey__route ol { display: flex; flex-wrap: wrap; gap: 8px 24px; padding-top: 1px; }
 .tracking-journey__route li { position: relative; display: grid; grid-template-columns: 10px auto; gap: 2px 7px; padding-right: 8px; }
@@ -57,12 +58,22 @@
 .tracking-journey__route li i { grid-row: 1 / 3; align-self: start; width: 7px; height: 7px; margin-top: 4px; border: 1px solid currentcolor; border-radius: 50%; background: transparent; }
 .tracking-journey__route li strong { font-size: .7rem; }
 .tracking-journey__route li small { color: var(--muted); font-size: .59rem; }
+.tracking-journey__route li > em { grid-column: 2; color: var(--accent); font-family: var(--font-mono); font-size: .55rem; font-style: normal; font-weight: 760; letter-spacing: .05em; text-transform: uppercase; }
 .tracking-journey__route li[data-state="complete"] { color: var(--teal); }
 .tracking-journey__route li[data-state="complete"] strong { color: var(--text); }
 .tracking-journey__route li[data-state="complete"] i { background: var(--teal); }
 .tracking-journey__route li[data-state="current"] { color: var(--accent); }
 .tracking-journey__route li[data-state="current"] i { background: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent); }
 .tracking-journey__route li[data-state="upcoming"] { color: var(--muted); }
+.tracking-journey__route li[data-viewer] { border-left: 2px solid var(--accent); padding: 5px 8px; background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.tracking-journey__route li[data-viewer] i { margin-left: 1px; }
+.tracking-journey__route .tracking-route-origin { color: var(--text); }
+.tracking-journey__route .tracking-route-origin i { border-color: var(--teal); background: transparent; }
+.tracking-journey__route .tracking-route-pending { color: var(--muted); }
+.tracking-journey__route .tracking-route-now { grid-template-columns: 16px minmax(90px, auto); align-items: center; border: 1px solid color-mix(in srgb, var(--accent) 72%, var(--border)); border-left: 3px solid var(--accent); padding: 8px 12px; background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); animation: tracking-stage-in .24s ease-out both; }
+.tracking-journey__route .tracking-route-now i { width: 12px; height: 12px; margin: 0; border: 3px solid var(--surface); background: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 0 0 7px color-mix(in srgb, var(--accent) 12%, transparent); animation: tracking-current-breathe 2.4s ease-in-out infinite; }
+.tracking-journey__route .tracking-route-now strong { color: var(--text); font-size: .78rem; }
+.tracking-journey__route .tracking-route-now small { color: var(--accent); font-family: var(--font-mono); font-weight: 760; letter-spacing: .04em; text-transform: uppercase; }
 .tracking-journey__route > p { margin: 0; color: var(--muted); font-size: .7rem; }
 .tracking-journey__phases ol { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .tracking-journey__phases li { display: grid; grid-template-columns: 26px minmax(0, 1fr); grid-template-rows: auto auto; gap: 7px 9px; min-height: 104px; border-top: 2px solid var(--border-strong); padding: 13px 12px 10px; animation: tracking-stage-in .24s ease-out both; }
@@ -134,5 +145,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .tracking-row, .tracking-open-link svg { transition: none; }
-  .tracking-journey__phases li, .tracking-journey__phases li[data-state="current"] i { animation: none; }
+  .tracking-journey__phases li, .tracking-journey__phases li[data-state="current"] i, .tracking-journey__route .tracking-route-now, .tracking-journey__route .tracking-route-now i { animation: none; }
 }
