@@ -15,6 +15,7 @@ describe("local web container boundary", () => {
     expect(config).toContain("server_name localhost 127.0.0.1;");
     expect(config).toContain("return 444;");
     expect(config.match(/server_tokens off;/g)).toHaveLength(2);
+    expect(config.match(/access_log off;/g)).toHaveLength(2);
   });
 
   it.each([
@@ -52,6 +53,14 @@ describe("local web container boundary", () => {
     expect(dockerfile).toContain("/run/nginx.pid");
     expect(dockerfile).toContain("grep -qx 'pid /tmp/nginx.pid;'");
     expect(dockerfile).toContain("USER 101:101");
+  });
+
+  it("uses the supported digest-pinned Node 24 LTS builder", () => {
+    expect(dockerfile).toMatch(/FROM node:24-alpine@sha256:[a-f0-9]{64} AS build/u);
+    expect(dockerfile).not.toContain("node:25");
+    expect(dockerfile).toMatch(
+      /^# syntax=docker\/dockerfile:1\.7@sha256:[a-f0-9]{64}$/mu,
+    );
   });
 
   it("buffers larger request and proxy bodies on the writable temporary filesystem", () => {

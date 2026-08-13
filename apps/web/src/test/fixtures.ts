@@ -25,7 +25,9 @@ export const requesterSession: Session = {
     organisationUnitIds: [],
   },
   csrfToken: "csrf-token",
-  expiresAt: "2026-08-07T12:00:00Z",
+  expiresAt: "2099-08-07T12:00:00Z",
+  idleExpiresAt: "2099-08-07T12:00:00Z",
+  idleTimeoutSeconds: 3600,
   elevatedUntil: null,
 };
 

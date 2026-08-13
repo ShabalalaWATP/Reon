@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from types import SimpleNamespace
 from typing import Any
 from uuid import uuid4
@@ -11,8 +12,13 @@ import pytest
 from istari_service.errors import InvalidAction
 from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
 from istari_service.schemas.work import AssignSpecialist, ReturnToCoordination
-from istari_service.work_command_types import PendingWorkCommand, WorkCommandType
+from istari_service.work_command_types import (
+    PendingWorkCommand,
+    RoutingSelection,
+    WorkCommandType,
+)
 from istari_service.workflow_command_state import (
+    _validate_assignment,
     completion_engine_command,
     validated_command_state,
 )
@@ -23,15 +29,17 @@ class StateSession:
         self,
         rows: list[object | None],
         specialist: object | None = None,
+        scalar_ids: list[list[object]] | None = None,
     ) -> None:
         self._rows = rows
         self._specialist = specialist
+        self._scalar_ids = scalar_ids
 
     async def scalar(self, _statement: object) -> object | None:
         return self._rows.pop(0) if self._rows else True
 
     async def scalars(self, _statement: object) -> list[object]:
-        return [uuid4()]
+        return self._scalar_ids.pop(0) if self._scalar_ids else [uuid4()]
 
     async def get(self, _model: type[object], _identity: object) -> object | None:
         return self._specialist
@@ -43,6 +51,7 @@ def _state(
     role: UserRole = UserRole.INTAKE_TRIAGE,
     scope: str = "Shared queue",
     assigned_team: str | None = None,
+    assigned_team_id: Any = None,
     command_type: WorkCommandType = WorkCommandType.CLAIM_TASK,
     completion: Any = None,
 ) -> tuple[PendingWorkCommand, Any, Any, Any, Any]:
@@ -69,7 +78,7 @@ def _state(
         requester_id=uuid4(),
         status=status,
         assigned_delivery_team=assigned_team,
-        assigned_delivery_team_id=None,
+        assigned_delivery_team_id=assigned_team_id,
         assigned_specialist_id=None,
         version=3,
     )
@@ -159,9 +168,11 @@ async def test_assignment_is_reauthorised_at_dispatch(
         role=UserRole.DELIVERY_TEAM_LEAD,
         scope="DELIVERY_TEAM_A",
         assigned_team="DELIVERY_TEAM_A",
+        assigned_team_id=uuid4(),
         command_type=WorkCommandType.COMPLETE_TASK,
         completion=payload,
     )
+    team_id = request.assigned_delivery_team_id
     specialist = (
         SimpleNamespace(
             id=specialist_id,
@@ -174,7 +185,11 @@ async def test_assignment_is_reauthorised_at_dispatch(
         if valid_specialist
         else None
     )
-    session = StateSession([task, request, user, instance], specialist)
+    session = StateSession(
+        [task, request, user, instance],
+        specialist,
+        [[team_id], [specialist_id], [specialist_id]],
+    )
     if not valid_specialist:
         with pytest.raises(InvalidAction):
             await validated_command_state(  # type: ignore[arg-type]
@@ -189,7 +204,69 @@ async def test_assignment_is_reauthorised_at_dispatch(
     assert work.request.assigned_delivery_team == "DELIVERY_TEAM_A"
 
 
+async def test_dispatch_rejects_changed_assignment_routing() -> None:
+    specialist_id = uuid4()
+    payload = AssignSpecialist(
+        action="assign",
+        specialist_id=specialist_id,
+        reason="The Manager selected the accountable delivery Lead.",
+    )
+    command, task, request, user, instance = _state(
+        status=RequestStatus.DELIVERY_PLANNING,
+        role=UserRole.DELIVERY_TEAM_LEAD,
+        scope="DELIVERY_TEAM_A",
+        assigned_team="DELIVERY_TEAM_A",
+        assigned_team_id=uuid4(),
+        command_type=WorkCommandType.COMPLETE_TASK,
+        completion=payload,
+    )
+    command = replace(
+        command,
+        routing=RoutingSelection(
+            unit_id=uuid4(),
+            unit_code="SYNTHETIC",
+            unit_name="Synthetic unit",
+            position=1,
+            candidate_groups=("synthetic-group",),
+            staffed=True,
+        ),
+    )
+    specialist = SimpleNamespace(
+        id=specialist_id,
+        username="specialist@example.test",
+        display_name="Synthetic Specialist",
+        is_active=True,
+        role=UserRole.DELIVERY_SPECIALIST,
+        scope="DELIVERY_TEAM_A",
+    )
+    team_id = request.assigned_delivery_team_id
+    with pytest.raises(InvalidAction):
+        await validated_command_state(  # type: ignore[arg-type]
+            StateSession(
+                [task, request, user, instance],
+                specialist,
+                [[team_id], [specialist_id], [specialist_id]],
+            ),
+            command,
+            request.id,
+        )
+
+
 def test_completion_engine_command_requires_completion_payload() -> None:
     command, *_rest = _state(command_type=WorkCommandType.COMPLETE_TASK)
     with pytest.raises(InvalidAction):
         completion_engine_command(command)
+
+
+async def test_non_assignment_completion_needs_no_participant_validation() -> None:
+    payload = ReturnToCoordination(
+        action="return_to_coordination",
+        reason="Synthetic return reason.",
+    )
+    command, _task, request, _user, _instance = _state(
+        command_type=WorkCommandType.COMPLETE_TASK,
+        completion=payload,
+    )
+    await _validate_assignment(StateSession([]), request, command)  # type: ignore[arg-type]
+    engine_command = completion_engine_command(command)
+    assert engine_command.action.value == "return_to_coordination"

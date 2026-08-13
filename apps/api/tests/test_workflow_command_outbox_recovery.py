@@ -11,7 +11,6 @@ from api_helpers import current_item, submit_request
 from conftest import ApiHarness
 from istari_service.models import (
     OutboxStatus,
-    RequestEvent,
     RequestStatus,
     ServiceRequest,
     WorkflowOutbox,
@@ -19,6 +18,7 @@ from istari_service.models import (
     WorkflowTaskStatus,
 )
 from istari_service.repositories.work import SqlAlchemyWorkRepository
+from istari_service.request_event_models import RequestEvent
 from istari_service.workflow.types import ActiveTaskQuery
 from istari_service.workflow_command_dispatch import WorkflowCommandDispatcher
 

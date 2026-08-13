@@ -38,6 +38,9 @@ from istari_service.repositories.product_records import (
     package_record,
 )
 from istari_service.repositories.product_requests import ProductRequestRepositoryMixin
+from istari_service.repositories.product_storage_usage import (
+    ProductStorageUsageRepositoryMixin,
+)
 from istari_service.repositories.product_upload_retries import (
     ProductUploadRetryRepositoryMixin,
 )
@@ -46,6 +49,8 @@ from istari_service.schemas.products import (
     PackageView,
 )
 
+MAX_PACKAGE_VERSIONS_PER_REQUEST = 100
+
 
 class SqlAlchemyProductRepository(
     ProductConfigurationRepositoryMixin,
@@ -53,6 +58,7 @@ class SqlAlchemyProductRepository(
     ProductUploadRetryRepositoryMixin,
     ProductLifecycleMixin,
     ProductRequestRepositoryMixin,
+    ProductStorageUsageRepositoryMixin,
 ):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
@@ -72,6 +78,18 @@ class SqlAlchemyProductRepository(
                 ProductPackage.request_id == request_id
             )
         )
+        active_drafts = await self.session.scalar(
+            select(func.count())
+            .select_from(ProductPackage)
+            .where(
+                ProductPackage.request_id == request_id,
+                ProductPackage.status == PackageStatus.DRAFT,
+            )
+        )
+        if active_drafts:
+            raise ProductConflict("The request already has an active product draft.")
+        if (latest or 0) >= MAX_PACKAGE_VERSIONS_PER_REQUEST:
+            raise ProductConflict("The request has reached its product-version limit.")
         package = ProductPackage(
             request_id=request_id,
             package_version=(latest or 0) + 1,

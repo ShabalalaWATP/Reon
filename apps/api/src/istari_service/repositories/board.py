@@ -18,8 +18,9 @@ from istari_service.board_models import (
     WorkPackageContributor,
 )
 from istari_service.board_projection import ProjectedBoardItem, request_projection
-from istari_service.errors import BoardItemNotFound, StaleVersion
+from istari_service.errors import BoardItemNotFound, StaleVersion, TeamWorkspaceNotFound
 from istari_service.models import ServiceRequest, User
+from istari_service.organisation_models import OrganisationUnit
 from istari_service.repositories.board_package_reads import (
     SqlAlchemyPackageReadRepository,
 )
@@ -137,6 +138,17 @@ class SqlAlchemyBoardRepository:
         if package.version != expected_version:
             raise StaleVersion()
         return package
+
+    async def lock_planning_aggregate(self, team_id: UUID) -> None:
+        """Serialise invariants which span multiple packages in one team."""
+
+        locked_team_id = await self.session.scalar(
+            select(OrganisationUnit.id)
+            .where(OrganisationUnit.id == team_id)
+            .with_for_update()
+        )
+        if locked_team_id is None:
+            raise TeamWorkspaceNotFound()
 
     async def current_member_ids(self, team_id: UUID) -> set[UUID]:
         now = datetime.now(UTC)

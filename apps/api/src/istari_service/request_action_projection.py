@@ -17,7 +17,6 @@ from istari_service.action_notification_models import (
 )
 from istari_service.models import (
     Feedback,
-    RequestEvent,
     RequestStatus,
     ServiceRequest,
     User,
@@ -26,7 +25,8 @@ from istari_service.models import (
 )
 from istari_service.organisation_models import RequestRouteSelection
 from istari_service.repositories.actions import SqlAlchemyActionRepository
-from istari_service.repositories.request_participants import active_participant_ids
+from istari_service.repositories.request_participants import eligible_participant_ids
+from istari_service.request_event_models import RequestEvent
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,15 +107,10 @@ async def project_request_action(
             projected_at=projected_at,
         )
     waiting_ids = (
-        set(await active_participant_ids(session, request.id))
+        set(await eligible_participant_ids(session, request))
         if request.status is RequestStatus.CUSTOMER_INFORMATION_REQUIRED
         else set()
     )
-    if (
-        request.status is RequestStatus.CUSTOMER_INFORMATION_REQUIRED
-        and request.assigned_specialist_id is not None
-    ):
-        waiting_ids.add(request.assigned_specialist_id)
     for waiting in waiting_ids:
         key = f"request:{request.id}:waiting:{waiting}"
         active_keys.append(key)
@@ -178,9 +173,7 @@ async def action_audiences(
             )
         ]
     if status in {RequestStatus.IN_PROGRESS, RequestStatus.REWORK_REQUIRED}:
-        participant_ids = set(await active_participant_ids(session, request.id))
-        if request.assigned_specialist_id is not None:
-            participant_ids.add(request.assigned_specialist_id)
+        participant_ids = set(await eligible_participant_ids(session, request))
         return [
             ActionAudience(
                 recipient_user_id=user_id,

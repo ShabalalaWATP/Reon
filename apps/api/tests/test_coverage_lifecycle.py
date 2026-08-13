@@ -148,6 +148,7 @@ def test_production_disables_interactive_api_schema_surfaces(tmp_path: Path) -> 
             camunda_username="synthetic-client",
             camunda_password=SecretStr("synthetic-secret"),
             audit_hmac_key=SecretStr("a" * 32),
+            security_pseudonym_key=SecretStr("s" * 32),
             product_storage_path=str(tmp_path / "istari-products"),
             request_embedding_cache_path=str(tmp_path / "model-cache"),
             worker_health_required=True,
@@ -267,7 +268,8 @@ async def test_registered_service_error_handler_uses_stable_envelope() -> None:
         password_hasher=FastHasher(),
     )
     handler = application.exception_handlers[ServiceError]
-    response = await handler(cast(Any, None), AuthenticationFailed())
+    request = cast(Any, type("Request", (), {"method": "GET"})())
+    response = await handler(request, AuthenticationFailed())
 
     assert response.status_code == 401
     assert json.loads(response.body) == {

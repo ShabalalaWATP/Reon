@@ -63,7 +63,9 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 | A capacity estimate automatically assigns work | Label estimates and source freshness; require a named Manager-led assignment or handover command and never move a Camunda task from a scenario |
 | A stale planning scenario overwrites commitments | Bind preview and commit to membership, calendar, work, package and reservation versions; return a conflict when any source drifts |
 | Reassignment loses accountable handover | Preview affected tasks, packages, commitments and reservations, then record the Manager, reason, previous owner and accepted target in one transaction |
-| A dependency cycle makes planning unusable | Reject cycles in the package dependency graph and bound traversal depth and result size |
+| Concurrent dependency edits jointly create a cycle | Serialise dependency-graph mutations on the exact team aggregate, then validate the complete committed graph; reject the losing change with a conflict |
+| Concurrent board moves exceed a WIP limit | Serialise WIP admission and configuration changes on the exact team aggregate before reading the lane count or limit; preserve package optimistic versions for same-card conflicts |
+| Concurrent reservations double-book a person | Enforce non-overlap for active half-open reservation windows with a PostgreSQL partial GiST exclusion constraint; map only that named constraint to a stable conflict and roll back all losing side effects |
 | Blocker or checklist text leaks across teams | Apply exact-team ownership and grant policy on list, detail, notification and saved-view execution |
 | Iteration completion becomes an individual ranking | Report factual team commitment and completion only; do not create Analyst league tables, surveillance scores or inferred performance measures |
 | Planning notification exposes private calendar detail | Publish content-minimal assignment, blocker, due-risk, iteration and dispute events without event title, notes or private reasons |
@@ -122,3 +124,12 @@ blocked until separately threat-modelled and approved.
 Capacity scenarios can still influence human decisions. Representative-user
 acceptance must confirm that estimates are understood as advisory and do not
 become an informal performance-ranking mechanism.
+Workspace collaboration links are treated as untrusted navigation. The API stores
+only canonical public HTTPS destinations and rejects credentials, fragments,
+control characters, backslashes, non-standard ports, loopback, private and
+link-local addresses. Any future renderer must open external links with
+`rel="noopener noreferrer"` and must not fetch or preview them server-side.
+
+Local and test Platform Administration uses the same roster-disposition checks as
+ordinary membership changes, so an administrative update cannot orphan active
+service work, participation, commitments, work packages or capacity reservations.

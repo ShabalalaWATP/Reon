@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from enum import StrEnum
-from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -17,7 +16,6 @@ from sqlalchemy import (
     MetaData,
     String,
     Text,
-    UniqueConstraint,
     Uuid,
     false,
     func,
@@ -131,6 +129,8 @@ class User(ProfileFieldsMixin, TimestampMixin, Base):
     __table_args__ = (Index("ix_users_updated_id", "updated_at", "id"),)
     username: Mapped[str] = mapped_column(String(254), unique=True, index=True)
     email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
+    assistance_email_hash: Mapped[str | None] = mapped_column(String(64), index=True)
+    assistance_email_key_id: Mapped[str | None] = mapped_column(String(64))
     display_name: Mapped[str] = mapped_column(String(120))
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[UserRole] = mapped_column(_enum(UserRole, "user_role"), index=True)
@@ -245,39 +245,11 @@ class ServiceRequest(TimestampMixin, Base):
     )
     audit_head_hash: Mapped[str | None] = mapped_column(String(64))
     audit_anchor_mac: Mapped[str | None] = mapped_column(String(64))
+    audit_anchor_key_id: Mapped[str | None] = mapped_column(String(64))
     requester: Mapped[User] = rel(foreign_keys=[requester_id])
     assigned_specialist: Mapped[User | None] = rel(
         foreign_keys=[assigned_specialist_id]
     )
-
-
-class RequestEvent(CreatedMixin, Base):
-    __tablename__ = "request_events"
-    __table_args__ = (
-        UniqueConstraint("event_hash", name="uq_request_events_event_hash"),
-        Index("ix_request_events_request_created", "request_id", "created_at"),
-        Index(
-            "ix_request_events_request_created_id",
-            "request_id",
-            "created_at",
-            "id",
-        ),
-    )
-
-    request_id: Mapped[UUID] = mapped_column(ForeignKey("service_requests.id"))
-    actor_user_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
-    type: Mapped[str] = mapped_column(String(80))
-    message: Mapped[str] = mapped_column(Text)
-    prior_status: Mapped[RequestStatus | None] = mapped_column(
-        _enum(RequestStatus, "event_prior_status")
-    )
-    next_status: Mapped[RequestStatus | None] = mapped_column(
-        _enum(RequestStatus, "event_next_status")
-    )
-    details: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
-    previous_hash: Mapped[str | None] = mapped_column(String(64))
-    event_hash: Mapped[str] = mapped_column(String(64))
-    actor: Mapped[User | None] = rel(foreign_keys=[actor_user_id])
 
 
 class WorkflowInstance(TimestampMixin, Base):

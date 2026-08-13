@@ -52,9 +52,6 @@ class RequestLike(Protocol):
     @property
     def assigned_specialist_id(self) -> UUID | None: ...
 
-    @property
-    def participant_ids(self) -> frozenset[UUID]: ...
-
 
 class WorkLike(Protocol):
     @property

@@ -13,6 +13,7 @@ from istari_service.models import User
 from istari_service.repositories.team_memberships import (
     SqlAlchemyTeamMembershipRepository,
 )
+from istari_service.roster_disposition import reject_active_roster_assignments
 from istari_service.team_models import (
     TeamActivityType,
     TeamMembership,
@@ -53,6 +54,11 @@ async def align_admin_workspace_memberships(
     retained: set[UUID] = set()
     reason = "Platform Administrator updated the account workspace membership."
     repository = SqlAlchemyTeamMembershipRepository(session)
+    if any(
+        item.team_id not in next_unit_ids or item.workspace_position is not position
+        for item in memberships
+    ):
+        await reject_active_roster_assignments(session, user.id, effective_at)
     for membership in memberships:
         keep = (
             membership.team_id in next_unit_ids

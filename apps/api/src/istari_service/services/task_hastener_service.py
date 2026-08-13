@@ -26,6 +26,7 @@ from istari_service.repositories.task_hasteners import (
 from istari_service.repositories.team_workspaces import (
     SqlAlchemyTeamWorkspaceRepository,
 )
+from istari_service.request_event_audience import RequestEventAudience
 from istari_service.schemas.task_hasteners import (
     HastenerAudience,
     TaskHastenerCommand,
@@ -81,6 +82,7 @@ class TaskHastenerService:
             message=event_message,
             prior_status=request.status,
             next_status=request.status,
+            audience=RequestEventAudience.STAFF_ONLY,
             details={
                 "audience": command.audience.value,
                 "recipientCount": len(recipients),

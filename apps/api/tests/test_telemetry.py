@@ -4,9 +4,18 @@ from __future__ import annotations
 
 import json
 import logging
+from pathlib import Path
 from uuid import UUID, uuid4
 
 from conftest import ApiHarness
+
+ROOT = Path(__file__).parents[3]
+
+
+def test_container_disables_raw_uvicorn_access_logging() -> None:
+    dockerfile = (ROOT / "apps/api/Dockerfile").read_text("utf-8")
+    assert '"--no-access-log"' in dockerfile
+    assert "docker/dockerfile:1.7@sha256:" in dockerfile
 
 
 async def test_valid_correlation_is_returned_and_logs_only_the_route_template(

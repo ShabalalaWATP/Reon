@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
 
@@ -10,6 +11,7 @@ from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from istari_service.models import (
+    UTC_TS,
     UUID_TYPE,
     Base,
     CreatedMixin,
@@ -68,3 +70,13 @@ class PasswordAssistanceAttempt(CreatedMixin, Base):
     matched_user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL")
     )
+    email_hash: Mapped[str | None] = mapped_column(String(64), index=True)
+    email_key_id: Mapped[str | None] = mapped_column(String(64))
+    processing_status: Mapped[str] = mapped_column(
+        String(16), default="PENDING", server_default="PENDING", index=True
+    )
+    processing_attempts: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0"
+    )
+    next_attempt_at: Mapped[datetime | None] = mapped_column(UTC_TS, index=True)
+    processed_at: Mapped[datetime | None] = mapped_column(UTC_TS)

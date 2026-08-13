@@ -12,7 +12,7 @@ import { SESSION_EXPIRED_EVENT } from "../lib/api/client";
 import { useAuth, AuthProvider } from "../lib/auth/AuthProvider";
 import { useTheme } from "../lib/theme/ThemeProvider";
 import { json, mockFetch, renderApp, TestProviders } from "../test/render";
-import { requesterSession } from "../test/fixtures";
+import { requesterSession, staffSession } from "../test/fixtures";
 
 describe("authentication and route policy", () => {
   it("renders an accessible login, validates input and signs in", async () => {
@@ -40,9 +40,30 @@ describe("authentication and route policy", () => {
     await user.click(screen.getByRole("button", { name: "Hide password" }));
     await user.click(screen.getByRole("button", { name: "Sign in to ISTARI" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Unable to sign in");
+    expect(screen.getByLabelText(/Password/)).toHaveValue("");
+    expect(screen.getByLabelText(/Password/)).toHaveAttribute("type", "password");
     rejectLogin = false;
+    await user.type(screen.getByLabelText(/Password/), "synthetic-password");
     await user.click(screen.getByRole("button", { name: "Sign in to ISTARI" }));
     expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
+  });
+
+  it.each([
+    ["staff", staffSession, "/tracking", "Home"],
+    ["Customer", requesterSession, "/requests/new", "My requests"],
+  ])("sends %s to their fixed landing page after protected-page sign-in", async (_label, session, path, destination) => {
+    mockFetch((url, init) => {
+      if (url.pathname.endsWith("/auth/me")) return json({ detail: "Signed out" }, 401);
+      if (url.pathname.endsWith("/auth/login") && init.method === "POST") return json(session);
+      if (url.pathname.endsWith("/requests")) return json({ items: [] });
+      throw new Error(`Unexpected ${url.pathname}`);
+    });
+    const user = userEvent.setup();
+    renderApp(path);
+    await user.type(await screen.findByLabelText(/Account ID/), session.user.username);
+    await user.type(screen.getByLabelText(/Password/), "synthetic-password");
+    await user.click(screen.getByRole("button", { name: "Sign in to ISTARI" }));
+    expect(await screen.findByRole("link", { name: destination })).toHaveAttribute("aria-current", "page");
   });
 
   it("redirects anonymous protected access and toggles the login theme", async () => {
@@ -68,6 +89,7 @@ describe("authentication and route policy", () => {
     });
     const user = userEvent.setup();
     renderApp("/login");
+    await user.type(await screen.findByLabelText(/Password/), "must-clear");
     await user.click(await screen.findByRole("button", { name: "Request account" }));
     const submit = screen.getByRole("button", { name: "Submit account request" });
     expect(submit).toBeDisabled();
@@ -82,12 +104,18 @@ describe("authentication and route policy", () => {
       displayName: "Synthetic Customer",
       reason: "I need access for a fictional request.",
     });
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(screen.getByLabelText(/Password/)).toHaveValue("");
   });
 
-  it("signs out from the shell and reports logout failures", async () => {
+  it("clears the protected shell even when remote logout fails", async () => {
     let failLogout = true;
+    const sessionWithWorkspace = {
+      ...requesterSession,
+      user: { ...requesterSession.user, organisationUnitIds: ["synthetic-unit"] },
+    };
     mockFetch((url) => {
-      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/auth/me")) return json(sessionWithWorkspace);
       if (url.pathname.endsWith("/requests")) return json({ items: [] });
       if (url.pathname.endsWith("/auth/logout")) return failLogout ? json({ detail: "Try later" }, 500) : new Response(null, { status: 204 });
       throw new Error(`Unexpected ${url.pathname}`);
@@ -102,6 +130,7 @@ describe("authentication and route policy", () => {
       requesterSession.user.username,
     );
     expect(screen.getByRole("dialog", { name: "Account details" })).toHaveTextContent("Customer");
+    expect(screen.getByRole("dialog", { name: "Account details" })).toHaveTextContent("Workspace position");
     expect(screen.getByRole("dialog", { name: "Account details" })).toHaveTextContent("Own requests and released products");
     expect(screen.getByRole("link", { name: "View profile" })).toHaveAttribute("href", "/profile");
     await user.click(screen.getByRole("dialog", { name: "Account details" }));
@@ -114,11 +143,9 @@ describe("authentication and route policy", () => {
     expect(screen.queryByRole("dialog", { name: "Account details" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /Open account menu/ }));
     await user.click(screen.getByRole("button", { name: "Sign out" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Sign out failed");
-    failLogout = false;
-    await user.click(screen.getByRole("button", { name: /Open account menu/ }));
-    await user.click(screen.getByRole("button", { name: "Sign out" }));
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "My requests" })).not.toBeInTheDocument();
+    failLogout = false;
   });
 
   it("provides a keyboard bypass for repeated authenticated navigation", async () => {

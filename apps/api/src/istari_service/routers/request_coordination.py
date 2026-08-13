@@ -29,6 +29,7 @@ async def post_coordination(
     )
     return CoordinationResult(event=event)
 
+
 @router.post("/{request_id}/return-requests", response_model=CoordinationResult)
 async def request_return(
     request_id: UUID,

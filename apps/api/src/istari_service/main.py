@@ -7,6 +7,7 @@ from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack, asynccontextmanager
 from dataclasses import replace
 from datetime import timedelta
+from typing import cast
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -17,7 +18,9 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from istari_service.admin_audit import initialise_admin_audit_anchor
 from istari_service.admin_sequence import initialise_admin_identity_sequence
+from istari_service.audit import AUDIT_KEY_INFO
 from istari_service.auth_service import DUMMY_HASH_INPUT, PasswordHasher
+from istari_service.compliance_models import SecurityOutcome
 from istari_service.config import Environment, Settings, get_settings
 from istari_service.configuration_seed import (
     restore_active_configuration_projection,
@@ -25,7 +28,7 @@ from istari_service.configuration_seed import (
 )
 from istari_service.database import SessionFactory
 from istari_service.demo_seed import seed_demo_users
-from istari_service.errors import ServiceError
+from istari_service.errors import InvalidAction, ObjectNotFound, ServiceError
 from istari_service.organisation_seed import seed_organisation_units
 from istari_service.product_filesystem_storage import PrivateFilesystemObjectStorage
 from istari_service.product_runtime import ProductRuntime, clamav_product_runtime
@@ -59,6 +62,7 @@ from istari_service.routers import (
     work_items,
     workspace_collaboration,
 )
+from istari_service.security_events import SecurityEventCommand, SecurityEventRecorder
 from istari_service.telemetry import OperationalTelemetryMiddleware
 from istari_service.workflow.engine import WorkflowEngine
 from istari_service.workflow_runtime import (
@@ -217,9 +221,34 @@ def create_app(
 
     @application.exception_handler(ServiceError)
     async def handle_service_error(
-        _request: Request,
+        request: Request,
         error: ServiceError,
     ) -> JSONResponse:
+        if request.method in {"POST", "PUT", "PATCH", "DELETE"} and isinstance(
+            error, (ObjectNotFound, InvalidAction)
+        ):
+            actor = getattr(request.state, "authenticated_actor", None)
+            if actor is not None:
+                factory = cast(
+                    async_sessionmaker[AsyncSession],
+                    request.app.state.session_factory,
+                )
+                route = request.scope.get("route")
+                await SecurityEventRecorder(
+                    factory,
+                    pseudonym_key=cast(bytes, factory.kw["info"][AUDIT_KEY_INFO]),
+                ).record_once(
+                    SecurityEventCommand(
+                        event_type="AUTHORIZATION_DENIAL",
+                        outcome=SecurityOutcome.DENIED,
+                        reason_code=error.code,
+                        actor_user_id=actor.id,
+                        source=request.client.host if request.client else None,
+                        correlation_id=getattr(request.state, "correlation_id", None),
+                        request_method=request.method,
+                        route_template=getattr(route, "path", None),
+                    )
+                )
         return JSONResponse(
             status_code=error.status_code,
             headers=getattr(error, "response_headers", None),

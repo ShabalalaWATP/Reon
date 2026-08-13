@@ -13,6 +13,9 @@ RUN rm -f \
     /var/lib/db/sbom/gnutar-rmt-*.spdx.json \
     /var/lib/db/sbom/libnghttp2-14-*.spdx.json
 
+# Upgrade the base shell package to the repository's patched release.
+RUN apk add --no-cache 'busybox>=1.38.0-r1'
+
 COPY --chown=1001:0 infra/camunda/application-postgresql.yaml /usr/local/camunda/config/application.yaml
 
 USER 1001:1001

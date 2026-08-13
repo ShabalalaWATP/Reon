@@ -40,9 +40,19 @@ foreach ($requiredText in @('--format=custom', 'pg_restore --list', 'SHA256', '.
         throw "Backup control is missing: $requiredText"
     }
 }
-foreach ($requiredText in @('RESTORE_ISOLATED_DATABASE', 'pg_restore --list', 'SHA256', 'verify-restore')) {
+foreach ($requiredText in @('BackupManifest.ps1', 'New-AuthenticatedBackupManifest')) {
+    if (-not $backup.Contains($requiredText)) {
+        throw "Authenticated backup control is missing: $requiredText"
+    }
+}
+foreach ($requiredText in @('RESTORE_ISOLATED_DATABASE', 'pg_restore --list', 'verify-restore')) {
     if (-not $restore.Contains($requiredText)) {
         throw "Restore control is missing: $requiredText"
+    }
+}
+foreach ($requiredText in @('BackupManifest.ps1', 'Assert-AuthenticatedBackupManifest')) {
+    if (-not $restore.Contains($requiredText)) {
+        throw "Authenticated restore control is missing: $requiredText"
     }
 }
 if ($restore.Contains('--clean')) {

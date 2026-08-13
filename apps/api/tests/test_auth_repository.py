@@ -250,6 +250,7 @@ async def test_find_session_returns_active_session_and_touches_last_seen(
         stored.token_hash,
         now=now,
         idle_cutoff=now - timedelta(minutes=5),
+        touch=True,
     )
 
     assert result is not None

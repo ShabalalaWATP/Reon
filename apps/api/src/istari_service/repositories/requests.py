@@ -32,6 +32,7 @@ from istari_service.repositories.request_scope import scoped_request
 from istari_service.repositories.request_views import (
     build_request_detail,
 )
+from istari_service.request_event_audience import RequestEventAudience
 from istari_service.request_search_projection import new_search_document
 from istari_service.schemas.requests import (
     RequestCancel,
@@ -161,12 +162,14 @@ class SqlAlchemyRequestRepository(RequestCustomerRepositoryMixin):
             message="Request submitted.",
             prior_status=None,
             next_status=RequestStatus.ROUTING_PENDING,
+            audience=RequestEventAudience.CUSTOMER_AND_STAFF,
         )
         await self._session.flush()
         return await build_request_detail(
             self._session,
             request_id,
             reveal_unreleased_deliverable=False,
+            include_staff_events=False,
         )
 
     async def get_record_for_actor(
@@ -199,6 +202,7 @@ class SqlAlchemyRequestRepository(RequestCustomerRepositoryMixin):
         include_clarifications: bool = False,
         event_limit: int = 50,
         event_cursor: str | None = None,
+        include_staff_events: bool = False,
     ) -> RequestDetail:
         return await build_request_detail(
             self._session,
@@ -207,6 +211,7 @@ class SqlAlchemyRequestRepository(RequestCustomerRepositoryMixin):
             include_clarifications=include_clarifications,
             event_limit=event_limit,
             event_cursor=event_cursor,
+            include_staff_events=include_staff_events,
         )
 
     async def cancel(

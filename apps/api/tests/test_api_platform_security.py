@@ -10,11 +10,16 @@ from istari_service.action_notification_models import (
     NotificationRecipient,
 )
 from istari_service.admin_models import AdminAuditEvent
+from istari_service.database import SECURITY_PSEUDONYM_KEY_INFO
 from istari_service.models import User, UserRole
 from istari_service.platform_security_models import (
     PasswordAssistanceAttempt,
     PlatformClassificationSetting,
 )
+from istari_service.repositories.platform_security import (
+    SqlAlchemyPlatformSecurityRepository,
+)
+from istari_service.services.platform_security_service import PlatformSecurityService
 
 
 def test_platform_classification_persists_public_values() -> None:
@@ -123,9 +128,34 @@ async def test_password_assistance_is_neutral_bounded_and_admin_only(
                 NotificationEvent.event_type == "PASSWORD_ASSISTANCE_REQUESTED"
             )
         )
-        assert event_count == 1
+        assert event_count == 0
         attempt_columns = set(PasswordAssistanceAttempt.__table__.columns.keys())
         assert "email" not in attempt_columns
+
+    pseudonym_key = harness.sessions.kw["info"][SECURITY_PSEUDONYM_KEY_INFO]
+    for _ in range(5):
+        async with harness.sessions() as session, session.begin():
+            processed = await PlatformSecurityService(
+                SqlAlchemyPlatformSecurityRepository(session),
+                pseudonym_key=pseudonym_key,
+                pseudonym_key_id=harness.settings.security_pseudonym_key_id,
+            ).process_pending_password_assistance()
+        if not processed:
+            break
+    async with harness.sessions() as session:
+        event_count = await session.scalar(
+            select(func.count(NotificationEvent.id)).where(
+                NotificationEvent.event_type == "PASSWORD_ASSISTANCE_REQUESTED"
+            )
+        )
+        assert event_count == 1
+
+    async with harness.sessions() as session, session.begin():
+        assert not await PlatformSecurityService(
+            SqlAlchemyPlatformSecurityRepository(session),
+            pseudonym_key=pseudonym_key,
+            pseudonym_key_id=harness.settings.security_pseudonym_key_id,
+        ).process_pending_password_assistance()
 
     await harness.login("admin1")
     notifications = await harness.client.get("/api/v1/me/notifications")

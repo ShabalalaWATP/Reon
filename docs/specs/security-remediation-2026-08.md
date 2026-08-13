@@ -68,8 +68,15 @@ Existing production validation must continue to reject them.
   deadline. PostgreSQL also applies transaction-local statement and row-lock
   deadlines. Contention fails account-neutrally before account lookup or hashing,
   and cancellation cleanup cannot remain unbounded.
-- Source identifiers are one-way digests. Raw IP addresses and usernames are not
-  stored in the limiter table or emitted in security logs.
+- Source and normalised-credential identifiers use domain-separated HMAC-SHA-256
+  with the stable security pseudonym key. Raw IP addresses and usernames are not
+  stored in the limiter table or emitted in security logs. Production keys are at
+  least 32 bytes. Planned rotation changes the opaque bucket identifiers; old-key
+  limiter rows retire through bounded expiry and routine pruning. Assistance-index
+  rotation changes the configured key ID and requires pending attempts to be
+  drained before activation; the worker then reindexes all users under the new ID
+  before processing new attempts. A dual-key migration is required for no-drain
+  rotation.
 - Forwarded addresses are trusted only when the direct peer belongs to an explicit
   configured proxy network. Invalid or ambiguous forwarded values fall back to the
   direct peer.

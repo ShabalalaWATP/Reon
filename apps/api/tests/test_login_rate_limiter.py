@@ -6,12 +6,10 @@ import asyncio
 import threading
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
-from ipaddress import ip_network
 from types import SimpleNamespace
 from typing import cast
 
 import pytest
-from fastapi import Request
 from sqlalchemy import select
 from sqlalchemy.dialects import postgresql, sqlite
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -36,13 +34,14 @@ from istari_service.login_rate_limiter import (
     LoginRateLimitDecision,
     LoginRateLimitPolicy,
     LoginRateLimitUnavailable,
-    login_source_key,
 )
 from istari_service.repositories.login_rate_limits import (
     SqlAlchemyLoginAttemptLimiter,
     _dialect_insert,
     _retry_after,
 )
+
+PSEUDONYM_KEY = b"p" * 32
 
 
 @pytest.fixture
@@ -59,59 +58,6 @@ async def sessions() -> AsyncIterator[async_sessionmaker[AsyncSession]]:
     await engine.dispose()
 
 
-def _request(
-    peer: str | None,
-    *,
-    forwarded: str | None = None,
-) -> Request:
-    headers = [] if forwarded is None else [(b"x-forwarded-for", forwarded.encode())]
-    return Request(
-        {
-            "type": "http",
-            "method": "POST",
-            "path": "/api/v1/auth/login",
-            "headers": headers,
-            "client": ((peer, 12345) if peer is not None else None),
-        }
-    )
-
-
-def test_source_key_ignores_untrusted_forwarding_and_stores_no_address() -> None:
-    direct = login_source_key(_request("203.0.113.7"), ())
-    forged = login_source_key(
-        _request("203.0.113.7", forwarded="198.51.100.9"),
-        (),
-    )
-
-    assert direct == forged
-    assert direct == login_source_key(_request("::ffff:203.0.113.7"), ())
-    assert direct.startswith("source:") and len(direct) == 71
-    assert "203.0.113.7" not in direct
-
-
-def test_source_key_accepts_one_address_only_from_an_explicit_proxy() -> None:
-    trusted = (ip_network("10.20.0.0/16"),)
-    expected = login_source_key(_request("198.51.100.9"), ())
-
-    assert (
-        login_source_key(
-            _request("10.20.1.5", forwarded="198.51.100.9"),
-            trusted,
-        )
-        == expected
-    )
-    assert login_source_key(
-        _request("10.20.1.5", forwarded="198.51.100.9, 10.20.1.4"),
-        trusted,
-    ) == login_source_key(_request("10.20.1.5"), trusted)
-    assert login_source_key(
-        _request("10.20.1.5", forwarded="not-an-address"), trusted
-    ) == login_source_key(_request("10.20.1.5"), trusted)
-    assert login_source_key(_request(None), ()) == login_source_key(
-        _request("not-an-address"), ()
-    )
-
-
 async def test_source_limit_is_shared_between_database_sessions(
     sessions: async_sessionmaker[AsyncSession],
 ) -> None:
@@ -123,7 +69,7 @@ async def test_source_limit_is_shared_between_database_sessions(
     assert 1 <= decisions[-1].retry_after_seconds <= 60
 
 
-async def test_global_limit_and_expired_row_cleanup_are_enforced(
+async def test_global_budget_bounds_distributed_hash_admission_and_cleanup_runs(
     sessions: async_sessionmaker[AsyncSession],
 ) -> None:
     now = datetime.now(UTC)
@@ -178,6 +124,7 @@ async def test_budget_is_committed_before_slow_password_work(
         dummy_hash="dummy-hash",
         login_limiter=limiter,
         login_rate_limit_policy=policy,
+        pseudonym_key=PSEUDONYM_KEY,
     )
 
     login = asyncio.create_task(service.login("missing", TEST_PASSWORD))
@@ -193,7 +140,8 @@ async def test_budget_is_committed_before_slow_password_work(
     )
     hasher.release.set()
 
-    assert counts == {"global": 1, "source:unit-test": 1}
+    assert counts["source:unit-test"] == 1
+    assert counts["global"] == 1
     assert second.allowed
     with pytest.raises(AuthenticationFailed):
         await login

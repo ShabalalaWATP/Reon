@@ -121,7 +121,9 @@ work. Production still needs edge protection for volumetric attacks.
 
 | Variable | Local value | Meaning and constraint |
 |---|---|---|
-| `AUDIT_HMAC_KEY` | unique value of at least 32 bytes | HMAC material for tamper-evident audit events. Required in production. Rotation needs an approved chain-continuity procedure. |
+| `AUDIT_HMAC_KEY` | unique value of at least 32 bytes | Legacy single HMAC key for tamper-evident audit events. Required in production unless the versioned keyring is configured. |
+| `AUDIT_HMAC_ACTIVE_KEY_ID` | `legacy` | Safe identifier written on new audit events and anchors. Must name a key in the configured keyring. |
+| `AUDIT_HMAC_KEYRING` | JSON object of key ID to 32-byte-or-longer secret | Rotation keyring. Retain every historic key referenced by live events or backups; secrets must come from the approved secret store. |
 | `ALLOW_DEMO_USERS` | `true` | Permits synthetic fixture seeding. Must be `false` in production. |
 | `DEMO_USER_PASSWORD` | `admin` | Deliberately weak local-only shared fixture password. Must differ from infrastructure secrets. |
 

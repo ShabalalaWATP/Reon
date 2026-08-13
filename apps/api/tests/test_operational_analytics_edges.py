@@ -14,7 +14,7 @@ from conftest import ApiHarness
 from istari_service.analytics_evolution_models import OperationalFactType
 from istari_service.board_models import IterationStatus, TeamIteration
 from istari_service.calendar_models import CalendarCapacitySnapshot
-from istari_service.models import RequestEvent, ServiceRequest
+from istari_service.models import ServiceRequest
 from istari_service.operational_analytics_facts import (
     OperationalFactInput,
     OperationalScope,
@@ -36,6 +36,7 @@ from istari_service.operational_analytics_reconciliation import (
 from istari_service.organisation_models import OrganisationKind
 from istari_service.product_models import ProductAccessEvent
 from istari_service.product_types import AccessKind, AccessOutcome
+from istari_service.request_event_models import RequestEvent
 
 
 class _ScalarResult:

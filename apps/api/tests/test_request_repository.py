@@ -24,7 +24,6 @@ from istari_service.models import (
     Deliverable,
     DeliverableStatus,
     Feedback,
-    RequestEvent,
     RequestStatus,
     ServiceRequest,
     User,
@@ -39,6 +38,7 @@ from istari_service.repositories.event_store import (
 )
 from istari_service.repositories.request_views import build_request_detail
 from istari_service.repositories.requests import SqlAlchemyRequestRepository
+from istari_service.request_event_models import RequestEvent
 from istari_service.schemas.requests import FeedbackCreate, RequestCreate, Sensitivity
 from pin_test_support import StaticConfigurationPins
 from synthetic_user_support import actor_from, make_user
@@ -173,6 +173,8 @@ async def test_create_list_get_and_hash_linked_events(
                 next_status=event.next_status,
                 details=event.details,
                 event_hash=event.event_hash,
+                audience=event.audience.value,
+                hash_version=event.hash_version,
             )
             for event in events
         ]
@@ -293,7 +295,7 @@ async def test_request_detail_controls_deliverable_visibility(
         )
         await session.flush()
         detail = await repository.get_detail(
-            request_id, reveal_unreleased_deliverable=False
+            request_id, False, include_staff_events=True
         )
         assert detail.deliverable is not None
         assert detail.deliverable.title == "Released response"
@@ -339,9 +341,7 @@ async def test_feedback_gates_and_missing_detail(
             )
         with pytest.raises(LookupError, match="no longer exists"):
             await build_request_detail(
-                session,
-                uuid4(),
-                reveal_unreleased_deliverable=False,
+                session, uuid4(), reveal_unreleased_deliverable=False
             )
         feedback_event = await session.scalar(
             select(RequestEvent).where(RequestEvent.type == "feedback_submitted")

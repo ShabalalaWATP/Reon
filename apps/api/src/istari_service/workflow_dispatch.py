@@ -25,6 +25,7 @@ from istari_service.models import (
 from istari_service.ownership import OWNER_BY_STATUS
 from istari_service.policies import ROLE_BY_STAGE
 from istari_service.repositories.event_store import append_request_event
+from istari_service.request_event_audience import RequestEventAudience
 from istari_service.workflow.engine import WorkflowEngine
 from istari_service.workflow.errors import (
     WorkflowConflict,
@@ -246,6 +247,7 @@ class WorkflowOutboxDispatcher:
                     message="Request entered intake review.",
                     prior_status=RequestStatus.ROUTING_PENDING,
                     next_status=RequestStatus.TRIAGE_REVIEW,
+                    audience=RequestEventAudience.CUSTOMER_AND_STAFF,
                 )
             if task is not None and not cancelled:
                 await self._add_projection(session, request, instance, task)

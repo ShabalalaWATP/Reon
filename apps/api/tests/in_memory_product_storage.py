@@ -98,3 +98,19 @@ class InMemoryPrivateObjectStorage:
 
     async def delete_quarantine(self, object_key: str) -> None:
         self._quarantine.pop(object_key, None)
+        self._grants.pop(object_key, None)
+
+    async def delete_released(self, object_key: str) -> None:
+        self._released.pop(object_key, None)
+
+    def quarantine_keys(
+        self, *, limit: int = 1_000, after: str | None = None
+    ) -> tuple[str, ...]:
+        keys = sorted(self._quarantine)
+        if after is not None:
+            keys = [key for key in keys if key > after]
+        return tuple(keys[:limit])
+
+    def reconcile_quarantine_index(self, *, limit: int) -> int:
+        del limit
+        return 0

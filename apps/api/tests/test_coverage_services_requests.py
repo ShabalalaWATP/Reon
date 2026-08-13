@@ -69,6 +69,7 @@ class FakeRequestRepository:
         self.records: dict[UUID, RequestRecord] = {}
         self.reveal: bool | None = None
         self.includes_clarifications: list[bool] = []
+        self.includes_staff_events: list[bool] = []
         self.created = cast(RequestDetail, object())
         self.detail = RequestDetail.model_construct(events=[])
         self.feedback = cast(FeedbackView, object())
@@ -108,10 +109,12 @@ class FakeRequestRepository:
         *,
         reveal_unreleased_deliverable: bool,
         include_clarifications: bool = False,
+        include_staff_events: bool = True,
     ) -> RequestDetail:
         assert request_id in self.records
         self.reveal = reveal_unreleased_deliverable
         self.includes_clarifications.append(include_clarifications)
+        self.includes_staff_events.append(include_staff_events)
         return self.detail
 
     async def add_feedback(
@@ -160,6 +163,7 @@ async def test_get_conceals_missing_and_out_of_scope_records() -> None:
     assert await service.get(requester, request_id) is repository.detail
     assert repository.reveal is False
     assert repository.includes_clarifications[-1] is True
+    assert repository.includes_staff_events[-1] is False
     assert repository.record_locks[-1] is True
 
     triage = actor(UserRole.INTAKE_TRIAGE)
@@ -172,6 +176,7 @@ async def test_get_conceals_missing_and_out_of_scope_records() -> None:
     repository.assigned_actor_ids.add(triage.id)
     assert await service.get(triage, request_id) is repository.detail
     assert repository.includes_clarifications[-1] is False
+    assert repository.includes_staff_events[-1] is True
     assert repository.reveal is True
 
 

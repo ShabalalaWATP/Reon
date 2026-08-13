@@ -103,7 +103,7 @@ class ClarificationMessage(CreatedMixin, Base):
     )
 
     thread_id: Mapped[UUID] = mapped_column(
-        ForeignKey("clarification_threads.id", ondelete="RESTRICT"), index=True
+        ForeignKey("clarification_threads.id", ondelete="CASCADE"), index=True
     )
     actor_user_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id", ondelete="RESTRICT")

@@ -56,6 +56,9 @@ def _service(
         upload_ttl=runtime.upload_ttl,
         maximum_file_bytes=runtime.maximum_file_bytes,
         maximum_package_bytes=runtime.maximum_package_bytes,
+        maximum_request_storage_bytes=runtime.maximum_request_storage_bytes,
+        maximum_user_storage_bytes=runtime.maximum_user_storage_bytes,
+        maximum_global_storage_bytes=runtime.maximum_global_storage_bytes,
         managed_file_uploads_enabled=runtime.managed_file_uploads_enabled,
     )
 

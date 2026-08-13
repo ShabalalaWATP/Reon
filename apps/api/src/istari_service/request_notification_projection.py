@@ -13,7 +13,6 @@ from istari_service.action_notification_models import (
     NotificationEvent,
 )
 from istari_service.models import (
-    RequestEvent,
     RequestStatus,
     ServiceRequest,
     User,
@@ -32,8 +31,9 @@ from istari_service.repositories.notification_projection import (
     RecipientRule,
     SqlAlchemyNotificationProjectionRepository,
 )
-from istari_service.repositories.request_participants import active_participant_ids
+from istari_service.repositories.request_participants import eligible_participant_ids
 from istari_service.request_action_projection import action_audiences, as_utc
+from istari_service.request_event_models import RequestEvent
 from istari_service.team_models import TeamMembership
 
 
@@ -111,17 +111,12 @@ async def recipient_rules_for(
         "CLARIFICATION_REQUESTED",
     }:
         return [_requester_rule(request)]
-    if (
-        event_type
-        in {
-            "CLARIFICATION_ANSWERED",
-            "MANAGER_REVIEW_RETURNED",
-            "QC_REVIEW_RETURNED",
-        }
-    ):
-        participant_ids = set(await active_participant_ids(session, request.id))
-        if request.assigned_specialist_id is not None:
-            participant_ids.add(request.assigned_specialist_id)
+    if event_type in {
+        "CLARIFICATION_ANSWERED",
+        "MANAGER_REVIEW_RETURNED",
+        "QC_REVIEW_RETURNED",
+    }:
+        participant_ids = set(await eligible_participant_ids(session, request))
         return [_participant_rule(user_id) for user_id in participant_ids]
     rules: list[RecipientRule] = []
     for audience in await action_audiences(session, request):
@@ -148,7 +143,7 @@ async def recipient_rules_for(
     if event_type in {"TASK_ASSIGNED", "TASK_REASSIGNED", "TASK_RETURNED"}:
         rules.extend(
             _participant_rule(user_id)
-            for user_id in await active_participant_ids(session, request.id)
+            for user_id in await eligible_participant_ids(session, request)
         )
     return rules
 
@@ -181,7 +176,7 @@ async def cancellation_recipient_rules(
         rules.append(_assignee_rule(request))
     rules.extend(
         _participant_rule(user_id)
-        for user_id in await active_participant_ids(session, request.id)
+        for user_id in await eligible_participant_ids(session, request)
     )
     if event.prior_status in {
         RequestStatus.QUALITY_REVIEW,

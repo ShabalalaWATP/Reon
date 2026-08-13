@@ -85,6 +85,7 @@ class SqlAlchemyOrganisationRepository(OrganisationTrackingRepositoryMixin):
     ) -> RoutingOptionsWorkspace:
         return await routing_workspace(self._session, request_id, status)
 
+
 async def resolve_routing_selection(
     session: AsyncSession,
     request: ServiceRequest,

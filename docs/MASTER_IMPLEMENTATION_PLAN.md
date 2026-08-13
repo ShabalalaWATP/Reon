@@ -1211,3 +1211,14 @@ acceptance remains required.
   gates at or above 95 per cent line and branch coverage.
 - [ ] Obtain representative routing-unit and Customer acceptance for the new
   separation and explicit acceptance wording.
+
+## Deterministic post-login landing fix
+
+Status: implemented and browser-verified locally on 13 August 2026.
+
+- [x] Ignore the protected route that caused an anonymous user to reach sign-in.
+- [x] Send every internal role to `/overview` after successful sign-in.
+- [x] Send Customers to `/requests` after successful sign-in.
+- [x] Preserve intentional deep links for sessions that are already authenticated.
+- [x] Cover staff and Customer return-route regressions and verify both in the
+  real local browser with a clean authenticated console.

@@ -185,6 +185,9 @@ class AdminService:
                 actor_id=actor.id,
             )
         user.display_name = payload.display_name
+        if user.email != next_email:
+            user.assistance_email_hash = None
+            user.assistance_email_key_id = None
         user.email = next_email
         user.role = payload.role
         user.scope = next_scope

@@ -4,12 +4,23 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from typing import cast
 
 from istari_service.config import Settings, get_settings
-from istari_service.database import SessionFactory, dispose_database
+from istari_service.database import (
+    SECURITY_PSEUDONYM_KEY_INFO,
+    SessionFactory,
+    dispose_database,
+)
+from istari_service.product_cleanup import ProductUploadCleanup
+from istari_service.product_filesystem_storage import PrivateFilesystemObjectStorage
+from istari_service.repositories.platform_security import (
+    SqlAlchemyPlatformSecurityRepository,
+)
 from istari_service.request_embeddings import FastEmbedRequestEmbeddingProvider
 from istari_service.request_event_projection import NotificationProjectionReconciler
 from istari_service.request_search_indexer import RequestSearchIndexer
+from istari_service.services.platform_security_service import PlatformSecurityService
 from istari_service.team_membership_sync import TeamMembershipProjector
 from istari_service.worker_runtime import MaintenanceJob, WorkerIteration, run_worker
 from istari_service.workflow.engine import WorkflowEngine
@@ -72,7 +83,27 @@ def build_iteration(
         jobs.append(
             MaintenanceJob("request-search-index", request_search.reconcile_once)
         )
+    if settings.managed_products_enabled:
+        product_cleanup = ProductUploadCleanup(
+            SessionFactory,
+            PrivateFilesystemObjectStorage(settings.product_storage_path),
+        )
+        jobs.append(
+            MaintenanceJob("product-upload-cleanup", product_cleanup.reconcile_once)
+        )
     jobs.append(MaintenanceJob("membership-projection", membership.reconcile_once))
+
+    async def password_assistance() -> bool:
+        async with SessionFactory() as session, session.begin():
+            return await PlatformSecurityService(
+                SqlAlchemyPlatformSecurityRepository(session),
+                pseudonym_key=cast(
+                    bytes, SessionFactory.kw["info"][SECURITY_PSEUDONYM_KEY_INFO]
+                ),
+                pseudonym_key_id=settings.security_pseudonym_key_id,
+            ).process_pending_password_assistance()
+
+    jobs.append(MaintenanceJob("password-assistance", password_assistance))
     return WorkerIteration(
         SessionFactory,
         tuple(jobs),

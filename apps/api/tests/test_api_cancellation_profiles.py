@@ -27,7 +27,6 @@ from istari_service.domain import Actor
 from istari_service.errors import ObjectNotFound
 from istari_service.models import (
     OutboxStatus,
-    RequestEvent,
     RequestStatus,
     ServiceRequest,
     UserRole,
@@ -41,6 +40,7 @@ from istari_service.repositories.request_cancellation import (
     _record_workflow_cancellation,
     cancel_request,
 )
+from istari_service.request_event_models import RequestEvent
 from istari_service.schemas.requests import RequestCancel
 from istari_service.workflow_cancellation_dispatch import (
     WorkflowCancellationDispatcher,

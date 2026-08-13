@@ -21,6 +21,7 @@ from istari_service.organisation_models import (
     UserOrganisationMembership,
 )
 from istari_service.organisation_seed import organisation_id, seed_organisation_units
+from istari_service.repositories.request_views import build_request_detail
 from istari_service.schemas.coordination import (
     CoordinationAudience,
     CoordinationMessageCreate,
@@ -33,9 +34,7 @@ from test_work_repository import actor_from, make_request, make_user
 
 
 @pytest.fixture
-async def coordination_database() -> AsyncIterator[
-    async_sessionmaker[AsyncSession]
-]:
+async def coordination_database() -> AsyncIterator[async_sessionmaker[AsyncSession]]:
     settings = Settings(
         environment=Environment.TEST,
         database_url="sqlite+aiosqlite:///:memory:",
@@ -108,6 +107,23 @@ async def test_route_user_and_customer_can_record_coordination(
         )
         assert response.message.startswith("Message for current owner:")
         assert request.audit_event_count == 2
+        customer_detail = await build_request_detail(
+            session,
+            request.id,
+            reveal_unreleased_deliverable=False,
+            include_staff_events=False,
+        )
+        staff_detail = await build_request_detail(
+            session,
+            request.id,
+            reveal_unreleased_deliverable=True,
+            include_staff_events=True,
+        )
+        assert [event.message for event in customer_detail.events] == [question.message]
+        assert [event.message for event in staff_detail.events] == [
+            question.message,
+            response.message,
+        ]
 
 
 @pytest.mark.asyncio

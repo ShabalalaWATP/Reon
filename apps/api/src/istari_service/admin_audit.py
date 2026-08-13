@@ -18,7 +18,10 @@ from istari_service.admin_models import (
 )
 from istari_service.audit import canonical_anchor_mac
 from istari_service.audit_types import AdminAuditEvidence
-from istari_service.repositories.event_store import audit_key_for_session
+from istari_service.repositories.event_store import (
+    active_audit_key_for_session,
+    audit_key_for_session,
+)
 
 
 async def initialise_admin_audit_anchor(session: AsyncSession) -> None:
@@ -77,7 +80,7 @@ async def append_admin_event(
         anchor = AdminAuditAnchor(id=ADMIN_AUDIT_ANCHOR_ID)
         session.add(anchor)
         await session.flush()
-    key = audit_key_for_session(session)
+    key_id, key = active_audit_key_for_session(session)
     created_at = datetime.now(UTC)
     sequence = anchor.event_count + 1
     event_hash = admin_event_hash(
@@ -103,6 +106,7 @@ async def append_admin_event(
         summary=summary,
         previous_hash=anchor.head_hash,
         event_hash=event_hash,
+        audit_key_id=key_id,
         created_at=created_at,
     )
     session.add(event)
@@ -114,6 +118,7 @@ async def append_admin_event(
         head_hash=event_hash,
         audit_key=key,
     )
+    anchor.anchor_key_id = key_id
     await session.flush()
     return event
 
@@ -122,7 +127,6 @@ async def verify_admin_audit_integrity(session: AsyncSession) -> bool:
     anchor = await session.get(AdminAuditAnchor, ADMIN_AUDIT_ANCHOR_ID)
     if anchor is None:
         return True
-    key = audit_key_for_session(session)
     if anchor.event_count == 0:
         return anchor.head_hash is None and anchor.anchor_mac is None
     if anchor.head_hash is None or anchor.anchor_mac is None:
@@ -131,7 +135,9 @@ async def verify_admin_audit_integrity(session: AsyncSession) -> bool:
         request_id=anchor.id,
         event_count=anchor.event_count,
         head_hash=anchor.head_hash,
-        audit_key=key,
+        audit_key=audit_key_for_session(
+            session, getattr(anchor, "anchor_key_id", None) or "legacy"
+        ),
     )
     if not hmac.compare_digest(anchor.anchor_mac, expected_mac):
         return False
@@ -158,7 +164,9 @@ async def verify_admin_audit_integrity(session: AsyncSession) -> bool:
             summary=event.summary,
             created_at=event.created_at,
             previous_hash=previous,
-            audit_key=key,
+            audit_key=audit_key_for_session(
+                session, getattr(event, "audit_key_id", "legacy")
+            ),
         )
         if not hmac.compare_digest(event.event_hash, calculated):
             return False

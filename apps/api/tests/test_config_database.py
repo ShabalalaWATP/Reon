@@ -21,6 +21,7 @@ from istari_service.database import (
     create_schema,
     create_session_factory,
     dispose_database,
+    session_scope,
 )
 from istari_service.models import Base, User, UserRole
 
@@ -58,6 +59,7 @@ def production_settings(**overrides: Any) -> Settings:
         "web_origin": "https://service.example.test",
         "trusted_origins": frozenset({"https://staff.example.test"}),
         "audit_hmac_key": SecretStr("a" * 32),
+        "security_pseudonym_key": SecretStr("s" * 32),
         "product_storage_path": str(product_storage_path),
         "request_embedding_cache_path": str(product_storage_path / "model-cache"),
         "worker_health_required": True,
@@ -133,11 +135,13 @@ def test_settings_normalise_origins_modes_and_aliases() -> None:
             "allowed hosts must be explicit",
         ),
         ({"audit_hmac_key": None}, "audit HMAC key is required"),
+        ({"security_pseudonym_key": None}, "security pseudonym key is required"),
         (
             {"product_storage_path": ".local/product-storage"},
             "absolute private path",
         ),
         ({"audit_hmac_key": SecretStr("short")}, "at least 32 bytes"),
+        ({"security_pseudonym_key": SecretStr("short")}, "at least 32 bytes"),
         ({"camunda_auth_mode": "NONE"}, "authentication is required"),
         ({"camunda_username": None}, "credentials must be non-empty"),
         ({"camunda_password": None}, "credentials must be non-empty"),
@@ -204,6 +208,48 @@ def test_settings_reject_invalid_login_security_configuration() -> None:
             login_rate_limit_per_source=20,
             login_rate_limit_global=10,
         )
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"worker_health_required": False}, "independent worker"),
+        (
+            {
+                "audit_hmac_key": None,
+                "audit_hmac_active_key_id": "missing",
+                "audit_hmac_keyring": SecretStr('{"present":"' + "p" * 32 + '"}'),
+            },
+            "absent from the keyring",
+        ),
+        ({"request_embedding_cache_path": "relative-cache"}, "embedding cache"),
+    ],
+)
+def test_production_settings_reject_remaining_security_edges(
+    overrides: dict[str, Any], message: str
+) -> None:
+    with pytest.raises(ValidationError, match=message):
+        production_settings(**overrides)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [None, "not-json", "[]", "{}", '{"bad id!":"' + "a" * 32 + '"}', '{"ok":1}'],
+)
+def test_audit_keyring_rejects_invalid_material(value: str | None) -> None:
+    if value is None:
+        assert Settings(audit_hmac_keyring=None).audit_hmac_keys == {}
+        return
+    with pytest.raises(ValidationError):
+        Settings(audit_hmac_keyring=SecretStr(value))
+
+
+def test_audit_keyring_exposes_valid_key_material() -> None:
+    settings = Settings(
+        audit_hmac_active_key_id="next",
+        audit_hmac_keyring=SecretStr('{"next":"' + "n" * 32 + '"}'),
+    )
+    assert settings.audit_hmac_key_bytes == b"n" * 32
     with pytest.raises(ValidationError, match="ClamAV host"):
         Settings(
             environment=Environment.TEST,
@@ -268,6 +314,24 @@ async def test_schema_creation_and_disposal() -> None:
     factory = create_session_factory(engine)
     async with factory() as session, session.begin():
         session.add(make_user("scoped@example.test"))
+    async with factory() as session:
+        assert await session.scalar(select(func.count(User.id))) == 1
+    await dispose_database(engine)
+
+
+@pytest.mark.asyncio
+async def test_session_scope_commits_and_factory_rejects_missing_active_key() -> None:
+    engine = create_database_engine(sqlite_settings())
+    await create_schema(engine)
+    with pytest.raises(ValueError, match="active audit key ID"):
+        create_session_factory(
+            engine,
+            audit_hmac_keys={"present": b"p" * 32},
+            audit_active_key_id="missing",
+        )
+    factory = create_session_factory(engine)
+    async with session_scope(factory) as session:
+        session.add(make_user("scope@example.test"))
     async with factory() as session:
         assert await session.scalar(select(func.count(User.id))) == 1
     await dispose_database(engine)

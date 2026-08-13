@@ -15,7 +15,7 @@ from istari_service.action_notification_models import (
 )
 from istari_service.board_models import IterationStatus, TeamIteration
 from istari_service.calendar_models import CalendarCapacitySnapshot
-from istari_service.models import RequestEvent, ServiceRequest
+from istari_service.models import ServiceRequest
 from istari_service.operational_analytics_projection import (
     REQUEST_FACT_TYPES,
     project_capacity_snapshot_facts,
@@ -27,6 +27,7 @@ from istari_service.operational_analytics_projection import (
 )
 from istari_service.product_models import ProductAccessEvent
 from istari_service.product_types import AccessOutcome
+from istari_service.request_event_models import RequestEvent
 
 MAX_REPLAY_DAYS = 366
 MAX_REPLAY_SOURCES = 5_000

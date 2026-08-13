@@ -28,6 +28,8 @@ jobs:
       APP_RUNTIME_DATABASE_PASSWORD: ci-runtime-validation-only
       APP_BACKUP_DATABASE_USER: app_validation_backup
       APP_BACKUP_DATABASE_PASSWORD: ci-backup-validation-only
+      APP_MAINTENANCE_DATABASE_USER: app_validation_maintenance
+      APP_MAINTENANCE_DATABASE_PASSWORD: ci-maintenance-validation-only
       MIGRATION_DATABASE_URL: postgresql+asyncpg://app_validation_owner:ci-app-validation-only@postgres:5432/app_validation
       DATABASE_URL: postgresql+asyncpg://app_validation:ci-runtime-validation-only@postgres:5432/app_validation
       CAMUNDA_DATABASE_NAME: camunda_validation
@@ -45,6 +47,23 @@ jobs:
       - run: >-
           timeout --signal=TERM --kill-after=30s 15m docker compose
           build api web postgres orchestration clamav
+      - name: Build dependency-bearing builder and security-tool stages
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build --file apps/api/Dockerfile --target build --tag istari-build-api:ci .
+          docker build --file apps/web/Dockerfile --target build --tag istari-build-web:ci .
+          docker build --file infra/postgres/Dockerfile --target vector-build --tag istari-build-postgres:ci .
+          docker build --file scripts/actionlint.Dockerfile --tag istari-tool-actionlint:ci .
+          docker build --file scripts/secret-scan.Dockerfile --target tool --tag istari-tool-gitleaks:ci .
+          docker build --file scripts/trufflehog-scan.Dockerfile --target tool --tag istari-tool-trufflehog:ci .
+          docker build --file scripts/trufflehog-scan.Dockerfile --target gate --tag istari-tool-trufflehog-gate:ci .
+          docker pull ghcr.io/astral-sh/uv:0.12.1@sha256:cf4eedcaa81655197f625739489effcbe71b61ceb1506f332c3facae5deceded
+          docker tag ghcr.io/astral-sh/uv:0.12.1@sha256:cf4eedcaa81655197f625739489effcbe71b61ceb1506f332c3facae5deceded istari-tool-uv:ci
+          docker pull docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+          docker tag docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e istari-tool-dockerfile-frontend:ci
+      - name: Exercise built-container canaries
+        run: sh scripts/canary-built-containers.sh
       - name: Validate signed ClamAV definition age
         shell: bash
         run: |
@@ -91,6 +110,51 @@ jobs:
           image-ref: istari/clamav-local:1.5.3
           severity: HIGH,CRITICAL
           exit-code: "1"
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
+        with:
+          image-ref: istari-build-api:ci
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
+        with:
+          image-ref: istari-build-web:ci
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
+        with:
+          image-ref: istari-build-postgres:ci
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
+        with:
+          image-ref: istari-tool-actionlint:ci
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
+        with:
+          image-ref: istari-tool-gitleaks:ci
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
+        with:
+          image-ref: istari-tool-trufflehog:ci
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
+        with:
+          image-ref: istari-tool-trufflehog-gate:ci
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
+        with:
+          image-ref: istari-tool-uv:ci
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
+        with:
+          image-ref: istari-tool-dockerfile-frontend:ci
+          severity: HIGH,CRITICAL
+          exit-code: "1"
       - name: Generate CycloneDX image SBOMs
         shell: bash
         run: |
@@ -104,6 +168,15 @@ jobs:
           postgres=istari/postgres-local:17.10-pgvector0.8.1-alpine3.23
           camunda=istari/camunda-local:8.9.14
           clamav=istari/clamav-local:1.5.3
+          api-builder=istari-build-api:ci
+          web-builder=istari-build-web:ci
+          postgres-builder=istari-build-postgres:ci
+          actionlint-tool=istari-tool-actionlint:ci
+          gitleaks-tool=istari-tool-gitleaks:ci
+          trufflehog-tool=istari-tool-trufflehog:ci
+          trufflehog-gate-tool=istari-tool-trufflehog-gate:ci
+          uv-tool=istari-tool-uv:ci
+          dockerfile-frontend-tool=istari-tool-dockerfile-frontend:ci
           IMAGES
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

@@ -8,12 +8,14 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from istari_service.models import User
+from istari_service.errors import InvalidAction
+from istari_service.models import ServiceRequest, User, UserRole
 from istari_service.request_participant_models import (
     RequestParticipant,
     RequestParticipantRole,
 )
 from istari_service.schemas.requests import RequesterView
+from istari_service.team_models import TeamMembership
 
 
 async def replace_request_participants(
@@ -76,6 +78,151 @@ async def active_participant_ids(
             )
         )
     )
+
+
+async def eligible_participant_ids(
+    session: AsyncSession,
+    request: ServiceRequest,
+) -> frozenset[UUID]:
+    """Return current participants who still satisfy delivery authority."""
+
+    if request.assigned_delivery_team_id is None:
+        return frozenset()
+    now = datetime.now(UTC)
+    return frozenset(
+        await session.scalars(
+            select(RequestParticipant.user_id)
+            .join(User, User.id == RequestParticipant.user_id)
+            .join(
+                TeamMembership,
+                TeamMembership.user_id == RequestParticipant.user_id,
+            )
+            .where(
+                RequestParticipant.request_id == request.id,
+                RequestParticipant.ended_at.is_(None),
+                User.is_active.is_(True),
+                User.role == UserRole.DELIVERY_SPECIALIST,
+                TeamMembership.team_id == request.assigned_delivery_team_id,
+                TeamMembership.effective_from <= now,
+                (
+                    TeamMembership.effective_until.is_(None)
+                    | (TeamMembership.effective_until > now)
+                ),
+            )
+        )
+    )
+
+
+async def validate_request_participants(
+    session: AsyncSession,
+    request: ServiceRequest,
+) -> frozenset[UUID]:
+    """Lock and reject a stale lead or contributor at the command boundary."""
+
+    participant_ids = set(
+        await session.scalars(
+            select(RequestParticipant.user_id).where(
+                RequestParticipant.request_id == request.id,
+                RequestParticipant.ended_at.is_(None),
+            )
+        )
+    )
+    if not participant_ids or request.assigned_delivery_team_id is None:
+        raise InvalidAction()
+    users = (
+        await session.execute(
+            select(User.id, User.is_active, User.role)
+            .where(User.id.in_(participant_ids))
+            .order_by(User.id)
+            .with_for_update()
+        )
+    ).all()
+    now = datetime.now(UTC)
+    membership_user_ids = set(
+        await session.scalars(
+            select(TeamMembership.user_id)
+            .where(
+                TeamMembership.user_id.in_(participant_ids),
+                TeamMembership.team_id == request.assigned_delivery_team_id,
+                TeamMembership.effective_from <= now,
+                (
+                    TeamMembership.effective_until.is_(None)
+                    | (TeamMembership.effective_until > now)
+                ),
+            )
+            .order_by(TeamMembership.user_id, TeamMembership.id)
+            .with_for_update()
+        )
+    )
+    participants = (
+        await session.execute(
+            select(RequestParticipant.user_id, RequestParticipant.role)
+            .where(
+                RequestParticipant.request_id == request.id,
+                RequestParticipant.ended_at.is_(None),
+            )
+            .order_by(RequestParticipant.user_id, RequestParticipant.id)
+            .with_for_update()
+        )
+    ).all()
+    locked_participant_ids = {item.user_id for item in participants}
+    eligible = {
+        user.id
+        for user in users
+        if user.is_active and user.role is UserRole.DELIVERY_SPECIALIST
+    } & membership_user_ids
+    leads = [item for item in participants if item.role is RequestParticipantRole.LEAD]
+    if (
+        len(leads) != 1
+        or request.assigned_specialist_id != leads[0].user_id
+        or locked_participant_ids != participant_ids
+        or eligible != locked_participant_ids
+    ):
+        raise InvalidAction()
+    return frozenset(eligible)
+
+
+async def validate_participant_selection(
+    session: AsyncSession,
+    *,
+    team_id: UUID | None,
+    lead_id: UUID,
+    contributor_ids: list[UUID],
+) -> None:
+    """Lock and validate every proposed participant against the exact team."""
+
+    selected = {lead_id, *contributor_ids}
+    if team_id is None or len(selected) != 1 + len(contributor_ids):
+        raise InvalidAction()
+    now = datetime.now(UTC)
+    users = set(
+        await session.scalars(
+            select(User.id)
+            .where(
+                User.id.in_(selected),
+                User.is_active.is_(True),
+                User.role == UserRole.DELIVERY_SPECIALIST,
+            )
+            .with_for_update()
+        )
+    )
+    memberships = set(
+        await session.scalars(
+            select(TeamMembership.user_id)
+            .where(
+                TeamMembership.user_id.in_(selected),
+                TeamMembership.team_id == team_id,
+                TeamMembership.effective_from <= now,
+                (
+                    TeamMembership.effective_until.is_(None)
+                    | (TeamMembership.effective_until > now)
+                ),
+            )
+            .with_for_update()
+        )
+    )
+    if users != selected or memberships != selected:
+        raise InvalidAction()
 
 
 async def active_contributor_views(

@@ -4,7 +4,7 @@
 
 Current-head record reviewed on 10 August 2026.
 
-The current migration head is `0033_customer_product_acceptance`. The application,
+The current migration head is `0042_durable_password_assistance`. The application,
 restore script and restore verifier use that same default rather than a stale
 embedded revision. Empty-database upgrade, metadata drift and downgrade/re-upgrade
 checks run through the isolated compatibility harness as release gates. The
@@ -25,7 +25,7 @@ records. Revision 0029 installs PostgreSQL `pg_trgm` and pgvector, adds the
 all-field request-search projection, backfills every submitted request and
 creates GIN, trigram and HNSW indexes. It also extends recorded related-request
 decisions with `NOT_RELEVANT`. `scripts/restore-postgres.ps1` and the maintenance
-verifier default to the exact `0033_customer_product_acceptance` revision. Revision
+verifier default to the exact `0042_durable_password_assistance` revision. Revision
 0030 adds bounded self-declared user skills, revision 0031 repairs role-aware
 action audiences and queue links, and revision 0032 applies the current
 plain-language coordination presentation values.

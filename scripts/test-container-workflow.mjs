@@ -12,6 +12,12 @@ const workflowPath = join(
   "container-validation.yml",
 );
 const workflow = await readFile(workflowPath, "utf8");
+const repositoryRoot = join(scriptDirectory, "..");
+const compose = await readFile(join(repositoryRoot, "docker-compose.yml"), "utf8");
+const canary = await readFile(
+  join(repositoryRoot, "scripts", "canary-built-containers.sh"),
+  "utf8",
+);
 const normalisedWorkflow = workflow.replace(/\s+/gu, " ");
 const expectedImages = [
   "istari-service-local-api",
@@ -19,6 +25,15 @@ const expectedImages = [
   "istari/postgres-local:17.10-pgvector0.8.1-alpine3.23",
   "istari/camunda-local:8.9.14",
   "istari/clamav-local:1.5.3",
+  "istari-build-api:ci",
+  "istari-build-web:ci",
+  "istari-build-postgres:ci",
+  "istari-tool-actionlint:ci",
+  "istari-tool-gitleaks:ci",
+  "istari-tool-trufflehog:ci",
+  "istari-tool-trufflehog-gate:ci",
+  "istari-tool-uv:ci",
+  "istari-tool-dockerfile-frontend:ci",
 ];
 
 for (const required of [
@@ -27,6 +42,8 @@ for (const required of [
   "schedule:",
   "name: Container and Compose validation",
   "docker compose build api web postgres orchestration clamav",
+  "name: Exercise built-container canaries",
+  "sh scripts/canary-built-containers.sh",
   "alembic downgrade -1",
   "alembic upgrade head",
   "alembic check",
@@ -36,6 +53,15 @@ for (const required of [
   "postgres=istari/postgres-local:17.10-pgvector0.8.1-alpine3.23",
   "camunda=istari/camunda-local:8.9.14",
   "clamav=istari/clamav-local:1.5.3",
+  "api-builder=istari-build-api:ci",
+  "web-builder=istari-build-web:ci",
+  "postgres-builder=istari-build-postgres:ci",
+  "actionlint-tool=istari-tool-actionlint:ci",
+  "gitleaks-tool=istari-tool-gitleaks:ci",
+  "trufflehog-tool=istari-tool-trufflehog:ci",
+  "trufflehog-gate-tool=istari-tool-trufflehog-gate:ci",
+  "uv-tool=istari-tool-uv:ci",
+  "dockerfile-frontend-tool=istari-tool-dockerfile-frontend:ci",
   "if: always()",
   "docker compose down --volumes --remove-orphans",
 ]) {
@@ -77,6 +103,64 @@ assert.match(
   normalisedWorkflow,
   /timeout-minutes: 45/u,
   "cold container validation needs a conservative measured deadline",
+);
+
+for (const required of [
+  "network_mode: none",
+  "networks: [data, workflow]",
+  "networks: [data, scanner, service, workflow]",
+  "service: {internal: true}",
+  "workflow: {internal: true}",
+]) {
+  assert.ok(compose.includes(required), `Compose security boundary is missing: ${required}`);
+}
+
+for (const dockerfile of [
+  "apps/api/Dockerfile",
+  "apps/web/Dockerfile",
+  "infra/clamav/Dockerfile",
+  "infra/postgres/Dockerfile",
+  "scripts/actionlint.Dockerfile",
+  "scripts/secret-scan.Dockerfile",
+  "scripts/trufflehog-scan.Dockerfile",
+]) {
+  const source = await readFile(join(repositoryRoot, dockerfile), "utf8");
+  assert.match(
+    source,
+    /^# syntax=docker\/dockerfile:1\.7@sha256:[a-f0-9]{64}$/mu,
+    `${dockerfile} must pin its external Dockerfile frontend`,
+  );
+}
+
+for (const dockerfile of ["apps/web/Dockerfile", "scripts/trufflehog-scan.Dockerfile"]) {
+  const source = await readFile(join(repositoryRoot, dockerfile), "utf8");
+  assert.match(source, /FROM node:24-alpine@sha256:[a-f0-9]{64}/u);
+  assert.ok(!source.includes("node:25"), `${dockerfile} still uses unsupported Node 25`);
+}
+for (const required of [
+  "trap cleanup EXIT INT TERM",
+  "docker network create --internal",
+  "--network-alias api",
+  "uvicorn.run(app",
+  "access_log=False",
+  "path_marker=",
+  "query_marker=",
+  "agent_marker=",
+  "docker logs",
+  "combined_logs=",
+  "grep -F \"$marker\"",
+  "Raw request marker leaked into built-container logs",
+  "\"event\":\"http_request\"",
+  "\"route\":\"unmatched\"",
+  "\"status\":404",
+]) {
+  assert.ok(canary.includes(required), `runtime canary is missing: ${required}`);
+}
+assert.match(canary, /attempt.*-ge 30/su, "runtime readiness must be bounded");
+assert.match(
+  canary,
+  /for marker in "\$path_marker" "\$query_marker" "\$agent_marker"/u,
+  "every injected raw request marker must be checked",
 );
 assert.match(
   normalisedWorkflow,

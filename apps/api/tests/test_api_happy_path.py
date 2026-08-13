@@ -75,6 +75,14 @@ async def test_complete_representative_workflow_and_feedback(
     assert created.json()["status"] == "ROUTING_PENDING"
     assert await harness.dispatch_start()
 
+    initial_customer_types = {
+        item["type"]
+        for item in (await harness.client.get(f"/api/v1/requests/{request_id}")).json()[
+            "events"
+        ]
+    }
+    assert {"request_submitted", "workflow_started"} <= initial_customer_types
+
     listed = await harness.client.get("/api/v1/requests")
     assert [item["id"] for item in listed.json()["items"]] == [request_id]
     unavailable_product = await harness.client.get(
@@ -94,6 +102,15 @@ async def test_complete_representative_workflow_and_feedback(
         item,
         {"action": "progress", "priority": "HIGH"},
     )
+
+    await harness.login("admin2")
+    customer_types = {
+        item["type"]
+        for item in (await harness.client.get(f"/api/v1/requests/{request_id}")).json()[
+            "events"
+        ]
+    }
+    assert "workflow_progress" in customer_types
 
     await harness.login("admin5")
     await _complete(
@@ -147,9 +164,7 @@ async def test_complete_representative_workflow_and_feedback(
         },
     ]
 
-    contributor_work = (await harness.client.get("/api/v1/work-items")).json()[
-        "items"
-    ]
+    contributor_work = (await harness.client.get("/api/v1/work-items")).json()["items"]
     assert len(contributor_work) == 1
     assert contributor_work[0]["assigneeId"] == str(specialist_id)
     assert contributor_work[0]["assignedToCurrentUser"] is True

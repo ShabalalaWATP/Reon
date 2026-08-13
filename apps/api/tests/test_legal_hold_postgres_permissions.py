@@ -1,0 +1,67 @@
+"""PostgreSQL legal-hold operations through the maintenance role."""
+
+from __future__ import annotations
+
+import os
+from uuid import uuid4
+
+import pytest
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+
+from istari_service.legal_holds import LEGAL_HOLD_AUTHORITY, LegalHoldService
+from istari_service.postgres_permissions import permission_statements
+
+
+@pytest.mark.asyncio
+async def test_maintenance_role_can_apply_and_release_legal_hold() -> None:
+    database_url = os.getenv("ISTARI_POSTGRES_TEST_URL")
+    if not database_url:
+        pytest.skip("ISTARI_POSTGRES_TEST_URL is required for PostgreSQL role tests")
+
+    engine = create_async_engine(database_url)
+    role = f"legal_hold_test_{uuid4().hex[:12]}"
+    role_created = False
+    try:
+        async with engine.begin() as owner:
+            target_id = uuid4()
+            await owner.execute(
+                text(
+                    "INSERT INTO security_events "
+                    "(id,event_type,outcome,reason_code) "
+                    "VALUES (:id,'LEGAL_HOLD_TEST','SUCCESS','SYNTHETIC_TEST')"
+                ),
+                {"id": target_id},
+            )
+            await owner.execute(text(f'CREATE ROLE "{role}" NOLOGIN'))
+            role_created = True
+            statements = permission_statements("unused_runtime", "unused_backup", role)
+            for statement in statements:
+                if f'"{role}"' in statement:
+                    await owner.execute(text(statement))
+
+        async with engine.connect() as connection:
+            transaction = await connection.begin()
+            await connection.execute(text(f'SET LOCAL ROLE "{role}"'))
+            session = AsyncSession(bind=connection, expire_on_commit=False)
+            service = LegalHoldService(
+                session,
+                subject="synthetic-legal-hold-operator",
+                authority=LEGAL_HOLD_AUTHORITY,
+            )
+            hold = await service.apply("SECURITY_EVENT", target_id, "LITIGATION")
+            released = await service.release("SECURITY_EVENT", target_id)
+            assert released.id == hold.id
+            assert released.released_at is not None
+            assert released.released_by == "synthetic-legal-hold-operator"
+            await transaction.rollback()
+            await session.close()
+    finally:
+        if role_created:
+            async with engine.begin() as owner:
+                await owner.execute(text(f'DROP OWNED BY "{role}"'))
+                await owner.execute(text(f'DROP ROLE IF EXISTS "{role}"'))
+                await owner.execute(
+                    text("DELETE FROM security_events WHERE id=:id"), {"id": target_id}
+                )
+        await engine.dispose()

@@ -27,6 +27,7 @@ from istari_service.repositories.event_store import append_request_event
 from istari_service.repositories.product_access_repository import (
     ProductAccessRepositoryMixin,
 )
+from istari_service.request_event_audience import RequestEventAudience
 
 
 def _package_record(package: ProductPackage) -> PackageRecord:
@@ -292,6 +293,17 @@ class ProductLifecycleMixin(ProductAccessRepositoryMixin):
                 message=message,
                 prior_status=request.status,
                 next_status=request.status,
+                audience=(
+                    RequestEventAudience.CUSTOMER_AND_STAFF
+                    if event_type
+                    in {
+                        "PRODUCT_DISSEMINATED",
+                        "PRODUCT_ACCEPTED",
+                        "PRODUCT_WITHDRAWN",
+                        "PRODUCT_REPLACED",
+                    }
+                    else RequestEventAudience.STAFF_ONLY
+                ),
                 details={
                     "packageId": str(package.id),
                     "packageVersion": package.package_version,

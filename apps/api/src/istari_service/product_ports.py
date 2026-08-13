@@ -41,6 +41,14 @@ class PrivateObjectStorage(Protocol):
 
     async def delete_quarantine(self, object_key: str) -> None: ...
 
+    async def delete_released(self, object_key: str) -> None: ...
+
+    def quarantine_keys(
+        self, *, limit: int, after: str | None = None
+    ) -> tuple[str, ...]: ...
+
+    def reconcile_quarantine_index(self, *, limit: int) -> int: ...
+
 
 class ScannerAssurance(StrEnum):
     """Security meaning of a scanner result at the application boundary."""

@@ -2,11 +2,12 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from istari_service.models import RequestEvent, ServiceRequest
+from istari_service.models import ServiceRequest
 from istari_service.operational_analytics_projection import (
     project_request_operational_event,
 )
 from istari_service.request_action_projection import project_request_action
+from istari_service.request_event_models import RequestEvent
 from istari_service.request_notification_projection import (
     publish_request_notification,
     reconcile_pending_notifications,

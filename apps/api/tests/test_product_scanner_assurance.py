@@ -58,6 +58,7 @@ def production_settings(private_root: Path, **overrides: Any) -> Settings:
         "web_origin": "https://service.example.test",
         "trusted_origins": frozenset({"https://staff.example.test"}),
         "audit_hmac_key": SecretStr("a" * 32),
+        "security_pseudonym_key": SecretStr("s" * 32),
         "product_storage_path": private_root.resolve(),
         "request_embedding_cache_path": (private_root / "model-cache").resolve(),
         "product_allowed_external_domains": frozenset({"products.example.test"}),

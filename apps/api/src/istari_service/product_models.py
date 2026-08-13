@@ -72,6 +72,18 @@ class ProductPackage(TimestampMixin, Base):
     version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
 
 
+class ProductStorageQuota(Base):
+    """Singleton row serialising global storage reservations."""
+
+    __tablename__ = "product_storage_quotas"
+    __table_args__ = (
+        CheckConstraint("id = 1", name="product_storage_quota_singleton"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    cleanup_cursor: Mapped[str | None] = mapped_column(String(255))
+
+
 class ProductArtefact(TimestampMixin, Base):
     __tablename__ = "product_artefacts"
     __table_args__ = (

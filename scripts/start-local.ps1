@@ -30,6 +30,8 @@ $requiredSettings = @(
     "APP_RUNTIME_DATABASE_PASSWORD",
     "APP_BACKUP_DATABASE_USER",
     "APP_BACKUP_DATABASE_PASSWORD",
+    "APP_MAINTENANCE_DATABASE_USER",
+    "APP_MAINTENANCE_DATABASE_PASSWORD",
     "CAMUNDA_DATABASE_NAME",
     "CAMUNDA_DATABASE_USER",
     "CAMUNDA_DATABASE_PASSWORD",
@@ -58,6 +60,7 @@ $databaseUsers = @(
     $settings.APP_DATABASE_USER,
     $settings.APP_RUNTIME_DATABASE_USER,
     $settings.APP_BACKUP_DATABASE_USER,
+    $settings.APP_MAINTENANCE_DATABASE_USER,
     $settings.CAMUNDA_DATABASE_USER
 )
 if (($databaseUsers | Select-Object -Unique).Count -ne $databaseUsers.Count) {
@@ -69,6 +72,7 @@ $databasePasswords = @(
     $settings.APP_DATABASE_PASSWORD,
     $settings.APP_RUNTIME_DATABASE_PASSWORD,
     $settings.APP_BACKUP_DATABASE_PASSWORD,
+    $settings.APP_MAINTENANCE_DATABASE_PASSWORD,
     $settings.CAMUNDA_DATABASE_PASSWORD
 )
 if (($databasePasswords | Select-Object -Unique).Count -ne $databasePasswords.Count) {

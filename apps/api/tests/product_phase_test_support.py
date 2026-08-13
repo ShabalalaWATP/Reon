@@ -153,6 +153,7 @@ def repository(**updates: object) -> SimpleNamespace:
         "active_actor": AsyncMock(return_value=True),
         "request": AsyncMock(return_value=request),
         "managed_retry": AsyncMock(return_value=None),
+        "storage_usage": AsyncMock(return_value=(0, 0, 0, 0, 0, 0, 0, 0)),
         "refresh_upload_grant": AsyncMock(return_value=intent),
         "create_managed": AsyncMock(return_value=(artefact, intent)),
         "view": AsyncMock(return_value=view),

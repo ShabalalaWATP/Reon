@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
@@ -65,3 +66,26 @@ async def test_find_session_does_not_rewrite_a_recent_last_seen(
 
     assert result is not None
     assert stored.last_seen_at == recent
+
+
+@pytest.mark.asyncio
+async def test_activity_endpoint_requires_csrf_and_advances_idle_state(
+    api_harness,
+) -> None:
+    await api_harness.login("admin2")
+    user_id = await api_harness.user_id("admin2")
+    async with api_harness.sessions() as session:
+        stored = await session.scalar(select(Session).where(Session.user_id == user_id))
+        assert stored is not None
+        before = stored.last_seen_at
+
+    denied = await api_harness.client.post("/api/v1/auth/activity")
+    assert denied.status_code == 403
+    accepted = await api_harness.client.post(
+        "/api/v1/auth/activity", headers=api_harness.mutation_headers()
+    )
+    assert accepted.status_code == 204
+    async with api_harness.sessions() as session:
+        stored = await session.scalar(select(Session).where(Session.user_id == user_id))
+        assert stored is not None
+        assert stored.last_seen_at >= before

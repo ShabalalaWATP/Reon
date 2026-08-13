@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from enum import StrEnum
 from functools import lru_cache
 from ipaddress import IPv4Network, IPv6Network, ip_network
@@ -96,6 +97,14 @@ class Settings(BaseSettings):
         le=100 * 1024 * 1024,
     )
     audit_hmac_key: SecretStr | None = None
+    audit_hmac_active_key_id: str = "legacy"
+    audit_hmac_keyring: SecretStr | None = None
+    security_pseudonym_key: SecretStr | None = None
+    security_pseudonym_key_id: str = "stable-v1"
+    maintenance_operator_subject: str | None = None
+    maintenance_disposal_authority: str | None = None
+    maintenance_legal_hold_authority: str | None = None
+    maintenance_database_url: str | None = None
 
     camunda_rest_address: str = Field(
         default="http://localhost:8080",
@@ -192,6 +201,43 @@ class Settings(BaseSettings):
             raise ValueError("audit HMAC key must contain at least 32 bytes")
         return value
 
+    @field_validator("security_pseudonym_key")
+    @classmethod
+    def validate_security_pseudonym_key(
+        cls, value: SecretStr | None
+    ) -> SecretStr | None:
+        if value is not None and len(value.get_secret_value().encode("utf-8")) < 32:
+            raise ValueError("security pseudonym key must contain at least 32 bytes")
+        return value
+
+    @field_validator("audit_hmac_active_key_id", "security_pseudonym_key_id")
+    @classmethod
+    def validate_audit_key_id(cls, value: str) -> str:
+        if (
+            not value
+            or len(value) > 64
+            or not all(c.isalnum() or c in "._-" for c in value)
+        ):
+            raise ValueError("audit HMAC key ID must be a bounded safe identifier")
+        return value
+
+    @field_validator("audit_hmac_keyring")
+    @classmethod
+    def validate_audit_keyring(cls, value: SecretStr | None) -> SecretStr | None:
+        if value is None:
+            return None
+        try:
+            parsed = json.loads(value.get_secret_value())
+        except (TypeError, json.JSONDecodeError) as error:
+            raise ValueError("audit HMAC keyring must be a JSON object") from error
+        if not isinstance(parsed, dict) or not parsed:
+            raise ValueError("audit HMAC keyring must contain at least one key")
+        for key_id, key in parsed.items():
+            cls.validate_audit_key_id(str(key_id))
+            if not isinstance(key, str) or len(key.encode("utf-8")) < 32:
+                raise ValueError("every audit HMAC key must contain at least 32 bytes")
+        return value
+
     @model_validator(mode="after")
     def validate_environment_controls(self) -> Self:
         origin = self.web_origin.rstrip("/")
@@ -250,8 +296,14 @@ class Settings(BaseSettings):
                 "*" in host or "/" in host for host in self.allowed_hosts
             ):
                 raise ValueError("production allowed hosts must be explicit hostnames")
-            if self.audit_hmac_key is None:
+            if self.audit_hmac_key is None and self.audit_hmac_keyring is None:
                 raise ValueError("an audit HMAC key is required in production")
+            if self.security_pseudonym_key is None:
+                raise ValueError("a security pseudonym key is required in production")
+            if self.audit_hmac_active_key_id not in self.audit_hmac_keys:
+                raise ValueError(
+                    "the active audit HMAC key ID is absent from the keyring"
+                )
             if not self.product_storage_path.is_absolute():
                 raise ValueError(
                     "production product storage must use an absolute private path"
@@ -267,9 +319,19 @@ class Settings(BaseSettings):
 
     @property
     def audit_hmac_key_bytes(self) -> bytes | None:
+        return self.audit_hmac_keys.get(self.audit_hmac_active_key_id)
+
+    @property
+    def audit_hmac_keys(self) -> dict[str, bytes]:
+        if self.audit_hmac_keyring is not None:
+            parsed = json.loads(self.audit_hmac_keyring.get_secret_value())
+            return {
+                str(key): str(value).encode("utf-8") for key, value in parsed.items()
+            }
         if self.audit_hmac_key is None:
-            return None
-        return self.audit_hmac_key.get_secret_value().encode("utf-8")
+            return {}
+        material = self.audit_hmac_key.get_secret_value().encode("utf-8")
+        return {self.audit_hmac_active_key_id: material}
 
     @property
     def camunda_base_url(self) -> str:

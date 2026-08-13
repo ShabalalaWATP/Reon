@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Navigate, Outlet, Route, Routes, useLocation } from "react-router";
+import { Navigate, Outlet, Route, Routes } from "react-router";
 
 import { AppShell } from "../components/AppShell";
 import { PageState } from "../components/PageState";
@@ -159,9 +159,8 @@ export function AppRoutes() {
 
 function RequireAuth() {
   const { session, status } = useAuth();
-  const location = useLocation();
   if (status === "loading") return <PageState kind="loading" title="Opening ISTARI" />;
-  if (!session) return <Navigate replace state={{ from: location.pathname }} to="/login" />;
+  if (!session) return <Navigate replace to="/login" />;
   return <Outlet />;
 }
 

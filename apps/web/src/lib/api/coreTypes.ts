@@ -21,6 +21,8 @@ export type Session = {
   user: User;
   csrfToken: string;
   expiresAt: string;
+  idleExpiresAt?: string;
+  idleTimeoutSeconds?: number;
   elevatedUntil: string | null;
 };
 

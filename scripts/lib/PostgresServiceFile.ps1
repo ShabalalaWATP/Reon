@@ -46,6 +46,42 @@ function New-PostgresServiceFile([string]$DatabaseUrl) {
     if ([string]::IsNullOrWhiteSpace($database)) {
         throw 'The PostgreSQL database URL must contain a database name.'
     }
+    $queryValues = [ordered]@{}
+    foreach ($pair in $uri.Query.TrimStart('?').Split('&', [System.StringSplitOptions]::RemoveEmptyEntries)) {
+        $parts = $pair.Split('=', 2)
+        $name = [System.Uri]::UnescapeDataString($parts[0]).ToLowerInvariant()
+        if ($name -in @('sslmode', 'sslrootcert', 'sslcert', 'sslkey') -and $parts.Count -eq 2) {
+            if ($queryValues.Contains($name)) {
+                throw "The PostgreSQL database URL contains duplicate $name values."
+            }
+            $queryValues[$name] = [System.Uri]::UnescapeDataString($parts[1])
+        }
+    }
+
+    # Only these three exact development hosts receive the plaintext exception.
+    # Do not broaden this with Uri.IsLoopback, DNS resolution or subnet matching.
+    $isExactLoopback = $uri.Host.ToLowerInvariant() -in @('localhost', '127.0.0.1', '[::1]')
+    if (-not $isExactLoopback) {
+        if ($queryValues['sslmode'] -cne 'verify-full') {
+            throw 'Non-loopback PostgreSQL URLs require sslmode=verify-full.'
+        }
+        if ([string]::IsNullOrWhiteSpace($queryValues['sslrootcert'])) {
+            throw 'Non-loopback PostgreSQL URLs require sslrootcert.'
+        }
+        if ([string]::IsNullOrWhiteSpace($env:ISTARI_POSTGRES_APPROVED_SSL_ROOT_CERT)) {
+            throw 'Set ISTARI_POSTGRES_APPROVED_SSL_ROOT_CERT to the approved CA bundle path.'
+        }
+        $approvedTrustPath = [System.IO.Path]::GetFullPath(
+            $env:ISTARI_POSTGRES_APPROVED_SSL_ROOT_CERT
+        )
+        $suppliedTrustPath = [System.IO.Path]::GetFullPath($queryValues['sslrootcert'])
+        if ($suppliedTrustPath -cne $approvedTrustPath -or
+            -not (Test-Path -LiteralPath $approvedTrustPath -PathType Leaf)) {
+            throw 'sslrootcert must be the existing approved CA bundle path.'
+        }
+        $queryValues['sslrootcert'] = $approvedTrustPath
+    }
+
     $values = [ordered]@{
         host = $uri.Host
         port = $(if ($uri.IsDefaultPort) { '5432' } else { [string]$uri.Port })
@@ -53,12 +89,8 @@ function New-PostgresServiceFile([string]$DatabaseUrl) {
         password = [System.Uri]::UnescapeDataString($identity[1])
         dbname = $database
     }
-    foreach ($pair in $uri.Query.TrimStart('?').Split('&', [System.StringSplitOptions]::RemoveEmptyEntries)) {
-        $parts = $pair.Split('=', 2)
-        $name = [System.Uri]::UnescapeDataString($parts[0]).ToLowerInvariant()
-        if ($name -in @('sslmode', 'sslrootcert', 'sslcert', 'sslkey') -and $parts.Count -eq 2) {
-            $values[$name] = [System.Uri]::UnescapeDataString($parts[1])
-        }
+    foreach ($item in $queryValues.GetEnumerator()) {
+        $values[$item.Key] = $item.Value
     }
     $path = [System.IO.Path]::GetTempFileName()
     try {

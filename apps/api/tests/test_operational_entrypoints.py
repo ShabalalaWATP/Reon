@@ -77,6 +77,24 @@ async def test_retention_entry_point_commits_apply_and_rolls_back_failure(
     monkeypatch.setattr(
         maintenance, "SessionFactory", lambda: FakeAsyncContext(session)
     )
+    monkeypatch.setattr(
+        maintenance,
+        "get_settings",
+        lambda: SimpleNamespace(
+            maintenance_database_url="postgresql+asyncpg://synthetic",
+            maintenance_operator_subject="synthetic-operator",
+            maintenance_disposal_authority="RETENTION_DISPOSAL",
+            audit_hmac_keys={"legacy": b"a" * 32},
+            audit_hmac_active_key_id="legacy",
+            model_copy=lambda **_values: SimpleNamespace(),
+        ),
+    )
+    monkeypatch.setattr(maintenance, "create_database_engine", lambda _s: FakeEngine())
+    monkeypatch.setattr(
+        maintenance,
+        "create_session_factory",
+        lambda *_args, **_kwargs: lambda: FakeAsyncContext(session),
+    )
 
     class SuccessfulService:
         def __init__(self, _repository: object) -> None:
@@ -87,7 +105,7 @@ async def test_retention_entry_point_commits_apply_and_rolls_back_failure(
 
     monkeypatch.setattr(maintenance, "RetentionService", SuccessfulService)
     monkeypatch.setattr(
-        maintenance, "SqlAlchemyRetentionRepository", lambda value: value
+        maintenance, "SqlAlchemyRetentionRepository", lambda value, *_args: value
     )
     report = await maintenance.run_retention(
         _arguments("retention", apply=True, confirm="APPLY_RETENTION", batch_size=5)

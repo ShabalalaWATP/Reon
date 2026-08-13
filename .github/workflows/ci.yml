@@ -33,6 +33,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: uv sync --project apps/api --all-groups --frozen
       - run: pnpm check
+      - name: Verify recovery transport and authenticated-manifest policy
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path scripts/tests/PostgresRecovery.Tests.ps1 -PassThru
+          if ($result.FailedCount -ne 0) { exit 1 }
       - run: pnpm smoke-contract
       - run: pwsh -File workflow/validate-bpmn.ps1
       - run: pwsh -File workflow/test-validator.ps1
@@ -67,6 +72,23 @@ jobs:
     name: Backend static checks and tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: istari_race_tests
+          POSTGRES_USER: istari_tests
+          POSTGRES_PASSWORD: synthetic-ci-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U istari_tests -d istari_race_tests"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      ISTARI_POSTGRES_TEST_URL: >-
+        postgresql+asyncpg://istari_tests:synthetic-ci-password@127.0.0.1:5432/istari_race_tests
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
@@ -79,6 +101,26 @@ jobs:
       - run: uv run --directory apps/api mypy
       - run: uv run --directory apps/api bandit -c pyproject.toml -r src alembic
       - run: uv run --directory apps/api pytest
+      - name: Verify mandatory PostgreSQL race tests do not skip
+        shell: bash
+        run: |
+          set -euo pipefail
+          report="${RUNNER_TEMP}/postgres-races.xml"
+          uv run --directory apps/api pytest \
+            tests/test_planning_concurrency.py \
+            tests/test_request_participant_postgres_locking.py \
+            tests/test_password_assistance_postgres_locking.py \
+            tests/test_legal_hold_postgres_permissions.py \
+            --no-cov --junitxml="$report"
+          python - "$report" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+
+          root = ET.parse(sys.argv[1]).getroot()
+          skipped = sum(int(suite.get("skipped", "0")) for suite in root.iter("testsuite"))
+          if skipped:
+              raise SystemExit(f"Mandatory PostgreSQL race tests skipped: {skipped}")
+          PY
       - name: Retain backend coverage
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -206,6 +248,7 @@ jobs:
       APP_DATABASE_USER: app_smoke_owner
       APP_RUNTIME_DATABASE_USER: app_smoke
       APP_BACKUP_DATABASE_USER: app_smoke_backup
+      APP_MAINTENANCE_DATABASE_USER: app_smoke_maintenance
       CAMUNDA_DATABASE_NAME: camunda_smoke
       CAMUNDA_DATABASE_USER: camunda_smoke
       ENVIRONMENT: local
@@ -225,12 +268,13 @@ jobs:
           app_password="$(openssl rand -hex 24)"
           runtime_password="$(openssl rand -hex 24)"
           backup_password="$(openssl rand -hex 24)"
+          maintenance_password="$(openssl rand -hex 24)"
           camunda_password="$(openssl rand -hex 24)"
           demo_password="$(openssl rand -hex 24)"
           audit_key="$(openssl rand -hex 32)"
           migration_url="postgresql+asyncpg://app_smoke_owner:${app_password}@postgres:5432/app_smoke"
           database_url="postgresql+asyncpg://app_smoke:${runtime_password}@postgres:5432/app_smoke"
-          for value in "$admin_password" "$app_password" "$runtime_password" "$backup_password" "$camunda_password" "$demo_password" "$audit_key" "$migration_url" "$database_url"; do
+          for value in "$admin_password" "$app_password" "$runtime_password" "$backup_password" "$maintenance_password" "$camunda_password" "$demo_password" "$audit_key" "$migration_url" "$database_url"; do
             printf '::add-mask::%s\n' "$value"
           done
           {
@@ -238,6 +282,7 @@ jobs:
             printf 'APP_DATABASE_PASSWORD=%s\n' "$app_password"
             printf 'APP_RUNTIME_DATABASE_PASSWORD=%s\n' "$runtime_password"
             printf 'APP_BACKUP_DATABASE_PASSWORD=%s\n' "$backup_password"
+            printf 'APP_MAINTENANCE_DATABASE_PASSWORD=%s\n' "$maintenance_password"
             printf 'CAMUNDA_DATABASE_PASSWORD=%s\n' "$camunda_password"
             printf 'DEMO_USER_PASSWORD=%s\n' "$demo_password"
             printf 'AUDIT_HMAC_KEY=%s\n' "$audit_key"

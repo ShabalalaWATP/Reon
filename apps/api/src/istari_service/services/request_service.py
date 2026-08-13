@@ -10,7 +10,7 @@ from uuid import UUID
 from istari_service.authorisation import RequestOperation
 from istari_service.domain import Actor, ProductDownload, RequestRecord
 from istari_service.errors import FeedbackUnavailable, ObjectNotFound
-from istari_service.models import RequestStatus
+from istari_service.models import RequestStatus, UserRole
 from istari_service.policies import decide_request_access
 from istari_service.schemas.requests import (
     FeedbackCreate,
@@ -55,6 +55,7 @@ class RequestRepository(Protocol):
         include_clarifications: bool = False,
         event_limit: int = 50,
         event_cursor: str | None = None,
+        include_staff_events: bool = True,
     ) -> RequestDetail: ...
 
     async def get_released_product(
@@ -152,6 +153,7 @@ class RequestService:
                 request_id,
                 reveal_unreleased_deliverable=reveal,
                 include_clarifications=clarifications,
+                include_staff_events=actor.role is not UserRole.REQUESTER,
             )
         else:
             detail = await self._repository.get_detail(
@@ -160,6 +162,7 @@ class RequestService:
                 include_clarifications=clarifications,
                 event_limit=event_limit,
                 event_cursor=event_cursor,
+                include_staff_events=actor.role is not UserRole.REQUESTER,
             )
         return detail
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import ipaddress
 import re
@@ -15,13 +16,16 @@ from urllib.parse import urlsplit, urlunsplit
 from istari_service.product_errors import ProductValidationFailed
 from istari_service.product_ports import ScannerAssurance
 from istari_service.product_types import ScanDecision, ScanResult
+from istari_service.product_zip_preflight import (
+    MAX_ZIP_ENTRIES,
+    central_directory_preflight,
+)
 
 MAX_FILE_BYTES = 25 * 1024 * 1024
 MAX_PACKAGE_BYTES = 100 * 1024 * 1024
-MAX_ZIP_ENTRIES = 1_000
 MAX_UNCOMPRESSED_BYTES = 125 * 1024 * 1024
 MAX_COMPRESSION_RATIO = 100
-
+MAX_CONCURRENT_DOCUMENT_SCANS = 4
 PPTX_MEDIA_TYPE = (
     "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 )
@@ -58,11 +62,11 @@ _EXTERNAL_RELATIONSHIP = re.compile(
     rb"targetmode\s*=\s*['\"]external['\"]", re.IGNORECASE
 )
 _ACTIVE_XML = (b"ddeauto", b"attachedtemplate", b"oleobject", b"externaldata")
+_STANDARD_ZIPFILE = zipfile.ZipFile
 
 
 class _ReadableSeekable(Protocol):
     def read(self, size: int = -1) -> bytes: ...
-
     def seek(self, offset: int, whence: int = 0) -> int:
         del offset, whence
         raise NotImplementedError
@@ -113,11 +117,34 @@ def normalise_product_correlation_id(value: str | None) -> str | None:
 
 
 class SafeDocumentScanner:
-    """Local deterministic heuristic inspector, not semantic or CDR assurance."""
-
     assurance = ScannerAssurance.LOCAL_HEURISTIC
 
+    def __init__(
+        self, *, maximum_concurrent_scans: int = MAX_CONCURRENT_DOCUMENT_SCANS
+    ) -> None:
+        if maximum_concurrent_scans < 1:
+            raise ValueError("maximum_concurrent_scans must be positive")
+        self._scan_slots = asyncio.Semaphore(maximum_concurrent_scans)
+
     async def scan(
+        self,
+        chunks: AsyncIterable[bytes],
+        *,
+        filename: str,
+        declared_media_type: str,
+        expected_size: int,
+        expected_checksum: str,
+    ) -> ScanDecision:
+        async with self._scan_slots:
+            return await self._scan(
+                chunks,
+                filename=filename,
+                declared_media_type=declared_media_type,
+                expected_size=expected_size,
+                expected_checksum=expected_checksum,
+            )
+
+    async def _scan(
         self,
         chunks: AsyncIterable[bytes],
         *,
@@ -195,6 +222,14 @@ class SafeDocumentScanner:
     def _inspect_office(stream: _ReadableSeekable, extension: str) -> str | None:
         if stream.read(4) != b"PK\x03\x04":
             return "SIGNATURE_MISMATCH"
+        stream.seek(0)
+        zipfile_type = zipfile.ZipFile
+        if isinstance(zipfile_type, type) and issubclass(
+            zipfile_type, _STANDARD_ZIPFILE
+        ):
+            preflight = central_directory_preflight(stream)
+            if preflight is not None:
+                return preflight
         stream.seek(0)
         with zipfile.ZipFile(stream) as archive:
             entries = archive.infolist()

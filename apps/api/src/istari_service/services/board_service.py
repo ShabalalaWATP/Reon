@@ -121,6 +121,7 @@ class BoardService:
         self, actor: Actor, team_id: UUID, command: WorkPackageCommand
     ) -> WorkPackageResult:
         await self._authorise_create(actor, team_id, command)
+        await self._board.lock_planning_aggregate(team_id)
         await self._validate_links(team_id, command)
         package = await self._commands.create_package(actor.id, team_id, command)
         if await self._commands.dependency_cycle(
@@ -145,6 +146,7 @@ class BoardService:
             or command.owner_user_id == package.owner_user_id,
             BoardItemNotFound(),
         )
+        await self._board.lock_planning_aggregate(team_id)
         await self._validate_links(team_id, command)
         if (
             package.id in command.dependency_ids
@@ -205,6 +207,7 @@ class BoardService:
         self, actor: Actor, team_id: UUID, command: BoardConfigurationCommand
     ) -> BoardConfigurationResult:
         await authorise_board_manager(self._board, actor, team_id, command.grant_id)
+        await self._board.lock_planning_aggregate(team_id)
         config = await self._commands.set_configuration(team_id, command)
         return BoardConfigurationResult(
             wip_limits=config.wip_limits, version=config.version
@@ -289,6 +292,7 @@ class BoardService:
         target_column = PACKAGE_STATUS_TO_COLUMN.get(target)
         if target_column is None:
             return
+        await self._board.lock_planning_aggregate(team_id)
         config = await self._board.configuration(team_id)
         limit = config.wip_limits.get(target_column.value) if config else None
         if limit is None:

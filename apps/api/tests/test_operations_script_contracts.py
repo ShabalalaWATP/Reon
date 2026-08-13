@@ -50,3 +50,15 @@ def test_postgres_tools_receive_only_a_password_free_service_reference() -> None
     helper = (ROOT / "scripts/lib/PostgresServiceFile.ps1").read_text("utf-8")
     assert "Protect-PostgresServiceFile $path" in helper
     assert "password =" in helper
+
+
+def test_remote_recovery_requires_authenticated_transport_and_manifests() -> None:
+    service_helper = (ROOT / "scripts/lib/PostgresServiceFile.ps1").read_text("utf-8")
+    manifest_helper = (ROOT / "scripts/lib/BackupManifest.ps1").read_text("utf-8")
+    pester = (ROOT / "scripts/tests/PostgresRecovery.Tests.ps1").read_text("utf-8")
+    assert "@('localhost', '127.0.0.1', '[::1]')" in service_helper
+    assert "sslmode=verify-full" in service_helper
+    assert "ISTARI_POSTGRES_APPROVED_SSL_ROOT_CERT" in service_helper
+    assert "HMACSHA256" in manifest_helper
+    assert "FixedTimeEquals" in manifest_helper
+    assert "coordinated dump and manifest hash change" in pester

@@ -19,6 +19,11 @@ from istari_service.product_ports import (
     PrivateObjectStorage,
     ScannerAssurance,
 )
+from istari_service.product_quota_policy import (
+    MAX_GLOBAL_STORAGE_BYTES,
+    MAX_REQUEST_STORAGE_BYTES,
+    MAX_USER_STORAGE_BYTES,
+)
 from istari_service.product_security import (
     MAX_FILE_BYTES,
     MAX_PACKAGE_BYTES,
@@ -35,6 +40,9 @@ class ProductRuntime:
     upload_ttl: timedelta = timedelta(minutes=10)
     maximum_file_bytes: int = MAX_FILE_BYTES
     maximum_package_bytes: int = MAX_PACKAGE_BYTES
+    maximum_request_storage_bytes: int = MAX_REQUEST_STORAGE_BYTES
+    maximum_user_storage_bytes: int = MAX_USER_STORAGE_BYTES
+    maximum_global_storage_bytes: int = MAX_GLOBAL_STORAGE_BYTES
     managed_file_uploads_enabled: bool = True
     clamav_host: str | None = None
     clamav_port: int = 3310

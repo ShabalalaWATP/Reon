@@ -16,7 +16,7 @@ from istari_service.analytics_evolution_models import (
 )
 from istari_service.domain import Actor
 from istari_service.management_seed import management_grant_id
-from istari_service.models import RequestEvent, RequestStatus, ServiceRequest
+from istari_service.models import RequestStatus, ServiceRequest
 from istari_service.operational_analytics_reconciliation import (
     reconcile_operational_analytics,
 )
@@ -24,6 +24,7 @@ from istari_service.organisation_models import RequestRouteSelection
 from istari_service.product_runtime import ProductRuntime
 from istari_service.product_security import AllowedHttpsLinkPolicy
 from istari_service.repositories.event_store import append_request_event
+from istari_service.request_event_models import RequestEvent
 from product_test_support import create_product_request, product_actors
 
 

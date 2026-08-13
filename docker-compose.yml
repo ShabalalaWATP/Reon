@@ -23,6 +23,7 @@ x-runtime-environment: &runtime-environment
   REQUEST_MATCHING_SEMANTIC_ENABLED: ${REQUEST_MATCHING_SEMANTIC_ENABLED:-true}
   ALLOW_DEMO_USERS: ${ALLOW_DEMO_USERS:?Set ALLOW_DEMO_USERS in .env}
   AUDIT_HMAC_KEY: ${AUDIT_HMAC_KEY:?Set AUDIT_HMAC_KEY in .env}
+  SECURITY_PSEUDONYM_KEY: ${SECURITY_PSEUDONYM_KEY:?Set SECURITY_PSEUDONYM_KEY in .env}
 x-clamav-runtime: &clamav-runtime
   build:
     context: .
@@ -72,6 +73,8 @@ services:
       APP_RUNTIME_DATABASE_PASSWORD: ${APP_RUNTIME_DATABASE_PASSWORD:?Set APP_RUNTIME_DATABASE_PASSWORD in .env}
       APP_BACKUP_DATABASE_USER: ${APP_BACKUP_DATABASE_USER:?Set APP_BACKUP_DATABASE_USER in .env}
       APP_BACKUP_DATABASE_PASSWORD: ${APP_BACKUP_DATABASE_PASSWORD:?Set APP_BACKUP_DATABASE_PASSWORD in .env}
+      APP_MAINTENANCE_DATABASE_USER: ${APP_MAINTENANCE_DATABASE_USER:?Set APP_MAINTENANCE_DATABASE_USER in .env}
+      APP_MAINTENANCE_DATABASE_PASSWORD: ${APP_MAINTENANCE_DATABASE_PASSWORD:?Set APP_MAINTENANCE_DATABASE_PASSWORD in .env}
       CAMUNDA_DATABASE_NAME: ${CAMUNDA_DATABASE_NAME:?Set CAMUNDA_DATABASE_NAME in .env}
       CAMUNDA_DATABASE_USER: ${CAMUNDA_DATABASE_USER:?Set CAMUNDA_DATABASE_USER in .env}
       CAMUNDA_DATABASE_PASSWORD: ${CAMUNDA_DATABASE_PASSWORD:?Set CAMUNDA_DATABASE_PASSWORD in .env}
@@ -117,6 +120,8 @@ services:
       - CHOWN
       - DAC_OVERRIDE
       - FOWNER
+    network_mode: none
+    read_only: true
     restart: "no"
   orchestration:
     <<: *runtime-security
@@ -152,9 +157,7 @@ services:
       camunda-data-init:
         condition: service_completed_successfully
     restart: unless-stopped
-    networks:
-      - data
-      - service
+    networks: [data, workflow]
 
   product-storage-init:
     <<: *runtime-security
@@ -238,10 +241,7 @@ services:
     read_only: true
     tmpfs:
       - /tmp:mode=1777
-    networks:
-      - data
-      - scanner
-      - service
+    networks: [data, scanner, service, workflow]
   worker:
     <<: [*runtime-security, *api-image]
     command: ["istari-worker"]
@@ -263,9 +263,7 @@ services:
     read_only: true
     tmpfs:
       - /tmp:mode=1777
-    networks:
-      - data
-      - service
+    networks: [data, workflow]
 
   clamav-updater:
     <<: [*runtime-security, *clamav-runtime]
@@ -302,6 +300,7 @@ services:
       DATABASE_URL: ${MIGRATION_DATABASE_URL:?Set MIGRATION_DATABASE_URL in .env}
       APP_RUNTIME_DATABASE_USER: ${APP_RUNTIME_DATABASE_USER:?Set APP_RUNTIME_DATABASE_USER in .env}
       APP_BACKUP_DATABASE_USER: ${APP_BACKUP_DATABASE_USER:?Set APP_BACKUP_DATABASE_USER in .env}
+      APP_MAINTENANCE_DATABASE_USER: ${APP_MAINTENANCE_DATABASE_USER:?Set APP_MAINTENANCE_DATABASE_USER in .env}
     depends_on:
       postgres:
         condition: service_healthy
@@ -347,4 +346,5 @@ networks:
   scanner:
     internal: true
   signature-updates:
-  service:
+  service: {internal: true}
+  workflow: {internal: true}

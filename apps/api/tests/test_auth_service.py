@@ -8,6 +8,7 @@ from auth_test_support import (
     TEST_PASSWORD,
     FakeAuthRepository,
     StubHasher,
+    StubLoginLimiter,
     make_account,
     make_service,
     make_session,
@@ -18,7 +19,15 @@ from istari_service.auth_service import (
     hash_opaque_token,
 )
 from istari_service.domain import AccountRecord
-from istari_service.errors import AuthenticationFailed, SessionRequired
+from istari_service.errors import (
+    AuthenticationFailed,
+    AuthenticationRateLimited,
+    SessionRequired,
+)
+from istari_service.login_rate_limiter import (
+    LoginRateLimitDecision,
+    LoginRateLimitPolicy,
+)
 
 
 def test_hash_opaque_token_is_stable_sha256() -> None:
@@ -69,6 +78,30 @@ async def test_login_normalises_username_and_rotates_existing_sessions() -> None
 
 
 @pytest.mark.asyncio
+async def test_credential_budget_is_consumed_only_after_neutral_hashing() -> None:
+    limiter = StubLoginLimiter(LoginRateLimitDecision(True))
+    policy = LoginRateLimitPolicy(window_seconds=60, per_source=5, global_limit=10)
+    hasher = StubHasher()
+    service = make_service(FakeAuthRepository(), hasher, limiter=limiter, policy=policy)
+
+    original_consume = limiter.consume_scope_only
+
+    async def consume(
+        source: str, selected: LoginRateLimitPolicy
+    ) -> LoginRateLimitDecision:
+        if source.startswith("credential:"):
+            return LoginRateLimitDecision(False, 23)
+        return await original_consume(source, selected)
+
+    limiter.consume_scope_only = consume  # type: ignore[method-assign]
+    with pytest.raises(AuthenticationRateLimited) as raised:
+        await service.login(" Missing@Example.Test ", TEST_PASSWORD)
+
+    assert raised.value.response_headers == {"Retry-After": "23"}
+    assert hasher.verify_calls == [("dummy-hash", TEST_PASSWORD)]
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("account", "valid_pair", "records_failure"),
     [
@@ -91,6 +124,11 @@ async def test_login_failures_are_generic(
     stored_hash = account.password_hash if account else "dummy-hash"
     pairs = {(stored_hash, TEST_PASSWORD)} if valid_pair else set()
     service = make_service(repository, StubHasher(pairs))
+
+    if account is not None and valid_pair and account.is_active:
+        result = await service.login("requester.1@example.test", TEST_PASSWORD)
+        assert result.session.actor == account.actor
+        return
 
     with pytest.raises(AuthenticationFailed) as raised:
         await service.login("requester.1@example.test", TEST_PASSWORD)
@@ -159,14 +197,13 @@ async def test_authenticate_returns_repository_session() -> None:
 
 
 @pytest.mark.asyncio
-async def test_logout_and_csrf_refresh_delegate_hashed_values() -> None:
+async def test_logout_and_activity_delegate_to_repository() -> None:
     repository = FakeAuthRepository()
     service = make_service(repository, StubHasher())
     session = make_session()
 
     await service.logout(session)
-    refreshed = await service.refresh_csrf(session)
+    await service.record_activity(session)
 
     assert repository.revoked_sessions == [session.id]
-    assert repository.rotations == [(session.id, hash_opaque_token(refreshed))]
-    assert refreshed != repository.rotations[0][1]
+    assert repository.session_lookups[-1][0] == str(session.id)

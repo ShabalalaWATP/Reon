@@ -15,6 +15,8 @@ from istari_service.audit_types import (
 )
 
 AUDIT_KEY_INFO = "audit_hmac_key"
+AUDIT_KEYRING_INFO = "audit_hmac_keyring"
+AUDIT_ACTIVE_KEY_ID_INFO = "audit_active_key_id"
 
 
 def canonical_event_hash(
@@ -29,12 +31,14 @@ def canonical_event_hash(
     prior_status: str | None = None,
     next_status: str | None = None,
     details: Mapping[str, object] | None = None,
+    audience: str | None = None,
+    hash_version: int = 1,
 ) -> str:
     """Hash stable event fields and the preceding event hash."""
 
     if created_at.tzinfo is None:
         created_at = created_at.replace(tzinfo=UTC)
-    payload = {
+    payload: dict[str, object] = {
         "actorId": str(actor_id) if actor_id else None,
         "createdAt": created_at.astimezone(UTC).isoformat(timespec="microseconds"),
         "details": validate_audit_details(details),
@@ -45,6 +49,11 @@ def canonical_event_hash(
         "priorStatus": prior_status,
         "requestId": str(request_id),
     }
+    if hash_version >= 2:
+        if audience is None:
+            raise ValueError("version 2 request event hashes require an audience")
+        payload["audience"] = audience
+        payload["hashVersion"] = hash_version
     canonical = json.dumps(
         payload,
         ensure_ascii=False,
@@ -101,6 +110,8 @@ def verify_event_chain(
             prior_status=event.prior_status,
             next_status=event.next_status,
             details=event.validated_details(),
+            audience=event.audience,
+            hash_version=event.hash_version,
         )
         if not hmac.compare_digest(calculated, event.event_hash):
             return False

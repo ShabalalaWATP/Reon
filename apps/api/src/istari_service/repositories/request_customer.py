@@ -28,6 +28,7 @@ from istari_service.repositories.projection_pagination import (
 from istari_service.repositories.request_views import (
     summary_from_request,
 )
+from istari_service.request_event_audience import RequestEventAudience
 from istari_service.schemas.requests import (
     FeedbackCreate,
     FeedbackView,
@@ -181,6 +182,7 @@ class RequestCustomerRepositoryMixin:
             message="Feedback submitted.",
             prior_status=request.status,
             next_status=request.status,
+            audience=RequestEventAudience.CUSTOMER_AND_STAFF,
         )
         return FeedbackView(
             id=feedback.id,

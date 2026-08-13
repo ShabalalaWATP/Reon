@@ -23,11 +23,11 @@ from istari_service.models import (
     Deliverable,
     DeliverableStatus,
     Feedback,
-    RequestEvent,
     RequestStatus,
     ServiceRequest,
 )
 from istari_service.organisation_models import RequestRouteSelection
+from istari_service.request_event_models import RequestEvent
 
 PROJECTION_NAME = "request-operations"
 PROJECTION_VERSION = 1

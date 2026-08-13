@@ -46,6 +46,9 @@ class ProductTransferContext:
             upload_ttl=self.runtime.upload_ttl,
             maximum_file_bytes=self.runtime.maximum_file_bytes,
             maximum_package_bytes=self.runtime.maximum_package_bytes,
+            maximum_request_storage_bytes=self.runtime.maximum_request_storage_bytes,
+            maximum_user_storage_bytes=self.runtime.maximum_user_storage_bytes,
+            maximum_global_storage_bytes=self.runtime.maximum_global_storage_bytes,
             managed_file_uploads_enabled=self.runtime.managed_file_uploads_enabled,
         )
 
@@ -59,6 +62,9 @@ class ProductTransferContext:
             upload_ttl=self.runtime.upload_ttl,
             maximum_file_bytes=self.runtime.maximum_file_bytes,
             maximum_package_bytes=self.runtime.maximum_package_bytes,
+            maximum_request_storage_bytes=self.runtime.maximum_request_storage_bytes,
+            maximum_user_storage_bytes=self.runtime.maximum_user_storage_bytes,
+            maximum_global_storage_bytes=self.runtime.maximum_global_storage_bytes,
             managed_file_uploads_enabled=self.runtime.managed_file_uploads_enabled,
         )
 
@@ -78,6 +84,12 @@ class ProductTransferContext:
     async def discard_quarantine(self, object_key: str) -> None:
         try:
             await self.runtime.storage.delete_quarantine(object_key)
+        except ProductDependencyUnavailable:
+            return
+
+    async def discard_released(self, object_key: str) -> None:
+        try:
+            await self.runtime.storage.delete_released(object_key)
         except ProductDependencyUnavailable:
             return
 

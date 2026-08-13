@@ -53,6 +53,38 @@ class SqlAlchemyLoginAttemptLimiter:
         except (TimeoutError, SQLAlchemyError) as error:
             raise LoginRateLimitUnavailable() from error
 
+    async def consume_scope_only(
+        self, scope_key: str, policy: LoginRateLimitPolicy
+    ) -> LoginRateLimitDecision:
+        operation = asyncio.create_task(self._consume_scope_durably(scope_key, policy))
+        try:
+            return await asyncio.shield(operation)
+        except asyncio.CancelledError:
+            with suppress(TimeoutError, SQLAlchemyError):
+                await asyncio.shield(operation)
+            raise
+        except (TimeoutError, SQLAlchemyError) as error:
+            raise LoginRateLimitUnavailable() from error
+
+    async def _consume_scope_durably(
+        self, scope_key: str, policy: LoginRateLimitPolicy
+    ) -> LoginRateLimitDecision:
+        async with asyncio.timeout(self._timeout_seconds):
+            async with self._session_factory() as session, session.begin():
+                await self._configure_database_timeouts(session)
+                now = datetime.now(UTC)
+                count, started = await self._consume_scope(
+                    session, scope_key, now, policy.window_seconds
+                )
+                retry = (
+                    _retry_after(now, started, policy.window_seconds)
+                    if count > policy.per_source
+                    else 0
+                )
+                return LoginRateLimitDecision(
+                    not retry, retry, count == policy.per_source + 1
+                )
+
     async def _consume_durably(
         self,
         source_key: str,
@@ -78,17 +110,23 @@ class SqlAlchemyLoginAttemptLimiter:
         policy: LoginRateLimitPolicy,
     ) -> LoginRateLimitDecision:
         now = datetime.now(UTC)
-        global_count, global_start = await self._consume_scope(
-            session,
-            GLOBAL_SCOPE,
-            now,
-            policy.window_seconds,
-        )
         source_count, source_start = await self._consume_scope(
             session,
             source_key,
             now,
             policy.window_seconds,
+        )
+        source_retry = (
+            _retry_after(now, source_start, policy.window_seconds)
+            if source_count > policy.per_source
+            else 0
+        )
+        if source_retry:
+            return LoginRateLimitDecision(
+                False, source_retry, source_count == policy.per_source + 1
+            )
+        global_count, global_start = await self._consume_scope(
+            session, GLOBAL_SCOPE, now, policy.window_seconds
         )
         if global_count == 1:
             await session.execute(
@@ -101,13 +139,13 @@ class SqlAlchemyLoginAttemptLimiter:
             _retry_after(now, start, policy.window_seconds)
             for count, limit, start in (
                 (global_count, policy.global_limit, global_start),
-                (source_count, policy.per_source, source_start),
             )
             if count > limit
         ]
         return LoginRateLimitDecision(
             allowed=not retries,
             retry_after_seconds=max(retries, default=0),
+            first_denial=global_count == policy.global_limit + 1,
         )
 
     async def _consume_scope(

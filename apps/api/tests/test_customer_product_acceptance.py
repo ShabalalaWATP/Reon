@@ -7,11 +7,12 @@ import pytest
 from sqlalchemy import func, select
 
 from conftest import ApiHarness
-from istari_service.models import RequestEvent, RequestStatus, ServiceRequest
+from istari_service.models import RequestStatus, ServiceRequest
 from istari_service.product_errors import ProductNotFound
 from istari_service.product_models import ProductDissemination, ProductPackage
 from istari_service.product_types import PackageStatus
 from istari_service.repositories.products import SqlAlchemyProductRepository
+from istari_service.request_event_models import RequestEvent
 from product_test_support import (
     create_product_request,
     product_actors,
@@ -21,9 +22,7 @@ from product_test_support import (
 async def test_customer_acceptance_is_exact_idempotent_and_visible_to_route(
     api_harness: ApiHarness,
 ) -> None:
-    requester, other_customer, _manager, analyst, qc = await product_actors(
-        api_harness
-    )
+    requester, other_customer, _manager, analyst, qc = await product_actors(api_harness)
     request_id = await create_product_request(api_harness, requester, analyst)
     package_id = uuid4()
     now = datetime.now(UTC)

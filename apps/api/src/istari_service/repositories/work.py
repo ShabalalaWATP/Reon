@@ -19,9 +19,7 @@ from istari_service.models import (
     WorkflowInstanceStatus,
     WorkflowTaskStatus,
 )
-from istari_service.models import (
-    WorkflowTask as StoredWorkflowTask,
-)
+from istari_service.models import WorkflowTask as StoredWorkflowTask
 from istari_service.organisation_models import RequestRouteSelection
 from istari_service.ownership import OWNER_BY_STATUS
 from istari_service.repositories.event_store import append_request_event
@@ -60,6 +58,7 @@ from istari_service.workflow.projection import (
     status_after_action,
 )
 from istari_service.workflow.types import WorkflowAction, WorkflowTask
+from istari_service.workflow_event_visibility import work_event_audience
 
 
 class SqlAlchemyWorkRepository(WorkStaffingRepositoryMixin):
@@ -232,6 +231,7 @@ class SqlAlchemyWorkRepository(WorkStaffingRepositoryMixin):
             self._session,
             request_id,
             reveal_unreleased_deliverable=True,
+            include_staff_events=True,
         )
 
     async def finalise_claim(
@@ -332,6 +332,7 @@ class SqlAlchemyWorkRepository(WorkStaffingRepositoryMixin):
             message=event_message(payload, prior_status),
             prior_status=prior_status,
             next_status=next_status,
+            audience=work_event_audience(action),
             details=event_details,
         )
         await self._session.flush()
@@ -345,4 +346,5 @@ class SqlAlchemyWorkRepository(WorkStaffingRepositoryMixin):
                 UserRole.DELIVERY_TEAM_LEAD,
                 UserRole.REQUESTER,
             },
+            include_staff_events=actor.role is not UserRole.REQUESTER,
         )

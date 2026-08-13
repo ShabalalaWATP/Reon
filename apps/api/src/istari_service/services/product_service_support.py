@@ -20,6 +20,15 @@ from istari_service.product_ports import (
     PrivateObjectStorage,
     ProductAccessAudit,
 )
+from istari_service.product_quota_policy import (
+    MAX_GLOBAL_ACTIVE_INTENTS,
+    MAX_GLOBAL_STORAGE_BYTES,
+    MAX_PACKAGE_ACTIVE_INTENTS,
+    MAX_REQUEST_ACTIVE_INTENTS,
+    MAX_REQUEST_STORAGE_BYTES,
+    MAX_USER_ACTIVE_INTENTS,
+    MAX_USER_STORAGE_BYTES,
+)
 from istari_service.product_security import (
     MAX_FILE_BYTES,
     MAX_PACKAGE_BYTES,
@@ -45,6 +54,9 @@ class ProductServiceSupport:
         upload_ttl: timedelta = timedelta(minutes=10),
         maximum_file_bytes: int = MAX_FILE_BYTES,
         maximum_package_bytes: int = MAX_PACKAGE_BYTES,
+        maximum_request_storage_bytes: int = MAX_REQUEST_STORAGE_BYTES,
+        maximum_user_storage_bytes: int = MAX_USER_STORAGE_BYTES,
+        maximum_global_storage_bytes: int = MAX_GLOBAL_STORAGE_BYTES,
         managed_file_uploads_enabled: bool = True,
     ) -> None:
         self._repository = repository
@@ -55,7 +67,39 @@ class ProductServiceSupport:
         self._upload_ttl = upload_ttl
         self._maximum_file_bytes = maximum_file_bytes
         self._maximum_package_bytes = maximum_package_bytes
+        self._maximum_request_storage_bytes = maximum_request_storage_bytes
+        self._maximum_user_storage_bytes = maximum_user_storage_bytes
+        self._maximum_global_storage_bytes = maximum_global_storage_bytes
         self._managed_file_uploads_enabled = managed_file_uploads_enabled
+
+    async def _require_storage_capacity(
+        self, package: PackageRecord, additional_bytes: int
+    ) -> None:
+        usage = await self._repository.storage_usage(
+            package.id, package.request_id, package.author_user_id
+        )
+        byte_limits = (
+            (usage[0], self._maximum_package_bytes, "package"),
+            (usage[1], self._maximum_request_storage_bytes, "request"),
+            (usage[2], self._maximum_user_storage_bytes, "user"),
+            (usage[3], self._maximum_global_storage_bytes, "service"),
+        )
+        for used, limit, scope in byte_limits:
+            if used + additional_bytes > limit:
+                raise ProductConflict(
+                    f"The managed-product {scope} storage limit has been reached."
+                )
+        count_limits = (
+            (usage[4], MAX_PACKAGE_ACTIVE_INTENTS, "package"),
+            (usage[5], MAX_REQUEST_ACTIVE_INTENTS, "request"),
+            (usage[6], MAX_USER_ACTIVE_INTENTS, "user"),
+            (usage[7], MAX_GLOBAL_ACTIVE_INTENTS, "service"),
+        )
+        for used, limit, scope in count_limits:
+            if used >= limit:
+                raise ProductConflict(
+                    f"The managed-product {scope} active-upload limit has been reached."
+                )
 
     def _require_managed_file_uploads(self) -> None:
         if not self._managed_file_uploads_enabled:

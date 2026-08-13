@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from uuid import UUID, uuid4
 
+import pytest
+from pydantic import ValidationError
 from sqlalchemy import select
 
 from conftest import ApiHarness
+from istari_service.schemas.workspace_collaboration import WorkspaceRecordCreate
 from istari_service.workspace_collaboration_models import WorkspaceRecordEvent
 
 
@@ -175,3 +178,72 @@ async def test_collaboration_validation_and_stale_resolution_fail_closed(
         headers=harness.mutation_headers(),
     )
     assert repeated.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://example.test/path",
+        "https://user@example.test/path",
+        "https://:password@example.test/path",
+        "https://example.test/path#fragment",
+        "https://example.test\\@127.0.0.1/path",
+        "https://example.test:444/path",
+        "https://example.test:invalid/path",
+        "https://127.0.0.1/path",
+        "https://169.254.169.254/latest/meta-data",
+        "https://[::1]/path",
+        "https://localhost/path",
+        "https://\uff4c\uff4f\uff43\uff41\uff4c\uff48\uff4f\uff53\uff54/path",
+        "https://127\u30020\u30020\u30021/path",
+        "https://example.test/path\nconfused",
+    ],
+)
+def test_workspace_links_reject_ambiguous_or_private_destinations(url: str) -> None:
+    with pytest.raises(ValidationError):
+        WorkspaceRecordCreate(
+            grantId=uuid4(),
+            kind="LINK",
+            title="Unsafe destination",
+            body="The destination must fail the canonical URL policy.",
+            url=url,
+        )
+
+
+def test_workspace_links_are_stored_in_canonical_https_form() -> None:
+    command = WorkspaceRecordCreate(
+        grantId=uuid4(),
+        kind="LINK",
+        title="Canonical destination",
+        body="The destination is normalised before it reaches persistence.",
+        url="HTTPS://Products.Example.Test.:443/handover?view=current",
+    )
+    assert command.url == ("https://products.example.test/handover?view=current")
+
+
+def test_workspace_links_reject_invalid_idna(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "istari_service.schemas.workspace_collaboration.urlsplit",
+        lambda _value: type(
+            "Parsed",
+            (),
+            {
+                "port": 443,
+                "scheme": "https",
+                "hostname": "\ud800.example.test",
+                "username": None,
+                "password": None,
+                "fragment": "",
+                "path": "/",
+                "query": "",
+            },
+        )(),
+    )
+    with pytest.raises(ValueError, match="invalid hostname"):
+        WorkspaceRecordCreate(
+            grantId=uuid4(),
+            kind="LINK",
+            title="Invalid international hostname",
+            body="Synthetic IDNA failure must be rejected safely.",
+            url="https://public.example.test/",
+        )

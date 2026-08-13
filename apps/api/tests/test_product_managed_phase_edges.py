@@ -82,3 +82,25 @@ async def test_managed_preparation_and_finalisation_reject_stale_races() -> None
             plan,
             UploadGrant(intent.object_key, TOKEN, intent.expires_at),
         )
+
+
+async def test_managed_preparation_rejects_package_quota_before_grant() -> None:
+    actor, package, _request, _artefact, _intent, _view = DATA
+    quota_repository = repository(
+        storage_usage=AsyncMock(return_value=(95, 95, 95, 95, 0, 0, 0, 0))
+    )
+    phases = service(ProductManagedPhases, quota_repository)
+    phases._maximum_package_bytes = 100
+    with pytest.raises(ProductConflict, match="package storage limit"):
+        await phases.prepare_managed(actor, package.id, command(sizeBytes=10))
+
+
+async def test_managed_preparation_rejects_active_intent_count_limit() -> None:
+    actor, package, _request, _artefact, _intent, _view = DATA
+    quota_repository = repository(
+        storage_usage=AsyncMock(return_value=(0, 0, 0, 0, 10, 10, 10, 10))
+    )
+    with pytest.raises(ProductConflict, match="package active-upload limit"):
+        await service(ProductManagedPhases, quota_repository).prepare_managed(
+            actor, package.id, command(sizeBytes=1)
+        )

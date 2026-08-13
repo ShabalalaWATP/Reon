@@ -23,8 +23,11 @@ from istari_service.repositories.organisation import (
     has_route_membership,
     resolve_routing_selection,
 )
+from istari_service.repositories.request_participants import (
+    validate_participant_selection,
+    validate_request_participants,
+)
 from istari_service.repositories.requests import record_from_request
-from istari_service.repositories.request_participants import active_participant_ids
 from istari_service.repositories.work_actions import validate_work_effect
 from istari_service.schemas.work import AssignSpecialist
 from istari_service.work_command_types import PendingWorkCommand, WorkCommandType
@@ -86,9 +89,12 @@ async def validated_command_state(
     ):
         raise InvalidAction()
     actor = await actor_from_user_with_memberships(session, user)
-    request_record = record_from_request(
-        request, await active_participant_ids(session, request.id)
+    participant_ids = (
+        await validate_request_participants(session, request)
+        if request.assigned_specialist_id is not None
+        else frozenset()
     )
+    request_record = record_from_request(request, participant_ids)
     if not can_access_work(actor, request_record) or not await has_route_membership(
         session, actor, request.id, lock=True
     ):
@@ -134,6 +140,12 @@ async def _validate_assignment(
     payload = command.completion
     if not isinstance(payload, AssignSpecialist):
         return
+    await validate_participant_selection(
+        session,
+        team_id=request.assigned_delivery_team_id,
+        lead_id=payload.specialist_id,
+        contributor_ids=payload.contributor_ids,
+    )
     specialist = await session.get(User, payload.specialist_id)
     specialist_actor = (
         await actor_from_user_with_memberships(session, specialist)

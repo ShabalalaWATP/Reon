@@ -2,11 +2,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Eye, EyeOff, FileCheck2, KeyRound, LogIn, Moon, Route, Send, ShieldCheck, Sun, Users } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Navigate, useLocation, useNavigate } from "react-router";
+import { Navigate, useNavigate } from "react-router";
 import { z } from "zod";
 
 import { ApiError, api } from "../../lib/api/client";
 import { useAuth } from "../../lib/auth/AuthProvider";
+import { revealThroughMist } from "../../lib/mistReveal";
 import { homeRouteForRole } from "../../lib/routes";
 import { useTheme } from "../../lib/theme/ThemeProvider";
 import { ParticleField } from "./ParticleField";
@@ -40,7 +41,6 @@ export function LoginPage() {
   const { login, session, status } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [mode, setMode] = useState<AuthMode>("sign-in");
@@ -49,24 +49,34 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
     handleSubmit,
     register,
+    resetField,
   } = useForm<FormValues>({
     defaultValues: { password: "", username: "" },
     resolver: zodResolver(schema),
   });
-  const requestedPath = (location.state as { from?: string } | null)?.from;
-
   if (status === "authenticated" && session) {
-    return <Navigate replace to={requestedPath ?? homeRouteForRole(session.user.role)} />;
+    return <Navigate replace to={homeRouteForRole(session.user.role)} />;
   }
 
   async function submit(values: FormValues) {
     setAuthError(null);
     try {
       const nextSession = await login(values);
-      void navigate(requestedPath ?? homeRouteForRole(nextSession.user.role), { replace: true });
+      revealThroughMist();
+      void navigate(homeRouteForRole(nextSession.user.role), { replace: true });
     } catch (error) {
+      resetField("password");
+      setShowPassword(false);
       setAuthError(error instanceof ApiError ? error.message : "Unable to sign in. Try again.");
     }
+  }
+
+  function changeMode(nextMode: AuthMode) {
+    resetField("password");
+    setShowPassword(false);
+    setAuthError(null);
+    setMode(nextMode);
+    setRecovering(false);
   }
 
   return (
@@ -100,8 +110,8 @@ export function LoginPage() {
             <ShieldCheck aria-hidden="true" size={18} />Authorised account access
           </div>
           <div className="login-mode" aria-label="Account action" role="group">
-            <button aria-pressed={mode === "sign-in"} onClick={() => { setMode("sign-in"); setRecovering(false); }} type="button">Sign in</button>
-            <button aria-pressed={mode === "request-account"} onClick={() => { setMode("request-account"); setRecovering(false); }} type="button">Request account</button>
+            <button aria-pressed={mode === "sign-in"} onClick={() => changeMode("sign-in")} type="button">Sign in</button>
+            <button aria-pressed={mode === "request-account"} onClick={() => changeMode("request-account")} type="button">Request account</button>
           </div>
           {mode === "sign-in" && recovering ? <PasswordAssistanceForm onBack={() => setRecovering(false)} /> : mode === "sign-in" ? <form onSubmit={(event) => void handleSubmit(submit)(event)} noValidate>
             <header>
@@ -123,7 +133,7 @@ export function LoginPage() {
               </span>
               {errors.password ? <small role="alert">{errors.password.message}</small> : null}
             </label>
-            <button className="back-link forgot-password-link" onClick={() => setRecovering(true)} type="button">Forgotten password?</button>
+            <button className="back-link forgot-password-link" onClick={() => { resetField("password"); setShowPassword(false); setRecovering(true); }} type="button">Forgotten password?</button>
             {authError ? <p className="form-error" role="alert">{authError}</p> : null}
             <button className="button button--primary button--wide" disabled={isSubmitting || status === "loading"} type="submit">
               <LogIn aria-hidden="true" size={17} />{status === "loading" ? "Checking session…" : isSubmitting ? "Signing in…" : "Sign in to ISTARI"}

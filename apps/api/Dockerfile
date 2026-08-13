@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
 
 FROM ghcr.io/astral-sh/uv:0.12.1@sha256:cf4eedcaa81655197f625739489effcbe71b61ceb1506f332c3facae5deceded AS uv
 
@@ -66,4 +66,4 @@ USER app
 
 EXPOSE 8000
 
-CMD ["uvicorn", "istari_service.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "istari_service.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

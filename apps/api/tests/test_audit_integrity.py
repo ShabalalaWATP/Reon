@@ -8,8 +8,10 @@ from sqlalchemy import delete, select, update
 
 from api_helpers import submit_request
 from conftest import ApiHarness
-from istari_service.models import RequestEvent, RequestStatus, ServiceRequest
+from istari_service.models import RequestStatus, ServiceRequest
 from istari_service.repositories.event_store import verify_request_event_integrity
+from istari_service.request_event_audience import RequestEventAudience
+from istari_service.request_event_models import RequestEvent
 
 
 async def test_audit_anchor_detects_status_tampering(
@@ -23,6 +25,25 @@ async def test_audit_anchor_detects_status_tampering(
             update(RequestEvent)
             .where(RequestEvent.request_id == request_id)
             .values(next_status=RequestStatus.COMPLETED)
+        )
+        assert not await verify_request_event_integrity(session, request_id)
+
+
+async def test_audit_anchor_detects_audience_tampering(
+    api_harness: ApiHarness,
+) -> None:
+    request_id = UUID(await submit_request(api_harness))
+    async with api_harness.sessions() as session, session.begin():
+        event_id = await session.scalar(
+            select(RequestEvent)
+            .where(RequestEvent.request_id == request_id)
+            .with_only_columns(RequestEvent.id)
+        )
+        assert event_id is not None
+        await session.execute(
+            update(RequestEvent)
+            .where(RequestEvent.id == event_id)
+            .values(audience=RequestEventAudience.STAFF_ONLY)
         )
         assert not await verify_request_event_integrity(session, request_id)
 

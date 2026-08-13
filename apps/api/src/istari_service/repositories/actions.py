@@ -279,5 +279,7 @@ class SqlAlchemyActionRepository:
         return select(ActionProjection).where(
             ActionProjection.is_active.is_(True), or_(direct, candidate)
         )
+
+
 def utc(value: datetime) -> datetime:
     return value if value.tzinfo else value.replace(tzinfo=UTC)

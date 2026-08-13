@@ -24,7 +24,6 @@ from istari_service.models import (
     DeliverableStatus,
     Feedback,
     OutboxStatus,
-    RequestEvent,
     RequestStatus,
     ServiceRequest,
     Session,
@@ -36,6 +35,8 @@ from istari_service.models import (
     WorkflowTask,
     WorkflowTaskStatus,
 )
+from istari_service.request_event_audience import RequestEventAudience
+from istari_service.request_event_models import RequestEvent
 
 
 @pytest.fixture
@@ -178,6 +179,7 @@ async def test_all_models_persist_with_defaults_and_relationships(
         stored_outbox = await session.scalar(select(WorkflowOutbox))
         stored_deliverable = await session.scalar(select(Deliverable))
         stored_instance = await session.scalar(select(WorkflowInstance))
+        stored_event = await session.scalar(select(RequestEvent))
         assert stored_task is not None
         assert stored_task.status is WorkflowTaskStatus.OPEN
         assert stored_outbox is not None
@@ -187,6 +189,8 @@ async def test_all_models_persist_with_defaults_and_relationships(
         assert stored_deliverable.status is DeliverableStatus.SUBMITTED
         assert stored_instance is not None
         assert stored_instance.status is WorkflowInstanceStatus.START_PENDING
+        assert stored_event is not None
+        assert stored_event.audience is RequestEventAudience.STAFF_ONLY
 
 
 @pytest.mark.asyncio

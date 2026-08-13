@@ -36,7 +36,9 @@ team workload, then links to the team workspace as a distinct destination.
 The same default applies to every staff representative type, including Platform
 Administrators and Team Analysts. After a normal sign-in they land on Home,
 while Customers continue to land on `My requests`. Authorised deep links remain
-available when a user intentionally opens a specific destination.
+available when an already authenticated user intentionally opens a specific
+destination. A sign-in never resumes the protected route that caused the login
+screen to open, because the new session always starts from its role landing page.
 
 ## Primary navigation
 
@@ -68,6 +70,9 @@ role, object or action authorisation.
   shared team workspace.
 - Every staff representative type defaults to Home after sign-in; Customers
   default to `My requests`.
+- A successful sign-in ignores any previously visited or originally requested
+  protected route. Session restoration and authenticated deep links do not
+  change this explicit sign-in rule.
 - Personal and organisation metrics are in separately named regions with short
   scope explanations.
 - The organisation explanation states that it is not personal workload.

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from istari_service.action_notification_models import NotificationEventGroup
-from istari_service.models import RequestEvent, RequestStatus
+from istari_service.models import RequestStatus
+from istari_service.request_event_models import RequestEvent
 
 DIRECT_NOTIFICATION_SPECS: dict[str, tuple[str, NotificationEventGroup]] = {
     "request_submitted": (

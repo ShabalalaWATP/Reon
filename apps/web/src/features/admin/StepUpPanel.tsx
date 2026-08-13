@@ -26,6 +26,7 @@ export function StepUpPanel() {
       await elevate(password);
       setPassword("");
     } catch (caught) {
+      setPassword("");
       setError(caught instanceof ApiError ? caught.message : "Password confirmation failed.");
     } finally {
       setPending(false);

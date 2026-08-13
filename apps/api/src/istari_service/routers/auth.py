@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Literal, cast
 
 from fastapi import APIRouter, Request, Response, status
 
+from istari_service.auth_service import csrf_token_for_session
 from istari_service.dependencies import (
     AppSettings,
     AuthDependency,
     CurrentSession,
     DatabaseSession,
+    LoginPseudonymKey,
     MutationSession,
 )
 from istari_service.login_rate_limiter import login_source_key
@@ -66,11 +69,20 @@ async def request_password_assistance(
     request: Request,
     session: DatabaseSession,
     settings: AppSettings,
+    pseudonym_key: LoginPseudonymKey,
 ) -> PasswordAssistanceAccepted:
-    service = PlatformSecurityService(SqlAlchemyPlatformSecurityRepository(session))
+    service = PlatformSecurityService(
+        SqlAlchemyPlatformSecurityRepository(session),
+        pseudonym_key=pseudonym_key,
+        pseudonym_key_id=settings.security_pseudonym_key_id,
+    )
     await service.request_password_assistance(
         command.email,
-        source_key=login_source_key(request, settings.trusted_proxy_networks),
+        source_key=login_source_key(
+            request,
+            settings.trusted_proxy_networks,
+            pseudonym_key=pseudonym_key,
+        ),
     )
     return PasswordAssistanceAccepted()
 
@@ -78,6 +90,7 @@ async def request_password_assistance(
 def _session_response(
     session: CurrentSession,
     csrf_token: str,
+    idle_seconds: int,
 ) -> SessionResponse:
     return SessionResponse(
         user=CurrentUser(
@@ -90,7 +103,25 @@ def _session_response(
         ),
         csrf_token=csrf_token,
         expires_at=session.expires_at,
+        idle_expires_at=(session.last_seen_at or session.expires_at)
+        + timedelta(seconds=idle_seconds),
+        idle_timeout_seconds=idle_seconds,
         elevated_until=session.elevated_until,
+    )
+
+
+def _current_session_response(
+    request: Request,
+    session: CurrentSession,
+    settings: AppSettings,
+) -> SessionResponse:
+    session_token = request.cookies.get(settings.session_cookie_name)
+    if not session_token:
+        raise RuntimeError("authenticated session cookie is unavailable")
+    return _session_response(
+        session,
+        csrf_token_for_session(session_token),
+        settings.session_idle_seconds,
     )
 
 
@@ -101,11 +132,16 @@ async def login(
     response: Response,
     service: AuthDependency,
     settings: AppSettings,
+    pseudonym_key: LoginPseudonymKey,
 ) -> SessionResponse:
     result = await service.login(
         command.username,
         command.password,
-        source_key=login_source_key(request, settings.trusted_proxy_networks),
+        source_key=login_source_key(
+            request,
+            settings.trusted_proxy_networks,
+            pseudonym_key=pseudonym_key,
+        ),
     )
     response.set_cookie(
         key=settings.session_cookie_name,
@@ -119,16 +155,26 @@ async def login(
         max_age=settings.session_ttl_seconds,
         path="/",
     )
-    return _session_response(result.session, result.csrf_token)
+    return _session_response(
+        result.session,
+        result.csrf_token,
+        settings.session_idle_seconds,
+    )
 
 
 @router.get("/me", response_model=SessionResponse)
 async def me(
+    request: Request,
     session: CurrentSession,
-    service: AuthDependency,
+    settings: AppSettings,
 ) -> SessionResponse:
-    csrf_token = await service.refresh_csrf(session)
-    return _session_response(session, csrf_token)
+    return _current_session_response(request, session, settings)
+
+
+@router.post("/activity", status_code=status.HTTP_204_NO_CONTENT)
+async def activity(session: MutationSession, service: AuthDependency) -> Response:
+    await service.record_activity(session)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/elevate", response_model=ElevationResponse)

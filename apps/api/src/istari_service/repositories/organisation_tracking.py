@@ -10,7 +10,7 @@ from sqlalchemy import ColumnElement, and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from istari_service.models import RequestEvent, RequestStatus, ServiceRequest
+from istari_service.models import RequestStatus, ServiceRequest
 from istari_service.organisation_models import OrganisationUnit, RequestRouteSelection
 from istari_service.product_models import ProductDissemination, ProductPackage
 from istari_service.product_types import PackageStatus
@@ -21,6 +21,7 @@ from istari_service.repositories.projection_pagination import (
     decode_cursor,
     encode_cursor,
 )
+from istari_service.request_event_models import RequestEvent
 from istari_service.schemas.organisation import (
     TrackedRequest,
     TrackedRequestDetail,
@@ -70,9 +71,7 @@ async def tracked_requests(
             )
         )
     if route_unit_id:
-        statement = statement.where(
-            exists_route_selection(route_unit_id)
-        )
+        statement = statement.where(exists_route_selection(route_unit_id))
     if minimum_age_days is not None:
         statement = statement.where(
             ServiceRequest.created_at
@@ -211,9 +210,7 @@ async def tracked_request_detail(
                 id=event.id,
                 type=event.type,
                 message=event.message,
-                actor_display_name=(
-                    event.actor.display_name if event.actor else None
-                ),
+                actor_display_name=(event.actor.display_name if event.actor else None),
                 prior_status=event.prior_status,
                 next_status=event.next_status,
                 created_at=event.created_at,
@@ -229,10 +226,14 @@ async def tracked_request_detail(
 
 
 def exists_route_selection(unit_id: UUID) -> ColumnElement[bool]:
-    return select(RequestRouteSelection.id).where(
-        RequestRouteSelection.request_id == ServiceRequest.id,
-        RequestRouteSelection.unit_id == unit_id,
-    ).exists()
+    return (
+        select(RequestRouteSelection.id)
+        .where(
+            RequestRouteSelection.request_id == ServiceRequest.id,
+            RequestRouteSelection.unit_id == unit_id,
+        )
+        .exists()
+    )
 
 
 def _age_days(created_at: datetime) -> int:
@@ -244,23 +245,20 @@ async def _customer_acceptances(
     session: AsyncSession,
     request_ids: set[UUID],
 ) -> dict[UUID, datetime | None]:
-    rows = (
-        await session.execute(
-            select(ProductPackage.request_id, ProductDissemination.accepted_at)
-            .join(
-                ProductDissemination,
-                ProductDissemination.package_id == ProductPackage.id,
-            )
-            .where(
-                ProductPackage.request_id.in_(request_ids),
-                ProductPackage.status == PackageStatus.DISSEMINATED,
-                ProductDissemination.withdrawn_at.is_(None),
-                ProductDissemination.package_checksum
-                == ProductPackage.package_checksum,
-            )
+    result = await session.execute(
+        select(ProductPackage.request_id, ProductDissemination.accepted_at)
+        .join(
+            ProductDissemination,
+            ProductDissemination.package_id == ProductPackage.id,
         )
-    ).all()
-    return dict(rows)
+        .where(
+            ProductPackage.request_id.in_(request_ids),
+            ProductPackage.status == PackageStatus.DISSEMINATED,
+            ProductDissemination.withdrawn_at.is_(None),
+            ProductDissemination.package_checksum == ProductPackage.package_checksum,
+        )
+    )
+    return dict(result.tuples().all())
 
 
 async def _tracked_routes(

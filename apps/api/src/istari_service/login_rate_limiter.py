@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from hashlib import sha256
+from hmac import new as hmac_new
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network, ip_address
 from typing import Protocol
 
@@ -23,6 +24,7 @@ class LoginRateLimitPolicy:
 class LoginRateLimitDecision:
     allowed: bool
     retry_after_seconds: int = 0
+    first_denial: bool = False
 
 
 class LoginRateLimitUnavailable(RuntimeError):
@@ -38,8 +40,36 @@ class LoginAttemptLimiter(Protocol):
         policy: LoginRateLimitPolicy,
     ) -> LoginRateLimitDecision: ...
 
+    async def consume_scope_only(
+        self, scope_key: str, policy: LoginRateLimitPolicy
+    ) -> LoginRateLimitDecision: ...
 
-def login_source_key(request: Request, trusted_proxies: tuple[Network, ...]) -> str:
+
+def login_scope_key(scope: str, value: str, *, pseudonym_key: bytes) -> str:
+    """Return a domain-separated, keyed lookup value for a limiter scope."""
+
+    if len(pseudonym_key) < 32:
+        raise ValueError("login pseudonym key must be at least 32 bytes")
+    digest = hmac_new(
+        pseudonym_key,
+        f"istari-login-{scope}-v2:{value}".encode(),
+        sha256,
+    ).hexdigest()
+    return f"{scope}:{digest}"
+
+
+def credential_budget_key(username: str, *, pseudonym_key: bytes) -> str:
+    return login_scope_key(
+        "credential", username.strip().lower(), pseudonym_key=pseudonym_key
+    )
+
+
+def login_source_key(
+    request: Request,
+    trusted_proxies: tuple[Network, ...],
+    *,
+    pseudonym_key: bytes,
+) -> str:
     """Return a non-reversible key without trusting caller-controlled headers."""
 
     peer = _address(request.client.host if request.client else None)
@@ -49,8 +79,7 @@ def login_source_key(request: Request, trusted_proxies: tuple[Network, ...]) -> 
         if forwarded and "," not in forwarded:
             source = _address(forwarded.strip()) or peer
     canonical = source.compressed if source is not None else "unresolved"
-    digest = sha256(f"istari-login-source-v1:{canonical}".encode()).hexdigest()
-    source_key = "source:" + digest
+    source_key = login_scope_key("source", canonical, pseudonym_key=pseudonym_key)
     # This is a content-free PostgreSQL lookup key, never an HTTP or HTML response.
     return source_key  # nosemgrep
 

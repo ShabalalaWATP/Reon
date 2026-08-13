@@ -76,6 +76,18 @@ The board provides:
 - due risk, age in state, owner, contributors, blocker, dependency, checklist and
   reservation context where those facts exist.
 
+### Concurrent planning changes
+
+- Active capacity reservations for one person use half-open time windows and
+  must never overlap. PostgreSQL enforces the invariant with a partial GiST
+  exclusion constraint, including when requests arrive in separate processes.
+- A constraint conflict returns the stable board-planning conflict response and
+  rolls back the losing reservation, its activity record and package revision.
+- WIP admission, WIP configuration and dependency-graph changes serialise on
+  the exact team planning aggregate before counting a lane or validating the
+  complete graph. Competing changes therefore observe the committed winner and
+  cannot jointly exceed a WIP limit or introduce a dependency cycle.
+
 ## Work-item inspector
 
 The inspector is shared by board cards and table rows. It shows the authoritative

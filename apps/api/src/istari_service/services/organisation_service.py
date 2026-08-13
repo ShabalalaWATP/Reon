@@ -51,7 +51,9 @@ class OrganisationService:
     def __init__(self, repository: OrganisationRepository) -> None:
         self._repository = repository
 
-    async def list_units(self, _actor: Actor) -> list[OrganisationUnitView]:
+    async def list_units(self, actor: Actor) -> list[OrganisationUnitView]:
+        if actor.role is UserRole.REQUESTER:
+            raise ObjectNotFound()
         return await self._repository.list_units()
 
     async def page_tracked_requests(

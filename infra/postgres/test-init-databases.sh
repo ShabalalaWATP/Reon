@@ -47,6 +47,8 @@ docker create \
   --env APP_RUNTIME_DATABASE_PASSWORD=validation-runtime-password \
   --env APP_BACKUP_DATABASE_USER=app_validation_backup \
   --env APP_BACKUP_DATABASE_PASSWORD=validation-backup-password \
+  --env APP_MAINTENANCE_DATABASE_USER=app_validation_maintenance \
+  --env APP_MAINTENANCE_DATABASE_PASSWORD=validation-maintenance-password \
   --env CAMUNDA_DATABASE_NAME=camunda_validation \
   --env CAMUNDA_DATABASE_USER=camunda_validation \
   --env CAMUNDA_DATABASE_PASSWORD=validation-camunda-password \

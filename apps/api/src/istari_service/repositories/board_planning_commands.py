@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from istari_service.board_models import (
     CapacityReservation,
@@ -64,16 +65,24 @@ class SqlAlchemyBoardPlanningCommandRepository:
             cancellation_reason=None,
             version=1,
         )
-        self.session.add(reservation)
-        package.version += 1
-        self._activity(
-            package,
-            actor_id,
-            WorkPackageActivityType.RESERVATION_CREATED,
-            "Capacity reservation created.",
-            {"userId": str(command.user_id), "minutes": minutes},
-        )
-        await self.session.flush()
+        try:
+            async with self.session.begin_nested():
+                self.session.add(reservation)
+                package.version += 1
+                self._activity(
+                    package,
+                    actor_id,
+                    WorkPackageActivityType.RESERVATION_CREATED,
+                    "Capacity reservation created.",
+                    {"userId": str(command.user_id), "minutes": minutes},
+                )
+                await self.session.flush()
+        except IntegrityError as error:
+            if _constraint_name(error) == "capacity_reservations_active_no_overlap":
+                raise InvalidBoardChange(
+                    "This person already has an overlapping reservation."
+                ) from error
+            raise
         return reservation
 
     async def cancel_reservation(
@@ -176,3 +185,27 @@ class SqlAlchemyBoardPlanningCommandRepository:
                 details=details,
             )
         )
+
+
+def _constraint_name(error: BaseException) -> str | None:
+    """Extract a PostgreSQL constraint name through SQLAlchemy/asyncpg wrappers."""
+
+    pending: list[BaseException] = [error]
+    seen: set[int] = set()
+    while pending:
+        current = pending.pop()
+        if id(current) in seen:
+            continue
+        seen.add(id(current))
+        direct = getattr(current, "constraint_name", None)
+        if isinstance(direct, str):
+            return direct
+        diagnostics = getattr(current, "diag", None)
+        diagnosed = getattr(diagnostics, "constraint_name", None)
+        if isinstance(diagnosed, str):
+            return diagnosed
+        for attribute in ("orig", "__cause__", "__context__"):
+            nested = getattr(current, attribute, None)
+            if isinstance(nested, BaseException):
+                pending.append(nested)
+    return None

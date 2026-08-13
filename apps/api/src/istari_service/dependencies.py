@@ -10,10 +10,13 @@ from typing import Annotated, cast
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from istari_service.audit import AUDIT_KEY_INFO
 from istari_service.auth_service import AuthService, PasswordHasher
+from istari_service.compliance_models import SecurityOutcome
 from istari_service.config import Settings
+from istari_service.database import SECURITY_PSEUDONYM_KEY_INFO
 from istari_service.domain import Actor, SessionRecord
-from istari_service.errors import AdministrationAccessDenied, StepUpRequired
+from istari_service.errors import AdministrationAccessDenied, CsrfFailed, StepUpRequired
 from istari_service.login_rate_limiter import LoginRateLimitPolicy
 from istari_service.models import UserRole
 from istari_service.repositories.auth import SqlAlchemyAuthRepository
@@ -21,6 +24,7 @@ from istari_service.repositories.login_rate_limits import (
     SqlAlchemyLoginAttemptLimiter,
 )
 from istari_service.security import require_csrf
+from istari_service.security_events import SecurityEventCommand, SecurityEventRecorder
 from istari_service.workflow.engine import WorkflowEngine
 
 
@@ -83,6 +87,14 @@ SessionFactoryDependency = Annotated[
 ]
 
 
+def login_pseudonym_key_from_request(request: Request) -> bytes:
+    factory = session_factory_from_request(request)
+    return cast(bytes, factory.kw["info"][SECURITY_PSEUDONYM_KEY_INFO])
+
+
+LoginPseudonymKey = Annotated[bytes, Depends(login_pseudonym_key_from_request)]
+
+
 def _auth_service_for_session(request: Request, session: AsyncSession) -> AuthService:
     hasher = cast(PasswordHasher, request.app.state.password_hasher)
     dummy_hash = cast(str, request.app.state.dummy_password_hash)
@@ -108,6 +120,16 @@ def _auth_service_for_session(request: Request, session: AsyncSession) -> AuthSe
             global_limit=settings.login_rate_limit_global,
         ),
         password_semaphore=password_semaphore,
+        security_events=_security_event_recorder(request),
+        pseudonym_key=login_pseudonym_key_from_request(request),
+    )
+
+
+def _security_event_recorder(request: Request) -> SecurityEventRecorder:
+    factory = session_factory_from_request(request)
+    return SecurityEventRecorder(
+        factory,
+        pseudonym_key=cast(bytes, factory.kw["info"][AUDIT_KEY_INFO]),
     )
 
 
@@ -123,7 +145,11 @@ async def current_session(
     service: AuthDependency,
 ) -> SessionRecord:
     settings = settings_from_request(request)
-    return await service.authenticate(request.cookies.get(settings.session_cookie_name))
+    session = await service.authenticate(
+        request.cookies.get(settings.session_cookie_name)
+    )
+    request.state.authenticated_actor = session.actor
+    return session
 
 
 CurrentSession = Annotated[SessionRecord, Depends(current_session)]
@@ -134,12 +160,23 @@ async def mutation_session(
     session: CurrentSession,
 ) -> SessionRecord:
     settings = settings_from_request(request)
-    require_csrf(
-        session,
-        request.headers.get("X-CSRF-Token"),
-        request.headers.get("Origin"),
-        settings.trusted_origins,
-    )
+    try:
+        require_csrf(
+            session,
+            request.headers.get("X-CSRF-Token"),
+            request.headers.get("Origin"),
+            settings.trusted_origins,
+        )
+    except CsrfFailed:
+        await _security_event_recorder(request).record(
+            SecurityEventCommand(
+                "CSRF_DENIAL",
+                SecurityOutcome.FAILURE,
+                "CSRF_VALIDATION_FAILED",
+                actor_user_id=session.actor.id,
+            )
+        )
+        raise
     return session
 
 
@@ -169,6 +206,7 @@ async def detached_current_session(request: Request) -> SessionRecord:
             record = await service.authenticate(
                 request.cookies.get(settings.session_cookie_name)
             )
+            request.state.authenticated_actor = record.actor
             await session.commit()
             return record
         except BaseException:
@@ -192,17 +230,28 @@ DetachedCurrentActor = Annotated[
 ]
 
 
-def detached_mutation_actor(
+async def detached_mutation_actor(
     request: Request,
     session: DetachedCurrentSession,
 ) -> Actor:
     settings = settings_from_request(request)
-    require_csrf(
-        session,
-        request.headers.get("X-CSRF-Token"),
-        request.headers.get("Origin"),
-        settings.trusted_origins,
-    )
+    try:
+        require_csrf(
+            session,
+            request.headers.get("X-CSRF-Token"),
+            request.headers.get("Origin"),
+            settings.trusted_origins,
+        )
+    except CsrfFailed:
+        await _security_event_recorder(request).record(
+            SecurityEventCommand(
+                "CSRF_DENIAL",
+                SecurityOutcome.FAILURE,
+                "CSRF_VALIDATION_FAILED",
+                actor_user_id=session.actor.id,
+            )
+        )
+        raise
     return session.actor
 
 
@@ -212,17 +261,38 @@ DetachedMutationActor = Annotated[
 ]
 
 
-def elevated_mutation_actor(session: MutationSession) -> Actor:
+async def elevated_mutation_actor(request: Request, session: MutationSession) -> Actor:
     if session.actor.role is not UserRole.PLATFORM_ADMIN:
+        await _security_event_recorder(request).record(
+            SecurityEventCommand(
+                "ROLE_DENIAL",
+                SecurityOutcome.FAILURE,
+                "PLATFORM_ADMIN_REQUIRED",
+                actor_user_id=session.actor.id,
+            )
+        )
         raise AdministrationAccessDenied()
     elevated_until = session.elevated_until
     if elevated_until is None:
+        await _record_step_up_expired(request, session)
         raise StepUpRequired()
     if elevated_until.tzinfo is None:
         elevated_until = elevated_until.replace(tzinfo=UTC)
     if elevated_until <= datetime.now(UTC):
+        await _record_step_up_expired(request, session)
         raise StepUpRequired()
     return session.actor
+
+
+async def _record_step_up_expired(request: Request, session: SessionRecord) -> None:
+    await _security_event_recorder(request).record(
+        SecurityEventCommand(
+            "STEP_UP",
+            SecurityOutcome.EXPIRED,
+            "ELEVATION_REQUIRED",
+            actor_user_id=session.actor.id,
+        )
+    )
 
 
 ElevatedMutationActor = Annotated[Actor, Depends(elevated_mutation_actor)]

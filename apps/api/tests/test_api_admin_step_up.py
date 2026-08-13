@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.models import Session
+from istari_service.models import Session, User
 
 
 async def _ssg(harness: ApiHarness) -> dict[str, object]:
@@ -94,3 +94,31 @@ async def test_step_up_rejects_wrong_password_non_admin_and_missing_csrf(
     )
     assert non_admin.status_code == 403
     assert non_admin.json()["detail"]["code"] == "ADMINISTRATION_ACCESS_DENIED"
+
+
+async def test_step_up_failures_lock_then_successful_login_resets_state(
+    api_harness: ApiHarness,
+) -> None:
+    harness = api_harness
+    await harness.login("admin1")
+    for _ in range(5):
+        response = await harness.client.post(
+            "/api/v1/auth/elevate",
+            json={"password": "incorrect"},
+            headers=harness.mutation_headers(),
+        )
+        assert response.status_code == 401
+
+    locked = await harness.client.post(
+        "/api/v1/auth/elevate",
+        json={"password": "Synthetic-demo-passphrase-42"},
+        headers=harness.mutation_headers(),
+    )
+    assert locked.status_code == 401
+    await harness.login("admin1")
+    async with harness.sessions() as session:
+        account = await session.scalar(select(User).where(User.username == "admin1"))
+        assert account is not None
+        assert account.failed_login_count == 0
+        assert account.locked_until is None
+    assert (await harness.elevate()).get("elevatedUntil")

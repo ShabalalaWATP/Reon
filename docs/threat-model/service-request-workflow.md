@@ -99,6 +99,10 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | Notification retry creates duplicates | Use the source event plus recipient as a unique idempotency key and reconcile through the transactional outbox |
 | A notification leaks protected content | Store a minimum safe subject only; exclude request narrative, clarification text, product content, Customer identity and private calendar text from payloads, logs and metrics |
 | A copied notification deep link grants access | Recheck current recipient, role, object, assignment and organisation policy at the target endpoint; notification possession is never authority |
+| Internal coordination appears in Customer history | Persist a server-owned event audience, backfill legacy `CURRENT_OWNER` and internal event types to `STAFF_ONLY`, and filter before pagination at every Customer history query |
+| A removed or deactivated Contributor retains action or notification authority | At command dispatch and finalisation, lock and revalidate the Lead and every Contributor as active Delivery Specialists in the exact current delivery team; build action and notification audiences only from that eligible set |
+| A Customer enumerates staffing or organisation topology | Deny the global organisation reference endpoint to Customers; initialise submission routing from server-owned configuration only |
+| A workspace link targets a local service or exploits URL parser differences | Canonicalise HTTPS links before persistence and reject credentials, fragments, controls, backslashes, unapproved ports and non-global destinations |
 | Administrator uses support role as a content bypass | Separate metadata ports and routes; deny administrator request list, detail and mutation policy |
 | A stolen Administrator session changes access | Require password step-up bound to that opaque session, CSRF and trusted origin; expire elevation after five minutes |
 | Elevation is replayed in another browser session | Store elevation only on the server-side session row and return only its expiry time |
@@ -145,6 +149,10 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | A local heuristic result is mistaken for production semantic assurance | Give every scanner runtime an explicit assurance class; advertise and permit managed-file uploads in production only for an injected `APPROVED_SEMANTIC_CDR` runtime. Local heuristic and ClamAV composition never self-identify as CDR |
 | Scanner failure or stale result is treated as success | Fail closed for unknown, failed, timed-out or superseded scans; bind promotion to object checksum and scan-policy version; derive daily-definition age from signed build metadata and require equality between on-disk and loaded versions |
 | A scanner protocol or archive parser is abused | Run strict PDF/Office structure checks before a bounded ClamAV `INSTREAM` scan; cap object bytes, archive entries, expanded bytes, compression ratio, scanner time and scanner response length |
+| Hostile Office central-directory metadata exhausts parser memory | Parse only the bounded end-of-central-directory window first; reject Zip64, multi-disk, excessive entries and central-directory bytes before `ZipFile` construction, then cap concurrent document inspections |
+| Parallel upload intents exhaust package or service storage before review | Reserve declared bytes while holding the singleton service quota plus owner, request and package locks; enforce package, request, author and service totals before issuing and again before persisting a grant |
+| Upload finalisation fails after an object write or promotion | Compensate quarantine and released objects immediately, then run a fenced bounded reconciler for expired intents and unreferenced quarantine objects; deletion and expiry transitions are idempotent |
+| Local product paths are replaced by symbolic links | Reject symbolic links in every object path component, use no-follow file descriptors where supported and retain root-contained atomic replacement semantics |
 | The malware service becomes a network pivot | Keep the untrusted-content clamd process non-root on a dedicated internal network, read-only signature mount and no published port or egress; give only a separate non-scanning updater outbound mirror access; use `INSTREAM` and never pass an application-controlled filesystem path |
 | Quarantined or released objects become public | Deny public bucket access, separate storage privileges and test unauthenticated object retrieval before release |
 | An artefact changes after approval | Bind Manager review and QC dissemination to the immutable package version and checksum; any change creates a new version and invalidates approval |
@@ -265,3 +273,15 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 - Object-store and scanner interruption, quarantine, cleanup and joined restore
   rehearsals.
 - Backup restore and recovery-point verification before pilot exit.
+
+Authenticated polling is not evidence of human presence. Session validation is
+read-only, while a CSRF-protected and browser-throttled activity endpoint is the
+only path that advances idle state. The client also applies the absolute and idle
+deadlines locally and broadcasts sign-out state between tabs. CSRF bootstrap is
+stable for the opaque session so one tab cannot invalidate another tab's token.
+
+Public login attempts consume independent opaque source and normalised-identifier
+budgets before password verification. This retains brute-force protection across
+replicas without a shared global exhaustion switch and without exposing a named
+account to attacker-triggered hard lockout. Real and unknown identifiers follow
+the same verification and public-error path.

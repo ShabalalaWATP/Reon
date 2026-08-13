@@ -34,6 +34,7 @@ class SessionRecord:
     actor: Actor
     csrf_token_hash: str
     expires_at: datetime
+    last_seen_at: datetime | None = None
     elevated_until: datetime | None = None
 
 

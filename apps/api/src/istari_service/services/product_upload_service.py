@@ -70,6 +70,7 @@ class ProductUploadOperations(ProductServiceSupport):
             return await self._managed_intent(package.id, artefact, intent, grant.token)
         if package.version != command.expected_version:
             raise ProductConflict()
+        await self._require_storage_capacity(package, command.size_bytes)
         object_id = uuid5(package.id, str(command.idempotency_key))
         object_key = f"quarantine/{package.id}/{object_id}"
         expires_at = datetime.now(UTC) + self._upload_ttl

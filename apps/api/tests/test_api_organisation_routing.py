@@ -165,11 +165,11 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
         "createdAt",
         "updatedAt",
         "route",
-            "awaitingTeamStaffing",
-            "ageDays",
-            "customerAcceptanceRequired",
-            "customerAcceptedAt",
-        }
+        "awaitingTeamStaffing",
+        "ageDays",
+        "customerAcceptanceRequired",
+        "customerAcceptedAt",
+    }
     assert tracked["title"] == request_payload()["title"]
     assert tracked["currentOwner"] == "Team Manager"
     assert tracked["awaitingTeamStaffing"] is False
@@ -246,6 +246,10 @@ async def test_organisation_reference_data_is_authenticated_and_complete(
     unauthenticated = await harness.client.get("/api/v1/organisation/units")
     assert unauthenticated.status_code == 401
     await harness.login("admin2")
+    customer = await harness.client.get("/api/v1/organisation/units")
+    assert customer.status_code == 404
+    assert "SSG_TEAM" not in customer.text
+    await harness.login("admin4")
     response = await harness.client.get("/api/v1/organisation/units")
     assert response.status_code == 200
     items = response.json()["items"]

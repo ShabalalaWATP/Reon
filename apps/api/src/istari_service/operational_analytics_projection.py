@@ -17,7 +17,7 @@ from istari_service.board_models import (
     WorkPackageStatus,
 )
 from istari_service.calendar_models import CalendarCapacitySnapshot
-from istari_service.models import RequestEvent, ServiceRequest
+from istari_service.models import ServiceRequest
 from istari_service.operational_analytics_facts import (
     OperationalFactInput,
     anonymous_source_key,
@@ -29,6 +29,7 @@ from istari_service.operational_analytics_facts import (
 from istari_service.planning_capacity import calculate_planning_capacity
 from istari_service.product_models import ProductAccessEvent, ProductPackage
 from istari_service.product_types import AccessKind, AccessOutcome
+from istari_service.request_event_models import RequestEvent
 from istari_service.schemas.calendar import CapacityDay
 
 REQUEST_FACT_TYPES = {

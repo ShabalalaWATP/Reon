@@ -10,6 +10,8 @@ required_variables=(
   APP_RUNTIME_DATABASE_PASSWORD
   APP_BACKUP_DATABASE_USER
   APP_BACKUP_DATABASE_PASSWORD
+  APP_MAINTENANCE_DATABASE_USER
+  APP_MAINTENANCE_DATABASE_PASSWORD
   CAMUNDA_DATABASE_NAME
   CAMUNDA_DATABASE_USER
   CAMUNDA_DATABASE_PASSWORD
@@ -27,6 +29,7 @@ identifiers=(
   "$APP_DATABASE_USER"
   "$APP_RUNTIME_DATABASE_USER"
   "$APP_BACKUP_DATABASE_USER"
+  "$APP_MAINTENANCE_DATABASE_USER"
   "$CAMUNDA_DATABASE_NAME"
   "$CAMUNDA_DATABASE_USER"
 )
@@ -41,10 +44,11 @@ service_users=(
   "$APP_DATABASE_USER"
   "$APP_RUNTIME_DATABASE_USER"
   "$APP_BACKUP_DATABASE_USER"
+  "$APP_MAINTENANCE_DATABASE_USER"
   "$CAMUNDA_DATABASE_USER"
 )
-if [[ "$(printf '%s\n' "${service_users[@]}" | sort -u | wc -l)" -ne 4 ]]; then
-  echo "Migration, runtime, backup and Camunda users must differ." >&2
+if [[ "$(printf '%s\n' "${service_users[@]}" | sort -u | wc -l)" -ne 5 ]]; then
+  echo "Migration, runtime, backup, maintenance and Camunda users must differ." >&2
   exit 1
 fi
 for service_user in "${service_users[@]}"; do
@@ -59,9 +63,10 @@ passwords=(
   "$APP_DATABASE_PASSWORD"
   "$APP_RUNTIME_DATABASE_PASSWORD"
   "$APP_BACKUP_DATABASE_PASSWORD"
+  "$APP_MAINTENANCE_DATABASE_PASSWORD"
   "$CAMUNDA_DATABASE_PASSWORD"
 )
-if [[ "$(printf '%s\n' "${passwords[@]}" | sort -u | wc -l)" -ne 5 ]]; then
+if [[ "$(printf '%s\n' "${passwords[@]}" | sort -u | wc -l)" -ne 6 ]]; then
   echo "Every database identity must use a distinct password." >&2
   exit 1
 fi
@@ -86,6 +91,8 @@ psql \
   --set=runtime_password="$APP_RUNTIME_DATABASE_PASSWORD" \
   --set=backup_user="$APP_BACKUP_DATABASE_USER" \
   --set=backup_password="$APP_BACKUP_DATABASE_PASSWORD" \
+  --set=maintenance_user="$APP_MAINTENANCE_DATABASE_USER" \
+  --set=maintenance_password="$APP_MAINTENANCE_DATABASE_PASSWORD" \
   --set=camunda_database="$CAMUNDA_DATABASE_NAME" \
   --set=camunda_user="$CAMUNDA_DATABASE_USER" \
   --set=camunda_password="$CAMUNDA_DATABASE_PASSWORD" <<'SQL'
@@ -99,6 +106,7 @@ FROM (
     (:'app_user', :'app_password'),
     (:'runtime_user', :'runtime_password'),
     (:'backup_user', :'backup_password'),
+    (:'maintenance_user', :'maintenance_password'),
     (:'camunda_user', :'camunda_password')
 ) AS roles(role_name, role_password)
 WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = role_name) \gexec

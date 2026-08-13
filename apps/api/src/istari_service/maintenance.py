@@ -8,10 +8,18 @@ import json
 from dataclasses import asdict
 from uuid import UUID
 
-from istari_service.database import SessionFactory, dispose_database
+from istari_service.config import get_settings
+from istari_service.database import (
+    SessionFactory,
+    create_database_engine,
+    create_session_factory,
+    dispose_database,
+)
+from istari_service.legal_holds import LegalHoldService
 from istari_service.operational_snapshot import capture_operational_snapshot
 from istari_service.restore_verification import verify_restored_database
 from istari_service.retention import (
+    DisposalIdentity,
     RetentionPolicy,
     RetentionService,
     SqlAlchemyRetentionRepository,
@@ -30,10 +38,15 @@ def parser() -> argparse.ArgumentParser:
     retention.add_argument("--apply", action="store_true")
     retention.add_argument("--confirm")
     retention.add_argument("--batch-size", type=int, default=1_000)
+    holds = subcommands.add_parser("legal-hold")
+    holds.add_argument("action", choices=("apply", "release"))
+    holds.add_argument("--target-type", required=True)
+    holds.add_argument("--target-id", type=UUID, required=True)
+    holds.add_argument("--reason-code")
     verification = subcommands.add_parser("verify-restore")
     verification.add_argument(
         "--expected-revision",
-        default="0033_customer_product_acceptance",
+        default="0043_security_event_dedup",
     )
     snapshot = subcommands.add_parser("health-snapshot")
     snapshot.add_argument("--max-command-age-seconds", type=int, default=300)
@@ -56,9 +69,36 @@ def parser() -> argparse.ArgumentParser:
 
 
 async def run_retention(arguments: argparse.Namespace) -> dict[str, object]:
-    async with SessionFactory() as session:
+    settings = get_settings()
+    factory = SessionFactory
+    engine = None
+    if arguments.apply:
+        if not settings.maintenance_database_url:
+            raise ValueError("MAINTENANCE_DATABASE_URL is required for disposal")
+        configured = settings.model_copy(
+            update={"database_url": settings.maintenance_database_url}
+        )
+        engine = create_database_engine(configured)
+        factory = create_session_factory(
+            engine,
+            audit_hmac_keys=settings.audit_hmac_keys,
+            audit_active_key_id=settings.audit_hmac_active_key_id,
+        )
+    async with factory() as session:
         try:
-            report = await RetentionService(SqlAlchemyRetentionRepository(session)).run(
+            operator_subject = settings.maintenance_operator_subject
+            disposal_authority = settings.maintenance_disposal_authority
+            identity = (
+                DisposalIdentity(operator_subject, disposal_authority)
+                if operator_subject and disposal_authority
+                else None
+            )
+            repository = (
+                SqlAlchemyRetentionRepository(session, identity)
+                if identity is not None
+                else SqlAlchemyRetentionRepository(session)
+            )
+            report = await RetentionService(repository).run(
                 apply=arguments.apply,
                 confirmation=arguments.confirm,
                 policy=RetentionPolicy(batch_size=arguments.batch_size),
@@ -69,6 +109,42 @@ async def run_retention(arguments: argparse.Namespace) -> dict[str, object]:
         except BaseException:
             await session.rollback()
             raise
+        finally:
+            if engine is not None:
+                await engine.dispose()
+
+
+async def run_legal_hold(arguments: argparse.Namespace) -> dict[str, object]:
+    settings = get_settings()
+    subject = settings.maintenance_operator_subject
+    authority = settings.maintenance_legal_hold_authority
+    if subject is None or authority is None:
+        raise ValueError("configured maintenance identity and authority are required")
+    if not settings.maintenance_database_url:
+        raise ValueError("MAINTENANCE_DATABASE_URL is required for legal holds")
+    configured = settings.model_copy(
+        update={"database_url": settings.maintenance_database_url}
+    )
+    engine = create_database_engine(configured)
+    factory = create_session_factory(
+        engine,
+        audit_hmac_keys=settings.audit_hmac_keys,
+        audit_active_key_id=settings.audit_hmac_active_key_id,
+    )
+    async with factory() as session, session.begin():
+        service = LegalHoldService(session, subject=subject, authority=authority)
+        hold = (
+            await service.apply(
+                arguments.target_type,
+                arguments.target_id,
+                arguments.reason_code or "",
+            )
+            if arguments.action == "apply"
+            else await service.release(arguments.target_type, arguments.target_id)
+        )
+        result = {"id": str(hold.id), "action": arguments.action}
+    await engine.dispose()
+    return result
 
 
 async def async_main(arguments: argparse.Namespace) -> int:
@@ -85,7 +161,10 @@ async def async_main(arguments: argparse.Namespace) -> int:
                 result = asdict(verification_report) | {
                     "valid": verification_report.valid
                 }
-                exit_code = 0 if verification_report.valid else 2
+            exit_code = 0 if verification_report.valid else 2
+        elif arguments.job == "legal-hold":
+            result = await run_legal_hold(arguments)
+            exit_code = 0
         elif arguments.job == "health-snapshot":
             async with SessionFactory() as session:
                 snapshot_report = await capture_operational_snapshot(

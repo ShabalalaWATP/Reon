@@ -13,9 +13,9 @@ from istari_service.errors import InvalidAction
 from istari_service.models import (
     OutboxStatus,
     ServiceRequest,
+    UserRole,
     WorkflowOutbox,
     WorkflowTaskStatus,
-    UserRole,
 )
 from istari_service.models import WorkflowTask as StoredWorkflowTask
 from istari_service.policies import can_access_work, may_complete
@@ -76,10 +76,7 @@ async def prepare_completion_intent(
     task, request = await _locked_state(session, work)
     action = WorkflowAction(payload.action)
     participant_ids = frozenset({actor.id})
-    if (
-        actor.role is UserRole.DELIVERY_SPECIALIST
-        and task.assignee_user_id != actor.id
-    ):
+    if actor.role is UserRole.DELIVERY_SPECIALIST and task.assignee_user_id != actor.id:
         participant_ids = await active_participant_ids(session, request.id)
     request_record = record_from_request(request, participant_ids)
     if (

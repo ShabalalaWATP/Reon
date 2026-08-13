@@ -12,7 +12,6 @@ from istari_service.models import (
     Deliverable,
     DeliverableStatus,
     Feedback,
-    RequestEvent,
     RequestStatus,
     ServiceRequest,
 )
@@ -23,6 +22,8 @@ from istari_service.repositories.projection_pagination import (
     encode_cursor,
 )
 from istari_service.repositories.request_participants import active_contributor_views
+from istari_service.request_event_audience import RequestEventAudience
+from istari_service.request_event_models import RequestEvent
 from istari_service.schemas.requests import (
     DeliverableView,
     FeedbackView,
@@ -68,6 +69,7 @@ async def build_request_detail(
     include_clarifications: bool = False,
     event_limit: int = 50,
     event_cursor: str | None = None,
+    include_staff_events: bool = False,
 ) -> RequestDetail:
     request = await session.scalar(
         select(ServiceRequest)
@@ -84,6 +86,10 @@ async def build_request_detail(
         .options(selectinload(RequestEvent.actor))
         .where(RequestEvent.request_id == request_id)
     )
+    if not include_staff_events:
+        event_statement = event_statement.where(
+            RequestEvent.audience == RequestEventAudience.CUSTOMER_AND_STAFF
+        )
     if event_cursor is not None:
         changed_at, event_id = decode_cursor(
             event_cursor, message="The request-history filters are invalid."

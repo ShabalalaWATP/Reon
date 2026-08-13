@@ -33,6 +33,7 @@ class AdminAuditAnchor(Base):
     event_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     head_hash: Mapped[str | None] = mapped_column(String(64))
     anchor_mac: Mapped[str | None] = mapped_column(String(64))
+    anchor_key_id: Mapped[str | None] = mapped_column(String(64))
 
 
 class AdminIdentitySequence(Base):
@@ -60,6 +61,9 @@ class AdminAuditEvent(CreatedMixin, Base):
     summary: Mapped[str] = mapped_column(Text)
     previous_hash: Mapped[str | None] = mapped_column(String(64))
     event_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    audit_key_id: Mapped[str] = mapped_column(
+        String(64), default="legacy", server_default="legacy"
+    )
     created_at: Mapped[datetime] = mapped_column(UTC_TS)
 
 

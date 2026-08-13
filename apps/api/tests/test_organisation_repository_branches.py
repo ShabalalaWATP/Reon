@@ -199,7 +199,9 @@ async def test_organisation_service_hides_tracking_from_non_routing_roles() -> N
         "Area A",
     )
 
-    assert await service.list_units(requester) == []
+    with pytest.raises(ObjectNotFound):
+        await service.list_units(requester)
+    repository.list_units.assert_not_awaited()
     with pytest.raises(ObjectNotFound):
         await service.page_tracked_requests(requester)
     with pytest.raises(ObjectNotFound):
@@ -231,6 +233,10 @@ async def test_organisation_service_hides_tracking_from_non_routing_roles() -> N
     repository.get_tracked_request_detail.assert_awaited_once_with(
         triage_user, request_id, event_limit=50, event_cursor=None
     )
+    repository.get_tracked_request_detail.reset_mock(return_value=True)
+    repository.get_tracked_request_detail.return_value = None
+    with pytest.raises(ObjectNotFound):
+        await service.get_tracked_request_detail(triage_user, uuid4())
 
 
 @pytest.mark.asyncio

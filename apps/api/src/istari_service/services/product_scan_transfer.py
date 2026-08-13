@@ -31,6 +31,7 @@ class ProductScanTransfer:
             )
         if isinstance(operation, PackageView):
             return operation
+        released_key = None
         try:
             decision = await self._context.runtime.scanner.scan(
                 self._context.runtime.storage.stream_quarantine(operation.object_key),
@@ -39,7 +40,6 @@ class ProductScanTransfer:
                 expected_size=operation.expected_size,
                 expected_checksum=operation.expected_checksum,
             )
-            released_key = None
             if decision.result is ScanResult.CLEAN:
                 released_key = (
                     f"released/{operation.package_id}/{operation.artefact_id}"
@@ -55,6 +55,8 @@ class ProductScanTransfer:
                     released_key,
                 )
         except Exception:
+            if released_key is not None:
+                await self._context.discard_released(released_key)
             await self._context.release_after_failure(operation)
             raise
         await self._context.discard_quarantine(operation.object_key)

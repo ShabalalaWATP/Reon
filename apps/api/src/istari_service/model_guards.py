@@ -13,8 +13,9 @@ from istari_service.analytics_evolution_models import (
     OperationalAnalyticsFact,
 )
 from istari_service.board_models import WorkPackageActivity
-from istari_service.models import Feedback, RequestEvent, ServiceRequest
+from istari_service.models import Feedback, ServiceRequest
 from istari_service.operations_models import OperationalRun
+from istari_service.request_event_models import RequestEvent
 from istari_service.team_models import TeamActivityEvent
 
 
@@ -37,8 +38,8 @@ def _reject_audit_mutation(_mapper: Any, _connection: Any, _target: Any) -> None
 
 
 for audit_type in (
-    RequestEvent,
     Feedback,
+    RequestEvent,
     TeamActivityEvent,
     WorkPackageActivity,
     OperationalRun,

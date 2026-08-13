@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from uuid import UUID, uuid5
 
 from istari_service.domain import Actor
@@ -49,8 +50,22 @@ class ProductManagedPhases(ProductServiceSupport):
         else:
             if package.version != command.expected_version:
                 raise ProductConflict()
+            await self._require_storage_capacity(package, command.size_bytes)
             object_id = uuid5(package.id, str(command.idempotency_key))
             object_key = f"quarantine/{package.id}/{object_id}"
+            await self._repository.create_managed(
+                package.id,
+                label=command.label,
+                filename=filename,
+                media_type=media_type,
+                size_bytes=command.size_bytes,
+                checksum=command.sha256.lower(),
+                creation_key=command.idempotency_key,
+                intent_key=command.idempotency_key,
+                object_key=object_key,
+                token_hash=self._token_hash(f"pending:{object_id}"),
+                expires_at=datetime.now(UTC) + self._upload_ttl,
+            )
         return ManagedPreparation(
             package.id,
             command,
@@ -86,21 +101,7 @@ class ProductManagedPhases(ProductServiceSupport):
                 expires_at=grant.expires_at,
             )
         else:
-            if package.version != command.expected_version:
-                raise ProductConflict()
-            artefact, intent = await self._repository.create_managed(
-                package.id,
-                label=command.label,
-                filename=plan.filename,
-                media_type=plan.media_type,
-                size_bytes=command.size_bytes,
-                checksum=command.sha256.lower(),
-                creation_key=command.idempotency_key,
-                intent_key=command.idempotency_key,
-                object_key=grant.object_key,
-                token_hash=self._token_hash(grant.token),
-                expires_at=grant.expires_at,
-            )
+            raise ProductConflict("The upload reservation is unavailable.")
         view = await self._repository.view(package.id)
         artefact_view = next(item for item in view.artefacts if item.id == artefact.id)
         return ManagedArtefactIntent(

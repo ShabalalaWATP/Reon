@@ -23,11 +23,11 @@ from istari_service.operational_analytics_projection import (
     project_notification_response_fact,
 )
 from istari_service.organisation_models import RequestRouteSelection
-from istari_service.request_participant_models import RequestParticipant
 from istari_service.repositories.projection_pagination import (
     decode_cursor,
     encode_cursor,
 )
+from istari_service.request_participant_models import RequestParticipant
 from istari_service.schemas.actions import (
     NotificationFilterState,
     NotificationPreferenceUpdate,

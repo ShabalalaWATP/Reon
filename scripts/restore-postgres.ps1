@@ -6,7 +6,7 @@ param(
     [string]$EvidenceDirectory,
     [Parameter(Mandatory = $true)]
     [string]$Confirmation,
-    [string]$ExpectedRevision = '0033_customer_product_acceptance'
+    [string]$ExpectedRevision = '0043_security_event_dedup'
 )
 
 Set-StrictMode -Version Latest
@@ -24,6 +24,7 @@ foreach ($command in @('psql', 'pg_restore', 'uv')) {
     }
 }
 . (Join-Path $PSScriptRoot 'lib/PostgresServiceFile.ps1')
+. (Join-Path $PSScriptRoot 'lib/BackupManifest.ps1')
 
 $backup = (Resolve-Path -LiteralPath $BackupFile).Path
 $manifestPath = "$backup.sha256.json"
@@ -31,10 +32,7 @@ if (-not (Test-Path -LiteralPath $manifestPath)) {
     throw 'The SHA-256 backup manifest is required.'
 }
 $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
-$actualHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $backup).Hash.ToLowerInvariant()
-if ($actualHash -cne [string]$manifest.hash) {
-    throw 'Backup checksum does not match its manifest.'
-}
+Assert-AuthenticatedBackupManifest -Manifest $manifest -BackupPath $backup
 & pg_restore --list $backup | Out-Null
 if ($LASTEXITCODE -ne 0) {
     throw 'Backup validation failed before restore.'

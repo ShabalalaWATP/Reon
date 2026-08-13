@@ -8,8 +8,9 @@ from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.admin_audit import verify_admin_audit_integrity
-from istari_service.models import RequestEvent, ServiceRequest, User, WorkflowOutbox
+from istari_service.models import ServiceRequest, User, WorkflowOutbox
 from istari_service.repositories.event_store import verify_request_event_integrity
+from istari_service.request_event_models import RequestEvent
 
 
 @dataclass(frozen=True)

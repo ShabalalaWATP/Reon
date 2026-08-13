@@ -16,6 +16,8 @@ export const authApi = {
       method: "POST",
     }),
   session: () => apiRequest<Session>("/auth/me"),
+  activity: (csrfToken: string) =>
+    apiRequest<void>("/auth/activity", { csrfToken, method: "POST" }),
   profile: () => apiRequest<PersonalProfile>("/profile"),
   updateProfile: (input: PersonalProfileUpdate, csrfToken: string) =>
     apiRequest<PersonalProfile>("/profile", {

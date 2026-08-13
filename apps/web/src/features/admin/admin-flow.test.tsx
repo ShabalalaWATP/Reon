@@ -116,6 +116,7 @@ describe("platform administrator workspace", () => {
     await user.type(screen.getByLabelText(/^Current password/), "wrong");
     await user.click(screen.getByRole("button", { name: "Confirm password" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Unable to confirm that password.");
+    expect(screen.getByLabelText(/^Current password/)).toHaveValue("");
     expect(create).toBeDisabled();
   });
 

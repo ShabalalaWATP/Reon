@@ -65,4 +65,6 @@ class ProductContentTransfer:
                 )
         except Exception:
             await self._context.release_after_failure(operation)
+            if operation.uploaded_at is None:
+                await self._context.discard_quarantine(operation.object_key)
             raise

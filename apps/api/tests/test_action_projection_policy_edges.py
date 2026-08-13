@@ -146,7 +146,7 @@ async def test_request_action_policy_status_branches(api_harness: ApiHarness) ->
         customer = _request(RequestStatus.INFORMATION_REQUIRED)
         assert (await action_audiences(session, customer))[0].recipient_user_id
         assigned = _request(RequestStatus.IN_PROGRESS, assigned=specialist_id)
-        assert (await action_audiences(session, assigned))[0].recipient_user_id
+        assert await action_audiences(session, assigned) == []
         assert (
             await action_audiences(session, _request(RequestStatus.IN_PROGRESS)) == []
         )

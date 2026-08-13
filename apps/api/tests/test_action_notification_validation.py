@@ -9,13 +9,14 @@ import pytest
 from pydantic import ValidationError
 
 from istari_service.errors import InvalidAction
-from istari_service.models import RequestEvent, RequestStatus
+from istari_service.models import RequestStatus
 from istari_service.notification_catalog import render_subject
 from istari_service.repositories.notifications import _state_filter
 from istari_service.repositories.projection_pagination import (
     InvalidProjectionQuery,
     decode_cursor,
 )
+from istari_service.request_event_models import RequestEvent
 from istari_service.request_notification_projection import notification_spec
 from istari_service.schemas.actions import (
     ActionColumn,

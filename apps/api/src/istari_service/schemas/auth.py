@@ -54,6 +54,8 @@ class SessionResponse(ApiModel):
     user: CurrentUser
     csrf_token: str
     expires_at: datetime
+    idle_expires_at: datetime
+    idle_timeout_seconds: int
     elevated_until: datetime | None
 
 

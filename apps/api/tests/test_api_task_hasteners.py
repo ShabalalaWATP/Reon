@@ -127,8 +127,7 @@ async def test_any_exact_team_manager_can_hasten_one_or_all_assigned_analysts(
         for item in customer_detail.json()["events"]
         if item["type"] == "task_hastener"
     ]
-    assert len(customer_hasteners) == 2
-    assert any("Nathan Patterson" in item["message"] for item in customer_hasteners)
+    assert customer_hasteners == []
 
     await harness.login("admin12")
     notifications = await harness.client.get(

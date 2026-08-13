@@ -121,9 +121,14 @@ class FakeAuthRepository:
         *,
         now: datetime,
         idle_cutoff: datetime,
+        touch: bool = False,
     ) -> SessionRecord | None:
+        del touch
         self.session_lookups.append((token_hash, now, idle_cutoff))
         return self.session_result
+
+    async def touch_session(self, session_id: UUID, *, now: datetime) -> None:
+        self.session_lookups.append((str(session_id), now, now))
 
     async def revoke_session(self, session_id: UUID) -> None:
         self.revoked_sessions.append(session_id)
@@ -151,6 +156,12 @@ class StubLoginLimiter:
         self.calls.append((source_key, policy))
         return self.decision
 
+    async def consume_scope_only(
+        self, source_key: str, policy: LoginRateLimitPolicy
+    ) -> LoginRateLimitDecision:
+        self.calls.append((source_key, policy))
+        return self.decision
+
 
 def make_service(
     repository: FakeAuthRepository,
@@ -173,4 +184,5 @@ def make_service(
         login_limiter=limiter,
         login_rate_limit_policy=policy,
         password_semaphore=semaphore,
+        pseudonym_key=b"p" * 32,
     )

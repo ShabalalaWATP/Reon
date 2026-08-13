@@ -79,6 +79,8 @@ class AuditEventEvidence:
     prior_status: str | None = None
     next_status: str | None = None
     details: Mapping[str, object] | None = None
+    audience: str | None = None
+    hash_version: int = 1
 
     def validated_details(self) -> AuditDetails:
         return validate_audit_details(self.details)

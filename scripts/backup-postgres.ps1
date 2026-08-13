@@ -17,6 +17,7 @@ if (-not (Get-Command pg_restore -ErrorAction SilentlyContinue)) {
     throw 'pg_restore is required.'
 }
 . (Join-Path $PSScriptRoot 'lib/PostgresServiceFile.ps1')
+. (Join-Path $PSScriptRoot 'lib/BackupManifest.ps1')
 
 $target = [System.IO.Path]::GetFullPath($OutputDirectory)
 if (-not (Test-Path -LiteralPath $target)) {
@@ -71,12 +72,12 @@ try {
     Move-Item -LiteralPath $temporary -Destination $backup
     Protect-BackupFile $backup
     $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $backup).Hash.ToLowerInvariant()
-    @{
-        algorithm = 'SHA256'
-        backupFile = [System.IO.Path]::GetFileName($backup)
-        createdAt = [DateTimeOffset]::UtcNow.ToString('o')
-        hash = $hash
-    } | ConvertTo-Json | Set-Content -LiteralPath $manifest -Encoding utf8NoBOM
+    New-AuthenticatedBackupManifest `
+        -BackupFile ([System.IO.Path]::GetFileName($backup)) `
+        -CreatedAt ([DateTimeOffset]::UtcNow.ToString('o')) `
+        -Hash $hash |
+        ConvertTo-Json |
+        Set-Content -LiteralPath $manifest -Encoding utf8NoBOM
     Protect-BackupFile $manifest
     Write-Output ([pscustomobject]@{
         backup = $backup

@@ -11,13 +11,13 @@ from api_helpers import submit_request
 from conftest import ApiHarness, request_payload
 from istari_service.models import (
     OutboxStatus,
-    RequestEvent,
     WorkflowInstance,
     WorkflowInstanceStatus,
     WorkflowOutbox,
     WorkflowTask,
     WorkflowTaskStatus,
 )
+from istari_service.request_event_models import RequestEvent
 from istari_service.workflow_command_dispatch import WorkflowCommandDispatcher
 from istari_service.workflow_command_results import (
     RETRY_EXHAUSTED_MESSAGE,

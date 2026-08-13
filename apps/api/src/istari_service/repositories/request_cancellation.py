@@ -33,6 +33,7 @@ from istari_service.ownership import OWNER_BY_STATUS
 from istari_service.repositories.clarifications import withdraw_open_clarification
 from istari_service.repositories.event_store import append_request_event
 from istari_service.repositories.request_views import build_request_detail
+from istari_service.request_event_audience import RequestEventAudience
 from istari_service.schemas.requests import RequestCancel, RequestDetail
 
 TERMINAL_STATUSES = {
@@ -94,6 +95,7 @@ async def cancel_request(
         message=f"Customer cancelled the request. Reason: {command.reason}",
         prior_status=prior_status,
         next_status=RequestStatus.CANCELLED,
+        audience=RequestEventAudience.CUSTOMER_AND_STAFF,
         details={"reason": command.reason},
     )
     await session.flush()
@@ -102,6 +104,7 @@ async def cancel_request(
         request.id,
         reveal_unreleased_deliverable=False,
         include_clarifications=True,
+        include_staff_events=False,
     )
 
 

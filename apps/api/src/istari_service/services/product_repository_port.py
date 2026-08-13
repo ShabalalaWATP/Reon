@@ -41,6 +41,10 @@ class ProductRepository(Protocol):
         self, request_id: UUID
     ) -> frozenset[str] | None: ...
 
+    async def storage_usage(
+        self, package_id: UUID, request_id: UUID, author_id: UUID
+    ) -> tuple[int, int, int, int, int, int, int, int]: ...
+
     async def create_managed(
         self,
         package_id: UUID,

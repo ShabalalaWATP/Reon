@@ -18,7 +18,6 @@ from istari_service.action_notification_models import (
 from istari_service.domain import Actor
 from istari_service.errors import InvalidAction, ObjectNotFound, StaleVersion
 from istari_service.models import (
-    RequestEvent,
     RequestStatus,
     ServiceRequest,
     User,
@@ -33,6 +32,10 @@ from istari_service.repositories.notification_projection import (
 from istari_service.repositories.notifications import (
     SqlAlchemyNotificationRepository,
 )
+from istari_service.repositories.request_participants import (
+    replace_request_participants,
+)
+from istari_service.request_event_models import RequestEvent
 from istari_service.request_notification_projection import (
     _assignee_rule,
     deserialise_rule,
@@ -98,8 +101,17 @@ async def test_clarification_event_projects_waiting_action(
         prior = request.status
         request.status = RequestStatus.CUSTOMER_INFORMATION_REQUIRED
         request.assigned_specialist_id = specialist_id
+        request.assigned_delivery_team_id = await api_harness.unit_id("SSG_TEAM")
         request.current_owner = "Customer"
         request.version += 1
+        await replace_request_participants(
+            session,
+            request_id=request.id,
+            lead_id=specialist_id,
+            contributor_ids=[],
+            actor_id=specialist_id,
+            reason="Synthetic active participant for clarification projection.",
+        )
         await append_request_event(
             session,
             request_id=request.id,
@@ -135,6 +147,15 @@ async def test_notification_policy_and_validation_edges(
         request = await session.get(ServiceRequest, request_id)
         assert request is not None
         request.assigned_specialist_id = specialist_id
+        request.assigned_delivery_team_id = await api_harness.unit_id("SSG_TEAM")
+        await replace_request_participants(
+            session,
+            request_id=request.id,
+            lead_id=specialist_id,
+            contributor_ids=[],
+            actor_id=specialist_id,
+            reason="Synthetic current Lead for notification projection.",
+        )
         stored_policy_event = NotificationEvent(
             request_id=request.id,
             event_type="PRODUCT_WITHDRAWN",

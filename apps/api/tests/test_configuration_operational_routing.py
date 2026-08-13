@@ -112,6 +112,11 @@ async def test_activation_materialises_staffs_and_routes_new_team_from_pin(
 
     await harness.login("admin2")
     visible = await harness.client.get("/api/v1/organisation/units")
+    assert visible.status_code == 404
+    assert str(new_team_id) not in visible.text
+
+    await harness.login("admin4")
+    visible = await harness.client.get("/api/v1/organisation/units")
     assert visible.status_code == 200
     assert any(item["id"] == str(new_team_id) for item in visible.json()["items"])
 

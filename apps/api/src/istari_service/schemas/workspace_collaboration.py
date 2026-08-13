@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from datetime import datetime
+from ipaddress import ip_address
 from typing import Annotated
-from urllib.parse import urlparse
+from urllib.parse import urlsplit, urlunsplit
 from uuid import UUID
 
 from pydantic import Field, field_validator, model_validator
@@ -33,10 +34,52 @@ class WorkspaceRecordCreate(StrictApiModel):
         if self.kind is WorkspaceRecordKind.LINK and self.url is None:
             raise ValueError("A useful link requires an HTTPS URL.")
         if self.url is not None:
-            parsed = urlparse(self.url)
-            if parsed.scheme != "https" or not parsed.hostname or parsed.username:
-                raise ValueError("Workspace links must use a normal HTTPS URL.")
+            self.url = canonical_workspace_url(self.url)
         return self
+
+
+def canonical_workspace_url(value: str) -> str:
+    """Canonicalise a public HTTPS destination and reject parser confusion."""
+
+    if any(ord(character) < 32 or ord(character) == 127 for character in value):
+        raise ValueError("Workspace links cannot contain control characters.")
+    if "\\" in value:
+        raise ValueError("Workspace links cannot contain backslashes.")
+    try:
+        parsed = urlsplit(value)
+        port = parsed.port
+    except ValueError as error:
+        raise ValueError("Workspace links must use a normal HTTPS URL.") from error
+    if (
+        parsed.scheme.lower() != "https"
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.fragment
+        or port not in {None, 443}
+    ):
+        raise ValueError("Workspace links must use a normal HTTPS URL.")
+    hostname = parsed.hostname.rstrip(".").lower()
+    if not hostname or "%" in hostname:
+        raise ValueError("Workspace links must use a public HTTPS destination.")
+    try:
+        hostname = hostname.encode("idna").decode("ascii")
+    except UnicodeError as error:
+        raise ValueError("Workspace links contain an invalid hostname.") from error
+    if _is_private_destination(hostname):
+        raise ValueError("Workspace links must use a public HTTPS destination.")
+    host = f"[{hostname}]" if ":" in hostname else hostname
+    return urlunsplit(("https", host, parsed.path or "/", parsed.query, ""))
+
+
+def _is_private_destination(hostname: str) -> bool:
+    try:
+        destination = ip_address(hostname)
+    except ValueError:
+        return hostname == "localhost" or hostname.endswith(
+            (".localhost", ".local", ".internal")
+        )
+    return not destination.is_global
 
 
 class WorkspaceRecordResolve(StrictApiModel):

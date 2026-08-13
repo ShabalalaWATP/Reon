@@ -98,7 +98,6 @@ class SqlAlchemyAuthRepository:
             .where(
                 User.id == account.actor.id,
                 User.is_active.is_(True),
-                or_(User.locked_until.is_(None), User.locked_until <= now),
             )
             .values(
                 failed_login_count=case(
@@ -153,6 +152,7 @@ class SqlAlchemyAuthRepository:
             actor=account.actor,
             csrf_token_hash=stored.csrf_token_hash,
             expires_at=expires_at,
+            last_seen_at=_as_utc(stored.last_seen_at),
             elevated_until=None,
         )
 
@@ -162,6 +162,7 @@ class SqlAlchemyAuthRepository:
         *,
         now: datetime,
         idle_cutoff: datetime,
+        touch: bool = False,
     ) -> SessionRecord | None:
         stored = await self._session.scalar(
             select(Session)
@@ -187,7 +188,7 @@ class SqlAlchemyAuthRepository:
             return None
         idle_window = now - idle_cutoff
         touch_cutoff = now - (idle_window / 2)
-        if _as_utc(stored.last_seen_at) <= touch_cutoff:
+        if touch and _as_utc(stored.last_seen_at) <= touch_cutoff:
             stored.last_seen_at = now
         return SessionRecord(
             id=stored.id,
@@ -197,9 +198,17 @@ class SqlAlchemyAuthRepository:
             ),
             csrf_token_hash=stored.csrf_token_hash,
             expires_at=_as_utc(stored.expires_at),
+            last_seen_at=_as_utc(stored.last_seen_at),
             elevated_until=(
                 _as_utc(stored.elevated_until) if stored.elevated_until else None
             ),
+        )
+
+    async def touch_session(self, session_id: UUID, *, now: datetime) -> None:
+        await self._session.execute(
+            update(Session)
+            .where(Session.id == session_id, Session.revoked_at.is_(None))
+            .values(last_seen_at=now)
         )
 
     async def set_elevation(self, session_id: UUID, until: datetime) -> None:
