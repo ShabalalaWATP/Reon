@@ -1,12 +1,17 @@
 # syntax=docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
 
-# v8.30.1 has a confirmed default-rule regression. Keep the last reviewed
-# release pinned until that upstream issue is resolved and a control token test
-# passes for the replacement.
-FROM zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f AS upstream
+# Keep the reviewed v8.30.1 rules and CLI while rebuilding its static binary
+# with patched Go and x/* modules.
+FROM golang:1.26.5-alpine3.23@sha256:622e56dbc11a8cfe87cafa2331e9a201877271cbff918af53d3be315f3da88cc AS build
+WORKDIR /build
+RUN go mod init istari.local/gitleaks-build \
+    && go get github.com/zricethezav/gitleaks/v8@v8.30.1 \
+    && go get golang.org/x/crypto@v0.52.0 golang.org/x/text@v0.39.0 \
+    && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" \
+       -o /out/gitleaks github.com/zricethezav/gitleaks/v8
 
 FROM alpine:3.23@sha256:fd791d74b68913cbb027c6546007b3f0d3bc45125f797758156952bc2d6daf40 AS tool
-COPY --from=upstream /usr/bin/gitleaks /usr/local/bin/gitleaks
+COPY --from=build /out/gitleaks /usr/local/bin/gitleaks
 ENTRYPOINT ["gitleaks"]
 
 FROM tool AS scan

@@ -160,13 +160,12 @@ const gitleaksDockerfile = await readFile(
 );
 assert.match(
   gitleaksDockerfile,
-  /FROM zricethezav\/gitleaks:v8\.30\.1@sha256:[a-f0-9]{64} AS upstream/u,
+  /FROM golang:1\.26\.5-alpine3\.23@sha256:[a-f0-9]{64} AS build/u,
 );
 assert.match(gitleaksDockerfile, /FROM alpine:3\.23@sha256:[a-f0-9]{64} AS tool/u);
-assert.match(
-  gitleaksDockerfile,
-  /COPY --from=upstream \/usr\/bin\/gitleaks \/usr\/local\/bin\/gitleaks/u,
-);
+assert.match(gitleaksDockerfile, /zricethezav\/gitleaks\/v8@v8\.30\.1/u);
+assert.match(gitleaksDockerfile, /golang\.org\/x\/crypto@v0\.52\.0/u);
+assert.match(gitleaksDockerfile, /golang\.org\/x\/text@v0\.39\.0/u);
 
 for (const dockerfile of ["apps/web/Dockerfile", "scripts/trufflehog-scan.Dockerfile"]) {
   const source = await readFile(join(repositoryRoot, dockerfile), "utf8");
