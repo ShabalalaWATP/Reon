@@ -154,6 +154,20 @@ assert.match(
 );
 assert.match(actionlintDockerfile, /FROM alpine:3\.23@sha256:/u);
 
+const gitleaksDockerfile = await readFile(
+  join(repositoryRoot, "scripts/secret-scan.Dockerfile"),
+  "utf8",
+);
+assert.match(
+  gitleaksDockerfile,
+  /FROM zricethezav\/gitleaks:v8\.30\.1@sha256:[a-f0-9]{64} AS upstream/u,
+);
+assert.match(gitleaksDockerfile, /FROM alpine:3\.23@sha256:[a-f0-9]{64} AS tool/u);
+assert.match(
+  gitleaksDockerfile,
+  /COPY --from=upstream \/usr\/bin\/gitleaks \/usr\/local\/bin\/gitleaks/u,
+);
+
 for (const dockerfile of ["apps/web/Dockerfile", "scripts/trufflehog-scan.Dockerfile"]) {
   const source = await readFile(join(repositoryRoot, dockerfile), "utf8");
   assert.match(source, /FROM node:24-alpine@sha256:[a-f0-9]{64}/u);
