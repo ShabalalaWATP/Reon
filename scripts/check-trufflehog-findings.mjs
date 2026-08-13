@@ -11,10 +11,11 @@ if (!findingsPath || !allowlistPath) {
 
 function fingerprint(finding) {
   const git = finding?.SourceMetadata?.Data?.Git;
+  const raw = finding?.RawV2 || finding?.Raw;
   const fields = [
-    git?.commit,
     git?.file,
     finding?.DetectorName,
+    raw,
   ];
   if (fields.some((value) => !value)) {
     throw new Error("A TruffleHog finding lacks stable Git fingerprint fields.");

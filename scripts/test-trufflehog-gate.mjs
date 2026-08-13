@@ -26,7 +26,7 @@ function idFor(value) {
   const git = value.SourceMetadata.Data.Git;
   return createHash("sha256")
     .update(
-      [git.commit, git.file, value.DetectorName].join(
+      [git.file, value.DetectorName, value.RawV2 || value.Raw].join(
         "|",
       ),
     )
@@ -86,7 +86,7 @@ try {
     [
       {
         ...finding,
-        SourceMetadata: { Data: { Git: { ...finding.SourceMetadata.Data.Git, commit: "b".repeat(40) } } },
+        RawV2: `${raw}-changed`,
       },
     ],
     [approved],

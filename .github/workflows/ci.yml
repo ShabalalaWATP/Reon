@@ -255,6 +255,7 @@ jobs:
       SESSION_COOKIE_SECURE: "false"
       WEB_ORIGIN: http://127.0.0.1:5173
       ALLOW_DEMO_USERS: "true"
+      SECURITY_PSEUDONYM_KEY: ci-smoke-pseudonym-separate-at-least-32-bytes
       POSTGRES_HOST_PORT: "55432"
       CAMUNDA_HOST_PORT: "18080"
       CAMUNDA_MANAGEMENT_HOST_PORT: "19600"
