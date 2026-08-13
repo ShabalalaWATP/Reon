@@ -8,6 +8,7 @@ import type { TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import { addLocalDays, localDateInputValue } from "../../lib/dateInputs";
 import { DeliveryTeamHome } from "./DeliveryTeamHome";
 import { RoutingTeamHome } from "./RoutingTeamHome";
+import { TeamNoticeboard } from "./TeamNoticeboard";
 
 const overviewTo = localDateInputValue(new Date());
 const overviewFrom = localDateInputValue(addLocalDays(new Date(), -29));
@@ -26,6 +27,7 @@ export function TeamOverviewPage({ access, userId }: { access: TeamWorkspaceAcce
         <div><span>Active work</span><strong>{data.activeWorkCount}</strong></div>
       </section>
       {delivery ? <DeliveryTeamHome access={access} overview={data} userId={userId} /> : <RoutingTeamHome access={access} overview={data} userId={userId} />}
+      <TeamNoticeboard access={access} userId={userId} />
       <TeamStatisticsStrip teamId={access.teamId} userId={userId} />
     </>
   );

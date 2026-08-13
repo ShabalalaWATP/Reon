@@ -190,6 +190,16 @@
 .workspace-record--resolved { border-color: color-mix(in srgb, var(--success) 26%, var(--border)); opacity: .72; }
 .workspace-record form, .workspace-record-form form { display: grid; gap: 13px; margin-top: 15px; }
 .workspace-record-form { position: sticky; top: 20px; }
+.team-noticeboard h3 { margin: 0 0 12px; font-size: .92rem; }
+.team-noticeboard__column { min-width: 0; }
+.team-noticeboard__column ol, .team-noticeboard__column ul { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.workspace-record h4 { margin: 10px 0 0; font-size: .85rem; line-height: 1.4; }
+.workspace-record h4 a { color: var(--accent); }
+.workspace-record h4 a:hover, .workspace-record h4 a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+.workspace-record__action { margin-top: 12px; font-size: .68rem; }
+.workspace-record__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.team-noticeboard__open-form { margin-top: 14px; }
+.team-noticeboard__form { display: grid; gap: 13px; border: 1px dashed color-mix(in srgb, var(--accent) 35%, var(--border)); border-radius: var(--radius-md); margin-top: 14px; padding: 15px; background: color-mix(in srgb, var(--accent) 4%, transparent); }
 
 @media (max-width: 1050px) { .team-attention-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } .team-home__measures { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .team-people-layout, .workspace-collaboration, .team-home__columns { grid-template-columns: 1fr; } .roster-control, .workspace-record-form { position: static; } .team-metrics { grid-template-columns: repeat(2, 1fr); } }

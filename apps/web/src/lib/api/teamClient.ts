@@ -8,11 +8,35 @@ import type {
   TeamWorkspaceList,
   TeamWorkspaceOverview,
   TransferMemberInput,
+  WorkspaceRecordInput,
+  WorkspaceRecordList,
+  WorkspaceRecordResolveInput,
 } from "./teamTypes";
 import { apiRequest } from "./transport";
 
 export const teamApi = {
   teamWorkspaces: () => apiRequest<TeamWorkspaceList>("/team-workspaces"),
+  workspaceRecords: (teamId: string) =>
+    apiRequest<WorkspaceRecordList>(
+      `/team-workspaces/${encodeURIComponent(teamId)}/records`,
+    ),
+  createWorkspaceRecord: (
+    teamId: string,
+    input: WorkspaceRecordInput,
+    csrfToken: string,
+  ) => apiRequest<WorkspaceRecordList>(
+    `/team-workspaces/${encodeURIComponent(teamId)}/records`,
+    { body: input, csrfToken, method: "POST" },
+  ),
+  resolveWorkspaceRecord: (
+    teamId: string,
+    recordId: string,
+    input: WorkspaceRecordResolveInput,
+    csrfToken: string,
+  ) => apiRequest<WorkspaceRecordList>(
+    `/team-workspaces/${encodeURIComponent(teamId)}/records/${encodeURIComponent(recordId)}/resolve`,
+    { body: input, csrfToken, method: "POST" },
+  ),
   teamWorkspace: (teamId: string) =>
     apiRequest<TeamWorkspaceOverview>(
       `/team-workspaces/${encodeURIComponent(teamId)}`,

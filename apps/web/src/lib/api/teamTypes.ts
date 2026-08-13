@@ -81,6 +81,44 @@ export type TeamMemberProfile = {
 export type EligibleRosterAnalystList = { items: EligibleRosterAnalyst[] };
 export type TeamActivityList = { items: TeamActivity[] };
 
+export type WorkspaceRecordKind =
+  | "DESCRIPTION"
+  | "HANDOVER"
+  | "RISK"
+  | "BLOCKER"
+  | "DECISION"
+  | "LINK";
+
+export type WorkspaceRecord = {
+  id: string;
+  kind: WorkspaceRecordKind;
+  status: "OPEN" | "RESOLVED";
+  title: string;
+  body: string;
+  url: string | null;
+  createdByDisplayName: string;
+  resolution: string | null;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type WorkspaceRecordList = { items: WorkspaceRecord[] };
+
+export type WorkspaceRecordInput = {
+  grantId: string;
+  kind: WorkspaceRecordKind;
+  title: string;
+  body: string;
+  url?: string;
+};
+
+export type WorkspaceRecordResolveInput = {
+  grantId: string;
+  expectedVersion: number;
+  resolution: string;
+};
+
 export type AddMemberInput = {
   grantId: string;
   analystId: string;
