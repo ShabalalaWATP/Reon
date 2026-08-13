@@ -26,7 +26,7 @@ function idFor(value) {
   const git = value.SourceMetadata.Data.Git;
   return createHash("sha256")
     .update(
-      [git.commit, git.file, String(git.line), value.DetectorName, value.RawV2 || value.Raw].join(
+      [git.commit, git.file, String(git.line), value.DetectorName].join(
         "|",
       ),
     )
