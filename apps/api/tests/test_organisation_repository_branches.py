@@ -118,7 +118,9 @@ async def test_tracking_enforces_membership_and_maps_the_selected_route(
         await session.flush()
         request = make_request(requester.id, RequestStatus.COORDINATION_REVIEW)
         request.awaiting_team_staffing = True
-        session.add(request)
+        second_request = make_request(requester.id, RequestStatus.COORDINATION_REVIEW)
+        second_request.title = "Another synthetic tracked request"
+        session.add_all([request, second_request])
         await session.flush()
         repository = SqlAlchemyOrganisationRepository(session)
 
@@ -143,6 +145,11 @@ async def test_tracking_enforces_membership_and_maps_the_selected_route(
                     unit_id=organisation_id("JOCK"),
                     position=1,
                 ),
+                RequestRouteSelection(
+                    request_id=second_request.id,
+                    unit_id=organisation_id("CRIOC"),
+                    position=0,
+                ),
             ]
         )
         await session.flush()
@@ -150,17 +157,35 @@ async def test_tracking_enforces_membership_and_maps_the_selected_route(
         tracked, _cursor = await repository.page_tracked_requests(
             actor_from(triage_user, organisation_id("CRIOC"))
         )
-        assert len(tracked) == 1
-        assert tracked[0].id == request.id
-        assert tracked[0].title == request.title
-        assert tracked[0].awaiting_team_staffing is True
-        assert [unit.name for unit in tracked[0].route] == ["CRIOC", "JOCK"]
+        assert len(tracked) == 2
+        tracked_request = next(item for item in tracked if item.id == request.id)
+        assert tracked_request.title == request.title
+        assert tracked_request.awaiting_team_staffing is True
+        assert [unit.name for unit in tracked_request.route] == ["CRIOC", "JOCK"]
         detail = await repository.get_tracked_request_detail(
             actor_from(triage_user, organisation_id("CRIOC")), request.id
         )
         assert detail is not None
         assert detail.description == request.description
         assert detail.requester_display_name == requester.display_name
+
+        filtered, next_cursor = await repository.page_tracked_requests(
+            actor_from(triage_user, organisation_id("CRIOC")),
+            limit=1,
+            search="synthetic",
+            statuses=(RequestStatus.COORDINATION_REVIEW,),
+            current_owner=request.current_owner,
+            route_unit_id=organisation_id("CRIOC"),
+            minimum_age_days=0,
+        )
+        assert len(filtered) == 1
+        assert next_cursor is not None
+        following, _ = await repository.page_tracked_requests(
+            actor_from(triage_user, organisation_id("CRIOC")),
+            limit=1,
+            cursor=next_cursor,
+        )
+        assert len(following) == 1
 
 
 @pytest.mark.asyncio

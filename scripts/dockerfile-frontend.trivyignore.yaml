@@ -1,0 +1,16 @@
+vulnerabilities:
+  - id: CVE-2024-23651
+    expired_at: 2026-09-13
+    statement: The pinned 2026 BuildKit pseudo-version is newer than the fixed release, but Trivy cannot order pseudo-versions.
+  - id: CVE-2024-23652
+    expired_at: 2026-09-13
+    statement: The pinned 2026 BuildKit pseudo-version is newer than the fixed release, but Trivy cannot order pseudo-versions.
+  - id: CVE-2024-23653
+    expired_at: 2026-09-13
+    statement: The pinned 2026 BuildKit pseudo-version is newer than the fixed release, but Trivy cannot order pseudo-versions.
+  - id: CVE-2026-33747
+    expired_at: 2026-09-13
+    statement: The pinned upstream frontend postdates the fixed BuildKit release, but Trivy cannot order its pseudo-version.
+  - id: CVE-2026-33748
+    expired_at: 2026-09-13
+    statement: The pinned upstream frontend postdates the fixed BuildKit release, but Trivy cannot order its pseudo-version.

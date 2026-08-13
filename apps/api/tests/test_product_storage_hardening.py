@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import io
 import shutil
+import sqlite3
 import struct
 import zipfile
 from collections.abc import AsyncIterator
@@ -235,6 +236,48 @@ def test_filesystem_resumes_bounded_legacy_index_reconciliation(tmp_path) -> Non
     keys = restarted.quarantine_keys(limit=10)
     assert len(keys) == 7
     assert restarted.reconcile_quarantine_index(limit=3) == 0
+
+
+def test_quarantine_index_recovers_pending_and_rejects_invalid_bounds(tmp_path) -> None:
+    root = tmp_path / "private"
+    storage = PrivateFilesystemObjectStorage(root)
+    index = storage._index
+    with pytest.raises(ValueError, match="enumeration limit"):
+        index.keys(limit=0, after=None)
+    with pytest.raises(ValueError, match="reconciliation limit"):
+        index.reconcile(limit=0)
+
+    present = "quarantine/present/object"
+    missing = "quarantine/missing/object"
+    present_path = root / present
+    present_path.parent.mkdir(parents=True)
+    present_path.write_bytes(b"synthetic")
+    index.prepare(present)
+    index.prepare(missing)
+    assert index.reconcile(limit=2) == 1
+    assert index.keys(limit=10, after=None) == (present,)
+
+    second = "quarantine/second/object"
+    second_path = root / second
+    second_path.parent.mkdir(parents=True)
+    second_path.write_bytes(b"synthetic")
+    index.prepare(second)
+    assert index.reconcile(limit=1) == 1
+
+
+def test_quarantine_index_upgrades_legacy_schema_and_skips_seen_roots(tmp_path) -> None:
+    root = tmp_path / "private"
+    quarantine = root / "quarantine"
+    quarantine.mkdir(parents=True)
+    database = root / ".quarantine-index.sqlite3"
+    with sqlite3.connect(database) as connection:
+        connection.execute(
+            "CREATE TABLE quarantine_objects (object_key TEXT PRIMARY KEY)"
+        )
+    storage = PrivateFilesystemObjectStorage(root)
+    index = storage._index
+    index._stage_one_legacy_root()
+    assert index.reconcile(limit=1) == 0
 
 
 def test_filesystem_index_closes_connections_before_root_delete(tmp_path) -> None:

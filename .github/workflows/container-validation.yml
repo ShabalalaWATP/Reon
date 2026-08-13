@@ -61,8 +61,8 @@ jobs:
           docker build --file scripts/trufflehog-scan.Dockerfile --target gate --tag istari-tool-trufflehog-gate:ci .
           docker pull ghcr.io/astral-sh/uv:0.12.1@sha256:cf4eedcaa81655197f625739489effcbe71b61ceb1506f332c3facae5deceded
           docker tag ghcr.io/astral-sh/uv:0.12.1@sha256:cf4eedcaa81655197f625739489effcbe71b61ceb1506f332c3facae5deceded istari-tool-uv:ci
-          docker pull docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
-          docker tag docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e istari-tool-dockerfile-frontend:ci
+          docker pull docker/dockerfile-upstream:master@sha256:655d8ec53fd4a740c5e5a7031454a72020caf93841bad4a9f7f4f4d85929c083
+          docker tag docker/dockerfile-upstream:master@sha256:655d8ec53fd4a740c5e5a7031454a72020caf93841bad4a9f7f4f4d85929c083 istari-tool-dockerfile-frontend:ci
       - name: Exercise built-container canaries
         run: sh scripts/canary-built-containers.sh
       - name: Validate signed ClamAV definition age
@@ -159,6 +159,7 @@ jobs:
           image-ref: istari-tool-dockerfile-frontend:ci
           severity: HIGH,CRITICAL
           exit-code: "1"
+          trivyignores: scripts/dockerfile-frontend.trivyignore.yaml
       - name: Generate CycloneDX image SBOMs
         shell: bash
         run: |

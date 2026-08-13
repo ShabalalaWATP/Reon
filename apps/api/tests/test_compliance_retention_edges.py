@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import func, select
+from sqlalchemy.orm.attributes import set_committed_value
 
 import istari_service.retention as retention_module
 from api_helpers import submit_request
@@ -17,7 +18,12 @@ from istari_service.clarification_models import (
     ClarificationStatus,
     ClarificationThread,
 )
-from istari_service.compliance_models import SecurityEvent, SecurityOutcome
+from istari_service.compliance_models import (
+    LegalHold,
+    SecurityEvent,
+    SecurityOutcome,
+    _protect_hold,
+)
 from istari_service.legal_holds import LEGAL_HOLD_AUTHORITY, LegalHoldService
 from istari_service.models import ServiceRequest
 from istari_service.retention import (
@@ -61,6 +67,44 @@ async def test_legal_hold_release_is_one_way(api_harness: ApiHarness) -> None:
         released.released_by = "different-counsel"
         with pytest.raises(ValueError, match="legal-hold release"):
             await session.flush()
+
+
+def test_legal_hold_release_requires_atomic_attributable_fields() -> None:
+    hold = LegalHold(
+        target_type="REQUEST",
+        target_id=str(uuid4()),
+        reason_code="LITIGATION",
+        authorised_by="synthetic-counsel",
+    )
+    for field in ("target_type", "target_id", "reason_code", "authorised_by"):
+        set_committed_value(hold, field, getattr(hold, field))
+    hold.released_at = datetime.now(UTC)
+    with pytest.raises(ValueError, match="change together"):
+        _protect_hold(None, None, hold)
+
+    set_committed_value(hold, "released_at", None)
+    hold.released_at = datetime.now(UTC)
+    hold.released_by = ""
+    with pytest.raises(ValueError, match="attributable"):
+        _protect_hold(None, None, hold)
+
+
+def test_legal_hold_release_values_cannot_be_replaced() -> None:
+    hold = LegalHold(
+        target_type="REQUEST",
+        target_id=str(uuid4()),
+        reason_code="LITIGATION",
+        authorised_by="synthetic-counsel",
+    )
+    for field in ("target_type", "target_id", "reason_code", "authorised_by"):
+        set_committed_value(hold, field, getattr(hold, field))
+    released_at = datetime.now(UTC)
+    set_committed_value(hold, "released_at", released_at)
+    set_committed_value(hold, "released_by", "synthetic-counsel")
+    hold.released_at = released_at + timedelta(seconds=1)
+    hold.released_by = "different-counsel"
+    with pytest.raises(ValueError, match="release is immutable"):
+        _protect_hold(None, None, hold)
 
 
 @pytest.mark.parametrize("subject", ["", "x" * 161])

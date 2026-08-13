@@ -138,7 +138,7 @@ for (const dockerfile of [
   const source = await readFile(join(repositoryRoot, dockerfile), "utf8");
   assert.match(
     source,
-    /^# syntax=docker\/dockerfile:1\.7@sha256:[a-f0-9]{64}$/mu,
+    /^# syntax=docker\/dockerfile-upstream:master@sha256:[a-f0-9]{64}$/mu,
     `${dockerfile} must pin its external Dockerfile frontend`,
   );
 }
