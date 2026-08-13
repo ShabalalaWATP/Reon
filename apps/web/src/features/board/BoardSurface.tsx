@@ -26,8 +26,13 @@ type DragState = {
 };
 
 export function BoardSurface({
+  activeColumns = activeBoardColumns,
+  ariaLabel = "Team Kanban board",
   columnCounts,
+  columnDescriptions = {},
+  columnFilterActive = false,
   context,
+  exceptionColumns = exceptionBoardColumns,
   filteredColumns,
   items,
   mode,
@@ -40,9 +45,16 @@ export function BoardSurface({
   wipLimits,
   onShowArchive,
   onShowExceptions,
+  archiveColumns = archiveBoardColumns,
+  resultNote = "Drag a work-package card to move it; service requests change stage through their named workflow action.",
 }: {
+  activeColumns?: BoardColumn[];
+  ariaLabel?: string;
   columnCounts: Partial<Record<BoardColumn, number>>;
+  columnDescriptions?: Partial<Record<BoardColumn, string>>;
+  columnFilterActive?: boolean;
   context: Context;
+  exceptionColumns?: BoardColumn[];
   filteredColumns: BoardColumn[];
   items: BoardItem[];
   mode: "board" | "table";
@@ -55,14 +67,16 @@ export function BoardSurface({
   wipLimits: Record<string, number>;
   onShowArchive: () => void;
   onShowExceptions: () => void;
+  archiveColumns?: BoardColumn[];
+  resultNote?: string;
 }) {
   const [dragging, setDragging] = useState<BoardItem | null>(null);
   const [pending, setPending] = useState<{ item: BoardItem; target: BoardColumn } | null>(null);
   if (mode === "table") {
-    return <BoardTable items={items} onInspect={onInspect} totalCount={totalCount} />;
+    return <BoardTable ariaLabel={ariaLabel} items={items} onInspect={onInspect} totalCount={totalCount} />;
   }
-  const selected = filteredColumns.length ? filteredColumns : activeBoardColumns;
-  const customSelection = filteredColumns.length > 0;
+  const customSelection = columnFilterActive || filteredColumns.length > 0;
+  const selected = customSelection ? filteredColumns : activeColumns;
   const drag: DragState = {
     dragging,
     onDragStart: (item) => setDragging(item),
@@ -77,7 +91,9 @@ export function BoardSurface({
   return (
     <div className="board-flow">
       <BoardColumns
+        ariaLabel={ariaLabel}
         columnCounts={columnCounts}
+        columnDescriptions={columnDescriptions}
         columns={selected}
         context={context}
         drag={drag}
@@ -87,32 +103,34 @@ export function BoardSurface({
       />
       {!customSelection ? (
         <div className="board-secondary-groups">
-          <BoardGroupToggle
-            columns={exceptionBoardColumns}
+          {exceptionColumns.length ? <BoardGroupToggle
+            columns={exceptionColumns}
             columnCounts={columnCounts}
             label="Exceptions and downstream"
             onClick={onShowExceptions}
             open={showExceptions}
-          />
-          <BoardGroupToggle
-            columns={archiveBoardColumns}
+          /> : null}
+          {archiveColumns.length ? <BoardGroupToggle
+            columns={archiveColumns}
             columnCounts={columnCounts}
             label="Completed and cancelled"
             onClick={onShowArchive}
             open={showArchive}
-          />
+          /> : null}
         </div>
       ) : null}
-      {!customSelection && showExceptions ? <BoardColumns columnCounts={columnCounts} columns={exceptionBoardColumns} context={context} drag={drag} items={items} onInspect={onInspect} wipLimits={wipLimits} /> : null}
-      {!customSelection && showArchive ? <BoardColumns columnCounts={columnCounts} columns={archiveBoardColumns} context={context} drag={drag} items={items} onInspect={onInspect} wipLimits={wipLimits} /> : null}
-      <p className="board-result-note">Showing {items.length} of {totalCount} matching work items. Column totals cover the complete filtered result. Drag a work-package card to move it; service requests change stage through their named workflow action.</p>
+      {!customSelection && showExceptions && exceptionColumns.length ? <BoardColumns ariaLabel={`${ariaLabel}, exceptions`} columnCounts={columnCounts} columnDescriptions={columnDescriptions} columns={exceptionColumns} context={context} drag={drag} items={items} onInspect={onInspect} wipLimits={wipLimits} /> : null}
+      {!customSelection && showArchive && archiveColumns.length ? <BoardColumns ariaLabel={`${ariaLabel}, archive`} columnCounts={columnCounts} columnDescriptions={columnDescriptions} columns={archiveColumns} context={context} drag={drag} items={items} onInspect={onInspect} wipLimits={wipLimits} /> : null}
+      <p className="board-result-note">Showing {items.length} of {totalCount} matching work items. Column totals cover the complete filtered result. {resultNote}</p>
       {pending ? <PackageMoveDialog item={pending.item} moving={moving} onCancel={() => setPending(null)} onConfirm={async (reason) => { await onMove?.(pending.item, pending.target, reason); setPending(null); }} target={pending.target} /> : null}
     </div>
   );
 }
 
 function BoardColumns({
+  ariaLabel,
   columnCounts,
+  columnDescriptions,
   columns,
   context,
   drag,
@@ -120,7 +138,9 @@ function BoardColumns({
   onInspect,
   wipLimits,
 }: {
+  ariaLabel: string;
   columnCounts: Partial<Record<BoardColumn, number>>;
+  columnDescriptions: Partial<Record<BoardColumn, string>>;
   columns: BoardColumn[];
   context: Context;
   drag: DragState;
@@ -132,7 +152,7 @@ function BoardColumns({
   const droppable = (column: BoardColumn) =>
     Boolean(drag.dragging && drag.dragging.column !== column && drag.dragging.availableColumns.includes(column));
   return (
-    <section aria-label="Team Kanban board" className="kanban">
+    <section aria-label={ariaLabel} className="kanban">
       {columns.map((column) => {
         const cards = items.filter((item) => item.column === column);
         const count = columnCounts[column] ?? 0;
@@ -151,7 +171,7 @@ function BoardColumns({
             onDragOver={(event) => { if (canDrop) { event.preventDefault(); setOver(column); } }}
             onDrop={(event) => { if (canDrop) { event.preventDefault(); drag.onDropColumn(column); } setOver(null); }}
           >
-            <header><div><h3>{boardLabel(column)}</h3>{limit ? <small>Limit {limit}</small> : null}</div><span aria-label={`${count} total`}>{count}</span></header>
+            <header><div><h3>{boardLabel(column)}</h3>{columnDescriptions[column] ? <p className="kanban-column__meaning">({columnDescriptions[column]})</p> : null}{limit ? <small>Limit {limit}</small> : null}</div><span aria-label={`${count} total`}>{count}</span></header>
             {breached ? <p className="kanban-warning" role="status">WIP limit exceeded by {count - limit}</p> : null}
             {cards.map((item) => <BoardCard context={context} drag={drag} item={item} key={`${item.itemType}-${item.id}`} onInspect={onInspect} />)}
             {cards.length === 0 ? <p className="kanban-empty">{canDrop ? "Drop here to move" : "No items on this page."}</p> : null}
@@ -225,6 +245,6 @@ function BoardGroupToggle({ columns, columnCounts, label, onClick, open }: { col
   return <button aria-expanded={open} onClick={onClick} type="button"><span>{label}</span><strong>{count}</strong><small>{open ? "Collapse" : "Show lanes"}</small></button>;
 }
 
-function BoardTable({ items, onInspect, totalCount }: { items: BoardItem[]; onInspect: (item: BoardItem) => void; totalCount: number }) {
-  return <div className="team-table-wrap"><table className="team-table"><caption>Filtered team work, showing {items.length} of {totalCount}</caption><thead><tr><th>Reference</th><th>Title</th><th>Type</th><th>Status</th><th>Owner</th><th>Due</th><th>Age</th></tr></thead><tbody>{items.map((item) => <tr key={`${item.itemType}-${item.id}`}><th>{item.reference}</th><td><button className="table-link" onClick={() => onInspect(item)} type="button">{item.title}</button></td><td>{boardLabel(item.itemType)}</td><td>{boardLabel(item.column)}</td><td>{item.ownerDisplayName ?? "Unassigned"}</td><td>{item.dueOn}</td><td>{daysInState(item.changedAt)}</td></tr>)}</tbody></table></div>;
+function BoardTable({ ariaLabel, items, onInspect, totalCount }: { ariaLabel: string; items: BoardItem[]; onInspect: (item: BoardItem) => void; totalCount: number }) {
+  return <div className="team-table-wrap"><table className="team-table"><caption>{ariaLabel}, showing {items.length} of {totalCount}</caption><thead><tr><th>Reference</th><th>Title</th><th>Type</th><th>Status</th><th>Owner</th><th>Due</th><th>Age</th></tr></thead><tbody>{items.map((item) => <tr key={`${item.itemType}-${item.id}`}><th>{item.reference}</th><td><button className="table-link" onClick={() => onInspect(item)} type="button">{item.title}</button></td><td>{boardLabel(item.itemType)}</td><td>{boardLabel(item.column)}</td><td>{item.ownerDisplayName ?? "Unassigned"}</td><td>{item.dueOn}</td><td>{daysInState(item.changedAt)}</td></tr>)}</tbody></table></div>;
 }

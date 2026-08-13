@@ -40,10 +40,22 @@ picture, with controls still governed by returned capabilities.
 
 ## Delivery board
 
-The default active flow is Awaiting assignment, Backlog, Ready, In progress,
-Blocked and Manager review. Quality review, Rework and On hold form an expandable
+The delivery view separates two different operating concepts. The always-visible
+`Service request board` is a read-only projection of the Customer request
+workflow. Its default active flow is Awaiting assignment, In progress, Blocked
+and Manager review. Quality review, Rework and On hold form an expandable
 exception and downstream section. Completed and Cancelled form an expandable
-archive.
+archive. Each service-request lane includes a short plain-English explanation of
+the human action or wait state represented by that column.
+
+The separately labelled `Work package Kanban` contains internal team-planning
+cards only. It is collapsed by default and can be expanded or collapsed with a
+keyboard-operable control. Its active flow is Backlog, Ready, In progress and
+Blocked, with Completed and Cancelled in its own expandable archive. Work-package
+moves remain reasoned and audited; they never change the Customer request stage.
+When expanded, it presents a prominent `Create internal card` action in the
+Kanban itself. A current Analyst creates a card owned by themselves and can move
+cards they own or contribute to; a Team Manager retains team-planning authority.
 
 The API returns aggregate column totals for the complete filtered result as well
 as a bounded cursor page. Totals apply the same search, type, priority, owner and
@@ -57,7 +69,8 @@ The board provides:
 - a compact filter drawer and board/table presentation;
 - visible WIP limits and breaches;
 - an accessible work-item inspector;
-- a focused New work package action rather than a permanently expanded form;
+- a focused Create internal card action inside the Work package Kanban rather
+  than a permanently expanded form or a Manager-oriented global command;
 - keyboard-accessible status selection for work packages;
 - explicit links to named request workflow actions;
 - due risk, age in state, owner, contributors, blocker, dependency, checklist and
@@ -138,6 +151,12 @@ External calendar synchronisation remains out of scope until separately approved
 - An Analyst can open My actions and inspect complete authorised context.
 - Column totals remain correct when more rows exist than the returned page.
 - Terminal columns are collapsed by default and remain discoverable.
+- The Service request board and Work package Kanban are visually and
+  semantically separate, and work packages are collapsed by default.
+- Every service-request lane explains the workflow meaning beneath its title.
+- A current Analyst can create an internal card from the expanded Work package
+  Kanban, with themselves fixed as owner, then move cards they own or contribute
+  to through the planning lanes.
 - A request card cannot be moved through a work-package command.
 - A current exact-team Manager can inspect a terminal request assigned to that
   team, while a Manager in another team receives no existence signal.

@@ -24,7 +24,6 @@ type Props = {
   onChange: (filters: BoardFilters) => void;
   onDeleteView: (view: SavedBoardView) => void;
   onModeChange: (mode: "board" | "table") => void;
-  onNewPackage: () => void;
   onOpenSettings: () => void;
   onSaveView: () => void;
   onViewNameChange: (name: string) => void;
@@ -47,7 +46,6 @@ export function BoardToolbar(props: Props) {
           <p>Requests use named workflow actions. Internal work packages use explicit, audited planning moves.</p>
         </div>
         <div className="board-toolbar__actions">
-          <button className="button button--primary" onClick={props.onNewPackage} type="button">New work package</button>
           {props.canManage ? <button className="button button--quiet" onClick={props.onOpenSettings} type="button">Board settings</button> : null}
         </div>
       </header>

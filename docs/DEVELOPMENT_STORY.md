@@ -1173,3 +1173,17 @@ gates remain above 95 per cent for both lines and branches.
   now depend on the `WorkflowEngine` port, SDK configuration and lifecycle casts
   remain inside the infrastructure adapter, and startup fails closed without
   leaking a partially constructed engine.
+- Separated team delivery boards on 13 August 2026. The always-visible Service
+  request board now explains the workflow meaning of every lane, while a
+  distinctly labelled Work package Kanban is collapsed by default and loaded
+  only when opened. Work packages retain reasoned manual movement and requests
+  remain fixed to their named Analyst, Manager, QC and dissemination actions.
+- Made internal planning explicit inside the expanded Kanban: Analysts now see
+  a prominent `Create internal card` action, create cards owned by themselves,
+  and can move cards they own or contribute to without changing the Customer
+  request workflow. Managers retain wider team-planning authority.
+- Preserved independently filtered totals, paging, table alternatives, saved
+  views, WIP controls and fail-closed error recovery for both board types. The
+  serialised complete frontend suite passed 394 tests at 99.41 per cent line
+  and 95.01 per cent branch coverage, followed by the production build, ESLint,
+  line-limit, documentation and terminology checks.

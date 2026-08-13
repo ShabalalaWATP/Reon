@@ -18,6 +18,38 @@ export const exceptionBoardColumns: BoardColumn[] = [
 
 export const archiveBoardColumns: BoardColumn[] = ["COMPLETED", "CANCELLED"];
 
+export const serviceRequestBoardColumns: BoardColumn[] = [
+  "AWAITING_ASSIGNMENT",
+  "IN_PROGRESS",
+  "BLOCKED",
+  "MANAGER_REVIEW",
+];
+
+export const serviceRequestExceptionColumns: BoardColumn[] = [
+  "QUALITY_REVIEW",
+  "REWORK",
+  "ON_HOLD",
+];
+
+export const workPackageBoardColumns: BoardColumn[] = [
+  "BACKLOG",
+  "READY",
+  "IN_PROGRESS",
+  "BLOCKED",
+];
+
+export const serviceRequestColumnMeanings: Partial<Record<BoardColumn, string>> = {
+  AWAITING_ASSIGNMENT: "A Manager needs to assign the Analyst team",
+  IN_PROGRESS: "Assigned Analysts are producing the response",
+  BLOCKED: "The team is waiting for the Customer to answer a question",
+  MANAGER_REVIEW: "The response is with the Team Manager for review",
+  QUALITY_REVIEW: "The response is with QC for review and dissemination",
+  REWORK: "A Manager or QC has requested changes from the Analysts",
+  ON_HOLD: "The request is paused with a recorded reason",
+  COMPLETED: "QC has disseminated the response to the Customer",
+  CANCELLED: "The request has been withdrawn or cancelled",
+};
+
 export const allBoardColumns = [
   ...activeBoardColumns,
   ...exceptionBoardColumns,

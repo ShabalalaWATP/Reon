@@ -1137,3 +1137,27 @@ acceptance remains required.
   per cent line and 95.06 per cent branch coverage, and all repository checks.
 - [ ] Obtain representative JOCK, SYGOC and MYGOC acceptance for the final
   queue and ownership wording.
+
+## Separated delivery-board milestone
+
+Status: implemented and assured locally on 13 August 2026. Representative-user
+acceptance remains required.
+
+- [x] Keep the Service request board always visible and driven only by named
+  workflow actions.
+- [x] Explain each service-request lane in small plain-language text beneath its
+  title.
+- [x] Present internal work packages in a separately labelled Kanban that is
+  collapsed by default and lazy-loaded when opened.
+- [x] Put a prominent `Create internal card` action inside the expanded Kanban,
+  fix Analyst-created cards to the current Analyst, and retain owner or
+  contributor checks for Analyst moves.
+- [x] Preserve reasoned, audited manual moves for work packages without allowing
+  service-request cards to be dragged.
+- [x] Keep filtering, saved views, aggregate counts, independent paging, table
+  mode, WIP settings and retry states operational across the split boards.
+- [x] Pass all 394 frontend tests at 99.41 per cent line and 95.01 per cent
+  branch coverage, plus the production build, ESLint, line-limit, documentation
+  and terminology checks.
+- [ ] Obtain representative Team Manager and Analyst acceptance for the board
+  separation, collapsed default and lane wording.

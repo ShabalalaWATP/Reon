@@ -47,6 +47,13 @@ describe("team workflow board", () => {
     const user = userEvent.setup();
     const view = renderApp("/teams/team-ssg/board");
     expect(await screen.findByRole("heading", { name: "Team delivery" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Service request board" })).toBeInTheDocument();
+    expect(screen.getByText("(Assigned Analysts are producing the response)")).toBeInTheDocument();
+    const packageBoard = screen.getByText("Work package Kanban").closest("details");
+    expect(packageBoard).not.toHaveAttribute("open");
+    expect(screen.queryByText("Prepare synthetic product")).not.toBeInTheDocument();
+    await user.click(screen.getByText("Work package Kanban"));
+    expect(await screen.findByText("Prepare synthetic product")).toBeInTheDocument();
     expect(screen.getByText("Customer request projection")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Quality Review" })).not.toBeInTheDocument();
     const requestCard = screen.getByRole("heading", { name: "Customer request projection" }).closest("article");
@@ -55,8 +62,8 @@ describe("team workflow board", () => {
     expect(await screen.findByRole("heading", { name: "Customer requirement" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open full request" })).toHaveAttribute("href", "/requests/request-one");
     await user.click(screen.getByRole("button", { name: "Close Work item details" }));
-    await user.click(screen.getByRole("button", { name: "New work package" }));
-    const createPackage = await screen.findByRole("dialog", { name: "Create work package" });
+    await user.click(screen.getByRole("button", { name: "Create internal card" }));
+    const createPackage = await screen.findByRole("dialog", { name: "Create internal card" });
     fireEvent.change(await screen.findByLabelText(/^Title/, { selector: "input" }), { target: { value: "New synthetic package" } });
     fireEvent.change(screen.getByLabelText(/^Description/), { target: { value: "Complete detail for a second synthetic package." } });
     await user.selectOptions(within(createPackage).getByLabelText(/^Owner/), "analyst-ssg");
@@ -66,7 +73,7 @@ describe("team workflow board", () => {
     fireEvent.change(screen.getByLabelText(/^Acceptance criteria/), { target: { value: "The complete fictional product is delivered." } });
     fireEvent.change(screen.getByLabelText(/^Linked request ID/), { target: { value: "request-two" } });
     await user.selectOptions(screen.getByLabelText(/^Iteration/), "iteration-active");
-    await user.click(screen.getByRole("button", { name: "Create package" }));
+    await user.click(screen.getByRole("button", { name: "Add card to Kanban" }));
     await waitFor(() => expect(calls.some((call) => call.path.endsWith("/packages") && call.method === "POST" && call.body.linkedRequestId === "request-two" && call.body.iterationId === "iteration-active")).toBe(true));
     expect(await axe(view.container)).toHaveNoViolations();
   });
@@ -170,7 +177,7 @@ describe("team workflow board", () => {
     await user.click(screen.getByRole("button", { name: /Exceptions and downstream/ }));
     await user.click(screen.getByRole("button", { name: /Completed and cancelled/ }));
     await user.click(await screen.findByRole("button", { name: "Table" }));
-    expect(screen.getByRole("table", { name: /Filtered team work/ })).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: /Service request workflow board/ })).toBeInTheDocument();
     await user.type(screen.getByLabelText("Search work"), "product");
     await user.click(screen.getByText(/Filters/));
     await user.selectOptions(screen.getByLabelText("Item type"), "WORK_PACKAGE");
@@ -178,23 +185,29 @@ describe("team workflow board", () => {
     await user.selectOptions(screen.getByLabelText("Priority"), "HIGH");
     await user.selectOptions(screen.getByLabelText("Owner"), "analyst-ssg");
     fireEvent.change(screen.getByLabelText("Due by"), { target: { value: "2026-08-31" } });
-    expect(await screen.findByRole("table", { name: /Filtered team work/ })).toBeInTheDocument();
-    expect(screen.getByText("Unassigned")).toBeInTheDocument();
+    const packageTable = await screen.findByRole("table", { name: /Work package Kanban/ });
+    expect(within(packageTable).getByText("Lewis Ferguson")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Board" }));
-    expect(await screen.findByRole("region", { name: "Team Kanban board" })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "Work package Kanban" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Table" }));
-    await screen.findByRole("table", { name: /Filtered team work/ });
+    await screen.findByRole("table", { name: /Work package Kanban/ });
     await user.selectOptions(screen.getByLabelText("Item type"), "");
-    await screen.findByRole("table", { name: /Filtered team work/ });
+    await screen.findByRole("table", { name: /Service request workflow board/ });
+    await user.selectOptions(screen.getByLabelText("Item type"), "SERVICE_REQUEST");
+    expect(screen.queryByText("Work package Kanban")).not.toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("Item type"), "");
     fireEvent.change(screen.getByLabelText("Due by"), { target: { value: "" } });
     await user.selectOptions(await screen.findByLabelText("Status"), "");
     await user.selectOptions(await screen.findByLabelText("Priority"), "");
     await user.selectOptions(await screen.findByLabelText("Owner"), "");
-    await screen.findByRole("table", { name: /Filtered team work/ });
-    await user.click(screen.getByRole("button", { name: "Next page" }));
+    await screen.findByRole("table", { name: /Service request workflow board/ });
+    const requestSection = screen.getByRole("heading", { name: "Service request board" }).closest("section") as HTMLElement;
+    await user.click(within(requestSection).getByRole("button", { name: "Next page" }));
     expect(await screen.findByText("Page 2")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Previous page" }));
-    expect(await screen.findByText("Page 1")).toBeInTheDocument();
+    const secondPageRequestSection = screen.getByRole("heading", { name: "Service request board" }).closest("section") as HTMLElement;
+    await user.click(within(secondPageRequestSection).getByRole("button", { name: "Previous page" }));
+    const refreshedRequestSection = screen.getByRole("heading", { name: "Service request board" }).closest("section") as HTMLElement;
+    expect(await within(refreshedRequestSection).findByText("Page 1")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Board settings" }));
     const wip = (await screen.findByRole("heading", { name: "Work in progress limits" })).closest("section");
@@ -209,17 +222,23 @@ describe("team workflow board", () => {
     mockBoard(analystSession, analystAccess, calls, { ...board, items: [], columnCounts: { ...board.columnCounts, READY: 0, IN_PROGRESS: 0 }, totalCount: 0, nextCursor: null, savedViews: [], wipLimits: {}, configurationVersion: 0 });
     const user = userEvent.setup();
     renderApp("/teams/team-ssg/board");
-    expect(await screen.findByRole("heading", { name: "No work matches this view" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "No service requests match this view" })).toBeInTheDocument();
+    await user.click(screen.getByText("Work package Kanban"));
+    expect(await screen.findByRole("heading", { name: "No work packages match this view" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Work in progress limits" })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "New work package" }));
+    await user.click(screen.getByRole("button", { name: "Create internal card" }));
+    const createCard = await screen.findByRole("dialog", { name: "Create internal card" });
+    const owner = within(createCard).getByLabelText(/^Owner/);
+    expect(owner).toBeDisabled();
+    expect(owner).toHaveValue("analyst-ssg");
     await user.type(screen.getByLabelText(/^Title/, { selector: "input" }), "Analyst package");
     await user.type(screen.getByLabelText(/^Description/), "A complete package without optional links.");
     await user.selectOptions(screen.getByLabelText(/^Contributor/), "analyst-ssg");
     fireEvent.change(screen.getByLabelText(/^Due date/), { target: { value: "2026-08-30" } });
     await user.type(screen.getByLabelText(/^Blockers or none/), "No known blockers.");
     await user.type(screen.getByLabelText(/^Acceptance criteria/), "The package is complete.");
-    await user.click(screen.getByRole("button", { name: "Create package" }));
-    await waitFor(() => expect(calls.some((call) => call.path.endsWith("/packages") && call.body.linkedRequestId === null && call.body.iterationId === null)).toBe(true));
+    await user.click(screen.getByRole("button", { name: "Add card to Kanban" }));
+    await waitFor(() => expect(calls.some((call) => call.path.endsWith("/packages") && call.body.ownerUserId === "analyst-ssg" && call.body.grantId === null && call.body.linkedRequestId === null && call.body.iterationId === null)).toBe(true));
 
     let attempts = 0;
     mockFetch(async (url) => {
@@ -241,6 +260,8 @@ describe("team workflow board", () => {
     mockBoard(managerSession, managerAccess, [], board, true);
     const user = userEvent.setup();
     renderApp("/teams/team-ssg/board");
+    await screen.findByRole("heading", { name: "Service request board" });
+    await user.click(screen.getByText("Work package Kanban"));
     expect(await screen.findByText("Prepare synthetic product")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Board settings" }));
     await user.click(screen.getByRole("button", { name: "Save limits" }));
@@ -253,7 +274,30 @@ describe("team workflow board", () => {
     await user.click(screen.getByRole("button", { name: "Move package" }));
     expect((await screen.findAllByRole("alert")).some((alert) => alert.textContent?.includes("Planning conflict"))).toBe(true);
   });
-
+  it("recovers the work package Kanban independently", async () => {
+    let packageBoardAttempts = 0;
+    mockFetch(async (url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(managerSession);
+      if (url.pathname.endsWith("/team-workspaces")) return json({ items: [managerAccess] });
+      if (url.pathname.endsWith("/people")) return json({ items: people });
+      if (url.pathname.endsWith("/iterations")) return json({ items: iterations });
+      if (url.pathname.endsWith("/packages")) return json({ items: [packageItem] });
+      if (url.pathname.endsWith("/board") && url.searchParams.get("itemType") === "WORK_PACKAGE") {
+        packageBoardAttempts += 1;
+        return packageBoardAttempts === 1 ? json({ detail: "Unavailable" }, 503) : json(board);
+      }
+      if (url.pathname.endsWith("/board")) return json(board);
+      throw new Error(`Unexpected ${url.pathname}`);
+    }, true, true, false);
+    const user = userEvent.setup();
+    renderApp("/teams/team-ssg/board");
+    await screen.findByRole("heading", { name: "Service request board" });
+    await user.click(screen.getByText("Work package Kanban"));
+    expect(await screen.findByRole("heading", { name: "Work package Kanban could not be loaded" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("Prepare synthetic product")).toBeInTheDocument();
+    expect(packageBoardAttempts).toBe(2);
+  });
   it("fails closed and recovers all required queries after an outage", async () => {
     const attempts = { board: 0, people: 0, iterations: 0 };
     mockFetch(async (url) => {
