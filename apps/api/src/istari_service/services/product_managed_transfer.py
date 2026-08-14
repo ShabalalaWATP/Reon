@@ -20,6 +20,7 @@ class ProductManagedTransfer:
         command: ManagedArtefactCreate,
     ) -> ManagedArtefactIntent:
         async with self._context.sessions() as session, session.begin():
+            await self._context.fence(session)
             plan = await self._context.managed_phases(session).prepare_managed(
                 actor, package_id, command
             )
@@ -28,6 +29,7 @@ class ProductManagedTransfer:
             expires_at=self._context.upload_expires_at(),
         )
         async with self._context.sessions() as session, session.begin():
+            await self._context.fence(session)
             return await self._context.managed_phases(session).finalise_managed(
                 actor, plan, grant
             )

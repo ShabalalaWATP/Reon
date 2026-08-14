@@ -12,7 +12,12 @@ from conftest import ApiHarness
 from istari_service.models import RequestStatus, ServiceRequest
 from istari_service.product_runtime import ProductRuntime
 from istari_service.product_security import AllowedHttpsLinkPolicy
-from product_test_support import create_product_request, product_actors
+from product_test_support import (
+    create_product_request,
+    product_actors,
+    seed_claimed_lead_review_task,
+    seed_claimed_release_task,
+)
 
 
 def _command(version: int, **extra: Any) -> dict[str, Any]:
@@ -57,6 +62,7 @@ async def _approve_and_release(
 ) -> dict[str, Any]:
     await _set_status(harness, request_id, RequestStatus.LEAD_REVIEW)
     await harness.login("admin8")
+    await seed_claimed_lead_review_task(harness, request_id, "admin8")
     response = await harness.client.post(
         f"/api/v1/product-packages/{package['id']}/manager-approve",
         json=_command(
@@ -69,6 +75,7 @@ async def _approve_and_release(
 
     await _set_status(harness, request_id, RequestStatus.READY_FOR_RELEASE)
     await harness.login("admin15")
+    await seed_claimed_release_task(harness, request_id, "admin15")
     response = await harness.client.post(
         f"/api/v1/releases/{package['id']}/disseminate",
         json=_command(
@@ -88,18 +95,15 @@ async def test_managed_file_full_http_release_download_and_withdraw(
     requester, _other, _manager, analyst, _qc = await product_actors(api_harness)
     request_id = await create_product_request(api_harness, requester, analyst)
     pdf = b"%PDF-1.7\nSynthetic HTTP managed product"
-
     await api_harness.login("admin11")
     package = await _create_package(api_harness, request_id)
     package_id = package["id"]
-
     response = await api_harness.client.get(
         f"/api/v1/product-packages/by-request/{request_id}"
     )
     assert response.status_code == 200
     response = await api_harness.client.get(f"/api/v1/product-packages/{package_id}")
     assert response.status_code == 200
-
     response = await api_harness.client.post(
         f"/api/v1/product-packages/{package_id}/managed-artefacts",
         json=_command(
@@ -133,11 +137,12 @@ async def test_managed_file_full_http_release_download_and_withdraw(
     assert response.status_code == 200, response.text
     response = await api_harness.client.post(
         f"/api/v1/product-packages/{package_id}/submit",
-        json=_command(4),
+        json=_command(4, coveringNote="Synthetic product covering note."),
         headers=api_harness.mutation_headers(),
     )
     assert response.status_code == 200, response.text
     submitted = response.json()
+    assert submitted["coveringNote"] == "Synthetic product covering note."
 
     released = await _approve_and_release(
         api_harness,
@@ -166,6 +171,7 @@ async def test_managed_file_full_http_release_download_and_withdraw(
     assert response.json()["productAvailable"] is True
     response = await api_harness.client.get(f"/api/v1/releases/requests/{request_id}")
     assert response.status_code == 200, response.text
+    assert response.json()["coveringNote"] == "Synthetic product covering note."
     artefact_id = response.json()["artefacts"][0]["id"]
     response = await api_harness.client.get(
         f"/api/v1/releases/artefacts/{artefact_id}/download",
@@ -213,7 +219,7 @@ async def test_external_link_full_http_redirect_and_headers(
     assert response.status_code == 200, response.text
     response = await api_harness.client.post(
         f"/api/v1/product-packages/{package['id']}/submit",
-        json=_command(2),
+        json=_command(2, coveringNote="Synthetic linked product covering note."),
         headers=api_harness.mutation_headers(),
     )
     assert response.status_code == 200, response.text
@@ -269,7 +275,7 @@ async def test_http_product_failures_are_bounded_and_non_enumerating(
     package_id = package["id"]
     response = await api_harness.client.post(
         f"/api/v1/product-packages/{package_id}/submit",
-        json=_command(1),
+        json=_command(1, coveringNote="Synthetic empty-package note."),
         headers=api_harness.mutation_headers(),
     )
     assert response.status_code == 409

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 from hashlib import sha256
 from uuid import UUID
@@ -13,33 +12,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.board_models import CapacityReservation, ReservationStatus
 from istari_service.calendar_models import CalendarEventKind
+from istari_service.planning_capacity_types import (
+    PlanningCapacityDay,
+    PlanningCapacityProjection,
+)
 from istari_service.repositories.calendar import SqlAlchemyCalendarRepository
 from istari_service.schemas.calendar import CalendarOccurrence
 
 WORKDAY_MINUTES = 450
-
-
-@dataclass(frozen=True, slots=True)
-class PlanningCapacityDay:
-    date: date
-    baseline_minutes: int
-    calendar_minutes: int
-    reserved_minutes: int
-    available_minutes: int
-
-
-@dataclass(frozen=True, slots=True)
-class PlanningCapacityProjection:
-    days: tuple[PlanningCapacityDay, ...]
-    source_digest: str
-
-    @property
-    def available_minutes(self) -> int:
-        return sum(day.available_minutes for day in self.days)
-
-    @property
-    def reserved_minutes(self) -> int:
-        return sum(day.reserved_minutes for day in self.days)
 
 
 async def calculate_planning_capacity(

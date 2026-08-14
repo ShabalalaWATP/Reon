@@ -91,6 +91,9 @@ async def test_csrf_requires_current_token_and_trusted_origin(
         "managedFileUploads": True,
         "planning": True,
         "statistics": True,
+        "conversationReads": True,
+        "conversationWrites": True,
+        "contextSwitching": True,
     }
     harness.csrf_token = me.json()["csrfToken"]
     still_current = await harness.client.post(

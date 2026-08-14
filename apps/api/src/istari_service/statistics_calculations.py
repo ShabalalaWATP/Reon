@@ -9,13 +9,8 @@ from statistics import median
 from typing import Literal
 from zoneinfo import ZoneInfo
 
-from istari_service.analytics_models import (
-    ProjectionHealth,
-    RequestAnalyticsFact,
-    RequestStageInterval,
-)
+from istari_service.analytics_models import ProjectionHealth
 from istari_service.models import RequestStatus
-from istari_service.repositories.statistics import StatisticsDataset
 from istari_service.schemas.statistics import (
     CategoryCount,
     MetricDefinition,
@@ -26,6 +21,11 @@ from istari_service.schemas.statistics import (
     SummaryMetric,
 )
 from istari_service.statistics_children import child_comparisons
+from istari_service.statistics_records import (
+    StatisticsDataset,
+    StatisticsFact,
+    StatisticsStageInterval,
+)
 from istari_service.statistics_throughput import (
     local_date,
     throughput_resolution,
@@ -146,7 +146,7 @@ def build_statistics_dashboard(
 
 
 def _summary_metrics(
-    facts: tuple[RequestAnalyticsFact, ...],
+    facts: tuple[StatisticsFact, ...],
     *,
     active_count: int,
     overdue: int,
@@ -223,7 +223,7 @@ def _summary_metrics(
 
 
 def _status_rows(
-    facts: tuple[RequestAnalyticsFact, ...],
+    facts: tuple[StatisticsFact, ...],
 ) -> list[CategoryCount]:
     counts = Counter(fact.current_status for fact in facts)
     return [
@@ -236,7 +236,7 @@ def _status_rows(
 
 
 def _age_rows(
-    facts: tuple[RequestAnalyticsFact, ...],
+    facts: tuple[StatisticsFact, ...],
     as_of_date: date,
     time_zone: ZoneInfo,
 ) -> list[CategoryCount]:
@@ -253,7 +253,7 @@ def _age_rows(
 
 
 def _due_rows(
-    facts: tuple[RequestAnalyticsFact, ...],
+    facts: tuple[StatisticsFact, ...],
     as_of_date: date,
 ) -> list[CategoryCount]:
     counts = [0, 0, 0]
@@ -272,7 +272,7 @@ def _due_rows(
 
 
 def _stage_rows(
-    intervals: tuple[RequestStageInterval, ...],
+    intervals: tuple[StatisticsStageInterval, ...],
 ) -> list[StageDuration]:
     grouped: dict[RequestStatus, list[int]] = defaultdict(list)
     for interval in intervals:

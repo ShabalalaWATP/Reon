@@ -8,35 +8,43 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.domain import Actor
-from istari_service.models import ServiceRequest
+from istari_service.models import ServiceRequest, UserRole
 from istari_service.organisation_models import OrganisationUnit, RequestRouteSelection
-from istari_service.repositories.organisation import route_membership_condition
+from istari_service.repositories.route_access import (
+    ROUTE_POSITION_BY_ROLE,
+    route_membership_condition,
+)
+from istari_service.request_coordination_ports import ReturnRouteTarget
 
 
 class RequestCoordinationRepository:
     def __init__(self, session: AsyncSession) -> None:
-        self.session = session
+        self._session = session
 
     async def request(self, request_id: UUID) -> ServiceRequest | None:
-        return await self.session.get(ServiceRequest, request_id)
+        return await self._session.get(ServiceRequest, request_id)
 
     async def has_route_membership(self, actor: Actor, request_id: UUID) -> bool:
         membership = route_membership_condition(actor)
         if membership is None:
             return False
         return bool(
-            await self.session.scalar(
+            await self._session.scalar(
                 select(ServiceRequest.id).where(
                     ServiceRequest.id == request_id, membership
                 )
             )
         )
 
+    @staticmethod
+    def route_position(role: UserRole) -> int | None:
+        return ROUTE_POSITION_BY_ROLE.get(role)
+
     async def route_target(
         self, request_id: UUID, unit_id: UUID
-    ) -> tuple[OrganisationUnit, int] | None:
+    ) -> ReturnRouteTarget | None:
         row = (
-            await self.session.execute(
+            await self._session.execute(
                 select(OrganisationUnit, RequestRouteSelection.position)
                 .join(
                     RequestRouteSelection,
@@ -48,4 +56,8 @@ class RequestCoordinationRepository:
                 )
             )
         ).one_or_none()
-        return (row.OrganisationUnit, row.position) if row else None
+        return (
+            ReturnRouteTarget(name=row.OrganisationUnit.name, position=row.position)
+            if row
+            else None
+        )

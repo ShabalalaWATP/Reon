@@ -68,7 +68,9 @@ async def test_seeded_closure_and_grants_match_exact_management_authority(
                 )
             ).all()
         )
-        assert self_rows == 40
+        # Closure retains the non-routing Combined QC Team identity as well as
+        # the 40 currently configured routing units.
+        assert self_rows == 41
         assert depths[ssg_id] == 0
         assert depths[ncgi_id] == 1
         assert depths[crioc_id] == 3

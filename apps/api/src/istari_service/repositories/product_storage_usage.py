@@ -15,7 +15,11 @@ from istari_service.product_models import (
     ProductStorageQuota,
     ProductUploadIntent,
 )
-from istari_service.product_types import ArtefactKind, ArtefactLifecycle
+from istari_service.product_types import (
+    ArtefactKind,
+    ArtefactLifecycle,
+    ProductStorageUsage,
+)
 
 
 class ProductStorageUsageRepositoryMixin:
@@ -23,7 +27,7 @@ class ProductStorageUsageRepositoryMixin:
 
     async def storage_usage(
         self, package_id: UUID, request_id: UUID, author_id: UUID
-    ) -> tuple[int, int, int, int, int, int, int, int]:
+    ) -> ProductStorageUsage:
         await self._lock_storage_scopes(package_id, request_id, author_id)
         counted = ProductArtefact.lifecycle.notin_(
             [ArtefactLifecycle.FAILED, ArtefactLifecycle.EXPIRED]
@@ -56,15 +60,19 @@ class ProductStorageUsageRepositoryMixin:
             )
             return int(value or 0)
 
-        return (
-            await total(ProductPackage.id == package_id),
-            await total(ProductPackage.request_id == request_id),
-            await total(ProductPackage.author_user_id == author_id),
-            await total(),
-            await active(ProductPackage.id == package_id),
-            await active(ProductPackage.request_id == request_id),
-            await active(ProductPackage.author_user_id == author_id),
-            await active(),
+        return ProductStorageUsage(
+            package_bytes=await total(ProductPackage.id == package_id),
+            request_bytes=await total(ProductPackage.request_id == request_id),
+            user_bytes=await total(ProductPackage.author_user_id == author_id),
+            service_bytes=await total(),
+            package_active_intents=await active(ProductPackage.id == package_id),
+            request_active_intents=await active(
+                ProductPackage.request_id == request_id
+            ),
+            user_active_intents=await active(
+                ProductPackage.author_user_id == author_id
+            ),
+            service_active_intents=await active(),
         )
 
     async def _lock_storage_scopes(

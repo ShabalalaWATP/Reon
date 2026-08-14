@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.domain import Actor
 from istari_service.errors import TeamWorkspaceNotFound
+from istari_service.identity_context import require_staff_context
 from istari_service.management_models import (
     ManagementAction,
     ManagementGrant,
@@ -27,6 +28,8 @@ async def authorise_planning_read(
     action: ManagementAction,
 ) -> None:
     """Allow a team member or a current exact-team content grant."""
+
+    require_staff_context(actor, TeamWorkspaceNotFound())
 
     configured_team = await session.scalar(
         select(OrganisationUnit.id).where(
@@ -71,6 +74,7 @@ async def authorise_planning_preview(
 ) -> None:
     """Require one current exact-team grant with board and capacity actions."""
 
+    require_staff_context(actor, TeamWorkspaceNotFound())
     if actor.role is not UserRole.DELIVERY_TEAM_LEAD:
         raise TeamWorkspaceNotFound()
     for action in (ManagementAction.BOARD, ManagementAction.CAPACITY):

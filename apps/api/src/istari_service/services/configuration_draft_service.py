@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from istari_service.configuration_models import ConfigurationVersion
 from istari_service.configuration_policy import may_replace_draft
 from istari_service.configuration_types import ConfigurationStatus
 from istari_service.domain import Actor
@@ -14,27 +13,23 @@ from istari_service.schemas.configuration import (
     ConfigurationDraftReplace,
     ConfigurationVersionDetail,
 )
+from istari_service.services.configuration_ports import ConfigurationDraftPort
 from istari_service.services.configuration_service_base import ConfigurationServiceBase
 
 
-class ConfigurationDraftService(ConfigurationServiceBase):
+class ConfigurationDraftService(ConfigurationServiceBase[ConfigurationDraftPort]):
     async def create(
         self, actor: Actor, payload: ConfigurationDraftCreate
     ) -> ConfigurationVersionDetail:
         self.authorise(actor)
         await self._validate_base(payload.based_on_version_id)
-        version = ConfigurationVersion(
-            sequence=await self._repository.next_sequence(),
+        version = await self._repository.create_draft(
             label=payload.label,
-            status=ConfigurationStatus.DRAFT,
             effective_from=payload.effective_from,
             created_by_user_id=actor.id,
             based_on_version_id=payload.based_on_version_id,
-            reason=None,
+            specification=payload.to_spec(),
         )
-        self._repository.session.add(version)
-        await self._repository.session.flush()
-        await self._repository.replace_components(version.id, payload.to_spec())
         await self._audit(
             actor,
             "CONFIGURATION_DRAFT_CREATED",

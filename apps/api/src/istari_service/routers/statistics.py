@@ -9,15 +9,15 @@ from uuid import UUID
 from fastapi import APIRouter, Query
 
 from istari_service.dependencies import CurrentActor, DatabaseSession
-from istari_service.repositories.statistics import SqlAlchemyStatisticsRepository
 from istari_service.schemas.statistics import StatisticsDashboard, StatisticsScopeList
 from istari_service.services.statistics_service import StatisticsService
+from istari_service.statistics_composition import statistics_service
 
 router = APIRouter(prefix="/statistics", tags=["operational-statistics"])
 
 
 def _service(session: DatabaseSession) -> StatisticsService:
-    return StatisticsService(SqlAlchemyStatisticsRepository(session))
+    return statistics_service(session)
 
 
 @router.get("/scopes", response_model=StatisticsScopeList)

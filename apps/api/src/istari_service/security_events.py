@@ -29,7 +29,7 @@ class SecurityEventCommand:
 
 
 class SecurityEventRecorder:
-    """Writes through a separate transaction so rejected work cannot erase evidence."""
+    """Build atomic success evidence and independently retain rejected work."""
 
     def __init__(
         self,
@@ -43,9 +43,14 @@ class SecurityEventRecorder:
         self._key = pseudonym_key
 
     async def record(self, command: SecurityEventCommand) -> None:
-        _validate(command)
         async with self._sessions() as session, session.begin():
-            session.add(SecurityEvent(**self._values(command)))
+            session.add(self.build(command))
+
+    def build(self, command: SecurityEventCommand) -> SecurityEvent:
+        """Build an event that a caller can commit with protected state."""
+
+        _validate(command)
+        return SecurityEvent(**self._values(command))
 
     async def record_once(
         self,

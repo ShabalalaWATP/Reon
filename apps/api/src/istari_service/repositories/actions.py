@@ -16,8 +16,13 @@ from istari_service.action_notification_models import (
     ProjectionHealth,
     SavedActionView,
 )
+from istari_service.action_ports import ActionProjectionCommand
 from istari_service.domain import Actor
 from istari_service.errors import ObjectNotFound, StaleVersion
+from istari_service.identity_context import (
+    active_actor_condition,
+    actor_identity_context,
+)
 from istari_service.models import User, UserRole
 from istari_service.organisation_models import OrganisationUnit
 from istari_service.repositories.action_scope import (
@@ -108,22 +113,29 @@ class SqlAlchemyActionRepository:
         )
         return dict(rows.tuples().all())
 
-    async def saved_views(self, actor_id: UUID) -> list[SavedActionView]:
+    async def saved_views(self, actor: Actor) -> list[SavedActionView]:
+        await self._require_current_actor(actor)
+        context = actor_identity_context(actor)
         return list(
             (
                 await self.session.scalars(
                     select(SavedActionView)
-                    .where(SavedActionView.owner_user_id == actor_id)
+                    .where(
+                        SavedActionView.owner_user_id == actor.id,
+                        SavedActionView.identity_context == context,
+                    )
                     .order_by(SavedActionView.name, SavedActionView.id)
                 )
             ).all()
         )
 
     async def create_saved_view(
-        self, actor_id: UUID, command: SavedActionViewCommand
+        self, actor: Actor, command: SavedActionViewCommand
     ) -> SavedActionView:
+        await self._require_current_actor(actor)
         view = SavedActionView(
-            owner_user_id=actor_id,
+            owner_user_id=actor.id,
+            identity_context=actor_identity_context(actor),
             name=command.name.strip(),
             filters=command.filters.model_dump(mode="json"),
             visible_columns=[column.value for column in command.visible_columns],
@@ -134,9 +146,10 @@ class SqlAlchemyActionRepository:
         return view
 
     async def update_saved_view(
-        self, actor_id: UUID, view_id: UUID, command: SavedActionViewUpdate
+        self, actor: Actor, view_id: UUID, command: SavedActionViewUpdate
     ) -> SavedActionView:
-        view = await self._locked_view(actor_id, view_id)
+        await self._require_current_actor(actor)
+        view = await self._locked_view(actor, view_id)
         if view.version != command.expected_version:
             raise StaleVersion()
         view.name = command.name.strip()
@@ -146,9 +159,10 @@ class SqlAlchemyActionRepository:
         return view
 
     async def delete_saved_view(
-        self, actor_id: UUID, view_id: UUID, expected_version: int
+        self, actor: Actor, view_id: UUID, expected_version: int
     ) -> None:
-        view = await self._locked_view(actor_id, view_id)
+        await self._require_current_actor(actor)
+        view = await self._locked_view(actor, view_id)
         if view.version != expected_version:
             raise StaleVersion()
         await self.session.delete(view)
@@ -215,6 +229,32 @@ class SqlAlchemyActionRepository:
         await self.session.flush()
         return action
 
+    async def project(self, command: ActionProjectionCommand) -> ActionProjection:
+        """Persist a validated application projection command."""
+
+        return await self.project_action(
+            stable_key=command.stable_key,
+            source_type=command.source_type,
+            source_id=command.source_id,
+            source_version=command.source_version,
+            request_id=command.request_id,
+            recipient_user_id=command.recipient_user_id,
+            candidate_role=command.candidate_role,
+            required_scope=command.required_scope,
+            organisation_unit_id=command.organisation_unit_id,
+            section=command.section,
+            action_type=command.action_type,
+            reference=command.reference,
+            safe_title=command.safe_title,
+            current_owner=command.current_owner,
+            required_by=command.required_by,
+            last_changed_at=command.last_changed_at,
+            completed_at=command.completed_at,
+            deep_link=command.deep_link,
+            projected_at=command.projected_at,
+            is_active=command.is_active,
+        )
+
     async def checkpoint(self, name: str) -> ProjectionCheckpoint | None:
         return await self.session.get(ProjectionCheckpoint, name)
 
@@ -242,12 +282,13 @@ class SqlAlchemyActionRepository:
         await self.session.flush()
         return checkpoint
 
-    async def _locked_view(self, actor_id: UUID, view_id: UUID) -> SavedActionView:
+    async def _locked_view(self, actor: Actor, view_id: UUID) -> SavedActionView:
         view = await self.session.scalar(
             select(SavedActionView)
             .where(
                 SavedActionView.id == view_id,
-                SavedActionView.owner_user_id == actor_id,
+                SavedActionView.owner_user_id == actor.id,
+                SavedActionView.identity_context == actor_identity_context(actor),
             )
             .with_for_update()
         )
@@ -258,10 +299,7 @@ class SqlAlchemyActionRepository:
     async def _require_current_actor(self, actor: Actor) -> None:
         current = await self.session.scalar(
             select(User.id).where(
-                User.id == actor.id,
-                User.is_active.is_(True),
-                User.role == actor.role,
-                User.scope == actor.scope,
+                active_actor_condition(actor),
             )
         )
         if current is None:

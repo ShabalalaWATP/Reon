@@ -8,13 +8,14 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from istari_service.domain import Actor
 from istari_service.errors import StatisticsQueryInvalid
-from istari_service.repositories.statistics_evolution import (
-    SqlAlchemyStatisticsEvolutionRepository,
-)
 from istari_service.schemas.statistics_evolution import (
     StatisticsEvolution,
     StatisticsExportCommand,
     StatisticsExportResult,
+)
+from istari_service.services.statistics_ports import (
+    StatisticsEvolutionQueryPort,
+    StatisticsExportAuditPort,
 )
 from istari_service.statistics_evolution_calculations import (
     EXPORT_REASON,
@@ -25,8 +26,13 @@ MAX_DATE_RANGE_DAYS = 366
 
 
 class StatisticsEvolutionService:
-    def __init__(self, repository: SqlAlchemyStatisticsEvolutionRepository) -> None:
-        self._repository = repository
+    def __init__(
+        self,
+        queries: StatisticsEvolutionQueryPort,
+        export_audit: StatisticsExportAuditPort,
+    ) -> None:
+        self._queries = queries
+        self._export_audit = export_audit
 
     async def dashboard(
         self,
@@ -54,7 +60,7 @@ class StatisticsEvolutionService:
         previous_end = datetime.combine(
             previous_to + timedelta(days=1), time.min, time_zone
         ).astimezone(UTC)
-        dataset = await self._repository.load(
+        dataset = await self._queries.load(
             actor,
             scope_id=scope_id,
             selected_unit_id=selected_unit_id,
@@ -91,7 +97,7 @@ class StatisticsEvolutionService:
         selected_unit = getattr(result, "selected_unit", None)
         if selected_unit is None:
             raise StatisticsQueryInvalid("The statistics scope is unavailable.")
-        await self._repository.record_denied_export(
+        await self._export_audit.record_denied_export(
             actor=actor,
             command=command,
             scope_unit_id=selected_unit.id,

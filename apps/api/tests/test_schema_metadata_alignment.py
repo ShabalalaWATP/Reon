@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import istari_service.model_registry  # noqa: F401
-from istari_service.models import Base
+from istari_service.model_registry import Base
 
 
 def test_migration_owned_indexes_are_present_in_model_metadata() -> None:

@@ -8,12 +8,8 @@ from math import ceil
 from statistics import median
 from zoneinfo import ZoneInfo
 
-from istari_service.analytics_models import ProjectionHealth, RequestStageInterval
+from istari_service.analytics_models import ProjectionHealth
 from istari_service.models import RequestStatus
-from istari_service.repositories.statistics import StatisticsDataset
-from istari_service.repositories.statistics_evolution import (
-    StatisticsEvolutionDataset,
-)
 from istari_service.schemas.statistics import ProjectionFreshness, StatisticsRange
 from istari_service.schemas.statistics_evolution import (
     BottleneckMeasure,
@@ -29,6 +25,11 @@ from istari_service.statistics_operational_calculations import (
     iteration_rows,
     notification_rows,
     release_rows,
+)
+from istari_service.statistics_records import (
+    StatisticsDataset,
+    StatisticsEvolutionDataset,
+    StatisticsStageInterval,
 )
 
 MIN_COHORT = 5
@@ -160,7 +161,9 @@ def _request_counts(dataset: StatisticsDataset) -> dict[str, int | float]:
 def _bottleneck_rows(
     dataset: StatisticsDataset, now: datetime
 ) -> list[BottleneckMeasure]:
-    grouped: defaultdict[RequestStatus, list[RequestStageInterval]] = defaultdict(list)
+    grouped: defaultdict[RequestStatus, list[StatisticsStageInterval]] = defaultdict(
+        list
+    )
     for interval in dataset.intervals:
         grouped[interval.status].append(interval)
     facts = {fact.request_id: fact for fact in dataset.facts}
@@ -194,7 +197,7 @@ def _bottleneck_rows(
     return rows
 
 
-def _interval_seconds(interval: RequestStageInterval, now: datetime) -> int:
+def _interval_seconds(interval: StatisticsStageInterval, now: datetime) -> int:
     if interval.duration_seconds is not None:
         return interval.duration_seconds
     started = interval.started_at

@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 from datetime import datetime
-from uuid import UUID
 
-from sqlalchemy import ColumnElement, Select, and_, exists, func, or_, select
+from sqlalchemy import Select, and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.action_notification_models import (
-    NotificationAccessKind,
     NotificationEvent,
     NotificationEventGroup,
     NotificationPreference,
@@ -18,27 +16,31 @@ from istari_service.action_notification_models import (
 )
 from istari_service.domain import Actor
 from istari_service.errors import ObjectNotFound, StaleVersion
-from istari_service.models import ServiceRequest, User, WorkflowTask
+from istari_service.identity_context import (
+    active_actor_condition,
+    actor_identity_context,
+)
+from istari_service.models import User
+from istari_service.notification_preference_policy import MANDATORY_GROUPS
 from istari_service.operational_analytics_projection import (
     project_notification_response_fact,
 )
-from istari_service.organisation_models import RequestRouteSelection
+from istari_service.repositories.notification_access import (
+    access_condition as _access_condition,
+)
+from istari_service.repositories.notification_access import (
+    state_filter as _state_filter,
+)
 from istari_service.repositories.projection_pagination import (
     decode_cursor,
     encode_cursor,
 )
-from istari_service.request_participant_models import RequestParticipant
 from istari_service.schemas.actions import (
     NotificationFilterState,
     NotificationPreferenceUpdate,
     NotificationStateAction,
     NotificationStateTarget,
 )
-
-MANDATORY_GROUPS = frozenset(
-    {NotificationEventGroup.RELEASE, NotificationEventGroup.ACCOUNT_SECURITY}
-)
-MANDATORY_EVENT_TYPES = frozenset({"TASK_HASTENER"})
 
 
 class SqlAlchemyNotificationRepository:
@@ -147,12 +149,17 @@ class SqlAlchemyNotificationRepository:
         await self.session.flush()
         return found
 
-    async def preferences(self, user_id: UUID) -> list[NotificationPreference]:
+    async def preferences(self, actor: Actor) -> list[NotificationPreference]:
+        await self._require_current_actor(actor)
+        context = actor_identity_context(actor)
         return list(
             (
                 await self.session.scalars(
                     select(NotificationPreference)
-                    .where(NotificationPreference.user_id == user_id)
+                    .where(
+                        NotificationPreference.user_id == actor.id,
+                        NotificationPreference.identity_context == context,
+                    )
                     .order_by(NotificationPreference.event_group)
                 )
             ).all()
@@ -160,14 +167,17 @@ class SqlAlchemyNotificationRepository:
 
     async def update_preference(
         self,
-        user_id: UUID,
+        actor: Actor,
         event_group: NotificationEventGroup,
         command: NotificationPreferenceUpdate,
     ) -> NotificationPreference:
+        await self._require_current_actor(actor)
+        context = actor_identity_context(actor)
         preference = await self.session.scalar(
             select(NotificationPreference)
             .where(
-                NotificationPreference.user_id == user_id,
+                NotificationPreference.user_id == actor.id,
+                NotificationPreference.identity_context == context,
                 NotificationPreference.event_group == event_group,
             )
             .with_for_update()
@@ -176,8 +186,9 @@ class SqlAlchemyNotificationRepository:
             if command.expected_version != 0:
                 raise StaleVersion()
             preference = NotificationPreference(
-                user_id=user_id,
+                user_id=actor.id,
                 event_group=event_group,
+                identity_context=context,
                 enabled=command.enabled,
                 reminder_days=command.reminder_days,
                 version=1,
@@ -216,96 +227,11 @@ class SqlAlchemyNotificationRepository:
     async def _require_current_actor(self, actor: Actor) -> None:
         current = await self.session.scalar(
             select(User.id).where(
-                User.id == actor.id,
-                User.is_active.is_(True),
-                User.role == actor.role,
-                User.scope == actor.scope,
+                active_actor_condition(actor),
             )
         )
         if current is None:
             raise ObjectNotFound()
-
-
-def _access_condition(actor: Actor) -> ColumnElement[bool]:
-    account = and_(
-        NotificationRecipient.access_kind == NotificationAccessKind.ACCOUNT,
-        NotificationEvent.request_id.is_(None),
-    )
-    requester = and_(
-        NotificationRecipient.access_kind == NotificationAccessKind.REQUESTER,
-        exists().where(
-            ServiceRequest.id == NotificationEvent.request_id,
-            ServiceRequest.requester_id == actor.id,
-        ),
-    )
-    assignee = and_(
-        NotificationRecipient.access_kind == NotificationAccessKind.ASSIGNEE,
-        or_(
-            exists().where(
-                ServiceRequest.id == NotificationEvent.request_id,
-                ServiceRequest.assigned_specialist_id == actor.id,
-            ),
-            exists().where(
-                RequestParticipant.request_id == NotificationEvent.request_id,
-                RequestParticipant.user_id == actor.id,
-                RequestParticipant.ended_at.is_(None),
-            ),
-            exists().where(
-                WorkflowTask.request_id == NotificationEvent.request_id,
-                WorkflowTask.assignee_user_id == actor.id,
-                WorkflowTask.candidate_role == actor.role,
-                WorkflowTask.completed_at.is_(None),
-            ),
-        ),
-    )
-    route_member = and_(
-        NotificationRecipient.access_kind == NotificationAccessKind.ROUTE_MEMBER,
-        NotificationRecipient.organisation_unit_id.in_(actor.organisation_unit_ids),
-        or_(
-            NotificationEvent.request_id.is_(None),
-            exists().where(
-                RequestRouteSelection.request_id == NotificationEvent.request_id,
-                RequestRouteSelection.unit_id
-                == NotificationRecipient.organisation_unit_id,
-            ),
-        ),
-    )
-    role_scope = and_(
-        NotificationRecipient.access_kind == NotificationAccessKind.ROLE_SCOPE,
-        NotificationRecipient.required_scope == actor.scope,
-        or_(
-            NotificationEvent.request_id.is_(None),
-            exists().where(
-                WorkflowTask.request_id == NotificationEvent.request_id,
-                WorkflowTask.candidate_role == actor.role,
-                WorkflowTask.completed_at.is_(None),
-            ),
-        ),
-    )
-    return or_(account, requester, assignee, route_member, role_scope)
-
-
-def _state_filter(states: list[NotificationFilterState]) -> ColumnElement[bool]:
-    conditions: list[ColumnElement[bool]] = []
-    if NotificationFilterState.UNREAD in states:
-        conditions.append(
-            and_(
-                NotificationRecipient.read_at.is_(None),
-                NotificationRecipient.archived_at.is_(None),
-            )
-        )
-    if NotificationFilterState.READ in states:
-        conditions.append(
-            and_(
-                NotificationRecipient.read_at.is_not(None),
-                NotificationRecipient.archived_at.is_(None),
-            )
-        )
-    if NotificationFilterState.ARCHIVED in states:
-        conditions.append(NotificationRecipient.archived_at.is_not(None))
-    if NotificationFilterState.ACTION_COMPLETED in states:
-        conditions.append(NotificationRecipient.action_completed_at.is_not(None))
-    return or_(*conditions)
 
 
 def _apply_state(

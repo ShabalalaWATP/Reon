@@ -8,18 +8,18 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from istari_service.domain import Actor
 from istari_service.errors import StatisticsQueryInvalid
-from istari_service.repositories.statistics import SqlAlchemyStatisticsRepository
 from istari_service.schemas.statistics import (
     StatisticsDashboard,
     StatisticsScope,
 )
+from istari_service.services.statistics_ports import StatisticsQueryPort
 from istari_service.statistics_calculations import build_statistics_dashboard
 
 MAX_DATE_RANGE_DAYS = 366
 
 
 class StatisticsService:
-    def __init__(self, repository: SqlAlchemyStatisticsRepository) -> None:
+    def __init__(self, repository: StatisticsQueryPort) -> None:
         self._repository = repository
 
     async def list_scopes(self, actor: Actor) -> list[StatisticsScope]:

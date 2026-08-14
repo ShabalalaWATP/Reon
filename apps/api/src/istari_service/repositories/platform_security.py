@@ -13,9 +13,9 @@ from istari_service.models import User, UserRole
 from istari_service.platform_security_models import (
     PLATFORM_CLASSIFICATION_ID,
     PasswordAssistanceAttempt,
-    PlatformClassification,
     PlatformClassificationSetting,
 )
+from istari_service.platform_security_types import PlatformClassification
 
 
 class SqlAlchemyPlatformSecurityRepository:

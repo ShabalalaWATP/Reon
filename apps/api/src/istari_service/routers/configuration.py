@@ -2,21 +2,19 @@
 
 from __future__ import annotations
 
-from typing import Annotated, cast
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Query, Request, status
+from fastapi import APIRouter, Query, status
 from pydantic import AwareDatetime
 
-from istari_service.configuration_events import ConfigurationEventPublisher
-from istari_service.dependencies import (
-    AppSettings,
-    CurrentActor,
-    DatabaseSession,
-    ElevatedMutationActor,
+from istari_service.configuration_composition import (
+    ConfigurationLifecycleDependency,
+    ConfigurationQueryDependency,
 )
-from istari_service.repositories.configuration import (
-    SqlAlchemyConfigurationRepository,
+from istari_service.dependencies import (
+    CurrentActor,
+    ElevatedMutationActor,
 )
 from istari_service.schemas.configuration import (
     ApprovedWorkflowDefinitionList,
@@ -29,12 +27,6 @@ from istari_service.schemas.configuration import (
     ConfigurationVersionDetail,
     ConfigurationVersionList,
 )
-from istari_service.services.configuration_lifecycle_service import (
-    ConfigurationLifecycleService,
-)
-from istari_service.services.configuration_query_service import (
-    ConfigurationQueryService,
-)
 
 router = APIRouter(
     prefix="/admin/configuration",
@@ -42,36 +34,12 @@ router = APIRouter(
 )
 
 
-def _query(
-    session: DatabaseSession,
-    settings: AppSettings,
-) -> ConfigurationQueryService:
-    return ConfigurationQueryService(
-        SqlAlchemyConfigurationRepository(session), settings
-    )
-
-
-def _lifecycle(
-    request: Request,
-    session: DatabaseSession,
-    settings: AppSettings,
-) -> ConfigurationLifecycleService:
-    publisher = cast(
-        ConfigurationEventPublisher | None,
-        getattr(request.app.state, "configuration_event_publisher", None),
-    )
-    return ConfigurationLifecycleService(
-        SqlAlchemyConfigurationRepository(session), settings, publisher
-    )
-
-
 @router.get("/versions", response_model=ConfigurationVersionList)
 async def list_versions(
     actor: CurrentActor,
-    session: DatabaseSession,
-    settings: AppSettings,
+    service: ConfigurationQueryDependency,
 ) -> ConfigurationVersionList:
-    return await _query(session, settings).list_versions(actor)
+    return await service.list_versions(actor)
 
 
 @router.post(
@@ -81,36 +49,29 @@ async def list_versions(
 )
 async def create_version(
     payload: ConfigurationDraftCreate,
-    request: Request,
     actor: ElevatedMutationActor,
-    session: DatabaseSession,
-    settings: AppSettings,
+    service: ConfigurationLifecycleDependency,
 ) -> ConfigurationVersionDetail:
-    return await _lifecycle(request, session, settings).create(actor, payload)
+    return await service.create(actor, payload)
 
 
 @router.get("/versions/{version_id}", response_model=ConfigurationVersionDetail)
 async def get_version(
     version_id: UUID,
     actor: CurrentActor,
-    session: DatabaseSession,
-    settings: AppSettings,
+    service: ConfigurationQueryDependency,
 ) -> ConfigurationVersionDetail:
-    return await _query(session, settings).get_version(actor, version_id)
+    return await service.get_version(actor, version_id)
 
 
 @router.put("/versions/{version_id}", response_model=ConfigurationVersionDetail)
 async def replace_version(
     version_id: UUID,
     payload: ConfigurationDraftReplace,
-    request: Request,
     actor: ElevatedMutationActor,
-    session: DatabaseSession,
-    settings: AppSettings,
+    service: ConfigurationLifecycleDependency,
 ) -> ConfigurationVersionDetail:
-    return await _lifecycle(request, session, settings).replace(
-        actor, version_id, payload
-    )
+    return await service.replace(actor, version_id, payload)
 
 
 @router.post(
@@ -120,28 +81,20 @@ async def replace_version(
 async def validate_version(
     version_id: UUID,
     payload: ConfigurationVersionCommand,
-    request: Request,
     actor: ElevatedMutationActor,
-    session: DatabaseSession,
-    settings: AppSettings,
+    service: ConfigurationLifecycleDependency,
 ) -> ConfigurationVersionDetail:
-    return await _lifecycle(request, session, settings).validate(
-        actor, version_id, payload
-    )
+    return await service.validate(actor, version_id, payload)
 
 
 @router.post("/versions/{version_id}/submit", response_model=ConfigurationVersionDetail)
 async def submit_version(
     version_id: UUID,
     payload: ConfigurationReasonCommand,
-    request: Request,
     actor: ElevatedMutationActor,
-    session: DatabaseSession,
-    settings: AppSettings,
+    service: ConfigurationLifecycleDependency,
 ) -> ConfigurationVersionDetail:
-    return await _lifecycle(request, session, settings).submit(
-        actor, version_id, payload
-    )
+    return await service.submit(actor, version_id, payload)
 
 
 @router.post(
@@ -150,28 +103,20 @@ async def submit_version(
 async def approve_version(
     version_id: UUID,
     payload: ConfigurationReasonCommand,
-    request: Request,
     actor: ElevatedMutationActor,
-    session: DatabaseSession,
-    settings: AppSettings,
+    service: ConfigurationLifecycleDependency,
 ) -> ConfigurationVersionDetail:
-    return await _lifecycle(request, session, settings).approve(
-        actor, version_id, payload
-    )
+    return await service.approve(actor, version_id, payload)
 
 
 @router.post("/versions/{version_id}/reject", response_model=ConfigurationVersionDetail)
 async def reject_version(
     version_id: UUID,
     payload: ConfigurationReasonCommand,
-    request: Request,
     actor: ElevatedMutationActor,
-    session: DatabaseSession,
-    settings: AppSettings,
+    service: ConfigurationLifecycleDependency,
 ) -> ConfigurationVersionDetail:
-    return await _lifecycle(request, session, settings).reject(
-        actor, version_id, payload
-    )
+    return await service.reject(actor, version_id, payload)
 
 
 @router.post(
@@ -180,24 +125,19 @@ async def reject_version(
 async def activate_version(
     version_id: UUID,
     payload: ConfigurationReasonCommand,
-    request: Request,
     actor: ElevatedMutationActor,
-    session: DatabaseSession,
-    settings: AppSettings,
+    service: ConfigurationLifecycleDependency,
 ) -> ConfigurationVersionDetail:
-    return await _lifecycle(request, session, settings).activate(
-        actor, version_id, payload
-    )
+    return await service.activate(actor, version_id, payload)
 
 
 @router.get("/versions/{version_id}/preview", response_model=ConfigurationPreview)
 async def preview_version(
     version_id: UUID,
     actor: CurrentActor,
-    session: DatabaseSession,
-    settings: AppSettings,
+    service: ConfigurationQueryDependency,
 ) -> ConfigurationPreview:
-    return await _query(session, settings).preview(actor, version_id)
+    return await service.preview(actor, version_id)
 
 
 @router.get(
@@ -207,26 +147,23 @@ async def preview_version(
 async def organisation_snapshot(
     version_id: UUID,
     actor: CurrentActor,
-    session: DatabaseSession,
-    settings: AppSettings,
+    service: ConfigurationQueryDependency,
     at: Annotated[AwareDatetime | None, Query()] = None,
 ) -> ConfigurationOrganisationSnapshot:
-    return await _query(session, settings).organisation(actor, version_id, at=at)
+    return await service.organisation(actor, version_id, at=at)
 
 
 @router.get("/active", response_model=ConfigurationVersionDetail)
 async def active_version(
     actor: CurrentActor,
-    session: DatabaseSession,
-    settings: AppSettings,
+    service: ConfigurationQueryDependency,
 ) -> ConfigurationVersionDetail:
-    return await _query(session, settings).active(actor)
+    return await service.active(actor)
 
 
 @router.get("/workflow-definitions", response_model=ApprovedWorkflowDefinitionList)
 async def workflow_definitions(
     actor: CurrentActor,
-    session: DatabaseSession,
-    settings: AppSettings,
+    service: ConfigurationQueryDependency,
 ) -> ApprovedWorkflowDefinitionList:
-    return await _query(session, settings).workflow_definitions(actor)
+    return await service.workflow_definitions(actor)

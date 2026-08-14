@@ -84,6 +84,7 @@ async def test_content_finalisation_failure_deletes_written_quarantine() -> None
     )
     context = SimpleNamespace(
         sessions=sessions,
+        fence=AsyncMock(),
         content_phases=lambda _session: phases,
         runtime=SimpleNamespace(
             storage=storage,
@@ -122,6 +123,7 @@ async def test_scan_finalisation_failure_deletes_promoted_object() -> None:
     )
     context = SimpleNamespace(
         sessions=sessions,
+        fence=AsyncMock(),
         content_phases=lambda _session: phases,
         runtime=SimpleNamespace(storage=storage, scanner=scanner),
         lease_ttl=None,

@@ -7,25 +7,16 @@ import hmac
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from istari_service.action_notification_models import (
-    NotificationAccessKind,
-    NotificationEventGroup,
-)
-from istari_service.admin_audit import append_admin_event
 from istari_service.domain import Actor
 from istari_service.errors import (
     AdministrationAccessDenied,
     StaleVersion,
 )
-from istari_service.models import User, UserRole
-from istari_service.notification_catalog import render_subject
-from istari_service.notification_rule_serialisation import serialise_rule
-from istari_service.repositories.notification_projection import (
-    RecipientRule,
-    SqlAlchemyNotificationProjectionRepository,
-)
-from istari_service.repositories.platform_security import (
-    SqlAlchemyPlatformSecurityRepository,
+from istari_service.models import UserRole
+from istari_service.platform_security_ports import (
+    AssistanceUserRecord,
+    PasswordAssistancePublisherPort,
+    PlatformSecurityApplicationPort,
 )
 from istari_service.schemas.platform_security import (
     PlatformClassificationUpdate,
@@ -41,7 +32,8 @@ GLOBAL_ATTEMPT_LIMIT = 500
 class PlatformSecurityService:
     def __init__(
         self,
-        repository: SqlAlchemyPlatformSecurityRepository,
+        repository: PlatformSecurityApplicationPort,
+        publisher: PasswordAssistancePublisherPort,
         *,
         pseudonym_key: bytes = b"\0" * 32,
         pseudonym_key_id: str = "legacy",
@@ -49,12 +41,16 @@ class PlatformSecurityService:
         if len(pseudonym_key) < 32:
             raise ValueError("security pseudonym key must be at least 32 bytes")
         self._repository = repository
+        self._publisher = publisher
         self._pseudonym_key = pseudonym_key
         self._pseudonym_key_id = pseudonym_key_id
 
     async def classification(self) -> PlatformClassificationView:
-        return PlatformClassificationView.model_validate(
-            await self._repository.classification()
+        setting = await self._repository.classification()
+        return PlatformClassificationView(
+            classification=setting.classification,
+            version=setting.version,
+            updatedAt=setting.updated_at,
         )
 
     async def update_classification(
@@ -68,22 +64,16 @@ class PlatformSecurityService:
         if setting.version != command.expected_version:
             raise StaleVersion()
         if setting.classification is command.classification:
-            return PlatformClassificationView.model_validate(setting)
-        setting.classification = command.classification
-        setting.updated_by_user_id = actor.id
-        setting.version += 1
-        await append_admin_event(
-            self._repository.session,
+            return PlatformClassificationView(
+                classification=setting.classification,
+                version=setting.version,
+                updatedAt=setting.updated_at,
+            )
+        return await self._repository.update_classification(
+            setting,
+            classification=command.classification,
             actor_id=actor.id,
-            action="CLASSIFICATION_UPDATED",
-            target_type="PLATFORM_SETTING",
-            target_id=setting.id,
-            changed_fields=["classification"],
-            summary="Global classification marking updated.",
         )
-        await self._repository.session.flush()
-        await self._repository.session.refresh(setting)
-        return PlatformClassificationView.model_validate(setting)
 
     async def request_password_assistance(
         self,
@@ -105,14 +95,14 @@ class PlatformSecurityService:
         )
         if not allowed:
             return None
-        attempt = await self._repository.add_attempt(
+        attempt_id = await self._repository.add_attempt(
             source_key=source_key,
             matched_user_id=None,
             email_hash=self._email_hash(email),
             email_key_id=self._pseudonym_key_id,
         )
         await self._repository.prune_attempts(current - ASSISTANCE_RETENTION)
-        return attempt.id
+        return attempt_id
 
     def _email_hash(self, email: str) -> str:
         return hmac.new(
@@ -126,8 +116,11 @@ class PlatformSecurityService:
             self._pseudonym_key_id
         )
         for user in users:
-            user.assistance_email_hash = self._email_hash(user.email)
-            user.assistance_email_key_id = self._pseudonym_key_id
+            await self._repository.set_assistance_index(
+                user.id,
+                email_hash=self._email_hash(user.email),
+                key_id=self._pseudonym_key_id,
+            )
         return bool(users)
 
     async def process_password_assistance(
@@ -155,7 +148,7 @@ class PlatformSecurityService:
         if attempt is None:
             return reconciled
         if attempt.email_key_id != self._pseudonym_key_id:
-            self._repository.retry_attempt(attempt, now)
+            await self._repository.retry_attempt(attempt.id, now)
             return True
         try:
             user = await self._repository.active_user_by_email_hash(
@@ -169,37 +162,17 @@ class PlatformSecurityService:
                 await self._repository.match_attempt(attempt.id, user.id)
             if user is not None and not recent:
                 await self._publish_password_assistance(attempt.id, user, now)
-            self._repository.complete_attempt(attempt, now)
+            await self._repository.complete_attempt(attempt.id, now)
         except Exception:
-            self._repository.retry_attempt(attempt, now)
+            await self._repository.retry_attempt(attempt.id, now)
         return True
 
     async def _publish_password_assistance(
-        self, attempt_id: UUID, user: User, occurred_at: datetime
+        self, attempt_id: UUID, user: AssistanceUserRecord, occurred_at: datetime
     ) -> None:
-        event_type, subject = render_subject(
-            "PASSWORD_ASSISTANCE_REQUESTED",
-            user.username,
-        )
-        administrators = await self._repository.active_administrators()
-        rules = [
-            RecipientRule(
-                administrator.id,
-                NotificationAccessKind.ACCOUNT,
-                UserRole.PLATFORM_ADMIN,
-            )
-            for administrator in administrators
-        ]
-        await SqlAlchemyNotificationProjectionRepository(
-            self._repository.session
-        ).publish_event(
-            stable_key=f"password-assistance:{attempt_id}",
-            event_type=event_type,
-            event_group=NotificationEventGroup.ACCOUNT_SECURITY,
-            source_version=1,
-            request_id=None,
-            safe_subject=subject,
-            deep_link=f"/admin/users/{user.id}",
-            audience=[serialise_rule(rule) for rule in rules],
-            occurred_at=occurred_at,
+        await self._publisher.publish_password_assistance(
+            attempt_id,
+            user,
+            await self._repository.active_administrator_ids(),
+            occurred_at,
         )

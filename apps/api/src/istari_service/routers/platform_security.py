@@ -3,9 +3,7 @@
 from fastapi import APIRouter
 
 from istari_service.dependencies import DatabaseSession, ElevatedMutationActor
-from istari_service.repositories.platform_security import (
-    SqlAlchemyPlatformSecurityRepository,
-)
+from istari_service.platform_security_composition import platform_security_service
 from istari_service.schemas.platform_security import (
     PlatformClassificationUpdate,
     PlatformClassificationView,
@@ -16,7 +14,7 @@ router = APIRouter(tags=["platform-security"])
 
 
 def _service(session: DatabaseSession) -> PlatformSecurityService:
-    return PlatformSecurityService(SqlAlchemyPlatformSecurityRepository(session))
+    return platform_security_service(session)
 
 
 @router.get(

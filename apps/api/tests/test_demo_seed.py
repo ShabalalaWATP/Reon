@@ -123,8 +123,8 @@ async def test_seeding_inserts_fixture_and_is_idempotent(
     )
     stored = list((await db_session.scalars(select(User))).all())
 
-    assert (first, second) == (99, 0)
-    assert len(stored) == 99
+    assert (first, second) == (100, 0)
+    assert len(stored) == 100
     assert {user.username for user in stored} == {
         identity.username for identity in DEMO_IDENTITIES
     }
@@ -158,12 +158,13 @@ async def test_seeded_memberships_staff_every_team_correctly(
     by_team: dict[str, Counter[UserRole]] = {}
     for team_code, role in rows:
         by_team.setdefault(team_code, Counter())[role] += 1
-    assert len(by_team) == 27
+    assert len(by_team) == 28
     assert by_team["SSG_TEAM"] == Counter(
         {UserRole.DELIVERY_TEAM_LEAD: 3, UserRole.DELIVERY_SPECIALIST: 7}
     )
+    assert by_team["QC_TEAM"] == Counter({UserRole.QUALITY_RELEASE: 2})
     for team_code, role_counts in by_team.items():
-        if team_code != "SSG_TEAM":
+        if team_code not in {"SSG_TEAM", "QC_TEAM"}:
             assert role_counts == Counter(
                 {UserRole.DELIVERY_TEAM_LEAD: 1, UserRole.DELIVERY_SPECIALIST: 1}
             )
@@ -213,7 +214,7 @@ async def test_legacy_username_is_renamed_without_changing_user_id(
     )
 
     migrated = await db_session.scalar(select(User).where(User.username == "admin1"))
-    assert created == 98
+    assert created == 99
     assert migrated is not None
     assert migrated.id == legacy_id
     assert (migrated.display_name, migrated.role, migrated.is_active) == (
@@ -227,6 +228,33 @@ async def test_legacy_username_is_renamed_without_changing_user_id(
         )
         is None
     )
+
+
+@pytest.mark.asyncio
+async def test_legacy_quality_scope_joins_the_combined_qc_team(
+    db_session: AsyncSession,
+) -> None:
+    legacy_qc = User(
+        username="quality.1@example.test",
+        email="quality.1@example.test",
+        display_name="Angus Gunn",
+        password_hash="legacy-hash",
+        role=UserRole.QUALITY_RELEASE,
+        scope="Shared QC",
+    )
+    db_session.add(legacy_qc)
+    await db_session.flush()
+
+    await seed_demo_users(
+        db_session,
+        RecordingHasher(),
+        environment="test",
+        enabled=True,
+        shared_password=TEST_SHARED_PASSWORD,
+    )
+
+    await db_session.refresh(legacy_qc)
+    assert (legacy_qc.username, legacy_qc.scope) == ("admin15", "Combined QC Team")
 
 
 @pytest.mark.asyncio

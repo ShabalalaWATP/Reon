@@ -96,7 +96,12 @@ async def _expected_grants(
     position: WorkspacePosition | None,
     is_active: bool,
 ) -> dict[tuple[UUID, bool], set[ManagementAction]]:
-    if not is_active or position is not WorkspacePosition.MANAGER or not unit_ids:
+    if (
+        role is UserRole.QUALITY_RELEASE
+        or not is_active
+        or position is not WorkspacePosition.MANAGER
+        or not unit_ids
+    ):
         return {}
     rows = (
         await session.execute(

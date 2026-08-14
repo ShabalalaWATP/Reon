@@ -22,6 +22,7 @@ class ProductScanTransfer:
         command: VersionCommand,
     ) -> PackageView:
         async with self._context.sessions() as session, session.begin():
+            await self._context.fence(session)
             operation = await self._context.content_phases(session).claim_scan(
                 actor,
                 package_id,
@@ -48,6 +49,7 @@ class ProductScanTransfer:
                     operation.object_key, released_key
                 )
             async with self._context.sessions() as session, session.begin():
+                await self._context.fence(session)
                 view = await self._context.content_phases(session).finalise_scan(
                     actor,
                     operation,

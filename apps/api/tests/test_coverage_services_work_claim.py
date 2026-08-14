@@ -18,7 +18,8 @@ from istari_service.errors import (
 )
 from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
 from istari_service.schemas.work import CompletionPayload, WorkItem
-from istari_service.services.work_service import WorkBundle, WorkService
+from istari_service.services.work_service import WorkService
+from istari_service.work_types import WorkBundle
 from istari_service.workflow.errors import (
     WorkflowConflict,
     WorkflowEngineUnavailable,
@@ -42,7 +43,7 @@ def actor(
 
 
 def bundle(
-    user: Actor,
+    _user: Actor,
     *,
     status: RequestStatus = RequestStatus.TRIAGE_REVIEW,
     assignee_id: UUID | None = None,
@@ -55,7 +56,7 @@ def bundle(
 ) -> WorkBundle:
     request = RequestRecord(
         uuid4(),
-        requester_id or user.id,
+        requester_id or uuid4(),
         status,
         team,
         specialist_id,

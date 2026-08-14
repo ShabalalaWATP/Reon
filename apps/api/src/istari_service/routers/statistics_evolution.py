@@ -8,9 +8,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query
 
-from istari_service.dependencies import CurrentActor, DatabaseSession, MutationActor
-from istari_service.repositories.statistics_evolution import (
-    SqlAlchemyStatisticsEvolutionRepository,
+from istari_service.dependencies import (
+    CurrentActor,
+    DatabaseSession,
+    MutationActor,
 )
 from istari_service.schemas.statistics_evolution import (
     StatisticsEvolution,
@@ -20,12 +21,13 @@ from istari_service.schemas.statistics_evolution import (
 from istari_service.services.statistics_evolution_service import (
     StatisticsEvolutionService,
 )
+from istari_service.statistics_composition import statistics_evolution_service
 
 router = APIRouter(tags=["operational-statistics"])
 
 
 def _service(session: DatabaseSession) -> StatisticsEvolutionService:
-    return StatisticsEvolutionService(SqlAlchemyStatisticsEvolutionRepository(session))
+    return statistics_evolution_service(session)
 
 
 @router.get("/evolution", response_model=StatisticsEvolution)

@@ -12,15 +12,12 @@ from istari_service.database import (
     SessionFactory,
     dispose_database,
 )
+from istari_service.platform_security_composition import platform_security_service
 from istari_service.product_cleanup import ProductUploadCleanup
 from istari_service.product_filesystem_storage import PrivateFilesystemObjectStorage
-from istari_service.repositories.platform_security import (
-    SqlAlchemyPlatformSecurityRepository,
-)
 from istari_service.request_embeddings import FastEmbedRequestEmbeddingProvider
 from istari_service.request_event_projection import NotificationProjectionReconciler
 from istari_service.request_search_indexer import RequestSearchIndexer
-from istari_service.services.platform_security_service import PlatformSecurityService
 from istari_service.team_membership_sync import TeamMembershipProjector
 from istari_service.worker_runtime import MaintenanceJob, WorkerIteration, run_worker
 from istari_service.workflow.engine import WorkflowEngine
@@ -95,8 +92,8 @@ def build_iteration(
 
     async def password_assistance() -> bool:
         async with SessionFactory() as session, session.begin():
-            return await PlatformSecurityService(
-                SqlAlchemyPlatformSecurityRepository(session),
+            return await platform_security_service(
+                session,
                 pseudonym_key=cast(
                     bytes, SessionFactory.kw["info"][SECURITY_PSEUDONYM_KEY_INFO]
                 ),

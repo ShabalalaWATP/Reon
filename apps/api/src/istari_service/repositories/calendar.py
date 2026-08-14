@@ -3,30 +3,30 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from typing import cast
 from uuid import UUID
 
 from sqlalchemy import Select, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.calendar_models import (
-    CalendarCategory,
     CalendarEvent,
     CalendarEventKind,
     CalendarEventStatus,
     CalendarOccurrenceException,
-    CalendarVisibility,
     CommitmentStatus,
     OccurrenceExceptionKind,
     RecurrenceFrequency,
 )
-from istari_service.calendar_recurrence import ExpandedOccurrence, expand_event
+from istari_service.calendar_recurrence import expand_event
 from istari_service.errors import (
     CalendarItemNotFound,
     InvalidCalendarChange,
     StaleVersion,
 )
 from istari_service.models import ServiceRequest, User
+from istari_service.repositories.calendar_views import occurrence_view
 from istari_service.schemas.calendar import (
     CalendarEventCommand,
     CalendarOccurrence,
@@ -140,6 +140,16 @@ class SqlAlchemyCalendarRepository:
             is not None
         )
 
+    async def request_requester_id(self, request_id: UUID) -> UUID | None:
+        return cast(
+            UUID | None,
+            await self.session.scalar(
+                select(ServiceRequest.requester_id).where(
+                    ServiceRequest.id == request_id
+                )
+            ),
+        )
+
     async def locked_event(
         self, event_id: UUID, expected_version: int
     ) -> CalendarEvent:
@@ -205,6 +215,28 @@ class SqlAlchemyCalendarRepository:
         event.version += 1
         return event
 
+    async def split_series(
+        self,
+        event: CalendarEvent,
+        *,
+        actor_id: UUID,
+        split_from: datetime,
+        replacement: CalendarEventCommand,
+    ) -> CalendarEvent:
+        """End one recurrence and create its replacement under the same lock."""
+
+        event.recurrence_until = split_from - timedelta(microseconds=1)
+        event.version += 1
+        return await self.create_event(
+            actor_id=actor_id,
+            subject_id=event.subject_user_id,
+            team_id=event.team_id,
+            request_id=event.request_id,
+            kind=event.kind,
+            commitment_status=event.commitment_status,
+            command=replacement,
+        )
+
     async def set_commitment(
         self, event: CalendarEvent, status: CommitmentStatus, reason: str | None
     ) -> CalendarEvent:
@@ -252,7 +284,9 @@ class SqlAlchemyCalendarRepository:
             )
             for occurrence in expand_event(event, exceptions[event.id], start, end):
                 output.append(
-                    _view(event, occurrence, names[event.subject_user_id], reveal)
+                    occurrence_view(
+                        event, occurrence, names[event.subject_user_id], reveal
+                    )
                 )
         return sorted(output, key=lambda item: (item.starts_at, str(item.event_id)))
 
@@ -294,33 +328,3 @@ class SqlAlchemyCalendarRepository:
         )
         if existing:
             raise InvalidCalendarChange("This occurrence already has an exception.")
-
-
-def _view(
-    event: CalendarEvent,
-    occurrence: ExpandedOccurrence,
-    display_name: str,
-    reveal: bool,
-) -> CalendarOccurrence:
-    show_detail = reveal or event.visibility is CalendarVisibility.TEAM_DETAIL
-    return CalendarOccurrence(
-        event_id=event.id,
-        occurrence_start=occurrence.occurrence_start,
-        starts_at=occurrence.starts_at,
-        ends_at=occurrence.ends_at,
-        title=occurrence.title if show_detail else "Busy",
-        notes=occurrence.notes if show_detail else None,
-        category=event.category if show_detail else CalendarCategory.AVAILABILITY,
-        visibility=event.visibility,
-        kind=event.kind,
-        subject_user_id=event.subject_user_id,
-        subject_display_name=display_name,
-        team_id=event.team_id,
-        request_id=event.request_id,
-        all_day=event.all_day,
-        time_zone=event.time_zone,
-        recurrence=event.recurrence,
-        commitment_status=event.commitment_status,
-        version=event.version,
-        is_exception=occurrence.is_exception,
-    )

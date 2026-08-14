@@ -14,12 +14,13 @@ from istari_service.schemas.configuration import (
     ConfigurationReasonCommand,
     ConfigurationVersionDetail,
 )
+from istari_service.services.configuration_ports import ConfigurationReviewPort
 from istari_service.services.configuration_service_base import (
     ConfigurationServiceBase,
 )
 
 
-class ConfigurationReviewOperations(ConfigurationServiceBase):
+class ConfigurationReviewOperations(ConfigurationServiceBase[ConfigurationReviewPort]):
     async def approve(
         self,
         actor: Actor,
@@ -53,7 +54,7 @@ class ConfigurationReviewOperations(ConfigurationServiceBase):
             raise InvalidAdministrationChange(
                 "A different Platform Administrator must review this version."
             )
-        bundle = await self._repository.bundle(version.id, version=version)
+        bundle = await self._repository.bundle(version.id)
         if bundle.approval is not None:
             raise InvalidAdministrationChange("This version already has a decision.")
         await self._repository.create_approval(

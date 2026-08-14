@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock
 from uuid import uuid4
 
 from istari_service.domain import Actor
-from istari_service.models import RequestStatus, UserRole
+from istari_service.models import ProductMode, RequestStatus, UserRole
 from istari_service.product_types import (
     ArtefactKind,
     ArtefactLifecycle,
@@ -17,6 +17,7 @@ from istari_service.product_types import (
     PackageRecord,
     PackageStatus,
     ProductRequestRecord,
+    ProductStorageUsage,
     UploadIntentRecord,
 )
 from istari_service.schemas.products import (
@@ -54,22 +55,24 @@ def records() -> tuple[
         frozenset({team_id}),
     )
     package = PackageRecord(
-        package_id,
-        request_id,
-        actor_id,
-        PackageStatus.DRAFT,
-        None,
-        1,
-        1,
+        id=package_id,
+        request_id=request_id,
+        author_user_id=actor_id,
+        status=PackageStatus.DRAFT,
+        covering_note=None,
+        package_checksum=None,
+        version=1,
+        package_version=1,
     )
     request = ProductRequestRecord(
-        request_id,
-        uuid4(),
-        RequestStatus.IN_PROGRESS.value,
-        "Synthetic Team",
-        actor_id,
-        3,
-        team_id,
+        id=request_id,
+        requester_id=uuid4(),
+        status=RequestStatus.IN_PROGRESS.value,
+        product_mode=ProductMode.MANAGED.value,
+        assigned_team="Synthetic Team",
+        assigned_specialist_id=actor_id,
+        version=3,
+        assigned_team_id=team_id,
     )
     artefact = ArtefactRecord(
         artefact_id,
@@ -103,6 +106,7 @@ def records() -> tuple[
         authorDisplayName=actor.display_name,
         packageVersion=1,
         status=PackageStatus.DRAFT,
+        coveringNote=None,
         packageChecksum=None,
         version=1,
         artefacts=[
@@ -151,9 +155,12 @@ def repository(**updates: object) -> SimpleNamespace:
     values: dict[str, object] = {
         "package": AsyncMock(return_value=package),
         "active_actor": AsyncMock(return_value=True),
+        "live_delivery_membership": AsyncMock(return_value=True),
         "request": AsyncMock(return_value=request),
         "managed_retry": AsyncMock(return_value=None),
-        "storage_usage": AsyncMock(return_value=(0, 0, 0, 0, 0, 0, 0, 0)),
+        "storage_usage": AsyncMock(
+            return_value=ProductStorageUsage(0, 0, 0, 0, 0, 0, 0, 0)
+        ),
         "refresh_upload_grant": AsyncMock(return_value=intent),
         "create_managed": AsyncMock(return_value=(artefact, intent)),
         "view": AsyncMock(return_value=view),
@@ -171,12 +178,7 @@ def repository(**updates: object) -> SimpleNamespace:
     return SimpleNamespace(**values)
 
 
-def service(service_type: type[Any], repository_value: object) -> Any:
-    placeholder = cast(Any, object())
-    return service_type(
-        cast(Any, repository_value),
-        placeholder,
-        placeholder,
-        placeholder,
-        placeholder,
-    )
+def service(
+    service_type: type[Any], repository_value: object, **options: object
+) -> Any:
+    return service_type(cast(Any, repository_value), **options)

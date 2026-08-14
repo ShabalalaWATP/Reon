@@ -2,22 +2,31 @@
 
 from __future__ import annotations
 
-from istari_service.configuration_types import ValidationFinding
-from istari_service.configuration_validation import validate_configuration
-from istari_service.repositories.configuration import (
-    SqlAlchemyConfigurationRepository,
-)
-from istari_service.repositories.configuration_records import (
-    ConfigurationBundle,
+from istari_service.configuration_records import (
+    ApprovedWorkflowRecord,
+    ConfigurationBundleRecord,
     stored_utc,
-    workflow_specification,
 )
-from istari_service.repositories.configuration_staffing import load_staffing_counts
+from istari_service.configuration_types import ApprovedWorkflowSpec, ValidationFinding
+from istari_service.configuration_validation import validate_configuration
+from istari_service.services.configuration_ports import ConfigurationValidationPort
+
+
+def _workflow_specification(
+    workflow: ApprovedWorkflowRecord | None,
+) -> ApprovedWorkflowSpec | None:
+    if workflow is None:
+        return None
+    return ApprovedWorkflowSpec(
+        id=workflow.id,
+        compatibility_key=workflow.compatibility_key,
+        available=workflow.is_available,
+    )
 
 
 async def configuration_findings(
-    repository: SqlAlchemyConfigurationRepository,
-    bundle: ConfigurationBundle,
+    repository: ConfigurationValidationPort,
+    bundle: ConfigurationBundleRecord,
 ) -> list[ValidationFinding]:
     """Build findings from one repository-owned configuration snapshot."""
 
@@ -25,13 +34,12 @@ async def configuration_findings(
     workflow = await repository.approved_workflow(
         specification.workflow_template.workflow_definition_id
     )
-    staffing = await load_staffing_counts(
-        repository.session,
-        {item.unit_id for item in specification.units},
+    staffing = await repository.staffing_counts(
+        {item.unit_id for item in specification.units}
     )
     return validate_configuration(
         specification,
         effective_from=stored_utc(bundle.version.effective_from),
-        workflow=workflow_specification(workflow),
+        workflow=_workflow_specification(workflow),
         staffing=staffing,
     )

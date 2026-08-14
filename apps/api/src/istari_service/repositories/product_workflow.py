@@ -25,14 +25,14 @@ async def validate_product_workflow_effect(
     request: ServiceRequest,
     actor_id: UUID,
     payload: CompletionPayload,
-) -> None:
+) -> bool:
     """Require the latest immutable package evidence for each managed stage."""
 
     if not isinstance(
         payload,
         (SubmitDeliverable, ApproveWork, ChangesRequired, ReleaseDeliverable),
     ):
-        return
+        return False
     package = await session.scalar(
         select(ProductPackage)
         .where(ProductPackage.request_id == request.id)
@@ -41,7 +41,11 @@ async def validate_product_workflow_effect(
         .limit(1)
     )
     if package is None:
-        return
+        return False
+    if isinstance(payload, (SubmitDeliverable, ReleaseDeliverable)) and not (
+        payload.managed_product
+    ):
+        raise InvalidAction("Use the immutable managed product package.")
     if package.package_checksum is None:
         raise InvalidAction("An immutable managed product package is required.")
     if isinstance(payload, SubmitDeliverable):
@@ -65,6 +69,7 @@ async def validate_product_workflow_effect(
         raise InvalidAction(
             "The managed product package is not ready for this workflow action."
         )
+    return True
 
 
 async def product_workflow_details(

@@ -19,9 +19,11 @@ def package_record(package: ProductPackage) -> PackageRecord:
         request_id=package.request_id,
         author_user_id=package.author_user_id,
         status=package.status,
+        covering_note=package.covering_note,
         package_checksum=package.package_checksum,
         version=package.version,
         package_version=package.package_version,
+        policy_version=package.policy_version,
     )
 
 

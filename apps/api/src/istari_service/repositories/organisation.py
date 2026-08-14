@@ -7,23 +7,20 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, and_, delete, exists, or_, select, update
+from sqlalchemy import ColumnElement, and_, delete, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from istari_service.domain import Actor
 from istari_service.errors import InvalidAction
-from istari_service.models import RequestStatus, ServiceRequest, UserRole
+from istari_service.models import RequestStatus, ServiceRequest
 from istari_service.organisation_models import (
     OrganisationKind,
     OrganisationUnit,
     RequestRouteSelection,
     StaffingStatus,
 )
+from istari_service.qc_membership import QC_TEAM_CODE, QC_TEAM_ID
 from istari_service.repositories.configuration_policies import (
     load_request_configuration_policy,
-)
-from istari_service.repositories.organisation_tracking_repository import (
-    OrganisationTrackingRepositoryMixin,
 )
 from istari_service.repositories.routing_options import routing_workspace
 from istari_service.request_participant_models import RequestParticipant
@@ -40,13 +37,6 @@ from istari_service.schemas.work import (
 from istari_service.work_command_types import RoutingSelection
 
 GROUP_PATTERN = re.compile(r"[a-z0-9](?:[a-z0-9-]{0,118}[a-z0-9])?")
-ROUTE_POSITION_BY_ROLE = {
-    UserRole.INTAKE_TRIAGE: 0,
-    UserRole.SERVICE_COORDINATION: 1,
-    UserRole.OPERATIONS_ALLOCATION: 2,
-    UserRole.DELIVERY_TEAM_LEAD: 3,
-    UserRole.DELIVERY_SPECIALIST: 3,
-}
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,15 +47,27 @@ class RoutingSpec:
     destination_id: UUID
 
 
-class SqlAlchemyOrganisationRepository(OrganisationTrackingRepositoryMixin):
+class SqlAlchemyOrganisationRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def list_units(self) -> list[OrganisationUnitView]:
+    async def list_units(
+        self, *, include_qc_support: bool = False
+    ) -> list[OrganisationUnitView]:
+        available: ColumnElement[bool] = OrganisationUnit.is_configured.is_(True)
+        if include_qc_support:
+            available = or_(
+                available,
+                and_(
+                    OrganisationUnit.id == QC_TEAM_ID,
+                    OrganisationUnit.code == QC_TEAM_CODE,
+                    OrganisationUnit.kind == OrganisationKind.TEAM,
+                ),
+            )
         units = (
             await self._session.scalars(
                 select(OrganisationUnit)
-                .where(OrganisationUnit.is_configured.is_(True))
+                .where(available)
                 .order_by(OrganisationUnit.sort_order, OrganisationUnit.id)
             )
         ).all()
@@ -191,79 +193,6 @@ async def clear_route_from(
         request.ops_group = None
     if position <= 3:
         _clear_team(request)
-
-
-def route_membership_condition(actor: Actor) -> ColumnElement[bool] | None:
-    position = ROUTE_POSITION_BY_ROLE.get(actor.role)
-    if position is None:
-        return None
-    unit_ids = actor.organisation_unit_ids
-    if not unit_ids:
-        return ServiceRequest.id.is_(None)
-    if position == 3:
-        stable_membership = exists().where(
-            ServiceRequest.assigned_delivery_team_id.in_(unit_ids),
-            RequestRouteSelection.request_id == ServiceRequest.id,
-            RequestRouteSelection.position == position,
-            RequestRouteSelection.unit_id == ServiceRequest.assigned_delivery_team_id,
-        )
-        routed_membership = exists().where(
-            RequestRouteSelection.unit_id.in_(unit_ids),
-            RequestRouteSelection.request_id == ServiceRequest.id,
-            RequestRouteSelection.position == position,
-        )
-        return or_(
-            and_(
-                ServiceRequest.assigned_delivery_team_id.is_not(None),
-                stable_membership,
-            ),
-            and_(
-                ServiceRequest.assigned_delivery_team_id.is_(None),
-                routed_membership,
-            ),
-        )
-    return exists().where(
-        RequestRouteSelection.unit_id.in_(unit_ids),
-        RequestRouteSelection.request_id == ServiceRequest.id,
-        RequestRouteSelection.position == position,
-    )
-
-
-async def has_route_membership(
-    session: AsyncSession,
-    actor: Actor,
-    request_id: UUID,
-    *,
-    lock: bool = False,
-) -> bool:
-    position = ROUTE_POSITION_BY_ROLE.get(actor.role)
-    if position is None:
-        return True
-    if not actor.organisation_unit_ids:
-        return False
-    if position == 3:
-        team_id = await session.scalar(
-            select(ServiceRequest.assigned_delivery_team_id).where(
-                ServiceRequest.id == request_id
-            )
-        )
-        if team_id is not None and team_id in actor.organisation_unit_ids:
-            query = select(RequestRouteSelection.id).where(
-                RequestRouteSelection.unit_id == team_id,
-                RequestRouteSelection.request_id == request_id,
-                RequestRouteSelection.position == position,
-            )
-            if lock:
-                query = query.with_for_update()
-            return await session.scalar(query) is not None
-    query = select(RequestRouteSelection.id).where(
-        RequestRouteSelection.request_id == request_id,
-        RequestRouteSelection.position == position,
-        RequestRouteSelection.unit_id.in_(actor.organisation_unit_ids),
-    )
-    if lock:
-        query = query.with_for_update()
-    return await session.scalar(query) is not None
 
 
 def _routing_spec(

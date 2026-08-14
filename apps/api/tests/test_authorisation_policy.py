@@ -310,7 +310,12 @@ def test_completion_decision_preserves_action_and_assignment_distinctions() -> N
 
 def test_authorisation_domain_has_no_framework_or_adapter_imports() -> None:
     forbidden = ("fastapi", "sqlalchemy", "camunda_orchestration_sdk")
-    for filename in ("authorisation.py", "policies.py"):
+    for filename in (
+        "authorisation.py",
+        "policies.py",
+        "request_access_policy.py",
+        "work_access_policy.py",
+    ):
         source = Path("src/istari_service", filename).read_text(encoding="utf-8")
         tree = ast.parse(source)
         modules = {

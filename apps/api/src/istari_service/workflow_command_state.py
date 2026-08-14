@@ -20,7 +20,6 @@ from istari_service.models import WorkflowTask as StoredWorkflowTask
 from istari_service.policies import can_access_work, may_complete
 from istari_service.repositories.auth import actor_from_user_with_memberships
 from istari_service.repositories.organisation import (
-    has_route_membership,
     resolve_routing_selection,
 )
 from istari_service.repositories.request_participants import (
@@ -28,6 +27,7 @@ from istari_service.repositories.request_participants import (
     validate_request_participants,
 )
 from istari_service.repositories.requests import record_from_request
+from istari_service.repositories.route_access import has_route_membership
 from istari_service.repositories.work_actions import validate_work_effect
 from istari_service.schemas.work import AssignSpecialist
 from istari_service.work_command_types import PendingWorkCommand, WorkCommandType
@@ -144,6 +144,8 @@ async def _validate_assignment(
     payload = command.completion
     if not isinstance(payload, AssignSpecialist):
         return
+    if request.requester_id in {payload.specialist_id, *payload.contributor_ids}:
+        raise InvalidAction()
     await validate_participant_selection(
         session,
         team_id=request.assigned_delivery_team_id,

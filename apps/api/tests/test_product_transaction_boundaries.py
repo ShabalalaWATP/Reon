@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 from collections.abc import AsyncIterable, AsyncIterator
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
@@ -14,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from conftest import ApiHarness
 from in_memory_product_storage import InMemoryPrivateObjectStorage
+from istari_service.auth_service import hash_opaque_token
 from istari_service.models import User
 from istari_service.product_ports import ScannerAssurance
 from istari_service.product_runtime import ProductRuntime
@@ -28,13 +30,19 @@ from istari_service.product_types import (
     StoredObject,
     UploadGrant,
 )
+from istari_service.repositories.auth import SqlAlchemyAuthRepository
+from istari_service.repositories.products import SqlAlchemyProductRepository
 from istari_service.schemas.products import (
     ManagedArtefactCreate,
     PackageCreate,
     VersionCommand,
 )
+from istari_service.services.product_customer_release_service import (
+    ProductCustomerReleaseService,
+)
 from istari_service.services.product_download_service import ProductDownloadService
-from istari_service.services.product_service import ProductService
+from istari_service.services.product_review_service import ProductReviewService
+from istari_service.services.product_transfer_context import ProductTransferContext
 from istari_service.services.product_transfer_service import ProductTransferService
 from product_test_support import (
     PDF_MEDIA,
@@ -141,6 +149,16 @@ async def test_product_external_io_and_slow_stream_release_database_connections(
 ) -> None:
     requester, _other, _manager, analyst, _qc = await product_actors(api_harness)
     request_id = await create_product_request(api_harness, requester, analyst)
+    await api_harness.login("admin11")
+    token = api_harness.client.cookies[api_harness.settings.session_cookie_name]
+    now = datetime.now(UTC)
+    async with api_harness.sessions() as session:
+        mutation_session = await SqlAlchemyAuthRepository(session).find_session(
+            hash_opaque_token(token),
+            now=now,
+            idle_cutoff=now - timedelta(minutes=15),
+        )
+    assert mutation_session is not None
     async with api_harness.sessions() as session:
         engine = session.bind
     assert isinstance(engine, AsyncEngine)
@@ -165,8 +183,22 @@ async def test_product_external_io_and_slow_stream_release_database_connections(
                     idempotency_key=uuid4(),
                 ),
             )
+
+        async def mutation_fence(session: object, record: object) -> bool:
+            del record
+            return await SqlAlchemyAuthRepository(session).lock_mutation_context(  # type: ignore[arg-type]
+                mutation_session.id,
+                expected_context_version=mutation_session.context_version,
+            )
+
         transfer = ProductTransferService(
-            api_harness.sessions, runtime, RecordingAudit()
+            ProductTransferContext(
+                api_harness.sessions,
+                runtime,
+                mutation_session,
+                lambda session: SqlAlchemyProductRepository(session),
+                mutation_fence,  # type: ignore[arg-type]
+            )
         )
         intent = await transfer.add_managed(
             analyst,
@@ -216,7 +248,7 @@ async def test_product_external_io_and_slow_stream_release_database_connections(
         authorisation_connection_seen = False
 
         async def authorise(
-            self: ProductService,
+            self: ProductCustomerReleaseService,
             actor: object,
             artefact_id: object,
             correlation_id: object,
@@ -231,8 +263,16 @@ async def test_product_external_io_and_slow_stream_release_database_connections(
             authorisation_connection_seen = True
             return access
 
-        monkeypatch.setattr(ProductService, "authorise_download", authorise)
-        result = await ProductDownloadService(api_harness.sessions, runtime).download(
+        monkeypatch.setattr(
+            ProductCustomerReleaseService,
+            "authorise_download",
+            authorise,
+        )
+        download_service = ProductDownloadService(
+            api_harness.sessions,
+            lambda session: product_service(session, storage, RecordingAudit()),
+        )
+        result = await download_service.download(
             requester, artefact.id, "synthetic-correlation"
         )
         assert authorisation_connection_seen
@@ -241,12 +281,45 @@ async def test_product_external_io_and_slow_stream_release_database_connections(
         assert await anext(iterator) == pdf
         await iterator.aclose()
         assert tracker.active == 0
+
+        review_authorisation_seen = False
+
+        async def authorise_review(
+            self: ProductReviewService,
+            actor: object,
+            artefact_id: object,
+            correlation_id: object,
+        ) -> ReleaseAccessRecord:
+            nonlocal review_authorisation_seen
+            del actor, artefact_id, correlation_id
+            assert self._repository.session.in_transaction()  # type: ignore[attr-defined]
+            user_id = await self._repository.session.scalar(  # type: ignore[attr-defined]
+                select(User.id).where(User.id == analyst.id)
+            )
+            assert user_id == analyst.id and tracker.active > 0
+            review_authorisation_seen = True
+            return access
+
+        monkeypatch.setattr(
+            ProductReviewService,
+            "authorise_review",
+            authorise_review,
+        )
+        review = await download_service.review(analyst, artefact.id, "synthetic-review")
+        assert review_authorisation_seen
+        assert tracker.active == 0
+        review_iterator = review.chunks
+        assert await anext(review_iterator) == pdf
+        await review_iterator.aclose()
+        assert tracker.active == 0
         assert storage.operations == [
             "issue-upload",
             "write-quarantine",
             "stream-quarantine",
             "promote",
             "delete-quarantine",
+            "download",
+            "stream-chunk",
             "download",
             "stream-chunk",
         ]

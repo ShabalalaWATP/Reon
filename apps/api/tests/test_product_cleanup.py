@@ -10,6 +10,7 @@ from in_memory_product_storage import InMemoryPrivateObjectStorage
 from istari_service.product_cleanup import ProductUploadCleanup
 from istari_service.product_models import ProductArtefact, ProductUploadIntent
 from istari_service.product_types import ArtefactLifecycle
+from istari_service.repositories.products import SqlAlchemyProductRepository
 from istari_service.schemas.products import PackageCreate
 from product_test_support import (
     RecordingAudit,
@@ -35,9 +36,7 @@ async def test_cleanup_expires_intent_and_deletes_orphan(api_harness) -> None:
             ),
         )
         payload = b"%PDF-1.7\nSynthetic abandoned upload"
-        artefact, intent = await product_service(
-            session, storage, RecordingAudit()
-        )._repository.create_managed(
+        artefact, intent = await SqlAlchemyProductRepository(session).create_managed(
             package.id,
             label="Abandoned",
             filename="abandoned.pdf",
@@ -91,9 +90,7 @@ async def test_cleanup_validates_batch_and_preserves_active_lease(api_harness) -
                 idempotency_key=uuid4(),
             ),
         )
-        _artefact, intent = await product_service(
-            session, storage, RecordingAudit()
-        )._repository.create_managed(
+        _artefact, intent = await SqlAlchemyProductRepository(session).create_managed(
             package.id,
             label="Leased",
             filename="leased.pdf",
@@ -159,9 +156,7 @@ async def test_cleanup_cursor_reaches_orphan_after_referenced_page(api_harness) 
             ),
         )
         for index in range(2):
-            await product_service(
-                session, storage, RecordingAudit()
-            )._repository.create_managed(
+            await SqlAlchemyProductRepository(session).create_managed(
                 package.id,
                 label=f"Referenced {index}",
                 filename=f"referenced-{index}.pdf",
@@ -204,7 +199,7 @@ async def test_cleanup_preserves_consumed_intent_until_service_deletes_object(
                 idempotency_key=uuid4(),
             ),
         )
-        _artefact, intent = await service._repository.create_managed(
+        _artefact, intent = await SqlAlchemyProductRepository(session).create_managed(
             package.id,
             label="Consumed",
             filename="consumed.pdf",

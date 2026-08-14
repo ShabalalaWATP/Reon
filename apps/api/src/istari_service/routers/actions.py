@@ -8,16 +8,21 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, Response, status
 
+from istari_service.action_notification_composition import (
+    action_service,
+    notification_service,
+)
 from istari_service.action_notification_models import (
     ActionSection,
     NotificationEventGroup,
 )
-from istari_service.dependencies import CurrentActor, DatabaseSession, MutationActor
-from istari_service.repositories.actions import SqlAlchemyActionRepository
-from istari_service.repositories.notification_projection import (
-    SqlAlchemyNotificationProjectionRepository,
+from istari_service.dependencies import (
+    CurrentActor,
+    DatabaseSession,
+    MutationActor,
+    StaffActor,
+    StaffMutationActor,
 )
-from istari_service.repositories.notifications import SqlAlchemyNotificationRepository
 from istari_service.schemas.actions import (
     ActionFilters,
     ActionWorkspaceResult,
@@ -33,27 +38,14 @@ from istari_service.schemas.actions import (
     SavedActionViewResult,
     SavedActionViewUpdate,
 )
-from istari_service.services.action_service import ActionService
-from istari_service.services.notification_service import NotificationService
 
 action_router = APIRouter(prefix="/me", tags=["personal-workspace"])
 notification_router = APIRouter(prefix="/me", tags=["notifications"])
 
 
-def _action_service(session: DatabaseSession) -> ActionService:
-    return ActionService(SqlAlchemyActionRepository(session))
-
-
-def _notification_service(session: DatabaseSession) -> NotificationService:
-    return NotificationService(
-        SqlAlchemyNotificationRepository(session),
-        SqlAlchemyNotificationProjectionRepository(session),
-    )
-
-
 @action_router.get("/actions", response_model=ActionWorkspaceResult)
 async def get_actions(
-    actor: CurrentActor,
+    actor: StaffActor,
     session: DatabaseSession,
     sections: Annotated[list[ActionSection] | None, Query()] = None,
     action_types: Annotated[
@@ -63,7 +55,7 @@ async def get_actions(
     cursor: Annotated[str | None, Query(max_length=500)] = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
 ) -> ActionWorkspaceResult:
-    return await _action_service(session).workspace(
+    return await action_service(session).workspace(
         actor,
         ActionFilters(
             sections=sections or [],
@@ -78,10 +70,10 @@ async def get_actions(
 @action_router.post("/actions/saved-views", response_model=SavedActionViewResult)
 async def create_action_view(
     command: SavedActionViewCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> SavedActionViewResult:
-    return await _action_service(session).create_saved_view(actor, command)
+    return await action_service(session).create_saved_view(actor, command)
 
 
 @action_router.patch(
@@ -90,10 +82,10 @@ async def create_action_view(
 async def update_action_view(
     view_id: UUID,
     command: SavedActionViewUpdate,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> SavedActionViewResult:
-    return await _action_service(session).update_saved_view(actor, view_id, command)
+    return await action_service(session).update_saved_view(actor, view_id, command)
 
 
 @action_router.delete(
@@ -101,11 +93,11 @@ async def update_action_view(
 )
 async def delete_action_view(
     view_id: UUID,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
     expected_version: Annotated[int, Query(alias="expectedVersion", ge=1)],
 ) -> Response:
-    await _action_service(session).delete_saved_view(actor, view_id, expected_version)
+    await action_service(session).delete_saved_view(actor, view_id, expected_version)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -122,7 +114,7 @@ async def get_notifications(
     cursor: Annotated[str | None, Query(max_length=500)] = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
 ) -> NotificationListResult:
-    return await _notification_service(session).list_notifications(
+    return await notification_service(session).list_notifications(
         actor,
         states=states or [],
         event_types=event_types or [],
@@ -137,7 +129,7 @@ async def get_notifications(
 async def get_notification_count(
     actor: CurrentActor, session: DatabaseSession
 ) -> NotificationCountResult:
-    return await _notification_service(session).count(actor)
+    return await notification_service(session).count(actor)
 
 
 @notification_router.post(
@@ -148,7 +140,7 @@ async def update_notification_state(
     actor: MutationActor,
     session: DatabaseSession,
 ) -> NotificationStateResult:
-    return await _notification_service(session).mutate_state(actor, command)
+    return await notification_service(session).mutate_state(actor, command)
 
 
 @notification_router.get(
@@ -157,7 +149,7 @@ async def update_notification_state(
 async def get_notification_preferences(
     actor: CurrentActor, session: DatabaseSession
 ) -> NotificationPreferencesResult:
-    return await _notification_service(session).preferences(actor)
+    return await notification_service(session).preferences(actor)
 
 
 @notification_router.patch(
@@ -170,7 +162,7 @@ async def update_notification_preference(
     actor: MutationActor,
     session: DatabaseSession,
 ) -> NotificationPreferenceResult:
-    return await _notification_service(session).update_preference(
+    return await notification_service(session).update_preference(
         actor, event_group, command
     )
 

@@ -2,22 +2,22 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from istari_service.configuration_models import RequestConfigurationPin
+from istari_service.model_enums import (
+    RequestStatus,
+    WorkflowInstanceStatus,
+    WorkflowTaskStatus,
+)
 from istari_service.models import (
     OutboxStatus,
-    RequestStatus,
     ServiceRequest,
     WorkflowInstance,
-    WorkflowInstanceStatus,
     WorkflowOutbox,
-    WorkflowTaskStatus,
 )
 from istari_service.models import (
     WorkflowTask as StoredWorkflowTask,
@@ -45,22 +45,13 @@ from istari_service.workflow.types import (
     StartProcessCommand,
     WorkflowTask,
 )
-from istari_service.workflow_start_types import WorkflowStartCommand
-from istari_service.workflow_start_validation import reject_invalid_start_identity
+from istari_service.workflow_start_lease import (
+    PendingStart,
+    claim_pending_start,
+    lock_start_lease,
+)
 
 DEFAULT_START_LOOKUP_POLICY = TaskLookupPolicy()
-
-
-@dataclass(frozen=True, slots=True)
-class PendingStart:
-    outbox_id: UUID
-    request_id: UUID
-    requester_id: UUID
-    attempts: int
-    lease_owner: str
-    lease_generation: int
-    process_id: str = "service-request-v1"
-    process_version: int = -1
 
 
 class WorkflowOutboxDispatcher:
@@ -118,66 +109,11 @@ class WorkflowOutboxDispatcher:
             )
 
     async def _claim_next(self) -> PendingStart | None:
-        now = datetime.now(UTC)
         async with self._sessions() as session, session.begin():
-            outbox = await session.scalar(
-                select(WorkflowOutbox)
-                .where(
-                    WorkflowOutbox.event_type == "START_PROCESS",
-                    WorkflowOutbox.status.in_(
-                        [OutboxStatus.PENDING, OutboxStatus.PROCESSING]
-                    ),
-                    WorkflowOutbox.available_at <= now,
-                )
-                .order_by(WorkflowOutbox.created_at, WorkflowOutbox.id)
-                .with_for_update(skip_locked=True)
-                .limit(1)
-            )
-            if outbox is None:
-                return None
-            request = await session.get(ServiceRequest, outbox.request_id)
-            if request is None:
-                outbox.status = OutboxStatus.FAILED
-                outbox.lease_owner = None
-                outbox.last_error = "Associated request is missing."
-                return None
-            instance = await session.scalar(
-                select(WorkflowInstance).where(
-                    WorkflowInstance.request_id == outbox.request_id
-                )
-            )
-            pin = await session.scalar(
-                select(RequestConfigurationPin).where(
-                    RequestConfigurationPin.request_id == outbox.request_id
-                )
-            )
-            if reject_invalid_start_identity(pin, outbox, request, instance):
-                return None
-            lease_owner = uuid4().hex
-            outbox.status = OutboxStatus.PROCESSING
-            outbox.attempts += 1
-            outbox.lease_owner = lease_owner
-            outbox.lease_generation += 1
-            outbox.available_at = now + timedelta(seconds=30)
-            try:
-                start_command = WorkflowStartCommand.from_payload(
-                    outbox.payload,
-                    legacy_process_id=self._process_id,
-                )
-            except ValueError:
-                outbox.status = OutboxStatus.FAILED
-                outbox.lease_owner = None
-                outbox.last_error = "Workflow start command is invalid."
-                return None
-            return PendingStart(
-                outbox_id=outbox.id,
-                request_id=request.id,
-                requester_id=request.requester_id,
-                attempts=outbox.attempts,
-                lease_owner=lease_owner,
-                lease_generation=outbox.lease_generation,
-                process_id=start_command.process_id,
-                process_version=start_command.process_version or -1,
+            return await claim_pending_start(
+                session,
+                legacy_process_id=self._process_id,
+                now=datetime.now(UTC),
             )
 
     async def _start_idempotently(
@@ -297,17 +233,7 @@ class WorkflowOutboxDispatcher:
     ) -> WorkflowOutbox | None:
         """Compare and lock a lease so a superseded worker cannot finalise it."""
 
-        outbox: WorkflowOutbox | None = await session.scalar(
-            select(WorkflowOutbox)
-            .where(
-                WorkflowOutbox.id == pending.outbox_id,
-                WorkflowOutbox.status == OutboxStatus.PROCESSING,
-                WorkflowOutbox.lease_owner == pending.lease_owner,
-                WorkflowOutbox.lease_generation == pending.lease_generation,
-            )
-            .with_for_update()
-        )
-        return outbox
+        return await lock_start_lease(session, pending)
 
     @staticmethod
     async def _add_projection(

@@ -13,10 +13,7 @@ from istari_service.dependencies import (
     DatabaseSession,
     MutationActor,
 )
-from istari_service.repositories.configuration_pins import (
-    SqlAlchemyConfigurationPinRepository,
-)
-from istari_service.repositories.requests import SqlAlchemyRequestRepository
+from istari_service.request_composition import build_request_service
 from istari_service.schemas.requests import (
     FeedbackCreate,
     FeedbackView,
@@ -25,22 +22,8 @@ from istari_service.schemas.requests import (
     RequestDetail,
     RequestList,
 )
-from istari_service.services.request_service import RequestService
 
 router = APIRouter(prefix="/requests", tags=["service requests"])
-
-
-def _service(
-    session: DatabaseSession,
-    settings: AppSettings,
-) -> RequestService:
-    return RequestService(
-        SqlAlchemyRequestRepository(
-            session,
-            process_id=settings.camunda_process_id,
-            configuration_pins=SqlAlchemyConfigurationPinRepository(session),
-        )
-    )
 
 
 @router.get("", response_model=RequestList)
@@ -51,7 +34,7 @@ async def list_requests(
     limit: int = Query(default=50, ge=1, le=100),
     cursor: str | None = Query(default=None, max_length=500),
 ) -> RequestList:
-    items, next_cursor = await _service(session, settings).list_page(
+    items, next_cursor = await build_request_service(session, settings).list_page(
         actor, limit=limit, cursor=cursor
     )
     return RequestList(items=items, next_cursor=next_cursor)
@@ -64,7 +47,7 @@ async def create_request(
     session: DatabaseSession,
     settings: AppSettings,
 ) -> RequestDetail:
-    return await _service(session, settings).create(actor, command)
+    return await build_request_service(session, settings).create(actor, command)
 
 
 @router.get("/{request_id}", response_model=RequestDetail)
@@ -76,7 +59,7 @@ async def get_request(
     event_limit: int = Query(default=50, alias="eventLimit", ge=1, le=100),
     event_cursor: str | None = Query(default=None, alias="eventCursor", max_length=500),
 ) -> RequestDetail:
-    return await _service(session, settings).get_page(
+    return await build_request_service(session, settings).get_page(
         actor,
         request_id,
         event_limit=event_limit,
@@ -92,7 +75,7 @@ async def submit_feedback(
     session: DatabaseSession,
     settings: AppSettings,
 ) -> FeedbackView:
-    return await _service(session, settings).add_feedback(
+    return await build_request_service(session, settings).add_feedback(
         actor,
         request_id,
         command,
@@ -107,7 +90,9 @@ async def cancel_request(
     session: DatabaseSession,
     settings: AppSettings,
 ) -> RequestDetail:
-    return await _service(session, settings).cancel(actor, request_id, command)
+    return await build_request_service(session, settings).cancel(
+        actor, request_id, command
+    )
 
 
 @router.get("/{request_id}/product", response_class=PlainTextResponse)
@@ -117,7 +102,7 @@ async def download_product(
     session: DatabaseSession,
     settings: AppSettings,
 ) -> PlainTextResponse:
-    filename, text = await _service(session, settings).download_product(
+    filename, text = await build_request_service(session, settings).download_product(
         actor,
         request_id,
     )

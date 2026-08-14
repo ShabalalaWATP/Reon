@@ -190,7 +190,7 @@ async def test_commitment_decision_and_team_change_authority_branches() -> None:
     calendar.locked_event = AsyncMock(return_value=event)
     calendar.set_commitment = AsyncMock(return_value=event)
     workspaces = MagicMock()
-    service = CalendarService(calendar, workspaces)
+    service = CalendarService(calendar, workspaces, MagicMock(), MagicMock())
 
     acknowledged = await service.decide_commitment(
         actor,
@@ -226,7 +226,7 @@ async def test_commitment_decision_and_team_change_authority_branches() -> None:
         )
     )
     with pytest.raises(CalendarItemNotFound):
-        await service._authorise_event_change(actor, event)
+        await service._access.authorise_event_change(actor, event)
 
     workspaces.require_read.return_value = TeamWorkspaceAccess(
         teamId=team_id,
@@ -238,9 +238,9 @@ async def test_commitment_decision_and_team_change_authority_branches() -> None:
         permissions=[ManagementAction.CALENDAR],
         views=["OVERVIEW", "CALENDAR"],
     )
-    service._authorise = AsyncMock()  # type: ignore[method-assign]
-    await service._authorise_event_change(actor, event)
-    service._authorise.assert_awaited_once_with(  # type: ignore[attr-defined]
+    service._access.authorise = AsyncMock()  # type: ignore[method-assign]
+    await service._access.authorise_event_change(actor, event)
+    service._access.authorise.assert_awaited_once_with(  # type: ignore[attr-defined]
         actor, team_id, grant_id, ManagementAction.CALENDAR
     )
 
@@ -256,6 +256,37 @@ async def test_repository_cancel_command_strips_reason() -> None:
     )
     result = await repository.cancel_event(event, command.reason)
     assert result.commitment_reason == "Required synthetic cancellation reason."
+
+
+async def test_requester_stable_identity_is_excluded_from_commitments() -> None:
+    actor = Actor(
+        id=uuid4(),
+        username="dual-context-manager",
+        display_name="Dual Context Manager",
+        role=UserRole.DELIVERY_TEAM_LEAD,
+        scope="SSG Team",
+    )
+    request_id, other_user_id = uuid4(), uuid4()
+    calendar = MagicMock()
+    calendar.session = MagicMock()
+    calendar.request_requester_id = AsyncMock(return_value=actor.id)
+    service = CalendarService(calendar, MagicMock(), MagicMock(), MagicMock())
+
+    with pytest.raises(CalendarItemNotFound):
+        await service._access.require_no_requester_conflict(
+            actor, request_id, other_user_id
+        )
+
+    calendar.request_requester_id.return_value = other_user_id
+    with pytest.raises(CalendarItemNotFound):
+        await service._access.require_no_requester_conflict(
+            actor, request_id, other_user_id
+        )
+
+    calendar.request_requester_id.return_value = uuid4()
+    await service._access.require_no_requester_conflict(
+        actor, request_id, other_user_id
+    )
 
 
 async def test_roster_disposition_checks_work_then_commitments() -> None:

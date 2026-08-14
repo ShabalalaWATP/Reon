@@ -1,39 +1,39 @@
-"""Database-filtered, bounded team-board page projection."""
+"""Compatibility facade for bounded team-board projection queries."""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import and_, false, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 from sqlalchemy.sql.elements import ColumnElement
 
-from istari_service.analytics_models import RequestAnalyticsFact
-from istari_service.board_models import BoardColumn, WorkPackage, WorkPackageStatus
+from istari_service.board_models import BoardColumn
 from istari_service.board_projection import (
-    PACKAGE_COLUMNS,
-    REQUEST_COLUMNS,
     ProjectedBoardItem,
     decode_cursor,
-    package_projection,
     paginate,
-    request_projection,
 )
-from istari_service.models import RequestStatus, ServiceRequest, User
+from istari_service.repositories.board_page_counts import SqlAlchemyBoardCountQueries
+from istari_service.repositories.board_page_filters import (
+    cursor_filter,
+    includes,
+    package_filters,
+    request_filters,
+)
+from istari_service.repositories.board_page_sources import (
+    SqlAlchemyBoardProjectionQueries,
+)
 from istari_service.schemas.board import BoardFilters, BoardItem, BoardItemType
-
-TERMINAL_REQUEST_STATUSES = {
-    RequestStatus.COMPLETED,
-    RequestStatus.CLOSED_NOT_PROGRESSED,
-    RequestStatus.CANCELLED,
-}
 
 
 class SqlAlchemyBoardPageRepository:
+    """Retain the board port while delegating projections and counts."""
+
     def __init__(self, session: AsyncSession) -> None:
-        self._session = session
+        self._projections = SqlAlchemyBoardProjectionQueries(session)
+        self._counts = SqlAlchemyBoardCountQueries(session)
 
     async def page(
         self,
@@ -55,11 +55,7 @@ class SqlAlchemyBoardPageRepository:
         cursor_key = decode_cursor(cursor) if cursor else None
         if cursor_key is not None:
             changed_at, item_type, item_id = cursor_key
-            cursor_key = (
-                changed_at,
-                BoardItemType(item_type).value,
-                item_id,
-            )
+            cursor_key = (changed_at, BoardItemType(item_type).value, item_id)
         rows: list[ProjectedBoardItem] = []
         if self._includes(filters, BoardItemType.SERVICE_REQUEST):
             rows.extend(await self._requests(team_id, filters, cursor_key, fetch_limit))
@@ -74,93 +70,14 @@ class SqlAlchemyBoardPageRepository:
         *,
         exclude_package_id: UUID,
     ) -> int:
-        request_statuses = [
-            status
-            for status, projected in REQUEST_COLUMNS.items()
-            if projected is column
-        ]
-        package_statuses = [
-            status
-            for status, projected in PACKAGE_COLUMNS.items()
-            if projected is column
-        ]
-        request_count = 0
-        if request_statuses:
-            request_count = int(
-                await self._session.scalar(
-                    select(func.count(ServiceRequest.id))
-                    .join(
-                        RequestAnalyticsFact,
-                        RequestAnalyticsFact.request_id == ServiceRequest.id,
-                    )
-                    .where(
-                        RequestAnalyticsFact.team_unit_id == team_id,
-                        ServiceRequest.status.in_(request_statuses),
-                    )
-                )
-                or 0
-            )
-        package_count = 0
-        if package_statuses:
-            package_count = int(
-                await self._session.scalar(
-                    select(func.count(WorkPackage.id)).where(
-                        WorkPackage.team_id == team_id,
-                        WorkPackage.status.in_(package_statuses),
-                        WorkPackage.id != exclude_package_id,
-                    )
-                )
-                or 0
-            )
-        return request_count + package_count
+        return await self._counts.column_count(
+            team_id, column, exclude_package_id=exclude_package_id
+        )
 
     async def filtered_column_counts(
         self, team_id: UUID, filters: BoardFilters
     ) -> dict[BoardColumn, int]:
-        """Count each column after non-status filters and before cursor pagination."""
-        counts = dict.fromkeys(BoardColumn, 0)
-        completed_cutoff = datetime.now(UTC) - timedelta(days=30)
-        if self._includes(filters, BoardItemType.SERVICE_REQUEST):
-            request_statuses = list(REQUEST_COLUMNS)
-            if request_statuses:
-                request_rows = (
-                    await self._session.execute(
-                        select(ServiceRequest.status, func.count(ServiceRequest.id))
-                        .join(
-                            RequestAnalyticsFact,
-                            RequestAnalyticsFact.request_id == ServiceRequest.id,
-                        )
-                        .where(
-                            RequestAnalyticsFact.team_unit_id == team_id,
-                            ServiceRequest.status.in_(request_statuses),
-                            or_(
-                                ServiceRequest.status.not_in(TERMINAL_REQUEST_STATUSES),
-                                ServiceRequest.updated_at >= completed_cutoff,
-                            ),
-                            *self._request_filters(filters),
-                        )
-                        .group_by(ServiceRequest.status)
-                    )
-                ).all()
-                for status, count in request_rows:
-                    counts[REQUEST_COLUMNS[status]] += int(count)
-        if self._includes(filters, BoardItemType.WORK_PACKAGE):
-            package_statuses = list(PACKAGE_COLUMNS)
-            if package_statuses:
-                package_rows = (
-                    await self._session.execute(
-                        select(WorkPackage.status, func.count(WorkPackage.id))
-                        .where(
-                            WorkPackage.team_id == team_id,
-                            WorkPackage.status.in_(package_statuses),
-                            *self._package_filters(filters),
-                        )
-                        .group_by(WorkPackage.status)
-                    )
-                ).all()
-                for status, count in package_rows:
-                    counts[PACKAGE_COLUMNS[status]] += int(count)
-        return counts
+        return await self._counts.filtered_column_counts(team_id, filters)
 
     async def _requests(
         self,
@@ -169,48 +86,7 @@ class SqlAlchemyBoardPageRepository:
         cursor: tuple[datetime, str, str] | None,
         fetch_limit: int,
     ) -> list[ProjectedBoardItem]:
-        statuses = self._request_statuses(filters)
-        if not statuses:
-            return []
-        completed_cutoff = datetime.now(UTC) - timedelta(days=30)
-        statement = (
-            select(ServiceRequest, User.display_name)
-            .join(
-                RequestAnalyticsFact,
-                RequestAnalyticsFact.request_id == ServiceRequest.id,
-            )
-            .outerjoin(User, User.id == ServiceRequest.assigned_specialist_id)
-            .where(
-                RequestAnalyticsFact.team_unit_id == team_id,
-                ServiceRequest.status.in_(statuses),
-                or_(
-                    ServiceRequest.status.not_in(TERMINAL_REQUEST_STATUSES),
-                    ServiceRequest.updated_at >= completed_cutoff,
-                ),
-                *self._request_filters(filters),
-            )
-        )
-        if cursor is not None:
-            statement = statement.where(
-                self._cursor_filter(
-                    ServiceRequest.updated_at,
-                    ServiceRequest.id,
-                    BoardItemType.SERVICE_REQUEST,
-                    cursor,
-                )
-            )
-        rows = (
-            await self._session.execute(
-                statement.order_by(
-                    ServiceRequest.updated_at.desc(), ServiceRequest.id.desc()
-                ).limit(fetch_limit)
-            )
-        ).all()
-        return [
-            item
-            for request, owner in rows
-            if (item := request_projection(request, owner)) is not None
-        ]
+        return await self._projections.requests(team_id, filters, cursor, fetch_limit)
 
     async def _packages(
         self,
@@ -219,102 +95,19 @@ class SqlAlchemyBoardPageRepository:
         cursor: tuple[datetime, str, str] | None,
         fetch_limit: int,
     ) -> list[ProjectedBoardItem]:
-        statuses = self._package_statuses(filters)
-        if not statuses:
-            return []
-        statement = (
-            select(WorkPackage, User.display_name)
-            .join(User, User.id == WorkPackage.owner_user_id)
-            .where(
-                WorkPackage.team_id == team_id,
-                WorkPackage.status.in_(statuses),
-                *self._package_filters(filters),
-            )
-        )
-        if cursor is not None:
-            statement = statement.where(
-                self._cursor_filter(
-                    WorkPackage.updated_at,
-                    WorkPackage.id,
-                    BoardItemType.WORK_PACKAGE,
-                    cursor,
-                )
-            )
-        rows = (
-            await self._session.execute(
-                statement.order_by(
-                    WorkPackage.updated_at.desc(), WorkPackage.id.desc()
-                ).limit(fetch_limit)
-            )
-        ).all()
-        return [package_projection(package, owner) for package, owner in rows]
+        return await self._projections.packages(team_id, filters, cursor, fetch_limit)
 
     @staticmethod
     def _includes(filters: BoardFilters, item_type: BoardItemType) -> bool:
-        return not filters.item_types or item_type in filters.item_types
-
-    @staticmethod
-    def _request_statuses(filters: BoardFilters) -> list[RequestStatus]:
-        return [
-            status
-            for status, column in REQUEST_COLUMNS.items()
-            if not filters.columns or column in filters.columns
-        ]
-
-    @staticmethod
-    def _package_statuses(filters: BoardFilters) -> list[WorkPackageStatus]:
-        return [
-            status
-            for status, column in PACKAGE_COLUMNS.items()
-            if not filters.columns or column in filters.columns
-        ]
+        return includes(filters, item_type)
 
     @staticmethod
     def _request_filters(filters: BoardFilters) -> list[ColumnElement[bool]]:
-        conditions: list[ColumnElement[bool]] = []
-        search = filters.search.strip().lower()
-        if search:
-            conditions.append(
-                or_(
-                    func.lower(ServiceRequest.reference).contains(
-                        search, autoescape=True
-                    ),
-                    func.lower(ServiceRequest.title).contains(search, autoescape=True),
-                )
-            )
-        if filters.priorities:
-            values = [value for value in filters.priorities if value != "UNSET"]
-            conditions.append(
-                or_(
-                    ServiceRequest.priority.in_(values) if values else false(),
-                    ServiceRequest.priority.is_(None)
-                    if "UNSET" in filters.priorities
-                    else false(),
-                )
-            )
-        if filters.owner_user_id:
-            conditions.append(
-                ServiceRequest.assigned_specialist_id == filters.owner_user_id
-            )
-        if filters.due_before:
-            conditions.append(ServiceRequest.required_by <= filters.due_before)
-        return conditions
+        return request_filters(filters)
 
     @staticmethod
     def _package_filters(filters: BoardFilters) -> list[ColumnElement[bool]]:
-        conditions: list[ColumnElement[bool]] = []
-        search = filters.search.strip().lower()
-        if search:
-            conditions.append(
-                func.lower(WorkPackage.title).contains(search, autoescape=True)
-            )
-        if filters.priorities:
-            conditions.append(WorkPackage.priority.in_(filters.priorities))
-        if filters.owner_user_id:
-            conditions.append(WorkPackage.owner_user_id == filters.owner_user_id)
-        if filters.due_before:
-            conditions.append(WorkPackage.due_on <= filters.due_before)
-        return conditions
+        return package_filters(filters)
 
     @staticmethod
     def _cursor_filter(
@@ -323,16 +116,4 @@ class SqlAlchemyBoardPageRepository:
         item_type: BoardItemType,
         cursor: tuple[datetime, str, str],
     ) -> ColumnElement[bool]:
-        changed_at, cursor_type, cursor_id = cursor
-        selected_type = item_type.value
-        tie_breaker: ColumnElement[bool]
-        if selected_type < cursor_type:
-            tie_breaker = id_column.is_not(None)
-        elif selected_type == cursor_type:
-            tie_breaker = id_column < UUID(cursor_id)
-        else:
-            tie_breaker = false()
-        return or_(
-            changed_column < changed_at,
-            and_(changed_column == changed_at, tie_breaker),
-        )
+        return cursor_filter(changed_column, id_column, item_type, cursor)

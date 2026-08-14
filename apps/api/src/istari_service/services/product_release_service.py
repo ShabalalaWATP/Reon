@@ -1,4 +1,4 @@
-"""QC dissemination and authenticated Customer product access."""
+"""QC dissemination and withdrawal operations."""
 
 from __future__ import annotations
 
@@ -7,41 +7,42 @@ from uuid import UUID
 
 from istari_service.domain import Actor
 from istari_service.models import RequestStatus, UserRole
-from istari_service.product_errors import (
-    ProductConflict,
-    ProductDependencyUnavailable,
-    ProductNotFound,
-    ProductValidationFailed,
-)
-from istari_service.product_security import normalise_product_correlation_id
-from istari_service.product_types import (
-    AccessAuditRecord,
-    AccessKind,
-    AccessOutcome,
-    ArtefactKind,
-    DownloadStream,
-    PackageStatus,
-    ReleaseAccessRecord,
-)
+from istari_service.product_errors import ProductConflict, ProductNotFound
+from istari_service.product_types import ArtefactKind, PackageStatus
 from istari_service.schemas.products import (
-    AcceptanceCommand,
-    CustomerReleaseView,
     DisseminationCommand,
     PackageView,
     WithdrawalCommand,
 )
+from istari_service.services.product_repository_port import (
+    ProductReleaseServiceRepository,
+)
 from istari_service.services.product_service_support import ProductServiceSupport
 
 
-class ProductReleaseOperations(ProductServiceSupport):
+class ProductReleaseService(ProductServiceSupport[ProductReleaseServiceRepository]):
+    """Release the latest approved package through a claimed QC task."""
+
+    def __init__(self, repository: ProductReleaseServiceRepository) -> None:
+        super().__init__(repository)
+
     async def disseminate(
         self, actor: Actor, package_id: UUID, command: DisseminationCommand
     ) -> PackageView:
         package, request = await self._authorised_package(actor, package_id, lock=True)
+        latest_package = await self._repository.latest_package(request.id)
         if (
             actor.role is not UserRole.QUALITY_RELEASE
+            or not await self._repository.live_qc_manager(actor.id)
             or request.status != RequestStatus.READY_FOR_RELEASE.value
+            or latest_package is None
+            or latest_package.id != package.id
+            or latest_package.package_version != package.package_version
         ):
+            raise ProductNotFound()
+        if actor.id in await self._repository.release_excluded_actor_ids(package.id):
+            raise ProductNotFound()
+        if not await self._repository.release_task_claimed_by(package.id, actor.id):
             raise ProductNotFound()
         view = await self._repository.view(package.id)
         has_links = any(
@@ -83,6 +84,7 @@ class ProductReleaseOperations(ProductServiceSupport):
         package, _request = await self._authorised_package(actor, package_id, lock=True)
         if (
             actor.role is not UserRole.QUALITY_RELEASE
+            or not await self._repository.live_qc_manager(actor.id)
             or package.status is not PackageStatus.DISSEMINATED
             or package.version != command.expected_version
         ):
@@ -92,240 +94,6 @@ class ProductReleaseOperations(ProductServiceSupport):
         )
         return await self._repository.view(package.id)
 
-    async def customer_release(
-        self, actor: Actor, request_id: UUID
-    ) -> CustomerReleaseView:
-        view = await self.find_customer_release(actor, request_id)
-        if view is None:
-            raise ProductNotFound()
-        return view
 
-    async def find_customer_release(
-        self, actor: Actor, request_id: UUID
-    ) -> CustomerReleaseView | None:
-        if (
-            actor.role is not UserRole.REQUESTER
-            or not await self._repository.active_actor(actor)
-        ):
-            raise ProductNotFound()
-        request = await self._repository.request(request_id, lock=False)
-        if request is None or request.requester_id != actor.id:
-            raise ProductNotFound()
-        return await self._repository.release_view(request_id, actor.id)
-
-    async def accept_product(
-        self, actor: Actor, request_id: UUID, command: AcceptanceCommand
-    ) -> CustomerReleaseView:
-        if (
-            actor.role is not UserRole.REQUESTER
-            or not await self._repository.active_actor(actor)
-        ):
-            raise ProductNotFound()
-        view = await self._repository.release_view(request_id, actor.id)
-        if view is None:
-            raise ProductNotFound()
-        await self._repository.accept(
-            view.package_id,
-            actor.id,
-            command.idempotency_key,
-            now=datetime.now(UTC),
-        )
-        accepted = await self._repository.release_view(request_id, actor.id)
-        if accepted is None:
-            raise ProductNotFound()
-        return accepted
-
-    async def download(
-        self, actor: Actor, artefact_id: UUID, correlation_id: str | None
-    ) -> DownloadStream:
-        access = await self.authorise_download(actor, artefact_id, correlation_id)
-        return await self.download_authorised(actor, access, correlation_id)
-
-    async def authorise_download(
-        self,
-        actor: Actor,
-        artefact_id: UUID,
-        correlation_id: str | None,
-    ) -> ReleaseAccessRecord:
-        access = await self._customer_access(
-            actor, artefact_id, AccessKind.DOWNLOAD, correlation_id
-        )
-        artefact = access.artefact
-        if (
-            artefact.kind is not ArtefactKind.MANAGED_FILE
-            or not artefact.released_key
-            or not artefact.filename
-            or not artefact.media_type
-        ):
-            await self._audit_access(
-                actor,
-                artefact_id,
-                AccessKind.DOWNLOAD,
-                AccessOutcome.UNAVAILABLE,
-                "WRONG_ARTEFACT_KIND",
-                correlation_id,
-                access,
-            )
-            raise ProductNotFound()
-        return access
-
-    async def download_authorised(
-        self,
-        actor: Actor,
-        access: ReleaseAccessRecord,
-        correlation_id: str | None,
-    ) -> DownloadStream:
-        artefact_id = access.artefact.id
-        artefact = access.artefact
-        if (
-            not artefact.released_key
-            or not artefact.filename
-            or not artefact.media_type
-        ):
-            raise ProductNotFound()
-        try:
-            result = await self._storage.download(
-                artefact.released_key,
-                filename=artefact.filename,
-                media_type=artefact.media_type,
-            )
-        except ProductDependencyUnavailable:
-            await self._audit_access(
-                actor,
-                artefact_id,
-                AccessKind.DOWNLOAD,
-                AccessOutcome.UNAVAILABLE,
-                "STORAGE_UNAVAILABLE",
-                correlation_id,
-                access,
-            )
-            raise
-        await self._audit_access(
-            actor,
-            artefact_id,
-            AccessKind.DOWNLOAD,
-            AccessOutcome.ALLOWED,
-            "CUSTOMER_DOWNLOAD",
-            correlation_id,
-            access,
-        )
-        return result
-
-    async def redirect(
-        self, actor: Actor, artefact_id: UUID, correlation_id: str | None
-    ) -> str:
-        access = await self._customer_access(
-            actor, artefact_id, AccessKind.REDIRECT, correlation_id
-        )
-        artefact = access.artefact
-        if (
-            artefact.kind is not ArtefactKind.EXTERNAL_LINK
-            or not artefact.destination_url
-            or (
-                artefact.expires_at
-                and self._aware(artefact.expires_at) <= datetime.now(UTC)
-            )
-        ):
-            await self._audit_access(
-                actor,
-                artefact_id,
-                AccessKind.REDIRECT,
-                AccessOutcome.UNAVAILABLE,
-                "LINK_UNAVAILABLE",
-                correlation_id,
-                access,
-            )
-            raise ProductNotFound()
-        try:
-            destination, domain = await self._approved_link(
-                access.request_id, artefact.destination_url
-            )
-        except ProductValidationFailed as exc:
-            await self._audit_access(
-                actor,
-                artefact_id,
-                AccessKind.REDIRECT,
-                AccessOutcome.DENIED,
-                "LINK_POLICY_CHANGED",
-                correlation_id,
-                access,
-            )
-            raise ProductNotFound() from exc
-        if domain != artefact.destination_domain:
-            await self._audit_access(
-                actor,
-                artefact_id,
-                AccessKind.REDIRECT,
-                AccessOutcome.DENIED,
-                "LINK_POLICY_CHANGED",
-                correlation_id,
-                access,
-            )
-            raise ProductNotFound()
-        await self._audit_access(
-            actor,
-            artefact_id,
-            AccessKind.REDIRECT,
-            AccessOutcome.ALLOWED,
-            "CUSTOMER_REDIRECT",
-            correlation_id,
-            access,
-        )
-        return destination
-
-    async def _customer_access(
-        self,
-        actor: Actor,
-        artefact_id: UUID,
-        kind: AccessKind,
-        correlation_id: str | None,
-    ) -> ReleaseAccessRecord:
-        if (
-            actor.role is not UserRole.REQUESTER
-            or not await self._repository.active_actor(actor)
-        ):
-            await self._audit_access(
-                actor,
-                artefact_id,
-                kind,
-                AccessOutcome.DENIED,
-                "ACCESS_DENIED",
-                correlation_id,
-            )
-            raise ProductNotFound()
-        access = await self._repository.access(artefact_id, actor.id)
-        if access is None:
-            await self._audit_access(
-                actor,
-                artefact_id,
-                kind,
-                AccessOutcome.DENIED,
-                "ACCESS_DENIED",
-                correlation_id,
-            )
-            raise ProductNotFound()
-        return access
-
-    async def _audit_access(
-        self,
-        actor: Actor,
-        target: UUID,
-        kind: AccessKind,
-        outcome: AccessOutcome,
-        reason: str,
-        correlation_id: str | None,
-        access: ReleaseAccessRecord | None = None,
-    ) -> None:
-        await self._audit.record(
-            AccessAuditRecord(
-                request_id=access.request_id if access else None,
-                package_id=access.package_id if access else None,
-                artefact_id=access.artefact.id if access else None,
-                target_reference=target,
-                actor_id=actor.id,
-                kind=kind,
-                outcome=outcome,
-                reason_code=reason,
-                correlation_id=normalise_product_correlation_id(correlation_id),
-            )
-        )
+# Temporary import compatibility while callers migrate to the focused name.
+ProductReleaseOperations = ProductReleaseService

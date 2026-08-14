@@ -13,10 +13,7 @@ from istari_service.dependencies import (
     DatabaseSession,
     MutationActor,
 )
-from istari_service.repositories.configuration_pins import (
-    SqlAlchemyConfigurationPinRepository,
-)
-from istari_service.repositories.drafts import SqlAlchemyDraftRepository
+from istari_service.request_composition import build_draft_service
 from istari_service.schemas.drafts import (
     RequestDraftCreate,
     RequestDraftList,
@@ -25,19 +22,8 @@ from istari_service.schemas.drafts import (
     RequestDraftView,
 )
 from istari_service.schemas.requests import RequestDetail
-from istari_service.services.draft_service import DraftService
 
 router = APIRouter(prefix="/request-drafts", tags=["request drafts"])
-
-
-def _service(session: DatabaseSession, settings: AppSettings) -> DraftService:
-    return DraftService(
-        SqlAlchemyDraftRepository(
-            session,
-            process_id=settings.camunda_process_id,
-            configuration_pins=SqlAlchemyConfigurationPinRepository(session),
-        )
-    )
 
 
 @router.get("", response_model=RequestDraftList)
@@ -48,7 +34,7 @@ async def list_drafts(
     limit: int = Query(default=50, ge=1, le=100),
     cursor: str | None = Query(default=None, max_length=500),
 ) -> RequestDraftList:
-    items, next_cursor = await _service(session, settings).list_page(
+    items, next_cursor = await build_draft_service(session, settings).list_page(
         actor, limit=limit, cursor=cursor
     )
     return RequestDraftList(items=items, next_cursor=next_cursor)
@@ -61,7 +47,7 @@ async def create_draft(
     session: DatabaseSession,
     settings: AppSettings,
 ) -> RequestDraftView:
-    return await _service(session, settings).create(actor, command)
+    return await build_draft_service(session, settings).create(actor, command)
 
 
 @router.get("/{draft_id}", response_model=RequestDraftView)
@@ -71,7 +57,7 @@ async def get_draft(
     session: DatabaseSession,
     settings: AppSettings,
 ) -> RequestDraftView:
-    return await _service(session, settings).get(actor, draft_id)
+    return await build_draft_service(session, settings).get(actor, draft_id)
 
 
 @router.patch("/{draft_id}", response_model=RequestDraftView)
@@ -82,7 +68,7 @@ async def update_draft(
     session: DatabaseSession,
     settings: AppSettings,
 ) -> RequestDraftView:
-    return await _service(session, settings).update(actor, draft_id, command)
+    return await build_draft_service(session, settings).update(actor, draft_id, command)
 
 
 @router.delete("/{draft_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -93,7 +79,9 @@ async def delete_draft(
     session: DatabaseSession,
     settings: AppSettings,
 ) -> Response:
-    await _service(session, settings).delete(actor, draft_id, expected_version)
+    await build_draft_service(session, settings).delete(
+        actor, draft_id, expected_version
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -105,4 +93,4 @@ async def submit_draft(
     session: DatabaseSession,
     settings: AppSettings,
 ) -> RequestDetail:
-    return await _service(session, settings).submit(actor, draft_id, command)
+    return await build_draft_service(session, settings).submit(actor, draft_id, command)

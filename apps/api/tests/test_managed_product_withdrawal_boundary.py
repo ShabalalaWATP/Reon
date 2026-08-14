@@ -46,7 +46,7 @@ async def test_withdrawal_revokes_dashboard_and_legacy_fallback_access(
     assert response.status_code == 200, response.text
     response = await api_harness.client.post(
         f"/api/v1/product-packages/{package['id']}/submit",
-        json=_command(2),
+        json=_command(2, coveringNote="Synthetic product covering note."),
         headers=api_harness.mutation_headers(),
     )
     assert response.status_code == 200, response.text

@@ -89,7 +89,7 @@ async def test_projection_is_idempotent_scoped_and_content_free(
     await perform(harness, "admin15", {"action": "approve"})
     await perform(
         harness,
-        "admin15",
+        "admin100",
         {"action": "release", "recipients": ["Fictional service owner"]},
     )
     await harness.login("admin2")

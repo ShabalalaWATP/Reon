@@ -25,6 +25,8 @@ from istari_service.models import (
     User,
     UserRole,
 )
+from istari_service.organisation_seed import seed_organisation_units
+from istari_service.qc_membership import QC_TEAM_ID
 from istari_service.repositories.work_actions import (
     apply_work_effect,
     event_message,
@@ -45,6 +47,7 @@ from istari_service.schemas.work import (
     SendToAllocation,
     SubmitDeliverable,
 )
+from istari_service.team_models import TeamMembership, WorkspacePosition
 
 
 @pytest.fixture
@@ -112,15 +115,31 @@ async def test_validation_and_every_persisted_work_effect(
 ) -> None:
     _, factory = database
     async with factory() as session:
+        await seed_organisation_units(session)
         requester = make_user(UserRole.REQUESTER, "Area A")
         author = make_user(UserRole.DELIVERY_SPECIALIST, "DELIVERY_TEAM_A")
         reviewer = make_user(UserRole.QUALITY_RELEASE, "Shared queue")
-        session.add_all([requester, author, reviewer])
+        releaser = make_user(UserRole.QUALITY_RELEASE, "Shared queue")
+        session.add_all([requester, author, reviewer, releaser])
+        await session.flush()
+        now = datetime.now(UTC)
+        session.add_all(
+            TeamMembership(
+                user_id=user.id,
+                team_id=QC_TEAM_ID,
+                workspace_position=WorkspacePosition.MANAGER,
+                effective_from=now,
+                start_projected_at=now,
+                start_reason="Synthetic QC test membership.",
+            )
+            for user in (reviewer, releaser)
+        )
         await session.flush()
         request = make_request(requester.id)
         session.add(request)
         await session.flush()
         author_actor, reviewer_actor = actor_from(author), actor_from(reviewer)
+        releaser_actor = actor_from(releaser)
 
         progress = ProgressRequest(
             action="progress",
@@ -215,8 +234,10 @@ async def test_validation_and_every_persisted_work_effect(
             session, request, reviewer_actor, ApproveWork(action="approve")
         )
         assert latest.status is DeliverableStatus.APPROVED
-        await validate_work_effect(session, request, reviewer_actor, release)
-        await apply_work_effect(session, request, reviewer_actor, release)
+        with pytest.raises(InvalidAction, match="QC reviewer cannot disseminate"):
+            await validate_work_effect(session, request, reviewer_actor, release)
+        await validate_work_effect(session, request, releaser_actor, release)
+        await apply_work_effect(session, request, releaser_actor, release)
         assert latest.status is DeliverableStatus.RELEASED
         assert latest.release_recipients == ["Recipient"]
         assert latest.approved_at is not None and latest.released_at is not None

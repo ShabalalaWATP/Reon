@@ -7,17 +7,8 @@ from uuid import UUID
 
 from istari_service.domain import Actor
 from istari_service.errors import InvalidRosterChange, TeamWorkspaceNotFound
+from istari_service.identity_context import require_staff_context
 from istari_service.management_models import ManagementAction
-from istari_service.repositories.management import resolve_management_scope
-from istari_service.repositories.team_member_profiles import (
-    SqlAlchemyTeamMemberProfileRepository,
-)
-from istari_service.repositories.team_memberships import (
-    SqlAlchemyTeamMembershipRepository,
-)
-from istari_service.repositories.team_workspaces import (
-    SqlAlchemyTeamWorkspaceRepository,
-)
 from istari_service.schemas.team_workspaces import (
     EligibleRosterAnalyst,
     EndMembershipCommand,
@@ -29,27 +20,38 @@ from istari_service.schemas.team_workspaces import (
     TeamWorkspaceOverview,
     TransferCommand,
 )
+from istari_service.services.team_workspace_ports import (
+    ExactManagementScopePort,
+    TeamMemberProfileReadPort,
+    TeamMembershipMutationPort,
+    TeamWorkspaceViewPort,
+)
 from istari_service.team_models import WorkspacePosition
 
 
 class TeamWorkspaceService:
     def __init__(
         self,
-        views: SqlAlchemyTeamWorkspaceRepository,
-        memberships: SqlAlchemyTeamMembershipRepository,
-        profiles: SqlAlchemyTeamMemberProfileRepository,
+        views: TeamWorkspaceViewPort,
+        memberships: TeamMembershipMutationPort,
+        profiles: TeamMemberProfileReadPort,
+        management_scopes: ExactManagementScopePort,
     ) -> None:
         self._views = views
         self._memberships = memberships
         self._profiles = profiles
+        self._management_scopes = management_scopes
 
     async def list_access(self, actor: Actor) -> list[TeamWorkspaceAccess]:
+        self._require_staff(actor)
         return await self._views.list_access(actor.id)
 
     async def overview(self, actor: Actor, team_id: UUID) -> TeamWorkspaceOverview:
+        self._require_staff(actor)
         return await self._views.overview(actor.id, team_id)
 
     async def people(self, actor: Actor, team_id: UUID) -> list[TeamMember]:
+        self._require_staff(actor)
         access = await self._views.require_read(actor.id, team_id)
         reveal_reasons = (
             access.workspace_position is WorkspacePosition.MANAGER
@@ -62,20 +64,24 @@ class TeamWorkspaceService:
     async def member_profile(
         self, actor: Actor, team_id: UUID, member_id: UUID
     ) -> TeamMemberProfile:
+        self._require_staff(actor)
         return await self._profiles.get(actor.id, team_id, member_id)
 
     async def eligible_analysts(
         self, actor: Actor, team_id: UUID, grant_id: UUID
     ) -> list[EligibleRosterAnalyst]:
+        self._require_staff(actor)
         await self._authorise_roster(actor, team_id, grant_id)
         return await self._views.eligible_analysts(actor.id, team_id)
 
     async def activity(self, actor: Actor, team_id: UUID) -> list[TeamActivity]:
+        self._require_staff(actor)
         return await self._views.activity(actor.id, team_id)
 
     async def add(
         self, actor: Actor, team_id: UUID, command: RosterCommand
     ) -> list[TeamMember]:
+        self._require_staff(actor)
         await self._authorise_roster(actor, team_id, command.grant_id, lock=True)
         await self._memberships.add(
             actor_id=actor.id,
@@ -88,6 +94,7 @@ class TeamWorkspaceService:
     async def transfer(
         self, actor: Actor, team_id: UUID, command: TransferCommand
     ) -> list[TeamMember]:
+        self._require_staff(actor)
         await self._authorise_roster(actor, team_id, command.grant_id, lock=True)
         now = datetime.now(UTC)
         _require(
@@ -114,6 +121,7 @@ class TeamWorkspaceService:
         membership_id: UUID,
         command: EndMembershipCommand,
     ) -> list[TeamMember]:
+        self._require_staff(actor)
         await self._authorise_roster(actor, team_id, command.grant_id, lock=True)
         await self._memberships.end(
             actor_id=actor.id,
@@ -137,18 +145,18 @@ class TeamWorkspaceService:
             access.workspace_position is WorkspacePosition.MANAGER,
             TeamWorkspaceNotFound(),
         )
-        scope = await resolve_management_scope(
-            self._views.session,
-            subject_user_id=actor.id,
+        authorised = await self._management_scopes.authorises_exact_root(
+            actor_id=actor.id,
             grant_id=grant_id,
-            target_unit_id=team_id,
+            unit_id=team_id,
             action=ManagementAction.ROSTER,
             lock=lock,
         )
-        _require(
-            scope is not None and scope.root_unit_id == team_id,
-            TeamWorkspaceNotFound(),
-        )
+        _require(authorised, TeamWorkspaceNotFound())
+
+    @staticmethod
+    def _require_staff(actor: Actor) -> None:
+        require_staff_context(actor, TeamWorkspaceNotFound())
 
 
 def _require(condition: bool, error: Exception) -> None:

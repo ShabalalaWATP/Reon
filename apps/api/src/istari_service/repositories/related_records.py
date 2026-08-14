@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.domain import Actor
 from istari_service.errors import InvalidAction, StaleVersion
+from istari_service.identity_context import active_actor_condition
 from istari_service.models import (
     Deliverable,
     DeliverableStatus,
@@ -23,9 +24,10 @@ from istari_service.models import (
 )
 from istari_service.models import WorkflowTask as StoredWorkflowTask
 from istari_service.related_record_models import RequestLink, RequestLinkType
+from istari_service.related_record_types import RelatedRecordSource
 from istari_service.repositories.event_store import append_request_event
-from istari_service.repositories.organisation import route_membership_condition
 from istari_service.repositories.related_record_search import RelatedRecordSearch
+from istari_service.repositories.route_access import route_membership_condition
 from istari_service.repositories.work_scope import work_scope_conditions
 from istari_service.schemas.related_records import (
     RelatedRecordCandidate,
@@ -34,7 +36,6 @@ from istari_service.schemas.related_records import (
     RequestLinkView,
     RequestLinkWorkspace,
 )
-from istari_service.services.related_record_service import RelatedRecordSource
 
 
 class SqlAlchemyRelatedRecordRepository:
@@ -64,10 +65,7 @@ class SqlAlchemyRelatedRecordRepository:
                 WorkflowInstance.status == WorkflowInstanceStatus.ACTIVE,
                 WorkflowInstance.current_element_id == StoredWorkflowTask.element_id,
                 WorkflowInstance.process_instance_key.is_not(None),
-                User.id == actor.id,
-                User.is_active.is_(True),
-                User.role == actor.role,
-                User.scope == actor.scope,
+                active_actor_condition(actor),
                 *work_scope_conditions(actor),
             )
         )
@@ -173,6 +171,7 @@ class SqlAlchemyRelatedRecordRepository:
             await self._session.scalar(
                 select(ServiceRequest).where(
                     ServiceRequest.id == target_id,
+                    ServiceRequest.requester_id != actor.id,
                     membership,
                 )
             ),

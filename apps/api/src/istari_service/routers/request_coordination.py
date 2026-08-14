@@ -5,13 +5,13 @@ from uuid import UUID
 from fastapi import APIRouter
 
 from istari_service.dependencies import DatabaseSession, MutationActor
+from istari_service.request_coordination_composition import (
+    request_coordination_service,
+)
 from istari_service.schemas.coordination import (
     CoordinationMessageCreate,
     CoordinationResult,
     ReturnRequestCreate,
-)
-from istari_service.services.request_coordination_service import (
-    RequestCoordinationService,
 )
 
 router = APIRouter(prefix="/requests", tags=["request-coordination"])
@@ -24,7 +24,7 @@ async def post_coordination(
     actor: MutationActor,
     session: DatabaseSession,
 ) -> CoordinationResult:
-    event = await RequestCoordinationService(session).post_message(
+    event = await request_coordination_service(session).post_message(
         actor, request_id, command
     )
     return CoordinationResult(event=event)
@@ -37,7 +37,7 @@ async def request_return(
     actor: MutationActor,
     session: DatabaseSession,
 ) -> CoordinationResult:
-    event = await RequestCoordinationService(session).request_return(
+    event = await request_coordination_service(session).request_return(
         actor, request_id, command
     )
     return CoordinationResult(event=event)

@@ -20,6 +20,8 @@ IMMUTABLE_TABLES = (
     "operational_runs",
     "product_access_events",
     "request_configuration_pins",
+    "request_conversation_messages",
+    "request_conversations",
     "request_events",
     "security_events",
     "team_activity_events",
@@ -28,6 +30,7 @@ IMMUTABLE_TABLES = (
 NON_DELETABLE_TABLES = (
     "approved_workflow_definitions",
     "configuration_versions",
+    "request_conversation_deliveries",
 )
 
 

@@ -74,7 +74,7 @@ async def test_account_without_a_workspace_can_use_a_personal_calendar(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
-    await harness.login("admin2")
+    await harness.login("admin1")
     created = await harness.client.post(
         "/api/v1/calendar/events",
         json=_event(),

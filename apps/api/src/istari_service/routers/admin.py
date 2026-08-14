@@ -7,6 +7,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, Request, status
 
+from istari_service.admin_composition import account_request_service, admin_service
 from istari_service.auth_service import PasswordHasher
 from istari_service.dependencies import (
     AppSettings,
@@ -14,10 +15,6 @@ from istari_service.dependencies import (
     DatabaseSession,
     ElevatedMutationActor,
 )
-from istari_service.repositories.account_requests import (
-    SqlAlchemyAccountRequestRepository,
-)
-from istari_service.repositories.admin import SqlAlchemyAdminRepository
 from istari_service.schemas.account_requests import (
     AccountRequestApprove,
     AccountRequestList,
@@ -44,8 +41,8 @@ def _service(
     session: DatabaseSession,
     settings: AppSettings,
 ) -> AdminService:
-    return AdminService(
-        SqlAlchemyAdminRepository(session),
+    return admin_service(
+        session,
         settings,
         cast(PasswordHasher, request.app.state.password_hasher),
     )
@@ -56,8 +53,8 @@ def _account_service(
     session: DatabaseSession,
     settings: AppSettings,
 ) -> AccountRequestService:
-    return AccountRequestService(
-        SqlAlchemyAccountRequestRepository(session),
+    return account_request_service(
+        session,
         settings,
         _service(request, session, settings),
     )

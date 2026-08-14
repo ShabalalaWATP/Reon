@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.account_request_models import AccountRequest, AccountRequestStatus
+from istari_service.account_request_ports import PendingAccountRequest
+from istari_service.admin_audit import append_admin_event
 from istari_service.errors import ObjectNotFound, StaleVersion
 from istari_service.schemas.account_requests import (
     AccountRequestCreate,
@@ -55,3 +58,63 @@ class SqlAlchemyAccountRequestRepository:
         if row.status is not AccountRequestStatus.PENDING:
             raise StaleVersion()
         return row
+
+    async def pending(
+        self, request_id: UUID, expected_version: int
+    ) -> PendingAccountRequest:
+        row = await self.locked(request_id, expected_version)
+        return PendingAccountRequest(
+            row.id, row.display_name, row.contact_email, row.version
+        )
+
+    async def approve(
+        self,
+        request: PendingAccountRequest,
+        *,
+        created_user_id: UUID,
+        reviewed_by_user_id: UUID,
+        reviewed_at: datetime,
+    ) -> AccountRequestView:
+        row = await self.locked(request.id, request.version)
+        row.status = AccountRequestStatus.APPROVED
+        row.created_user_id = created_user_id
+        row.reviewed_by_user_id = reviewed_by_user_id
+        row.reviewed_at = reviewed_at
+        row.version += 1
+        return await self._reviewed(
+            row, reviewed_by_user_id, "ACCOUNT_REQUEST_APPROVED"
+        )
+
+    async def reject(
+        self,
+        request: PendingAccountRequest,
+        *,
+        decision_note: str,
+        reviewed_by_user_id: UUID,
+        reviewed_at: datetime,
+    ) -> AccountRequestView:
+        row = await self.locked(request.id, request.version)
+        row.status = AccountRequestStatus.REJECTED
+        row.decision_note = decision_note.strip()
+        row.reviewed_by_user_id = reviewed_by_user_id
+        row.reviewed_at = reviewed_at
+        row.version += 1
+        return await self._reviewed(
+            row, reviewed_by_user_id, "ACCOUNT_REQUEST_REJECTED"
+        )
+
+    async def _reviewed(
+        self, row: AccountRequest, actor_id: UUID, action: str
+    ) -> AccountRequestView:
+        await append_admin_event(
+            self.session,
+            actor_id=actor_id,
+            action=action,
+            target_type="ACCOUNT_REQUEST",
+            target_id=row.id,
+            changed_fields=["status"],
+            summary="Synthetic Customer account request reviewed.",
+        )
+        await self.session.flush()
+        await self.session.refresh(row)
+        return AccountRequestView.model_validate(row)

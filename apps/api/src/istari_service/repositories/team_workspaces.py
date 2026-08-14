@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from functools import partial, reduce
-from typing import Any
 from uuid import UUID
 
 from sqlalchemy import func, or_, select
@@ -24,6 +22,15 @@ from istari_service.organisation_models import (
     OrganisationUnit,
 )
 from istari_service.repositories.team_memberships import MEMBER_ROLE_BY_KIND
+from istari_service.repositories.team_workspace_authority import (
+    WorkspaceAuthority as _Authority,
+)
+from istari_service.repositories.team_workspace_authority import (
+    merge_authority as _merge_authority,
+)
+from istari_service.repositories.team_workspace_authority import (
+    own_authority as _own_authority,
+)
 from istari_service.schemas.team_workspaces import (
     EligibleRosterAnalyst,
     TeamActivity,
@@ -59,14 +66,6 @@ WORKSPACE_ACTIONS = {
     ManagementAction.CAPACITY,
     ManagementAction.STATISTICS,
 }
-
-
-@dataclass(slots=True)
-class _Authority:
-    team: OrganisationUnit
-    position: WorkspacePosition | None = None
-    grant_id: UUID | None = None
-    permissions: set[ManagementAction] = field(default_factory=set)
 
 
 class SqlAlchemyTeamWorkspaceRepository:
@@ -306,25 +305,6 @@ class SqlAlchemyTeamWorkspaceRepository:
             permissions=sorted(authority.permissions, key=lambda action: action.value),
             views=_workspace_views(authority.team.kind),
         )
-
-
-def _merge_authority(
-    authority: dict[UUID, _Authority], row: Any
-) -> dict[UUID, _Authority]:
-    grant, action, team = row
-    item = authority.setdefault(team.id, _Authority(team=team))
-    if item.grant_id is None or action in {
-        ManagementAction.ROSTER,
-        ManagementAction.CALENDAR,
-    }:
-        item.grant_id = grant.id
-    item.permissions.add(action)
-    return authority
-
-
-def _own_authority(row: Any) -> tuple[UUID, _Authority]:
-    unit, position = row
-    return unit.id, _Authority(team=unit, position=position)
 
 
 def _workspace_views(kind: OrganisationKind) -> list[str]:

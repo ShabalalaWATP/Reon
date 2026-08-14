@@ -25,7 +25,12 @@ from istari_service.product_runtime import ProductRuntime
 from istari_service.product_security import AllowedHttpsLinkPolicy
 from istari_service.repositories.event_store import append_request_event
 from istari_service.request_event_models import RequestEvent
-from product_test_support import create_product_request, product_actors
+from product_test_support import (
+    add_claimed_lead_review_task,
+    add_claimed_release_task,
+    create_product_request,
+    product_actors,
+)
 
 
 async def test_complete_managed_releases_are_counted_once_in_statistics(
@@ -121,11 +126,13 @@ async def _complete_managed_release(
     submitted = await harness.client.post(
         f"/api/v1/product-packages/{package['id']}/submit",
         headers=harness.mutation_headers(),
-        json=_command(2),
+        json=_command(2, coveringNote="Synthetic product covering note."),
     )
     assert submitted.status_code == 200, submitted.text
 
     await _set_request_status(harness, request_id, RequestStatus.LEAD_REVIEW)
+    async with harness.sessions() as session, session.begin():
+        await add_claimed_lead_review_task(session, request_id, manager.id)
     await harness.login("admin8")
     approved = await harness.client.post(
         f"/api/v1/product-packages/{package['id']}/manager-approve",
@@ -139,6 +146,8 @@ async def _complete_managed_release(
 
     await _set_request_status(harness, request_id, RequestStatus.READY_FOR_RELEASE)
     await _record_workflow_completion(harness, request_id, qc.id)
+    async with harness.sessions() as session, session.begin():
+        await add_claimed_release_task(session, request_id, qc.id)
     await harness.login("admin15")
     released = await harness.client.post(
         f"/api/v1/releases/{package['id']}/disseminate",

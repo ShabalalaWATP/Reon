@@ -7,15 +7,13 @@ from uuid import UUID
 from fastapi import APIRouter
 
 from istari_service.dependencies import CurrentActor, DatabaseSession, MutationActor
+from istari_service.planning_evolution_composition import planning_evolution_service
 from istari_service.schemas.planning import (
     CapacityScenarioCommand,
     CapacityScenarioList,
     CapacityScenarioPreview,
     PackageTemplateList,
     PlanningCockpit,
-)
-from istari_service.services.planning_evolution_service import (
-    PlanningEvolutionService,
 )
 
 router = APIRouter(tags=["team-planning"])
@@ -27,7 +25,7 @@ async def get_planning_cockpit(
     actor: CurrentActor,
     session: DatabaseSession,
 ) -> PlanningCockpit:
-    return await PlanningEvolutionService(session).cockpit(actor, team_id)
+    return await planning_evolution_service(session).cockpit(actor, team_id)
 
 
 @router.get("/{team_id}/planning/templates", response_model=PackageTemplateList)
@@ -36,7 +34,7 @@ async def list_package_templates(
     actor: CurrentActor,
     session: DatabaseSession,
 ) -> PackageTemplateList:
-    return await PlanningEvolutionService(session).templates(actor, team_id)
+    return await planning_evolution_service(session).templates(actor, team_id)
 
 
 @router.get("/{team_id}/planning/scenarios", response_model=CapacityScenarioList)
@@ -45,7 +43,7 @@ async def list_capacity_scenarios(
     actor: CurrentActor,
     session: DatabaseSession,
 ) -> CapacityScenarioList:
-    return await PlanningEvolutionService(session).scenarios(actor, team_id)
+    return await planning_evolution_service(session).scenarios(actor, team_id)
 
 
 @router.post(
@@ -58,6 +56,6 @@ async def preview_capacity_scenario(
     actor: MutationActor,
     session: DatabaseSession,
 ) -> CapacityScenarioPreview:
-    return await PlanningEvolutionService(session).preview_scenario(
+    return await planning_evolution_service(session).preview_scenario(
         actor, team_id, command
     )

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime
 from hashlib import sha256
 from uuid import UUID
@@ -24,16 +23,12 @@ from istari_service.repositories.statistics import (
     MAX_FACT_ROWS,
     PLATFORM_SCOPE_ID,
     SqlAlchemyStatisticsRepository,
-    StatisticsDataset,
+)
+from istari_service.repositories.statistics_record_mapping import (
+    operational_statistics_fact,
 )
 from istari_service.schemas.statistics_evolution import StatisticsExportCommand
-
-
-@dataclass(frozen=True, slots=True)
-class StatisticsEvolutionDataset:
-    current: StatisticsDataset
-    previous: StatisticsDataset
-    operational_facts: tuple[OperationalAnalyticsFact, ...]
+from istari_service.statistics_records import StatisticsEvolutionDataset
 
 
 class SqlAlchemyStatisticsEvolutionRepository:
@@ -76,7 +71,7 @@ class SqlAlchemyStatisticsEvolutionRepository:
             at=at,
         )
         unit_column = _operational_unit_column(unit.kind)
-        facts = tuple(
+        fact_rows = tuple(
             await self.session.scalars(
                 select(OperationalAnalyticsFact)
                 .where(
@@ -91,9 +86,13 @@ class SqlAlchemyStatisticsEvolutionRepository:
                 .limit(MAX_FACT_ROWS + 1)
             )
         )
-        if len(facts) > MAX_FACT_ROWS:
+        if len(fact_rows) > MAX_FACT_ROWS:
             raise StatisticsQueryInvalid("Reduce the statistics date range.")
-        return StatisticsEvolutionDataset(current, previous, facts)
+        return StatisticsEvolutionDataset(
+            current,
+            previous,
+            tuple(map(operational_statistics_fact, fact_rows)),
+        )
 
     async def record_denied_export(
         self,

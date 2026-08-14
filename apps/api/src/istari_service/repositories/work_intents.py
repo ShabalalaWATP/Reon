@@ -20,11 +20,11 @@ from istari_service.models import (
 from istari_service.models import WorkflowTask as StoredWorkflowTask
 from istari_service.policies import can_access_work, may_complete
 from istari_service.repositories.organisation import (
-    has_route_membership,
     resolve_routing_selection,
 )
 from istari_service.repositories.request_participants import active_participant_ids
 from istari_service.repositories.requests import record_from_request
+from istari_service.repositories.route_access import has_route_membership
 from istari_service.repositories.work_actions import validate_work_effect
 from istari_service.schemas.work import CompletionPayload
 from istari_service.work_command_types import (

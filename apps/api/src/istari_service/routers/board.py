@@ -8,11 +8,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, Response, status
 
+from istari_service.board_composition import board_services
 from istari_service.board_models import BoardColumn
-from istari_service.dependencies import CurrentActor, DatabaseSession, MutationActor
-from istari_service.repositories.board import SqlAlchemyBoardRepository
-from istari_service.repositories.team_workspaces import (
-    SqlAlchemyTeamWorkspaceRepository,
+from istari_service.dependencies import (
+    DatabaseSession,
+    StaffActor,
+    StaffMutationActor,
 )
 from istari_service.schemas.board import (
     BoardConfigurationCommand,
@@ -47,15 +48,13 @@ router = APIRouter(prefix="/team-workspaces", tags=["team-board"])
 def _services(
     session: DatabaseSession,
 ) -> tuple[BoardService, BoardPlanningService]:
-    board = SqlAlchemyBoardRepository(session)
-    workspaces = SqlAlchemyTeamWorkspaceRepository(session)
-    return BoardService(board, workspaces), BoardPlanningService(board, workspaces)
+    return board_services(session)
 
 
 @router.get("/{team_id}/board", response_model=BoardResult)
 async def get_board(
     team_id: UUID,
-    actor: CurrentActor,
+    actor: StaffActor,
     session: DatabaseSession,
     search: Annotated[str, Query(max_length=120)] = "",
     column: Annotated[list[BoardColumn] | None, Query()] = None,
@@ -87,7 +86,7 @@ async def get_board(
 async def get_board_request(
     team_id: UUID,
     request_id: UUID,
-    actor: CurrentActor,
+    actor: StaffActor,
     session: DatabaseSession,
 ) -> BoardItem:
     service, _ = _services(session)
@@ -98,7 +97,7 @@ async def get_board_request(
 async def move_board_item(
     team_id: UUID,
     command: BoardMoveAttempt,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> WorkPackageResult:
     service, _ = _services(session)
@@ -109,7 +108,7 @@ async def move_board_item(
 async def configure_board(
     team_id: UUID,
     command: BoardConfigurationCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> BoardConfigurationResult:
     service, _ = _services(session)
@@ -120,7 +119,7 @@ async def configure_board(
 async def create_saved_view(
     team_id: UUID,
     command: SavedBoardViewCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> SavedBoardViewResult:
     service, _ = _services(session)
@@ -134,7 +133,7 @@ async def update_saved_view(
     team_id: UUID,
     view_id: UUID,
     command: SavedBoardViewUpdate,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> SavedBoardViewResult:
     service, _ = _services(session)
@@ -148,7 +147,7 @@ async def delete_saved_view(
     team_id: UUID,
     view_id: UUID,
     command: DeleteSavedViewCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> Response:
     service, _ = _services(session)
@@ -159,7 +158,7 @@ async def delete_saved_view(
 @router.get("/{team_id}/packages", response_model=WorkPackageList)
 async def list_packages(
     team_id: UUID,
-    actor: CurrentActor,
+    actor: StaffActor,
     session: DatabaseSession,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
 ) -> WorkPackageList:
@@ -171,7 +170,7 @@ async def list_packages(
 async def get_package(
     team_id: UUID,
     package_id: UUID,
-    actor: CurrentActor,
+    actor: StaffActor,
     session: DatabaseSession,
 ) -> WorkPackageResult:
     service, _ = _services(session)
@@ -182,7 +181,7 @@ async def get_package(
 async def create_package(
     team_id: UUID,
     command: WorkPackageCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> WorkPackageResult:
     service, _ = _services(session)
@@ -194,7 +193,7 @@ async def update_package(
     team_id: UUID,
     package_id: UUID,
     command: WorkPackageUpdate,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> WorkPackageResult:
     service, _ = _services(session)
@@ -206,7 +205,7 @@ async def move_package(
     team_id: UUID,
     package_id: UUID,
     command: WorkPackageMove,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> WorkPackageResult:
     service, _ = _services(session)
@@ -222,7 +221,7 @@ async def create_reservation(
     package_id: UUID,
     command: ReservationCommand,
     package_version: Annotated[int, Query(alias="packageVersion", ge=1)],
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> WorkPackageResult:
     _, service = _services(session)
@@ -239,7 +238,7 @@ async def cancel_reservation(
     reservation_id: UUID,
     command: ReservationCancelCommand,
     package_version: Annotated[int, Query(alias="packageVersion", ge=1)],
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> WorkPackageResult:
     _, service = _services(session)
@@ -250,7 +249,7 @@ async def cancel_reservation(
 
 @router.get("/{team_id}/iterations", response_model=IterationList)
 async def list_iterations(
-    team_id: UUID, actor: CurrentActor, session: DatabaseSession
+    team_id: UUID, actor: StaffActor, session: DatabaseSession
 ) -> IterationList:
     _, service = _services(session)
     return await service.iterations(actor, team_id)
@@ -260,7 +259,7 @@ async def list_iterations(
 async def create_iteration(
     team_id: UUID,
     command: IterationCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> IterationResult:
     _, service = _services(session)
@@ -274,7 +273,7 @@ async def close_iteration(
     team_id: UUID,
     iteration_id: UUID,
     command: IterationCloseCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> IterationResult:
     _, service = _services(session)

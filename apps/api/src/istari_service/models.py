@@ -1,127 +1,65 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from enum import StrEnum
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from sqlalchemy import (
     JSON,
     Boolean,
     CheckConstraint,
     Date,
-    DateTime,
     ForeignKey,
     Index,
     Integer,
-    MetaData,
     String,
     Text,
-    Uuid,
     false,
     func,
     text,
 )
-from sqlalchemy import Enum as SqlEnum
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import relationship as rel
 
+from istari_service.model_enums import DeliverableStatus as DeliverableStatus
+from istari_service.model_enums import (
+    IdentityContext as IdentityContext,
+)
+from istari_service.model_enums import OutboxStatus as OutboxStatus
+from istari_service.model_enums import (
+    ProductMode as ProductMode,
+)
+from istari_service.model_enums import (
+    RequestStatus as RequestStatus,
+)
+from istari_service.model_enums import (
+    UserRole as UserRole,
+)
+from istari_service.model_enums import (
+    WorkflowInstanceStatus as WorkflowInstanceStatus,
+)
+from istari_service.model_enums import (
+    WorkflowTaskStatus as WorkflowTaskStatus,
+)
+from istari_service.orm_base import (
+    UTC_TS as UTC_TS,
+)
+from istari_service.orm_base import (
+    UUID_TYPE as UUID_TYPE,
+)
+from istari_service.orm_base import (
+    Base as Base,
+)
+from istari_service.orm_base import (
+    CreatedMixin as CreatedMixin,
+)
+from istari_service.orm_base import IdMixin as IdMixin
+from istari_service.orm_base import (
+    TimestampMixin as TimestampMixin,
+)
+from istari_service.orm_base import (
+    _enum as _enum,
+)
 from istari_service.profile_models import ProfileFieldsMixin
-
-
-class UserRole(StrEnum):
-    PLATFORM_ADMIN = "PLATFORM_ADMIN"
-    REQUESTER = "REQUESTER"
-    INTAKE_TRIAGE = "INTAKE_TRIAGE"
-    SERVICE_COORDINATION = "SERVICE_COORDINATION"
-    OPERATIONS_ALLOCATION = "OPERATIONS_ALLOCATION"
-    DELIVERY_TEAM_LEAD = "DELIVERY_TEAM_LEAD"
-    DELIVERY_SPECIALIST = "DELIVERY_SPECIALIST"
-    QUALITY_RELEASE = "QUALITY_RELEASE"
-
-
-class RequestStatus(StrEnum):
-    ROUTING_PENDING = "ROUTING_PENDING"
-    TRIAGE_REVIEW = "TRIAGE_REVIEW"
-    INFORMATION_REQUIRED = "INFORMATION_REQUIRED"
-    COORDINATION_REVIEW = "COORDINATION_REVIEW"
-    ON_HOLD = "ON_HOLD"
-    ALLOCATION_REVIEW = "ALLOCATION_REVIEW"
-    DELIVERY_PLANNING = "DELIVERY_PLANNING"
-    IN_PROGRESS = "IN_PROGRESS"
-    CUSTOMER_INFORMATION_REQUIRED = "CUSTOMER_INFORMATION_REQUIRED"
-    LEAD_REVIEW = "LEAD_REVIEW"
-    REWORK_REQUIRED = "REWORK_REQUIRED"
-    QUALITY_REVIEW = "QUALITY_REVIEW"
-    READY_FOR_RELEASE = "READY_FOR_RELEASE"
-    COMPLETED = "COMPLETED"
-    CLOSED_NOT_PROGRESSED = "CLOSED_NOT_PROGRESSED"
-    CANCELLED = "CANCELLED"
-
-
-class WorkflowInstanceStatus(StrEnum):
-    START_PENDING = "START_PENDING"
-    ACTIVE = "ACTIVE"
-    COMPLETED = "COMPLETED"
-    TERMINATED = "TERMINATED"
-    ERROR = "ERROR"
-
-
-class WorkflowTaskStatus(StrEnum):
-    OPEN = "OPEN"
-    CLAIM_PENDING = "CLAIM_PENDING"
-    CLAIMED = "CLAIMED"
-    COMPLETION_PENDING = "COMPLETION_PENDING"
-    COMPLETED = "COMPLETED"
-    CANCELLED = "CANCELLED"
-    ERROR = "ERROR"
-
-
-class DeliverableStatus(StrEnum):
-    SUBMITTED = "SUBMITTED"
-    CHANGES_REQUIRED = "CHANGES_REQUIRED"
-    APPROVED = "APPROVED"
-    RELEASED = "RELEASED"
-
-
-class OutboxStatus(StrEnum):
-    PENDING = "PENDING"
-    PROCESSING = "PROCESSING"
-    SENT = "SENT"
-    FAILED = "FAILED"
-
-
-class Base(DeclarativeBase):
-    metadata = MetaData(
-        naming_convention={
-            "ix": "ix_%(table_name)s_%(column_0_name)s",
-            "uq": "uq_%(table_name)s_%(column_0_name)s",
-            "ck": "ck_%(table_name)s_%(constraint_name)s",
-            "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-            "pk": "pk_%(table_name)s",
-        }
-    )
-
-
-UTC_TS = DateTime(timezone=True)
-UUID_TYPE = Uuid(as_uuid=True)
-
-
-class IdMixin:
-    id: Mapped[UUID] = mapped_column(UUID_TYPE, primary_key=True, default=uuid4)
-
-
-class CreatedMixin(IdMixin):
-    created_at: Mapped[datetime] = mapped_column(UTC_TS, server_default=func.now())
-
-
-class TimestampMixin(CreatedMixin):
-    updated_at: Mapped[datetime] = mapped_column(
-        UTC_TS, server_default=func.now(), onupdate=func.now()
-    )
-
-
-def _enum(enum_type: type[StrEnum], name: str) -> SqlEnum:
-    return SqlEnum(enum_type, name=name, native_enum=False, create_constraint=True)
 
 
 class User(ProfileFieldsMixin, TimestampMixin, Base):
@@ -135,6 +73,9 @@ class User(ProfileFieldsMixin, TimestampMixin, Base):
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[UserRole] = mapped_column(_enum(UserRole, "user_role"), index=True)
     scope: Mapped[str] = mapped_column(String(120))
+    customer_context_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=text("false")
+    )
     is_active: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default=text("true")
     )
@@ -158,6 +99,12 @@ class Session(CreatedMixin, Base):
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     csrf_token_hash: Mapped[str] = mapped_column(String(64))
     credential_version: Mapped[int] = mapped_column(Integer)
+    active_context: Mapped[IdentityContext] = mapped_column(
+        _enum(IdentityContext, "identity_context"),
+        default=IdentityContext.STAFF,
+        server_default=IdentityContext.STAFF.value,
+    )
+    context_version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
     last_seen_at: Mapped[datetime] = mapped_column(UTC_TS, server_default=func.now())
     expires_at: Mapped[datetime] = mapped_column(UTC_TS, index=True)
     revoked_at: Mapped[datetime | None] = mapped_column(UTC_TS)
@@ -207,6 +154,11 @@ class ServiceRequest(TimestampMixin, Base):
     required_by: Mapped[date] = mapped_column(Date)
     required_by_reason: Mapped[str] = mapped_column(Text)
     preferred_deliverable_type: Mapped[str] = mapped_column(String(80))
+    product_mode: Mapped[ProductMode] = mapped_column(
+        _enum(ProductMode, "request_product_mode"),
+        default=ProductMode.LEGACY,
+        server_default=ProductMode.LEGACY.value,
+    )
     success_criteria: Mapped[str] = mapped_column(Text)
     constraints_or_caveats: Mapped[str] = mapped_column(Text)
     supporting_information: Mapped[str] = mapped_column(Text)
@@ -313,7 +265,6 @@ class WorkflowTask(TimestampMixin, Base):
     assignee: Mapped[User | None] = rel(foreign_keys=[assignee_user_id])
 
 
-import istari_service.model_registry as _model_registry  # noqa: E402, F401
 from istari_service.deliverable_model import Deliverable as Deliverable  # noqa: E402
 from istari_service.feedback_model import Feedback as Feedback  # noqa: E402
 from istari_service.outbox_model import WorkflowOutbox as WorkflowOutbox  # noqa: E402

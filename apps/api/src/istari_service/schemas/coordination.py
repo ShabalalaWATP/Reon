@@ -20,6 +20,7 @@ class CoordinationAudience(StrEnum):
 class CoordinationMessageCreate(ApiModel):
     audience: CoordinationAudience
     body: Annotated[str, Field(min_length=3, max_length=2_000)]
+    client_mutation_id: UUID
 
     @field_validator("body")
     @classmethod

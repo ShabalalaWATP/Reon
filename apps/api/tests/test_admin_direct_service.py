@@ -19,6 +19,9 @@ from istari_service.auth_service import PasswordHasher
 from istari_service.domain import Actor
 from istari_service.models import User, UserRole
 from istari_service.repositories.admin import SqlAlchemyAdminRepository
+from istari_service.repositories.admin_application import (
+    SqlAlchemyAdminApplication,
+)
 from istari_service.schemas.admin import (
     AdminOrganisationRename,
     AdminStatusPatch,
@@ -46,7 +49,7 @@ async def test_direct_service_happy_paths_cover_transactional_continuations(
         )
         repository = SqlAlchemyAdminRepository(session)
         service = AdminService(
-            repository,
+            SqlAlchemyAdminApplication(session),
             harness.settings,
             PasswordHasher(time_cost=1, memory_cost=8_192, parallelism=1),
         )
@@ -86,7 +89,10 @@ async def test_direct_service_happy_paths_cover_transactional_continuations(
         assert reactivated.is_active
 
         harness.settings.configuration_admin_enabled = False
-        cedar = await repository.load_units([await harness.unit_id("CEDAR_TEAM")])
+        cedar = await repository.load_units(
+            [await harness.unit_id("CEDAR_TEAM")],
+            role=UserRole.DELIVERY_SPECIALIST,
+        )
         renamed = await service.rename_unit(
             actor,
             cedar[0].id,

@@ -3,17 +3,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
 
 from istari_service.configuration_models import (
     ApprovedWorkflowDefinition,
-    ConfigurationApproval,
     ConfigurationCandidateGroup,
     ConfigurationHierarchyEdge,
     ConfigurationUnitRevision,
-    ConfigurationValidationFinding,
-    ConfigurationVersion,
     ConfigurationWorkflowTemplate,
+)
+from istari_service.configuration_records import (
+    ConfigurationApprovalRecord,
+    ConfigurationVersionRecord,
+    ValidationFindingRecord,
+    stored_utc,
 )
 from istari_service.configuration_types import (
     ApprovedWorkflowSpec,
@@ -27,13 +29,13 @@ from istari_service.configuration_types import (
 
 @dataclass(frozen=True, slots=True)
 class ConfigurationBundle:
-    version: ConfigurationVersion
+    version: ConfigurationVersionRecord
     units: tuple[ConfigurationUnitRevision, ...]
     edges: tuple[ConfigurationHierarchyEdge, ...]
     candidate_groups: tuple[ConfigurationCandidateGroup, ...]
     workflow_template: ConfigurationWorkflowTemplate
-    findings: tuple[ConfigurationValidationFinding, ...]
-    approval: ConfigurationApproval | None
+    findings: tuple[ValidationFindingRecord, ...]
+    approval: ConfigurationApprovalRecord | None
 
     def specification(self) -> ConfigurationDraftSpec:
         template = self.workflow_template
@@ -101,9 +103,3 @@ def workflow_specification(
         compatibility_key=workflow.compatibility_key,
         available=workflow.is_available,
     )
-
-
-def stored_utc(value: datetime) -> datetime:
-    if value.tzinfo is None:
-        return value.replace(tzinfo=UTC)
-    return value.astimezone(UTC)

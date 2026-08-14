@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
+from sqlalchemy.dialects import postgresql
 
 from istari_service.errors import InvalidAction
 from istari_service.models import OutboxStatus, RequestStatus, UserRole
@@ -80,7 +81,10 @@ async def test_release_requires_exact_dissemination_evidence() -> None:
             ScalarSession(unreleased),
             request,
             uuid4(),
-            ReleaseDeliverable(action="release", recipients=["Customer"]),
+            ReleaseDeliverable(
+                action="release",
+                managed_product=True,
+            ),
         )
     package = SimpleNamespace(
         id=uuid4(),
@@ -92,7 +96,10 @@ async def test_release_requires_exact_dissemination_evidence() -> None:
             ScalarSession(package, None),
             request,
             uuid4(),
-            ReleaseDeliverable(action="release", recipients=["Customer"]),
+            ReleaseDeliverable(
+                action="release",
+                managed_product=True,
+            ),
         )
 
 
@@ -104,8 +111,10 @@ class RequestLookup(ProductRequestRepositoryMixin):
 class ExecuteSession:
     def __init__(self, row: object | None) -> None:
         self.row = row
+        self.statements: list[object] = []
 
-    async def execute(self, _statement: object) -> object:
+    async def execute(self, statement: object) -> object:
+        self.statements.append(statement)
         return SimpleNamespace(one_or_none=lambda: self.row)
 
 
@@ -124,12 +133,10 @@ async def test_product_request_lookup_rejects_missing_and_route_drift() -> None:
         assigned_specialist_id=uuid4(),
         version=1,
     )
-    assert (
-        await RequestLookup(ExecuteSession((request, uuid4()))).request(
-            request_id, lock=True
-        )
-        is None
-    )
+    session = ExecuteSession((request, uuid4()))
+    assert await RequestLookup(session).request(request_id, lock=True) is None
+    sql = str(session.statements[0].compile(dialect=postgresql.dialect()))
+    assert sql.endswith("FOR UPDATE OF service_requests")
 
 
 async def test_projection_and_start_validation_handle_missing_rows() -> None:
@@ -175,7 +182,7 @@ async def test_product_policy_and_attestation_reject_invalid_identity() -> None:
         package_checksum="a" * 64,
     )
     with pytest.raises(ProductConflict):
-        ProductServiceSupport._require_draft_author(  # type: ignore[arg-type]
+        await object.__new__(ProductServiceSupport)._require_draft_author(  # type: ignore[arg-type]
             actor, package, request
         )
     with pytest.raises(ProductConflict):

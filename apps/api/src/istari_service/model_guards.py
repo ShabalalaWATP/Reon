@@ -13,7 +13,13 @@ from istari_service.analytics_evolution_models import (
     OperationalAnalyticsFact,
 )
 from istari_service.board_models import WorkPackageActivity
-from istari_service.models import Feedback, ServiceRequest
+from istari_service.conversation_models import (
+    RequestConversation,
+    RequestConversationDelivery,
+    RequestConversationMessage,
+)
+from istari_service.feedback_model import Feedback
+from istari_service.models import ServiceRequest
 from istari_service.operations_models import OperationalRun
 from istari_service.request_event_models import RequestEvent
 from istari_service.team_models import TeamActivityEvent
@@ -37,6 +43,16 @@ def _reject_audit_mutation(_mapper: Any, _connection: Any, _target: Any) -> None
     raise ValueError("audit records are append-only")
 
 
+@event.listens_for(RequestConversationDelivery, "before_update")
+def _protect_read_receipt(_mapper: Any, _connection: Any, target: Any) -> None:
+    state = inspect(target)
+    history = state.attrs.read_at.history
+    if history.has_changes() and (
+        history.deleted != [None] or len(history.added) != 1 or history.added[0] is None
+    ):
+        raise ValueError("conversation read receipts can only advance once")
+
+
 for audit_type in (
     Feedback,
     RequestEvent,
@@ -45,6 +61,10 @@ for audit_type in (
     OperationalRun,
     OperationalAnalyticsFact,
     AnalyticsExportAuditEvent,
+    RequestConversation,
+    RequestConversationMessage,
 ):
     event.listen(audit_type, "before_update", _reject_audit_mutation)
     event.listen(audit_type, "before_delete", _reject_audit_mutation)
+
+event.listen(RequestConversationDelivery, "before_delete", _reject_audit_mutation)

@@ -9,9 +9,6 @@ from uuid import UUID
 from istari_service.config import Settings
 from istari_service.configuration_events import ConfigurationEventPublisher
 from istari_service.domain import Actor
-from istari_service.repositories.configuration import (
-    SqlAlchemyConfigurationRepository,
-)
 from istari_service.schemas.configuration import (
     ConfigurationDraftCreate,
     ConfigurationDraftReplace,
@@ -25,6 +22,7 @@ from istari_service.services.configuration_activation_service import (
 from istari_service.services.configuration_draft_service import (
     ConfigurationDraftService,
 )
+from istari_service.services.configuration_ports import ConfigurationApplicationPort
 from istari_service.services.configuration_review_service import (
     ConfigurationReviewOperations,
 )
@@ -38,7 +36,7 @@ class ConfigurationLifecycleService:
 
     def __init__(
         self,
-        repository: SqlAlchemyConfigurationRepository,
+        repository: ConfigurationApplicationPort,
         settings: Settings,
         publisher: ConfigurationEventPublisher | None = None,
         *,

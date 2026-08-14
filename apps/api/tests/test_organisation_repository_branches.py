@@ -23,16 +23,18 @@ from istari_service.organisation_models import (
     UserOrganisationMembership,
 )
 from istari_service.organisation_seed import organisation_id, seed_organisation_units
-from istari_service.repositories.organisation import (
-    SqlAlchemyOrganisationRepository,
-    has_route_membership,
+from istari_service.repositories.organisation import SqlAlchemyOrganisationRepository
+from istari_service.repositories.organisation_tracking_repository import (
+    SqlAlchemyOrganisationTrackingRepository,
 )
 from istari_service.repositories.request_route_initialisation import (
     initialise_request_route,
 )
+from istari_service.repositories.route_access import has_route_membership
 from istari_service.services.organisation_service import (
-    OrganisationRepository,
+    OrganisationReferenceRepository,
     OrganisationService,
+    OrganisationTrackingRepository,
 )
 from test_work_repository import actor_from, make_request, make_user
 
@@ -122,7 +124,7 @@ async def test_tracking_enforces_membership_and_maps_the_selected_route(
         second_request.title = "Another synthetic tracked request"
         session.add_all([request, second_request])
         await session.flush()
-        repository = SqlAlchemyOrganisationRepository(session)
+        repository = SqlAlchemyOrganisationTrackingRepository(session)
 
         assert (await repository.page_tracked_requests(actor_from(requester)))[0] == []
         assert (await repository.page_tracked_requests(actor_from(triage_user)))[
@@ -211,11 +213,12 @@ async def test_initial_route_requires_a_configured_root_and_adds_it(
 
 @pytest.mark.asyncio
 async def test_organisation_service_hides_tracking_from_non_routing_roles() -> None:
-    repository = AsyncMock(spec=OrganisationRepository)
-    repository.list_units.return_value = []
-    repository.page_tracked_requests.return_value = ([], None)
-    repository.get_tracked_request_detail.return_value = object()
-    service = OrganisationService(repository)
+    reference_repository = AsyncMock(spec=OrganisationReferenceRepository)
+    tracking_repository = AsyncMock(spec=OrganisationTrackingRepository)
+    reference_repository.list_units.return_value = []
+    tracking_repository.page_tracked_requests.return_value = ([], None)
+    tracking_repository.get_tracked_request_detail.return_value = object()
+    service = OrganisationService(reference_repository, tracking_repository)
     requester = Actor(
         uuid4(),
         "requester@example.test",
@@ -226,13 +229,13 @@ async def test_organisation_service_hides_tracking_from_non_routing_roles() -> N
 
     with pytest.raises(ObjectNotFound):
         await service.list_units(requester)
-    repository.list_units.assert_not_awaited()
+    reference_repository.list_units.assert_not_awaited()
     with pytest.raises(ObjectNotFound):
         await service.page_tracked_requests(requester)
     with pytest.raises(ObjectNotFound):
         await service.get_tracked_request_detail(requester, uuid4())
-    repository.page_tracked_requests.assert_not_awaited()
-    repository.get_tracked_request_detail.assert_not_awaited()
+    tracking_repository.page_tracked_requests.assert_not_awaited()
+    tracking_repository.get_tracked_request_detail.assert_not_awaited()
 
     triage_user = Actor(
         uuid4(),
@@ -243,7 +246,7 @@ async def test_organisation_service_hides_tracking_from_non_routing_roles() -> N
         frozenset({uuid4()}),
     )
     assert await service.page_tracked_requests(triage_user) == ([], None)
-    repository.page_tracked_requests.assert_awaited_once_with(
+    tracking_repository.page_tracked_requests.assert_awaited_once_with(
         triage_user,
         limit=50,
         cursor=None,
@@ -255,11 +258,11 @@ async def test_organisation_service_hides_tracking_from_non_routing_roles() -> N
     )
     request_id = uuid4()
     assert await service.get_tracked_request_detail(triage_user, request_id) is not None
-    repository.get_tracked_request_detail.assert_awaited_once_with(
+    tracking_repository.get_tracked_request_detail.assert_awaited_once_with(
         triage_user, request_id, event_limit=50, event_cursor=None
     )
-    repository.get_tracked_request_detail.reset_mock(return_value=True)
-    repository.get_tracked_request_detail.return_value = None
+    tracking_repository.get_tracked_request_detail.reset_mock(return_value=True)
+    tracking_repository.get_tracked_request_detail.return_value = None
     with pytest.raises(ObjectNotFound):
         await service.get_tracked_request_detail(triage_user, uuid4())
 

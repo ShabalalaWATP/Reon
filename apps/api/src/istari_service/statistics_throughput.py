@@ -7,14 +7,14 @@ from datetime import UTC, date, datetime, timedelta
 from typing import Literal
 from zoneinfo import ZoneInfo
 
-from istari_service.analytics_models import RequestAnalyticsFact
 from istari_service.schemas.statistics import DailyThroughput
+from istari_service.statistics_records import StatisticsFact
 
 ThroughputResolution = Literal["DAILY", "WEEKLY", "MONTHLY"]
 
 
 def throughput_rows(
-    facts: tuple[RequestAnalyticsFact, ...],
+    facts: tuple[StatisticsFact, ...],
     from_date: date,
     to_date: date,
     time_zone: ZoneInfo,

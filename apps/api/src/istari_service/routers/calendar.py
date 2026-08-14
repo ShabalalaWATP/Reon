@@ -8,10 +8,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query
 
-from istari_service.dependencies import CurrentActor, DatabaseSession, MutationActor
-from istari_service.repositories.calendar import SqlAlchemyCalendarRepository
-from istari_service.repositories.team_workspaces import (
-    SqlAlchemyTeamWorkspaceRepository,
+from istari_service.calendar_composition import calendar_service
+from istari_service.dependencies import (
+    DatabaseSession,
+    StaffActor,
+    StaffMutationActor,
 )
 from istari_service.schemas.calendar import (
     CalendarEventResult,
@@ -35,17 +36,14 @@ router = APIRouter(tags=["calendar"])
 
 
 def _service(session: DatabaseSession) -> CalendarService:
-    return CalendarService(
-        SqlAlchemyCalendarRepository(session),
-        SqlAlchemyTeamWorkspaceRepository(session),
-    )
+    return calendar_service(session)
 
 
 @router.get("/calendar/personal", response_model=CalendarOccurrenceList)
 async def personal_calendar(
     start: Annotated[datetime, Query(alias="from")],
     end: Annotated[datetime, Query(alias="to")],
-    actor: CurrentActor,
+    actor: StaffActor,
     session: DatabaseSession,
 ) -> CalendarOccurrenceList:
     return CalendarOccurrenceList(
@@ -55,7 +53,7 @@ async def personal_calendar(
 
 @router.post("/calendar/events", response_model=CalendarEventResult)
 async def create_personal_event(
-    command: PersonalEventCommand, actor: MutationActor, session: DatabaseSession
+    command: PersonalEventCommand, actor: StaffMutationActor, session: DatabaseSession
 ) -> CalendarEventResult:
     return await _service(session).create_personal(actor, command)
 
@@ -64,7 +62,7 @@ async def create_personal_event(
 async def update_event(
     event_id: UUID,
     command: CalendarEventUpdate,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> CalendarEventResult:
     return await _service(session).update(actor, event_id, command)
@@ -74,7 +72,7 @@ async def update_event(
 async def cancel_event(
     event_id: UUID,
     command: OccurrenceCancelCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> CalendarEventResult:
     return await _service(session).cancel(actor, event_id, command)
@@ -86,7 +84,7 @@ async def cancel_event(
 async def cancel_occurrence(
     event_id: UUID,
     command: OccurrenceCancelCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> CalendarEventResult:
     return await _service(session).cancel_occurrence(actor, event_id, command)
@@ -98,7 +96,7 @@ async def cancel_occurrence(
 async def edit_occurrence(
     event_id: UUID,
     command: OccurrenceEditCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> CalendarEventResult:
     return await _service(session).edit_occurrence(actor, event_id, command)
@@ -108,7 +106,7 @@ async def edit_occurrence(
 async def split_series(
     event_id: UUID,
     command: FutureSplitCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> CalendarEventResult:
     return await _service(session).split(actor, event_id, command)
@@ -120,7 +118,7 @@ async def split_series(
 async def acknowledge_commitment(
     event_id: UUID,
     command: CommitmentDecisionCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> CalendarEventResult:
     return await _service(session).decide_commitment(
@@ -132,7 +130,7 @@ async def acknowledge_commitment(
 async def dispute_commitment(
     event_id: UUID,
     command: CommitmentDecisionCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> CalendarEventResult:
     return await _service(session).decide_commitment(
@@ -147,7 +145,7 @@ async def team_calendar(
     team_id: UUID,
     start: Annotated[datetime, Query(alias="from")],
     end: Annotated[datetime, Query(alias="to")],
-    actor: CurrentActor,
+    actor: StaffActor,
     session: DatabaseSession,
 ) -> CalendarOccurrenceList:
     return CalendarOccurrenceList(
@@ -161,7 +159,7 @@ async def team_calendar(
 async def create_team_event(
     team_id: UUID,
     command: TeamEventCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> CalendarEventResult:
     return await _service(session).create_team(actor, team_id, command)
@@ -174,7 +172,7 @@ async def create_team_event(
 async def create_commitment(
     team_id: UUID,
     command: CommitmentCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> CalendarEventResult:
     return await _service(session).create_commitment(actor, team_id, command)
@@ -186,7 +184,7 @@ async def create_commitment(
 async def preview_capacity(
     team_id: UUID,
     command: CapacityPreviewCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> CapacityPreview:
     return await _service(session).preview_capacity(actor, team_id, command)
@@ -198,7 +196,7 @@ async def preview_capacity(
 async def commit_capacity(
     team_id: UUID,
     command: CapacityCommitCommand,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> CapacitySnapshot:
     return await _service(session).commit_capacity(actor, team_id, command)

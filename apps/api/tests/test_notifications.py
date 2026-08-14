@@ -23,6 +23,9 @@ from istari_service.repositories.notification_projection import (
     RecipientRule,
     SqlAlchemyNotificationProjectionRepository,
 )
+from istari_service.repositories.notification_reconciliation import (
+    SqlAlchemyNotificationReconciler,
+)
 from istari_service.repositories.notifications import SqlAlchemyNotificationRepository
 from istari_service.schemas.actions import (
     NotificationFilterState,
@@ -90,7 +93,9 @@ async def test_notification_replay_state_filters_count_and_freshness(
     async with api_harness.sessions() as session, session.begin():
         reads = SqlAlchemyNotificationRepository(session)
         service = NotificationService(
-            reads, SqlAlchemyNotificationProjectionRepository(session)
+            reads,
+            SqlAlchemyNotificationProjectionRepository(session),
+            SqlAlchemyNotificationReconciler(session),
         )
         event = await service.publish(_command(request_id, now))
         replay = await service.publish(_command(request_id, now))

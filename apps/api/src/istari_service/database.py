@@ -21,7 +21,7 @@ from istari_service.audit import (
     AUDIT_KEYRING_INFO,
 )
 from istari_service.config import Settings, get_settings
-from istari_service.models import Base
+from istari_service.model_registry import Base
 
 SECURITY_PSEUDONYM_KEY_INFO = "security_pseudonym_key"
 

@@ -6,7 +6,6 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from uuid import UUID
 
-from istari_service.admin_audit import append_admin_event
 from istari_service.config import Settings
 from istari_service.configuration_events import (
     ConfigurationEventPublisher,
@@ -14,39 +13,46 @@ from istari_service.configuration_events import (
     ConfigurationLifecycleEvent,
     NullConfigurationEventPublisher,
 )
-from istari_service.configuration_models import ConfigurationVersion
 from istari_service.configuration_policy import can_administer_configuration
+from istari_service.configuration_records import ConfigurationVersionRecord
 from istari_service.configuration_views import version_detail
 from istari_service.domain import Actor
 from istari_service.errors import (
     AdministrationAccessDenied,
     AdministrationUnavailable,
 )
-from istari_service.repositories.configuration import (
-    SqlAlchemyConfigurationRepository,
-)
 from istari_service.schemas.configuration import ConfigurationVersionDetail
+from istari_service.services.configuration_ports import ConfigurationCommandCorePort
 
 
-class ConfigurationServiceBase:
-    def __init__(
-        self,
-        repository: SqlAlchemyConfigurationRepository,
-        settings: Settings,
-        publisher: ConfigurationEventPublisher | None = None,
-        *,
-        clock: Callable[[], datetime] | None = None,
-    ) -> None:
-        self._repository = repository
+class ConfigurationAccessService:
+    """Shared feature-flag and role authorisation with no persistence dependency."""
+
+    def __init__(self, settings: Settings) -> None:
         self._settings = settings
-        self._publisher = publisher or NullConfigurationEventPublisher()
-        self._clock = clock or (lambda: datetime.now(UTC))
 
     def authorise(self, actor: Actor) -> None:
         if not self._settings.configuration_admin_enabled:
             raise AdministrationUnavailable()
         if not can_administer_configuration(actor.role):
             raise AdministrationAccessDenied()
+
+
+class ConfigurationServiceBase[RepositoryT: ConfigurationCommandCorePort](
+    ConfigurationAccessService
+):
+    def __init__(
+        self,
+        repository: RepositoryT,
+        settings: Settings,
+        publisher: ConfigurationEventPublisher | None = None,
+        *,
+        clock: Callable[[], datetime] | None = None,
+    ) -> None:
+        super().__init__(settings)
+        self._repository = repository
+        self._publisher = publisher or NullConfigurationEventPublisher()
+        self._clock = clock or (lambda: datetime.now(UTC))
 
     async def _audit(
         self,
@@ -56,12 +62,10 @@ class ConfigurationServiceBase:
         changed_fields: list[str],
         summary: str,
     ) -> None:
-        await append_admin_event(
-            self._repository.session,
+        await self._repository.append_configuration_audit(
             actor_id=actor.id,
             action=action,
-            target_type="CONFIGURATION_VERSION",
-            target_id=version_id,
+            version_id=version_id,
             changed_fields=changed_fields,
             summary=summary,
         )
@@ -69,7 +73,7 @@ class ConfigurationServiceBase:
     async def _publish(
         self,
         event_type: ConfigurationEventType,
-        version: ConfigurationVersion,
+        version: ConfigurationVersionRecord,
         actor: Actor,
         occurred_at: datetime,
         *,
@@ -88,10 +92,7 @@ class ConfigurationServiceBase:
         )
 
     async def _detail(
-        self, version: ConfigurationVersion
+        self, version: ConfigurationVersionRecord
     ) -> ConfigurationVersionDetail:
-        await self._repository.session.flush()
-        await self._repository.session.refresh(version)
-        return version_detail(
-            await self._repository.bundle(version.id, version=version)
-        )
+        await self._repository.refresh_version(version)
+        return version_detail(await self._repository.bundle(version.id))

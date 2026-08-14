@@ -11,13 +11,13 @@ from istari_service.configuration_models import (
     ConfigurationApproval,
     ConfigurationVersion,
 )
+from istari_service.configuration_records import stored_utc
 from istari_service.configuration_types import (
     ApprovalDecision,
     ConfigurationDraftSpec,
     ConfigurationStatus,
 )
 from istari_service.models import User, UserRole
-from istari_service.repositories.configuration_records import stored_utc
 
 
 async def snapshot_evidence_is_valid(

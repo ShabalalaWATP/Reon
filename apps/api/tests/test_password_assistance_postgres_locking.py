@@ -11,12 +11,9 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from istari_service.repositories.platform_security import (
-    SqlAlchemyPlatformSecurityRepository,
-)
+from istari_service.platform_security_composition import platform_security_service
 from istari_service.services.platform_security_service import (
     SOURCE_ATTEMPT_LIMIT,
-    PlatformSecurityService,
 )
 
 
@@ -71,8 +68,8 @@ async def test_password_assistance_budget_is_atomic_under_concurrent_calls() -> 
                 await session.execute(text(f"SET LOCAL search_path TO {schema}"))
                 await session.execute(text("SET LOCAL lock_timeout = '5s'"))
                 await session.execute(text("SET LOCAL statement_timeout = '8s'"))
-                service = PlatformSecurityService(
-                    SqlAlchemyPlatformSecurityRepository(session),
+                service = platform_security_service(
+                    session,
                     pseudonym_key=b"synthetic-postgres-race-test-key",
                 )
                 return await service.request_password_assistance(

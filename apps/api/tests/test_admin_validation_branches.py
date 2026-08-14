@@ -77,12 +77,65 @@ async def test_valid_routing_membership_and_display_only_update(
                 scope="CRIOC",
                 name="Renamed Branch Account",
             ),
+            "email": "renamed.branch@example.test",
             "expectedVersion": account["version"],
         },
         headers=harness.mutation_headers(),
     )
     assert changed.status_code == 200
     assert changed.json()["displayName"] == "Renamed Branch Account"
+    assert changed.json()["email"] == "renamed.branch@example.test"
+
+
+async def test_qc_accounts_require_exact_qc_manager_membership(
+    api_harness: ApiHarness,
+) -> None:
+    harness = api_harness
+    await _admin(harness)
+    ssg = str(await harness.unit_id("SSG_TEAM"))
+    qc_team = str(await harness.unit_id("QC_TEAM"))
+    options = await harness.client.get("/api/v1/organisation/units")
+    assert qc_team in {item["id"] for item in options.json()["items"]}
+    wrong = await harness.client.post(
+        "/api/v1/admin/users",
+        json=_body(role="QUALITY_RELEASE", units=[ssg]),
+        headers=harness.mutation_headers(),
+    )
+    assert wrong.status_code == 409
+    wrong_role = await harness.client.post(
+        "/api/v1/admin/users",
+        json=_body(role="DELIVERY_TEAM_LEAD", units=[qc_team]),
+        headers=harness.mutation_headers(),
+    )
+    assert wrong_role.status_code == 409
+    created = await harness.client.post(
+        "/api/v1/admin/users",
+        json=_body(role="QUALITY_RELEASE", units=[qc_team]),
+        headers=harness.mutation_headers(),
+    )
+    assert created.status_code == 201, created.text
+    assert created.json()["memberships"][0]["workspacePosition"] == "MANAGER"
+    account = created.json()
+    removed = await harness.client.patch(
+        f"/api/v1/admin/users/{account['id']}",
+        json={
+            **_body(role="REQUESTER", units=[], scope="Customer"),
+            "expectedVersion": account["version"],
+        },
+        headers=harness.mutation_headers(),
+    )
+    assert removed.status_code == 200, removed.text
+    assert removed.json()["memberships"] == []
+    restored = await harness.client.patch(
+        f"/api/v1/admin/users/{account['id']}",
+        json={
+            **_body(role="QUALITY_RELEASE", units=[qc_team]),
+            "expectedVersion": removed.json()["version"],
+        },
+        headers=harness.mutation_headers(),
+    )
+    assert restored.status_code == 200, restored.text
+    assert restored.json()["memberships"][0]["workspacePosition"] == "MANAGER"
 
 
 async def test_empty_search_and_unknown_mutation_targets(

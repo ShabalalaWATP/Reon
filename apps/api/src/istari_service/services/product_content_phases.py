@@ -7,7 +7,11 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 from istari_service.domain import Actor
-from istari_service.product_errors import ProductConflict, ProductNotFound
+from istari_service.product_errors import (
+    ProductConflict,
+    ProductDependencyUnavailable,
+    ProductNotFound,
+)
 from istari_service.product_types import (
     ScanDecision,
     StoredObject,
@@ -18,6 +22,9 @@ from istari_service.schemas.products import (
     UploadContentReceipt,
     VersionCommand,
 )
+from istari_service.services.product_repository_port import (
+    ProductUploadServiceRepository,
+)
 from istari_service.services.product_service_support import ProductServiceSupport
 from istari_service.services.product_transfer_types import (
     ContentOperation,
@@ -25,8 +32,17 @@ from istari_service.services.product_transfer_types import (
 )
 
 
-class ProductContentPhases(ProductServiceSupport):
+class ProductContentPhases(ProductServiceSupport[ProductUploadServiceRepository]):
     """Never call storage or the scanner while a transaction is active."""
+
+    def __init__(
+        self,
+        repository: ProductUploadServiceRepository,
+        *,
+        managed_file_uploads_enabled: bool = True,
+    ) -> None:
+        super().__init__(repository)
+        self._managed_file_uploads_enabled = managed_file_uploads_enabled
 
     async def claim_content(
         self,
@@ -40,7 +56,7 @@ class ProductContentPhases(ProductServiceSupport):
     ) -> ContentOperation:
         self._require_managed_file_uploads()
         package, request = await self._authorised_package(actor, package_id, lock=True)
-        self._require_draft_author(actor, package, request)
+        await self._require_draft_author(actor, package, request)
         row = await self._repository.upload_intent(package_id, intent_id, lock=True)
         if row is None:
             raise ProductNotFound()
@@ -93,7 +109,7 @@ class ProductContentPhases(ProductServiceSupport):
         package, request = await self._authorised_package(
             actor, operation.package_id, lock=True
         )
-        self._require_draft_author(actor, package, request)
+        await self._require_draft_author(actor, package, request)
         row = await self._repository.upload_intent(
             operation.package_id, operation.intent_id, lock=True
         )
@@ -138,7 +154,7 @@ class ProductContentPhases(ProductServiceSupport):
     ) -> ScanOperation | PackageView:
         self._require_managed_file_uploads()
         package, request = await self._authorised_package(actor, package_id, lock=True)
-        self._require_draft_author(actor, package, request)
+        await self._require_draft_author(actor, package, request)
         row = await self._repository.upload_intent(package_id, intent_id, lock=True)
         if row is None:
             raise ProductNotFound()
@@ -186,7 +202,7 @@ class ProductContentPhases(ProductServiceSupport):
         package, request = await self._authorised_package(
             actor, operation.package_id, lock=True
         )
-        self._require_draft_author(actor, package, request)
+        await self._require_draft_author(actor, package, request)
         row = await self._repository.upload_intent(
             operation.package_id, operation.intent_id, lock=True
         )
@@ -274,3 +290,9 @@ class ProductContentPhases(ProductServiceSupport):
         if operation.owner is None or operation.generation is None:
             raise ProductConflict()
         return operation.owner, operation.generation
+
+    def _require_managed_file_uploads(self) -> None:
+        if not self._managed_file_uploads_enabled:
+            raise ProductDependencyUnavailable(
+                "Managed-file uploads are unavailable in this environment."
+            )

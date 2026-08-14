@@ -197,8 +197,8 @@ $expectedAssignments = @{
     delivery_work = "= assignedSpecialistId|= selectedTeamAnalystCandidateGroup"
     customer_clarification_response = "= requesterId|"
     lead_review = "|= selectedTeamManagerCandidateGroup"
-    quality_review = "|qc-managers"
-    release = "|qc-managers"
+    quality_review = "|qc-reviewers"
+    release = "|release-managers"
 }
 $expectedTaskNames = @{
     intake_review = "CRIOC Routing"

@@ -11,11 +11,13 @@ from istari_service import (
     clarification_models,
     compliance_models,
     configuration_models,
+    conversation_models,
     deliverable_model,
     feedback_model,
     login_rate_limit_models,
     maintenance_models,
     management_models,
+    models,
     operations_models,
     organisation_models,
     outbox_model,
@@ -30,11 +32,13 @@ from istari_service import (
     team_models,
     workspace_collaboration_models,
 )
+from istari_service.orm_base import Base
 
 # Importing every module registers its ORM tables with the shared metadata. Keeping
 # explicit references documents that contract and lets dead-code analysis distinguish
 # intentional registration from accidental unused imports.
 REGISTERED_MODEL_MODULES = (
+    models,
     action_notification_models,
     account_request_models,
     admin_models,
@@ -44,6 +48,7 @@ REGISTERED_MODEL_MODULES = (
     calendar_models,
     clarification_models,
     compliance_models,
+    conversation_models,
     configuration_models,
     deliverable_model,
     feedback_model,
@@ -64,3 +69,5 @@ REGISTERED_MODEL_MODULES = (
     team_models,
     workspace_collaboration_models,
 )
+
+__all__ = ("REGISTERED_MODEL_MODULES", "Base")

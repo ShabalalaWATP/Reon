@@ -14,13 +14,16 @@ from istari_service.schemas.configuration import (
     ConfigurationVersionCommand,
     ConfigurationVersionDetail,
 )
+from istari_service.services.configuration_ports import ConfigurationValidationPort
 from istari_service.services.configuration_service_base import ConfigurationServiceBase
 from istari_service.services.configuration_validation_support import (
     configuration_findings,
 )
 
 
-class ConfigurationValidationService(ConfigurationServiceBase):
+class ConfigurationValidationService(
+    ConfigurationServiceBase[ConfigurationValidationPort]
+):
     async def validate(
         self,
         actor: Actor,
@@ -33,7 +36,7 @@ class ConfigurationValidationService(ConfigurationServiceBase):
         )
         if not may_validate(version.status):
             raise InvalidAdministrationChange("This version cannot be validated.")
-        bundle = await self._repository.bundle(version.id, version=version)
+        bundle = await self._repository.bundle(version.id)
         findings = await configuration_findings(self._repository, bundle)
         await self._repository.replace_findings(version.id, findings)
         has_errors = any(item.severity is FindingSeverity.ERROR for item in findings)

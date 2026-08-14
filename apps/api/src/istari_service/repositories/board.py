@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import cast
 from uuid import UUID
 
 from sqlalchemy import or_, select
@@ -19,12 +20,14 @@ from istari_service.board_models import (
 )
 from istari_service.board_projection import ProjectedBoardItem, request_projection
 from istari_service.errors import BoardItemNotFound, StaleVersion, TeamWorkspaceNotFound
+from istari_service.management_models import ManagementAction
 from istari_service.models import ServiceRequest, User
 from istari_service.organisation_models import OrganisationUnit
 from istari_service.repositories.board_package_reads import (
     SqlAlchemyPackageReadRepository,
 )
 from istari_service.repositories.board_page import SqlAlchemyBoardPageRepository
+from istari_service.repositories.management import resolve_management_scope
 from istari_service.schemas.board import (
     BoardFilters,
     BoardItem,
@@ -179,6 +182,15 @@ class SqlAlchemyBoardRepository:
             is not None
         )
 
+    async def package_contributor_ids(self, package_id: UUID) -> set[UUID]:
+        return set(
+            await self.session.scalars(
+                select(WorkPackageContributor.user_id).where(
+                    WorkPackageContributor.package_id == package_id
+                )
+            )
+        )
+
     async def request_belongs_to_team(self, team_id: UUID, request_id: UUID) -> bool:
         return (
             await self.session.scalar(
@@ -188,6 +200,16 @@ class SqlAlchemyBoardRepository:
                 )
             )
             is not None
+        )
+
+    async def request_requester_id(self, request_id: UUID) -> UUID | None:
+        return cast(
+            UUID | None,
+            await self.session.scalar(
+                select(ServiceRequest.requester_id).where(
+                    ServiceRequest.id == request_id
+                )
+            ),
         )
 
     async def package_ids_in_team(
@@ -214,6 +236,26 @@ class SqlAlchemyBoardRepository:
             )
             is not None
         )
+
+    async def has_management_authority(
+        self,
+        *,
+        actor_id: UUID,
+        grant_id: UUID,
+        team_id: UUID,
+        action: ManagementAction,
+    ) -> bool:
+        """Check a locked exact-team management grant inside this transaction."""
+
+        scope = await resolve_management_scope(
+            self.session,
+            subject_user_id=actor_id,
+            grant_id=grant_id,
+            target_unit_id=team_id,
+            action=action,
+            lock=True,
+        )
+        return scope is not None and scope.root_unit_id == team_id
 
     async def iterations(self, team_id: UUID) -> list[IterationResult]:
         rows = list(

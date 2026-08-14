@@ -234,6 +234,7 @@ async def test_complete_representative_workflow_and_feedback(
         json={
             "expectedVersion": link_response.json()["version"],
             "idempotencyKey": str(uuid4()),
+            "coveringNote": "Synthetic product covering note.",
         },
         headers=harness.mutation_headers(),
     )
@@ -242,16 +243,11 @@ async def test_complete_representative_workflow_and_feedback(
     await _complete(
         harness,
         item,
-        {
-            "action": "submit",
-            "deliverableTitle": "Synthetic service summary",
-            "deliverableText": (
-                "This is a complete fictional deliverable prepared for testing."
-            ),
-        },
+        {"action": "submit", "managedProduct": True},
     )
 
     await harness.login("admin8")
+    lead_item = await _claim_current(harness)
     approval = await harness.client.post(
         f"/api/v1/product-packages/{package['id']}/manager-approve",
         json={
@@ -265,7 +261,7 @@ async def test_complete_representative_workflow_and_feedback(
     package = approval.json()
     await _complete(
         harness,
-        await _claim_current(harness),
+        lead_item,
         {"action": "approve"},
     )
 
@@ -275,6 +271,8 @@ async def test_complete_representative_workflow_and_feedback(
         await _claim_current(harness),
         {"action": "approve"},
     )
+    await harness.login("admin100")
+    release_item = await _claim_current(harness)
     dissemination = await harness.client.post(
         f"/api/v1/releases/{package['id']}/disseminate",
         json={
@@ -288,15 +286,16 @@ async def test_complete_representative_workflow_and_feedback(
     assert dissemination.status_code == 200, dissemination.text
     await _complete(
         harness,
-        await _claim_current(harness),
-        {"action": "release", "recipients": ["Fictional service owner"]},
+        release_item,
+        {"action": "release", "managedProduct": True},
     )
 
     await harness.login("admin2")
     detail = await harness.client.get(f"/api/v1/requests/{request_id}")
     assert detail.status_code == 200
     assert detail.json()["status"] == "COMPLETED"
-    assert detail.json()["deliverable"]["title"] == "Synthetic service summary"
+    assert detail.json()["deliverable"] is None
+    assert detail.json()["productMode"] == "MANAGED"
     assert detail.json()["assignedDeliveryTeam"] == "SSG Team"
     assert detail.json()["productAvailable"] is True
     assert "SSG_TEAM" not in detail.text

@@ -6,7 +6,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
-from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
+from istari_service.models import (
+    IdentityContext,
+    RequestStatus,
+    UserRole,
+    WorkflowTaskStatus,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,6 +31,7 @@ class AccountRecord:
     is_active: bool
     failed_login_count: int
     locked_until: datetime | None
+    customer_context_enabled: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,6 +42,9 @@ class SessionRecord:
     expires_at: datetime
     last_seen_at: datetime | None = None
     elevated_until: datetime | None = None
+    active_context: IdentityContext = IdentityContext.CUSTOMER
+    available_contexts: tuple[IdentityContext, ...] = (IdentityContext.CUSTOMER,)
+    context_version: int = 1
 
 
 @dataclass(frozen=True, slots=True)

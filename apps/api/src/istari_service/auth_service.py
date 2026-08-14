@@ -5,16 +5,24 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from hashlib import sha256
 from secrets import token_urlsafe
-from typing import Protocol
 from uuid import UUID
 
 from anyio import to_thread
-from argon2 import PasswordHasher as ArgonPasswordHasher
-from argon2 import Type
-from argon2.exceptions import Argon2Error, InvalidHashError
 
+from istari_service.auth_ports import AuthRepository as AuthRepository
+from istari_service.auth_primitives import (
+    DUMMY_HASH_INPUT as DUMMY_HASH_INPUT,
+)
+from istari_service.auth_primitives import (
+    PasswordHasher as PasswordHasher,
+)
+from istari_service.auth_primitives import (
+    csrf_token_for_session as csrf_token_for_session,
+)
+from istari_service.auth_primitives import (
+    hash_opaque_token as hash_opaque_token,
+)
 from istari_service.compliance_models import SecurityOutcome
 from istari_service.domain import AccountRecord, SessionRecord
 from istari_service.errors import (
@@ -32,92 +40,6 @@ from istari_service.login_rate_limiter import (
 )
 from istari_service.models import UserRole
 from istari_service.security_events import SecurityEventCommand, SecurityEventRecorder
-
-DUMMY_HASH_INPUT = "local-unknown-account-input"
-
-
-def hash_opaque_token(token: str) -> str:
-    return sha256(token.encode("utf-8")).hexdigest()
-
-
-def csrf_token_for_session(session_token: str) -> str:
-    """Derive a stable, browser-readable CSRF secret from the opaque cookie value."""
-
-    return sha256(f"istari-csrf-v1:{session_token}".encode()).hexdigest()
-
-
-class PasswordHasher:
-    """Argon2id wrapper kept replaceable for fast deterministic tests."""
-
-    def __init__(
-        self,
-        *,
-        time_cost: int = 3,
-        memory_cost: int = 65_536,
-        parallelism: int = 4,
-    ) -> None:
-        self._hasher = ArgonPasswordHasher(
-            time_cost=time_cost,
-            memory_cost=memory_cost,
-            parallelism=parallelism,
-            hash_len=32,
-            salt_len=16,
-            type=Type.ID,
-        )
-
-    def hash(self, password: str) -> str:
-        return self._hasher.hash(password)
-
-    def verify(self, stored_hash: str, password: str) -> bool:
-        try:
-            return self._hasher.verify(stored_hash, password)
-        except (Argon2Error, InvalidHashError):
-            return False
-
-
-class AuthRepository(Protocol):
-    async def find_account(self, username: str) -> AccountRecord | None: ...
-
-    async def record_failure(
-        self,
-        account: AccountRecord,
-        *,
-        now: datetime,
-        lockout_threshold: int,
-        lockout_seconds: int,
-    ) -> None: ...
-
-    async def reset_failures(self, account: AccountRecord) -> None: ...
-
-    async def revoke_user_sessions(self, account: AccountRecord) -> None: ...
-
-    async def create_session(
-        self,
-        account: AccountRecord,
-        *,
-        token_hash: str,
-        csrf_token_hash: str,
-        expires_at: datetime,
-    ) -> SessionRecord: ...
-
-    async def find_session(
-        self,
-        token_hash: str,
-        *,
-        now: datetime,
-        idle_cutoff: datetime,
-        touch: bool = False,
-    ) -> SessionRecord | None: ...
-
-    async def touch_session(self, session_id: UUID, *, now: datetime) -> None: ...
-
-    async def revoke_session(self, session_id: UUID) -> None: ...
-
-    async def rotate_csrf(self, session_id: UUID, csrf_token_hash: str) -> None: ...
-
-    async def set_elevation(self, session_id: UUID, until: datetime) -> None: ...
-
-    async def commit_security_state(self) -> None: ...
 
 
 @dataclass(frozen=True, slots=True)

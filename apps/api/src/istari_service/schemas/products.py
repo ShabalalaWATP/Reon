@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from istari_service.models import RequestStatus
 from istari_service.product_types import (
@@ -46,6 +46,20 @@ class VersionCommand(StrictApiModel):
     idempotency_key: UUID
 
 
+class SubmitPackageCommand(VersionCommand):
+    covering_note: str | None = Field(default=None, min_length=3, max_length=2_000)
+
+    @field_validator("covering_note")
+    @classmethod
+    def covering_note_is_not_blank(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        stripped = value.strip()
+        if len(stripped) < 3:
+            raise ValueError("covering note must contain at least three characters")
+        return stripped
+
+
 class ApprovalCommand(VersionCommand):
     package_checksum: str = Field(min_length=64, max_length=64)
 
@@ -82,6 +96,8 @@ class ArtefactView(ApiModel):
     sha256: str | None
     version: int
     destination_domain: str | None = None
+    review_destination_url: str | None = None
+    review_url: str | None = None
     expires_at: datetime | None = None
     scan_result: ScanResult | None = None
     scan_reason: str | None = None
@@ -96,7 +112,9 @@ class PackageView(ApiModel):
     request_status: RequestStatus
     author_display_name: str
     package_version: int
+    policy_version: int = 2
     status: PackageStatus
+    covering_note: str | None
     package_checksum: str | None
     version: int
     artefacts: list[ArtefactView]
@@ -120,6 +138,7 @@ class CustomerReleaseView(ApiModel):
     status: PackageStatus
     released_at: datetime
     released_by: str
+    covering_note: str
     accepted_at: datetime | None = None
     artefacts: list[ArtefactView]
 

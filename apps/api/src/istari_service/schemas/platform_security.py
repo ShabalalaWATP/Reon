@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import Field
 
-from istari_service.platform_security_models import PlatformClassification
+from istari_service.platform_security_types import PlatformClassification
 from istari_service.schemas.common import ApiModel, StrictApiModel
 
 

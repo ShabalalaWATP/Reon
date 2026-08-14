@@ -7,23 +7,13 @@ from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from istari_service.analytics_models import AnalyticsProjectionState, ProjectionHealth
-from istari_service.analytics_projection import PROJECTION_NAME
 from istari_service.board_models import BoardColumn, IterationStatus, WorkPackageStatus
 from istari_service.board_projection import ProjectedBoardItem
 from istari_service.domain import Actor
 from istari_service.errors import StaleVersion
 from istari_service.management_models import ManagementAction
-from istari_service.planning_capacity import (
-    PlanningCapacityProjection,
-    calculate_planning_capacity,
-)
-from istari_service.planning_policy import (
-    authorise_planning_preview,
-    authorise_planning_read,
-)
+from istari_service.planning_capacity_types import PlanningCapacityProjection
+from istari_service.planning_evolution_types import PackagePlanningRows
 from istari_service.planning_projection import (
     blocker_warnings,
     capacity_conflicts,
@@ -31,12 +21,6 @@ from istari_service.planning_projection import (
     lanes,
     source_digest,
     utc,
-)
-from istari_service.repositories.board import SqlAlchemyBoardRepository
-from istari_service.repositories.planning import (
-    TERMINAL_PACKAGE_STATUSES,
-    PackagePlanningRows,
-    SqlAlchemyPlanningRepository,
 )
 from istari_service.schemas.planning import (
     CapacityBreakdown,
@@ -49,10 +33,19 @@ from istari_service.schemas.planning import (
     PlanningFreshness,
     PlanningSummary,
 )
+from istari_service.services.planning_evolution_ports import (
+    PlanningAccessPolicy,
+    PlanningBoardReader,
+    PlanningCapacityReader,
+    PlanningFreshnessReader,
+    PlanningQueryReader,
+    PlanningScenarioWriter,
+)
 
 COCKPIT_CAPACITY_DAYS = 14
 REQUEST_WORK_ESTIMATE_MINUTES = 450
 PREVIEW_TTL = timedelta(minutes=10)
+TERMINAL_PACKAGE_STATUSES = {WorkPackageStatus.DONE, WorkPackageStatus.CANCELLED}
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,20 +59,28 @@ class _Snapshot:
 
 
 class PlanningEvolutionService:
-    def __init__(self, session: AsyncSession) -> None:
-        self._session = session
-        self._board = SqlAlchemyBoardRepository(session)
-        self._planning = SqlAlchemyPlanningRepository(session)
+    def __init__(
+        self,
+        *,
+        access: PlanningAccessPolicy,
+        board: PlanningBoardReader,
+        queries: PlanningQueryReader,
+        scenarios: PlanningScenarioWriter,
+        capacity: PlanningCapacityReader,
+        freshness: PlanningFreshnessReader,
+    ) -> None:
+        self._access = access
+        self._board = board
+        self._queries = queries
+        self._scenarios = scenarios
+        self._capacity = capacity
+        self._freshness_reader = freshness
 
     async def cockpit(
         self, actor: Actor, team_id: UUID, *, now: datetime | None = None
     ) -> PlanningCockpit:
-        await authorise_planning_read(
-            self._session, actor, team_id, ManagementAction.BOARD
-        )
-        await authorise_planning_read(
-            self._session, actor, team_id, ManagementAction.CAPACITY
-        )
+        await self._access.authorise_read(actor, team_id, ManagementAction.BOARD)
+        await self._access.authorise_read(actor, team_id, ManagementAction.CAPACITY)
         effective_now = now or datetime.now(UTC)
         snapshot = await self._snapshot(team_id, effective_now.date())
         warnings, warning_counts = dependency_warnings(snapshot.packages)
@@ -141,16 +142,12 @@ class PlanningEvolutionService:
         )
 
     async def templates(self, actor: Actor, team_id: UUID) -> PackageTemplateList:
-        await authorise_planning_read(
-            self._session, actor, team_id, ManagementAction.BOARD
-        )
-        return PackageTemplateList(items=await self._planning.templates(team_id))
+        await self._access.authorise_read(actor, team_id, ManagementAction.BOARD)
+        return PackageTemplateList(items=await self._queries.templates(team_id))
 
     async def scenarios(self, actor: Actor, team_id: UUID) -> CapacityScenarioList:
-        await authorise_planning_read(
-            self._session, actor, team_id, ManagementAction.CAPACITY
-        )
-        return CapacityScenarioList(items=await self._planning.scenarios(team_id))
+        await self._access.authorise_read(actor, team_id, ManagementAction.CAPACITY)
+        return CapacityScenarioList(items=await self._queries.scenarios(team_id))
 
     async def preview_scenario(
         self,
@@ -160,18 +157,13 @@ class PlanningEvolutionService:
         *,
         now: datetime | None = None,
     ) -> CapacityScenarioPreview:
-        await authorise_planning_preview(
-            self._session, actor, team_id, command.grant_id
-        )
+        await self._access.authorise_preview(actor, team_id, command.grant_id)
         effective_now = now or datetime.now(UTC)
         snapshot = await self._snapshot(team_id, effective_now.date())
         if command.expected_source_version != snapshot.source_version:
             raise StaleVersion("Planning sources changed. Refresh and try again.")
-        capacity = await calculate_planning_capacity(
-            self._session,
-            team_id=team_id,
-            date_from=command.starts_on,
-            date_to=command.ends_on,
+        capacity = await self._capacity.capacity(
+            team_id, command.starts_on, command.ends_on
         )
         package_minutes = sum(
             package.remaining_effort_minutes
@@ -203,7 +195,7 @@ class PlanningEvolutionService:
         scenario_digest = sha256(
             f"{snapshot.source_digest}|{capacity.source_digest}".encode()
         ).hexdigest()
-        _, preview = await self._planning.create_scenario_preview(
+        preview = await self._scenarios.create_scenario_preview(
             actor_id=actor.id,
             team_id=team_id,
             command=command,
@@ -229,13 +221,12 @@ class PlanningEvolutionService:
 
     async def _snapshot(self, team_id: UUID, today: date) -> _Snapshot:
         items = tuple(await self._board.projected_items(team_id))
-        packages = await self._planning.package_rows(team_id)
-        request_count = await self._planning.request_work_count(team_id)
-        capacity = await calculate_planning_capacity(
-            self._session,
-            team_id=team_id,
-            date_from=today,
-            date_to=today + timedelta(days=COCKPIT_CAPACITY_DAYS - 1),
+        packages = await self._queries.package_rows(team_id)
+        request_count = await self._queries.request_work_count(team_id)
+        capacity = await self._capacity.capacity(
+            team_id,
+            today,
+            today + timedelta(days=COCKPIT_CAPACITY_DAYS - 1),
         )
         digest = source_digest(items, packages, request_count, capacity.source_digest)
         return _Snapshot(
@@ -248,8 +239,8 @@ class PlanningEvolutionService:
         )
 
     async def _freshness(self, source_version: int, now: datetime) -> PlanningFreshness:
-        state = await self._session.get(AnalyticsProjectionState, PROJECTION_NAME)
-        if state is None or state.health is ProjectionHealth.REBUILDING:
+        state = await self._freshness_reader.freshness()
+        if state.rebuilding:
             return PlanningFreshness(
                 health="REBUILDING",
                 label="Request projection is rebuilding",
@@ -271,7 +262,7 @@ class PlanningEvolutionService:
     async def _iteration(
         self, team_id: UUID, rows: PackagePlanningRows
     ) -> IterationProjection | None:
-        current = await self._planning.current_iteration(team_id)
+        current = await self._queries.current_iteration(team_id)
         if current is None:
             return None
         iteration, snapshot = current

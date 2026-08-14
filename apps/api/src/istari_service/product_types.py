@@ -69,6 +69,20 @@ class StoredObject:
 
 
 @dataclass(frozen=True, slots=True)
+class ProductStorageUsage:
+    """Reserved bytes and live upload intents at each enforced scope."""
+
+    package_bytes: int
+    request_bytes: int
+    user_bytes: int
+    service_bytes: int
+    package_active_intents: int
+    request_active_intents: int
+    user_active_intents: int
+    service_active_intents: int
+
+
+@dataclass(frozen=True, slots=True)
 class ScanDecision:
     result: ScanResult
     scanner: str
@@ -101,6 +115,7 @@ class ProductRequestRecord:
     id: UUID
     requester_id: UUID
     status: str
+    product_mode: str
     assigned_team: str | None
     assigned_specialist_id: UUID | None
     version: int
@@ -114,9 +129,11 @@ class PackageRecord:
     request_id: UUID
     author_user_id: UUID
     status: PackageStatus
+    covering_note: str | None
     package_checksum: str | None
     version: int
     package_version: int
+    policy_version: int = 2
 
 
 @dataclass(frozen=True, slots=True)

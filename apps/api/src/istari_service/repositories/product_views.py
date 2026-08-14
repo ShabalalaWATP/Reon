@@ -22,7 +22,12 @@ from istari_service.schemas.products import (
 )
 
 
-async def artefact_views(session: AsyncSession, package_id: UUID) -> list[ArtefactView]:
+async def artefact_views(
+    session: AsyncSession,
+    package_id: UUID,
+    *,
+    include_review_details: bool = False,
+) -> list[ArtefactView]:
     released_at = await session.scalar(
         select(ProductPackage.disseminated_at).where(ProductPackage.id == package_id)
     )
@@ -54,6 +59,18 @@ async def artefact_views(session: AsyncSession, package_id: UUID) -> list[Artefa
                 sha256=artefact.checksum,
                 version=artefact.version,
                 destination_domain=link.normalised_domain if link else None,
+                review_destination_url=(
+                    link.destination_url
+                    if link is not None and include_review_details
+                    else None
+                ),
+                review_url=(
+                    f"/api/v1/product-packages/artefacts/{artefact.id}/review"
+                    if include_review_details
+                    and artefact.kind.value == "MANAGED_FILE"
+                    and artefact.lifecycle.value == "CLEAN"
+                    else None
+                ),
                 expires_at=link.expires_at if link else None,
                 scan_result=scan.result if scan else None,
                 scan_reason=scan.reason_code if scan else None,
@@ -62,7 +79,12 @@ async def artefact_views(session: AsyncSession, package_id: UUID) -> list[Artefa
     return list(unique.values())
 
 
-async def package_view(session: AsyncSession, package: ProductPackage) -> PackageView:
+async def package_view(
+    session: AsyncSession,
+    package: ProductPackage,
+    *,
+    include_review_details: bool = False,
+) -> PackageView:
     request = await session.get(ServiceRequest, package.request_id)
     author_name = await session.scalar(
         select(User.display_name).where(User.id == package.author_user_id)
@@ -93,10 +115,16 @@ async def package_view(session: AsyncSession, package: ProductPackage) -> Packag
         request_status=request.status,
         author_display_name=author_name,
         package_version=package.package_version,
+        policy_version=package.policy_version,
         status=package.status,
+        covering_note=package.covering_note,
         package_checksum=package.package_checksum,
         version=package.version,
-        artefacts=await artefact_views(session, package.id),
+        artefacts=await artefact_views(
+            session,
+            package.id,
+            include_review_details=include_review_details,
+        ),
         manager_approved_at=package.manager_approved_at,
         manager_approved_by=manager_name,
         disseminated_at=package.disseminated_at,
@@ -125,6 +153,10 @@ async def customer_release_view(
         status=package.status,
         released_at=package.disseminated_at,
         released_by=releasing_name,
+        covering_note=(
+            package.covering_note
+            or "No covering note was recorded for this historical package."
+        ),
         accepted_at=accepted_at,
         artefacts=await artefact_views(session, package.id),
     )

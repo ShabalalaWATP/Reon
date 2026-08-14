@@ -2,25 +2,19 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Protocol
 from uuid import UUID
 
 from istari_service.domain import Actor
 from istari_service.errors import ObjectNotFound
 from istari_service.models import UserRole
+from istari_service.related_record_types import RelatedRecordSource
 from istari_service.schemas.related_records import (
     RelatedRecordCandidateList,
     RequestLinkCreate,
     RequestLinkView,
     RequestLinkWorkspace,
 )
-
-
-@dataclass(frozen=True, slots=True)
-class RelatedRecordSource:
-    request_id: UUID
-    version: int
 
 
 class RelatedRecordRepository(Protocol):

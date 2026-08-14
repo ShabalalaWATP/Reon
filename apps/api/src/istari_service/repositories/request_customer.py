@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import and_, exists, or_, select
+from sqlalchemy import and_, exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.domain import Actor, ProductDownload
 from istari_service.errors import FeedbackUnavailable
+from istari_service.identity_context import customer_context_entitlement
 from istari_service.models import (
     Deliverable,
     DeliverableStatus,
@@ -16,7 +17,6 @@ from istari_service.models import (
     RequestStatus,
     ServiceRequest,
     User,
-    UserRole,
 )
 from istari_service.product_models import ProductPackage
 from istari_service.repositories.event_store import append_request_event
@@ -63,13 +63,20 @@ class RequestCustomerRepositoryMixin:
             changed_at, request_id = decode_cursor(
                 cursor, message="The request filters are invalid."
             )
+            if self._session.get_bind().dialect.name == "sqlite":
+                changed_before = func.julianday(
+                    ServiceRequest.updated_at
+                ) < func.julianday(changed_at)
+                changed_at_same_time = func.julianday(
+                    ServiceRequest.updated_at
+                ) == func.julianday(changed_at)
+            else:
+                changed_before = ServiceRequest.updated_at < changed_at
+                changed_at_same_time = ServiceRequest.updated_at == changed_at
             statement = statement.where(
                 or_(
-                    ServiceRequest.updated_at < changed_at,
-                    and_(
-                        ServiceRequest.updated_at == changed_at,
-                        ServiceRequest.id < request_id,
-                    ),
+                    changed_before,
+                    and_(changed_at_same_time, ServiceRequest.id < request_id),
                 )
             )
         rows = (
@@ -108,7 +115,7 @@ class RequestCustomerRepositoryMixin:
                     ServiceRequest.id == request_id,
                     ServiceRequest.requester_id == requester_id,
                     User.is_active.is_(True),
-                    User.role == UserRole.REQUESTER,
+                    customer_context_entitlement(),
                 )
                 .with_for_update()
             )

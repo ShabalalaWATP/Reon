@@ -26,6 +26,9 @@ from istari_service.domain import Actor
 from istari_service.errors import InvalidAdministrationChange
 from istari_service.models import User, UserRole
 from istari_service.repositories.admin import SqlAlchemyAdminRepository
+from istari_service.repositories.admin_application import (
+    SqlAlchemyAdminApplication,
+)
 from istari_service.repositories.event_store import audit_key_for_session
 from istari_service.schemas.admin import AdminStatusPatch
 from istari_service.services.admin_service import AdminService
@@ -170,12 +173,12 @@ async def test_sequence_reconciles_upward_and_is_monotonic(
         assert sequence is not None
         sequence.next_value = 1
         await initialise_admin_identity_sequence(session)
-        assert sequence.next_value == 100
+        assert sequence.next_value == 101
         repository = SqlAlchemyAdminRepository(session)
-        assert await repository.next_username() == "admin100"
         assert await repository.next_username() == "admin101"
+        assert await repository.next_username() == "admin102"
         await initialise_admin_identity_sequence(session)
-        assert sequence.next_value == 102
+        assert sequence.next_value == 103
 
 
 async def test_initialisers_create_absent_rows(api_harness: ApiHarness) -> None:
@@ -198,9 +201,8 @@ async def test_last_admin_guard_with_distinct_actor(api_harness: ApiHarness) -> 
         assert target is not None and approver is not None
         approver.is_active = False
         await session.flush()
-        repository = SqlAlchemyAdminRepository(session)
         service = AdminService(
-            repository,
+            SqlAlchemyAdminApplication(session),
             harness.settings,
             PasswordHasher(time_cost=1, memory_cost=8_192, parallelism=1),
         )

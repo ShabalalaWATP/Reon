@@ -10,6 +10,7 @@ from sqlalchemy import Select, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.domain import Actor
+from istari_service.identity_context import user_matches_actor
 from istari_service.models import (
     RequestStatus,
     ServiceRequest,
@@ -20,7 +21,8 @@ from istari_service.models import (
     WorkflowTaskStatus,
 )
 from istari_service.models import WorkflowTask as StoredWorkflowTask
-from istari_service.repositories.organisation import (
+from istari_service.qc_membership import live_qc_membership_condition
+from istari_service.repositories.route_access import (
     has_route_membership,
     route_membership_condition,
 )
@@ -41,6 +43,7 @@ async def scoped_request(
     if actor.role is UserRole.REQUESTER:
         query = query.where(ServiceRequest.requester_id == actor.id)
     else:
+        query = query.where(ServiceRequest.requester_id != actor.id)
         participant_request = await _participant_request(
             session, request_id, actor, lock=lock
         )
@@ -94,6 +97,7 @@ async def _participant_request(
         )
         .where(
             ServiceRequest.id == request_id,
+            ServiceRequest.requester_id != actor.id,
             RequestParticipant.user_id == actor.id,
             RequestParticipant.ended_at.is_(None),
             TeamMembership.user_id == actor.id,
@@ -129,6 +133,7 @@ async def _team_manager_request(
         )
         .where(
             ServiceRequest.id == request_id,
+            ServiceRequest.requester_id != actor.id,
             TeamMembership.user_id == actor.id,
             TeamMembership.workspace_position == WorkspacePosition.MANAGER,
             TeamMembership.effective_from <= now,
@@ -151,12 +156,7 @@ async def _current_actor_is_valid(session: AsyncSession, actor: Actor) -> bool:
         # detail read subsequently locks the request row.
         select(User).where(User.id == actor.id).with_for_update(key_share=True)
     )
-    return bool(
-        current_user is not None
-        and current_user.is_active
-        and current_user.role is actor.role
-        and current_user.scope == actor.scope
-    )
+    return bool(current_user is not None and user_matches_actor(current_user, actor))
 
 
 async def _waiting_clarification_request(
@@ -176,6 +176,7 @@ async def _waiting_clarification_request(
         .join(WorkflowInstance, WorkflowInstance.request_id == ServiceRequest.id)
         .where(
             ServiceRequest.id == request_id,
+            ServiceRequest.requester_id != actor.id,
             ServiceRequest.status == RequestStatus.CUSTOMER_INFORMATION_REQUIRED,
             WorkflowInstance.status == WorkflowInstanceStatus.ACTIVE,
             WorkflowInstance.process_instance_key.is_not(None),
@@ -244,5 +245,7 @@ def _active_work_query(
         )
     elif actor.role is UserRole.DELIVERY_SPECIALIST:
         query = query.where(ServiceRequest.assigned_specialist_id == actor.id)
+    elif actor.role is UserRole.QUALITY_RELEASE:
+        return query.where(live_qc_membership_condition(actor.id, datetime.now(UTC)))
     membership = route_membership_condition(actor)
     return query.where(membership) if membership is not None else query

@@ -164,8 +164,10 @@ _BASE_IDENTITIES = (
     _identity(
         "Angus Gunn",
         UserRole.QUALITY_RELEASE,
-        "Shared QC",
+        "Combined QC Team",
         legacy="quality.1@example.test",
+        units=("QC_TEAM",),
+        manager=True,
     ),
     _identity(
         "James Forrest",
@@ -214,6 +216,13 @@ DEMO_IDENTITIES = tuple(
                     manager=fixture.manager,
                 )
                 for fixture in ROUTING_IDENTITY_FIXTURES
+            ),
+            _identity(
+                "Neil Alexander",
+                UserRole.QUALITY_RELEASE,
+                "Combined QC Team",
+                units=("QC_TEAM",),
+                manager=True,
             ),
         ),
         start=1,
@@ -273,6 +282,12 @@ async def seed_demo_users(
             created += 1
         else:
             user.username = identity.username
+            if (
+                identity.role is UserRole.QUALITY_RELEASE
+                and user.role is UserRole.QUALITY_RELEASE
+                and user.scope == "Shared QC"
+            ):
+                user.scope = identity.scope
         if identity.username not in stored_by_username or not user.email:
             user.email = f"{identity.username}@istari.example.test"
         if identity.username not in stored_by_username:
@@ -280,6 +295,10 @@ async def seed_demo_users(
             user.password_hash = password_hash
             user.role = identity.role
             user.scope = identity.scope
+            user.customer_context_enabled = identity.role not in {
+                UserRole.REQUESTER,
+                UserRole.PLATFORM_ADMIN,
+            }
             user.is_active = identity.active
             managed_usernames.add(identity.username)
         users[identity.username] = user

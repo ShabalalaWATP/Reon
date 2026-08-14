@@ -115,12 +115,12 @@ $staffedRoute = @(
         Variables = @{ leadReviewDecision = "approve" }
     }
     @{
-        ElementId = "quality_review"; Name = "QC Review"; Group = "qc-managers"
+        ElementId = "quality_review"; Name = "QC Review"; Group = "qc-reviewers"
         Actor = $qcManagerActorId; Action = "approve"; Claim = $true
         Variables = @{ qualityDecision = "approve" }
     }
     @{
-        ElementId = "release"; Name = "Dissemination"; Group = "qc-managers"
+        ElementId = "release"; Name = "Dissemination"; Group = "release-managers"
         Actor = $qcManagerActorId; Action = "disseminate"; Claim = $true
         Variables = @{}
     }
@@ -186,12 +186,12 @@ $alternativeRoute = @(
         Variables = @{ leadReviewDecision = "approve" }
     }
     @{
-        ElementId = "quality_review"; Name = "QC Review"; Group = "qc-managers"
+        ElementId = "quality_review"; Name = "QC Review"; Group = "qc-reviewers"
         Actor = $qcManagerActorId; Action = "approve"; Claim = $true
         Variables = @{ qualityDecision = "approve" }
     }
     @{
-        ElementId = "release"; Name = "Dissemination"; Group = "qc-managers"
+        ElementId = "release"; Name = "Dissemination"; Group = "release-managers"
         Actor = $qcManagerActorId; Action = "disseminate"; Claim = $true
         Variables = @{}
     }

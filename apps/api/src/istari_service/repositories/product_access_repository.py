@@ -7,7 +7,8 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from istari_service.models import RequestStatus, ServiceRequest, User, UserRole
+from istari_service.identity_context import customer_context_entitlement
+from istari_service.models import RequestStatus, ServiceRequest, User
 from istari_service.product_models import (
     ExternalProductLink,
     ProductArtefact,
@@ -73,7 +74,7 @@ class ProductAccessRepositoryMixin:
                     ProductDissemination.package_checksum
                     == ProductPackage.package_checksum,
                     User.is_active.is_(True),
-                    User.role == UserRole.REQUESTER,
+                    customer_context_entitlement(),
                 )
             )
         ).one_or_none()
@@ -112,7 +113,7 @@ class ProductAccessRepositoryMixin:
                 ProductDissemination.package_checksum
                 == ProductPackage.package_checksum,
                 User.is_active.is_(True),
-                User.role == UserRole.REQUESTER,
+                customer_context_entitlement(),
             )
         )
         return package

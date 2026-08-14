@@ -13,13 +13,17 @@ from istari_service.dependencies import (
     CurrentActor,
     DatabaseSession,
     DetachedCurrentActor,
-    DetachedMutationActor,
+    DetachedMutationSession,
     MutationActor,
     SessionFactoryDependency,
 )
-from istari_service.product_access_audit import SqlAlchemyProductAccessAudit
+from istari_service.product_composition import (
+    build_download_service,
+    build_product_service,
+    build_transfer_service,
+)
 from istari_service.product_dependencies import ProductRuntimeDependency
-from istari_service.repositories.products import SqlAlchemyProductRepository
+from istari_service.product_types import DownloadStream
 from istari_service.schemas.products import (
     AcceptanceCommand,
     ApprovalCommand,
@@ -30,47 +34,41 @@ from istari_service.schemas.products import (
     ManagedArtefactIntent,
     PackageCreate,
     PackageView,
+    SubmitPackageCommand,
     UploadContentReceipt,
     VersionCommand,
     WithdrawalCommand,
 )
-from istari_service.services.product_download_service import ProductDownloadService
-from istari_service.services.product_service import ProductService
-from istari_service.services.product_transfer_service import ProductTransferService
 
 router = APIRouter(prefix="/product-packages", tags=["product packages"])
 release_router = APIRouter(prefix="/releases", tags=["product releases"])
 
 
-def _service(
-    session: DatabaseSession,
-    sessions: SessionFactoryDependency,
-    runtime: ProductRuntimeDependency,
-) -> ProductService:
-    return ProductService(
-        SqlAlchemyProductRepository(session),
-        runtime.storage,
-        runtime.scanner,
-        runtime.link_policy,
-        SqlAlchemyProductAccessAudit(sessions),
-        upload_ttl=runtime.upload_ttl,
-        maximum_file_bytes=runtime.maximum_file_bytes,
-        maximum_package_bytes=runtime.maximum_package_bytes,
-        maximum_request_storage_bytes=runtime.maximum_request_storage_bytes,
-        maximum_user_storage_bytes=runtime.maximum_user_storage_bytes,
-        maximum_global_storage_bytes=runtime.maximum_global_storage_bytes,
-        managed_file_uploads_enabled=runtime.managed_file_uploads_enabled,
+def _download_response(
+    result: DownloadStream, *, inline_safe_media: bool = False
+) -> StreamingResponse:
+    fallback = re.sub(r"[^A-Za-z0-9._-]", "_", result.filename).strip("._")
+    fallback = fallback[:120] or "service-product"
+    kind = (
+        "inline"
+        if inline_safe_media
+        and result.media_type in {"application/pdf", "image/jpeg", "image/png"}
+        else "attachment"
     )
-
-
-def _transfer_service(
-    sessions: SessionFactoryDependency,
-    runtime: ProductRuntimeDependency,
-) -> ProductTransferService:
-    return ProductTransferService(
-        sessions,
-        runtime,
-        SqlAlchemyProductAccessAudit(sessions),
+    disposition = (
+        f'{kind}; filename="{fallback}"; '
+        f"filename*=UTF-8''{quote(result.filename, safe='')}"
+    )
+    return StreamingResponse(
+        result.chunks,
+        media_type=result.media_type,
+        headers={
+            "Cache-Control": "no-store",
+            "Content-Disposition": disposition,
+            "Content-Security-Policy": "sandbox; default-src 'none'",
+            "Referrer-Policy": "no-referrer",
+            "X-Content-Type-Options": "nosniff",
+        },
     )
 
 
@@ -82,7 +80,9 @@ async def create_package(
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> PackageView:
-    return await _service(session, sessions, runtime).create_package(actor, command)
+    return await build_product_service(session, sessions, runtime).create_package(
+        actor, command
+    )
 
 
 @router.get("/by-request/{request_id}", response_model=PackageView | None)
@@ -93,9 +93,9 @@ async def get_package_for_request(
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> PackageView | None:
-    return await _service(session, sessions, runtime).get_package_for_request(
-        actor, request_id
-    )
+    return await build_product_service(
+        session, sessions, runtime
+    ).get_package_for_request(actor, request_id)
 
 
 @router.get("/{package_id}", response_model=PackageView)
@@ -106,20 +106,36 @@ async def get_package(
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> PackageView:
-    return await _service(session, sessions, runtime).get_package(actor, package_id)
+    return await build_product_service(session, sessions, runtime).get_package(
+        actor, package_id
+    )
+
+
+@router.get("/artefacts/{artefact_id}/review")
+async def review_artefact(
+    artefact_id: UUID,
+    request: Request,
+    actor: DetachedCurrentActor,
+    sessions: SessionFactoryDependency,
+    runtime: ProductRuntimeDependency,
+) -> StreamingResponse:
+    result = await build_download_service(sessions, runtime).review(
+        actor, artefact_id, getattr(request.state, "correlation_id", None)
+    )
+    return _download_response(result, inline_safe_media=True)
 
 
 @router.post("/{package_id}/managed-artefacts", response_model=ManagedArtefactIntent)
 async def add_managed_artefact(
     package_id: UUID,
     command: ManagedArtefactCreate,
-    actor: DetachedMutationActor,
+    mutation_session: DetachedMutationSession,
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> ManagedArtefactIntent:
-    return await _transfer_service(sessions, runtime).add_managed(
-        actor, package_id, command
-    )
+    return await build_transfer_service(
+        sessions, runtime, mutation_session
+    ).add_managed(mutation_session.actor, package_id, command)
 
 
 @router.post("/{package_id}/external-links", response_model=PackageView)
@@ -131,7 +147,7 @@ async def add_external_link(
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> PackageView:
-    return await _service(session, sessions, runtime).add_external(
+    return await build_product_service(session, sessions, runtime).add_external(
         actor, package_id, command
     )
 
@@ -144,14 +160,16 @@ async def upload_content(
     package_id: UUID,
     intent_id: UUID,
     request: Request,
-    actor: DetachedMutationActor,
+    mutation_session: DetachedMutationSession,
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
     expected_version: int = Query(alias="expectedVersion", ge=1),
     upload_token: str = Header(alias="X-Upload-Token", min_length=32, max_length=200),
 ) -> UploadContentReceipt:
-    return await _transfer_service(sessions, runtime).upload_content(
-        actor,
+    return await build_transfer_service(
+        sessions, runtime, mutation_session
+    ).upload_content(
+        mutation_session.actor,
         package_id,
         intent_id,
         expected_version=expected_version,
@@ -165,25 +183,27 @@ async def complete_upload(
     package_id: UUID,
     intent_id: UUID,
     command: VersionCommand,
-    actor: DetachedMutationActor,
+    mutation_session: DetachedMutationSession,
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> PackageView:
-    return await _transfer_service(sessions, runtime).complete_upload(
-        actor, package_id, intent_id, command
-    )
+    return await build_transfer_service(
+        sessions, runtime, mutation_session
+    ).complete_upload(mutation_session.actor, package_id, intent_id, command)
 
 
 @router.post("/{package_id}/submit", response_model=PackageView)
 async def submit_package(
     package_id: UUID,
-    command: VersionCommand,
+    command: SubmitPackageCommand,
     actor: MutationActor,
     session: DatabaseSession,
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> PackageView:
-    return await _service(session, sessions, runtime).submit(actor, package_id, command)
+    return await build_product_service(session, sessions, runtime).submit(
+        actor, package_id, command
+    )
 
 
 @router.post("/{package_id}/manager-approve", response_model=PackageView)
@@ -195,7 +215,7 @@ async def manager_approve(
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> PackageView:
-    return await _service(session, sessions, runtime).manager_approve(
+    return await build_product_service(session, sessions, runtime).manager_approve(
         actor, package_id, command
     )
 
@@ -209,7 +229,7 @@ async def disseminate(
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> PackageView:
-    return await _service(session, sessions, runtime).disseminate(
+    return await build_product_service(session, sessions, runtime).disseminate(
         actor, package_id, command
     )
 
@@ -223,7 +243,7 @@ async def withdraw(
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> PackageView:
-    return await _service(session, sessions, runtime).withdraw(
+    return await build_product_service(session, sessions, runtime).withdraw(
         actor, package_id, command
     )
 
@@ -236,9 +256,9 @@ async def customer_release(
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> CustomerReleaseView | None:
-    return await _service(session, sessions, runtime).find_customer_release(
-        actor, request_id
-    )
+    return await build_product_service(
+        session, sessions, runtime
+    ).find_customer_release(actor, request_id)
 
 
 @release_router.post(
@@ -253,7 +273,7 @@ async def accept_customer_product(
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> CustomerReleaseView:
-    return await _service(session, sessions, runtime).accept_product(
+    return await build_product_service(session, sessions, runtime).accept_product(
         actor, request_id, command
     )
 
@@ -266,24 +286,10 @@ async def download(
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> StreamingResponse:
-    result = await ProductDownloadService(sessions, runtime).download(
+    result = await build_download_service(sessions, runtime).download(
         actor, artefact_id, getattr(request.state, "correlation_id", None)
     )
-    fallback = re.sub(r"[^A-Za-z0-9._-]", "_", result.filename).strip("._")
-    fallback = fallback[:120] or "service-product"
-    disposition = (
-        f'attachment; filename="{fallback}"; '
-        f"filename*=UTF-8''{quote(result.filename, safe='')}"
-    )
-    return StreamingResponse(
-        result.chunks,
-        media_type=result.media_type,
-        headers={
-            "Cache-Control": "no-store",
-            "Content-Disposition": disposition,
-            "X-Content-Type-Options": "nosniff",
-        },
-    )
+    return _download_response(result)
 
 
 @release_router.get("/artefacts/{artefact_id}/open")
@@ -295,7 +301,7 @@ async def open_external(
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
 ) -> RedirectResponse:
-    destination = await _service(session, sessions, runtime).redirect(
+    destination = await build_product_service(session, sessions, runtime).redirect(
         actor, artefact_id, getattr(request.state, "correlation_id", None)
     )
     return RedirectResponse(

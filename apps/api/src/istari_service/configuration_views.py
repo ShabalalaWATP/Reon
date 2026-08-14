@@ -5,20 +5,18 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from istari_service.configuration_models import (
-    ApprovedWorkflowDefinition,
-    ConfigurationVersion,
-)
 from istari_service.configuration_projection import (
     active_parents,
     active_units,
     mappings_for_unit,
 )
-from istari_service.configuration_types import ConfigurationDraftSpec, PreviewChange
-from istari_service.repositories.configuration_records import (
-    ConfigurationBundle,
+from istari_service.configuration_records import (
+    ApprovedWorkflowRecord,
+    ConfigurationBundleRecord,
+    ConfigurationVersionRecord,
     stored_utc,
 )
+from istari_service.configuration_types import ConfigurationDraftSpec, PreviewChange
 from istari_service.schemas.configuration import (
     ApprovedWorkflowDefinitionView,
     CandidateGroupInput,
@@ -35,7 +33,9 @@ from istari_service.schemas.configuration import (
 )
 
 
-def version_summary(version: ConfigurationVersion) -> ConfigurationVersionSummary:
+def version_summary(
+    version: ConfigurationVersionRecord,
+) -> ConfigurationVersionSummary:
     return ConfigurationVersionSummary(
         id=version.id,
         sequence=version.sequence,
@@ -50,7 +50,7 @@ def version_summary(version: ConfigurationVersion) -> ConfigurationVersionSummar
     )
 
 
-def version_detail(bundle: ConfigurationBundle) -> ConfigurationVersionDetail:
+def version_detail(bundle: ConfigurationBundleRecord) -> ConfigurationVersionDetail:
     version = bundle.version
     specification = bundle.specification()
     approval = None
@@ -87,7 +87,7 @@ def version_detail(bundle: ConfigurationBundle) -> ConfigurationVersionDetail:
 
 
 def workflow_view(
-    definition: ApprovedWorkflowDefinition,
+    definition: ApprovedWorkflowRecord,
 ) -> ApprovedWorkflowDefinitionView:
     return ApprovedWorkflowDefinitionView(
         id=definition.id,

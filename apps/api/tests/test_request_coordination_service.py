@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
@@ -22,14 +23,15 @@ from istari_service.organisation_models import (
 )
 from istari_service.organisation_seed import organisation_id, seed_organisation_units
 from istari_service.repositories.request_views import build_request_detail
+from istari_service.request_coordination_composition import (
+    request_coordination_service,
+)
 from istari_service.schemas.coordination import (
     CoordinationAudience,
     CoordinationMessageCreate,
     ReturnRequestCreate,
 )
-from istari_service.services.request_coordination_service import (
-    RequestCoordinationService,
-)
+from istari_service.team_models import TeamMembership, WorkspacePosition
 from test_work_repository import actor_from, make_request, make_user
 
 
@@ -56,13 +58,21 @@ async def test_route_user_and_customer_can_record_coordination(
         triage = make_user(UserRole.INTAKE_TRIAGE, "CRIOC")
         session.add_all([customer, triage])
         await session.flush()
-        request = make_request(customer.id, RequestStatus.IN_PROGRESS)
+        request = make_request(customer.id, RequestStatus.TRIAGE_REVIEW)
         session.add(request)
         await session.flush()
         crioc_id = organisation_id("CRIOC")
         session.add_all(
             [
                 UserOrganisationMembership(user_id=triage.id, unit_id=crioc_id),
+                TeamMembership(
+                    user_id=triage.id,
+                    team_id=crioc_id,
+                    workspace_position=WorkspacePosition.MANAGER,
+                    effective_from=datetime.now(UTC),
+                    started_by_user_id=triage.id,
+                    start_reason="Synthetic current route membership.",
+                ),
                 RequestRouteSelection(
                     request_id=request.id, unit_id=crioc_id, position=0
                 ),
@@ -74,7 +84,7 @@ async def test_route_user_and_customer_can_record_coordination(
             ]
         )
         await session.flush()
-        service = RequestCoordinationService(session)
+        service = request_coordination_service(session)
 
         with pytest.raises(ObjectNotFound):
             await service.post_message(
@@ -83,29 +93,39 @@ async def test_route_user_and_customer_can_record_coordination(
                 CoordinationMessageCreate(
                     audience=CoordinationAudience.CURRENT_OWNER,
                     body="An unknown request must not disclose its existence.",
+                    client_mutation_id=uuid4(),
                 ),
             )
 
+        question_body = "Can the Customer confirm the synthetic priority?"
+        question_command = CoordinationMessageCreate(
+            audience=CoordinationAudience.CUSTOMER,
+            body=question_body,
+            client_mutation_id=uuid4(),
+        )
         question = await service.post_message(
             actor_from(triage, crioc_id),
             request.id,
-            CoordinationMessageCreate(
-                audience=CoordinationAudience.CUSTOMER,
-                body="Can the Customer confirm the synthetic priority?",
-            ),
+            question_command,
         )
         assert question.type == "COORDINATION_MESSAGE"
-        assert question.message.startswith("Question for Customer:")
+        assert question.message == "Question for Customer recorded."
+        repeated = await service.post_message(
+            actor_from(triage, crioc_id), request.id, question_command
+        )
+        assert repeated.id == question.id
 
+        response_body = "The synthetic priority remains unchanged."
         response = await service.post_message(
             actor_from(customer),
             request.id,
             CoordinationMessageCreate(
                 audience=CoordinationAudience.CURRENT_OWNER,
-                body="The synthetic priority remains unchanged.",
+                body=response_body,
+                client_mutation_id=uuid4(),
             ),
         )
-        assert response.message.startswith("Message for current owner:")
+        assert response.message == "Message for current owner recorded."
         assert request.audit_event_count == 2
         customer_detail = await build_request_detail(
             session,
@@ -124,6 +144,12 @@ async def test_route_user_and_customer_can_record_coordination(
             question.message,
             response.message,
         ]
+        assert question_body not in " ".join(
+            event.message for event in staff_detail.events
+        )
+        assert response_body not in " ".join(
+            event.message for event in staff_detail.events
+        )
 
 
 @pytest.mark.asyncio
@@ -155,7 +181,7 @@ async def test_return_requests_are_route_scoped_and_target_earlier_units(
             ]
         )
         await session.flush()
-        service = RequestCoordinationService(session)
+        service = request_coordination_service(session)
         event = await service.request_return(
             actor_from(triage, crioc_id),
             request.id,
@@ -219,5 +245,6 @@ async def test_return_requests_are_route_scoped_and_target_earlier_units(
                 CoordinationMessageCreate(
                     audience=CoordinationAudience.CUSTOMER,
                     body="Customers cannot address themselves through this endpoint.",
+                    client_mutation_id=uuid4(),
                 ),
             )

@@ -8,7 +8,8 @@ from uuid import UUID
 from sqlalchemy import JSON, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from istari_service.models import UTC_TS, Base, CreatedMixin, DeliverableStatus, _enum
+from istari_service.model_enums import DeliverableStatus
+from istari_service.orm_base import UTC_TS, Base, CreatedMixin, _enum
 
 
 class Deliverable(CreatedMixin, Base):

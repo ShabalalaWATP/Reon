@@ -187,6 +187,15 @@ def _unit_definitions() -> tuple[UnitDefinition, ...]:
 
 
 UNIT_DEFINITIONS = _unit_definitions()
+QC_UNIT_DEFINITION = UnitDefinition(
+    "QC_TEAM",
+    "Combined QC Team",
+    OrganisationKind.TEAM,
+    "CRIOC",
+    StaffingStatus.STAFFED,
+    manager_group="qc-team-managers",
+    analyst_group="qc-team-members",
+)
 
 
 async def seed_organisation_units(session: AsyncSession) -> int:
@@ -220,6 +229,25 @@ async def seed_organisation_units(session: AsyncSession) -> int:
         configured.sort_order = sort_order
         configured.is_configured = True
         await session.flush()
+    definition = QC_UNIT_DEFINITION
+    qc_team = existing.get(definition.code)
+    if qc_team is None:
+        qc_team = OrganisationUnit(
+            id=organisation_id(definition.code),
+            code=definition.code,
+            name=definition.name,
+        )
+        session.add(qc_team)
+        created += 1
+    qc_team.kind = definition.kind
+    qc_team.parent_id = existing["CRIOC"].id
+    qc_team.staffing_status = definition.staffing_status
+    qc_team.routing_candidate_group = None
+    qc_team.manager_candidate_group = definition.manager_group
+    qc_team.analyst_candidate_group = definition.analyst_group
+    qc_team.sort_order = len(UNIT_DEFINITIONS)
+    qc_team.is_configured = False
+    await session.flush()
     from istari_service.repositories.management import rebuild_organisation_closure
 
     await rebuild_organisation_closure(session)

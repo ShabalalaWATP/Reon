@@ -9,7 +9,8 @@ from uuid import UUID
 from sqlalchemy import JSON, DateTime, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from istari_service.models import Base, OutboxStatus, TimestampMixin, _enum
+from istari_service.model_enums import OutboxStatus
+from istari_service.orm_base import Base, TimestampMixin, _enum
 
 OUTBOX_UTC_TS = DateTime(timezone=True)
 

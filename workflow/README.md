@@ -36,8 +36,8 @@ process contract.
 | `delivery_work` | Product Production | `= assignedSpecialistId` | `= selectedTeamAnalystCandidateGroup` |
 | `customer_clarification_response` | Provide production information | `= requesterId` | None |
 | `lead_review` | Manager Review | None | `= selectedTeamManagerCandidateGroup` |
-| `quality_review` | QC Review | None | `qc-managers` |
-| `release` | Dissemination | None | `qc-managers` |
+| `quality_review` | QC Review | None | `qc-reviewers` |
+| `release` | Dissemination | None | `release-managers` |
 
 ## Permitted variables
 

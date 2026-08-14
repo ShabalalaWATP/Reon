@@ -29,6 +29,9 @@ async def test_repository_not_found_and_package_idempotency(
         package = await repository.create_package(request_id, analyst.id, key)
         repeated = await repository.create_package(request_id, analyst.id, key)
         assert repeated.id == package.id
+        first_digest = await repository.package_digest(package.id, "First note.")
+        second_digest = await repository.package_digest(package.id, "Second note.")
+        assert first_digest[0] != second_digest[0]
         with pytest.raises(ProductNotFound):
             await repository.create_package(other_request_id, analyst.id, key)
         assert await repository.package(missing, lock=False) is None
@@ -36,7 +39,7 @@ async def test_repository_not_found_and_package_idempotency(
         with pytest.raises(ProductNotFound):
             await repository.view(missing)
         with pytest.raises(ProductNotFound):
-            await repository.freeze(missing, "a" * 64)
+            await repository.freeze(missing, "a" * 64, "Synthetic covering note.")
         with pytest.raises(ProductNotFound):
             await repository.approve(missing, analyst.id, now=datetime.now(UTC))
         with pytest.raises(ProductNotFound):

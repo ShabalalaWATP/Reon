@@ -39,7 +39,7 @@ from istari_service.repositories.configuration import SqlAlchemyConfigurationRep
 
 CONFIGURATION_NAMESPACE = UUID("69f571ac-2f72-4a86-86b0-7784f3f064b1")
 BUNDLED_BPMN_CHECKSUM = (
-    "99ddb5db518ddc6e07234eefede0d6574f18a14c522b5f0db77e0dd71e75dcec"
+    "ef64399aefc49d3fd0cd102d2c670de2e521922e926633cb9da3ac7eb71154bd"
 )
 
 

@@ -6,7 +6,7 @@ param(
     [string]$EvidenceDirectory,
     [Parameter(Mandatory = $true)]
     [string]$Confirmation,
-    [string]$ExpectedRevision = '0043_security_event_dedup'
+    [string]$ExpectedRevision = '0047_action_view_contexts'
 )
 
 Set-StrictMode -Version Latest

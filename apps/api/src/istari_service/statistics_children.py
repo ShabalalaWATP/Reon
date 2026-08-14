@@ -6,10 +6,10 @@ from collections import defaultdict
 from datetime import date
 from uuid import UUID
 
-from istari_service.analytics_models import RequestAnalyticsFact
 from istari_service.models import RequestStatus
-from istari_service.organisation_models import OrganisationKind, OrganisationUnit
+from istari_service.organisation_models import OrganisationKind
 from istari_service.schemas.statistics import ChildUnitComparison
+from istari_service.statistics_records import StatisticsChild, StatisticsFact
 
 RATING_COHORT = 5
 TERMINAL_STATUSES = {
@@ -21,8 +21,8 @@ TERMINAL_STATUSES = {
 
 def child_comparisons(
     scope_kind: OrganisationKind | str,
-    facts: tuple[RequestAnalyticsFact, ...],
-    children: tuple[OrganisationUnit, ...],
+    facts: tuple[StatisticsFact, ...],
+    children: tuple[StatisticsChild, ...],
     as_of_date: date,
 ) -> list[ChildUnitComparison]:
     attribute = {
@@ -33,7 +33,7 @@ def child_comparisons(
     }.get(scope_kind)
     if attribute is None:
         return []
-    grouped: dict[UUID, list[RequestAnalyticsFact]] = defaultdict(list)
+    grouped: dict[UUID, list[StatisticsFact]] = defaultdict(list)
     for fact in facts:
         unit_id = getattr(fact, attribute)
         if unit_id is not None:
@@ -42,8 +42,8 @@ def child_comparisons(
 
 
 def _child_row(
-    unit: OrganisationUnit,
-    facts: list[RequestAnalyticsFact],
+    unit: StatisticsChild,
+    facts: list[StatisticsFact],
     as_of_date: date,
 ) -> ChildUnitComparison:
     active = [fact for fact in facts if fact.current_status not in TERMINAL_STATUSES]

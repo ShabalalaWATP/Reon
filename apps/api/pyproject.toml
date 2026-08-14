@@ -11,6 +11,7 @@ dependencies = [
   "camunda-orchestration-sdk==9.0.1",
   "fastapi>=0.116,<1",
   "httpx>=0.28,<1",
+  "pillow>=12.1,<13",
   "pydantic[email]>=2.13.4,<3",
   "pydantic-settings>=2.10,<3",
   "sqlalchemy[asyncio]>=2.0.51,<3",

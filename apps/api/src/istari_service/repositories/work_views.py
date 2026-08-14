@@ -13,7 +13,7 @@ from istari_service.policies import allowed_actions
 from istari_service.repositories.auth import actor_from_user
 from istari_service.repositories.requests import record_from_request
 from istari_service.schemas.work import WorkItem
-from istari_service.services.work_service import WorkBundle
+from istari_service.work_types import WorkBundle
 
 
 def build_work_bundle(

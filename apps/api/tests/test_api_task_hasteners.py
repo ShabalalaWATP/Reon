@@ -1,9 +1,12 @@
 """Exact-team Manager hasteners for assigned Analysts."""
 
-from uuid import uuid4
+from uuid import UUID, uuid4
+
+from sqlalchemy import update
 
 from api_helpers import perform, reach_delivery_planning
 from conftest import ApiHarness
+from istari_service.models import ServiceRequest
 
 
 async def test_any_exact_team_manager_can_hasten_one_or_all_assigned_analysts(
@@ -232,3 +235,30 @@ async def test_sibling_team_manager_cannot_hasten_another_teams_request(
         f"/api/v1/team-workspaces/{ssg_id}/board/requests/{request_id}"
     )
     assert exact_item.status_code == 404
+
+
+async def test_dual_context_manager_cannot_hasten_own_customer_request(
+    api_harness: ApiHarness,
+) -> None:
+    harness = api_harness
+    request_id = await reach_delivery_planning(harness)
+    manager_id = await harness.user_id("admin9")
+    team_id = str(await harness.unit_id("SSG_TEAM"))
+    async with harness.sessions() as session, session.begin():
+        await session.execute(
+            update(ServiceRequest)
+            .where(ServiceRequest.id == UUID(request_id))
+            .values(requester_id=manager_id)
+        )
+    await harness.login("admin9")
+
+    denied = await harness.client.post(
+        f"/api/v1/team-workspaces/{team_id}/requests/{request_id}/hasteners",
+        json={
+            "audience": "ALL_ASSIGNED",
+            "message": "A staff context must not act on its own Customer request.",
+        },
+        headers=harness.mutation_headers(),
+    )
+
+    assert denied.status_code == 404

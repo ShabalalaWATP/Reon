@@ -17,15 +17,15 @@ from istari_service.action_notification_models import (
 from istari_service.domain import Actor
 from istari_service.errors import InvalidAction
 from istari_service.notification_catalog import EVENT_LABELS, render_subject
-from istari_service.repositories.notification_projection import (
+from istari_service.notification_ports import (
+    NotificationProjectionPort,
+    NotificationReconciler,
+    NotificationRepositoryPort,
     RecipientRule,
-    SqlAlchemyNotificationProjectionRepository,
 )
-from istari_service.repositories.notifications import (
-    MANDATORY_GROUPS,
-    SqlAlchemyNotificationRepository,
-)
-from istari_service.repositories.projection_pagination import InvalidProjectionQuery
+from istari_service.notification_preference_policy import MANDATORY_GROUPS
+from istari_service.projection_freshness import projection_freshness
+from istari_service.projection_pagination import InvalidProjectionQuery
 from istari_service.schemas.actions import (
     NotificationCountResult,
     NotificationFilterState,
@@ -37,7 +37,6 @@ from istari_service.schemas.actions import (
     NotificationStateCommand,
     NotificationStateResult,
 )
-from istari_service.services.action_service import _freshness
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,11 +54,13 @@ class NotificationEventCommand:
 class NotificationService:
     def __init__(
         self,
-        repository: SqlAlchemyNotificationRepository,
-        projection: SqlAlchemyNotificationProjectionRepository | None = None,
+        repository: NotificationRepositoryPort,
+        projection: NotificationProjectionPort | None = None,
+        reconciler: NotificationReconciler | None = None,
     ) -> None:
         self._repository = repository
         self._projection = projection
+        self._reconciler = reconciler
 
     async def list_notifications(
         self,
@@ -91,7 +92,7 @@ class NotificationService:
             items=[_notification_item(recipient, event) for recipient, event in rows],
             unread_count=await self._repository.unread_count(actor),
             next_cursor=next_cursor,
-            freshness=_freshness(checkpoint, current),
+            freshness=projection_freshness(checkpoint, current),
         )
 
     async def count(self, actor: Actor) -> NotificationCountResult:
@@ -122,7 +123,7 @@ class NotificationService:
     async def preferences(self, actor: Actor) -> NotificationPreferencesResult:
         stored = {
             preference.event_group: preference
-            for preference in await self._repository.preferences(actor.id)
+            for preference in await self._repository.preferences(actor)
         }
         return NotificationPreferencesResult(
             groups=[
@@ -138,7 +139,7 @@ class NotificationService:
         command: NotificationPreferenceUpdate,
     ) -> NotificationPreferenceResult:
         preference = await self._repository.update_preference(
-            actor.id, event_group, command
+            actor, event_group, command
         )
         return _preference(event_group, preference)
 
@@ -191,19 +192,14 @@ class NotificationService:
             attempted_at=attempted_at or datetime.now(UTC),
         )
 
-    def _require_projection(self) -> SqlAlchemyNotificationProjectionRepository:
+    def _require_projection(self) -> NotificationProjectionPort:
         if self._projection is None:
             raise RuntimeError("notification projection repository is not configured")
         return self._projection
 
     async def _reconcile_pending(self) -> None:
-        if self._projection is None:
-            return
-        from istari_service.request_notification_projection import (
-            reconcile_pending_notifications,
-        )
-
-        await reconcile_pending_notifications(self._projection.session)
+        if self._reconciler is not None:
+            await self._reconciler.reconcile_pending()
 
 
 def _notification_item(

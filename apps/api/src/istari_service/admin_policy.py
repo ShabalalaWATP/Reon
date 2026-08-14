@@ -3,9 +3,20 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Protocol
 
+from istari_service.errors import InvalidAdministrationChange
 from istari_service.models import UserRole
 from istari_service.organisation_models import OrganisationKind
+
+
+class MembershipUnit(Protocol):
+    @property
+    def kind(self) -> OrganisationKind: ...
+
+    @property
+    def code(self) -> str: ...
+
 
 ROLE_UNIT_KIND: dict[UserRole, OrganisationKind | None] = {
     UserRole.PLATFORM_ADMIN: None,
@@ -15,13 +26,14 @@ ROLE_UNIT_KIND: dict[UserRole, OrganisationKind | None] = {
     UserRole.OPERATIONS_ALLOCATION: OrganisationKind.OPS_GROUP,
     UserRole.DELIVERY_TEAM_LEAD: OrganisationKind.TEAM,
     UserRole.DELIVERY_SPECIALIST: OrganisationKind.TEAM,
-    UserRole.QUALITY_RELEASE: None,
+    UserRole.QUALITY_RELEASE: OrganisationKind.TEAM,
 }
 
 
 def membership_error(
     role: UserRole,
     kinds: Sequence[OrganisationKind],
+    codes: Sequence[str] = (),
 ) -> str | None:
     expected = ROLE_UNIT_KIND[role]
     if expected is None:
@@ -30,12 +42,31 @@ def membership_error(
         return "Select at least one compatible organisation unit."
     if any(kind is not expected for kind in kinds):
         return f"This role requires {expected.value} organisation units."
+    if role is UserRole.QUALITY_RELEASE and (
+        len(kinds) != 1 or tuple(codes) != ("QC_TEAM",)
+    ):
+        return "QC Managers must belong to the Combined QC Team only."
     if (
-        role in {UserRole.DELIVERY_TEAM_LEAD, UserRole.DELIVERY_SPECIALIST}
+        role
+        in {
+            UserRole.DELIVERY_TEAM_LEAD,
+            UserRole.DELIVERY_SPECIALIST,
+            UserRole.QUALITY_RELEASE,
+        }
         and len(kinds) != 1
     ):
-        return "Team Managers and Analysts must belong to exactly one team."
+        return "Team staff must belong to exactly one team."
     return None
+
+
+def require_memberships(role: UserRole, units: Sequence[MembershipUnit]) -> None:
+    message = membership_error(
+        role,
+        [unit.kind for unit in units],
+        [unit.code for unit in units],
+    )
+    if message:
+        raise InvalidAdministrationChange(message)
 
 
 def is_security_change(

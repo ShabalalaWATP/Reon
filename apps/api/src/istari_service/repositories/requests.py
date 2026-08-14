@@ -12,6 +12,7 @@ from istari_service.domain import Actor, RequestRecord
 from istari_service.errors import ObjectNotFound
 from istari_service.models import (
     OutboxStatus,
+    ProductMode,
     RequestStatus,
     ServiceRequest,
     WorkflowInstance,
@@ -64,10 +65,12 @@ class SqlAlchemyRequestRepository(RequestCustomerRepositoryMixin):
         session: AsyncSession,
         *,
         process_id: str,
+        default_product_mode: ProductMode = ProductMode.LEGACY,
         configuration_pins: SqlAlchemyConfigurationPinRepository | None = None,
     ) -> None:
         self._session = session
         self._process_id = process_id
+        self._default_product_mode = default_product_mode
         self._configuration_pins = configuration_pins
 
     async def create(
@@ -98,6 +101,7 @@ class SqlAlchemyRequestRepository(RequestCustomerRepositoryMixin):
             id=request_id,
             reference=f"SR-{now.year}-{request_id.hex[:8].upper()}",
             requester_id=actor.id,
+            product_mode=self._default_product_mode,
             status=RequestStatus.ROUTING_PENDING,
             current_owner="CRIOC Routing",
             **values,

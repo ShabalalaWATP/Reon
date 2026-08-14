@@ -5,8 +5,10 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID
 
+from istari_service.config import Settings
 from istari_service.configuration_digest import configuration_digest
 from istari_service.configuration_projection import preview_configuration_schedule
+from istari_service.configuration_records import ConfigurationBundleRecord, stored_utc
 from istari_service.configuration_views import (
     organisation_snapshot,
     preview_views,
@@ -16,11 +18,6 @@ from istari_service.configuration_views import (
 )
 from istari_service.domain import Actor
 from istari_service.errors import ObjectNotFound
-from istari_service.repositories.configuration_records import (
-    ConfigurationBundle,
-    stored_utc,
-)
-from istari_service.repositories.configuration_staffing import load_staffing_counts
 from istari_service.schemas.configuration import (
     ApprovedWorkflowDefinitionList,
     ConfigurationOrganisationSnapshot,
@@ -28,12 +25,17 @@ from istari_service.schemas.configuration import (
     ConfigurationVersionDetail,
     ConfigurationVersionList,
 )
+from istari_service.services.configuration_ports import ConfigurationQueryPort
 from istari_service.services.configuration_service_base import (
-    ConfigurationServiceBase,
+    ConfigurationAccessService,
 )
 
 
-class ConfigurationQueryService(ConfigurationServiceBase):
+class ConfigurationQueryService(ConfigurationAccessService):
+    def __init__(self, repository: ConfigurationQueryPort, settings: Settings) -> None:
+        super().__init__(settings)
+        self._repository = repository
+
     async def list_versions(self, actor: Actor) -> ConfigurationVersionList:
         self.authorise(actor)
         versions = await self._repository.list_versions()
@@ -78,7 +80,7 @@ class ConfigurationQueryService(ConfigurationServiceBase):
         unit_ids = {item.unit_id for item in specification.units}
         if comparison is not None:
             unit_ids.update(item.unit_id for item in comparison.units)
-        staffing = await load_staffing_counts(self._repository.session, unit_ids)
+        staffing = await self._repository.staffing_counts(unit_ids)
         changes = preview_configuration_schedule(
             comparison,
             specification,
@@ -106,7 +108,7 @@ class ConfigurationQueryService(ConfigurationServiceBase):
 
     async def _comparison_base(
         self, version_id: UUID | None
-    ) -> ConfigurationBundle | None:
+    ) -> ConfigurationBundleRecord | None:
         if version_id is not None:
             return await self._repository.bundle(version_id)
         return None

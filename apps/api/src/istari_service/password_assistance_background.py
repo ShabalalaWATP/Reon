@@ -7,17 +7,14 @@ from uuid import UUID
 from fastapi import BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from istari_service.repositories.platform_security import (
-    SqlAlchemyPlatformSecurityRepository,
-)
-from istari_service.services.platform_security_service import PlatformSecurityService
+from istari_service.platform_security_composition import platform_security_service
 
 
 async def process_password_assistance(
     sessions: async_sessionmaker[AsyncSession], attempt_id: UUID, email: str
 ) -> None:
     async with sessions() as session, session.begin():
-        service = PlatformSecurityService(SqlAlchemyPlatformSecurityRepository(session))
+        service = platform_security_service(session)
         await service.process_password_assistance(attempt_id, email)
 
 

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -10,6 +9,7 @@ from sqlalchemy import Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
+from istari_service import statistics_hierarchy
 from istari_service.analytics_models import (
     AnalyticsProjectionState,
     RequestAnalyticsFact,
@@ -26,26 +26,13 @@ from istari_service.management_models import (
 )
 from istari_service.models import User, UserRole
 from istari_service.organisation_models import OrganisationKind, OrganisationUnit
+from istari_service.repositories import statistics_record_mapping
 from istari_service.schemas.statistics import StatisticsScope, StatisticsUnit
-from istari_service.statistics_hierarchy import (
-    selected_statistics_unit,
-    statistics_breadcrumb,
-)
+from istari_service.statistics_records import StatisticsDataset
 
 MAX_FACT_ROWS = 50_000
 STATEMENT_TIMEOUT_MS = 2_000
 PLATFORM_SCOPE_ID = "platform"
-
-
-@dataclass(frozen=True, slots=True)
-class StatisticsDataset:
-    scope: StatisticsScope
-    selected_unit: StatisticsUnit
-    breadcrumb: tuple[StatisticsUnit, ...]
-    facts: tuple[RequestAnalyticsFact, ...]
-    intervals: tuple[RequestStageInterval, ...]
-    children: tuple[OrganisationUnit, ...]
-    freshness: AnalyticsProjectionState | None
 
 
 class SqlAlchemyStatisticsRepository:
@@ -59,6 +46,8 @@ class SqlAlchemyStatisticsRepository:
         at: datetime | None = None,
     ) -> list[StatisticsScope]:
         effective_at = at or datetime.now(UTC)
+        if actor.role is UserRole.REQUESTER:
+            return []
         if actor.role is UserRole.PLATFORM_ADMIN:
             root = await self._root_unit()
             return [await self._platform_scope(root)]
@@ -96,14 +85,14 @@ class SqlAlchemyStatisticsRepository:
             RequestAnalyticsFact.received_at < end,
         )
         fact_query = select(RequestAnalyticsFact).where(*fact_conditions)
-        facts = tuple(
+        fact_rows = tuple(
             await self._session.scalars(
                 fact_query.order_by(RequestAnalyticsFact.received_at).limit(
                     MAX_FACT_ROWS + 1
                 )
             )
         )
-        if len(facts) > MAX_FACT_ROWS:
+        if len(fact_rows) > MAX_FACT_ROWS:
             raise StatisticsQueryInvalid("Reduce the statistics date range.")
         interval_query = (
             select(RequestStageInterval)
@@ -117,10 +106,10 @@ class SqlAlchemyStatisticsRepository:
                 RequestStageInterval.sequence,
             )
         )
-        intervals = tuple(await self._session.scalars(interval_query))
-        children: tuple[OrganisationUnit, ...] = ()
+        interval_rows = tuple(await self._session.scalars(interval_query))
+        child_rows: tuple[OrganisationUnit, ...] = ()
         if scope.include_descendants:
-            children = tuple(
+            child_rows = tuple(
                 await self._session.scalars(
                     select(OrganisationUnit)
                     .where(
@@ -134,16 +123,16 @@ class SqlAlchemyStatisticsRepository:
             AnalyticsProjectionState,
             PROJECTION_NAME,
         )
-        selected = selected_statistics_unit(scope, unit.id)
-        breadcrumb = statistics_breadcrumb(scope, selected)
+        selected = statistics_hierarchy.selected_statistics_unit(scope, unit.id)
+        breadcrumb = statistics_hierarchy.statistics_breadcrumb(scope, selected)
         return StatisticsDataset(
             scope,
             selected,
             breadcrumb,
-            facts,
-            intervals,
-            children,
-            freshness,
+            tuple(map(statistics_record_mapping.statistics_fact, fact_rows)),
+            tuple(map(statistics_record_mapping.statistics_interval, interval_rows)),
+            tuple(map(statistics_record_mapping.statistics_child, child_rows)),
+            statistics_record_mapping.statistics_freshness(freshness),
         )
 
     async def authorised_scope(
@@ -172,6 +161,8 @@ class SqlAlchemyStatisticsRepository:
         selected_unit_id: UUID | None,
         at: datetime,
     ) -> tuple[StatisticsScope, OrganisationUnit]:
+        if actor.role is UserRole.REQUESTER:
+            raise ObjectNotFound()
         if scope_id == PLATFORM_SCOPE_ID:
             if actor.role is not UserRole.PLATFORM_ADMIN:
                 raise ObjectNotFound()

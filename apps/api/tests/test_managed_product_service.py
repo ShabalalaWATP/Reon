@@ -14,10 +14,7 @@ from in_memory_product_storage import InMemoryPrivateObjectStorage
 from istari_service.models import RequestStatus, ServiceRequest
 from istari_service.product_errors import ProductConflict, ProductNotFound
 from istari_service.product_models import ProductDissemination
-from istari_service.product_types import (
-    AccessOutcome,
-    PackageStatus,
-)
+from istari_service.product_types import AccessOutcome, PackageStatus
 from istari_service.request_event_models import RequestEvent
 from istari_service.schemas.products import (
     ApprovalCommand,
@@ -25,12 +22,15 @@ from istari_service.schemas.products import (
     ExternalLinkCreate,
     ManagedArtefactCreate,
     PackageCreate,
+    SubmitPackageCommand,
     VersionCommand,
     WithdrawalCommand,
 )
 from product_test_support import (
     PDF_MEDIA,
     RecordingAudit,
+    add_claimed_lead_review_task,
+    add_claimed_release_task,
     chunks,
     create_product_request,
     product_actors,
@@ -109,7 +109,11 @@ async def test_pdf_package_review_release_download_and_withdrawal(
         submitted = await service.submit(
             analyst,
             package.id,
-            VersionCommand(expected_version=4, idempotency_key=uuid4()),
+            SubmitPackageCommand(
+                expected_version=4,
+                idempotency_key=uuid4(),
+                covering_note="Synthetic note for the Customer.",
+            ),
         )
         assert submitted.status is PackageStatus.REVIEW_READY
         package_checksum = submitted.package_checksum
@@ -119,6 +123,7 @@ async def test_pdf_package_review_release_download_and_withdrawal(
         request = await session.get(ServiceRequest, request_id)
         assert request is not None
         request.status = RequestStatus.LEAD_REVIEW
+        await add_claimed_lead_review_task(session, request_id, manager.id)
         approved = await product_service(session, storage, audit).manager_approve(
             manager,
             package.id,
@@ -135,6 +140,7 @@ async def test_pdf_package_review_release_download_and_withdrawal(
         request = await session.get(ServiceRequest, request_id)
         assert request is not None
         request.status = RequestStatus.READY_FOR_RELEASE
+        await add_claimed_release_task(session, request_id, qc.id)
         release_key = uuid4()
         release_command = DisseminationCommand(
             expected_version=6,
@@ -244,7 +250,11 @@ async def test_external_link_requires_qc_attestation_and_safe_customer_redirect(
         submitted = await service.submit(
             analyst,
             package.id,
-            VersionCommand(expected_version=2, idempotency_key=uuid4()),
+            SubmitPackageCommand(
+                expected_version=2,
+                idempotency_key=uuid4(),
+                covering_note="Synthetic external product note.",
+            ),
         )
         assert linked.artefacts[0].destination_domain == "products.example.test"
 
@@ -252,6 +262,7 @@ async def test_external_link_requires_qc_attestation_and_safe_customer_redirect(
         request = await session.get(ServiceRequest, request_id)
         assert request is not None
         request.status = RequestStatus.LEAD_REVIEW
+        await add_claimed_lead_review_task(session, request_id, manager.id)
         approved = await product_service(session, storage, audit).manager_approve(
             manager,
             package.id,
@@ -266,6 +277,7 @@ async def test_external_link_requires_qc_attestation_and_safe_customer_redirect(
         request = await session.get(ServiceRequest, request_id)
         assert request is not None
         request.status = RequestStatus.READY_FOR_RELEASE
+        await add_claimed_release_task(session, request_id, qc.id)
         service = product_service(session, storage, audit)
         with pytest.raises(ProductNotFound):
             await service.disseminate(
@@ -306,25 +318,19 @@ async def test_product_package_access_and_version_conflicts_are_non_enumerating(
 ) -> None:
     requester, _other, _manager, analyst, _qc = await product_actors(api_harness)
     request_id = await create_product_request(api_harness, requester, analyst)
+    rid = request_id
+    key = uuid4()
     storage, audit = InMemoryPrivateObjectStorage(), RecordingAudit()
     async with api_harness.sessions() as session, session.begin():
         service = product_service(session, storage, audit)
         with pytest.raises(ProductConflict):
             await service.create_package(
                 analyst,
-                PackageCreate(
-                    request_id=request_id,
-                    expected_version=2,
-                    idempotency_key=uuid4(),
-                ),
+                PackageCreate(request_id=rid, expected_version=2, idempotency_key=key),
             )
         package = await service.create_package(
             analyst,
-            PackageCreate(
-                request_id=request_id,
-                expected_version=3,
-                idempotency_key=uuid4(),
-            ),
+            PackageCreate(request_id=rid, expected_version=3, idempotency_key=key),
         )
         with pytest.raises(ProductNotFound):
             await service.get_package(requester, package.id)

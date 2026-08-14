@@ -19,7 +19,17 @@ from istari_service.configuration_models import (
     ConfigurationWorkflowTemplate,
 )
 from istari_service.domain import Actor
-from istari_service.models import RequestStatus, ServiceRequest, User
+from istari_service.models import (
+    ProductMode,
+    RequestStatus,
+    ServiceRequest,
+    User,
+    UserRole,
+    WorkflowInstance,
+    WorkflowInstanceStatus,
+    WorkflowTask,
+    WorkflowTaskStatus,
+)
 from istari_service.product_security import AllowedHttpsLinkPolicy, SafeDocumentScanner
 from istari_service.product_types import AccessAuditRecord
 from istari_service.repositories.auth import actor_from_user
@@ -100,6 +110,7 @@ async def create_product_request(
                 required_by=datetime.now(UTC).date() + timedelta(days=7),
                 required_by_reason="Synthetic review date.",
                 preferred_deliverable_type="PDF",
+                product_mode=ProductMode.MANAGED,
                 success_criteria="The synthetic product passes review.",
                 constraints_or_caveats="No known constraints.",
                 supporting_information="No supporting material is available.",
@@ -117,6 +128,109 @@ async def create_product_request(
         await set_synthetic_active_link_domains(session, approved_link_domains)
         await SqlAlchemyConfigurationPinRepository(session).pin_request(request_id)
     return request_id
+
+
+async def add_claimed_release_task(
+    session: AsyncSession, request_id: UUID, assignee_id: UUID
+) -> WorkflowTask:
+    return await _add_claimed_task(
+        session,
+        request_id,
+        assignee_id,
+        element_id="release",
+        expected_status=RequestStatus.READY_FOR_RELEASE,
+        name="Release product",
+        key_prefix="release",
+        candidate_role=UserRole.QUALITY_RELEASE,
+    )
+
+
+async def add_claimed_quality_review_task(
+    session: AsyncSession, request_id: UUID, assignee_id: UUID
+) -> WorkflowTask:
+    return await _add_claimed_task(
+        session,
+        request_id,
+        assignee_id,
+        element_id="quality_review",
+        expected_status=RequestStatus.QUALITY_REVIEW,
+        name="Quality review",
+        key_prefix="quality",
+        candidate_role=UserRole.QUALITY_RELEASE,
+    )
+
+
+async def add_claimed_lead_review_task(
+    session: AsyncSession, request_id: UUID, assignee_id: UUID
+) -> WorkflowTask:
+    return await _add_claimed_task(
+        session,
+        request_id,
+        assignee_id,
+        element_id="lead_review",
+        expected_status=RequestStatus.LEAD_REVIEW,
+        name="Lead review",
+        key_prefix="lead",
+        candidate_role=UserRole.DELIVERY_TEAM_LEAD,
+    )
+
+
+async def seed_claimed_lead_review_task(
+    harness: ApiHarness, request_id: UUID, username: str
+) -> None:
+    async with harness.sessions() as session, session.begin():
+        await add_claimed_lead_review_task(
+            session, request_id, await harness.user_id(username)
+        )
+
+
+async def seed_claimed_release_task(
+    harness: ApiHarness, request_id: UUID, username: str
+) -> None:
+    async with harness.sessions() as session, session.begin():
+        await add_claimed_release_task(
+            session, request_id, await harness.user_id(username)
+        )
+
+
+async def _add_claimed_task(
+    session: AsyncSession,
+    request_id: UUID,
+    assignee_id: UUID,
+    *,
+    element_id: str,
+    expected_status: RequestStatus,
+    name: str,
+    key_prefix: str,
+    candidate_role: UserRole,
+) -> WorkflowTask:
+    instance = await session.scalar(
+        select(WorkflowInstance).where(WorkflowInstance.request_id == request_id)
+    )
+    if instance is None:
+        instance = WorkflowInstance(
+            request_id=request_id,
+            process_id="service-request-v1",
+            process_instance_key=f"{key_prefix}-{uuid4()}",
+            status=WorkflowInstanceStatus.ACTIVE,
+        )
+        session.add(instance)
+        await session.flush()
+    task = WorkflowTask(
+        request_id=request_id,
+        workflow_instance_id=instance.id,
+        task_key=f"{key_prefix}-{uuid4()}",
+        element_id=element_id,
+        name=name,
+        candidate_role=candidate_role,
+        expected_status=expected_status,
+        status=WorkflowTaskStatus.CLAIMED,
+        assignee_user_id=assignee_id,
+        claimed_at=datetime.now(UTC),
+    )
+    session.add(task)
+    await session.flush()
+    return task
 
 
 async def set_synthetic_active_link_domains(

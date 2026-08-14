@@ -143,6 +143,7 @@ async def build_request_detail(
     )
     return RequestDetail(
         **summary.model_dump(),
+        product_mode=request.product_mode,
         service_category=request.service_category,
         description=request.description,
         question_to_answer=request.question_to_answer,

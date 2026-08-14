@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 
 from pydantic import Field, field_validator, model_validator
 
-from istari_service.models import RequestStatus
+from istari_service.models import ProductMode, RequestStatus
 from istari_service.schemas.common import ApiModel, StrictApiModel
 
 
@@ -153,6 +153,7 @@ class RequestSummary(ApiModel):
 
 
 class RequestDetail(RequestSummary):
+    product_mode: ProductMode
     service_category: str
     description: str
     question_to_answer: str

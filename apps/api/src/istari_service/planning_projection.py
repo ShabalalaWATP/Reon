@@ -9,8 +9,8 @@ from uuid import UUID
 
 from istari_service.board_models import BoardColumn, WorkPackageStatus
 from istari_service.board_projection import ProjectedBoardItem
-from istari_service.planning_capacity import PlanningCapacityProjection
-from istari_service.repositories.planning import PackagePlanningRows
+from istari_service.planning_capacity_types import PlanningCapacityProjection
+from istari_service.planning_evolution_types import PackagePlanningRows
 from istari_service.schemas.board import BoardItemType
 from istari_service.schemas.planning import (
     BlockerWarning,

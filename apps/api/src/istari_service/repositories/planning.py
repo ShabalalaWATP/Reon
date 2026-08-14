@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import dataclass
 from datetime import datetime
 from secrets import token_urlsafe
 from typing import cast
@@ -18,7 +17,6 @@ from istari_service.board_models import (
     TeamIteration,
     WorkPackage,
     WorkPackageDependency,
-    WorkPackageStatus,
 )
 from istari_service.models import RequestStatus, User
 from istari_service.planning_analytics_models import (
@@ -31,6 +29,10 @@ from istari_service.planning_analytics_models import (
     PlanningCapacityPreview,
     PlanningScenario,
     PlanningScenarioStatus,
+)
+from istari_service.planning_evolution_types import (
+    PackagePlanningRows,
+    ScenarioPreviewRecord,
 )
 from istari_service.schemas.planning import (
     CapacityBreakdown,
@@ -49,16 +51,6 @@ TERMINAL_REQUEST_STATUSES = {
     RequestStatus.CLOSED_NOT_PROGRESSED,
     RequestStatus.CANCELLED,
 }
-TERMINAL_PACKAGE_STATUSES = {WorkPackageStatus.DONE, WorkPackageStatus.CANCELLED}
-
-
-@dataclass(frozen=True, slots=True)
-class PackagePlanningRows:
-    packages: tuple[tuple[WorkPackage, str], ...]
-    iteration_names: dict[UUID, str]
-    dependencies: tuple[tuple[UUID, WorkPackage | None], ...]
-    blockers: tuple[PackageBlocker, ...]
-    checklists: tuple[PackageChecklistResult, ...]
 
 
 class SqlAlchemyPlanningRepository:
@@ -213,7 +205,7 @@ class SqlAlchemyPlanningRepository:
         scenario_value: CapacityBreakdown,
         conflicts: list[CapacityConflict],
         expires_at: datetime,
-    ) -> tuple[PlanningScenario, PlanningCapacityPreview]:
+    ) -> ScenarioPreviewRecord:
         last_version = await self.session.scalar(
             select(func.max(PlanningScenario.version)).where(
                 PlanningScenario.team_id == team_id,
@@ -248,7 +240,11 @@ class SqlAlchemyPlanningRepository:
         )
         self.session.add(preview)
         await self.session.flush()
-        return scenario, preview
+        return ScenarioPreviewRecord(
+            token=preview.token,
+            expires_at=preview.expires_at,
+            source_version=preview.source_version,
+        )
 
     async def _template_items(
         self, template_ids: list[UUID]

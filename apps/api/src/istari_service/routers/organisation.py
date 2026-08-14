@@ -9,19 +9,14 @@ from fastapi import APIRouter, Query
 
 from istari_service.dependencies import CurrentActor, DatabaseSession
 from istari_service.models import RequestStatus
-from istari_service.repositories.organisation import SqlAlchemyOrganisationRepository
+from istari_service.organisation_composition import build_organisation_service
 from istari_service.schemas.organisation import (
     OrganisationUnitList,
     TrackedRequestDetail,
     TrackedRequestList,
 )
-from istari_service.services.organisation_service import OrganisationService
 
 router = APIRouter(tags=["organisation"])
-
-
-def _service(session: DatabaseSession) -> OrganisationService:
-    return OrganisationService(SqlAlchemyOrganisationRepository(session))
 
 
 @router.get("/organisation/units", response_model=OrganisationUnitList)
@@ -29,7 +24,9 @@ async def list_organisation_units(
     actor: CurrentActor,
     session: DatabaseSession,
 ) -> OrganisationUnitList:
-    return OrganisationUnitList(items=await _service(session).list_units(actor))
+    return OrganisationUnitList(
+        items=await build_organisation_service(session).list_units(actor)
+    )
 
 
 @router.get("/tracked-requests", response_model=TrackedRequestList)
@@ -48,7 +45,9 @@ async def list_tracked_requests(
         int | None, Query(alias="minimumAgeDays", ge=0, le=3650)
     ] = None,
 ) -> TrackedRequestList:
-    items, next_cursor = await _service(session).page_tracked_requests(
+    items, next_cursor = await build_organisation_service(
+        session
+    ).page_tracked_requests(
         actor,
         limit=limit,
         cursor=cursor,
@@ -74,7 +73,7 @@ async def get_tracked_request_detail(
         str | None, Query(alias="eventCursor", max_length=500)
     ] = None,
 ) -> TrackedRequestDetail:
-    return await _service(session).get_tracked_request_detail(
+    return await build_organisation_service(session).get_tracked_request_detail(
         actor,
         request_id,
         event_limit=event_limit,

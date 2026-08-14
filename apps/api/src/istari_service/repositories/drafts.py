@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.domain import Actor
 from istari_service.errors import ObjectNotFound, StaleVersion
-from istari_service.models import ServiceRequest
+from istari_service.models import ProductMode, ServiceRequest
 from istari_service.repositories.configuration_pins import (
     SqlAlchemyConfigurationPinRepository,
 )
@@ -38,12 +38,14 @@ class SqlAlchemyDraftRepository:
         session: AsyncSession,
         *,
         process_id: str,
+        default_product_mode: ProductMode = ProductMode.LEGACY,
         configuration_pins: SqlAlchemyConfigurationPinRepository | None = None,
     ) -> None:
         self._session = session
         self._requests = SqlAlchemyRequestRepository(
             session,
             process_id=process_id,
+            default_product_mode=default_product_mode,
             configuration_pins=configuration_pins,
         )
 

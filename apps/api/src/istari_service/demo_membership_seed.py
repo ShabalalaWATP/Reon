@@ -40,14 +40,12 @@ async def seed_demo_memberships(
 ) -> None:
     if not managed_usernames:
         return
-    units = (
-        await session.scalars(
-            select(OrganisationUnit).where(OrganisationUnit.is_configured.is_(True))
-        )
-    ).all()
+    units = (await session.scalars(select(OrganisationUnit))).all()
     unit_by_code = {unit.code: unit for unit in units}
     ops_codes = tuple(
-        unit.code for unit in units if unit.kind is OrganisationKind.OPS_GROUP
+        unit.code
+        for unit in units
+        if unit.kind is OrganisationKind.OPS_GROUP and unit.is_configured
     )
     desired_codes = {
         identity.username: (

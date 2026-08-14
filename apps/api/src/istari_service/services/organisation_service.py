@@ -21,9 +21,13 @@ TRACKING_ROLES = {
 }
 
 
-class OrganisationRepository(Protocol):
-    async def list_units(self) -> list[OrganisationUnitView]: ...
+class OrganisationReferenceRepository(Protocol):
+    async def list_units(
+        self, *, include_qc_support: bool = False
+    ) -> list[OrganisationUnitView]: ...
 
+
+class OrganisationTrackingRepository(Protocol):
     async def page_tracked_requests(
         self,
         actor: Actor,
@@ -48,13 +52,20 @@ class OrganisationRepository(Protocol):
 
 
 class OrganisationService:
-    def __init__(self, repository: OrganisationRepository) -> None:
-        self._repository = repository
+    def __init__(
+        self,
+        reference_repository: OrganisationReferenceRepository,
+        tracking_repository: OrganisationTrackingRepository,
+    ) -> None:
+        self._reference_repository = reference_repository
+        self._tracking_repository = tracking_repository
 
     async def list_units(self, actor: Actor) -> list[OrganisationUnitView]:
         if actor.role is UserRole.REQUESTER:
             raise ObjectNotFound()
-        return await self._repository.list_units()
+        return await self._reference_repository.list_units(
+            include_qc_support=actor.role is UserRole.PLATFORM_ADMIN
+        )
 
     async def page_tracked_requests(
         self,
@@ -70,7 +81,7 @@ class OrganisationService:
     ) -> tuple[list[TrackedRequest], str | None]:
         if actor.role not in TRACKING_ROLES:
             raise ObjectNotFound()
-        return await self._repository.page_tracked_requests(
+        return await self._tracking_repository.page_tracked_requests(
             actor,
             limit=limit,
             cursor=cursor,
@@ -91,7 +102,7 @@ class OrganisationService:
     ) -> TrackedRequestDetail:
         if actor.role not in TRACKING_ROLES:
             raise ObjectNotFound()
-        detail = await self._repository.get_tracked_request_detail(
+        detail = await self._tracking_repository.get_tracked_request_detail(
             actor,
             request_id,
             event_limit=event_limit,

@@ -27,6 +27,7 @@ class ProductContentTransfer:
         chunks: AsyncIterable[bytes],
     ) -> UploadContentReceipt:
         async with self._context.sessions() as session, session.begin():
+            await self._context.fence(session)
             operation = await self._context.content_phases(session).claim_content(
                 actor,
                 package_id,
@@ -60,6 +61,7 @@ class ProductContentTransfer:
                     "The uploaded bytes do not match the intent."
                 )
             async with self._context.sessions() as session, session.begin():
+                await self._context.fence(session)
                 return await self._context.content_phases(session).finalise_content(
                     actor, operation, stored
                 )

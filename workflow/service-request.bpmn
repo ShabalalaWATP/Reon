@@ -72,14 +72,14 @@
       <bpmn:incoming>flow_lead_gateway</bpmn:incoming><bpmn:outgoing>flow_lead_rework</bpmn:outgoing><bpmn:outgoing>flow_lead_quality</bpmn:outgoing>
     </bpmn:exclusiveGateway>
     <bpmn:userTask id="quality_review" name="QC Review">
-      <bpmn:extensionElements><zeebe:assignmentDefinition candidateGroups="qc-managers" /><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:extensionElements><zeebe:assignmentDefinition candidateGroups="qc-reviewers" /><zeebe:userTask /></bpmn:extensionElements>
       <bpmn:incoming>flow_lead_quality</bpmn:incoming><bpmn:outgoing>flow_quality_gateway</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="quality_outcome" name="Quality outcome">
       <bpmn:incoming>flow_quality_gateway</bpmn:incoming><bpmn:outgoing>flow_quality_rework</bpmn:outgoing><bpmn:outgoing>flow_quality_release</bpmn:outgoing>
     </bpmn:exclusiveGateway>
     <bpmn:userTask id="release" name="Dissemination">
-      <bpmn:extensionElements><zeebe:assignmentDefinition candidateGroups="qc-managers" /><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:extensionElements><zeebe:assignmentDefinition candidateGroups="release-managers" /><zeebe:userTask /></bpmn:extensionElements>
       <bpmn:incoming>flow_quality_release</bpmn:incoming><bpmn:outgoing>flow_release_completed</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:endEvent id="completed" name="Completed"><bpmn:incoming>flow_release_completed</bpmn:incoming></bpmn:endEvent>

@@ -6,7 +6,16 @@ from typing import Any
 from uuid import UUID
 
 from pgvector.sqlalchemy import VECTOR
-from sqlalchemy import ColumnElement, cast, desc, func, literal_column, or_, select
+from sqlalchemy import (
+    ColumnElement,
+    and_,
+    cast,
+    desc,
+    func,
+    literal_column,
+    or_,
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.domain import Actor
@@ -16,7 +25,7 @@ from istari_service.related_record_scoring import (
     score_candidates,
     significant_terms,
 )
-from istari_service.repositories.organisation import route_membership_condition
+from istari_service.repositories.route_access import route_membership_condition
 from istari_service.request_search_models import (
     EMBEDDING_DIMENSIONS,
     EmbeddingState,
@@ -47,6 +56,7 @@ class RelatedRecordSearch:
             return RelatedRecordCandidateList(
                 mode=RelatedRecordSearchMode.TEXT_ONLY, items=[]
             )
+        membership = and_(membership, ServiceRequest.requester_id != actor.id)
         source_row = (
             await self._session.execute(
                 select(ServiceRequest, RequestSearchDocument)

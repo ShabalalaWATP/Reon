@@ -6,12 +6,10 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-from istari_service.dependencies import CurrentActor, DatabaseSession, MutationActor
-from istari_service.repositories.team_workspaces import (
-    SqlAlchemyTeamWorkspaceRepository,
-)
-from istari_service.repositories.workspace_collaboration import (
-    WorkspaceCollaborationRepository,
+from istari_service.dependencies import (
+    DatabaseSession,
+    StaffActor,
+    StaffMutationActor,
 )
 from istari_service.schemas.workspace_collaboration import (
     WorkspaceRecordCreate,
@@ -21,20 +19,20 @@ from istari_service.schemas.workspace_collaboration import (
 from istari_service.services.workspace_collaboration_service import (
     WorkspaceCollaborationService,
 )
+from istari_service.team_workspace_composition import (
+    workspace_collaboration_service,
+)
 
 router = APIRouter(prefix="/team-workspaces", tags=["workspace-collaboration"])
 
 
 def _service(session: DatabaseSession) -> WorkspaceCollaborationService:
-    return WorkspaceCollaborationService(
-        SqlAlchemyTeamWorkspaceRepository(session),
-        WorkspaceCollaborationRepository(session),
-    )
+    return workspace_collaboration_service(session)
 
 
 @router.get("/{unit_id}/records", response_model=WorkspaceRecordList)
 async def list_records(
-    unit_id: UUID, actor: CurrentActor, session: DatabaseSession
+    unit_id: UUID, actor: StaffActor, session: DatabaseSession
 ) -> WorkspaceRecordList:
     return WorkspaceRecordList(items=await _service(session).list(actor, unit_id))
 
@@ -43,7 +41,7 @@ async def list_records(
 async def create_record(
     unit_id: UUID,
     command: WorkspaceRecordCreate,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> WorkspaceRecordList:
     return WorkspaceRecordList(
@@ -58,7 +56,7 @@ async def resolve_record(
     unit_id: UUID,
     record_id: UUID,
     command: WorkspaceRecordResolve,
-    actor: MutationActor,
+    actor: StaffMutationActor,
     session: DatabaseSession,
 ) -> WorkspaceRecordList:
     return WorkspaceRecordList(

@@ -8,11 +8,7 @@ from math import ceil
 from statistics import median
 from zoneinfo import ZoneInfo
 
-from istari_service.analytics_evolution_models import (
-    OperationalAnalyticsFact,
-    OperationalFactType,
-)
-from istari_service.repositories.statistics import StatisticsDataset
+from istari_service.analytics_evolution_models import OperationalFactType
 from istari_service.schemas.statistics_evolution import (
     CapacityMeasure,
     DemandCapacityProjection,
@@ -20,6 +16,10 @@ from istari_service.schemas.statistics_evolution import (
     NotificationMeasure,
     ProjectionPeriod,
     ReleaseMeasure,
+)
+from istari_service.statistics_records import (
+    OperationalStatisticsFact,
+    StatisticsDataset,
 )
 
 MIN_COHORT = 5
@@ -32,7 +32,9 @@ RELEASE_TYPES = {
 }
 
 
-def release_rows(facts: tuple[OperationalAnalyticsFact, ...]) -> list[ReleaseMeasure]:
+def release_rows(
+    facts: tuple[OperationalStatisticsFact, ...],
+) -> list[ReleaseMeasure]:
     grouped = _group_by_type(facts)
     output: list[ReleaseMeasure] = []
     for fact_type, label in RELEASE_TYPES.items():
@@ -59,7 +61,7 @@ def release_rows(facts: tuple[OperationalAnalyticsFact, ...]) -> list[ReleaseMea
 
 
 def notification_rows(
-    facts: tuple[OperationalAnalyticsFact, ...],
+    facts: tuple[OperationalStatisticsFact, ...],
 ) -> list[NotificationMeasure]:
     sent = [
         item for item in facts if item.type is OperationalFactType.NOTIFICATION_SENT
@@ -98,7 +100,7 @@ def notification_rows(
 
 
 def iteration_rows(
-    facts: tuple[OperationalAnalyticsFact, ...],
+    facts: tuple[OperationalStatisticsFact, ...],
 ) -> list[IterationMeasure]:
     grouped = _group_by_type(facts)
     committed = sum(
@@ -127,9 +129,9 @@ def iteration_rows(
 
 
 def capacity_rows(
-    facts: tuple[OperationalAnalyticsFact, ...], time_zone: ZoneInfo
+    facts: tuple[OperationalStatisticsFact, ...], time_zone: ZoneInfo
 ) -> list[CapacityMeasure]:
-    grouped: defaultdict[date, list[OperationalAnalyticsFact]] = defaultdict(list)
+    grouped: defaultdict[date, list[OperationalStatisticsFact]] = defaultdict(list)
     capacity_types = {
         OperationalFactType.CAPACITY_AVAILABLE,
         OperationalFactType.CAPACITY_RESERVED,
@@ -188,9 +190,9 @@ def demand_projection(
 
 
 def _group_by_type(
-    facts: tuple[OperationalAnalyticsFact, ...],
-) -> defaultdict[OperationalFactType, list[OperationalAnalyticsFact]]:
-    output: defaultdict[OperationalFactType, list[OperationalAnalyticsFact]] = (
+    facts: tuple[OperationalStatisticsFact, ...],
+) -> defaultdict[OperationalFactType, list[OperationalStatisticsFact]]:
+    output: defaultdict[OperationalFactType, list[OperationalStatisticsFact]] = (
         defaultdict(list)
     )
     for item in facts:

@@ -6,7 +6,7 @@ from datetime import date, datetime
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from istari_service.models import RequestStatus
 from istari_service.schemas.common import ApiModel, StrictApiModel
@@ -101,8 +101,18 @@ class ReturnForReallocation(StrictApiModel):
 
 class SubmitDeliverable(StrictApiModel):
     action: Literal["submit"]
-    deliverable_title: str = Field(min_length=3, max_length=160)
-    deliverable_text: str = Field(min_length=20, max_length=20_000)
+    managed_product: bool = False
+    deliverable_title: str | None = Field(default=None, min_length=3, max_length=160)
+    deliverable_text: str | None = Field(default=None, min_length=20, max_length=20_000)
+
+    @model_validator(mode="after")
+    def exactly_one_product_mode(self) -> SubmitDeliverable:
+        legacy = (
+            self.deliverable_title is not None and self.deliverable_text is not None
+        )
+        if self.managed_product == legacy:
+            raise ValueError("submit either a managed package or a legacy product")
+        return self
 
 
 class RequestClarification(StrictApiModel):
@@ -130,7 +140,14 @@ class ChangesRequired(StrictApiModel):
 
 class ReleaseDeliverable(StrictApiModel):
     action: Literal["release"]
-    recipients: list[str] = Field(min_length=1, max_length=20)
+    managed_product: bool = False
+    recipients: list[str] = Field(default_factory=list, max_length=20)
+
+    @model_validator(mode="after")
+    def exactly_one_release_mode(self) -> ReleaseDeliverable:
+        if self.managed_product == bool(self.recipients):
+            raise ValueError("release either a managed package or a legacy product")
+        return self
 
     @field_validator("recipients")
     @classmethod

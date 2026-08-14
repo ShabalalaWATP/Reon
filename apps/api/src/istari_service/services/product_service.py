@@ -1,148 +1,215 @@
-"""Managed-product package creation and immutable review lifecycle."""
+"""Compatibility facade for focused managed-product application services."""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from collections.abc import AsyncIterable
+from datetime import timedelta
 from uuid import UUID
 
 from istari_service.domain import Actor
-from istari_service.models import RequestStatus, UserRole
-from istari_service.product_errors import (
-    ProductConflict,
-    ProductNotFound,
-    ProductValidationFailed,
+from istari_service.product_ports import (
+    DocumentScanner,
+    ExternalLinkPolicy,
+    PrivateObjectStorage,
+    ProductAccessAudit,
 )
-from istari_service.product_types import (
-    PackageRecord,
-    PackageStatus,
-    ProductRequestRecord,
+from istari_service.product_quota_policy import (
+    MAX_GLOBAL_STORAGE_BYTES,
+    MAX_REQUEST_STORAGE_BYTES,
+    MAX_USER_STORAGE_BYTES,
 )
+from istari_service.product_security import MAX_FILE_BYTES, MAX_PACKAGE_BYTES
+from istari_service.product_types import DownloadStream, ReleaseAccessRecord
 from istari_service.schemas.products import (
+    AcceptanceCommand,
     ApprovalCommand,
+    CustomerReleaseView,
+    DisseminationCommand,
+    ExternalLinkCreate,
+    ManagedArtefactCreate,
+    ManagedArtefactIntent,
     PackageCreate,
     PackageView,
+    SubmitPackageCommand,
+    UploadContentReceipt,
     VersionCommand,
+    WithdrawalCommand,
 )
-from istari_service.services.product_release_service import ProductReleaseOperations
-from istari_service.services.product_upload_service import ProductUploadOperations
+from istari_service.services.product_customer_release_service import (
+    ProductCustomerReleaseService,
+)
+from istari_service.services.product_package_service import ProductPackageService
+from istari_service.services.product_release_service import ProductReleaseService
+from istari_service.services.product_repository_port import ProductRepository
+from istari_service.services.product_review_service import ProductReviewService
+from istari_service.services.product_upload_service import ProductUploadService
 
 
-class ProductService(ProductUploadOperations, ProductReleaseOperations):
-    """Enforce exact actor, object, state, version and checksum authority."""
+class ProductService:
+    """Preserve the public use-case API while focused services replace it."""
+
+    def __init__(
+        self,
+        repository: ProductRepository,
+        storage: PrivateObjectStorage,
+        scanner: DocumentScanner,
+        link_policy: ExternalLinkPolicy,
+        access_audit: ProductAccessAudit,
+        *,
+        upload_ttl: timedelta = timedelta(minutes=10),
+        maximum_file_bytes: int = MAX_FILE_BYTES,
+        maximum_package_bytes: int = MAX_PACKAGE_BYTES,
+        maximum_request_storage_bytes: int = MAX_REQUEST_STORAGE_BYTES,
+        maximum_user_storage_bytes: int = MAX_USER_STORAGE_BYTES,
+        maximum_global_storage_bytes: int = MAX_GLOBAL_STORAGE_BYTES,
+        managed_file_uploads_enabled: bool = True,
+    ) -> None:
+        self.packages = ProductPackageService(
+            repository,
+            maximum_package_bytes=maximum_package_bytes,
+        )
+        self.reviews = ProductReviewService(repository, storage, access_audit)
+        self.uploads = ProductUploadService(
+            repository,
+            storage,
+            scanner,
+            link_policy,
+            upload_ttl=upload_ttl,
+            maximum_file_bytes=maximum_file_bytes,
+            maximum_package_bytes=maximum_package_bytes,
+            maximum_request_storage_bytes=maximum_request_storage_bytes,
+            maximum_user_storage_bytes=maximum_user_storage_bytes,
+            maximum_global_storage_bytes=maximum_global_storage_bytes,
+            managed_file_uploads_enabled=managed_file_uploads_enabled,
+        )
+        self.releases = ProductReleaseService(repository)
+        self.customer_access = ProductCustomerReleaseService(
+            repository,
+            storage,
+            link_policy,
+            access_audit,
+        )
 
     async def create_package(self, actor: Actor, command: PackageCreate) -> PackageView:
-        request = await self._author_request(actor, command.request_id)
-        if request.version != command.expected_version:
-            raise ProductConflict()
-        package = await self._repository.create_package(
-            request.id, actor.id, command.idempotency_key
-        )
-        return await self._repository.view(package.id)
+        return await self.packages.create_package(actor, command)
 
     async def get_package(self, actor: Actor, package_id: UUID) -> PackageView:
-        package, request = await self._authorised_package(actor, package_id, lock=False)
-        if not self._can_review(actor, package, request):
-            raise ProductNotFound()
-        return await self._repository.view(package.id)
+        return await self.packages.get_package(actor, package_id)
 
     async def get_package_for_request(
         self, actor: Actor, request_id: UUID
     ) -> PackageView | None:
-        request = await self._repository.request(request_id, lock=False)
-        if (
-            request is None
-            or not await self._repository.active_actor(actor)
-            or not self._can_review_request(actor, request)
-        ):
-            raise ProductNotFound()
-        package = await self._repository.latest_package(request_id)
-        if package is None:
-            return None
-        return await self.get_package(actor, package.id)
+        return await self.packages.get_package_for_request(actor, request_id)
 
     async def submit(
-        self, actor: Actor, package_id: UUID, command: VersionCommand
+        self, actor: Actor, package_id: UUID, command: SubmitPackageCommand
     ) -> PackageView:
-        package, _request = await self._editable(
-            actor, package_id, command.expected_version
-        )
-        checksum, count, total_size = await self._repository.package_digest(package.id)
-        if not 1 <= count <= 10 or total_size < 0:
-            raise ProductConflict("Every artefact must pass validation before review.")
-        if total_size > self._maximum_package_bytes:
-            raise ProductValidationFailed(
-                "The product package exceeds the configured limit."
-            )
-        await self._repository.freeze(package.id, checksum)
-        return await self._repository.view(package.id)
+        return await self.packages.submit(actor, package_id, command)
 
     async def manager_approve(
         self, actor: Actor, package_id: UUID, command: ApprovalCommand
     ) -> PackageView:
-        package, request = await self._authorised_package(actor, package_id, lock=True)
-        if (
-            actor.role is not UserRole.DELIVERY_TEAM_LEAD
-            or not self._assigned_team(actor, request)
-            or request.status != RequestStatus.LEAD_REVIEW.value
-            or package.author_user_id == actor.id
-            or package.status is not PackageStatus.REVIEW_READY
-        ):
-            raise ProductNotFound()
-        self._expect(package, command.expected_version, command.package_checksum)
-        await self._repository.approve(package.id, actor.id, now=datetime.now(UTC))
-        return await self._repository.view(package.id)
+        return await self.packages.manager_approve(actor, package_id, command)
 
-    async def _author_request(
+    async def authorise_review(
+        self, actor: Actor, artefact_id: UUID, correlation_id: str | None
+    ) -> ReleaseAccessRecord:
+        return await self.reviews.authorise_review(actor, artefact_id, correlation_id)
+
+    async def review_authorised(
+        self,
+        actor: Actor,
+        access: ReleaseAccessRecord,
+        correlation_id: str | None,
+    ) -> DownloadStream:
+        return await self.reviews.review_authorised(actor, access, correlation_id)
+
+    async def add_managed(
+        self, actor: Actor, package_id: UUID, command: ManagedArtefactCreate
+    ) -> ManagedArtefactIntent:
+        return await self.uploads.add_managed(actor, package_id, command)
+
+    async def add_external(
+        self, actor: Actor, package_id: UUID, command: ExternalLinkCreate
+    ) -> PackageView:
+        return await self.uploads.add_external(actor, package_id, command)
+
+    async def upload_content(
+        self,
+        actor: Actor,
+        package_id: UUID,
+        intent_id: UUID,
+        *,
+        expected_version: int,
+        upload_token: str,
+        chunks: AsyncIterable[bytes],
+    ) -> UploadContentReceipt:
+        return await self.uploads.upload_content(
+            actor,
+            package_id,
+            intent_id,
+            expected_version=expected_version,
+            upload_token=upload_token,
+            chunks=chunks,
+        )
+
+    async def complete_upload(
+        self,
+        actor: Actor,
+        package_id: UUID,
+        intent_id: UUID,
+        command: VersionCommand,
+    ) -> PackageView:
+        return await self.uploads.complete_upload(actor, package_id, intent_id, command)
+
+    async def disseminate(
+        self, actor: Actor, package_id: UUID, command: DisseminationCommand
+    ) -> PackageView:
+        return await self.releases.disseminate(actor, package_id, command)
+
+    async def withdraw(
+        self, actor: Actor, package_id: UUID, command: WithdrawalCommand
+    ) -> PackageView:
+        return await self.releases.withdraw(actor, package_id, command)
+
+    async def customer_release(
         self, actor: Actor, request_id: UUID
-    ) -> ProductRequestRecord:
-        request = await self._repository.request(request_id, lock=True)
-        if (
-            request is None
-            or not await self._repository.active_actor(actor)
-            or actor.role is not UserRole.DELIVERY_SPECIALIST
-            or not self._assigned_analyst(actor, request)
-            or not self._assigned_team(actor, request)
-            or request.status
-            not in {
-                RequestStatus.IN_PROGRESS.value,
-                RequestStatus.REWORK_REQUIRED.value,
-            }
-        ):
-            raise ProductNotFound()
-        return request
+    ) -> CustomerReleaseView:
+        return await self.customer_access.customer_release(actor, request_id)
 
-    def _can_review(
-        self, actor: Actor, package: PackageRecord, request: ProductRequestRecord
-    ) -> bool:
-        return (
-            (
-                actor.role is UserRole.DELIVERY_SPECIALIST
-                and package.author_user_id == actor.id
-                and self._assigned_analyst(actor, request)
-            )
-            or (
-                actor.role is UserRole.DELIVERY_TEAM_LEAD
-                and self._assigned_team(actor, request)
-            )
-            or actor.role is UserRole.QUALITY_RELEASE
+    async def find_customer_release(
+        self, actor: Actor, request_id: UUID
+    ) -> CustomerReleaseView | None:
+        return await self.customer_access.find_customer_release(actor, request_id)
+
+    async def accept_product(
+        self, actor: Actor, request_id: UUID, command: AcceptanceCommand
+    ) -> CustomerReleaseView:
+        return await self.customer_access.accept_product(actor, request_id, command)
+
+    async def download(
+        self, actor: Actor, artefact_id: UUID, correlation_id: str | None
+    ) -> DownloadStream:
+        return await self.customer_access.download(actor, artefact_id, correlation_id)
+
+    async def authorise_download(
+        self, actor: Actor, artefact_id: UUID, correlation_id: str | None
+    ) -> ReleaseAccessRecord:
+        return await self.customer_access.authorise_download(
+            actor, artefact_id, correlation_id
         )
 
-    def _can_review_request(self, actor: Actor, request: ProductRequestRecord) -> bool:
-        return (
-            (
-                actor.role is UserRole.DELIVERY_SPECIALIST
-                and self._assigned_analyst(actor, request)
-                and self._assigned_team(actor, request)
-            )
-            or (
-                actor.role is UserRole.DELIVERY_TEAM_LEAD
-                and self._assigned_team(actor, request)
-            )
-            or actor.role is UserRole.QUALITY_RELEASE
+    async def download_authorised(
+        self,
+        actor: Actor,
+        access: ReleaseAccessRecord,
+        correlation_id: str | None,
+    ) -> DownloadStream:
+        return await self.customer_access.download_authorised(
+            actor, access, correlation_id
         )
 
-    @staticmethod
-    def _assigned_analyst(actor: Actor, request: ProductRequestRecord) -> bool:
-        return request.assigned_specialist_id == actor.id or (
-            actor.id in request.participant_ids
-        )
+    async def redirect(
+        self, actor: Actor, artefact_id: UUID, correlation_id: str | None
+    ) -> str:
+        return await self.customer_access.redirect(actor, artefact_id, correlation_id)

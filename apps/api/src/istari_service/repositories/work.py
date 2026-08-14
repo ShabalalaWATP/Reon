@@ -23,16 +23,14 @@ from istari_service.models import WorkflowTask as StoredWorkflowTask
 from istari_service.organisation_models import RequestRouteSelection
 from istari_service.ownership import OWNER_BY_STATUS
 from istari_service.repositories.event_store import append_request_event
-from istari_service.repositories.organisation import (
-    ROUTE_POSITION_BY_ROLE,
-    SqlAlchemyOrganisationRepository,
-)
+from istari_service.repositories.organisation import SqlAlchemyOrganisationRepository
 from istari_service.repositories.product_workflow import product_workflow_details
 from istari_service.repositories.projection_pagination import (
     decode_cursor,
     encode_cursor,
 )
 from istari_service.repositories.request_views import build_request_detail
+from istari_service.repositories.route_access import ROUTE_POSITION_BY_ROLE
 from istari_service.repositories.task_projection import next_task_projection
 from istari_service.repositories.work_actions import (
     apply_work_effect,
@@ -41,18 +39,15 @@ from istari_service.repositories.work_actions import (
     work_event_details,
 )
 from istari_service.repositories.work_claim_projection import project_claim
-from istari_service.repositories.work_intents import (
-    prepare_claim_intent,
-    prepare_completion_intent,
-)
+from istari_service.repositories.work_intent_repository import WorkIntentRepositoryMixin
 from istari_service.repositories.work_scope import work_scope_conditions
 from istari_service.repositories.work_staffing import WorkStaffingRepositoryMixin
 from istari_service.repositories.work_views import build_work_bundle
 from istari_service.schemas.organisation import RoutingOptionsWorkspace
 from istari_service.schemas.requests import RequestDetail
 from istari_service.schemas.work import CompletionPayload, WorkItem
-from istari_service.services.work_service import WorkBundle
 from istari_service.work_command_types import RoutingSelection
+from istari_service.work_types import WorkBundle
 from istari_service.workflow.projection import (
     NEXT_TASK_RECONCILIATION_MESSAGE,
     status_after_action,
@@ -61,7 +56,7 @@ from istari_service.workflow.types import WorkflowAction, WorkflowTask
 from istari_service.workflow_event_visibility import work_event_audience
 
 
-class SqlAlchemyWorkRepository(WorkStaffingRepositoryMixin):
+class SqlAlchemyWorkRepository(WorkIntentRepositoryMixin, WorkStaffingRepositoryMixin):
     def __init__(
         self, session: AsyncSession, *, managed_products_enabled: bool = False
     ) -> None:
@@ -203,29 +198,6 @@ class SqlAlchemyWorkRepository(WorkStaffingRepositoryMixin):
             work.request.status,
         )
 
-    async def prepare_claim(self, work: WorkRecord, actor: Actor) -> UUID:
-        return await prepare_claim_intent(self._session, work, actor)
-
-    async def prepare_completion(
-        self,
-        work: WorkRecord,
-        actor: Actor,
-        payload: CompletionPayload,
-    ) -> UUID:
-        return await prepare_completion_intent(
-            self._session,
-            work,
-            actor,
-            payload,
-            managed_products_enabled=self._managed_products_enabled,
-        )
-
-    async def commit_intent(self) -> None:
-        await self._session.commit()
-
-    def expire_state(self) -> None:
-        self._session.expire_all()
-
     async def request_detail(self, request_id: UUID) -> RequestDetail:
         return await build_request_detail(
             self._session,
@@ -282,7 +254,7 @@ class SqlAlchemyWorkRepository(WorkStaffingRepositoryMixin):
             or request.version != work.request.version
         ):
             raise InvalidAction()
-        await validate_work_effect(
+        managed_product = await validate_work_effect(
             self._session,
             request,
             actor,
@@ -297,7 +269,14 @@ class SqlAlchemyWorkRepository(WorkStaffingRepositoryMixin):
             event_details.update(
                 await product_workflow_details(self._session, request.id, payload)
             )
-        await apply_work_effect(self._session, request, actor, payload, routing)
+        await apply_work_effect(
+            self._session,
+            request,
+            actor,
+            payload,
+            routing,
+            managed_product=managed_product,
+        )
         now = datetime.now(UTC)
         task.status = WorkflowTaskStatus.COMPLETED
         task.completed_at = now

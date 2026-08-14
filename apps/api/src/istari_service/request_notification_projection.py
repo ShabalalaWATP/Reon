@@ -20,6 +20,7 @@ from istari_service.models import (
 )
 from istari_service.notification_catalog import render_subject
 from istari_service.notification_event_types import notification_spec
+from istari_service.notification_ports import RecipientRule
 from istari_service.notification_rule_serialisation import (
     deserialise_rule,
     serialise_rule,
@@ -27,14 +28,14 @@ from istari_service.notification_rule_serialisation import (
 from istari_service.organisation_models import (
     RequestRouteSelection,
 )
+from istari_service.qc_membership import QC_TEAM_ID
 from istari_service.repositories.notification_projection import (
-    RecipientRule,
     SqlAlchemyNotificationProjectionRepository,
 )
 from istari_service.repositories.request_participants import eligible_participant_ids
 from istari_service.request_action_projection import action_audiences, as_utc
 from istari_service.request_event_models import RequestEvent
-from istari_service.team_models import TeamMembership
+from istari_service.team_models import TeamMembership, WorkspacePosition
 
 
 async def publish_request_notification(
@@ -200,29 +201,25 @@ async def cancellation_recipient_rules(
 async def _route_rules(
     session: AsyncSession, unit_id: UUID, role: UserRole
 ) -> list[RecipientRule]:
-    users = (
-        (
-            await session.execute(
-                select(User.id, User.scope)
-                .join(
-                    TeamMembership,
-                    TeamMembership.user_id == User.id,
-                )
-                .where(
-                    TeamMembership.team_id == unit_id,
-                    TeamMembership.effective_from <= datetime.now(UTC),
-                    (
-                        TeamMembership.effective_until.is_(None)
-                        | (TeamMembership.effective_until > datetime.now(UTC))
-                    ),
-                    User.role == role,
-                    User.is_active.is_(True),
-                )
-            )
+    query = (
+        select(User.id, User.scope)
+        .join(TeamMembership, TeamMembership.user_id == User.id)
+        .where(
+            TeamMembership.team_id == unit_id,
+            TeamMembership.effective_from <= datetime.now(UTC),
+            (
+                TeamMembership.effective_until.is_(None)
+                | (TeamMembership.effective_until > datetime.now(UTC))
+            ),
+            User.role == role,
+            User.is_active.is_(True),
         )
-        .tuples()
-        .all()
     )
+    if role is UserRole.QUALITY_RELEASE:
+        query = query.where(
+            TeamMembership.workspace_position == WorkspacePosition.MANAGER
+        )
+    users = (await session.execute(query)).tuples().all()
     return [
         RecipientRule(
             user_id,
@@ -238,6 +235,8 @@ async def _route_rules(
 async def _scope_rules(
     session: AsyncSession, scope: str, role: UserRole
 ) -> list[RecipientRule]:
+    if role is UserRole.QUALITY_RELEASE:
+        return await _route_rules(session, QC_TEAM_ID, role)
     user_ids = await session.scalars(
         select(User.id).where(
             User.scope == scope, User.role == role, User.is_active.is_(True)

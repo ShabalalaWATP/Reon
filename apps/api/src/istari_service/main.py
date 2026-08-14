@@ -53,6 +53,7 @@ from istari_service.routers import (
     platform_security,
     products,
     profiles,
+    request_conversations,
     request_coordination,
     requests,
     statistics,
@@ -287,6 +288,7 @@ def create_app(
     application.include_router(profiles.router, prefix="/api/v1")
     application.include_router(requests.router, prefix="/api/v1")
     application.include_router(request_coordination.router, prefix="/api/v1")
+    application.include_router(request_conversations.router, prefix="/api/v1")
     application.include_router(statistics.router, prefix="/api/v1")
     application.include_router(team_workspaces.router, prefix="/api/v1")
     application.include_router(task_hasteners.router, prefix="/api/v1")

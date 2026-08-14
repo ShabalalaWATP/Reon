@@ -36,6 +36,16 @@ def test_legal_hold_migration_seals_attributable_evidence() -> None:
     assert "legal-hold release evidence must be attributable" in migration
 
 
+def test_conversation_migration_seals_delivery_read_evidence() -> None:
+    migration = (
+        Path(__file__).parents[1]
+        / "alembic/versions/0044_conversations_products_contexts.py"
+    ).read_text(encoding="utf-8")
+
+    assert "BEFORE UPDATE OR DELETE ON request_conversation_deliveries" in migration
+    assert "conversation delivery may only record its first read" in migration
+
+
 def test_permission_set_grants_runtime_and_read_only_backup_access() -> None:
     statements = permission_statements("istari_runtime", "istari_backup")
     combined = "\n".join(statements)
@@ -49,6 +59,9 @@ def test_permission_set_grants_runtime_and_read_only_backup_access() -> None:
     assert all(table in combined for table in IMMUTABLE_TABLES)
     assert all(table in combined for table in NON_DELETABLE_TABLES)
     assert "security_events" in IMMUTABLE_TABLES
+    assert "request_conversations" in IMMUTABLE_TABLES
+    assert "request_conversation_messages" in IMMUTABLE_TABLES
+    assert "request_conversation_deliveries" in NON_DELETABLE_TABLES
     assert "istari_maintenance" not in combined
 
 

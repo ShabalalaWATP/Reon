@@ -6,7 +6,7 @@ from uuid import UUID
 
 from istari_service.action_notification_models import NotificationAccessKind
 from istari_service.models import UserRole
-from istari_service.repositories.notification_projection import RecipientRule
+from istari_service.notification_ports import RecipientRule
 
 
 def serialise_rule(rule: RecipientRule) -> dict[str, str | None]:

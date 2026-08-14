@@ -8,7 +8,7 @@ from uuid import UUID
 from pydantic import Field, field_validator
 
 from istari_service.identity_validation import normalise_email
-from istari_service.models import UserRole
+from istari_service.models import IdentityContext, UserRole
 from istari_service.schemas.common import ApiModel, StrictApiModel
 
 
@@ -37,6 +37,10 @@ class PasswordConfirmation(StrictApiModel):
     password: str = Field(min_length=1, max_length=1024)
 
 
+class SwitchContextRequest(StrictApiModel):
+    context: IdentityContext
+
+
 class ElevationResponse(ApiModel):
     elevated_until: datetime
 
@@ -57,9 +61,18 @@ class SessionResponse(ApiModel):
     idle_expires_at: datetime
     idle_timeout_seconds: int
     elevated_until: datetime | None
+    active_context: IdentityContext
+    available_contexts: list[IdentityContext]
+    context_version: int
 
 
 class ClientCapabilities(ApiModel):
+    """Release capabilities advertised to tolerant clients.
+
+    Additive capabilities default closed so older or partially composed servers
+    cannot accidentally enable a new client command surface.
+    """
+
     my_work: bool
     notifications: bool
     configuration: bool
@@ -67,3 +80,6 @@ class ClientCapabilities(ApiModel):
     managed_file_uploads: bool
     planning: bool
     statistics: bool
+    conversation_reads: bool = False
+    conversation_writes: bool = False
+    context_switching: bool = False

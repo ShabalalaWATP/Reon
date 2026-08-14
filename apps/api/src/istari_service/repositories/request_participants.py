@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import ColumnElement, and_, exists, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.errors import InvalidAction
@@ -16,6 +17,41 @@ from istari_service.request_participant_models import (
 )
 from istari_service.schemas.requests import RequesterView
 from istari_service.team_models import TeamMembership
+
+
+def eligible_participant_condition(
+    request_id: Any,
+    user_id: Any,
+    at: Any,
+) -> ColumnElement[bool]:
+    """Require an effective participant and live membership in the assigned team."""
+
+    return exists(
+        select(RequestParticipant.user_id)
+        .join(ServiceRequest, ServiceRequest.id == RequestParticipant.request_id)
+        .join(User, User.id == RequestParticipant.user_id)
+        .join(
+            TeamMembership,
+            and_(
+                TeamMembership.user_id == RequestParticipant.user_id,
+                TeamMembership.team_id == ServiceRequest.assigned_delivery_team_id,
+            ),
+        )
+        .where(
+            RequestParticipant.request_id == request_id,
+            RequestParticipant.user_id == user_id,
+            RequestParticipant.effective_from <= at,
+            RequestParticipant.ended_at.is_(None),
+            ServiceRequest.assigned_delivery_team_id.is_not(None),
+            User.is_active.is_(True),
+            User.role == UserRole.DELIVERY_SPECIALIST,
+            TeamMembership.effective_from <= at,
+            or_(
+                TeamMembership.effective_until.is_(None),
+                TeamMembership.effective_until > at,
+            ),
+        )
+    )
 
 
 async def replace_request_participants(
@@ -100,6 +136,7 @@ async def eligible_participant_ids(
             .where(
                 RequestParticipant.request_id == request.id,
                 RequestParticipant.ended_at.is_(None),
+                RequestParticipant.effective_from <= now,
                 User.is_active.is_(True),
                 User.role == UserRole.DELIVERY_SPECIALIST,
                 TeamMembership.team_id == request.assigned_delivery_team_id,

@@ -192,7 +192,7 @@ async def test_export_rejects_a_scope_without_a_unit(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     repository = AsyncMock()
-    service = StatisticsEvolutionService(repository)
+    service = StatisticsEvolutionService(repository, repository)
     monkeypatch.setattr(
         service,
         "dashboard",

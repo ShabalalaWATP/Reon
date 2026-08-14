@@ -3,22 +3,19 @@
 from __future__ import annotations
 
 import re
-from dataclasses import asdict, dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from istari_service.action_notification_models import (
     ActionProjection,
     ActionSection,
-    ActionSourceType,
-    ProjectionCheckpoint,
     ProjectionHealth,
     SavedActionView,
 )
+from istari_service.action_ports import ActionProjectionCommand, ActionRepositoryPort
 from istari_service.domain import Actor
 from istari_service.errors import InvalidAction
-from istari_service.models import UserRole
-from istari_service.repositories.actions import SqlAlchemyActionRepository, utc
+from istari_service.projection_freshness import projection_freshness
 from istari_service.schemas.actions import (
     ActionAccess,
     ActionColumn,
@@ -35,32 +32,8 @@ from istari_service.schemas.actions import (
 ACTION_TYPE = re.compile(r"[A-Z][A-Z0-9_]{0,79}")
 
 
-@dataclass(frozen=True, slots=True)
-class ActionProjectionCommand:
-    stable_key: str
-    source_type: ActionSourceType
-    source_id: str
-    source_version: int
-    section: ActionSection
-    action_type: str
-    reference: str
-    current_owner: str
-    last_changed_at: datetime
-    deep_link: str
-    projected_at: datetime
-    request_id: UUID | None = None
-    recipient_user_id: UUID | None = None
-    candidate_role: UserRole | None = None
-    required_scope: str | None = None
-    organisation_unit_id: UUID | None = None
-    safe_title: str | None = None
-    required_by: date | None = None
-    completed_at: datetime | None = None
-    is_active: bool = True
-
-
 class ActionService:
-    def __init__(self, repository: SqlAlchemyActionRepository) -> None:
+    def __init__(self, repository: ActionRepositoryPort) -> None:
         self._repository = repository
 
     async def workspace(
@@ -84,9 +57,9 @@ class ActionService:
             }
         )
         counts = await self._repository.counts(actor)
-        views = await self._repository.saved_views(actor.id)
+        views = await self._repository.saved_views(actor)
         checkpoint = await self._repository.checkpoint("actions")
-        freshness = _freshness(checkpoint, current)
+        freshness = projection_freshness(checkpoint, current)
         return ActionWorkspaceResult(
             items=[
                 _action_item(item, actor, freshness, current, unit_names)
@@ -106,23 +79,23 @@ class ActionService:
     async def create_saved_view(
         self, actor: Actor, command: SavedActionViewCommand
     ) -> SavedActionViewResult:
-        return _saved_view(await self._repository.create_saved_view(actor.id, command))
+        return _saved_view(await self._repository.create_saved_view(actor, command))
 
     async def update_saved_view(
         self, actor: Actor, view_id: UUID, command: SavedActionViewUpdate
     ) -> SavedActionViewResult:
         return _saved_view(
-            await self._repository.update_saved_view(actor.id, view_id, command)
+            await self._repository.update_saved_view(actor, view_id, command)
         )
 
     async def delete_saved_view(
         self, actor: Actor, view_id: UUID, expected_version: int
     ) -> None:
-        await self._repository.delete_saved_view(actor.id, view_id, expected_version)
+        await self._repository.delete_saved_view(actor, view_id, expected_version)
 
     async def project(self, command: ActionProjectionCommand) -> ActionProjection:
         _validate_projection(command)
-        return await self._repository.project_action(**asdict(command))
+        return await self._repository.project(command)
 
 
 def _action_item(
@@ -132,11 +105,11 @@ def _action_item(
     now: datetime,
     unit_names: dict[UUID, str],
 ) -> ActionItem:
-    changed_at = utc(action.last_changed_at)
-    projected_at = utc(action.projected_at)
+    changed_at = _utc(action.last_changed_at)
+    projected_at = _utc(action.projected_at)
     source_changed_at = freshness.source_changed_at
     stale = freshness.status is not ProjectionHealth.CURRENT or (
-        source_changed_at is not None and projected_at < utc(source_changed_at)
+        source_changed_at is not None and projected_at < _utc(source_changed_at)
     )
     return ActionItem(
         id=action.id,
@@ -152,7 +125,7 @@ def _action_item(
         title=action.safe_title,
         current_owner=_current_owner(action, actor, unit_names),
         required_by=action.required_by,
-        age_days=max(0, (utc(now) - changed_at).days),
+        age_days=max(0, (_utc(now) - changed_at).days),
         last_changed_at=action.last_changed_at,
         deep_link=action.deep_link,
         source_version=action.source_version,
@@ -184,31 +157,6 @@ def _saved_view(view: SavedActionView) -> SavedActionViewResult:
     )
 
 
-def _freshness(
-    checkpoint: ProjectionCheckpoint | None, now: datetime
-) -> ProjectionFreshness:
-    if checkpoint is None:
-        return ProjectionFreshness(
-            status=ProjectionHealth.DEGRADED,
-            projected_at=None,
-            source_changed_at=None,
-            lag_seconds=None,
-            pending_count=0,
-        )
-    source = utc(checkpoint.source_changed_at) if checkpoint.source_changed_at else None
-    projected = utc(checkpoint.projected_at) if checkpoint.projected_at else None
-    lag = (
-        max(0, int((utc(now) - source).total_seconds())) if source is not None else None
-    )
-    return ProjectionFreshness(
-        status=checkpoint.health,
-        projected_at=projected,
-        source_changed_at=source,
-        lag_seconds=lag,
-        pending_count=checkpoint.pending_count,
-    )
-
-
 def _validate_projection(command: ActionProjectionCommand) -> None:
     if command.source_version < 1:
         raise InvalidAction("An action source version must be positive.")
@@ -229,3 +177,7 @@ def _validate_projection(command: ActionProjectionCommand) -> None:
         or any(char in command.deep_link for char in "\r\n")
     ):
         raise InvalidAction("An action link must be application-local.")
+
+
+def _utc(value: datetime) -> datetime:
+    return value if value.tzinfo is not None else value.replace(tzinfo=UTC)

@@ -6,7 +6,7 @@ import re
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import ColumnElement, and_, delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.admin_models import AdminIdentitySequence
@@ -30,6 +30,7 @@ from istari_service.organisation_models import (
     StaffingStatus,
     UserOrganisationMembership,
 )
+from istari_service.qc_membership import QC_TEAM_CODE, QC_TEAM_ID
 from istari_service.repositories.admin_reads import AdminReadRepositoryMixin
 from istari_service.team_models import TeamMembership, WorkspacePosition
 
@@ -52,14 +53,29 @@ class SqlAlchemyAdminRepository(AdminReadRepositoryMixin):
             raise StaleVersion()
         return user
 
-    async def load_units(self, unit_ids: list[UUID]) -> list[OrganisationUnit]:
+    async def load_units(
+        self,
+        unit_ids: list[UUID],
+        *,
+        role: UserRole,
+    ) -> list[OrganisationUnit]:
         if not unit_ids:
             return []
+        eligible: ColumnElement[bool] = OrganisationUnit.is_configured.is_(True)
+        if role is UserRole.QUALITY_RELEASE:
+            eligible = or_(
+                eligible,
+                and_(
+                    OrganisationUnit.id == QC_TEAM_ID,
+                    OrganisationUnit.code == QC_TEAM_CODE,
+                    OrganisationUnit.kind == OrganisationKind.TEAM,
+                ),
+            )
         units = list(
             await self.session.scalars(
                 select(OrganisationUnit).where(
                     OrganisationUnit.id.in_(unit_ids),
-                    OrganisationUnit.is_configured.is_(True),
+                    eligible,
                 )
             )
         )

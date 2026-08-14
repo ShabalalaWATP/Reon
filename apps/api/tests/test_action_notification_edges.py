@@ -173,7 +173,7 @@ async def test_notification_policy_and_validation_edges(
         assert direct[0].access_kind is NotificationAccessKind.REQUESTER
         request.status = RequestStatus.QUALITY_REVIEW
         scoped = await recipient_rules_for(session, "TASK_ASSIGNED", request)
-        assert scoped[0].access_kind is NotificationAccessKind.ROLE_SCOPE
+        assert scoped[0].access_kind is NotificationAccessKind.ROUTE_MEMBER
         serialised = serialise_rule(rules[0])
         assert deserialise_rule(serialised) == rules[0]
         with pytest.raises(ValueError):
@@ -281,14 +281,14 @@ async def test_notification_policy_and_validation_edges(
         await service.project(event.id, [], projected_at=now)
 
         preference = await reads.update_preference(
-            customer.id,
+            customer,
             NotificationEventGroup.ASSIGNMENT,
             NotificationPreferenceUpdate(
                 enabled=True, reminder_days=[], expected_version=0
             ),
         )
         updated = await reads.update_preference(
-            customer.id,
+            customer,
             NotificationEventGroup.ASSIGNMENT,
             NotificationPreferenceUpdate(
                 enabled=False, reminder_days=[], expected_version=preference.version
@@ -297,7 +297,7 @@ async def test_notification_policy_and_validation_edges(
         assert not updated.enabled
         with pytest.raises(StaleVersion):
             await reads.update_preference(
-                customer.id,
+                customer,
                 NotificationEventGroup.ASSIGNMENT,
                 NotificationPreferenceUpdate(
                     enabled=True, reminder_days=[], expected_version=1
@@ -305,21 +305,21 @@ async def test_notification_policy_and_validation_edges(
             )
         with pytest.raises(StaleVersion):
             await reads.update_preference(
-                customer.id,
+                customer,
                 NotificationEventGroup.FEEDBACK,
                 NotificationPreferenceUpdate(
                     enabled=True, reminder_days=[], expected_version=1
                 ),
             )
-        wrong_scope = Actor(
+        wrong_role = Actor(
             customer.id,
             customer.username,
             customer.display_name,
-            customer.role,
-            "Different scope",
+            UserRole.QUALITY_RELEASE,
+            customer.scope,
         )
         with pytest.raises(ObjectNotFound):
-            await reads.unread_count(wrong_scope)
+            await reads.unread_count(wrong_role)
 
     _validate_recipient_rule(
         RecipientRule(customer.id, NotificationAccessKind.ACCOUNT, customer.role)

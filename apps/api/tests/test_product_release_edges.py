@@ -37,6 +37,7 @@ from istari_service.schemas.products import DisseminationCommand, WithdrawalComm
 from istari_service.services.product_service import ProductService
 from product_test_support import (
     RecordingAudit,
+    add_claimed_release_task,
     create_product_request,
     product_actors,
     set_synthetic_active_link_domains,
@@ -279,6 +280,7 @@ async def test_dissemination_rejects_an_expired_external_link(
         row.manager_approved_by_user_id = manager.id
         row.version = 4
         request.status = RequestStatus.READY_FOR_RELEASE
+        await add_claimed_release_task(session, request_id, qc.id)
         service = _service(
             session, storage, audit, frozenset({"products.example.test"})
         )

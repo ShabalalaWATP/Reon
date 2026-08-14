@@ -15,9 +15,9 @@ from istari_service.configuration_models import (
     ConfigurationWorkflowTemplate,
 )
 from istari_service.configuration_policy import WORKFLOW_COMPATIBILITY_KEY
+from istari_service.configuration_records import stored_utc
 from istari_service.configuration_types import ConfigurationStatus
 from istari_service.repositories.configuration import SqlAlchemyConfigurationRepository
-from istari_service.repositories.configuration_records import stored_utc
 
 
 async def configuration_runtime_is_ready(

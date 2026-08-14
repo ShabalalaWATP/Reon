@@ -8,30 +8,21 @@ from functools import lru_cache
 from ipaddress import IPv4Network, IPv6Network, ip_network
 from pathlib import Path
 from typing import Annotated, Any, Self
-from urllib.parse import parse_qs, urlsplit
 
 from pydantic import AliasChoices, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+from istari_service.config_environment_policy import (
+    EnvironmentControls,
+    normalise_browser_boundaries,
+    validate_environment_controls,
+)
 
 
 class Environment(StrEnum):
     LOCAL = "local"
     TEST = "test"
     PROD = "prod"
-
-
-def _is_https_url(value: str) -> bool:
-    parsed = urlsplit(value)
-    return parsed.scheme.lower() == "https" and bool(parsed.netloc)
-
-
-def _postgres_url_verifies_tls(value: str) -> bool:
-    parameters = {
-        key.lower(): item.lower()
-        for key, values in parse_qs(urlsplit(value).query).items()
-        for item in values
-    }
-    return parameters.get("ssl") == "verify-full"
 
 
 class Settings(BaseSettings):
@@ -240,81 +231,49 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_environment_controls(self) -> Self:
-        origin = self.web_origin.rstrip("/")
-        self.trusted_origins = frozenset(
-            item.rstrip("/") for item in self.trusted_origins
-        ) | {origin}
-        derived_hosts = {
-            parsed.hostname
-            for item in self.trusted_origins
-            if (parsed := urlsplit(item)).hostname is not None
-        }
-        self.allowed_hosts = (
-            frozenset(
-                host.strip().lower() for host in self.allowed_hosts if host.strip()
-            )
-            | derived_hosts
+        origin, self.trusted_origins, self.allowed_hosts = normalise_browser_boundaries(
+            self.web_origin,
+            self.trusted_origins,
+            self.allowed_hosts,
         )
-        if self.product_max_package_bytes < self.product_max_file_bytes:
-            raise ValueError(
-                "the product package limit must be at least the per-file limit"
+        password = self.camunda_password
+        validate_environment_controls(
+            EnvironmentControls(
+                production=self.environment is Environment.PROD,
+                product_max_file_bytes=self.product_max_file_bytes,
+                product_max_package_bytes=self.product_max_package_bytes,
+                login_rate_limit_per_source=self.login_rate_limit_per_source,
+                login_rate_limit_global=self.login_rate_limit_global,
+                product_clamav_host=self.product_clamav_host,
+                worker_health_required=self.worker_health_required,
+                allow_demo_users=self.allow_demo_users,
+                session_cookie_secure=self.session_cookie_secure,
+                database_url=self.database_url,
+                camunda_rest_address=self.camunda_rest_address,
+                camunda_auth_mode=self.camunda_auth_mode,
+                camunda_username_configured=bool(self.camunda_username),
+                camunda_password_configured=bool(
+                    password and password.get_secret_value()
+                ),
+                browser_origin=origin,
+                trusted_origins=self.trusted_origins,
+                allowed_hosts=self.allowed_hosts,
+                audit_key_configured=(
+                    self.audit_hmac_key is not None
+                    or self.audit_hmac_keyring is not None
+                ),
+                security_pseudonym_key_configured=(
+                    self.security_pseudonym_key is not None
+                ),
+                audit_hmac_active_key_id=self.audit_hmac_active_key_id,
+                audit_hmac_key_ids=frozenset(self.audit_hmac_keys),
+                product_storage_path=self.product_storage_path,
+                request_matching_semantic_enabled=(
+                    self.request_matching_semantic_enabled
+                ),
+                request_embedding_cache_path=self.request_embedding_cache_path,
             )
-        if self.login_rate_limit_global < self.login_rate_limit_per_source:
-            raise ValueError(
-                "the global login rate limit must cover the per-source limit"
-            )
-        if not self.product_clamav_host.strip():
-            raise ValueError("the ClamAV host must be non-empty")
-        if self.environment is Environment.PROD:
-            if not self.worker_health_required:
-                raise ValueError("the independent worker is required in production")
-            if self.allow_demo_users:
-                raise ValueError("demo users must be disabled in production")
-            if not self.session_cookie_secure:
-                raise ValueError("secure session cookies are required in production")
-            if not self.database_url.startswith("postgresql+asyncpg://"):
-                raise ValueError(
-                    "production persistence must use PostgreSQL with asyncpg"
-                )
-            if not _postgres_url_verifies_tls(self.database_url):
-                raise ValueError("production PostgreSQL must use ssl=verify-full")
-            if not _is_https_url(self.camunda_rest_address):
-                raise ValueError("production Camunda endpoint must use HTTPS")
-            if self.camunda_auth_mode == "NONE":
-                raise ValueError("Camunda authentication is required in production")
-            if self.camunda_auth_mode == "BASIC" and (
-                not self.camunda_username
-                or not self.camunda_password
-                or not self.camunda_password.get_secret_value()
-            ):
-                raise ValueError("Camunda BASIC credentials must be non-empty")
-            if not origin.startswith("https://") or any(
-                not item.startswith("https://") for item in self.trusted_origins
-            ):
-                raise ValueError("production browser origins must use HTTPS")
-            if not self.allowed_hosts or any(
-                "*" in host or "/" in host for host in self.allowed_hosts
-            ):
-                raise ValueError("production allowed hosts must be explicit hostnames")
-            if self.audit_hmac_key is None and self.audit_hmac_keyring is None:
-                raise ValueError("an audit HMAC key is required in production")
-            if self.security_pseudonym_key is None:
-                raise ValueError("a security pseudonym key is required in production")
-            if self.audit_hmac_active_key_id not in self.audit_hmac_keys:
-                raise ValueError(
-                    "the active audit HMAC key ID is absent from the keyring"
-                )
-            if not self.product_storage_path.is_absolute():
-                raise ValueError(
-                    "production product storage must use an absolute private path"
-                )
-            if (
-                self.request_matching_semantic_enabled
-                and not self.request_embedding_cache_path.is_absolute()
-            ):
-                raise ValueError(
-                    "the production request embedding cache must use an absolute path"
-                )
+        )
         return self
 
     @property

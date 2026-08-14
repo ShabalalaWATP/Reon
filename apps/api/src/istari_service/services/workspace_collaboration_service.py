@@ -7,39 +7,42 @@ from uuid import UUID
 
 from istari_service.domain import Actor
 from istari_service.errors import TeamWorkspaceNotFound
+from istari_service.identity_context import require_staff_context
 from istari_service.management_models import ManagementAction
-from istari_service.repositories.management import resolve_management_scope
-from istari_service.repositories.team_workspaces import (
-    SqlAlchemyTeamWorkspaceRepository,
-)
-from istari_service.repositories.workspace_collaboration import (
-    WorkspaceCollaborationRepository,
-)
 from istari_service.schemas.workspace_collaboration import (
     WorkspaceRecordCreate,
     WorkspaceRecordResolve,
     WorkspaceRecordView,
+)
+from istari_service.services.team_workspace_ports import (
+    ExactManagementScopePort,
+    TeamWorkspaceReadPort,
+    WorkspaceCollaborationPort,
 )
 
 
 class WorkspaceCollaborationService:
     def __init__(
         self,
-        views: SqlAlchemyTeamWorkspaceRepository,
-        records: WorkspaceCollaborationRepository,
+        views: TeamWorkspaceReadPort,
+        records: WorkspaceCollaborationPort,
+        management_scopes: ExactManagementScopePort,
     ) -> None:
         self._views = views
         self._records = records
+        self._management_scopes = management_scopes
 
     async def list(
         self, actor: Actor, unit_id: UUID
     ) -> builtins.list[WorkspaceRecordView]:
+        self._require_staff(actor)
         await self._views.require_read(actor.id, unit_id)
         return await self._records.list(unit_id)
 
     async def create(
         self, actor: Actor, unit_id: UUID, command: WorkspaceRecordCreate
     ) -> builtins.list[WorkspaceRecordView]:
+        self._require_staff(actor)
         await self._authorise(actor, unit_id, command.grant_id)
         await self._records.create(unit_id, actor.id, command)
         return await self._records.list(unit_id)
@@ -51,6 +54,7 @@ class WorkspaceCollaborationService:
         record_id: UUID,
         command: WorkspaceRecordResolve,
     ) -> builtins.list[WorkspaceRecordView]:
+        self._require_staff(actor)
         await self._authorise(actor, unit_id, command.grant_id)
         await self._records.resolve(unit_id, record_id, actor.id, command)
         return await self._records.list(unit_id)
@@ -59,13 +63,16 @@ class WorkspaceCollaborationService:
         access = await self._views.require_read(actor.id, unit_id)
         if ManagementAction.ROSTER not in access.permissions:
             raise TeamWorkspaceNotFound()
-        scope = await resolve_management_scope(
-            self._records.session,
-            subject_user_id=actor.id,
+        authorised = await self._management_scopes.authorises_exact_root(
+            actor_id=actor.id,
             grant_id=grant_id,
-            target_unit_id=unit_id,
+            unit_id=unit_id,
             action=ManagementAction.ROSTER,
             lock=True,
         )
-        if scope is None or scope.root_unit_id != unit_id:
+        if not authorised:
             raise TeamWorkspaceNotFound()
+
+    @staticmethod
+    def _require_staff(actor: Actor) -> None:
+        require_staff_context(actor, TeamWorkspaceNotFound())

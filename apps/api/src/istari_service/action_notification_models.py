@@ -26,6 +26,7 @@ from istari_service.models import (
     UTC_TS,
     Base,
     CreatedMixin,
+    IdentityContext,
     TimestampMixin,
     UserRole,
     _enum,
@@ -144,12 +145,22 @@ class ActionProjection(TimestampMixin, Base):
 class SavedActionView(TimestampMixin, Base):
     __tablename__ = "saved_action_views"
     __table_args__ = (
-        UniqueConstraint("owner_user_id", "name"),
+        UniqueConstraint(
+            "owner_user_id",
+            "identity_context",
+            "name",
+            name="uq_saved_action_views_owner_context_name",
+        ),
         CheckConstraint("version > 0", name="saved_action_view_version"),
     )
 
     owner_user_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    identity_context: Mapped[IdentityContext] = mapped_column(
+        _enum(IdentityContext, "saved_action_view_identity_context"),
+        default=IdentityContext.STAFF,
+        server_default=IdentityContext.STAFF.value,
     )
     name: Mapped[str] = mapped_column(String(80))
     filters: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
@@ -233,7 +244,12 @@ class NotificationRecipient(TimestampMixin, Base):
 class NotificationPreference(TimestampMixin, Base):
     __tablename__ = "notification_preferences"
     __table_args__ = (
-        UniqueConstraint("user_id", "event_group"),
+        UniqueConstraint(
+            "user_id",
+            "identity_context",
+            "event_group",
+            name="uq_notification_preferences_user_context_group",
+        ),
         CheckConstraint("version > 0", name="notification_preference_version"),
     )
 
@@ -242,6 +258,11 @@ class NotificationPreference(TimestampMixin, Base):
     )
     event_group: Mapped[NotificationEventGroup] = mapped_column(
         _enum(NotificationEventGroup, "notification_preference_group")
+    )
+    identity_context: Mapped[IdentityContext] = mapped_column(
+        _enum(IdentityContext, "notification_preference_identity_context"),
+        default=IdentityContext.STAFF,
+        server_default=IdentityContext.STAFF.value,
     )
     enabled: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default=text("true")

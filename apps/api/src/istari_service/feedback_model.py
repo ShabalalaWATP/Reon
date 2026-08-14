@@ -7,7 +7,7 @@ from uuid import UUID
 from sqlalchemy import CheckConstraint, ForeignKey, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from istari_service.models import UUID_TYPE, Base, CreatedMixin
+from istari_service.orm_base import UUID_TYPE, Base, CreatedMixin
 
 
 class Feedback(CreatedMixin, Base):

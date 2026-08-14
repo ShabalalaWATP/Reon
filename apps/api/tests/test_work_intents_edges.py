@@ -11,7 +11,12 @@ import pytest
 
 from istari_service.domain import Actor, RequestRecord, WorkRecord
 from istari_service.errors import InvalidAction
-from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
+from istari_service.models import (
+    ProductMode,
+    RequestStatus,
+    UserRole,
+    WorkflowTaskStatus,
+)
 from istari_service.repositories.work_intents import (
     PENDING_MESSAGE,
     prepare_claim_intent,
@@ -51,6 +56,7 @@ def _state() -> tuple[Actor, WorkRecord, Any, Any]:
         status=RequestStatus.TRIAGE_REVIEW,
         assigned_delivery_team=None,
         assigned_specialist_id=None,
+        product_mode=ProductMode.LEGACY,
         version=1,
         workflow_error=None,
     )

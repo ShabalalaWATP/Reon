@@ -11,6 +11,7 @@ from istari_service.product_types import (
     ArtefactRecord,
     PackageRecord,
     ProductRequestRecord,
+    ProductStorageUsage,
     ReleaseAccessRecord,
     ScanDecision,
     UploadIntentRecord,
@@ -18,32 +19,69 @@ from istari_service.product_types import (
 from istari_service.schemas.products import CustomerReleaseView, PackageView
 
 
-class ProductRepository(Protocol):
+class ProductAccessRepository(Protocol):
+    """Actor, request and package access needed by product policies."""
+
     async def active_actor(self, actor: Actor) -> bool: ...
+
+    async def live_qc_manager(self, actor_id: UUID) -> bool: ...
 
     async def request(
         self, request_id: UUID, *, lock: bool
     ) -> ProductRequestRecord | None: ...
 
-    async def create_package(
-        self, request_id: UUID, actor_id: UUID, creation_key: UUID
-    ) -> PackageRecord: ...
-
     async def package(
         self, package_id: UUID, *, lock: bool
     ) -> PackageRecord | None: ...
 
-    async def latest_package(self, request_id: UUID) -> PackageRecord | None: ...
-
-    async def view(self, package_id: UUID) -> PackageView: ...
+    async def live_delivery_membership(
+        self,
+        actor_id: UUID,
+        team_id: UUID | None,
+        team_name: str | None,
+        *,
+        manager: bool,
+    ) -> bool: ...
 
     async def approved_link_domains(
         self, request_id: UUID
     ) -> frozenset[str] | None: ...
 
+
+class ProductPackageRepository(Protocol):
+    """Package creation, projection and immutable review lifecycle."""
+
+    async def create_package(
+        self, request_id: UUID, actor_id: UUID, creation_key: UUID
+    ) -> PackageRecord: ...
+
+    async def latest_package(self, request_id: UUID) -> PackageRecord | None: ...
+
+    async def view(
+        self, package_id: UUID, *, include_review_details: bool = False
+    ) -> PackageView: ...
+
+    async def review_access(self, artefact_id: UUID) -> ReleaseAccessRecord | None: ...
+
+    async def package_digest(
+        self, package_id: UUID, covering_note: str | None
+    ) -> tuple[str, int, int]: ...
+
+    async def freeze(
+        self, package_id: UUID, checksum: str, covering_note: str | None
+    ) -> PackageRecord: ...
+
+    async def approve(
+        self, package_id: UUID, actor_id: UUID, *, now: datetime
+    ) -> PackageRecord: ...
+
+
+class ProductUploadRepository(Protocol):
+    """Managed and linked artefact persistence."""
+
     async def storage_usage(
         self, package_id: UUID, request_id: UUID, author_id: UUID
-    ) -> tuple[int, int, int, int, int, int, int, int]: ...
+    ) -> ProductStorageUsage: ...
 
     async def create_managed(
         self,
@@ -92,6 +130,19 @@ class ProductRepository(Protocol):
 
     async def mark_uploaded(self, intent_id: UUID, *, now: datetime) -> None: ...
 
+    async def record_scan(
+        self,
+        artefact_id: UUID,
+        idempotency_key: UUID,
+        decision: ScanDecision,
+        checksum: str,
+        released_key: str | None,
+    ) -> ArtefactRecord: ...
+
+
+class ProductOperationLeaseRepository(Protocol):
+    """Exclusive short-lived ownership for detached transfer phases."""
+
     async def claim_intent_operation(
         self,
         intent_id: UUID,
@@ -117,21 +168,9 @@ class ProductRepository(Protocol):
         generation: int,
     ) -> bool: ...
 
-    async def record_scan(
-        self,
-        artefact_id: UUID,
-        idempotency_key: UUID,
-        decision: ScanDecision,
-        checksum: str,
-        released_key: str | None,
-    ) -> ArtefactRecord: ...
 
-    async def package_digest(self, package_id: UUID) -> tuple[str, int, int]: ...
-    async def freeze(self, package_id: UUID, checksum: str) -> PackageRecord: ...
-
-    async def approve(
-        self, package_id: UUID, actor_id: UUID, *, now: datetime
-    ) -> PackageRecord: ...
+class ProductReleaseRepository(Protocol):
+    """Review accountability, dissemination and Customer access."""
 
     async def attest_links(
         self, package_id: UUID, actor_id: UUID, *, now: datetime
@@ -149,6 +188,20 @@ class ProductRepository(Protocol):
 
     async def dissemination_matches(
         self, package_id: UUID, recipient_id: UUID, idempotency_key: UUID
+    ) -> bool: ...
+
+    async def release_excluded_actor_ids(self, package_id: UUID) -> frozenset[UUID]: ...
+
+    async def manager_task_claimed_by(
+        self, package_id: UUID, actor_id: UUID
+    ) -> bool: ...
+
+    async def release_task_claimed_by(
+        self, package_id: UUID, actor_id: UUID
+    ) -> bool: ...
+
+    async def quality_task_claimed_by(
+        self, package_id: UUID, actor_id: UUID
     ) -> bool: ...
 
     async def accept(
@@ -176,3 +229,39 @@ class ProductRepository(Protocol):
     async def access(
         self, artefact_id: UUID, requester_id: UUID
     ) -> ReleaseAccessRecord | None: ...
+
+
+class ProductPackageServiceRepository(
+    ProductAccessRepository,
+    ProductPackageRepository,
+    ProductReleaseRepository,
+    Protocol,
+):
+    """Capabilities consumed by package authoring and review use cases."""
+
+
+class ProductUploadServiceRepository(
+    ProductAccessRepository,
+    ProductPackageRepository,
+    ProductUploadRepository,
+    ProductOperationLeaseRepository,
+    Protocol,
+):
+    """Capabilities consumed by managed-product upload use cases."""
+
+
+class ProductReleaseServiceRepository(
+    ProductAccessRepository,
+    ProductPackageRepository,
+    ProductReleaseRepository,
+    Protocol,
+):
+    """Capabilities consumed by release and Customer-access use cases."""
+
+
+class ProductRepository(
+    ProductUploadServiceRepository,
+    ProductReleaseServiceRepository,
+    Protocol,
+):
+    """Compatibility aggregate implemented by the SQLAlchemy adapter."""

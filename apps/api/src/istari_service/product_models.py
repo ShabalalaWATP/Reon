@@ -20,7 +20,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
-from istari_service.models import (
+from istari_service.orm_base import (
     UTC_TS,
     UUID_TYPE,
     Base,
@@ -45,6 +45,9 @@ class ProductPackage(TimestampMixin, Base):
         UniqueConstraint("creation_key"),
         CheckConstraint("package_version > 0", name="product_package_version"),
         CheckConstraint("version > 0", name="product_package_record_version"),
+        CheckConstraint(
+            "policy_version IN (1, 2)", name="product_package_policy_version"
+        ),
     )
 
     request_id: Mapped[UUID] = mapped_column(
@@ -58,6 +61,8 @@ class ProductPackage(TimestampMixin, Base):
     status: Mapped[PackageStatus] = mapped_column(
         _enum(PackageStatus, "product_package_status"), index=True
     )
+    covering_note: Mapped[str | None] = mapped_column(Text)
+    policy_version: Mapped[int] = mapped_column(Integer, default=2, server_default="2")
     package_checksum: Mapped[str | None] = mapped_column(String(64))
     manager_approved_by_user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="RESTRICT")

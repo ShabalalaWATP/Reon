@@ -4,16 +4,18 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import ipaddress
 import re
 import tempfile
 import zipfile
 from collections.abc import AsyncIterable
 from pathlib import PurePath
 from typing import Protocol
-from urllib.parse import urlsplit, urlunsplit
 
 from istari_service.product_errors import ProductValidationFailed
+from istari_service.product_image_security import inspect_safe_image
+from istari_service.product_link_security import (
+    AllowedHttpsLinkPolicy as AllowedHttpsLinkPolicy,
+)
 from istari_service.product_ports import ScannerAssurance
 from istari_service.product_types import ScanDecision, ScanResult
 from istari_service.product_zip_preflight import (
@@ -24,8 +26,7 @@ from istari_service.product_zip_preflight import (
 MAX_FILE_BYTES = 25 * 1024 * 1024
 MAX_PACKAGE_BYTES = 100 * 1024 * 1024
 MAX_UNCOMPRESSED_BYTES = 125 * 1024 * 1024
-MAX_COMPRESSION_RATIO = 100
-MAX_CONCURRENT_DOCUMENT_SCANS = 4
+MAX_COMPRESSION_RATIO, MAX_CONCURRENT_DOCUMENT_SCANS = 100, 4
 PPTX_MEDIA_TYPE = (
     "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 )
@@ -33,6 +34,9 @@ MEDIA_BY_EXTENSION = {
     ".pdf": "application/pdf",
     ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ".pptx": PPTX_MEDIA_TYPE,
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
 }
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _SAFE_CORRELATION_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$")
@@ -184,11 +188,12 @@ class SafeDocumentScanner:
                     return self._failed("MALWARE_DETECTED")
                 stream.seek(0)
                 extension = PurePath(filename).suffix.lower()
-                reason = (
-                    self._inspect_pdf(stream)
-                    if extension == ".pdf"
-                    else self._inspect_office(stream, extension)
-                )
+                if extension == ".pdf":
+                    reason = self._inspect_pdf(stream)
+                elif extension in {".docx", ".pptx"}:
+                    reason = self._inspect_office(stream, extension)
+                else:
+                    reason = inspect_safe_image(stream, extension)
         except (OSError, ValueError, zipfile.BadZipFile):
             reason = "INVALID_CONTAINER"
         return (
@@ -278,70 +283,3 @@ class SafeDocumentScanner:
             scanner_version="2",
             reason_code=reason,
         )
-
-
-class AllowedHttpsLinkPolicy:
-    """Exact-domain allow-list validation that never resolves or fetches URLs."""
-
-    def __init__(self, allowed_domains: frozenset[str]) -> None:
-        self._allowed = frozenset(self._domain(item) for item in allowed_domains)
-
-    def normalise(self, destination: str) -> tuple[str, str]:
-        if (
-            not destination
-            or any(ord(char) < 32 for char in destination)
-            or "\\" in destination
-        ):
-            raise ProductValidationFailed("The external product link is invalid.")
-        parsed = urlsplit(destination)
-        if (
-            parsed.scheme.lower() != "https"
-            or not parsed.hostname
-            or parsed.username is not None
-            or parsed.password is not None
-            or parsed.fragment
-        ):
-            raise ProductValidationFailed(
-                "An approved absolute HTTPS link is required."
-            )
-        try:
-            port = parsed.port
-        except ValueError as exc:
-            raise ProductValidationFailed(
-                "An approved absolute HTTPS link is required."
-            ) from exc
-        if port not in {None, 443}:
-            raise ProductValidationFailed(
-                "An approved absolute HTTPS link is required."
-            )
-        domain = self._domain(parsed.hostname)
-        try:
-            address = ipaddress.ip_address(domain)
-        except ValueError:
-            address = None
-        if address is not None and (
-            address.is_private
-            or address.is_loopback
-            or address.is_link_local
-            or address.is_multicast
-            or address.is_reserved
-            or address.is_unspecified
-        ):
-            raise ProductValidationFailed(
-                "Private-network product links are forbidden."
-            )
-        if domain not in self._allowed:
-            raise ProductValidationFailed(
-                "The external product domain is not approved."
-            )
-        path = parsed.path or "/"
-        return urlunsplit(("https", domain, path, parsed.query, "")), domain
-
-    @staticmethod
-    def _domain(value: str) -> str:
-        try:
-            return value.rstrip(".").encode("idna").decode("ascii").lower()
-        except UnicodeError as exc:
-            raise ProductValidationFailed(
-                "The external product domain is invalid."
-            ) from exc

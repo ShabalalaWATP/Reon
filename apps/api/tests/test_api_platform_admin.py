@@ -102,8 +102,8 @@ async def test_admin_crud_contract_version_validation_and_session_revocation(
     )
     assert created.status_code == 201, created.text
     account = created.json()
-    assert account["username"] == "admin100"
-    assert account["email"] == "admin100@istari.example.test"
+    assert account["username"] == "admin101"
+    assert account["email"] == "admin101@istari.example.test"
     assert account["displayName"] == "Fictional New User"
     assert account["scope"] == "Requesting Area C"
     assert account["isActive"] is True

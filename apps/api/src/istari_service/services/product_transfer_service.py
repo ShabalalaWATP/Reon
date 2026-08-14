@@ -5,11 +5,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterable
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-
 from istari_service.domain import Actor
-from istari_service.product_ports import ProductAccessAudit
-from istari_service.product_runtime import ProductRuntime
 from istari_service.schemas.products import (
     ManagedArtefactCreate,
     ManagedArtefactIntent,
@@ -28,11 +24,8 @@ class ProductTransferService:
 
     def __init__(
         self,
-        sessions: async_sessionmaker[AsyncSession],
-        runtime: ProductRuntime,
-        audit: ProductAccessAudit,
+        context: ProductTransferContext,
     ) -> None:
-        context = ProductTransferContext(sessions, runtime, audit)
         self._managed = ProductManagedTransfer(context)
         self._content = ProductContentTransfer(context)
         self._scan = ProductScanTransfer(context)

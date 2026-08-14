@@ -12,14 +12,11 @@ from istari_service.action_notification_models import (
 from istari_service.admin_models import AdminAuditEvent
 from istari_service.database import SECURITY_PSEUDONYM_KEY_INFO
 from istari_service.models import User, UserRole
+from istari_service.platform_security_composition import platform_security_service
 from istari_service.platform_security_models import (
     PasswordAssistanceAttempt,
     PlatformClassificationSetting,
 )
-from istari_service.repositories.platform_security import (
-    SqlAlchemyPlatformSecurityRepository,
-)
-from istari_service.services.platform_security_service import PlatformSecurityService
 
 
 def test_platform_classification_persists_public_values() -> None:
@@ -135,8 +132,8 @@ async def test_password_assistance_is_neutral_bounded_and_admin_only(
     pseudonym_key = harness.sessions.kw["info"][SECURITY_PSEUDONYM_KEY_INFO]
     for _ in range(5):
         async with harness.sessions() as session, session.begin():
-            processed = await PlatformSecurityService(
-                SqlAlchemyPlatformSecurityRepository(session),
+            processed = await platform_security_service(
+                session,
                 pseudonym_key=pseudonym_key,
                 pseudonym_key_id=harness.settings.security_pseudonym_key_id,
             ).process_pending_password_assistance()
@@ -151,8 +148,8 @@ async def test_password_assistance_is_neutral_bounded_and_admin_only(
         assert event_count == 1
 
     async with harness.sessions() as session, session.begin():
-        assert not await PlatformSecurityService(
-            SqlAlchemyPlatformSecurityRepository(session),
+        assert not await platform_security_service(
+            session,
             pseudonym_key=pseudonym_key,
             pseudonym_key_id=harness.settings.security_pseudonym_key_id,
         ).process_pending_password_assistance()

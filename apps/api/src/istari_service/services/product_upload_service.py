@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hmac
 from collections.abc import AsyncIterable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid5
 
 from istari_service.domain import Actor
@@ -13,7 +13,25 @@ from istari_service.product_errors import (
     ProductNotFound,
     ProductValidationFailed,
 )
-from istari_service.product_security import validate_managed_metadata
+from istari_service.product_package_policy import (
+    require_supported_policy,
+    validate_managed_type,
+)
+from istari_service.product_ports import (
+    DocumentScanner,
+    ExternalLinkPolicy,
+    PrivateObjectStorage,
+)
+from istari_service.product_quota_policy import (
+    MAX_GLOBAL_STORAGE_BYTES,
+    MAX_REQUEST_STORAGE_BYTES,
+    MAX_USER_STORAGE_BYTES,
+)
+from istari_service.product_security import (
+    MAX_FILE_BYTES,
+    MAX_PACKAGE_BYTES,
+    validate_managed_metadata,
+)
 from istari_service.product_types import ArtefactRecord, ScanResult, UploadIntentRecord
 from istari_service.schemas.products import (
     ExternalLinkCreate,
@@ -24,22 +42,65 @@ from istari_service.schemas.products import (
     UploadIntentView,
     VersionCommand,
 )
+from istari_service.services.product_repository_port import (
+    ProductUploadServiceRepository,
+)
+from istari_service.services.product_service_collaborators import (
+    ProductLinkAuthoriser,
+    ProductStorageLimits,
+    ProductUploadPolicy,
+)
 from istari_service.services.product_service_support import ProductServiceSupport
 
 
-class ProductUploadOperations(ProductServiceSupport):
+class ProductUploadService(ProductServiceSupport[ProductUploadServiceRepository]):
+    """Create artefacts and perform the legacy in-transaction upload flow."""
+
+    def __init__(
+        self,
+        repository: ProductUploadServiceRepository,
+        storage: PrivateObjectStorage,
+        scanner: DocumentScanner,
+        link_policy: ExternalLinkPolicy,
+        *,
+        upload_ttl: timedelta = timedelta(minutes=10),
+        maximum_file_bytes: int = MAX_FILE_BYTES,
+        maximum_package_bytes: int = MAX_PACKAGE_BYTES,
+        maximum_request_storage_bytes: int = MAX_REQUEST_STORAGE_BYTES,
+        maximum_user_storage_bytes: int = MAX_USER_STORAGE_BYTES,
+        maximum_global_storage_bytes: int = MAX_GLOBAL_STORAGE_BYTES,
+        managed_file_uploads_enabled: bool = True,
+    ) -> None:
+        super().__init__(repository)
+        self._storage = storage
+        self._scanner = scanner
+        self._links = ProductLinkAuthoriser(repository, link_policy)
+        self._upload_policy = ProductUploadPolicy(
+            repository,
+            ProductStorageLimits(
+                package_bytes=maximum_package_bytes,
+                request_bytes=maximum_request_storage_bytes,
+                user_bytes=maximum_user_storage_bytes,
+                service_bytes=maximum_global_storage_bytes,
+            ),
+            enabled=managed_file_uploads_enabled,
+        )
+        self._upload_ttl = upload_ttl
+        self._maximum_file_bytes = maximum_file_bytes
+
     async def add_managed(
         self, actor: Actor, package_id: UUID, command: ManagedArtefactCreate
     ) -> ManagedArtefactIntent:
-        self._require_managed_file_uploads()
+        self._upload_policy.require_enabled()
         package, request = await self._authorised_package(actor, package_id, lock=True)
-        self._require_draft_author(actor, package, request)
+        await self._require_draft_author(actor, package, request)
         filename, media_type = validate_managed_metadata(
             filename=command.filename,
             media_type=command.media_type,
             size_bytes=command.size_bytes,
             checksum=command.sha256,
         )
+        validate_managed_type(package.policy_version, media_type)
         if command.size_bytes > self._maximum_file_bytes:
             raise ProductValidationFailed(
                 "The attachment exceeds the configured limit."
@@ -70,7 +131,7 @@ class ProductUploadOperations(ProductServiceSupport):
             return await self._managed_intent(package.id, artefact, intent, grant.token)
         if package.version != command.expected_version:
             raise ProductConflict()
-        await self._require_storage_capacity(package, command.size_bytes)
+        await self._upload_policy.require_capacity(package, command.size_bytes)
         object_id = uuid5(package.id, str(command.idempotency_key))
         object_key = f"quarantine/{package.id}/{object_id}"
         expires_at = datetime.now(UTC) + self._upload_ttl
@@ -116,10 +177,11 @@ class ProductUploadOperations(ProductServiceSupport):
         package, request = await self._editable(
             actor, package_id, command.expected_version
         )
+        require_supported_policy(package.policy_version)
         now = datetime.now(UTC)
         if command.expires_at is not None and self._aware(command.expires_at) <= now:
             raise ProductValidationFailed("The external product link has expired.")
-        destination, domain = await self._approved_link(request.id, command.url)
+        destination, domain = await self._links.approved(request.id, command.url)
         await self._repository.create_external(
             package.id,
             label=command.label,
@@ -128,7 +190,7 @@ class ProductUploadOperations(ProductServiceSupport):
             expires_at=command.expires_at,
             creation_key=command.idempotency_key,
         )
-        return await self._repository.view(package.id)
+        return await self._repository.view(package.id, include_review_details=True)
 
     async def upload_content(
         self,
@@ -140,9 +202,10 @@ class ProductUploadOperations(ProductServiceSupport):
         upload_token: str,
         chunks: AsyncIterable[bytes],
     ) -> UploadContentReceipt:
-        self._require_managed_file_uploads()
+        self._upload_policy.require_enabled()
         package, request = await self._authorised_package(actor, package_id, lock=True)
-        self._require_draft_author(actor, package, request)
+        await self._require_draft_author(actor, package, request)
+        require_supported_policy(package.policy_version)
         row = await self._repository.upload_intent(package_id, intent_id, lock=True)
         if row is None:
             raise ProductNotFound()
@@ -196,9 +259,10 @@ class ProductUploadOperations(ProductServiceSupport):
         intent_id: UUID,
         command: VersionCommand,
     ) -> PackageView:
-        self._require_managed_file_uploads()
+        self._upload_policy.require_enabled()
         package, request = await self._authorised_package(actor, package_id, lock=True)
-        self._require_draft_author(actor, package, request)
+        await self._require_draft_author(actor, package, request)
+        require_supported_policy(package.policy_version)
         row = await self._repository.upload_intent(package_id, intent_id, lock=True)
         if row is None:
             raise ProductNotFound()
@@ -232,3 +296,7 @@ class ProductUploadOperations(ProductServiceSupport):
             released_key,
         )
         return await self._repository.view(package_id)
+
+
+# Temporary import compatibility while callers migrate to the focused name.
+ProductUploadOperations = ProductUploadService

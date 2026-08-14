@@ -140,7 +140,7 @@ async def _release_request(harness: ApiHarness) -> str:
     await perform(harness, "admin15", {"action": "approve"})
     await perform(
         harness,
-        "admin15",
+        "admin100",
         {"action": "release", "recipients": ["Fictional service owner"]},
     )
     return request_id

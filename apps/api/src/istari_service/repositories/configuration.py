@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence, Set
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from istari_service.admin_audit import append_admin_event
+from istari_service.configuration_materialisation import materialise_configuration_units
 from istari_service.configuration_models import (
     ApprovedWorkflowDefinition,
     ConfigurationActivation,
@@ -20,11 +23,15 @@ from istari_service.configuration_models import (
     ConfigurationVersion,
     ConfigurationWorkflowTemplate,
 )
-from istari_service.configuration_policy import WORKFLOW_SCHEMA_DIGEST
+from istari_service.configuration_records import (
+    ConfigurationApprovalRecord,
+    ConfigurationVersionRecord,
+)
 from istari_service.configuration_types import (
     ApprovalDecision,
     ConfigurationDraftSpec,
     ConfigurationStatus,
+    StaffingCount,
     ValidationFinding,
 )
 from istari_service.errors import (
@@ -32,7 +39,12 @@ from istari_service.errors import (
     ObjectNotFound,
     StaleVersion,
 )
+from istari_service.repositories.configuration_mutations import (
+    replace_configuration_components,
+    replace_configuration_findings,
+)
 from istari_service.repositories.configuration_records import ConfigurationBundle
+from istari_service.repositories.configuration_staffing import load_staffing_counts
 
 
 class SqlAlchemyConfigurationRepository:
@@ -53,6 +65,29 @@ class SqlAlchemyConfigurationRepository:
         sequence = registry.next_sequence
         registry.next_sequence += 1
         return sequence
+
+    async def create_draft(
+        self,
+        *,
+        label: str,
+        effective_from: datetime,
+        created_by_user_id: UUID,
+        based_on_version_id: UUID | None,
+        specification: ConfigurationDraftSpec,
+    ) -> ConfigurationVersion:
+        version = ConfigurationVersion(
+            sequence=await self.next_sequence(),
+            label=label,
+            status=ConfigurationStatus.DRAFT,
+            effective_from=effective_from,
+            created_by_user_id=created_by_user_id,
+            based_on_version_id=based_on_version_id,
+            reason=None,
+        )
+        self.session.add(version)
+        await self.session.flush()
+        await self.replace_components(version.id, specification)
+        return version
 
     async def lock_registry(self) -> ConfigurationRegistry:
         registry = await self.session.scalar(
@@ -86,7 +121,10 @@ class SqlAlchemyConfigurationRepository:
         return version
 
     async def bundle(
-        self, version_id: UUID, *, version: ConfigurationVersion | None = None
+        self,
+        version_id: UUID,
+        *,
+        version: ConfigurationVersionRecord | None = None,
     ) -> ConfigurationBundle:
         stored = version or await self.get_version(version_id)
         units = tuple(
@@ -162,96 +200,12 @@ class SqlAlchemyConfigurationRepository:
             raise InvalidAdministrationChange(
                 "Only Draft configuration components can be replaced."
             )
-        for model in (
-            ConfigurationValidationFinding,
-            ConfigurationCandidateGroup,
-            ConfigurationHierarchyEdge,
-            ConfigurationUnitRevision,
-            ConfigurationWorkflowTemplate,
-        ):
-            await self.session.execute(
-                delete(model).where(model.configuration_version_id == version_id)
-            )
-        self.session.add_all(
-            ConfigurationUnitRevision(
-                configuration_version_id=version_id,
-                unit_id=item.unit_id,
-                code=item.code,
-                name=item.name,
-                kind=item.kind,
-                effective_from=item.effective_from,
-                effective_until=item.effective_until,
-                routing_enabled=item.routing_enabled,
-                minimum_managers=item.minimum_managers,
-                minimum_analysts=item.minimum_analysts,
-            )
-            for item in specification.units
-        )
-        self.session.add_all(
-            ConfigurationHierarchyEdge(
-                configuration_version_id=version_id,
-                parent_unit_id=item.parent_unit_id,
-                child_unit_id=item.child_unit_id,
-                effective_from=item.effective_from,
-                effective_until=item.effective_until,
-            )
-            for item in specification.edges
-        )
-        self.session.add_all(
-            ConfigurationCandidateGroup(
-                configuration_version_id=version_id,
-                unit_id=item.unit_id,
-                purpose=item.purpose,
-                candidate_group=item.candidate_group,
-            )
-            for item in specification.candidate_groups
-        )
-        template = specification.workflow_template
-        self.session.add(
-            ConfigurationWorkflowTemplate(
-                configuration_version_id=version_id,
-                schema_id=template.schema_id,
-                schema_digest=WORKFLOW_SCHEMA_DIGEST,
-                form_version=template.form_version,
-                notification_policy_version=template.notification_policy_version,
-                organisation_root_id=template.organisation_root_id,
-                route_depth=template.route_depth,
-                core_fields=list(template.core_fields),
-                service_categories=list(template.service_categories),
-                product_types=list(template.product_types),
-                task_labels=dict(template.task_labels),
-                allowed_outcomes={
-                    key: list(values)
-                    for key, values in template.allowed_outcomes.items()
-                },
-                reminder_days=list(template.reminder_days),
-                artefact_types=list(template.artefact_types),
-                approved_link_domains=list(template.approved_link_domains),
-                workflow_definition_id=template.workflow_definition_id,
-            )
-        )
-        await self.session.flush()
+        await replace_configuration_components(self.session, version_id, specification)
 
     async def replace_findings(
         self, version_id: UUID, findings: list[ValidationFinding]
     ) -> None:
-        await self.session.execute(
-            delete(ConfigurationValidationFinding).where(
-                ConfigurationValidationFinding.configuration_version_id == version_id
-            )
-        )
-        self.session.add_all(
-            ConfigurationValidationFinding(
-                configuration_version_id=version_id,
-                severity=item.severity,
-                code=item.code,
-                message=item.message,
-                path=item.path,
-                unit_id=item.unit_id,
-            )
-            for item in findings
-        )
-        await self.session.flush()
+        await replace_configuration_findings(self.session, version_id, findings)
 
     async def approved_workflow(
         self, workflow_id: UUID
@@ -272,7 +226,7 @@ class SqlAlchemyConfigurationRepository:
 
     async def create_approval(
         self,
-        version: ConfigurationVersion,
+        version: ConfigurationVersionRecord,
         *,
         actor_id: UUID,
         decision: ApprovalDecision,
@@ -293,8 +247,8 @@ class SqlAlchemyConfigurationRepository:
 
     async def activate(
         self,
-        version: ConfigurationVersion,
-        approval: ConfigurationApproval,
+        version: ConfigurationVersionRecord,
+        approval: ConfigurationApprovalRecord,
         *,
         actor_id: UUID,
         reason: str,
@@ -338,3 +292,37 @@ class SqlAlchemyConfigurationRepository:
         if registry is None or registry.active_version_id is None:
             return None
         return await self.bundle(registry.active_version_id)
+
+    async def refresh_version(
+        self, version: ConfigurationVersionRecord
+    ) -> ConfigurationVersionRecord:
+        await self.session.flush()
+        await self.session.refresh(version)
+        return version
+
+    async def append_configuration_audit(
+        self,
+        *,
+        actor_id: UUID,
+        action: str,
+        version_id: UUID,
+        changed_fields: Sequence[str],
+        summary: str,
+    ) -> None:
+        await append_admin_event(
+            self.session,
+            actor_id=actor_id,
+            action=action,
+            target_type="CONFIGURATION_VERSION",
+            target_id=version_id,
+            changed_fields=list(changed_fields),
+            summary=summary,
+        )
+
+    async def staffing_counts(self, unit_ids: Set[UUID]) -> dict[UUID, StaffingCount]:
+        return await load_staffing_counts(self.session, set(unit_ids))
+
+    async def materialise_configuration(
+        self, specification: ConfigurationDraftSpec, *, at: datetime
+    ) -> None:
+        await materialise_configuration_units(self.session, specification, at=at)

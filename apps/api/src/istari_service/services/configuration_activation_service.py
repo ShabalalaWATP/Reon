@@ -6,26 +6,28 @@ from uuid import UUID
 
 from istari_service.configuration_digest import configuration_digest
 from istari_service.configuration_events import ConfigurationEventType
-from istari_service.configuration_materialisation import materialise_configuration_units
 from istari_service.configuration_policy import may_activate
+from istari_service.configuration_records import (
+    ConfigurationBundleRecord,
+    stored_utc,
+)
 from istari_service.configuration_types import ApprovalDecision, FindingSeverity
 from istari_service.domain import Actor
 from istari_service.errors import InvalidAdministrationChange
-from istari_service.repositories.configuration_records import (
-    ConfigurationBundle,
-    stored_utc,
-)
 from istari_service.schemas.configuration import (
     ConfigurationReasonCommand,
     ConfigurationVersionDetail,
 )
+from istari_service.services.configuration_ports import ConfigurationActivationPort
 from istari_service.services.configuration_service_base import ConfigurationServiceBase
 from istari_service.services.configuration_validation_support import (
     configuration_findings,
 )
 
 
-class ConfigurationActivationService(ConfigurationServiceBase):
+class ConfigurationActivationService(
+    ConfigurationServiceBase[ConfigurationActivationPort]
+):
     async def activate(
         self,
         actor: Actor,
@@ -36,7 +38,7 @@ class ConfigurationActivationService(ConfigurationServiceBase):
         version = await self._repository.locked_version(
             version_id, payload.expected_version
         )
-        bundle = await self._repository.bundle(version.id, version=version)
+        bundle = await self._repository.bundle(version.id)
         self._require_activation_authority(actor, bundle)
         now = self._clock()
         if stored_utc(version.effective_from) > now:
@@ -63,11 +65,7 @@ class ConfigurationActivationService(ConfigurationServiceBase):
             reason=payload.reason,
             now=now,
         )
-        await materialise_configuration_units(
-            self._repository.session,
-            bundle.specification(),
-            at=now,
-        )
+        await self._repository.materialise_configuration(bundle.specification(), at=now)
         await self._audit(
             actor,
             "CONFIGURATION_ACTIVATED",
@@ -98,7 +96,7 @@ class ConfigurationActivationService(ConfigurationServiceBase):
 
     @staticmethod
     def _require_activation_authority(
-        actor: Actor, bundle: ConfigurationBundle
+        actor: Actor, bundle: ConfigurationBundleRecord
     ) -> None:
         version = bundle.version
         approval = bundle.approval

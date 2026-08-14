@@ -13,8 +13,8 @@ from fastapi import Response
 from pydantic import SecretStr
 from sqlalchemy.exc import SQLAlchemyError
 
+import istari_service.health_composition as health_composition
 import istari_service.main as main_module
-import istari_service.routers.health as health_module
 from istari_service.auth_service import PasswordHasher
 from istari_service.config import Environment, Settings
 from istari_service.errors import AuthenticationFailed, ServiceError
@@ -316,7 +316,7 @@ async def test_health_and_readiness_cover_dependency_combinations(
         return True
 
     monkeypatch.setattr(
-        health_module,
+        health_composition,
         "configuration_runtime_is_ready",
         configuration_ready,
     )

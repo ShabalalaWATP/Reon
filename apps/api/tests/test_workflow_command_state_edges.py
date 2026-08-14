@@ -11,7 +11,12 @@ import pytest
 from sqlalchemy.dialects import postgresql
 
 from istari_service.errors import InvalidAction
-from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
+from istari_service.models import (
+    ProductMode,
+    RequestStatus,
+    UserRole,
+    WorkflowTaskStatus,
+)
 from istari_service.schemas.work import AssignSpecialist, ReturnToCoordination
 from istari_service.work_command_types import (
     PendingWorkCommand,
@@ -83,6 +88,7 @@ def _state(
         assigned_delivery_team=assigned_team,
         assigned_delivery_team_id=assigned_team_id,
         assigned_specialist_id=None,
+        product_mode=ProductMode.LEGACY,
         version=3,
     )
     task = SimpleNamespace(

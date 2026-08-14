@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy.sql.elements import conv
 
-from istari_service.models import Base
+from istari_service.model_registry import Base
 
 config = context.config
 

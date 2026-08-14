@@ -16,6 +16,7 @@ from istari_service.configuration_models import (
     RequestConfigurationPin,
 )
 from istari_service.configuration_projection import active_units
+from istari_service.configuration_records import stored_utc
 from istari_service.configuration_request_policy import (
     build_request_policy_snapshot,
 )
@@ -26,7 +27,6 @@ from istari_service.organisation_models import OrganisationUnit
 from istari_service.repositories.configuration import (
     SqlAlchemyConfigurationRepository,
 )
-from istari_service.repositories.configuration_records import stored_utc
 from istari_service.repositories.configuration_staffing import load_staffing_counts
 
 

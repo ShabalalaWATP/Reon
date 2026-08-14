@@ -8,15 +8,6 @@ from uuid import UUID
 from fastapi import APIRouter, Query
 
 from istari_service.dependencies import CurrentActor, DatabaseSession, MutationActor
-from istari_service.repositories.team_member_profiles import (
-    SqlAlchemyTeamMemberProfileRepository,
-)
-from istari_service.repositories.team_memberships import (
-    SqlAlchemyTeamMembershipRepository,
-)
-from istari_service.repositories.team_workspaces import (
-    SqlAlchemyTeamWorkspaceRepository,
-)
 from istari_service.schemas.team_workspaces import (
     EligibleRosterAnalystList,
     EndMembershipCommand,
@@ -29,16 +20,13 @@ from istari_service.schemas.team_workspaces import (
     TransferCommand,
 )
 from istari_service.services.team_workspace_service import TeamWorkspaceService
+from istari_service.team_workspace_composition import team_workspace_service
 
 router = APIRouter(prefix="/team-workspaces", tags=["team-workspaces"])
 
 
 def _service(session: DatabaseSession) -> TeamWorkspaceService:
-    return TeamWorkspaceService(
-        SqlAlchemyTeamWorkspaceRepository(session),
-        SqlAlchemyTeamMembershipRepository(session),
-        SqlAlchemyTeamMemberProfileRepository(session),
-    )
+    return team_workspace_service(session)
 
 
 @router.get("", response_model=TeamWorkspaceList)

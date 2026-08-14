@@ -2,42 +2,34 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.action_notification_models import (
-    NotificationAccessKind,
     NotificationEvent,
     NotificationEventGroup,
-    NotificationPreference,
     NotificationProjectionStatus,
     NotificationRecipient,
-    ProjectionCheckpoint,
-    ProjectionHealth,
 )
 from istari_service.errors import ObjectNotFound
 from istari_service.models import User, UserRole
+from istari_service.notification_ports import RecipientRule
+from istari_service.notification_preference_policy import (
+    disabled_recipient_contexts,
+    required_context,
+    role_is_current,
+)
 from istari_service.operational_analytics_projection import (
     project_notification_sent_fact,
 )
-from istari_service.repositories.notifications import (
-    MANDATORY_EVENT_TYPES,
-    MANDATORY_GROUPS,
+from istari_service.qc_membership import QC_TEAM_ID
+from istari_service.repositories.notification_projection_checkpoint import (
+    update_notification_checkpoint,
 )
-from istari_service.team_models import TeamMembership
-
-
-@dataclass(frozen=True, slots=True)
-class RecipientRule:
-    user_id: UUID
-    access_kind: NotificationAccessKind
-    required_role: UserRole
-    required_scope: str | None = None
-    organisation_unit_id: UUID | None = None
+from istari_service.team_models import TeamMembership, WorkspacePosition
 
 
 class SqlAlchemyNotificationProjectionRepository:
@@ -124,8 +116,9 @@ class SqlAlchemyNotificationProjectionRepository:
         event.attempts += 1
         created: list[NotificationRecipient] = []
         current_rules = await self._current_recipient_rules(recipients)
-        disabled = await self._disabled_recipients(
-            {rule.user_id for rule in current_rules},
+        disabled = await disabled_recipient_contexts(
+            self.session,
+            current_rules,
             event.event_group,
             event.event_type,
         )
@@ -135,7 +128,7 @@ class SqlAlchemyNotificationProjectionRepository:
         )
         added = False
         for rule in current_rules:
-            if rule.user_id in disabled:
+            if (rule.user_id, required_context(rule.required_role)) in disabled:
                 continue
             recipient = existing.get(rule.user_id)
             if recipient is None:
@@ -167,7 +160,9 @@ class SqlAlchemyNotificationProjectionRepository:
         )
         await project_notification_sent_fact(self.session, event, unit_id=unit_id)
         if update_checkpoint:
-            await self._set_checkpoint(event, projected_at, failed=False)
+            await update_notification_checkpoint(
+                self.session, event, projected_at, failed=False
+            )
         return created
 
     async def update_projection_checkpoint(
@@ -178,7 +173,9 @@ class SqlAlchemyNotificationProjectionRepository:
     ) -> None:
         """Refresh batch health once after all selected events are projected."""
 
-        await self._set_checkpoint(event, projected_at, failed=False)
+        await update_notification_checkpoint(
+            self.session, event, projected_at, failed=False
+        )
 
     async def mark_projection_failed(
         self, event_id: UUID, *, error_code: str, attempted_at: datetime
@@ -194,7 +191,9 @@ class SqlAlchemyNotificationProjectionRepository:
         event.status = NotificationProjectionStatus.FAILED
         event.last_error = error_code[:120]
         event.available_at = attempted_at
-        await self._set_checkpoint(event, attempted_at, failed=True)
+        await update_notification_checkpoint(
+            self.session, event, attempted_at, failed=True
+        )
 
     async def _event_recipients(self, event_id: UUID) -> list[NotificationRecipient]:
         return list(
@@ -218,11 +217,16 @@ class SqlAlchemyNotificationProjectionRepository:
             return []
         user_ids = {rule.user_id for rule in unique}
         users = {
-            user_id: (role, scope)
-            for user_id, role, scope in (
+            user_id: (role, scope, customer_context_enabled)
+            for user_id, role, scope, customer_context_enabled in (
                 (
                     await self.session.execute(
-                        select(User.id, User.role, User.scope).where(
+                        select(
+                            User.id,
+                            User.role,
+                            User.scope,
+                            User.customer_context_enabled,
+                        ).where(
                             User.id.in_(user_ids),
                             User.is_active.is_(True),
                         )
@@ -237,6 +241,11 @@ class SqlAlchemyNotificationProjectionRepository:
             for rule in unique
             if rule.organisation_unit_id is not None
         }
+        required_memberships.update(
+            (rule.user_id, QC_TEAM_ID)
+            for rule in unique
+            if rule.required_role is UserRole.QUALITY_RELEASE
+        )
         current_memberships: set[tuple[UUID, UUID]] = set()
         if required_memberships:
             membership_users = {user_id for user_id, _unit_id in required_memberships}
@@ -255,6 +264,11 @@ class SqlAlchemyNotificationProjectionRepository:
                                 TeamMembership.effective_until.is_(None),
                                 TeamMembership.effective_until > datetime.now(UTC),
                             ),
+                            or_(
+                                TeamMembership.team_id != QC_TEAM_ID,
+                                TeamMembership.workspace_position
+                                == WorkspacePosition.MANAGER,
+                            ),
                         )
                     )
                 )
@@ -270,34 +284,17 @@ class SqlAlchemyNotificationProjectionRepository:
     @staticmethod
     def _rule_is_current(
         rule: RecipientRule,
-        users: dict[UUID, tuple[UserRole, str]],
+        users: dict[UUID, tuple[UserRole, str, bool]],
         memberships: set[tuple[UUID, UUID]],
     ) -> bool:
         user = users.get(rule.user_id)
-        if user is None or user[0] is not rule.required_role:
+        if user is None or not role_is_current(rule.required_role, user):
             return False
+        if rule.required_role is UserRole.QUALITY_RELEASE:
+            return (rule.user_id, QC_TEAM_ID) in memberships
         if rule.organisation_unit_id is not None:
             return (rule.user_id, rule.organisation_unit_id) in memberships
         return rule.required_scope is None or user[1] == rule.required_scope
-
-    async def _disabled_recipients(
-        self,
-        user_ids: set[UUID],
-        group: NotificationEventGroup,
-        event_type: str,
-    ) -> set[UUID]:
-        mandatory = group in MANDATORY_GROUPS or event_type in MANDATORY_EVENT_TYPES
-        if not user_ids or mandatory:
-            return set()
-        return set(
-            await self.session.scalars(
-                select(NotificationPreference.user_id).where(
-                    NotificationPreference.user_id.in_(user_ids),
-                    NotificationPreference.event_group == group,
-                    NotificationPreference.enabled.is_(False),
-                )
-            )
-        )
 
     async def _recipients_by_user(
         self,
@@ -315,35 +312,3 @@ class SqlAlchemyNotificationProjectionRepository:
                 )
             )
         }
-
-    async def _set_checkpoint(
-        self, event: NotificationEvent, projected_at: datetime, *, failed: bool
-    ) -> None:
-        checkpoint = await self.session.get(ProjectionCheckpoint, "notifications")
-        if checkpoint is None:
-            checkpoint = ProjectionCheckpoint(name="notifications")
-            self.session.add(checkpoint)
-        checkpoint.last_event_key = event.stable_key
-        checkpoint.source_changed_at = event.occurred_at
-        checkpoint.projected_at = projected_at
-        checkpoint.pending_count = await self._status_count(
-            NotificationProjectionStatus.PENDING
-        )
-        checkpoint.failed_count = await self._status_count(
-            NotificationProjectionStatus.FAILED
-        )
-        checkpoint.health = (
-            ProjectionHealth.DEGRADED
-            if failed or checkpoint.failed_count
-            else ProjectionHealth.CURRENT
-        )
-
-    async def _status_count(self, status: NotificationProjectionStatus) -> int:
-        return int(
-            await self.session.scalar(
-                select(func.count(NotificationEvent.id)).where(
-                    NotificationEvent.status == status
-                )
-            )
-            or 0
-        )

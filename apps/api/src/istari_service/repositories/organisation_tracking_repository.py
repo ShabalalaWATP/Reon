@@ -1,22 +1,27 @@
-"""Repository mixin for exact-route tracking projections."""
+"""SQLAlchemy adapter for exact-route tracking projections."""
 
 from __future__ import annotations
 
 from uuid import UUID
 
+from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from istari_service.domain import Actor
-from istari_service.models import RequestStatus
+from istari_service.models import RequestStatus, ServiceRequest
 from istari_service.repositories.organisation_tracking import (
     tracked_request_detail,
     tracked_requests,
 )
+from istari_service.repositories.route_access import route_membership_condition
 from istari_service.schemas.organisation import TrackedRequest, TrackedRequestDetail
 
 
-class OrganisationTrackingRepositoryMixin:
-    _session: AsyncSession
+class SqlAlchemyOrganisationTrackingRepository:
+    """Read route-scoped tracking data without coupling reference-data access."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
 
     async def page_tracked_requests(
         self,
@@ -30,11 +35,10 @@ class OrganisationTrackingRepositoryMixin:
         route_unit_id: UUID | None = None,
         minimum_age_days: int | None = None,
     ) -> tuple[list[TrackedRequest], str | None]:
-        from istari_service.repositories.organisation import route_membership_condition
-
         membership = route_membership_condition(actor)
         if membership is None:
             return [], None
+        membership = and_(membership, ServiceRequest.requester_id != actor.id)
         return await tracked_requests(
             self._session,
             membership,
@@ -55,11 +59,10 @@ class OrganisationTrackingRepositoryMixin:
         event_limit: int = 50,
         event_cursor: str | None = None,
     ) -> TrackedRequestDetail | None:
-        from istari_service.repositories.organisation import route_membership_condition
-
         membership = route_membership_condition(actor)
         if membership is None:
             return None
+        membership = and_(membership, ServiceRequest.requester_id != actor.id)
         return await tracked_request_detail(
             self._session,
             membership,

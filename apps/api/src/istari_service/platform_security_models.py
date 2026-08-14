@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import StrEnum
 from uuid import UUID
 
 from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, String
@@ -17,14 +16,7 @@ from istari_service.models import (
     CreatedMixin,
     TimestampMixin,
 )
-
-
-class PlatformClassification(StrEnum):
-    OFFICIAL = "OFFICIAL"
-    OFFICIAL_SENSITIVE = "OFFICIAL-SENSITIVE"
-    LEVEL_THREE = "SECRET"
-    LEVEL_FOUR = "TOP-SECRET"
-
+from istari_service.platform_security_types import PlatformClassification
 
 PLATFORM_CLASSIFICATION_ID = UUID("00000000-0000-0000-0000-000000000002")
 

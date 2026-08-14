@@ -19,12 +19,14 @@ from istari_service.board_models import (
     WorkPackagePriority,
     WorkPackageStatus,
 )
+from istari_service.domain import Actor
 from istari_service.errors import (
     BoardItemNotFound,
     InvalidBoardChange,
     StaleVersion,
     TeamWorkspaceNotFound,
 )
+from istari_service.models import UserRole
 from istari_service.repositories.board import SqlAlchemyBoardRepository
 from istari_service.repositories.board_planning_commands import (
     SqlAlchemyBoardPlanningCommandRepository,
@@ -235,19 +237,65 @@ async def test_service_link_validation_and_non_wip_target_paths() -> None:
         current_member_ids=AsyncMock(return_value=set()),
         package_ids_in_team=AsyncMock(return_value=set()),
         request_belongs_to_team=AsyncMock(return_value=False),
+        request_requester_id=AsyncMock(return_value=None),
         lock_planning_aggregate=AsyncMock(),
     )
-    service = BoardService(board, SimpleNamespace())
+    service = BoardService(board, SimpleNamespace(), SimpleNamespace())
+    actor = SimpleNamespace(id=uuid4())
     linked = uuid4()
     command = _work_command(linkedRequestId=linked)
     board.current_member_ids.return_value = {command.owner_user_id}
     with pytest.raises(BoardItemNotFound):
-        await service._validate_links(uuid4(), command)
+        await service._package_policy.validate_links(actor, uuid4(), command)
     board.request_belongs_to_team.assert_awaited_once()
 
     package = SimpleNamespace(id=uuid4())
-    await service._enforce_wip(uuid4(), package, cast(WorkPackageStatus, object()))
+    await service._package_policy.enforce_wip(
+        uuid4(), package, cast(WorkPackageStatus, object())
+    )
     board.lock_planning_aggregate.assert_not_awaited()
+
+
+async def test_service_link_validation_excludes_requester_stable_identity() -> None:
+    requester_id, other_id, team_id, request_id = uuid4(), uuid4(), uuid4(), uuid4()
+    board = SimpleNamespace(
+        session=cast(AsyncSession, _Session()),
+        current_member_ids=AsyncMock(return_value={requester_id, other_id}),
+        package_ids_in_team=AsyncMock(return_value=set()),
+        request_belongs_to_team=AsyncMock(return_value=True),
+        request_requester_id=AsyncMock(return_value=requester_id),
+        iteration_in_team=AsyncMock(),
+    )
+    service = BoardService(board, SimpleNamespace(), SimpleNamespace())
+
+    own = _work_command(ownerUserId=other_id, linkedRequestId=request_id)
+    with pytest.raises(BoardItemNotFound):
+        await service._package_policy.validate_links(
+            SimpleNamespace(id=requester_id), team_id, own
+        )
+
+    requester_owned = _work_command(
+        ownerUserId=requester_id, linkedRequestId=request_id
+    )
+    with pytest.raises(BoardItemNotFound):
+        await service._package_policy.validate_links(
+            SimpleNamespace(id=other_id), team_id, requester_owned
+        )
+
+    requester_contributes = _work_command(
+        ownerUserId=other_id,
+        contributorIds=[requester_id],
+        linkedRequestId=request_id,
+    )
+    with pytest.raises(BoardItemNotFound):
+        await service._package_policy.validate_links(
+            SimpleNamespace(id=other_id), team_id, requester_contributes
+        )
+
+    allowed = _work_command(ownerUserId=other_id, linkedRequestId=request_id)
+    await service._package_policy.validate_links(
+        SimpleNamespace(id=uuid4()), team_id, allowed
+    )
 
 
 async def test_service_create_rejects_cycle_after_aggregate_lock() -> None:
@@ -256,17 +304,23 @@ async def test_service_create_rejects_cycle_after_aggregate_lock() -> None:
         session=cast(AsyncSession, _Session()),
         lock_planning_aggregate=AsyncMock(),
     )
-    service = BoardService(board, SimpleNamespace())
-    service._authorise_create = AsyncMock()  # type: ignore[method-assign]
-    service._validate_links = AsyncMock()  # type: ignore[method-assign]
-    service._commands.create_package = AsyncMock(
-        return_value=SimpleNamespace(id=package_id)
+    commands = SimpleNamespace(
+        create_package=AsyncMock(return_value=SimpleNamespace(id=package_id)),
+        dependency_cycle=AsyncMock(return_value=True),
     )
-    service._commands.dependency_cycle = AsyncMock(return_value=True)
+    service = BoardService(board, commands, SimpleNamespace())
+    service._package_policy.authorise_create = AsyncMock()  # type: ignore[method-assign]
+    service._package_policy.validate_links = AsyncMock()  # type: ignore[method-assign]
 
     with pytest.raises(InvalidBoardChange, match="dependencies cannot contain"):
         await service.create_package(
-            SimpleNamespace(id=actor_id),  # type: ignore[arg-type]
+            Actor(
+                actor_id,
+                "synthetic-specialist",
+                "Synthetic Specialist",
+                UserRole.DELIVERY_SPECIALIST,
+                "SSG Team",
+            ),
             team_id,
             _work_command(),
         )

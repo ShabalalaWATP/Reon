@@ -40,7 +40,6 @@ def operations(
         cast(Any, storage or SimpleNamespace()),
         cast(Any, scanner or SimpleNamespace()),
         placeholder,
-        placeholder,
         maximum_file_bytes=maximum_file_bytes,
     )
 

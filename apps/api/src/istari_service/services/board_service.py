@@ -5,12 +5,13 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID
 
-from istari_service.board_models import BoardColumn, WorkPackage, WorkPackageStatus
+from istari_service.board_models import BoardColumn, WorkPackageStatus
 from istari_service.board_policy import (
     authorise_board_manager,
     authorise_package_change,
     require,
 )
+from istari_service.board_ports import BoardCommandPort, BoardRepositoryPort
 from istari_service.board_projection import PACKAGE_TRANSITIONS
 from istari_service.domain import Actor
 from istari_service.errors import (
@@ -18,12 +19,8 @@ from istari_service.errors import (
     InvalidBoardChange,
     TeamWorkspaceNotFound,
 )
+from istari_service.identity_context import require_staff_context
 from istari_service.models import UserRole
-from istari_service.repositories.board import SqlAlchemyBoardRepository
-from istari_service.repositories.board_commands import SqlAlchemyBoardCommandRepository
-from istari_service.repositories.team_workspaces import (
-    SqlAlchemyTeamWorkspaceRepository,
-)
 from istari_service.schemas.board import (
     BoardConfigurationCommand,
     BoardConfigurationResult,
@@ -43,6 +40,11 @@ from istari_service.schemas.board import (
     WorkPackageUpdate,
     normalise_filters,
 )
+from istari_service.services.board_package_policy import BoardPackagePolicy
+from istari_service.services.board_request_conflict import (
+    require_package_requester_excluded,
+)
+from istari_service.services.team_workspace_ports import TeamWorkspaceReadPort
 
 COLUMN_TO_PACKAGE_STATUS = {
     BoardColumn.BACKLOG: WorkPackageStatus.BACKLOG,
@@ -52,20 +54,19 @@ COLUMN_TO_PACKAGE_STATUS = {
     BoardColumn.COMPLETED: WorkPackageStatus.DONE,
     BoardColumn.CANCELLED: WorkPackageStatus.CANCELLED,
 }
-PACKAGE_STATUS_TO_COLUMN = {
-    value: key for key, value in COLUMN_TO_PACKAGE_STATUS.items()
-}
 
 
 class BoardService:
     def __init__(
         self,
-        board: SqlAlchemyBoardRepository,
-        workspaces: SqlAlchemyTeamWorkspaceRepository,
+        board: BoardRepositoryPort,
+        commands: BoardCommandPort,
+        workspaces: TeamWorkspaceReadPort,
     ) -> None:
         self._board = board
-        self._commands = SqlAlchemyBoardCommandRepository(board)
+        self._commands = commands
         self._workspaces = workspaces
+        self._package_policy = BoardPackagePolicy(board)
 
     async def board(
         self,
@@ -75,6 +76,7 @@ class BoardService:
         cursor: str | None,
         limit: int,
     ) -> BoardResult:
+        self._require_staff(actor)
         await self._workspaces.require_read(actor.id, team_id)
         try:
             items, next_cursor = await self._board.board_page(
@@ -102,27 +104,31 @@ class BoardService:
     async def board_request(
         self, actor: Actor, team_id: UUID, request_id: UUID
     ) -> BoardItem:
+        self._require_staff(actor)
         await self._workspaces.require_read(actor.id, team_id)
         return await self._board.request_item(team_id, request_id)
 
     async def packages(
         self, actor: Actor, team_id: UUID, limit: int
     ) -> WorkPackageList:
+        self._require_staff(actor)
         await self._workspaces.require_read(actor.id, team_id)
         return WorkPackageList(items=await self._board.list_packages(team_id, limit))
 
     async def package(
         self, actor: Actor, team_id: UUID, package_id: UUID
     ) -> WorkPackageResult:
+        self._require_staff(actor)
         await self._workspaces.require_read(actor.id, team_id)
         return await self._board.package(team_id, package_id)
 
     async def create_package(
         self, actor: Actor, team_id: UUID, command: WorkPackageCommand
     ) -> WorkPackageResult:
-        await self._authorise_create(actor, team_id, command)
+        self._require_staff(actor)
+        await self._package_policy.authorise_create(actor, team_id, command)
         await self._board.lock_planning_aggregate(team_id)
-        await self._validate_links(team_id, command)
+        await self._package_policy.validate_links(actor, team_id, command)
         package = await self._commands.create_package(actor.id, team_id, command)
         if await self._commands.dependency_cycle(
             team_id, package.id, set(command.dependency_ids)
@@ -137,17 +143,19 @@ class BoardService:
         package_id: UUID,
         command: WorkPackageUpdate,
     ) -> WorkPackageResult:
+        self._require_staff(actor)
         package = await self._board.locked_package(
             team_id, package_id, command.expected_version
         )
         await authorise_package_change(self._board, actor, package, command.grant_id)
+        await require_package_requester_excluded(self._board, package, actor.id)
         require(
             actor.role is not UserRole.DELIVERY_SPECIALIST
             or command.owner_user_id == package.owner_user_id,
             BoardItemNotFound(),
         )
         await self._board.lock_planning_aggregate(team_id)
-        await self._validate_links(team_id, command)
+        await self._package_policy.validate_links(actor, team_id, command)
         if (
             package.id in command.dependency_ids
             or await self._commands.dependency_cycle(
@@ -165,15 +173,17 @@ class BoardService:
         package_id: UUID,
         command: WorkPackageMove,
     ) -> WorkPackageResult:
+        self._require_staff(actor)
         package = await self._board.locked_package(
             team_id, package_id, command.expected_version
         )
         await authorise_package_change(self._board, actor, package, command.grant_id)
+        await require_package_requester_excluded(self._board, package, actor.id)
         require(
             command.target in PACKAGE_TRANSITIONS[package.status],
             InvalidBoardChange("That package transition is not available."),
         )
-        await self._enforce_wip(team_id, package, command.target)
+        await self._package_policy.enforce_wip(team_id, package, command.target)
         await self._commands.move_package(
             package, actor.id, command.target, command.reason
         )
@@ -182,6 +192,7 @@ class BoardService:
     async def move_board_item(
         self, actor: Actor, team_id: UUID, command: BoardMoveAttempt
     ) -> WorkPackageResult:
+        self._require_staff(actor)
         require(
             command.item_type is BoardItemType.WORK_PACKAGE,
             InvalidBoardChange(
@@ -206,6 +217,7 @@ class BoardService:
     async def configure(
         self, actor: Actor, team_id: UUID, command: BoardConfigurationCommand
     ) -> BoardConfigurationResult:
+        self._require_staff(actor)
         await authorise_board_manager(self._board, actor, team_id, command.grant_id)
         await self._board.lock_planning_aggregate(team_id)
         config = await self._commands.set_configuration(team_id, command)
@@ -216,6 +228,7 @@ class BoardService:
     async def create_saved_view(
         self, actor: Actor, team_id: UUID, command: SavedBoardViewCommand
     ) -> SavedBoardViewResult:
+        self._require_staff(actor)
         await self._workspaces.require_read(actor.id, team_id)
         view = await self._commands.create_saved_view(actor.id, team_id, command)
         return _saved_view(view.id, view.name, view.filters, view.version)
@@ -227,6 +240,7 @@ class BoardService:
         view_id: UUID,
         command: SavedBoardViewUpdate,
     ) -> SavedBoardViewResult:
+        self._require_staff(actor)
         await self._workspaces.require_read(actor.id, team_id)
         view = await self._commands.update_saved_view(
             actor.id, team_id, view_id, command
@@ -240,69 +254,15 @@ class BoardService:
         view_id: UUID,
         command: DeleteSavedViewCommand,
     ) -> None:
+        self._require_staff(actor)
         await self._workspaces.require_read(actor.id, team_id)
         await self._commands.delete_saved_view(
             actor.id, team_id, view_id, command.expected_version
         )
 
-    async def _authorise_create(
-        self, actor: Actor, team_id: UUID, command: WorkPackageCommand
-    ) -> None:
-        members = await self._board.current_member_ids(team_id)
-        require(actor.id in members, TeamWorkspaceNotFound())
-        if actor.role is UserRole.DELIVERY_TEAM_LEAD:
-            if command.grant_id is None:
-                raise TeamWorkspaceNotFound()
-            await authorise_board_manager(self._board, actor, team_id, command.grant_id)
-        else:
-            require(
-                actor.role is UserRole.DELIVERY_SPECIALIST
-                and command.owner_user_id == actor.id,
-                TeamWorkspaceNotFound(),
-            )
-
-    async def _validate_links(self, team_id: UUID, command: WorkPackageCommand) -> None:
-        members = await self._board.current_member_ids(team_id)
-        require(
-            {command.owner_user_id, *command.contributor_ids} <= members,
-            BoardItemNotFound(),
-        )
-        dependencies = set(command.dependency_ids)
-        require(
-            await self._board.package_ids_in_team(team_id, dependencies)
-            == dependencies,
-            BoardItemNotFound(),
-        )
-        if command.linked_request_id:
-            require(
-                await self._board.request_belongs_to_team(
-                    team_id, command.linked_request_id
-                ),
-                BoardItemNotFound(),
-            )
-        if command.iteration_id:
-            require(
-                await self._board.iteration_in_team(team_id, command.iteration_id),
-                BoardItemNotFound(),
-            )
-
-    async def _enforce_wip(
-        self, team_id: UUID, package: WorkPackage, target: WorkPackageStatus
-    ) -> None:
-        target_column = PACKAGE_STATUS_TO_COLUMN.get(target)
-        if target_column is None:
-            return
-        await self._board.lock_planning_aggregate(team_id)
-        config = await self._board.configuration(team_id)
-        limit = config.wip_limits.get(target_column.value) if config else None
-        if limit is None:
-            return
-        count = await self._board.column_count(
-            team_id,
-            target_column,
-            exclude_package_id=package.id,
-        )
-        require(count < limit, InvalidBoardChange("The team WIP limit is reached."))
+    @staticmethod
+    def _require_staff(actor: Actor) -> None:
+        require_staff_context(actor, TeamWorkspaceNotFound())
 
 
 def _saved_view(

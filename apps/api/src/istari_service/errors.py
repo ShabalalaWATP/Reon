@@ -51,6 +51,12 @@ class CsrfFailed(ServiceError):
     public_message = "The request could not be verified."
 
 
+class IdentityContextDenied(ServiceError):
+    status_code = 403
+    code = "IDENTITY_CONTEXT_DENIED"
+    public_message = "That account context is not available."
+
+
 class ObjectNotFound(ServiceError):
     status_code = 404
     code = "NOT_FOUND"

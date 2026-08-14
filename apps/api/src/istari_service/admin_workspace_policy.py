@@ -23,4 +23,10 @@ def workspace_position_for(
                 "A Delivery Specialist must be a workspace Member."
             )
         return WorkspacePosition.MEMBER
+    if payload.role is UserRole.QUALITY_RELEASE:
+        if payload.workspace_position not in {None, WorkspacePosition.MANAGER}:
+            raise InvalidAdministrationChange(
+                "A QC account must be a workspace Manager."
+            )
+        return WorkspacePosition.MANAGER
     return payload.workspace_position or WorkspacePosition.MEMBER

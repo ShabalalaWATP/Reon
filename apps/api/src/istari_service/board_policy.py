@@ -4,40 +4,36 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from istari_service.board_models import WorkPackage
+from istari_service.board_ports import (
+    BoardPlanningReadPort,
+    WorkPackageRecord,
+)
 from istari_service.domain import Actor
 from istari_service.errors import BoardItemNotFound, TeamWorkspaceNotFound
 from istari_service.management_models import ManagementAction
 from istari_service.models import UserRole
-from istari_service.repositories.board import SqlAlchemyBoardRepository
-from istari_service.repositories.management import resolve_management_scope
 
 
 async def authorise_board_manager(
-    board: SqlAlchemyBoardRepository,
+    board: BoardPlanningReadPort,
     actor: Actor,
     team_id: UUID,
     grant_id: UUID,
 ) -> None:
     require(actor.role is UserRole.DELIVERY_TEAM_LEAD, TeamWorkspaceNotFound())
-    scope = await resolve_management_scope(
-        board.session,
-        subject_user_id=actor.id,
+    authorised = await board.has_management_authority(
+        actor_id=actor.id,
         grant_id=grant_id,
-        target_unit_id=team_id,
+        team_id=team_id,
         action=ManagementAction.BOARD,
-        lock=True,
     )
-    require(
-        scope is not None and scope.root_unit_id == team_id,
-        TeamWorkspaceNotFound(),
-    )
+    require(authorised, TeamWorkspaceNotFound())
 
 
 async def authorise_package_change(
-    board: SqlAlchemyBoardRepository,
+    board: BoardPlanningReadPort,
     actor: Actor,
-    package: WorkPackage,
+    package: WorkPackageRecord,
     grant_id: UUID | None,
 ) -> None:
     if actor.role is UserRole.DELIVERY_TEAM_LEAD:

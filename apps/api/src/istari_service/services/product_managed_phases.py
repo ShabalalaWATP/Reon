@@ -2,24 +2,66 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid5
 
 from istari_service.domain import Actor
 from istari_service.product_errors import ProductConflict, ProductValidationFailed
-from istari_service.product_security import validate_managed_metadata
+from istari_service.product_quota_policy import (
+    MAX_GLOBAL_STORAGE_BYTES,
+    MAX_REQUEST_STORAGE_BYTES,
+    MAX_USER_STORAGE_BYTES,
+)
+from istari_service.product_security import (
+    MAX_FILE_BYTES,
+    MAX_PACKAGE_BYTES,
+    validate_managed_metadata,
+)
 from istari_service.product_types import ArtefactRecord, UploadGrant
 from istari_service.schemas.products import (
     ManagedArtefactCreate,
     ManagedArtefactIntent,
     UploadIntentView,
 )
+from istari_service.services.product_repository_port import (
+    ProductUploadServiceRepository,
+)
+from istari_service.services.product_service_collaborators import (
+    ProductStorageLimits,
+    ProductUploadPolicy,
+)
 from istari_service.services.product_service_support import ProductServiceSupport
 from istari_service.services.product_transfer_types import ManagedPreparation
 
 
-class ProductManagedPhases(ProductServiceSupport):
+class ProductManagedPhases(ProductServiceSupport[ProductUploadServiceRepository]):
     """Perform only database work; storage grants are passed in as values."""
+
+    def __init__(
+        self,
+        repository: ProductUploadServiceRepository,
+        *,
+        upload_ttl: timedelta = timedelta(minutes=10),
+        maximum_file_bytes: int = MAX_FILE_BYTES,
+        maximum_package_bytes: int = MAX_PACKAGE_BYTES,
+        maximum_request_storage_bytes: int = MAX_REQUEST_STORAGE_BYTES,
+        maximum_user_storage_bytes: int = MAX_USER_STORAGE_BYTES,
+        maximum_global_storage_bytes: int = MAX_GLOBAL_STORAGE_BYTES,
+        managed_file_uploads_enabled: bool = True,
+    ) -> None:
+        super().__init__(repository)
+        self._upload_ttl = upload_ttl
+        self._maximum_file_bytes = maximum_file_bytes
+        self._upload_policy = ProductUploadPolicy(
+            repository,
+            ProductStorageLimits(
+                package_bytes=maximum_package_bytes,
+                request_bytes=maximum_request_storage_bytes,
+                user_bytes=maximum_user_storage_bytes,
+                service_bytes=maximum_global_storage_bytes,
+            ),
+            enabled=managed_file_uploads_enabled,
+        )
 
     async def prepare_managed(
         self,
@@ -27,9 +69,9 @@ class ProductManagedPhases(ProductServiceSupport):
         package_id: UUID,
         command: ManagedArtefactCreate,
     ) -> ManagedPreparation:
-        self._require_managed_file_uploads()
+        self._upload_policy.require_enabled()
         package, request = await self._authorised_package(actor, package_id, lock=False)
-        self._require_draft_author(actor, package, request)
+        await self._require_draft_author(actor, package, request)
         filename, media_type = validate_managed_metadata(
             filename=command.filename,
             media_type=command.media_type,
@@ -50,7 +92,7 @@ class ProductManagedPhases(ProductServiceSupport):
         else:
             if package.version != command.expected_version:
                 raise ProductConflict()
-            await self._require_storage_capacity(package, command.size_bytes)
+            await self._upload_policy.require_capacity(package, command.size_bytes)
             object_id = uuid5(package.id, str(command.idempotency_key))
             object_key = f"quarantine/{package.id}/{object_id}"
             await self._repository.create_managed(
@@ -83,7 +125,7 @@ class ProductManagedPhases(ProductServiceSupport):
         package, request = await self._authorised_package(
             actor, plan.package_id, lock=True
         )
-        self._require_draft_author(actor, package, request)
+        await self._require_draft_author(actor, package, request)
         command = plan.command
         retry = await self._repository.managed_retry(
             package.id, command.idempotency_key
