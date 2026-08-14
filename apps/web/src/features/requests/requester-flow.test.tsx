@@ -198,7 +198,7 @@ describe("requester experience", () => {
     mockFeatureFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
       if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
-      if (url.pathname.endsWith(`/releases/requests/${legacy.id}`)) return json({ detail: "Not found" }, 404);
+      if (url.pathname.endsWith(`/releases/requests/${legacy.id}`)) return json(null);
       if (url.pathname.endsWith(`/requests/${legacy.id}`)) return json(legacy);
       throw new Error(url.pathname);
     });

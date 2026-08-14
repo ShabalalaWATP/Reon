@@ -89,6 +89,6 @@ async def test_withdrawal_revokes_dashboard_and_legacy_fallback_access(
     assert (
         await api_harness.client.get(f"/api/v1/requests/{request_id}/product")
     ).status_code == 404
-    assert (
-        await api_harness.client.get(f"/api/v1/releases/requests/{request_id}")
-    ).status_code == 404
+    release = await api_harness.client.get(f"/api/v1/releases/requests/{request_id}")
+    assert release.status_code == 200
+    assert release.json() is None

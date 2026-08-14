@@ -255,6 +255,13 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 - Administrator denial tests for every request-content endpoint.
 - Audit-chain verification and safe-logging assertions.
 - Engine outage, database rollback, outbox retry and duplicate-command tests.
+- Initial API-versus-worker command races, bounded hand-off and delayed recovery
+  tests proving that one engine effect cannot be reported as both success and
+  failure, while a stopped API remains recoverable without manual intervention.
+- PostgreSQL lock-mode and deadlock-victim tests proving that workflow actor and
+  request-detail reauthorisation remain stable while notification recipient
+  foreign keys are projected concurrently, with only a bounded idempotent
+  command retry.
 - Analyst clarification scope, repeated-loop, same-assignment, competing-open and
   process-version tests.
 - Lead and additional Analyst parity tests proving active roster membership at

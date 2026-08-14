@@ -47,10 +47,17 @@ class ProductService(ProductUploadOperations, ProductReleaseOperations):
 
     async def get_package_for_request(
         self, actor: Actor, request_id: UUID
-    ) -> PackageView:
+    ) -> PackageView | None:
+        request = await self._repository.request(request_id, lock=False)
+        if (
+            request is None
+            or not await self._repository.active_actor(actor)
+            or not self._can_review_request(actor, request)
+        ):
+            raise ProductNotFound()
         package = await self._repository.latest_package(request_id)
         if package is None:
-            raise ProductNotFound()
+            return None
         return await self.get_package(actor, package.id)
 
     async def submit(
@@ -112,6 +119,20 @@ class ProductService(ProductUploadOperations, ProductReleaseOperations):
                 actor.role is UserRole.DELIVERY_SPECIALIST
                 and package.author_user_id == actor.id
                 and self._assigned_analyst(actor, request)
+            )
+            or (
+                actor.role is UserRole.DELIVERY_TEAM_LEAD
+                and self._assigned_team(actor, request)
+            )
+            or actor.role is UserRole.QUALITY_RELEASE
+        )
+
+    def _can_review_request(self, actor: Actor, request: ProductRequestRecord) -> bool:
+        return (
+            (
+                actor.role is UserRole.DELIVERY_SPECIALIST
+                and self._assigned_analyst(actor, request)
+                and self._assigned_team(actor, request)
             )
             or (
                 actor.role is UserRole.DELIVERY_TEAM_LEAD

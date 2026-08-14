@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from typing import Any
 from uuid import uuid4
@@ -96,6 +97,7 @@ async def test_prepare_claim_records_a_validated_durable_intent() -> None:
     assert task.assignee_user_id == actor.id
     assert request.workflow_error == PENDING_MESSAGE
     assert session.flushes == 1
+    assert outbox.available_at >= datetime.now(UTC) + timedelta(seconds=4)
 
 
 async def test_prepare_claim_rejects_changed_or_ineligible_state() -> None:

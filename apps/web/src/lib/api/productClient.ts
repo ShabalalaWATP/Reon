@@ -23,7 +23,7 @@ export const productApi = {
     csrfToken: string,
   ) => apiRequest<ProductPackage>(packagesRoot, { body: input, csrfToken, method: "POST" }),
   package: (packageId: string) => apiRequest<ProductPackage>(packagePath(packageId)),
-  packageForRequest: (requestId: string) => apiRequest<ProductPackage>(
+  packageForRequest: (requestId: string) => apiRequest<ProductPackage | null>(
     `${packagesRoot}/by-request/${encodeURIComponent(requestId)}`,
   ),
   addManagedArtefact: (
@@ -93,7 +93,7 @@ export const productApi = {
     method: "POST",
   }),
   releaseForRequest: (requestId: string) =>
-    apiRequest<ProductRelease>(`/releases/requests/${encodeURIComponent(requestId)}`),
+    apiRequest<ProductRelease | null>(`/releases/requests/${encodeURIComponent(requestId)}`),
   acceptRelease: (requestId: string, idempotencyKey: string, csrfToken: string) =>
     apiRequest<ProductRelease>(`/releases/requests/${encodeURIComponent(requestId)}/accept`, {
       body: { idempotencyKey },

@@ -95,15 +95,23 @@ class ProductReleaseOperations(ProductServiceSupport):
     async def customer_release(
         self, actor: Actor, request_id: UUID
     ) -> CustomerReleaseView:
+        view = await self.find_customer_release(actor, request_id)
+        if view is None:
+            raise ProductNotFound()
+        return view
+
+    async def find_customer_release(
+        self, actor: Actor, request_id: UUID
+    ) -> CustomerReleaseView | None:
         if (
             actor.role is not UserRole.REQUESTER
             or not await self._repository.active_actor(actor)
         ):
             raise ProductNotFound()
-        view = await self._repository.release_view(request_id, actor.id)
-        if view is None:
+        request = await self._repository.request(request_id, lock=False)
+        if request is None or request.requester_id != actor.id:
             raise ProductNotFound()
-        return view
+        return await self._repository.release_view(request_id, actor.id)
 
     async def accept_product(
         self, actor: Actor, request_id: UUID, command: AcceptanceCommand

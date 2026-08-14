@@ -264,11 +264,26 @@ describe("managed product package journey", () => {
       if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       if (url.pathname.endsWith("/work-items")) return json({ items: [{ ...workItem, stage: "IN_PROGRESS", requestVersion: 7, assigneeId: session.user.id, availableActions: ["submit"] }] });
       if (url.pathname.endsWith(`/requests/${requestSummary.id}`)) return json({ ...requestDetail, status: "IN_PROGRESS" });
-      if (url.pathname.endsWith(`/product-packages/by-request/${requestSummary.id}`)) return json({ detail: "Not found" }, 404);
+      if (url.pathname.endsWith(`/product-packages/by-request/${requestSummary.id}`)) return json(null);
       throw new Error(url.pathname);
     });
     renderApp("/delivery/my-work");
     expect(await screen.findByRole("link", { name: "Start product package" })).toHaveAttribute("href", `/product-packages/new?requestId=${requestSummary.id}&version=7`);
+  });
+
+  it("tells a Manager when no managed package has been started", async () => {
+    const session = roleSession("DELIVERY_TEAM_LEAD");
+    mockFeatureFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(session);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
+      if (url.pathname.endsWith("/work-items")) return json({ items: [{ ...workItem, stage: "LEAD_REVIEW", assigneeId: session.user.id, availableActions: ["approve"] }] });
+      if (url.pathname.endsWith(`/requests/${requestSummary.id}`)) return json({ ...requestDetail, status: "LEAD_REVIEW" });
+      if (url.pathname.endsWith(`/product-packages/by-request/${requestSummary.id}`)) return json(null);
+      throw new Error(url.pathname);
+    });
+    renderApp("/delivery/team");
+
+    expect(await screen.findByText("No managed product package has been started.")).toBeInTheDocument();
   });
 
   it("offers a revised package when rework points at an immutable version", async () => {

@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { PackageOpen } from "lucide-react";
 import { Link } from "react-router";
 
-import { ApiError } from "../../lib/api/client";
 import { productApi } from "../../lib/api/productClient";
 import type { WorkStage } from "../../lib/api/types";
 import { useAuth } from "../../lib/auth/AuthProvider";
@@ -31,12 +30,10 @@ function EnabledStaffProductAction({ requestId, requestVersion, stage }: { reque
   });
   if (!relevant) return null;
   if (productPackage.isPending) return <p className="product-inline-state">Checking product package…</p>;
-  if (productPackage.isError) {
-    if (role === "DELIVERY_SPECIALIST" && productPackage.error instanceof ApiError && productPackage.error.status === 404) {
-      return <Link className="button button--primary button--wide" to={`/product-packages/new?requestId=${encodeURIComponent(requestId)}&version=${requestVersion}`}><PackageOpen aria-hidden="true" size={16} />Start product package</Link>;
-    }
-    return <p className="product-inline-state product-inline-state--error">Product package is not available.</p>;
-  }
+  if (productPackage.isError) return <p className="product-inline-state product-inline-state--error">Product package is temporarily unavailable.</p>;
+  if (productPackage.data === null) return role === "DELIVERY_SPECIALIST"
+    ? <Link className="button button--primary button--wide" to={`/product-packages/new?requestId=${encodeURIComponent(requestId)}&version=${requestVersion}`}><PackageOpen aria-hidden="true" size={16} />Start product package</Link>
+    : <p className="product-inline-state">No managed product package has been started.</p>;
   if (role === "DELIVERY_SPECIALIST" && stage === "REWORK_REQUIRED" && productPackage.data.status !== "DRAFT") {
     return <Link className="button button--primary button--wide" to={`/product-packages/new?requestId=${encodeURIComponent(requestId)}&version=${requestVersion}`}><PackageOpen aria-hidden="true" size={16} />Start revised package</Link>;
   }

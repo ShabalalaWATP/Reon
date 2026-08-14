@@ -134,3 +134,47 @@ async def test_completion_recovers_after_engine_success_before_product_commit(
         assert request.status is RequestStatus.CLOSED_NOT_PROGRESSED
         assert recovered is not None and recovered.status is OutboxStatus.SENT
     assert await _event_count(harness, "workflow_close") == 1
+
+
+async def test_new_command_is_reserved_for_explicit_dispatch_and_is_idempotent(
+    api_harness: ApiHarness,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    harness = api_harness
+    await submit_request(harness)
+    await harness.login("admin4")
+    listing = await harness.client.get("/api/v1/work-items")
+    assert listing.status_code == 200
+    item = listing.json()["items"][0]
+    original_dispatch = WorkflowCommandDispatcher.dispatch
+
+    async def leave_for_originating_api(
+        _dispatcher: WorkflowCommandDispatcher,
+        _outbox_id: UUID,
+    ) -> bool:
+        return False
+
+    monkeypatch.setattr(
+        WorkflowCommandDispatcher,
+        "dispatch",
+        leave_for_originating_api,
+    )
+    response = await harness.client.post(
+        f"/api/v1/work-items/{item['id']}/claim",
+        headers=harness.mutation_headers(),
+    )
+    assert response.status_code == 503
+
+    outbox = await _outbox(harness, "CLAIM_TASK")
+    assert outbox.status is OutboxStatus.PENDING
+    dispatcher = WorkflowCommandDispatcher(harness.sessions, harness.workflow)
+    assert not await dispatcher.dispatch_once()
+
+    monkeypatch.setattr(
+        WorkflowCommandDispatcher,
+        "dispatch",
+        original_dispatch,
+    )
+    assert await dispatcher.dispatch(outbox.id)
+    assert await dispatcher.dispatch(outbox.id)
+    assert await _event_count(harness, "workflow_claimed") == 1

@@ -152,7 +152,8 @@ async def test_managed_file_full_http_release_download_and_withdraw(
     unavailable = await api_harness.client.get(
         f"/api/v1/releases/requests/{request_id}"
     )
-    assert unavailable.status_code == 404
+    assert unavailable.status_code == 200
+    assert unavailable.json() is None
     await _set_status(api_harness, request_id, RequestStatus.COMPLETED)
 
     response = await api_harness.client.get("/api/v1/requests")
@@ -328,8 +329,6 @@ async def test_http_product_failures_are_bounded_and_non_enumerating(
     assert response.status_code == 404
 
     await api_harness.login("admin11")
-    response = await api_harness.client.get(f"/api/v1/releases/requests/{request_id}")
-    assert response.status_code == 404
     response = await api_harness.client.get(
         f"/api/v1/releases/artefacts/{uuid4()}/download"
     )
@@ -339,4 +338,7 @@ async def test_http_product_failures_are_bounded_and_non_enumerating(
     response = await api_harness.client.get(
         f"/api/v1/releases/requests/{other_request_id}"
     )
+    assert response.status_code == 200
+    assert response.json() is None
+    response = await api_harness.client.get(f"/api/v1/releases/requests/{request_id}")
     assert response.status_code == 404

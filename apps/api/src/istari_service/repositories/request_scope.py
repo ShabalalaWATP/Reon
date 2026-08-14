@@ -145,7 +145,11 @@ async def _team_manager_request(
 
 async def _current_actor_is_valid(session: AsyncSession, actor: Actor) -> bool:
     current_user = await session.scalar(
-        select(User).where(User.id == actor.id).with_for_update()
+        # FOR NO KEY UPDATE prevents concurrent account changes without
+        # conflicting with notification-recipient foreign-key validation.
+        # A full FOR UPDATE lock can otherwise deadlock when this authorised
+        # detail read subsequently locks the request row.
+        select(User).where(User.id == actor.id).with_for_update(key_share=True)
     )
     return bool(
         current_user is not None

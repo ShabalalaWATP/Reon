@@ -1282,3 +1282,24 @@ gates remain above 95 per cent for both lines and branches.
   cache key, so the paginated observer interpreted summary data as page data.
   Distinct shape-specific keys now preserve broad work-item invalidation, and a
   regression test reproduces the populated CRIOC navigation directly.
+- Removed the intermittent workflow and request-detail failures found during
+  repeated live route assurance on 14 August 2026. New durable commands give
+  their originating API call a five-second dispatch priority window, reconcile
+  a competing worker lease from the stored result, and retry one PostgreSQL
+  deadlock through the fenced idempotent path. Actor reauthorisation now uses a
+  foreign-key-compatible row lock for both workflow finalisation and locked
+  detail reads, preventing cycles with notification recipient projection.
+- Made absent managed packages and Customer releases explicit nullable results
+  for authorised legacy requests, while retaining non-disclosing `404` responses
+  for unknown and cross-Customer identifiers. The web panels now select their
+  legacy or create-package state without failed-resource console noise. Local
+  journey, load and seed tools default to the hardened port-5173 proxy, and
+  unexpected API failures emit one content-minimised correlated error event.
+- Verified the rebuilt result through five consecutive SYGOC, Nimbus Ops and
+  Beacon Team routes and two consecutive CRIOC, JOCK, ACSA-B Ops, SSG Team and
+  QC routes, all ending in verified Customer download with no 5xx or deadlock
+  log entries. A clean authenticated Customer browser opened the completed SSG
+  request with zero console errors or warnings. All 1,168 backend tests passed
+  (10 skipped); combined coverage reached 98.68 per cent line and 95.05
+  per cent branch. All 424 frontend tests passed at 99.45 per cent line and
+  95.02 per cent branch coverage, alongside the repository quality gates.

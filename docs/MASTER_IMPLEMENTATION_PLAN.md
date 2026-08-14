@@ -1241,3 +1241,31 @@ Status: implemented and live-verified on 14 August 2026.
   application crash.
 - [x] Give routing summaries and paginated work queues distinct query-cache
   identities, with an Overview-to-Queue regression test for populated units.
+
+## Workflow runtime reliability remediation
+
+Status: implemented and live-verified on 14 August 2026.
+
+- [x] Prevent the maintenance worker from racing the originating API call for a
+  newly committed human-workflow command while retaining five-second crash
+  recovery.
+- [x] Reconcile bounded competing leases from durable `SENT`, `FAILED`, pending
+  and processing states without duplicating a Camunda effect.
+- [x] Remove actor-row lock cycles between workflow or request-detail
+  authorisation and notification recipient projection; bound residual command
+  deadlocks to one idempotent retry.
+- [x] Default maintained journey, load and seed tooling to the hardened
+  port-5173 proxy-only topology.
+- [x] Return nullable optional managed-product lookups for authorised legacy
+  requests while concealing unknown and cross-Customer identifiers.
+- [x] Emit content-minimised correlated diagnostics for unexpected API failures
+  without request content, URLs, exception messages or credentials.
+- [x] Complete seven consecutive rebuilt-stack journeys across both configured
+  organisational routes with verified Customer downloads and no 5xx or deadlock
+  log entries.
+- [x] Verify a clean authenticated completed-request browser view with zero
+  console errors or warnings and only successful application API responses.
+- [x] Pass all 1,168 backend tests (10 skipped), all 424 frontend tests, backend
+  coverage of 98.68 per cent line and 95.05 per cent branch, frontend coverage
+  of 99.45 per cent line and 95.02 per cent branch, and the complete repository
+  static, documentation, security-oriented and contract checks.

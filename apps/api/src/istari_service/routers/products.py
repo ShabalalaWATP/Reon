@@ -85,14 +85,14 @@ async def create_package(
     return await _service(session, sessions, runtime).create_package(actor, command)
 
 
-@router.get("/by-request/{request_id}", response_model=PackageView)
+@router.get("/by-request/{request_id}", response_model=PackageView | None)
 async def get_package_for_request(
     request_id: UUID,
     actor: CurrentActor,
     session: DatabaseSession,
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
-) -> PackageView:
+) -> PackageView | None:
     return await _service(session, sessions, runtime).get_package_for_request(
         actor, request_id
     )
@@ -228,15 +228,15 @@ async def withdraw(
     )
 
 
-@release_router.get("/requests/{request_id}", response_model=CustomerReleaseView)
+@release_router.get("/requests/{request_id}", response_model=CustomerReleaseView | None)
 async def customer_release(
     request_id: UUID,
     actor: CurrentActor,
     session: DatabaseSession,
     sessions: SessionFactoryDependency,
     runtime: ProductRuntimeDependency,
-) -> CustomerReleaseView:
-    return await _service(session, sessions, runtime).customer_release(
+) -> CustomerReleaseView | None:
+    return await _service(session, sessions, runtime).find_customer_release(
         actor, request_id
     )
 

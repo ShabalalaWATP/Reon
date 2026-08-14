@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import select
@@ -35,6 +35,7 @@ from istari_service.work_command_types import (
 from istari_service.workflow.types import WorkflowAction
 
 PENDING_MESSAGE = "A workflow action is recorded and awaiting processing."
+INITIAL_COMMAND_RECOVERY_DELAY = timedelta(seconds=5)
 
 
 async def prepare_claim_intent(
@@ -163,5 +164,8 @@ def _outbox(
         ),
         idempotency_key=f"{command_type.value.lower()}:{work.engine_task_key}",
         status=OutboxStatus.PENDING,
-        available_at=datetime.now(UTC),
+        # The originating API call explicitly dispatches an untouched command.
+        # Maintenance honours this short delay so it cannot win the initial
+        # lease, while still recovering the command if the API stops.
+        available_at=datetime.now(UTC) + INITIAL_COMMAND_RECOVERY_DELAY,
     )

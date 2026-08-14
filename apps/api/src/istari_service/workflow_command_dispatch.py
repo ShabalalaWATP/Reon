@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 from pydantic import ValidationError
-from sqlalchemy import or_, select
+from sqlalchemy import and_, or_, select
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from istari_service.domain import Actor, WorkRecord
@@ -21,6 +23,7 @@ from istari_service.work_command_types import (
 )
 from istari_service.workflow.engine import WorkflowEngine
 from istari_service.workflow.errors import (
+    WorkflowEngineUnavailable,
     WorkflowError,
     WorkflowRequestRejected,
 )
@@ -68,18 +71,40 @@ class WorkflowCommandDispatcher:
         max_attempts: int = 30,
         lease_seconds: int = 30,
         managed_products_enabled: bool = False,
+        handoff_poll_attempts: int = 50,
+        handoff_poll_seconds: float = 0.02,
+        database_retry_attempts: int = 2,
     ) -> None:
         self._sessions = session_factory
         self._executor = WorkflowCommandExecutor(engine, lookup_policy)
         self._max_attempts = max_attempts
         self._lease_seconds = lease_seconds
         self._managed_products_enabled = managed_products_enabled
+        self._handoff_poll_attempts = max(1, handoff_poll_attempts)
+        self._handoff_poll_seconds = max(0, handoff_poll_seconds)
+        self._database_retry_attempts = max(1, database_retry_attempts)
 
     async def dispatch(self, outbox_id: UUID) -> bool:
+        for attempt in range(self._database_retry_attempts):
+            try:
+                return await self._dispatch_attempt(outbox_id)
+            except DBAPIError as error:
+                if not _is_deadlock(error):
+                    raise
+                if attempt + 1 >= self._database_retry_attempts:
+                    raise WorkflowEngineUnavailable(
+                        "workflow command projection deadlocked"
+                    ) from error
+                await asyncio.sleep(0)
+        raise WorkflowEngineUnavailable("workflow command projection unavailable")
+
+    async def _dispatch_attempt(self, outbox_id: UUID) -> bool:
         processed, error = await self._run(outbox_id)
         if error is not None:
             raise error
-        return processed
+        if processed:
+            return True
+        return await self._await_competing_dispatch(outbox_id)
 
     async def dispatch_once(self) -> bool:
         processed, _error = await self._run(None)
@@ -108,7 +133,6 @@ class WorkflowCommandDispatcher:
                 select(WorkflowOutbox)
                 .where(
                     WorkflowOutbox.event_type.in_(COMMAND_TYPES),
-                    WorkflowOutbox.available_at <= now,
                     or_(
                         WorkflowOutbox.status == OutboxStatus.PENDING,
                         WorkflowOutbox.status == OutboxStatus.PROCESSING,
@@ -118,8 +142,19 @@ class WorkflowCommandDispatcher:
                 .with_for_update(skip_locked=True)
                 .limit(1)
             )
-            if outbox_id is not None:
-                query = query.where(WorkflowOutbox.id == outbox_id)
+            if outbox_id is None:
+                query = query.where(WorkflowOutbox.available_at <= now)
+            else:
+                query = query.where(
+                    WorkflowOutbox.id == outbox_id,
+                    or_(
+                        WorkflowOutbox.available_at <= now,
+                        and_(
+                            WorkflowOutbox.status == OutboxStatus.PENDING,
+                            WorkflowOutbox.attempts == 0,
+                        ),
+                    ),
+                )
             outbox = await session.scalar(query)
             if outbox is None:
                 return None, None
@@ -160,6 +195,26 @@ class WorkflowCommandDispatcher:
                 ),
                 None,
             )
+
+    async def _await_competing_dispatch(self, outbox_id: UUID) -> bool:
+        """Observe a lease owner that won the narrow post-commit hand-off."""
+
+        for attempt in range(self._handoff_poll_attempts):
+            status = await self._stored_status(outbox_id)
+            if status is OutboxStatus.SENT:
+                return True
+            if status is OutboxStatus.FAILED:
+                raise WorkflowRequestRejected("dispatch_workflow_command", 409)
+            if status is not OutboxStatus.PROCESSING:
+                return False
+            if attempt + 1 < self._handoff_poll_attempts:
+                await asyncio.sleep(self._handoff_poll_seconds)
+        return False
+
+    async def _stored_status(self, outbox_id: UUID) -> OutboxStatus | None:
+        async with self._sessions() as session:
+            outbox = await session.get(WorkflowOutbox, outbox_id)
+            return outbox.status if outbox is not None else None
 
     async def _finalise(
         self,
@@ -258,3 +313,26 @@ class WorkflowCommandDispatcher:
             # The durable lease expiry remains the final recovery mechanism when
             # the database itself is unavailable during crash cleanup.
             return
+
+
+def _is_deadlock(error: BaseException) -> bool:
+    pending: list[BaseException] = [error]
+    seen: set[int] = set()
+    while pending:
+        current = pending.pop()
+        if id(current) in seen:
+            continue
+        seen.add(id(current))
+        if (
+            getattr(current, "sqlstate", None) == "40P01"
+            or getattr(current, "pgcode", None) == "40P01"
+        ):
+            return True
+        for candidate in (
+            getattr(current, "orig", None),
+            current.__cause__,
+            current.__context__,
+        ):
+            if isinstance(candidate, BaseException):
+                pending.append(candidate)
+    return False

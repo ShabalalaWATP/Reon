@@ -238,7 +238,7 @@ async def run_phase(
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--base-url", default="http://127.0.0.1:8000/api/v1")
+    parser.add_argument("--base-url", default="http://127.0.0.1:5173/api/v1")
     parser.add_argument("--origin", default="http://127.0.0.1:5173")
     parser.add_argument("--requests", type=int, default=200)
     parser.add_argument("--concurrency", type=int, default=12)

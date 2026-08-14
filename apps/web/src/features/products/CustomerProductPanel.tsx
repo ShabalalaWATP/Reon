@@ -3,7 +3,7 @@ import { PackageCheck } from "lucide-react";
 import { useRef } from "react";
 
 import { PageState } from "../../components/PageState";
-import { ApiError, productDownloadUrl } from "../../lib/api/client";
+import { productDownloadUrl } from "../../lib/api/client";
 import { productApi } from "../../lib/api/productClient";
 import { useAuth } from "../../lib/auth/AuthProvider";
 import { useCapabilities } from "../../lib/capabilities/useCapabilities";
@@ -31,8 +31,8 @@ function EnabledCustomerProductPanel({ compact, requestId }: { compact: boolean;
     onSuccess: (accepted) => client.setQueryData(queryKey, accepted),
   });
   if (release.isPending) return compact ? <span className="product-inline-state">Checking product…</span> : <PageState kind="loading" title="Loading released product" />;
-  if (release.isError && release.error instanceof ApiError && release.error.status === 404) return <LegacyProductLink compact={compact} requestId={requestId} />;
   if (release.isError) return compact ? <span className="product-inline-state product-inline-state--error">Product temporarily unavailable</span> : <PageState action={<button className="button" onClick={() => void release.refetch()}>Try again</button>} kind="error" title="Released product is temporarily unavailable" />;
+  if (release.data === null) return <LegacyProductLink compact={compact} requestId={requestId} />;
   if (release.data.status !== "DISSEMINATED") return <span className="product-inline-state">Product {release.data.status.toLowerCase()}</span>;
   const acceptanceControl = release.data.acceptedAt
     ? <p className="product-acceptance product-acceptance--complete"><PackageCheck aria-hidden="true" size={16} />Accepted {formatDate(release.data.acceptedAt, true)}</p>

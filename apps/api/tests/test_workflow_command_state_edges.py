@@ -8,6 +8,7 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
+from sqlalchemy.dialects import postgresql
 
 from istari_service.errors import InvalidAction
 from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
@@ -34,8 +35,10 @@ class StateSession:
         self._rows = rows
         self._specialist = specialist
         self._scalar_ids = scalar_ids
+        self.statements: list[object] = []
 
-    async def scalar(self, _statement: object) -> object | None:
+    async def scalar(self, statement: object) -> object | None:
+        self.statements.append(statement)
         return self._rows.pop(0) if self._rows else True
 
     async def scalars(self, _statement: object) -> list[object]:
@@ -111,12 +114,15 @@ def _state(
 
 async def test_validated_state_accepts_exact_current_claim() -> None:
     command, task, request, user, instance = _state()
+    session = StateSession([task, request, user, instance])
     actor, work = await validated_command_state(  # type: ignore[arg-type]
-        StateSession([task, request, user, instance]), command, request.id
+        session, command, request.id
     )
     assert actor.id == user.id
     assert work.id == task.id
     assert work.request.version == request.version
+    user_lock = str(session.statements[2].compile(dialect=postgresql.dialect()))
+    assert user_lock.endswith("FOR NO KEY UPDATE")
 
 
 async def test_validated_state_rejects_missing_or_out_of_scope_rows() -> None:

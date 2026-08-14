@@ -56,7 +56,11 @@ async def validated_command_state(
         select(ServiceRequest).where(ServiceRequest.id == request_id).with_for_update()
     )
     user = await session.scalar(
-        select(User).where(User.id == command.actor_id).with_for_update()
+        # FOR NO KEY UPDATE prevents account changes during authorisation while
+        # remaining compatible with the KEY SHARE locks taken by notification
+        # recipient foreign keys. A full FOR UPDATE lock can deadlock with the
+        # notification projector, which locks its event before validating users.
+        select(User).where(User.id == command.actor_id).with_for_update(key_share=True)
     )
     instance = await session.scalar(
         select(WorkflowInstance)

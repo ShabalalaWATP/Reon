@@ -9,6 +9,7 @@ from uuid import uuid4
 
 import pytest
 from sqlalchemy import true
+from sqlalchemy.dialects import postgresql
 
 from istari_service.domain import Actor
 from istari_service.models import RequestStatus, UserRole
@@ -42,6 +43,22 @@ def _request(actor: Actor) -> SimpleNamespace:
         assigned_specialist_id=actor.id,
         version=4,
     )
+
+
+@pytest.mark.asyncio
+async def test_locked_actor_validation_uses_foreign_key_compatible_lock() -> None:
+    actor = _actor(UserRole.REQUESTER)
+    statements: list[object] = []
+
+    async def scalar(statement: object) -> SimpleNamespace:
+        statements.append(statement)
+        return _user(actor)
+
+    session = SimpleNamespace(scalar=scalar)
+
+    assert await request_scope._current_actor_is_valid(session, actor)
+    sql = str(statements[0].compile(dialect=postgresql.dialect()))
+    assert sql.endswith("FOR NO KEY UPDATE")
 
 
 @pytest.mark.asyncio
@@ -137,6 +154,31 @@ async def test_locked_waiting_lookup_rechecks_route_membership(
     record = await repository.get_record_for_actor(request.id, actor, lock=True)
     assert record is not None
     membership.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_locked_waiting_lookup_conceals_lost_route_membership(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    actor = _actor(UserRole.DELIVERY_SPECIALIST)
+    request = _request(actor)
+    session = SimpleNamespace(
+        scalar=AsyncMock(side_effect=[_user(actor), None, request, request]),
+        scalars=AsyncMock(return_value=[]),
+    )
+    monkeypatch.setattr(
+        request_scope,
+        "has_route_membership",
+        AsyncMock(return_value=False),
+    )
+    monkeypatch.setattr(
+        request_scope,
+        "route_membership_condition",
+        lambda _actor: true(),
+    )
+    repository = SqlAlchemyRequestRepository(session, process_id="service-request-v1")
+
+    assert await repository.get_record_for_actor(request.id, actor, lock=True) is None
 
 
 @pytest.mark.asyncio
