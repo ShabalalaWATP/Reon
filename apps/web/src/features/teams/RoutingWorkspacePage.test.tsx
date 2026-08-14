@@ -144,6 +144,19 @@ describe("routing organisation workspace", () => {
     expect(await screen.findByText("Received in 30 days")).toBeInTheDocument();
   });
 
+  it("opens the paged queue after the overview has cached its summary list", async () => {
+    mockRoutingApi({ workItems: [routingWork({ id: "available" })] });
+    const user = userEvent.setup();
+    renderApp("/teams/crioc/overview");
+
+    expect(await screen.findByRole("heading", { name: "Routing decisions" })).toBeInTheDocument();
+    await user.click(screen.getByRole("link", { name: "Open work queue" }));
+
+    expect(await screen.findByRole("heading", { name: "Needs routing action" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Claim work item" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "This page could not be displayed" })).not.toBeInTheDocument();
+  });
+
   it("keeps detailed statistics inside the workspace and supports legacy access metadata", async () => {
     mockRoutingApi({ access: { unitKind: undefined, workspacePosition: undefined } });
     renderApp("/teams/crioc/statistics");

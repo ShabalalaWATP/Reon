@@ -1277,3 +1277,8 @@ gates remain above 95 per cent for both lines and branches.
   conflicts or ungoverned existing state, records the exact deployment identity
   and waits for application readiness. The real QA rerun reused the existing
   definition without creating another version.
+- Fixed the routing Overview-to-Queue crash found in live QA. The overview's
+  ordinary list and the queue's paginated list had shared one TanStack Query
+  cache key, so the paginated observer interpreted summary data as page data.
+  Distinct shape-specific keys now preserve broad work-item invalidation, and a
+  regression test reproduces the populated CRIOC navigation directly.

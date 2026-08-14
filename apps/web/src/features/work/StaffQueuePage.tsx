@@ -46,7 +46,7 @@ export function StaffQueuePage({
   const [searchParams] = useSearchParams();
   const requestId = searchParams.get("requestId")?.trim() || undefined;
   const userId = session?.user.id ?? "anonymous";
-  const queueQueryKey = protectedQueryKeys.workItems(
+  const queueQueryKey = protectedQueryKeys.workItemPages(
     userId,
     teamId,
     requestId,

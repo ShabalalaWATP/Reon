@@ -22,6 +22,9 @@ the primary SSG route and a configured alternative route.
    Beacon Team, Manager review, QC and Customer download.
 7. Journey scripts use the current public request and assignment schemas.
 8. Local passwords remain environment inputs and are never written to reports.
+9. A routing overview and its paginated work queue use distinct client cache
+   identities so navigating between them cannot reinterpret one response shape
+   as the other.
 
 ## Acceptance
 
@@ -31,4 +34,6 @@ the primary SSG route and a configured alternative route.
   creating another process version.
 - Both application journeys complete and verify the downloaded service product.
 - The customer profile route renders without an application crash.
+- Navigating from a populated routing overview into its work queue renders the
+  queue without requiring a full-page reload.
 - Repository checks, backend/frontend tests and security gates pass.

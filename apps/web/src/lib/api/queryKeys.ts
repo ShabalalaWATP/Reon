@@ -103,4 +103,9 @@ export const protectedQueryKeys = {
     : unitId
       ? ["protected", userId, "work-items", "unit", unitId] as const
       : ["protected", userId, "work-items"] as const,
+  workItemPages: (userId: string, unitId?: string, requestId?: string) => requestId
+    ? ["protected", userId, "work-items", "request", requestId, "pages"] as const
+    : unitId
+      ? ["protected", userId, "work-items", "unit", unitId, "pages"] as const
+      : ["protected", userId, "work-items", "pages"] as const,
 };

@@ -1239,3 +1239,5 @@ Status: implemented and live-verified on 14 August 2026.
   through the same real application boundary.
 - [x] Render John McGinn's full profile in the rebuilt UI without the historical
   application crash.
+- [x] Give routing summaries and paginated work queues distinct query-cache
+  identities, with an Overview-to-Queue regression test for populated units.
