@@ -15,10 +15,10 @@ export function RequesterAction({
   requestId: string;
 }) {
   const { session } = useAuth();
-  const userId = session?.user.id ?? "anonymous";
+  const queryKeys = protectedQueryKeys(session);
   const queryClient = useQueryClient();
   const query = useQuery({
-    queryKey: protectedQueryKeys.workItems(userId),
+    queryKey: queryKeys.workItems(),
     queryFn: () => api.workItems(),
     enabled: Boolean(session),
     refetchInterval: (currentQuery) =>
@@ -28,17 +28,45 @@ export function RequesterAction({
   const refresh = async () => {
     await Promise.all([
       queryClient.invalidateQueries({
-        queryKey: protectedQueryKeys.request(userId, requestId),
+        queryKey: queryKeys.request(requestId),
       }),
-      queryClient.invalidateQueries({ queryKey: protectedQueryKeys.requests(userId) }),
-      queryClient.invalidateQueries({ queryKey: protectedQueryKeys.workItems(userId) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.requests() }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.workItems() }),
     ]);
   };
-  const claim = useMutation({ mutationFn: () => api.claimWorkItem(item!.id, session!.csrfToken), onSuccess: refresh });
-  const complete = useMutation({ mutationFn: (action: WorkAction) => api.completeWorkItem(item!.id, action, session!.csrfToken), onSuccess: refresh });
+  const claim = useMutation({
+    mutationFn: () => api.claimWorkItem(item!.id, session!.csrfToken),
+    onSuccess: refresh,
+  });
+  const complete = useMutation({
+    mutationFn: (action: WorkAction) => api.completeWorkItem(item!.id, action, session!.csrfToken),
+    onSuccess: refresh,
+  });
   if (query.isPending) return <p className="inline-loading">Loading the requested response…</p>;
-  if (query.isError) return <p className="form-banner form-banner--error" role="alert">The requested response could not be loaded.</p>;
-  if (!item || !session) return <p className="inline-empty">No response task is currently available.</p>;
+  if (query.isError)
+    return (
+      <p className="form-banner form-banner--error" role="alert">
+        The requested response could not be loaded.
+      </p>
+    );
+  if (!item || !session)
+    return <p className="inline-empty">No response task is currently available.</p>;
   const error = claim.error ?? complete.error;
-  return <>{error ? <p className="form-banner form-banner--error" role="alert">{error instanceof ApiError ? error.message : "The outcome could not be recorded."}</p> : null}<WorkActionPanel clarification={clarification} currentUserId={session.user.id} disabled={claim.isPending || complete.isPending} item={item} onClaim={() => claim.mutate()} onComplete={(action) => complete.mutate(action)} /></>;
+  return (
+    <>
+      {error ? (
+        <p className="form-banner form-banner--error" role="alert">
+          {error instanceof ApiError ? error.message : "The outcome could not be recorded."}
+        </p>
+      ) : null}
+      <WorkActionPanel
+        clarification={clarification}
+        currentUserId={session.user.id}
+        disabled={claim.isPending || complete.isPending}
+        item={item}
+        onClaim={() => claim.mutate()}
+        onComplete={(action) => complete.mutate(action)}
+      />
+    </>
+  );
 }

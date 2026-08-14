@@ -1,7 +1,4 @@
-import type {
-  ProductArtefactLifecycle,
-  ProductPackageStatus,
-} from "../../lib/api/productTypes";
+import type { ProductArtefactLifecycle, ProductPackageStatus } from "../../lib/api/productTypes";
 
 export const packageStatusLabels: Record<ProductPackageStatus, string> = {
   DISSEMINATED: "Disseminated",

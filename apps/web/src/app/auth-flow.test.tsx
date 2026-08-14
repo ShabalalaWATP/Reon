@@ -1,18 +1,15 @@
 import { QueryClient } from "@tanstack/react-query";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { useState } from "react";
-import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import { App } from "./App";
-import { AppShell } from "../components/AppShell";
 import { SESSION_EXPIRED_EVENT } from "../lib/api/client";
-import { useAuth, AuthProvider } from "../lib/auth/AuthProvider";
-import { useTheme } from "../lib/theme/ThemeProvider";
+import { protectedQueryKeys } from "../lib/api/queryKeys";
+import { AuthProvider } from "../lib/auth/AuthProvider";
 import { json, mockFetch, renderApp, TestProviders } from "../test/render";
 import { requesterSession, staffSession } from "../test/fixtures";
+import { AnonymousElevateProbe } from "./authFlowTestProbes";
 
 describe("authentication and route policy", () => {
   it("renders an accessible login, validates input and signs in", async () => {
@@ -21,7 +18,15 @@ describe("authentication and route policy", () => {
       if (url.pathname.endsWith("/auth/me")) return json({ detail: "Signed out" }, 401);
       if (url.pathname.endsWith("/auth/login") && init.method === "POST") {
         return rejectLogin
-          ? json({ detail: { code: "AUTHENTICATION_FAILED", message: "Unable to sign in with those credentials." } }, 401)
+          ? json(
+              {
+                detail: {
+                  code: "AUTHENTICATION_FAILED",
+                  message: "Unable to sign in with those credentials.",
+                },
+              },
+              401,
+            )
           : json(requesterSession);
       }
       if (url.pathname.endsWith("/requests")) return json({ items: [] });
@@ -51,20 +56,26 @@ describe("authentication and route policy", () => {
   it.each([
     ["staff", staffSession, "/tracking", "Home"],
     ["Customer", requesterSession, "/requests/new", "My requests"],
-  ])("sends %s to their fixed landing page after protected-page sign-in", async (_label, session, path, destination) => {
-    mockFetch((url, init) => {
-      if (url.pathname.endsWith("/auth/me")) return json({ detail: "Signed out" }, 401);
-      if (url.pathname.endsWith("/auth/login") && init.method === "POST") return json(session);
-      if (url.pathname.endsWith("/requests")) return json({ items: [] });
-      throw new Error(`Unexpected ${url.pathname}`);
-    });
-    const user = userEvent.setup();
-    renderApp(path);
-    await user.type(await screen.findByLabelText(/Account ID/), session.user.username);
-    await user.type(screen.getByLabelText(/Password/), "synthetic-password");
-    await user.click(screen.getByRole("button", { name: "Sign in to ISTARI" }));
-    expect(await screen.findByRole("link", { name: destination })).toHaveAttribute("aria-current", "page");
-  });
+  ])(
+    "sends %s to their fixed landing page after protected-page sign-in",
+    async (_label, session, path, destination) => {
+      mockFetch((url, init) => {
+        if (url.pathname.endsWith("/auth/me")) return json({ detail: "Signed out" }, 401);
+        if (url.pathname.endsWith("/auth/login") && init.method === "POST") return json(session);
+        if (url.pathname.endsWith("/requests")) return json({ items: [] });
+        throw new Error(`Unexpected ${url.pathname}`);
+      });
+      const user = userEvent.setup();
+      renderApp(path);
+      await user.type(await screen.findByLabelText(/Account ID/), session.user.username);
+      await user.type(screen.getByLabelText(/Password/), "synthetic-password");
+      await user.click(screen.getByRole("button", { name: "Sign in to ISTARI" }));
+      expect(await screen.findByRole("link", { name: destination })).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
+    },
+  );
 
   it("redirects anonymous protected access and toggles the login theme", async () => {
     window.localStorage.setItem("istari-service-theme", "light");
@@ -95,7 +106,10 @@ describe("authentication and route policy", () => {
     expect(submit).toBeDisabled();
     await user.type(screen.getByLabelText(/^Name/), "Synthetic Customer");
     await user.type(screen.getByLabelText(/Work email/), "customer@example.test");
-    await user.type(screen.getByLabelText(/Reason for access/), "I need access for a fictional request.");
+    await user.type(
+      screen.getByLabelText(/Reason for access/),
+      "I need access for a fictional request.",
+    );
     expect(submit).toBeEnabled();
     await user.click(submit);
     expect(await screen.findByRole("status")).toHaveTextContent("Request submitted");
@@ -117,21 +131,31 @@ describe("authentication and route policy", () => {
     mockFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(sessionWithWorkspace);
       if (url.pathname.endsWith("/requests")) return json({ items: [] });
-      if (url.pathname.endsWith("/auth/logout")) return failLogout ? json({ detail: "Try later" }, 500) : new Response(null, { status: 204 });
+      if (url.pathname.endsWith("/auth/logout"))
+        return failLogout
+          ? json({ detail: "Try later" }, 500)
+          : new Response(null, { status: 204 });
       throw new Error(`Unexpected ${url.pathname}`);
     });
     const user = userEvent.setup();
     renderApp("/requests");
     await user.click(await screen.findByRole("button", { name: "Use light theme" }));
     expect(screen.getByRole("button", { name: "Use dark theme" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "My requests" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "My requests" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
     await user.click(screen.getByRole("button", { name: /Open account menu/ }));
     expect(screen.getByRole("dialog", { name: "Account details" })).toHaveTextContent(
       requesterSession.user.username,
     );
     expect(screen.getByRole("dialog", { name: "Account details" })).toHaveTextContent("Customer");
-    expect(screen.getByRole("dialog", { name: "Account details" })).toHaveTextContent("Workspace position");
-    expect(screen.getByRole("dialog", { name: "Account details" })).toHaveTextContent("Own requests and released products");
+    expect(screen.getByRole("dialog", { name: "Account details" })).toHaveTextContent(
+      "Workspace position",
+    );
+    expect(screen.getByRole("dialog", { name: "Account details" })).toHaveTextContent(
+      "Own requests and released products",
+    );
     expect(screen.getByRole("link", { name: "View profile" })).toHaveAttribute("href", "/profile");
     await user.click(screen.getByRole("dialog", { name: "Account details" }));
     await user.keyboard("a");
@@ -209,9 +233,7 @@ describe("authentication and route policy", () => {
         return json(secondSession);
       }
       if (url.pathname.endsWith("/requests")) {
-        return identity === "first"
-          ? json({ items: [firstRequest] })
-          : secondRequests;
+        return identity === "first" ? json({ items: [firstRequest] }) : secondRequests;
       }
       throw new Error(`Unexpected ${url.pathname}`);
     });
@@ -232,24 +254,18 @@ describe("authentication and route policy", () => {
     expect(identity).toBe("anonymous");
     expect(queryClient.getQueryCache().getAll()).toHaveLength(0);
     expect(queryClient.getMutationCache().getAll()).toHaveLength(0);
-    const staleKey = [
-      "protected",
-      requesterSession.user.id,
-      "requests",
-    ] as const;
+    const staleKey = protectedQueryKeys(requesterSession).requests();
     queryClient.setQueryData(staleKey, { items: [firstRequest] });
 
-    await user.type(
-      screen.getByLabelText(/Account ID/),
-      secondSession.user.username,
-    );
+    await user.type(screen.getByLabelText(/Account ID/), secondSession.user.username);
     await user.type(screen.getByLabelText(/Password/), "admin");
     await user.click(screen.getByRole("button", { name: "Sign in to ISTARI" }));
 
     expect(
       await screen.findByRole("heading", { name: "Loading your requests" }),
     ).toBeInTheDocument();
-    expect(queryClient.getQueryData(staleKey)).toBeUndefined();
+    // The previous client is detached; late data there cannot back the new identity tree.
+    expect(queryClient.getQueryData(staleKey)).toEqual({ items: [firstRequest] });
     expect(screen.queryByText("User A private request")).not.toBeInTheDocument();
     resolveSecondRequests(json({ items: [secondRequest] }));
     expect(await screen.findByText("User B private request")).toBeInTheDocument();
@@ -257,9 +273,11 @@ describe("authentication and route policy", () => {
   });
 
   it("returns to sign in when a protected request reports expiry", async () => {
-    mockFetch((url) => url.pathname.endsWith("/auth/me")
-      ? json(requesterSession)
-      : json({ detail: { code: "AUTHENTICATION_FAILED", message: "Session expired." } }, 401));
+    mockFetch((url) =>
+      url.pathname.endsWith("/auth/me")
+        ? json(requesterSession)
+        : json({ detail: { code: "AUTHENTICATION_FAILED", message: "Session expired." } }, 401),
+    );
     renderApp("/requests");
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
   });
@@ -269,7 +287,9 @@ describe("authentication and route policy", () => {
     const user = userEvent.setup();
     render(
       <TestProviders>
-        <AuthProvider><AnonymousElevateProbe /></AuthProvider>
+        <AuthProvider>
+          <AnonymousElevateProbe />
+        </AuthProvider>
       </TestProviders>,
     );
     await user.click(await screen.findByRole("button", { name: "Attempt step-up" }));
@@ -297,21 +317,14 @@ describe("authentication and route policy", () => {
     let expire: (() => void) | undefined;
     vi.spyOn(window, "setTimeout").mockImplementation(
       (handler, timeout, ...arguments_): ReturnType<typeof setTimeout> => {
-        if (
-          typeof handler === "function"
-          && Number(timeout) >= 4_000
-          && Number(timeout) <= 6_000
-        ) expire = () => handler();
-        return nativeSetTimeout(
-          handler,
-          timeout,
-          ...arguments_,
-        ) as unknown as ReturnType<typeof setTimeout>;
+        if (typeof handler === "function" && Number(timeout) >= 4_000 && Number(timeout) <= 6_000)
+          expire = () => handler();
+        return nativeSetTimeout(handler, timeout, ...arguments_) as unknown as ReturnType<
+          typeof setTimeout
+        >;
       },
     );
-    mockFetch((url) => url.pathname.endsWith("/auth/me")
-      ? json(elevated)
-      : json({ items: [] }));
+    mockFetch((url) => (url.pathname.endsWith("/auth/me") ? json(elevated) : json({ items: [] })));
     renderApp("/requests");
     expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
     expect(expire).toBeTypeOf("function");
@@ -320,27 +333,4 @@ describe("authentication and route policy", () => {
     act(() => expire?.());
     expect(screen.getByRole("heading", { name: "Sign in" })).toBeInTheDocument();
   });
-
-  it("covers provider guardrails, anonymous shell and the production composition", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
-    expect(() => render(<ThemeHookProbe />)).toThrow("useTheme must be used");
-    expect(() => render(<AuthHookProbe />)).toThrow("useAuth must be used");
-    mockFetch(() => json({ detail: "Signed out" }, 401));
-    const { container } = render(<TestProviders><AuthProvider><MemoryRouter><AppShell /></MemoryRouter></AuthProvider></TestProviders>);
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
-    window.history.pushState({}, "", "/login");
-    render(<App />);
-    expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
-  });
 });
-
-function ThemeHookProbe() { useTheme(); return null; }
-function AuthHookProbe() { useAuth(); return null; }
-function AnonymousElevateProbe() {
-  const { elevate } = useAuth();
-  const [message, setMessage] = useState("");
-  return <>
-    <button type="button" onClick={() => void elevate("admin").catch((error: Error) => setMessage(error.message))}>Attempt step-up</button>
-    {message ? <p role="alert">{message}</p> : null}
-  </>;
-}

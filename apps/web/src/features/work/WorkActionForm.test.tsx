@@ -59,14 +59,37 @@ describe("work action controls", () => {
     expect(submit).toHaveBeenCalledWith({ action: "approve" });
   });
 
+  it("uses package evidence and the originating Customer for managed actions", async () => {
+    const submit = vi.fn<(action: WorkAction) => void>();
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <WorkActionForm actions={["submit"]} disabled={false} managedProducts onSubmit={submit} />,
+    );
+    expect(screen.queryByLabelText("Product text")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Submit product" }));
+    expect(submit).toHaveBeenLastCalledWith({ action: "submit", managedProduct: true });
+    rerender(
+      <WorkActionForm actions={["release"]} disabled={false} managedProducts onSubmit={submit} />,
+    );
+    expect(screen.queryByLabelText("Dissemination recipients")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Disseminate to customer" }));
+    expect(submit).toHaveBeenLastCalledWith({ action: "release", managedProduct: true });
+  });
+
   it("submits structured Analyst clarification and Customer response payloads", async () => {
     const submit = vi.fn<(action: WorkAction) => void>();
     const user = userEvent.setup();
     const { rerender } = render(
       <WorkActionForm actions={["request_clarification"]} disabled={false} onSubmit={submit} />,
     );
-    await user.type(screen.getByLabelText("Question for the Customer"), "Which region should be prioritised?");
-    await user.type(screen.getByLabelText("Why this information is needed"), "The product needs a bounded scope.");
+    await user.type(
+      screen.getByLabelText("Question for the Customer"),
+      "Which region should be prioritised?",
+    );
+    await user.type(
+      screen.getByLabelText("Why this information is needed"),
+      "The product needs a bounded scope.",
+    );
     await user.type(screen.getByLabelText("Response deadline"), "2026-09-10");
     await user.click(screen.getByRole("button", { name: "Ask Customer for information" }));
     expect(submit).toHaveBeenLastCalledWith({
@@ -90,9 +113,17 @@ describe("work action controls", () => {
       closedAt: null,
     };
     rerender(
-      <WorkActionForm actions={["provide_clarification"]} clarification={clarification} disabled={false} onSubmit={submit} />,
+      <WorkActionForm
+        actions={["provide_clarification"]}
+        clarification={clarification}
+        disabled={false}
+        onSubmit={submit}
+      />,
     );
-    await user.type(screen.getByLabelText("Information for the Analyst"), "Prioritise the northern region.");
+    await user.type(
+      screen.getByLabelText("Information for the Analyst"),
+      "Prioritise the northern region.",
+    );
     await user.click(screen.getByRole("button", { name: "Send information to Analyst" }));
     expect(submit).toHaveBeenLastCalledWith({
       action: "provide_clarification",
@@ -104,10 +135,19 @@ describe("work action controls", () => {
 
   it("shows reason and allocation field errors", async () => {
     const user = userEvent.setup();
-    const { rerender } = render(<WorkActionForm actions={["request_information"]} disabled={false} onSubmit={vi.fn()} />);
+    const { rerender } = render(
+      <WorkActionForm actions={["request_information"]} disabled={false} onSubmit={vi.fn()} />,
+    );
     await user.click(screen.getByRole("button", { name: "Request more information" }));
     expect(await screen.findByText("Explain this decision.")).toBeInTheDocument();
-    rerender(<WorkActionForm actions={["allocate"]} disabled={false} onSubmit={vi.fn()} routingOptions={readyRouting} />);
+    rerender(
+      <WorkActionForm
+        actions={["allocate"]}
+        disabled={false}
+        onSubmit={vi.fn()}
+        routingOptions={readyRouting}
+      />,
+    );
     await user.click(screen.getByRole("button", { name: "Route to team" }));
     expect(await screen.findByText("Choose a destination unit.")).toBeInTheDocument();
   });
@@ -138,7 +178,10 @@ describe("work action controls", () => {
     await user.click(screen.getByRole("button", { name: "Assign Analysts" }));
     expect(screen.getByText("Choose a Lead Analyst.")).toHaveAttribute("id", error.id);
     await user.selectOptions(specialistSelect, "specialist-2");
-    await user.type(screen.getByLabelText(/^Assignment reason/), "Euan is the accountable Lead for this request.");
+    await user.type(
+      screen.getByLabelText(/^Assignment reason/),
+      "Euan is the accountable Lead for this request.",
+    );
     await user.click(screen.getByRole("button", { name: "Assign Analysts" }));
 
     expect(submit).toHaveBeenCalledWith({
@@ -213,9 +256,7 @@ describe("work action controls", () => {
         specialistOptions={{ items: [], onRetry: retry, status: "error" }}
       />,
     );
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Eligible Analysts could not be loaded.",
-    );
+    expect(screen.getByRole("alert")).toHaveTextContent("Eligible Analysts could not be loaded.");
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(retry).toHaveBeenCalledOnce();
 
@@ -249,7 +290,9 @@ describe("work action controls", () => {
   });
 
   it("renders no-action and disabled states", () => {
-    const { rerender } = render(<WorkActionForm actions={[]} disabled={false} onSubmit={vi.fn()} />);
+    const { rerender } = render(
+      <WorkActionForm actions={[]} disabled={false} onSubmit={vi.fn()} />,
+    );
     expect(screen.getByText("No actions are available for this item.")).toBeInTheDocument();
     rerender(<WorkActionForm actions={["approve"]} disabled onSubmit={vi.fn()} />);
     expect(screen.getByRole("button", { name: "Recording outcome…" })).toBeDisabled();
@@ -260,11 +303,22 @@ describe("work action controls", () => {
     const { rerender } = render(<WorkActionPanel {...props} item={workItem} />);
     expect(screen.getByRole("heading", { name: "Take ownership" })).toBeInTheDocument();
     rerender(<WorkActionPanel {...props} claimAllowed={false} item={workItem} />);
-    expect(screen.getByRole("heading", { name: "Manager assignment required" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Manager assignment required" }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Claim work item" })).not.toBeInTheDocument();
-    rerender(<WorkActionPanel {...props} item={{ ...workItem, assigneeId: "other", assigneeDisplayName: null }} />);
-    expect(screen.getByRole("heading", { name: "Assigned to another team member" })).toBeInTheDocument();
-    rerender(<WorkActionPanel {...props} item={{ ...workItem, assigneeId: "me", availableActions: [] }} />);
+    rerender(
+      <WorkActionPanel
+        {...props}
+        item={{ ...workItem, assigneeId: "other", assigneeDisplayName: null }}
+      />,
+    );
+    expect(
+      screen.getByRole("heading", { name: "Assigned to another team member" }),
+    ).toBeInTheDocument();
+    rerender(
+      <WorkActionPanel {...props} item={{ ...workItem, assigneeId: "me", availableActions: [] }} />,
+    );
     expect(screen.getByRole("heading", { name: "Record outcome" })).toBeInTheDocument();
     rerender(<WorkActionPanel {...props} disabled item={workItem} />);
     expect(screen.getByRole("button", { name: "Claiming…" })).toBeDisabled();

@@ -33,30 +33,104 @@ const packageInput: WorkPackageInput = {
 describe("board API client", () => {
   it("serialises board filters and calls every team planning endpoint", async () => {
     const calls: Array<{ path: string; init: RequestInit }> = [];
-    mockFetch((url, init) => {
-      calls.push({ path: `${url.pathname}${url.search}`, init });
-      if (init.method === "DELETE") return new Response(null, { status: 204 });
-      return json({ items: [], id: "result", filters, wipLimits: {}, version: 1 });
-    }, false, false, false);
+    mockFetch(
+      (url, init) => {
+        calls.push({ path: `${url.pathname}${url.search}`, init });
+        if (init.method === "DELETE") return new Response(null, { status: 204 });
+        return json({ items: [], id: "result", filters, wipLimits: {}, version: 1 });
+      },
+      false,
+      false,
+      false,
+    );
 
     await boardApi.board("team one");
     await boardApi.board("team one", filters, { cursor: "cursor one", limit: 25 });
     await boardApi.boardRequest("team one", "request one");
-    await boardApi.moveItem("team one", { grantId: null, itemType: "WORK_PACKAGE", itemId: "package-one", target: "READY", expectedVersion: 1, reason: "Ready for delivery." }, "csrf");
-    await boardApi.configure("team one", { grantId: "grant-one", expectedVersion: 1, wipLimits: { READY: 4 } }, "csrf");
+    await boardApi.moveItem(
+      "team one",
+      {
+        grantId: null,
+        itemType: "WORK_PACKAGE",
+        itemId: "package-one",
+        target: "READY",
+        expectedVersion: 1,
+        reason: "Ready for delivery.",
+      },
+      "csrf",
+    );
+    await boardApi.configure(
+      "team one",
+      { grantId: "grant-one", expectedVersion: 1, wipLimits: { READY: 4 } },
+      "csrf",
+    );
     await boardApi.createView("team one", { name: "Urgent work", filters }, "csrf");
-    await boardApi.updateView("team one", "view one", { name: "Updated view", filters, expectedVersion: 2 }, "csrf");
+    await boardApi.updateView(
+      "team one",
+      "view one",
+      { name: "Updated view", filters, expectedVersion: 2 },
+      "csrf",
+    );
     await boardApi.deleteView("team one", "view one", 3, "csrf");
     await boardApi.packages("team one");
     await boardApi.package("team one", "package one");
     await boardApi.createPackage("team one", packageInput, "csrf");
-    await boardApi.updatePackage("team one", "package one", { ...packageInput, expectedVersion: 2 }, "csrf");
-    await boardApi.movePackage("team one", "package one", { grantId: null, expectedVersion: 3, target: "BLOCKED", reason: "Waiting for customer information." }, "csrf");
-    await boardApi.reserve("team one", "package one", 4, { grantId: "grant-one", userId: "analyst-one", startsAt: "2026-08-08T09:00:00Z", endsAt: "2026-08-08T11:00:00Z", reason: "Focused delivery time." }, "csrf");
-    await boardApi.cancelReservation("team one", "package one", "reservation one", 5, { grantId: "grant-one", expectedVersion: 1, reason: "Replanned by the team." }, "csrf");
+    await boardApi.updatePackage(
+      "team one",
+      "package one",
+      { ...packageInput, expectedVersion: 2 },
+      "csrf",
+    );
+    await boardApi.movePackage(
+      "team one",
+      "package one",
+      {
+        grantId: null,
+        expectedVersion: 3,
+        target: "BLOCKED",
+        reason: "Waiting for customer information.",
+      },
+      "csrf",
+    );
+    await boardApi.reserve(
+      "team one",
+      "package one",
+      4,
+      {
+        grantId: "grant-one",
+        userId: "analyst-one",
+        startsAt: "2026-08-08T09:00:00Z",
+        endsAt: "2026-08-08T11:00:00Z",
+        reason: "Focused delivery time.",
+      },
+      "csrf",
+    );
+    await boardApi.cancelReservation(
+      "team one",
+      "package one",
+      "reservation one",
+      5,
+      { grantId: "grant-one", expectedVersion: 1, reason: "Replanned by the team." },
+      "csrf",
+    );
     await boardApi.iterations("team one");
-    await boardApi.createIteration("team one", { grantId: "grant-one", name: "Pilot", goal: "Deliver the product.", startsOn: "2026-08-01", endsOn: "2026-08-14" }, "csrf");
-    await boardApi.closeIteration("team one", "iteration one", { grantId: "grant-one", expectedVersion: 2, completionSummary: "The goal was achieved." }, "csrf");
+    await boardApi.createIteration(
+      "team one",
+      {
+        grantId: "grant-one",
+        name: "Pilot",
+        goal: "Deliver the product.",
+        startsOn: "2026-08-01",
+        endsOn: "2026-08-14",
+      },
+      "csrf",
+    );
+    await boardApi.closeIteration(
+      "team one",
+      "iteration one",
+      { grantId: "grant-one", expectedVersion: 2, completionSummary: "The goal was achieved." },
+      "csrf",
+    );
 
     expect(calls).toHaveLength(18);
     expect(calls[0].path).toBe("/api/v1/team-workspaces/team%20one/board");

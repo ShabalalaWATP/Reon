@@ -17,18 +17,40 @@ export function BoardSettings({
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    onSave(Object.fromEntries(
-      ["READY", "IN_PROGRESS", "BLOCKED"].map((key) => [key, Number(data.get(key))]),
-    ));
+    onSave(
+      Object.fromEntries(
+        ["READY", "IN_PROGRESS", "BLOCKED"].map((key) => [key, Number(data.get(key))]),
+      ),
+    );
   };
   return (
     <section className="wip-panel">
-      <header><span>Flow control</span><h2>Work in progress limits</h2><p>Limits make overload visible. They do not move, stop or assign work automatically.</p></header>
+      <header>
+        <span>Flow control</span>
+        <h2>Work in progress limits</h2>
+        <p>Limits make overload visible. They do not move, stop or assign work automatically.</p>
+      </header>
       <form onSubmit={submit}>
-        {["READY", "IN_PROGRESS", "BLOCKED"].map((key) => <label className="form-field" key={key}>{boardLabel(key)}<input defaultValue={current[key] ?? 5} max={100} min={1} name={key} required type="number" /></label>)}
-        <button className="button button--primary" disabled={pending} type="submit">{pending ? "Saving…" : "Save limits"}</button>
+        {["READY", "IN_PROGRESS", "BLOCKED"].map((key) => (
+          <label className="form-field" key={key}>
+            {boardLabel(key)}
+            <input
+              defaultValue={current[key] ?? 5}
+              max={100}
+              min={1}
+              name={key}
+              required
+              type="number"
+            />
+          </label>
+        ))}
+        <button className="button button--primary" disabled={pending} type="submit">
+          {pending ? "Saving…" : "Save limits"}
+        </button>
       </form>
-      {error ? <p role="alert">{error instanceof ApiError ? error.message : error.message}</p> : null}
+      {error ? (
+        <p role="alert">{error instanceof ApiError ? error.message : error.message}</p>
+      ) : null}
     </section>
   );
 }

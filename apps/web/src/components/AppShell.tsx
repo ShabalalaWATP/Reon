@@ -1,125 +1,171 @@
 import { Bell, Moon, ShieldCheck, Sun } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 
 import { AccountMenu } from "./AccountMenu";
+import { useShellData } from "./useShellData";
+import type { AccountContext, Session } from "../lib/api/types";
 import { useAuth } from "../lib/auth/AuthProvider";
-import { useCapabilities } from "../lib/capabilities/useCapabilities";
-import { api } from "../lib/api/client";
-import { actionNotificationApi } from "../lib/api/actionNotificationClient";
-import { protectedQueryKeys } from "../lib/api/queryKeys";
-import { isNavigationItemActive, navigationForRole } from "../lib/routes";
-import type { NavigationItem } from "../lib/routes";
+import { isNavigationItemActive, type NavigationItem } from "../lib/routes";
 import { useTheme } from "../lib/theme/ThemeProvider";
 
 export function AppShell() {
-  const { logout, session } = useAuth();
+  const auth = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [logoutError, setLogoutError] = useState(false);
-  const { capabilities } = useCapabilities();
-  const hasTeamWorkspace = Boolean(session && [
-    "INTAKE_TRIAGE",
-    "SERVICE_COORDINATION",
-    "OPERATIONS_ALLOCATION",
-    "DELIVERY_TEAM_LEAD",
-    "DELIVERY_SPECIALIST",
-  ].includes(session.user.role));
-  const notificationCount = useQuery({
-    queryKey: protectedQueryKeys.notificationCount(session?.user.id ?? "anonymous"),
-    queryFn: actionNotificationApi.notificationCount,
-    enabled: Boolean(
-      session
-      && capabilities.notifications
-      && location.pathname !== "/notifications",
-    ),
-    refetchInterval: 30_000,
-  });
-  const statisticsScopes = useQuery({
-    queryKey: protectedQueryKeys.statisticsScopes(session?.user.id ?? "anonymous"),
-    queryFn: api.statisticsScopes,
-    enabled: Boolean(session && capabilities.statistics),
-    staleTime: 60_000,
-  });
-  const teamWorkspaces = useQuery({
-    queryKey: protectedQueryKeys.teamWorkspaces(session?.user.id ?? "anonymous"),
-    queryFn: api.teamWorkspaces,
-    enabled: Boolean(session && hasTeamWorkspace),
-    staleTime: 60_000,
-  });
-  if (!session) return null;
-  const workspace = teamWorkspaces.data?.items[0];
-  const navigation = navigationForRole(session.user.role, capabilities, {
-    statisticsAvailable: (statisticsScopes.data?.items.length ?? 0) > 0,
-    workspace: workspace ? { id: workspace.teamId, name: workspace.teamName } : undefined,
-  });
+  if (!auth.session) return null;
+  return (
+    <AuthenticatedShell
+      auth={auth}
+      locationPath={location.pathname}
+      logoutError={logoutError}
+      navigateToLogin={() => void navigate("/login", { replace: true })}
+      session={auth.session}
+      setLogoutError={setLogoutError}
+      theme={theme}
+      toggleTheme={toggleTheme}
+    />
+  );
+}
 
-  async function signOut() {
-    setLogoutError(false);
+type ShellProps = {
+  auth: ReturnType<typeof useAuth>;
+  locationPath: string;
+  logoutError: boolean;
+  navigateToLogin: () => void;
+  session: Session;
+  setLogoutError: (failed: boolean) => void;
+  theme: "dark" | "light";
+  toggleTheme: () => void;
+};
+
+function AuthenticatedShell(props: ShellProps) {
+  const { auth, locationPath } = props;
+  const { session } = props;
+  const shell = useShellData(session, locationPath);
+  const signOut = async () => {
+    props.setLogoutError(false);
     try {
-      await logout();
-      void navigate("/login", { replace: true });
+      await auth.logout();
+      props.navigateToLogin();
     } catch {
-      setLogoutError(true);
+      props.setLogoutError(true);
     }
-  }
-
+  };
+  const changeContext = async (context: AccountContext) => {
+    if (!shell.capabilities.contextSwitching) return;
+    try {
+      await auth.switchContext(context);
+    } catch {
+      // AuthProvider reconciles the rotated session and exposes an accessible error.
+    }
+  };
   return (
     <div className="app-shell">
-      <a className="skip-link" href="#main-content">Skip to main content</a>
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
       <aside aria-label="Account and navigation" className="nav-rail">
         <NavLink aria-label="ISTARI home" className="shell-brand" to="/">
           <img alt="" height="42" src="/istari-logo-64.png" width="42" />
-          <span><strong>ISTARI</strong><small>Service workspace</small></span>
+          <span>
+            <strong>ISTARI</strong>
+            <small>Service workspace</small>
+          </span>
         </NavLink>
         <nav aria-label="Primary navigation">
-          {navigation.map((item) => (
-            <PrimaryNavigationLink item={item} key={item.path} pathname={location.pathname} />
+          {shell.navigation.map((item) => (
+            <PrimaryNavigationLink item={item} key={item.path} pathname={locationPath} />
           ))}
         </nav>
         <div className="nav-session-status">
           <ShieldCheck aria-hidden="true" size={15} />
-          <span><strong>Authenticated</strong><small>Protected workspace</small></span>
+          <span>
+            <strong>Authenticated</strong>
+            <small>Protected workspace</small>
+          </span>
         </div>
       </aside>
       <div className="workspace">
         <header className="top-bar">
-          <span className="top-bar__context">Secure service workspace</span>
+          <ShellIdentity context={session.activeContext} />
           <div className="top-bar__actions">
-            {capabilities.notifications ? <NavLink aria-label={`${notificationCount.data?.unreadCount ?? 0} unread notifications`} className="notification-bell" to="/notifications"><Bell aria-hidden="true" size={18} />{notificationCount.data?.unreadCount ? <span>{notificationCount.data.unreadCount > 99 ? "99+" : notificationCount.data.unreadCount}</span> : null}</NavLink> : null}
+            {shell.capabilities.notifications ? (
+              <NotificationLink count={shell.notificationCount} />
+            ) : null}
             <button
-              aria-label={`Use ${theme === "dark" ? "light" : "dark"} theme`}
+              aria-label={`Use ${props.theme === "dark" ? "light" : "dark"} theme`}
               className="icon-button"
-              onClick={toggleTheme}
+              onClick={props.toggleTheme}
               type="button"
             >
-              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+              {props.theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             <AccountMenu
+              contextSwitchingEnabled={shell.capabilities.contextSwitching}
               onSignOut={signOut}
-              pathname={location.pathname}
+              onSwitchContext={changeContext}
+              pathname={locationPath}
               session={session}
-              workspaceAccess={teamWorkspaces.data?.items ?? []}
-              workspaceAccessUnavailable={teamWorkspaces.isError}
+              switchingContext={auth.contextSwitching}
+              workspaceAccess={shell.teamWorkspaces.data?.items ?? []}
+              workspaceAccessUnavailable={shell.teamWorkspaces.isError}
             />
           </div>
-          {logoutError ? <p className="top-bar__error" role="alert">Sign out failed. Please try again.</p> : null}
+          {props.logoutError ? (
+            <p className="top-bar__error" role="alert">
+              Sign out failed. Please try again.
+            </p>
+          ) : null}
+          {auth.contextSwitchError ? (
+            <div className="top-bar__error top-bar__error--context" role="alert">
+              <span>{auth.contextSwitchError}</span>
+              <button onClick={auth.dismissContextSwitchError} type="button">
+                Dismiss
+              </button>
+            </div>
+          ) : null}
         </header>
-        <div className="workspace__main" id="main-content" tabIndex={-1}><Outlet /></div>
+        <div
+          className="workspace__main"
+          id="main-content"
+          key={session.contextVersion}
+          tabIndex={-1}
+        >
+          <Outlet />
+        </div>
       </div>
     </div>
   );
 }
 
-function PrimaryNavigationLink({
-  item,
-  pathname,
-}: {
-  item: NavigationItem;
-  pathname: string;
-}) {
+function ShellIdentity({ context }: { context: AccountContext }) {
+  return (
+    <div className="top-bar__identity">
+      <span className="top-bar__context">Secure service workspace</span>
+      <span className={`account-context-badge account-context-badge--${context.toLowerCase()}`}>
+        {context === "CUSTOMER" ? "Customer context" : "Staff context"}
+      </span>
+    </div>
+  );
+}
+
+function NotificationLink({ count }: { count: number }) {
+  return (
+    <NavLink
+      aria-label={`${count} unread notifications`}
+      className="notification-bell"
+      to="/notifications"
+    >
+      <Bell aria-hidden="true" size={18} />
+      {count ? <span>{count > 99 ? "99+" : count}</span> : null}
+    </NavLink>
+  );
+}
+
+function PrimaryNavigationLink({ item, pathname }: { item: NavigationItem; pathname: string }) {
   const active = isNavigationItemActive(pathname, item.path);
   return (
     <NavLink
@@ -128,7 +174,8 @@ function PrimaryNavigationLink({
       end={item.path === "/requests"}
       to={item.path}
     >
-      <span>{item.label}</span><i aria-hidden="true" />
+      <span>{item.label}</span>
+      <i aria-hidden="true" />
     </NavLink>
   );
 }

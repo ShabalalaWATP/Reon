@@ -40,9 +40,7 @@ describe("requester projection polling policy", () => {
   );
 
   it("polls an active detail and stops before its first response", () => {
-    expect(requestDetailPollInterval(requestDetail)).toBe(
-      EXPECTED_POLL_INTERVAL_MS,
-    );
+    expect(requestDetailPollInterval(requestDetail)).toBe(EXPECTED_POLL_INTERVAL_MS);
     expect(requestDetailPollInterval(undefined)).toBe(false);
   });
 
@@ -56,8 +54,6 @@ describe("requester projection polling policy", () => {
         requestDetail.id,
       ),
     ).toBe(EXPECTED_POLL_INTERVAL_MS);
-    expect(
-      clarificationTaskPollInterval({ items: [workItem] }, requestDetail.id),
-    ).toBe(false);
+    expect(clarificationTaskPollInterval({ items: [workItem] }, requestDetail.id)).toBe(false);
   });
 });

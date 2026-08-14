@@ -77,30 +77,54 @@ export function navigationForRole(
   capabilities = disabledCapabilities,
   context: NavigationContext = {},
 ): NavigationItem[] {
-  if (role === "REQUESTER") {
-    return [
-      { label: "My requests", path: "/requests" },
-      { label: "New request", path: "/requests/new" },
-    ];
-  }
-  if (role === "PLATFORM_ADMIN") {
-    return [
-      { label: "Home", path: "/overview" },
-      ...(capabilities.myWork ? [{ label: "My assigned actions", path: "/my-work" }] : []),
-      { label: "User accounts", path: "/admin/users" },
-      ...(capabilities.configuration ? [{ label: "Configuration", path: "/admin/configuration" }] : []),
-      ...(context.statisticsAvailable ? [{ label: "Operational statistics", path: "/statistics" }] : []),
-      personalCalendarLink,
-      organisationLink,
-    ];
-  }
+  if (role === "REQUESTER") return requesterNavigation();
+  if (role === "PLATFORM_ADMIN") return administratorNavigation(capabilities, context);
+  return staffNavigation(role, capabilities, context);
+}
+
+function requesterNavigation(): NavigationItem[] {
+  return [
+    { label: "My requests", path: "/requests" },
+    { label: "New request", path: "/requests/new" },
+  ];
+}
+
+function administratorNavigation(
+  capabilities: typeof disabledCapabilities,
+  context: NavigationContext,
+): NavigationItem[] {
   const navigation = [
     { label: "Home", path: "/overview" },
     ...(capabilities.myWork ? [{ label: "My assigned actions", path: "/my-work" }] : []),
-    ...(context.workspace ? [{
-      label: `${context.workspace.name} workspace`,
-      path: `/teams/${context.workspace.id}/overview`,
-    }] : [{ label: queueLabelForRole(role), path: queueRoutes[role]! }]),
+    { label: "User accounts", path: "/admin/users" },
+    ...(capabilities.configuration
+      ? [{ label: "Configuration", path: "/admin/configuration" }]
+      : []),
+    ...(context.statisticsAvailable
+      ? [{ label: "Operational statistics", path: "/statistics" }]
+      : []),
+    personalCalendarLink,
+    organisationLink,
+  ];
+  return navigation;
+}
+
+function staffNavigation(
+  role: UserRole,
+  capabilities: typeof disabledCapabilities,
+  context: NavigationContext,
+): NavigationItem[] {
+  const navigation = [
+    { label: "Home", path: "/overview" },
+    ...(capabilities.myWork ? [{ label: "My assigned actions", path: "/my-work" }] : []),
+    ...(context.workspace
+      ? [
+          {
+            label: `${context.workspace.name} workspace`,
+            path: `/teams/${context.workspace.id}/overview`,
+          },
+        ]
+      : [{ label: queueLabelForRole(role), path: queueRoutes[role]! }]),
   ];
   navigation.push(personalCalendarLink);
   if (role === "DELIVERY_SPECIALIST" && capabilities.products) {

@@ -6,13 +6,17 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build && node scripts/check-bundle-budget.mjs",
+    "complexity-ratchet": "node scripts/check-complexity-ratchet.mjs",
     "contract:openapi": "node scripts/check-openapi-contract.mjs",
     "dead-code": "knip --include files,exports,dependencies,unlisted,binaries && knip --production --include exports",
+    "format": "prettier --config ../../.prettierrc.json --ignore-path ../../.prettierignore --write \"src/**/*.{ts,tsx,css}\" \"e2e/**/*.ts\" \"scripts/**/*.{js,mjs,ts}\" \"*.{js,ts,json}\" ../../.prettierrc.json",
+    "format:check": "prettier --config ../../.prettierrc.json --ignore-path ../../.prettierignore --check \"src/**/*.{ts,tsx,css}\" \"e2e/**/*.ts\" \"scripts/**/*.{js,mjs,ts}\" \"*.{js,ts,json}\" ../../.prettierrc.json",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run --coverage",
+    "test:e2e": "playwright test",
     "test:watch": "vitest",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b && tsc -p tsconfig.e2e.json"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
@@ -26,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "1.62.1",
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -41,6 +46,7 @@
     "jest-axe": "^11.0.0",
     "jsdom": "^30.0.1",
     "knip": "6.32.0",
+    "prettier": "3.9.6",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.65.0",
     "vite": "^7.3.6",

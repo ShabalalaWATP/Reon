@@ -41,16 +41,20 @@ export function journeyState(index: number, current: number): JourneyState {
 
 export function routePosition(status: RequestStatus, routeLength: number): number {
   if (routeLength === 0) return -1;
-  if (status === "ROUTING_PENDING" || status === "TRIAGE_REVIEW" || status === "INFORMATION_REQUIRED") return 0;
+  if (
+    status === "ROUTING_PENDING" ||
+    status === "TRIAGE_REVIEW" ||
+    status === "INFORMATION_REQUIRED"
+  )
+    return 0;
   if (status === "COORDINATION_REVIEW" || status === "ON_HOLD") return Math.min(1, routeLength - 1);
   if (status === "ALLOCATION_REVIEW") return Math.min(2, routeLength - 1);
   return routeLength;
 }
 
 export function lifecycleLabels(status: RequestStatus): string[] {
-  const finalLabel = status === "CANCELLED" || status === "CLOSED_NOT_PROGRESSED"
-    ? "Closed"
-    : "Customer delivery";
+  const finalLabel =
+    status === "CANCELLED" || status === "CLOSED_NOT_PROGRESSED" ? "Closed" : "Customer delivery";
   return ["Routing", "Production", "Team check", "Quality and release", finalLabel];
 }
 

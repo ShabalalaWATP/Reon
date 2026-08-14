@@ -36,32 +36,132 @@ export const boardApi = {
   boardRequest: (teamId: string, requestId: string) =>
     apiRequest<BoardItem>(`${teamPath(teamId)}/board/requests/${encodeURIComponent(requestId)}`),
   moveItem: (teamId: string, input: BoardMoveInput, csrfToken: string) =>
-    apiRequest<WorkPackage>(`${teamPath(teamId)}/board/moves`, { body: input, csrfToken, method: "POST" }),
-  configure: (teamId: string, input: { grantId: string; expectedVersion: number; wipLimits: Record<string, number> }, csrfToken: string) =>
-    apiRequest<{ wipLimits: Record<string, number>; version: number }>(`${teamPath(teamId)}/board/configuration`, { body: input, csrfToken, method: "PUT" }),
+    apiRequest<WorkPackage>(`${teamPath(teamId)}/board/moves`, {
+      body: input,
+      csrfToken,
+      method: "POST",
+    }),
+  configure: (
+    teamId: string,
+    input: { grantId: string; expectedVersion: number; wipLimits: Record<string, number> },
+    csrfToken: string,
+  ) =>
+    apiRequest<{ wipLimits: Record<string, number>; version: number }>(
+      `${teamPath(teamId)}/board/configuration`,
+      { body: input, csrfToken, method: "PUT" },
+    ),
   createView: (teamId: string, input: { name: string; filters: BoardFilters }, csrfToken: string) =>
-    apiRequest<SavedBoardView>(`${teamPath(teamId)}/board/saved-views`, { body: input, csrfToken, method: "POST" }),
-  updateView: (teamId: string, viewId: string, input: { name: string; filters: BoardFilters; expectedVersion: number }, csrfToken: string) =>
-    apiRequest<SavedBoardView>(`${teamPath(teamId)}/board/saved-views/${encodeURIComponent(viewId)}`, { body: input, csrfToken, method: "PUT" }),
+    apiRequest<SavedBoardView>(`${teamPath(teamId)}/board/saved-views`, {
+      body: input,
+      csrfToken,
+      method: "POST",
+    }),
+  updateView: (
+    teamId: string,
+    viewId: string,
+    input: { name: string; filters: BoardFilters; expectedVersion: number },
+    csrfToken: string,
+  ) =>
+    apiRequest<SavedBoardView>(
+      `${teamPath(teamId)}/board/saved-views/${encodeURIComponent(viewId)}`,
+      { body: input, csrfToken, method: "PUT" },
+    ),
   deleteView: (teamId: string, viewId: string, expectedVersion: number, csrfToken: string) =>
-    apiRequest<void>(`${teamPath(teamId)}/board/saved-views/${encodeURIComponent(viewId)}`, { body: { expectedVersion }, csrfToken, method: "DELETE" }),
-  packages: (teamId: string) => apiRequest<{ items: WorkPackage[] }>(`${teamPath(teamId)}/packages`),
-  package: (teamId: string, packageId: string) => apiRequest<WorkPackage>(`${teamPath(teamId)}/packages/${encodeURIComponent(packageId)}`),
+    apiRequest<void>(`${teamPath(teamId)}/board/saved-views/${encodeURIComponent(viewId)}`, {
+      body: { expectedVersion },
+      csrfToken,
+      method: "DELETE",
+    }),
+  packages: (teamId: string) =>
+    apiRequest<{ items: WorkPackage[] }>(`${teamPath(teamId)}/packages`),
+  package: (teamId: string, packageId: string) =>
+    apiRequest<WorkPackage>(`${teamPath(teamId)}/packages/${encodeURIComponent(packageId)}`),
   createPackage: (teamId: string, input: WorkPackageInput, csrfToken: string) =>
-    apiRequest<WorkPackage>(`${teamPath(teamId)}/packages`, { body: input, csrfToken, method: "POST" }),
-  updatePackage: (teamId: string, packageId: string, input: WorkPackageInput & { expectedVersion: number }, csrfToken: string) =>
-    apiRequest<WorkPackage>(`${teamPath(teamId)}/packages/${encodeURIComponent(packageId)}`, { body: input, csrfToken, method: "PUT" }),
-  movePackage: (teamId: string, packageId: string, input: { grantId: string | null; expectedVersion: number; target: WorkPackageStatus; reason: string }, csrfToken: string) =>
-    apiRequest<WorkPackage>(`${teamPath(teamId)}/packages/${encodeURIComponent(packageId)}/move`, { body: input, csrfToken, method: "POST" }),
-  reserve: (teamId: string, packageId: string, packageVersion: number, input: ReservationInput, csrfToken: string) =>
-    apiRequest<WorkPackage>(`${teamPath(teamId)}/packages/${encodeURIComponent(packageId)}/reservations?packageVersion=${packageVersion}`, { body: input, csrfToken, method: "POST" }),
-  cancelReservation: (teamId: string, packageId: string, reservationId: string, packageVersion: number, input: { grantId: string | null; expectedVersion: number; reason: string }, csrfToken: string) =>
-    apiRequest<WorkPackage>(`${teamPath(teamId)}/packages/${encodeURIComponent(packageId)}/reservations/${encodeURIComponent(reservationId)}/cancel?packageVersion=${packageVersion}`, { body: input, csrfToken, method: "POST" }),
-  iterations: (teamId: string) => apiRequest<{ items: Iteration[] }>(`${teamPath(teamId)}/iterations`),
-  createIteration: (teamId: string, input: { grantId: string; name: string; goal: string; startsOn: string; endsOn: string }, csrfToken: string) =>
-    apiRequest<Iteration>(`${teamPath(teamId)}/iterations`, { body: input, csrfToken, method: "POST" }),
-  closeIteration: (teamId: string, iterationId: string, input: { grantId: string; expectedVersion: number; completionSummary: string }, csrfToken: string) =>
-    apiRequest<Iteration>(`${teamPath(teamId)}/iterations/${encodeURIComponent(iterationId)}/close`, { body: input, csrfToken, method: "POST" }),
-  sendTaskHastener: (teamId: string, requestId: string, input: TaskHastenerInput, csrfToken: string) =>
-    apiRequest<TaskHastenerResult>(`${teamPath(teamId)}/requests/${encodeURIComponent(requestId)}/hasteners`, { body: input, csrfToken, method: "POST" }),
+    apiRequest<WorkPackage>(`${teamPath(teamId)}/packages`, {
+      body: input,
+      csrfToken,
+      method: "POST",
+    }),
+  updatePackage: (
+    teamId: string,
+    packageId: string,
+    input: WorkPackageInput & { expectedVersion: number },
+    csrfToken: string,
+  ) =>
+    apiRequest<WorkPackage>(`${teamPath(teamId)}/packages/${encodeURIComponent(packageId)}`, {
+      body: input,
+      csrfToken,
+      method: "PUT",
+    }),
+  movePackage: (
+    teamId: string,
+    packageId: string,
+    input: {
+      grantId: string | null;
+      expectedVersion: number;
+      target: WorkPackageStatus;
+      reason: string;
+    },
+    csrfToken: string,
+  ) =>
+    apiRequest<WorkPackage>(`${teamPath(teamId)}/packages/${encodeURIComponent(packageId)}/move`, {
+      body: input,
+      csrfToken,
+      method: "POST",
+    }),
+  reserve: (
+    teamId: string,
+    packageId: string,
+    packageVersion: number,
+    input: ReservationInput,
+    csrfToken: string,
+  ) =>
+    apiRequest<WorkPackage>(
+      `${teamPath(teamId)}/packages/${encodeURIComponent(packageId)}/reservations?packageVersion=${packageVersion}`,
+      { body: input, csrfToken, method: "POST" },
+    ),
+  cancelReservation: (
+    teamId: string,
+    packageId: string,
+    reservationId: string,
+    packageVersion: number,
+    input: { grantId: string | null; expectedVersion: number; reason: string },
+    csrfToken: string,
+  ) =>
+    apiRequest<WorkPackage>(
+      `${teamPath(teamId)}/packages/${encodeURIComponent(packageId)}/reservations/${encodeURIComponent(reservationId)}/cancel?packageVersion=${packageVersion}`,
+      { body: input, csrfToken, method: "POST" },
+    ),
+  iterations: (teamId: string) =>
+    apiRequest<{ items: Iteration[] }>(`${teamPath(teamId)}/iterations`),
+  createIteration: (
+    teamId: string,
+    input: { grantId: string; name: string; goal: string; startsOn: string; endsOn: string },
+    csrfToken: string,
+  ) =>
+    apiRequest<Iteration>(`${teamPath(teamId)}/iterations`, {
+      body: input,
+      csrfToken,
+      method: "POST",
+    }),
+  closeIteration: (
+    teamId: string,
+    iterationId: string,
+    input: { grantId: string; expectedVersion: number; completionSummary: string },
+    csrfToken: string,
+  ) =>
+    apiRequest<Iteration>(
+      `${teamPath(teamId)}/iterations/${encodeURIComponent(iterationId)}/close`,
+      { body: input, csrfToken, method: "POST" },
+    ),
+  sendTaskHastener: (
+    teamId: string,
+    requestId: string,
+    input: TaskHastenerInput,
+    csrfToken: string,
+  ) =>
+    apiRequest<TaskHastenerResult>(
+      `${teamPath(teamId)}/requests/${encodeURIComponent(requestId)}/hasteners`,
+      { body: input, csrfToken, method: "POST" },
+    ),
 };

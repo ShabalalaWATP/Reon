@@ -35,7 +35,8 @@ export const statusLabels: Record<RequestStatus, string> = {
 export function statusTone(status: RequestStatus) {
   if (status === "COMPLETED") return "success";
   if (["CLOSED_NOT_PROGRESSED", "CANCELLED"].includes(status)) return "neutral";
-  if (["INFORMATION_REQUIRED", "CUSTOMER_INFORMATION_REQUIRED", "REWORK_REQUIRED"].includes(status)) return "attention";
+  if (["INFORMATION_REQUIRED", "CUSTOMER_INFORMATION_REQUIRED", "REWORK_REQUIRED"].includes(status))
+    return "attention";
   return "active";
 }
 
@@ -52,6 +53,7 @@ export function trackingStatusLabel(status: RequestStatus) {
 }
 
 export function requesterGroup(status: RequestStatus, needsInput: boolean) {
-  if (needsInput || ["INFORMATION_REQUIRED", "CUSTOMER_INFORMATION_REQUIRED"].includes(status)) return "Needs your input";
+  if (needsInput || ["INFORMATION_REQUIRED", "CUSTOMER_INFORMATION_REQUIRED"].includes(status))
+    return "Needs your input";
   return isComplete(status) ? "Completed" : "In progress";
 }

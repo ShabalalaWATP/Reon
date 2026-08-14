@@ -10,20 +10,14 @@ export type OrganisationUnit = {
   version: number;
 };
 
-export type RoutingPathUnit = Pick<
-  OrganisationUnit,
-  "id" | "code" | "name" | "kind"
->;
+export type RoutingPathUnit = Pick<OrganisationUnit, "id" | "code" | "name" | "kind">;
 
 export type RoutingOptionsWorkspace = {
   route: RoutingPathUnit[];
   items: OrganisationUnit[];
 };
 
-export type TrackedRequestRouteUnit = Pick<
-  OrganisationUnit,
-  "id" | "name" | "kind"
->;
+export type TrackedRequestRouteUnit = Pick<OrganisationUnit, "id" | "name" | "kind">;
 
 export type TrackedRequest = {
   id: string;
@@ -61,26 +55,27 @@ export type TrackedRequestEvent = {
 
 export type CoordinationResult = { event: TrackedRequestEvent };
 
-export type TrackedRequestDetail = TrackedRequest & Pick<
-  RequestDetail,
-  | "description"
-  | "questionToAnswer"
-  | "desiredOutcome"
-  | "backgroundContext"
-  | "subjectAreaOrLocation"
-  | "coverageStart"
-  | "coverageEnd"
-  | "customerUrgency"
-  | "supportedActivityOrDecision"
-  | "requiredByReason"
-  | "preferredDeliverableType"
-  | "successCriteria"
-  | "constraintsOrCaveats"
-  | "supportingInformation"
-  | "sensitivity"
-  | "handlingInstructions"
-> & {
-  requesterDisplayName: string;
-  events: TrackedRequestEvent[];
-  eventsNextCursor?: string | null;
-};
+export type TrackedRequestDetail = TrackedRequest &
+  Pick<
+    RequestDetail,
+    | "description"
+    | "questionToAnswer"
+    | "desiredOutcome"
+    | "backgroundContext"
+    | "subjectAreaOrLocation"
+    | "coverageStart"
+    | "coverageEnd"
+    | "customerUrgency"
+    | "supportedActivityOrDecision"
+    | "requiredByReason"
+    | "preferredDeliverableType"
+    | "successCriteria"
+    | "constraintsOrCaveats"
+    | "supportingInformation"
+    | "sensitivity"
+    | "handlingInstructions"
+  > & {
+    requesterDisplayName: string;
+    events: TrackedRequestEvent[];
+    eventsNextCursor?: string | null;
+  };

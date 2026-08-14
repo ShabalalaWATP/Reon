@@ -9,16 +9,33 @@ import { json, mockFeatureFetch, renderApp } from "../../test/render";
 
 const session: Session = {
   ...requesterSession,
-  user: { ...requesterSession.user, id: "crioc-user", username: "admin75", displayName: "Willie Ormond", role: "INTAKE_TRIAGE", scope: "CRIOC" },
+  user: {
+    ...requesterSession.user,
+    id: "crioc-user",
+    username: "admin75",
+    displayName: "Willie Ormond",
+    role: "INTAKE_TRIAGE",
+    scope: "CRIOC",
+  },
 };
 const baseAccess: TeamWorkspaceAccess = {
-  teamId: "crioc", teamCode: "CRIOC", teamName: "CRIOC", unitKind: "ROOT",
-  workspacePosition: "MANAGER", grantId: "grant-crioc", permissions: ["ROSTER"],
+  teamId: "crioc",
+  teamCode: "CRIOC",
+  teamName: "CRIOC",
+  unitKind: "ROOT",
+  workspacePosition: "MANAGER",
+  grantId: "grant-crioc",
+  permissions: ["ROSTER"],
   views: ["OVERVIEW", "QUEUE", "CALENDAR", "PEOPLE", "STATISTICS", "HANDOVER", "ACTIVITY"],
 };
 const people: TeamMember[] = [
   member({ membershipId: "member-aaron", displayName: "Aaron Member" }),
-  member({ membershipId: "manager-zara", displayName: "Zara Manager", role: "INTAKE_TRIAGE", workspacePosition: "MANAGER" }),
+  member({
+    membershipId: "manager-zara",
+    displayName: "Zara Manager",
+    role: "INTAKE_TRIAGE",
+    workspacePosition: "MANAGER",
+  }),
 ];
 
 describe("workspace People register", () => {
@@ -33,9 +50,15 @@ describe("workspace People register", () => {
       const header = within(table).getByRole("columnheader", { name: label });
       const button = within(header).getByRole("button", { name: label });
       await user.click(button);
-      expect(header).toHaveAttribute("aria-sort", label === "Position" ? "descending" : "ascending");
+      expect(header).toHaveAttribute(
+        "aria-sort",
+        label === "Position" ? "descending" : "ascending",
+      );
       await user.click(button);
-      expect(header).toHaveAttribute("aria-sort", label === "Position" ? "ascending" : "descending");
+      expect(header).toHaveAttribute(
+        "aria-sort",
+        label === "Position" ? "ascending" : "descending",
+      );
     }
   });
 
@@ -49,16 +72,36 @@ describe("workspace People register", () => {
 });
 
 function mockPeople(access: TeamWorkspaceAccess) {
-  return mockFeatureFetch(async (url) => {
-    if (url.pathname.endsWith("/auth/me")) return json(session);
-    if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
-    if (url.pathname.endsWith("/team-workspaces")) return json({ items: [access] });
-    if (url.pathname.endsWith("/people")) return json({ items: people });
-    if (url.pathname.endsWith("/eligible-analysts")) return json({ items: [] });
-    throw new Error(`Unexpected ${url.pathname}`);
-  }, true, true, false);
+  return mockFeatureFetch(
+    async (url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(session);
+      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
+      if (url.pathname.endsWith("/team-workspaces")) return json({ items: [access] });
+      if (url.pathname.endsWith("/people")) return json({ items: people });
+      if (url.pathname.endsWith("/eligible-analysts")) return json({ items: [] });
+      throw new Error(`Unexpected ${url.pathname}`);
+    },
+    true,
+    true,
+    false,
+  );
 }
 
 function member(overrides: Partial<TeamMember>): TeamMember {
-  return { membershipId: "member", accountId: "account", displayName: "Member", role: "INTAKE_TRIAGE", workspacePosition: "MEMBER", state: "CURRENT", effectiveFrom: "2026-01-01T09:00:00Z", effectiveUntil: null, version: 1, activeWorkCount: 0, skills: [], startReason: null, endReason: null, ...overrides };
+  return {
+    membershipId: "member",
+    accountId: "account",
+    displayName: "Member",
+    role: "INTAKE_TRIAGE",
+    workspacePosition: "MEMBER",
+    state: "CURRENT",
+    effectiveFrom: "2026-01-01T09:00:00Z",
+    effectiveUntil: null,
+    version: 1,
+    activeWorkCount: 0,
+    skills: [],
+    startReason: null,
+    endReason: null,
+    ...overrides,
+  };
 }

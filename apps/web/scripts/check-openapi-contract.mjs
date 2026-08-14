@@ -55,10 +55,7 @@ function jsonListItem(operation, label) {
 
 assert.ok(deliverable, "OpenAPI is missing DeliverableView.");
 for (const field of ["id", "title", "text", "releasedAt"]) {
-  assert.ok(
-    deliverable.required?.includes(field),
-    `DeliverableView must require ${field}.`,
-  );
+  assert.ok(deliverable.required?.includes(field), `DeliverableView must require ${field}.`);
 }
 assert.equal(deliverable.properties.id.format, "uuid");
 assert.equal(deliverable.properties.title.type, "string");
@@ -66,9 +63,7 @@ assert.equal(deliverable.properties.text.type, "string");
 
 const releasedAtVariants = deliverable.properties.releasedAt.anyOf;
 assert.ok(
-  releasedAtVariants.some(
-    (variant) => variant.type === "string" && variant.format === "date-time",
-  ),
+  releasedAtVariants.some((variant) => variant.type === "string" && variant.format === "date-time"),
   "DeliverableView.releasedAt must accept a date-time string.",
 );
 assert.ok(
@@ -159,10 +154,7 @@ assert.equal(
   "AllocateRequest must not accept deliveryTeam.",
 );
 
-const productOperation = getPath(
-  /\/requests\/\{[^}]+\}\/product$/,
-  "GET /requests/{id}/product",
-);
+const productOperation = getPath(/\/requests\/\{[^}]+\}\/product$/, "GET /requests/{id}/product");
 assert.ok(
   productOperation.responses?.["200"]?.content?.["text/plain"],
   "Product download must document a text/plain response.",
@@ -172,22 +164,47 @@ const adminUsersOperation = getPath(/\/admin\/users$/, "GET /admin/users");
 const adminUser = jsonListItem(adminUsersOperation, "Administrator users");
 requireFields(
   adminUser,
-  ["id", "username", "displayName", "role", "scope", "isActive", "version", "createdAt", "updatedAt", "memberships"],
+  [
+    "id",
+    "username",
+    "displayName",
+    "role",
+    "scope",
+    "isActive",
+    "version",
+    "createdAt",
+    "updatedAt",
+    "memberships",
+  ],
   "AdminUser",
 );
 for (const forbidden of ["request", "title", "description", "deliverable", "workflowTask"]) {
-  assert.equal(adminUser.properties[forbidden], undefined, `AdminUser must not expose ${forbidden}.`);
+  assert.equal(
+    adminUser.properties[forbidden],
+    undefined,
+    `AdminUser must not expose ${forbidden}.`,
+  );
 }
 const membership = resolveSchema(adminUser.properties.memberships.items);
-requireFields(membership, ["organisationUnitId", "organisationUnitName", "organisationUnitKind"], "AdminMembership");
+requireFields(
+  membership,
+  ["organisationUnitId", "organisationUnitName", "organisationUnitKind"],
+  "AdminMembership",
+);
 
-const adminUserPath = Object.keys(paths).find((candidate) => /\/admin\/users\/\{[^}]+\}$/.test(candidate));
+const adminUserPath = Object.keys(paths).find((candidate) =>
+  /\/admin\/users\/\{[^}]+\}$/.test(candidate),
+);
 assert.ok(adminUserPath, "OpenAPI is missing administrator user detail.");
 assert.ok(paths[adminUserPath].get, "Administrator user detail must support GET.");
 assert.ok(paths[adminUserPath].patch, "Administrator user detail must support PATCH.");
-const statusPath = Object.keys(paths).find((candidate) => /\/admin\/users\/\{[^}]+\}\/status$/.test(candidate));
+const statusPath = Object.keys(paths).find((candidate) =>
+  /\/admin\/users\/\{[^}]+\}\/status$/.test(candidate),
+);
 assert.ok(paths[statusPath]?.patch, "Administrator status must support PATCH.");
-const renamePath = Object.keys(paths).find((candidate) => /\/admin\/organisation\/units\/\{[^}]+\}$/.test(candidate));
+const renamePath = Object.keys(paths).find((candidate) =>
+  /\/admin\/organisation\/units\/\{[^}]+\}$/.test(candidate),
+);
 assert.ok(paths[renamePath]?.patch, "Administrator organisation rename must support PATCH.");
 
 process.stdout.write(

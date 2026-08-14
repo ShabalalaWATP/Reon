@@ -24,11 +24,7 @@ describe("PersonalProfileDetails", () => {
     expect(screen.getByText("Synthetic grade")).toBeInTheDocument();
     expect(screen.getAllByText("Not provided")).toHaveLength(3);
 
-    rerender(
-      <PersonalProfileDetails
-        profile={{ ...profile, skills: ["Research", "Briefing"] }}
-      />,
-    );
+    rerender(<PersonalProfileDetails profile={{ ...profile, skills: ["Research", "Briefing"] }} />);
     expect(screen.getByText("Research")).toBeInTheDocument();
     expect(screen.getByText("Briefing")).toBeInTheDocument();
   });

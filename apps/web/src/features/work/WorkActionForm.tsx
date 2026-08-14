@@ -1,24 +1,15 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, type ChangeEvent } from "react";
-import { useForm } from "react-hook-form";
-
 import type { ClarificationThread, WorkAction } from "../../lib/api/types";
 import type { SpecialistOptions } from "./EligibleSpecialistField";
 import type { RoutingOptions } from "./RoutingDestinationField";
+import { useWorkActionForm } from "./useWorkActionForm";
 import { WorkActionFields } from "./WorkActionFields";
-import {
-  actionLabels,
-  actionRequiresDestination,
-  buildWorkAction,
-  workActionSchema,
-  type WorkActionName,
-  type WorkActionValues,
-} from "./workActionModel";
+import { actionLabels, type WorkActionName } from "./workActionModel";
 
 type Props = {
   actions: WorkActionName[];
   clarification?: ClarificationThread;
   disabled: boolean;
+  managedProducts?: boolean;
   onActionChange?: (action: WorkActionName) => void;
   onSubmit: (action: WorkAction) => void;
   routingOptions?: RoutingOptions;
@@ -40,82 +31,34 @@ export function WorkActionForm({
   actions,
   clarification,
   disabled,
+  managedProducts = false,
   onActionChange,
   onSubmit,
   routingOptions = idleRoutingOptions,
   specialistOptions = idleSpecialistOptions,
 }: Props) {
-  const {
-    formState: { errors },
-    handleSubmit,
-    register,
-    reset,
-    setValue,
-    watch,
-  } = useForm<WorkActionValues>({
-    defaultValues: {
-      action: actions[0],
-      contributorIds: [],
-      expectedVersion: clarification?.version,
-      threadId: clarification?.id,
-    },
-    resolver: zodResolver(workActionSchema),
+  const controller = useWorkActionForm({
+    actions,
+    clarification,
+    managedProducts,
+    onActionChange,
+    onSubmit,
+    routingOptions,
+    specialistOptions,
   });
-  useEffect(
-    () =>
-      reset({
-        action: actions[0],
-        contributorIds: [],
-        expectedVersion: clarification?.version,
-        threadId: clarification?.id,
-      }),
-    [actions, clarification?.id, clarification?.version, reset],
-  );
-  const action = watch("action");
-  const contributorIds = watch("contributorIds");
-  const destinationUnitId = watch("destinationUnitId");
-  const specialistId = watch("specialistId");
-  const actionField = register("action");
-
-  useEffect(() => {
-    if (specialistId && contributorIds?.includes(specialistId)) {
-      setValue(
-        "contributorIds",
-        contributorIds.filter((id) => id !== specialistId),
-        { shouldDirty: true, shouldValidate: true },
-      );
-    }
-  }, [contributorIds, setValue, specialistId]);
-
   if (actions.length === 0) {
     return <p className="inline-empty">No actions are available for this item.</p>;
   }
-
-  const handleActionChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const nextAction = event.currentTarget.value as WorkActionName;
-    void actionField.onChange(event);
-    onActionChange?.(nextAction);
-  };
-  const assignmentUnavailable =
-    action === "assign" &&
-    (specialistOptions.status !== "ready" || specialistOptions.items.length === 0);
-  const routingUnavailable =
-    actionRequiresDestination(action) &&
-    (routingOptions.status !== "ready" || routingOptions.items.length === 0);
-  const clarificationUnavailable =
-    action === "provide_clarification" && !clarification;
 
   return (
     <form
       className="work-action-form"
       noValidate
-      onSubmit={(event) =>
-        void handleSubmit((values) => onSubmit(buildWorkAction(values)))(event)
-      }
+      onSubmit={(event) => void controller.submit(event)}
     >
       <label className="form-field">
         <span>Outcome</span>
-        <select {...actionField} onChange={handleActionChange}>
+        <select {...controller.actionField} onChange={controller.changeAction}>
           {actions.map((name) => (
             <option key={name} value={name}>
               {actionLabels[name]}
@@ -124,21 +67,22 @@ export function WorkActionForm({
         </select>
       </label>
       <WorkActionFields
-        action={action}
-        contributorIds={contributorIds ?? []}
-        destinationUnitId={destinationUnitId}
-        errors={errors}
-        register={register}
+        action={controller.action}
+        contributorIds={controller.contributorIds}
+        destinationUnitId={controller.destinationUnitId}
+        errors={controller.errors}
+        managedProducts={managedProducts}
+        register={controller.register}
         routingOptions={routingOptions}
-        specialistId={specialistId}
+        specialistId={controller.specialistId}
         specialistOptions={specialistOptions}
       />
       <button
         className="button button--primary"
-        disabled={disabled || assignmentUnavailable || routingUnavailable || clarificationUnavailable}
+        disabled={disabled || controller.unavailable}
         type="submit"
       >
-        {disabled ? "Recording outcome…" : actionLabels[action]}
+        {disabled ? "Recording outcome…" : actionLabels[controller.action]}
       </button>
       <p className="action-assurance">
         This records a named human decision and advances only the selected workflow outcome.

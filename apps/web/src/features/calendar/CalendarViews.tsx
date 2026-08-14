@@ -60,36 +60,87 @@ function Day({
   const today = sameDay(day, new Date());
   const free = items.length === 0;
   return (
-    <article className={`calendar-day${outside ? " calendar-day--outside" : ""}${today ? " calendar-day--today" : ""}${free ? " calendar-day--free" : ""}`}>
-      {onCreate ? <button aria-label={`Add event on ${longDate.format(day)}`} className="calendar-day__create" onClick={() => onCreate(day)} type="button" /> : null}
-      <header><span>{shortWeekday.format(day)}</span><strong>{day.getDate()}</strong></header>
+    <article
+      className={`calendar-day${outside ? " calendar-day--outside" : ""}${today ? " calendar-day--today" : ""}${free ? " calendar-day--free" : ""}`}
+    >
+      {onCreate ? (
+        <button
+          aria-label={`Add event on ${longDate.format(day)}`}
+          className="calendar-day__create"
+          onClick={() => onCreate(day)}
+          type="button"
+        />
+      ) : null}
+      <header>
+        <span>{shortWeekday.format(day)}</span>
+        <strong>{day.getDate()}</strong>
+      </header>
       {free ? null : (
-        <ol>{items.map((item) => <li key={`${item.eventId}-${item.occurrenceStart}`}><OccurrenceButton item={item} onSelect={onSelect} /></li>)}</ol>
+        <ol>
+          {items.map((item) => (
+            <li key={`${item.eventId}-${item.occurrenceStart}`}>
+              <OccurrenceButton item={item} onSelect={onSelect} />
+            </li>
+          ))}
+        </ol>
       )}
     </article>
   );
 }
 
-function Agenda({ items, onSelect }: { items: CalendarOccurrence[]; onSelect: (item: CalendarOccurrence) => void }) {
+function Agenda({
+  items,
+  onSelect,
+}: {
+  items: CalendarOccurrence[];
+  onSelect: (item: CalendarOccurrence) => void;
+}) {
   const days = groupByDay(items);
-  if (days.length === 0) return <section className="calendar-empty"><h2>No calendar activity</h2><p>This range has no recorded events or commitments.</p></section>;
+  if (days.length === 0)
+    return (
+      <section className="calendar-empty">
+        <h2>No calendar activity</h2>
+        <p>This range has no recorded events or commitments.</p>
+      </section>
+    );
   return (
     <section aria-label="Agenda" className="calendar-agenda">
       {days.map(([day, occurrences]) => (
         <article key={day}>
-          <header><span>{longWeekday.format(new Date(day))}</span><h2>{longDate.format(new Date(day))}</h2></header>
-          <ol>{occurrences.map((item) => <li key={`${item.eventId}-${item.occurrenceStart}`}><OccurrenceButton item={item} onSelect={onSelect} /></li>)}</ol>
+          <header>
+            <span>{longWeekday.format(new Date(day))}</span>
+            <h2>{longDate.format(new Date(day))}</h2>
+          </header>
+          <ol>
+            {occurrences.map((item) => (
+              <li key={`${item.eventId}-${item.occurrenceStart}`}>
+                <OccurrenceButton item={item} onSelect={onSelect} />
+              </li>
+            ))}
+          </ol>
         </article>
       ))}
     </section>
   );
 }
 
-function OccurrenceButton({ item, onSelect }: { item: CalendarOccurrence; onSelect: (item: CalendarOccurrence) => void }) {
+function OccurrenceButton({
+  item,
+  onSelect,
+}: {
+  item: CalendarOccurrence;
+  onSelect: (item: CalendarOccurrence) => void;
+}) {
   const time = item.allDay ? "All day" : clockTime.format(new Date(item.startsAt));
   return (
-    <button className={`calendar-event calendar-event--${item.category.toLowerCase()}`} onClick={() => onSelect(item)} type="button">
-      <span>{time}</span><strong>{item.title}</strong><small>{item.subjectDisplayName}</small>
+    <button
+      className={`calendar-event calendar-event--${item.category.toLowerCase()}`}
+      onClick={() => onSelect(item)}
+      type="button"
+    >
+      <span>{time}</span>
+      <strong>{item.title}</strong>
+      <small>{item.subjectDisplayName}</small>
     </button>
   );
 }

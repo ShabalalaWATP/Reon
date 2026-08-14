@@ -1,10 +1,5 @@
 export type ProductPackageStatus =
-  | "DRAFT"
-  | "REVIEW_READY"
-  | "MANAGER_APPROVED"
-  | "DISSEMINATED"
-  | "REPLACED"
-  | "WITHDRAWN";
+  "DRAFT" | "REVIEW_READY" | "MANAGER_APPROVED" | "DISSEMINATED" | "REPLACED" | "WITHDRAWN";
 
 export type ProductArtefactLifecycle =
   | "PENDING_UPLOAD"
@@ -28,6 +23,8 @@ export interface ProductArtefact {
   sizeBytes: number | null;
   sha256: string | null;
   destinationDomain: string | null;
+  reviewDestinationUrl?: string | null;
+  reviewUrl?: string | null;
   expiresAt: string | null;
   scanResult: "CLEAN" | "FAILED" | "UNKNOWN" | "TIMED_OUT" | null;
   scanReason: string | null;
@@ -42,7 +39,9 @@ export interface ProductPackage {
   requestTitle: string;
   requestStatus: string;
   packageVersion: number;
+  policyVersion: number;
   status: ProductPackageStatus;
+  coveringNote: string | null;
   packageChecksum: string | null;
   version: number;
   authorDisplayName: string;
@@ -74,6 +73,7 @@ export interface ProductRelease {
   status: "DISSEMINATED" | "WITHDRAWN" | "REPLACED";
   releasedAt: string;
   releasedBy: string;
+  coveringNote: string;
   acceptedAt: string | null;
   artefacts: ProductArtefact[];
 }

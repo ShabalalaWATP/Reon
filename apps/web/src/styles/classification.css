@@ -1,7 +1,29 @@
-:root { --mark-height: 22px; }
-.classified-app__body { padding-top: var(--mark-height); }
-.classification-strip { position: fixed; z-index: 1000; inset: 0 0 auto; display: grid; place-items: center; height: var(--mark-height); background: #17633a; color: #fff; }
-.classification-strip span { font: 850 .62rem/1 var(--font-mono); letter-spacing: .22em; }
-.classification-strip[data-classification="OFFICIAL-SENSITIVE"] { background: #145e91; }
-.classification-strip[data-classification="SECRET"] { background: #a51d2d; }
-.classification-strip[data-classification="TOP-SECRET"] { background: #770d1d; }
+:root {
+  --mark-height: 22px;
+}
+.classified-app__body {
+  padding-top: var(--mark-height);
+}
+.classification-strip {
+  position: fixed;
+  z-index: 1000;
+  inset: 0 0 auto;
+  display: grid;
+  place-items: center;
+  height: var(--mark-height);
+  background: #17633a;
+  color: #fff;
+}
+.classification-strip span {
+  font: 850 0.62rem/1 var(--font-mono);
+  letter-spacing: 0.22em;
+}
+.classification-strip[data-classification="OFFICIAL-SENSITIVE"] {
+  background: #145e91;
+}
+.classification-strip[data-classification="SECRET"] {
+  background: #a51d2d;
+}
+.classification-strip[data-classification="TOP-SECRET"] {
+  background: #770d1d;
+}

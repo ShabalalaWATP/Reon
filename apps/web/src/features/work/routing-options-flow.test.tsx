@@ -16,7 +16,9 @@ import type { RoutingOptions } from "./RoutingDestinationField";
 import { WorkActionForm } from "./WorkActionForm";
 
 const teamOptions: RoutingOptions = {
-  items: organisationChildren("ACSA_B_OPS").map((unit) => unit.code === "CEDAR_TEAM" ? { ...unit, staffingStatus: "UNSTAFFED" } : unit),
+  items: organisationChildren("ACSA_B_OPS").map((unit) =>
+    unit.code === "CEDAR_TEAM" ? { ...unit, staffingStatus: "UNSTAFFED" } : unit,
+  ),
   onRetry: vi.fn(),
   status: "ready",
 };
@@ -31,32 +33,29 @@ describe("dynamic routing destinations", () => {
     ["progress", "CRIOC", ["JOCK", "SYGOC", "MYGOC"]],
     ["send_to_allocation", "JOCK", ["ACSA-B Ops", "Aurora Ops", "Vertex Ops"]],
     ["allocate", "ACSA_B_OPS", ["SSG Team", "Cedar Team", "Quartz Team"]],
-  ] as const)(
-    "keeps every direct child enabled for %s",
-    (action, parentCode, expectedNames) => {
-      const items = organisationChildren(parentCode);
-      expect(items.map((item) => item.name)).toEqual(expectedNames);
-      render(
-        <WorkActionForm
-          actions={[action]}
-          disabled={false}
-          onSubmit={vi.fn()}
-          routingOptions={{ items, onRetry: vi.fn(), status: "ready" }}
-        />,
-      );
+  ] as const)("keeps every direct child enabled for %s", (action, parentCode, expectedNames) => {
+    const items = organisationChildren(parentCode);
+    expect(items.map((item) => item.name)).toEqual(expectedNames);
+    render(
+      <WorkActionForm
+        actions={[action]}
+        disabled={false}
+        onSubmit={vi.fn()}
+        routingOptions={{ items, onRetry: vi.fn(), status: "ready" }}
+      />,
+    );
 
-      const destination = screen.getByLabelText("Destination unit");
-      const displayedOptions = within(destination).getAllByRole("option").slice(1);
-      expect(displayedOptions).toHaveLength(expectedNames.length);
-      for (const name of expectedNames) {
-        const option = displayedOptions.find((candidate) =>
-          candidate.textContent?.startsWith(`${name} ·`),
-        );
-        expect(option).toBeDefined();
-        expect(option).toBeEnabled();
-      }
-    },
-  );
+    const destination = screen.getByLabelText("Destination unit");
+    const displayedOptions = within(destination).getAllByRole("option").slice(1);
+    expect(displayedOptions).toHaveLength(expectedNames.length);
+    for (const name of expectedNames) {
+      const option = displayedOptions.find((candidate) =>
+        candidate.textContent?.startsWith(`${name} ·`),
+      );
+      expect(option).toBeDefined();
+      expect(option).toBeEnabled();
+    }
+  });
 
   it("associates destination errors without retaining stale descriptions", async () => {
     const user = userEvent.setup();
@@ -84,10 +83,7 @@ describe("dynamic routing destinations", () => {
     expect(await axe(view.container)).toHaveNoViolations();
 
     await user.click(screen.getByRole("button", { name: "Route to Ops group" }));
-    expect(screen.getByText("Choose a destination unit.")).toHaveAttribute(
-      "id",
-      error.id,
-    );
+    expect(screen.getByText("Choose a destination unit.")).toHaveAttribute("id", error.id);
     await user.selectOptions(destination, organisationUnit("ACSA_B_OPS").id);
     expect(destination).toHaveAttribute("aria-invalid", "false");
     expect(destination).not.toHaveAttribute("aria-describedby");
@@ -119,9 +115,14 @@ describe("dynamic routing destinations", () => {
     await user.type(search, "vertex_ops");
     expect(screen.getByText("1 of 3 destinations shown")).toBeInTheDocument();
     expect(screen.getByRole("option", { name: /Vertex Ops/ })).toBeEnabled();
-    expect(screen.getByRole("group", { name: "Selected destination" })).toHaveTextContent("Aurora Ops");
+    expect(screen.getByRole("group", { name: "Selected destination" })).toHaveTextContent(
+      "Aurora Ops",
+    );
     expect(destination).toHaveValue(organisationUnit("AURORA_OPS").id);
-    await user.type(screen.getByLabelText("Routing note"), "Retain the selected route while searching.");
+    await user.type(
+      screen.getByLabelText("Routing note"),
+      "Retain the selected route while searching.",
+    );
     await user.click(screen.getByRole("button", { name: "Route to Ops group" }));
     expect(submit).toHaveBeenCalledWith({
       action: "send_to_allocation",
@@ -242,7 +243,9 @@ describe("dynamic routing destinations", () => {
     expect(await screen.findByRole("option", { name: /JOCK/ })).toBeEnabled();
     expect(screen.getByRole("option", { name: /SYGOC/ })).toBeEnabled();
     expect(screen.getByRole("option", { name: /MYGOC/ })).toBeEnabled();
-    expect(screen.getByRole("navigation", { name: "Current routing path" })).toHaveTextContent("CRIOC");
+    expect(screen.getByRole("navigation", { name: "Current routing path" })).toHaveTextContent(
+      "CRIOC",
+    );
     expect(routingCalls).toBe(1);
   });
 

@@ -4,7 +4,9 @@ import { formatActionDate, freshnessMessage, humaniseCode, safeWorkspaceHref } f
 
 describe("my work presentation policy", () => {
   it("permits only known relative workspace links", () => {
-    expect(safeWorkspaceHref("/requests/item?tab=history#event")).toBe("/requests/item?tab=history#event");
+    expect(safeWorkspaceHref("/requests/item?tab=history#event")).toBe(
+      "/requests/item?tab=history#event",
+    );
     expect(safeWorkspaceHref("/notifications")).toBe("/notifications");
     expect(safeWorkspaceHref("requests/item")).toBeNull();
     expect(safeWorkspaceHref("//attacker.test/requests")).toBeNull();
@@ -23,11 +25,17 @@ describe("my work presentation policy", () => {
   it("explains every projection freshness state", () => {
     const base = { projectedAt: null, sourceChangedAt: null, lagSeconds: null, pendingCount: 0 };
     expect(freshnessMessage({ ...base, status: "CURRENT" })).toBeNull();
-    expect(freshnessMessage({ ...base, status: "CURRENT", pendingCount: 1 })).toContain("1 update is");
-    expect(freshnessMessage({ ...base, status: "STALE", pendingCount: 2 })).toContain("2 updates are");
+    expect(freshnessMessage({ ...base, status: "CURRENT", pendingCount: 1 })).toContain(
+      "1 update is",
+    );
+    expect(freshnessMessage({ ...base, status: "STALE", pendingCount: 2 })).toContain(
+      "2 updates are",
+    );
     expect(freshnessMessage({ ...base, status: "DEGRADED" })).toContain("Live updates");
     expect(freshnessMessage({ ...base, status: "STALE" })).toContain("out of date");
-    expect(freshnessMessage({ ...base, status: "STALE", lagSeconds: 0 })).toContain("1 minute behind");
+    expect(freshnessMessage({ ...base, status: "STALE", lagSeconds: 0 })).toContain(
+      "1 minute behind",
+    );
     expect(freshnessMessage({ ...base, status: "STALE", lagSeconds: 61 })).toContain("2 minutes");
   });
 });

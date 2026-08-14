@@ -37,7 +37,12 @@ function panel(access = manager, request = requestDetail) {
 
 describe("task hasteners", () => {
   it("shows history without controls and hides an empty unavailable panel", () => {
-    const member = { ...manager, workspacePosition: "MEMBER" as const, grantId: null, permissions: [] };
+    const member = {
+      ...manager,
+      workspacePosition: "MEMBER" as const,
+      grantId: null,
+      permissions: [],
+    };
     const completed = { ...requestDetail, status: "COMPLETED" as const, events: [history] };
     const view = render(panel(member, completed));
     expect(screen.getByText(/Hastener sent to Lewis Ferguson/)).toBeInTheDocument();
@@ -48,7 +53,14 @@ describe("task hasteners", () => {
     expect(screen.queryByRole("button", { name: "Send hastener" })).not.toBeInTheDocument();
     view.rerender(panel(manager, completed));
     expect(screen.queryByRole("button", { name: "Send hastener" })).not.toBeInTheDocument();
-    view.rerender(panel(manager, { ...requestDetail, assignedSpecialist: null, contributors: [], events: [history] }));
+    view.rerender(
+      panel(manager, {
+        ...requestDetail,
+        assignedSpecialist: null,
+        contributors: [],
+        events: [history],
+      }),
+    );
     expect(screen.queryByRole("button", { name: "Send hastener" })).not.toBeInTheDocument();
     view.rerender(panel(member, { ...completed, events: [] }));
     expect(view.container).toBeEmptyDOMElement();
@@ -56,16 +68,24 @@ describe("task hasteners", () => {
 
   it("reports a safe API failure while retaining the reminder", async () => {
     mockFetch(async (url) => {
-      if (url.pathname.endsWith("/hasteners")) return json({ detail: "The reminder conflicts with current work." }, 409);
+      if (url.pathname.endsWith("/hasteners"))
+        return json({ detail: "The reminder conflicts with current work." }, 409);
       throw new Error(`Unexpected ${url.pathname}`);
     });
     const user = userEvent.setup();
     render(panel());
     await user.click(screen.getByRole("button", { name: "Send hastener" }));
-    await user.type(screen.getByLabelText(/^Message/), "Please confirm current progress before review.");
+    await user.type(
+      screen.getByLabelText(/^Message/),
+      "Please confirm current progress before review.",
+    );
     await user.click(screen.getByRole("button", { name: "Send and record hastener" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("The reminder conflicts with current work");
-    expect(screen.getByLabelText(/^Message/)).toHaveValue("Please confirm current progress before review.");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The reminder conflicts with current work",
+    );
+    expect(screen.getByLabelText(/^Message/)).toHaveValue(
+      "Please confirm current progress before review.",
+    );
   });
 
   it("uses a generic message for an unexpected transport failure", async () => {
@@ -73,7 +93,10 @@ describe("task hasteners", () => {
     const user = userEvent.setup();
     render(panel());
     await user.click(screen.getByRole("button", { name: "Send hastener" }));
-    await user.type(screen.getByLabelText(/^Message/), "Please confirm current progress before review.");
+    await user.type(
+      screen.getByLabelText(/^Message/),
+      "Please confirm current progress before review.",
+    );
     await user.click(screen.getByRole("button", { name: "Send and record hastener" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("The hastener could not be sent");
   });

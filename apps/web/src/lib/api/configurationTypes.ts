@@ -1,12 +1,7 @@
 import type { OrganisationUnit } from "./types";
 
 export type ConfigurationStatus =
-  | "DRAFT"
-  | "VALIDATED"
-  | "AWAITING_APPROVAL"
-  | "ACTIVE"
-  | "SUPERSEDED"
-  | "REJECTED";
+  "DRAFT" | "VALIDATED" | "AWAITING_APPROVAL" | "ACTIVE" | "SUPERSEDED" | "REJECTED";
 
 export interface ConfigurationUnitDraft {
   unitId: string;
@@ -119,7 +114,13 @@ export interface ConfigurationPreview {
 
 export type ConfigurationDraftInput = Pick<
   ConfigurationVersion,
-  "basedOnVersionId" | "candidateGroups" | "edges" | "effectiveFrom" | "label" | "units" | "workflowTemplate"
+  | "basedOnVersionId"
+  | "candidateGroups"
+  | "edges"
+  | "effectiveFrom"
+  | "label"
+  | "units"
+  | "workflowTemplate"
 >;
 
 export interface WorkflowDefinition {

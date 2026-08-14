@@ -1,16 +1,7 @@
-export type ActionSection =
-  | "NEEDS_MY_ACTION"
-  | "WAITING"
-  | "DUE_SOON"
-  | "RECENTLY_COMPLETED";
+export type ActionSection = "NEEDS_MY_ACTION" | "WAITING" | "DUE_SOON" | "RECENTLY_COMPLETED";
 
 export type ActionColumn =
-  | "REFERENCE"
-  | "TITLE"
-  | "CURRENT_OWNER"
-  | "REQUIRED_BY"
-  | "AGE"
-  | "LAST_CHANGED";
+  "REFERENCE" | "TITLE" | "CURRENT_OWNER" | "REQUIRED_BY" | "AGE" | "LAST_CHANGED";
 
 export type ActionFilters = {
   sections: ActionSection[];
@@ -69,7 +60,8 @@ export type SavedActionViewInput = Pick<SavedActionView, "name" | "filters" | "v
 export type SavedActionViewUpdate = SavedActionViewInput & { expectedVersion: number };
 
 export type NotificationStateFilter = "UNREAD" | "READ" | "ARCHIVED" | "ACTION_COMPLETED";
-export type NotificationStateAction = "MARK_READ" | "MARK_UNREAD" | "ARCHIVE" | "RESTORE" | "COMPLETE_ACTION";
+export type NotificationStateAction =
+  "MARK_READ" | "MARK_UNREAD" | "ARCHIVE" | "RESTORE" | "COMPLETE_ACTION";
 
 export type PersonalNotification = {
   id: string;
@@ -105,7 +97,19 @@ export type NotificationList = {
 
 export type NotificationCount = { unreadCount: number; projectedAt: string | null };
 export type NotificationStateResult = {
-  items: Array<Pick<PersonalNotification, "id" | "isRead" | "isArchived" | "isActionCompleted" | "readAt" | "archivedAt" | "actionCompletedAt" | "version">>;
+  items: Array<
+    Pick<
+      PersonalNotification,
+      | "id"
+      | "isRead"
+      | "isArchived"
+      | "isActionCompleted"
+      | "readAt"
+      | "archivedAt"
+      | "actionCompletedAt"
+      | "version"
+    >
+  >;
 };
 export type NotificationPreference = {
   eventGroup: string;

@@ -1,0 +1,212 @@
+.configuration-organisation-grid {
+  display: grid;
+  grid-template-columns: minmax(270px, 0.9fr) minmax(280px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.configuration-breadcrumb-empty {
+  margin: -9px 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.configuration-breadcrumbs {
+  margin-top: -9px;
+  overflow: hidden;
+}
+.configuration-breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.configuration-breadcrumbs li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: var(--muted);
+}
+.configuration-breadcrumbs button {
+  max-width: 210px;
+  overflow: hidden;
+  border: 0;
+  padding: 4px 5px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.configuration-breadcrumbs button:hover,
+.configuration-breadcrumbs button:focus-visible,
+.configuration-breadcrumbs button[aria-current] {
+  color: var(--accent);
+}
+.configuration-tree-panel {
+  min-width: 0;
+}
+.configuration-tree-search {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.configuration-tree-search > span:last-child {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 0 8px;
+  background: var(--surface);
+  color: var(--muted);
+}
+.configuration-tree-search input {
+  min-width: 0;
+  border: 0;
+  padding: 9px 2px;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 500;
+}
+.configuration-tree-search > span:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.configuration-tree-search button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  padding: 5px;
+  background: transparent;
+  color: var(--muted);
+}
+.configuration-tree-results {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 0.64rem;
+}
+.configuration-tree {
+  min-height: 260px;
+  border-block: 1px solid var(--border);
+}
+.configuration-tree__item {
+  display: grid;
+  grid-template-columns: 28px minmax(100px, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+  width: 100%;
+  min-height: 55px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 8px 9px 8px calc(9px + var(--tree-depth) * 18px);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+.configuration-tree__item:hover {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+.configuration-tree__item--selected {
+  box-shadow: inset 2px 0 var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+.configuration-tree__item > span:first-child {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+.configuration-tree__item > span:nth-child(2) {
+  display: grid;
+  gap: 3px;
+}
+.configuration-tree__item strong {
+  font-size: 0.78rem;
+}
+.configuration-tree__item small {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+}
+.configuration-tree__item em {
+  color: var(--muted);
+  font-size: 0.64rem;
+  font-style: normal;
+  text-align: right;
+}
+.configuration-unit-form,
+.workflow-template-form {
+  display: grid;
+  gap: 14px;
+  border-top: 1px solid var(--border-strong);
+  padding-top: 18px;
+}
+.configuration-unit-form .section-heading,
+.workflow-template-form .section-heading {
+  margin: 0;
+}
+.configuration-unit-form fieldset,
+.workflow-template-form > fieldset {
+  display: grid;
+  gap: 13px;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+.configuration-form-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+.configuration-inline-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.workflow-template-form {
+  border-top-color: var(--accent);
+  padding-top: 22px;
+}
+.configuration-checks {
+  display: flex !important;
+  gap: 15px !important;
+  border-block: 1px solid var(--border) !important;
+  padding: 12px 0 !important;
+}
+.configuration-checks legend {
+  padding-right: 12px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+.configuration-checks label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+}
+.configuration-checks input {
+  accent-color: var(--accent);
+}
+.configuration-task-table {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+}
+.configuration-task-table small,
+.configuration-review .form-field small {
+  color: var(--muted);
+  font-size: 0.63rem;
+  font-weight: 450;
+  line-height: 1.45;
+}

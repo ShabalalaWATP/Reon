@@ -38,7 +38,11 @@ export function StatusJourney({ status }: { status: RequestStatus }) {
       {stages.map((stage, index) => {
         const state = index < current ? "complete" : index === current ? "current" : "upcoming";
         return (
-          <li aria-current={state === "current" ? "step" : undefined} className={`journey-stage journey-stage--${state}`} key={stage}>
+          <li
+            aria-current={state === "current" ? "step" : undefined}
+            className={`journey-stage journey-stage--${state}`}
+            key={stage}
+          >
             <span aria-hidden="true">{state === "complete" ? <Check size={13} /> : index + 1}</span>
             <small>{stage}</small>
           </li>

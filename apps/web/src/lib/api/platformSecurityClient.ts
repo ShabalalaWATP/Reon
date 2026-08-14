@@ -1,10 +1,6 @@
 import { apiRequest } from "./transport";
 
-export type PlatformClassification =
-  | "OFFICIAL"
-  | "OFFICIAL-SENSITIVE"
-  | "SECRET"
-  | "TOP-SECRET";
+export type PlatformClassification = "OFFICIAL" | "OFFICIAL-SENSITIVE" | "SECRET" | "TOP-SECRET";
 
 export type PlatformClassificationSetting = {
   classification: PlatformClassification;
@@ -12,8 +8,7 @@ export type PlatformClassificationSetting = {
   updatedAt: string;
 };
 export const platformSecurityApi = {
-  classification: () =>
-    apiRequest<PlatformClassificationSetting>("/platform/classification"),
+  classification: () => apiRequest<PlatformClassificationSetting>("/platform/classification"),
   requestPasswordAssistance: (email: string) =>
     apiRequest<{ status: "accepted"; message: string }>("/auth/password-assistance", {
       body: { email },
@@ -23,9 +18,10 @@ export const platformSecurityApi = {
     classification: PlatformClassification,
     expectedVersion: number,
     csrfToken: string,
-  ) => apiRequest<PlatformClassificationSetting>("/admin/platform/classification", {
-    body: { classification, expectedVersion },
-    csrfToken,
-    method: "PATCH",
-  }),
+  ) =>
+    apiRequest<PlatformClassificationSetting>("/admin/platform/classification", {
+      body: { classification, expectedVersion },
+      csrfToken,
+      method: "PATCH",
+    }),
 };

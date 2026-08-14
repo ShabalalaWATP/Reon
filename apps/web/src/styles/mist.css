@@ -1,8 +1,31 @@
-.mist-reveal { position: fixed; inset: 0; z-index: 900; overflow: hidden; pointer-events: none; }
-.mist-reveal::before { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 90% at 50% 10%, #101a2c 0%, #070b14 55%, #04060c 100%); }
-.mist-reveal--dense { animation: mist-roll-in .55s ease-out both; }
-.mist-reveal__filter { position: absolute; width: 0; height: 0; }
-.mist-reveal__layer { position: absolute; inset: -22%; display: block; mix-blend-mode: screen; will-change: transform, opacity; }
+.mist-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  overflow: hidden;
+  pointer-events: none;
+}
+.mist-reveal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 50% 10%, #101a2c 0%, #070b14 55%, #04060c 100%);
+}
+.mist-reveal--dense {
+  animation: mist-roll-in 0.55s ease-out both;
+}
+.mist-reveal__filter {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.mist-reveal__layer {
+  position: absolute;
+  inset: -22%;
+  display: block;
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
 .mist-reveal__layer--far {
   background:
     radial-gradient(46% 38% at 18% 34%, rgb(255 255 255 / 62%), transparent 70%),
@@ -37,26 +60,126 @@
   filter: blur(30px);
   animation: mist-stream 13s ease-in-out infinite alternate;
 }
-.mist-reveal__status { position: absolute; inset: 0; display: grid; place-content: center; gap: 8px; margin: 0; color: #eef3ff; text-align: center; text-shadow: 0 2px 18px rgb(3 6 12 / 55%); animation: mist-status-in .9s ease-out both; }
-.mist-reveal__status strong { font-size: 1.7rem; font-weight: 800; letter-spacing: .34em; text-indent: .34em; }
-.mist-reveal__status span { color: rgb(238 243 255 / 72%); font-family: var(--font-mono); font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; }
+.mist-reveal__status {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  margin: 0;
+  color: #eef3ff;
+  text-align: center;
+  text-shadow: 0 2px 18px rgb(3 6 12 / 55%);
+  animation: mist-status-in 0.9s ease-out both;
+}
+.mist-reveal__status strong {
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+}
+.mist-reveal__status span {
+  color: rgb(238 243 255 / 72%);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
 
-.mist-reveal--clearing::before { animation: mist-backdrop-clear 2.3s ease-in both; }
-.mist-reveal--clearing .mist-reveal__layer--far { animation: mist-clear-far 3.2s ease-in both; }
-.mist-reveal--clearing .mist-reveal__layer--mid { animation: mist-clear-mid 3.6s ease-in both; }
-.mist-reveal--clearing .mist-reveal__layer--near { animation: mist-clear-near 3.9s ease-in both; }
-.mist-reveal--clearing .mist-reveal__layer--drift { animation: mist-clear-drift 3.9s ease-in both; }
-.mist-reveal--clearing .mist-reveal__status { animation: mist-status-out .9s ease-in both; }
+.mist-reveal--clearing::before {
+  animation: mist-backdrop-clear 2.3s ease-in both;
+}
+.mist-reveal--clearing .mist-reveal__layer--far {
+  animation: mist-clear-far 3.2s ease-in both;
+}
+.mist-reveal--clearing .mist-reveal__layer--mid {
+  animation: mist-clear-mid 3.6s ease-in both;
+}
+.mist-reveal--clearing .mist-reveal__layer--near {
+  animation: mist-clear-near 3.9s ease-in both;
+}
+.mist-reveal--clearing .mist-reveal__layer--drift {
+  animation: mist-clear-drift 3.9s ease-in both;
+}
+.mist-reveal--clearing .mist-reveal__status {
+  animation: mist-status-out 0.9s ease-in both;
+}
 
-@keyframes mist-roll-in { from { opacity: 0; } }
-@keyframes mist-drift-a { from { transform: translate3d(-2.5%, -1.5%, 0) scale(1); } to { transform: translate3d(2.5%, 1.5%, 0) scale(1.06); } }
-@keyframes mist-drift-b { from { transform: translate3d(2%, 1%, 0) scale(1.04); } to { transform: translate3d(-2.5%, -2%, 0) scale(1); } }
-@keyframes mist-drift-c { from { transform: translate3d(-1.5%, 2%, 0) scale(1); } to { transform: translate3d(2%, -1.5%, 0) scale(1.08); } }
-@keyframes mist-stream { from { transform: translateX(-6%); } to { transform: translateX(6%); } }
-@keyframes mist-backdrop-clear { to { opacity: 0; } }
-@keyframes mist-clear-far { to { transform: translate3d(-4%, -14%, 0) scale(1.18); opacity: 0; } }
-@keyframes mist-clear-mid { to { transform: translate3d(-26%, -6%, 0) scale(1.14); opacity: 0; } }
-@keyframes mist-clear-near { to { transform: translate3d(28%, -10%, 0) scale(1.22); opacity: 0; } }
-@keyframes mist-clear-drift { to { transform: translate3d(40%, 0, 0); opacity: 0; } }
-@keyframes mist-status-in { from { opacity: 0; transform: translateY(6px); } }
-@keyframes mist-status-out { to { opacity: 0; transform: translateY(-8px); } }
+@keyframes mist-roll-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes mist-drift-a {
+  from {
+    transform: translate3d(-2.5%, -1.5%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(2.5%, 1.5%, 0) scale(1.06);
+  }
+}
+@keyframes mist-drift-b {
+  from {
+    transform: translate3d(2%, 1%, 0) scale(1.04);
+  }
+  to {
+    transform: translate3d(-2.5%, -2%, 0) scale(1);
+  }
+}
+@keyframes mist-drift-c {
+  from {
+    transform: translate3d(-1.5%, 2%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(2%, -1.5%, 0) scale(1.08);
+  }
+}
+@keyframes mist-stream {
+  from {
+    transform: translateX(-6%);
+  }
+  to {
+    transform: translateX(6%);
+  }
+}
+@keyframes mist-backdrop-clear {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes mist-clear-far {
+  to {
+    transform: translate3d(-4%, -14%, 0) scale(1.18);
+    opacity: 0;
+  }
+}
+@keyframes mist-clear-mid {
+  to {
+    transform: translate3d(-26%, -6%, 0) scale(1.14);
+    opacity: 0;
+  }
+}
+@keyframes mist-clear-near {
+  to {
+    transform: translate3d(28%, -10%, 0) scale(1.22);
+    opacity: 0;
+  }
+}
+@keyframes mist-clear-drift {
+  to {
+    transform: translate3d(40%, 0, 0);
+    opacity: 0;
+  }
+}
+@keyframes mist-status-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes mist-status-out {
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}

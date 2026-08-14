@@ -3,7 +3,9 @@
   border-radius: var(--radius-lg);
   background: var(--surface-raised);
   overflow: hidden;
-  transition: border-color 160ms ease, background 160ms ease;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
 }
 
 .related-record-panel--expanded {
@@ -27,21 +29,21 @@
 
 .related-record-heading > div > span {
   color: var(--accent);
-  font-size: .61rem;
+  font-size: 0.61rem;
   font-weight: 700;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .related-record-heading h2 {
   margin: 0;
-  font-size: .96rem;
+  font-size: 0.96rem;
 }
 
 .related-record-heading p {
   margin: 0;
   color: var(--muted);
-  font-size: .7rem;
+  font-size: 0.7rem;
   line-height: 1.35;
 }
 
@@ -56,10 +58,13 @@
   background: transparent;
   color: var(--text);
   font: inherit;
-  font-size: .7rem;
+  font-size: 0.7rem;
   font-weight: 700;
   cursor: pointer;
-  transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    color 140ms ease;
 }
 
 .related-record-toggle:hover,
@@ -94,7 +99,7 @@
   max-width: 68ch;
   margin: 0;
   color: var(--muted);
-  font-size: .75rem;
+  font-size: 0.75rem;
   line-height: 1.5;
 }
 
@@ -122,7 +127,7 @@
 .related-record-mode {
   margin: 0;
   color: var(--muted);
-  font-size: .66rem;
+  font-size: 0.66rem;
 }
 
 .related-record-scroll {
@@ -158,7 +163,9 @@
   color: var(--text);
   text-align: left;
   cursor: pointer;
-  transition: background 130ms ease, transform 130ms ease;
+  transition:
+    background 130ms ease,
+    transform 130ms ease;
 }
 
 .related-record-results li:last-child button {
@@ -184,8 +191,12 @@
   font-family: var(--font-mono);
 }
 
-.match-score--strong { border-color: var(--teal); }
-.match-score--possible { border-color: var(--accent); }
+.match-score--strong {
+  border-color: var(--teal);
+}
+.match-score--possible {
+  border-color: var(--accent);
+}
 
 .match-copy {
   display: grid;
@@ -200,13 +211,13 @@
 }
 
 .match-copy > strong {
-  font-size: .79rem;
+  font-size: 0.79rem;
   line-height: 1.35;
 }
 
 .match-copy em {
   color: var(--accent);
-  font-size: .58rem;
+  font-size: 0.58rem;
   font-style: normal;
   text-transform: uppercase;
 }
@@ -222,7 +233,7 @@
 .related-record-results small,
 .related-record-links small {
   color: var(--muted);
-  font-size: .66rem;
+  font-size: 0.66rem;
   line-height: 1.35;
 }
 
@@ -240,7 +251,7 @@
 .related-record-review li {
   border-bottom: 1px solid var(--border);
   padding: 7px 0;
-  font-size: .72rem;
+  font-size: 0.72rem;
 }
 
 .related-record-review li p,
@@ -261,8 +272,14 @@
 }
 
 @keyframes related-record-reveal {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 520px) {

@@ -9,7 +9,10 @@ interface RouteErrorBoundaryState {
   failed: boolean;
 }
 
-export class RouteErrorBoundary extends Component<RouteErrorBoundaryProps, RouteErrorBoundaryState> {
+export class RouteErrorBoundary extends Component<
+  RouteErrorBoundaryProps,
+  RouteErrorBoundaryState
+> {
   state: RouteErrorBoundaryState = { failed: false };
 
   static getDerivedStateFromError(): RouteErrorBoundaryState {

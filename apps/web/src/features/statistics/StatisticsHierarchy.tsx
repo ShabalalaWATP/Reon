@@ -1,7 +1,4 @@
-import type {
-  StatisticsScope,
-  StatisticsUnit,
-} from "../../lib/api/statisticsTypes";
+import type { StatisticsScope, StatisticsUnit } from "../../lib/api/statisticsTypes";
 
 export function StatisticsHierarchy({
   scope,
@@ -16,11 +13,9 @@ export function StatisticsHierarchy({
 }) {
   return (
     <div className="statistics-hierarchy">
-      <label className="form-field">Organisation
-        <select
-          onChange={(event) => onSelect(event.target.value)}
-          value={selectedUnitId}
-        >
+      <label className="form-field">
+        Organisation
+        <select onChange={(event) => onSelect(event.target.value)} value={selectedUnitId}>
           {scope.units.map((unit) => (
             <option key={unit.id} value={unit.id}>
               {`${"  ".repeat(unit.depth)}${unit.name}`}

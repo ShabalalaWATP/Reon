@@ -15,14 +15,24 @@ type ReviewInput = { expectedVersion: number; reason: string };
 export const configurationApi = {
   versions: () => apiRequest<{ items: ConfigurationVersionSummary[] }>(`${root}/versions`),
   create: (input: ConfigurationDraftInput, csrfToken: string) =>
-    apiRequest<ConfigurationVersion>(`${root}/versions`, { body: input, csrfToken, method: "POST" }),
+    apiRequest<ConfigurationVersion>(`${root}/versions`, {
+      body: input,
+      csrfToken,
+      method: "POST",
+    }),
   version: (versionId: string) => apiRequest<ConfigurationVersion>(versionPath(versionId)),
   replace: (
     versionId: string,
     input: ConfigurationDraftInput & { expectedVersion: number },
     csrfToken: string,
-  ) => apiRequest<ConfigurationVersion>(versionPath(versionId), { body: input, csrfToken, method: "PUT" }),
-  preview: (versionId: string) => apiRequest<ConfigurationPreview>(`${versionPath(versionId)}/preview`),
+  ) =>
+    apiRequest<ConfigurationVersion>(versionPath(versionId), {
+      body: input,
+      csrfToken,
+      method: "PUT",
+    }),
+  preview: (versionId: string) =>
+    apiRequest<ConfigurationPreview>(`${versionPath(versionId)}/preview`),
   validate: (versionId: string, input: { expectedVersion: number }, csrfToken: string) =>
     configurationAction(versionId, "validate", input, csrfToken),
   submit: (versionId: string, input: ReviewInput, csrfToken: string) =>
@@ -34,10 +44,12 @@ export const configurationApi = {
   activate: (versionId: string, input: ReviewInput, csrfToken: string) =>
     configurationAction(versionId, "activate", input, csrfToken),
   active: () => apiRequest<ConfigurationVersion>(`${root}/active`),
-  organisation: (versionId: string, at?: string) => apiRequest<ConfigurationSnapshot>(
-    `${versionPath(versionId)}/organisation${at ? `?at=${encodeURIComponent(at)}` : ""}`,
-  ),
-  workflowDefinitions: () => apiRequest<{ items: WorkflowDefinition[] }>(`${root}/workflow-definitions`),
+  organisation: (versionId: string, at?: string) =>
+    apiRequest<ConfigurationSnapshot>(
+      `${versionPath(versionId)}/organisation${at ? `?at=${encodeURIComponent(at)}` : ""}`,
+    ),
+  workflowDefinitions: () =>
+    apiRequest<{ items: WorkflowDefinition[] }>(`${root}/workflow-definitions`),
 };
 
 function configurationAction<T extends { expectedVersion: number }>(

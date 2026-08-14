@@ -26,7 +26,15 @@ export function ComparisonPanel({ context, rows }: { context: string; rows: Peri
     chartValue: metric(row.current, row.unit),
     values: [metric(row.current, row.unit), metric(row.previous, row.unit), change(row)],
   }));
-  return <ParityPanel context={context} headers={["Measure", "Current", "Previous", "Change"]} rows={display} summary={comparisonSummary(rows)} title="Period comparison" />;
+  return (
+    <ParityPanel
+      context={context}
+      headers={["Measure", "Current", "Previous", "Change"]}
+      rows={display}
+      summary={comparisonSummary(rows)}
+      title="Period comparison"
+    />
+  );
 }
 
 export function BottleneckPanel({ context, rows }: { context: string; rows: BottleneckMeasure[] }) {
@@ -35,20 +43,54 @@ export function BottleneckPanel({ context, rows }: { context: string; rows: Bott
     label: row.label,
     magnitude: row.p90AgeHours ?? 0,
     chartValue: row.p90AgeHours === null ? "Not available" : `${row.p90AgeHours} h`,
-    values: [value(row.activeCount), value(row.medianAgeHours === null ? null : `${row.medianAgeHours} h`), value(row.p90AgeHours === null ? null : `${row.p90AgeHours} h`), value(row.overdueCount)],
+    values: [
+      value(row.activeCount),
+      value(row.medianAgeHours === null ? null : `${row.medianAgeHours} h`),
+      value(row.p90AgeHours === null ? null : `${row.p90AgeHours} h`),
+      value(row.overdueCount),
+    ],
   }));
-  return <ParityPanel context={context} headers={["Stage", "Active", "Median age", "90th percentile", "Overdue"]} rows={display} summary={bottleneckSummary(rows)} title="Stage bottlenecks" />;
+  return (
+    <ParityPanel
+      context={context}
+      headers={["Stage", "Active", "Median age", "90th percentile", "Overdue"]}
+      rows={display}
+      summary={bottleneckSummary(rows)}
+      title="Stage bottlenecks"
+    />
+  );
 }
 
-export function CapacityTrendPanel({ context, rows }: { context: string; rows: CapacityMeasure[] }) {
+export function CapacityTrendPanel({
+  context,
+  rows,
+}: {
+  context: string;
+  rows: CapacityMeasure[];
+}) {
   const display = rows.map((row) => ({
     key: row.date,
     label: formatDate(row.date),
     magnitude: row.projectedDemandMinutes,
     chartValue: hours(row.projectedDemandMinutes),
-    values: [hours(row.availableMinutes), hours(row.reservedMinutes), hours(row.activeWorkMinutes), hours(row.projectedDemandMinutes), row.estimate ? "Estimate" : "Observed"],
+    values: [
+      hours(row.availableMinutes),
+      hours(row.reservedMinutes),
+      hours(row.activeWorkMinutes),
+      hours(row.projectedDemandMinutes),
+      row.estimate ? "Estimate" : "Observed",
+    ],
   }));
-  return <ParityPanel context={context} headers={["Date", "Available", "Reserved", "Active work", "Demand", "Basis"]} rows={display} summary={capacitySummary(rows)} title="Capacity and demand" wide />;
+  return (
+    <ParityPanel
+      context={context}
+      headers={["Date", "Available", "Reserved", "Active work", "Demand", "Basis"]}
+      rows={display}
+      summary={capacitySummary(rows)}
+      title="Capacity and demand"
+      wide
+    />
+  );
 }
 
 export function ReleasePanel({ context, rows }: { context: string; rows: ReleaseMeasure[] }) {
@@ -59,18 +101,44 @@ export function ReleasePanel({ context, rows }: { context: string; rows: Release
     chartValue: row.count ?? "Not available",
     values: [value(row.count), row.medianHours === null ? "Not available" : `${row.medianHours} h`],
   }));
-  return <ParityPanel context={context} headers={["Release measure", "Count", "Median cycle"]} rows={display} summary={highestSummary(rows, "release events")} title="Release cycle" />;
+  return (
+    <ParityPanel
+      context={context}
+      headers={["Release measure", "Count", "Median cycle"]}
+      rows={display}
+      summary={highestSummary(rows, "release events")}
+      title="Release cycle"
+    />
+  );
 }
 
-export function NotificationPanel({ context, rows }: { context: string; rows: NotificationMeasure[] }) {
+export function NotificationPanel({
+  context,
+  rows,
+}: {
+  context: string;
+  rows: NotificationMeasure[];
+}) {
   const display = rows.map((row) => ({
     key: row.key,
     label: row.label,
     magnitude: row.unresolvedCount ?? 0,
     chartValue: row.unresolvedCount ?? "Not available",
-    values: [value(row.count), row.medianResponseHours === null ? "Not available" : `${row.medianResponseHours} h`, value(row.unresolvedCount)],
+    values: [
+      value(row.count),
+      row.medianResponseHours === null ? "Not available" : `${row.medianResponseHours} h`,
+      value(row.unresolvedCount),
+    ],
   }));
-  return <ParityPanel context={context} headers={["Notification group", "Created", "Median response", "Unresolved"]} rows={display} summary={notificationSummary(rows)} title="Notification response" />;
+  return (
+    <ParityPanel
+      context={context}
+      headers={["Notification group", "Created", "Median response", "Unresolved"]}
+      rows={display}
+      summary={notificationSummary(rows)}
+      title="Notification response"
+    />
+  );
 }
 
 export function IterationPanel({ context, rows }: { context: string; rows: IterationMeasure[] }) {
@@ -78,13 +146,32 @@ export function IterationPanel({ context, rows }: { context: string; rows: Itera
     key: row.key,
     label: row.label,
     magnitude: row.completionPercentage ?? 0,
-    chartValue: row.completionPercentage === null ? "Not available" : `${row.completionPercentage}%`,
-    values: [value(row.committedCount), value(row.completedCount), row.completionPercentage === null ? "Not available" : `${row.completionPercentage}%`],
+    chartValue:
+      row.completionPercentage === null ? "Not available" : `${row.completionPercentage}%`,
+    values: [
+      value(row.committedCount),
+      value(row.completedCount),
+      row.completionPercentage === null ? "Not available" : `${row.completionPercentage}%`,
+    ],
   }));
-  return <ParityPanel context={context} headers={["Iteration", "Committed", "Completed", "Completion"]} rows={display} summary={highestSummary(rows, "completed commitments")} title="Iteration commitments" />;
+  return (
+    <ParityPanel
+      context={context}
+      headers={["Iteration", "Committed", "Completed", "Completion"]}
+      rows={display}
+      summary={highestSummary(rows, "completed commitments")}
+      title="Iteration commitments"
+    />
+  );
 }
 
-export function ProjectionPanel({ context, projection }: { context: string; projection: StatisticsEvolution["projection"] }) {
+export function ProjectionPanel({
+  context,
+  projection,
+}: {
+  context: string;
+  projection: StatisticsEvolution["projection"];
+}) {
   const display = projection.periods.map((row) => ({
     key: row.date,
     label: formatDate(row.date),
@@ -92,7 +179,16 @@ export function ProjectionPanel({ context, projection }: { context: string; proj
     chartValue: row.demandCount,
     values: [row.demandCount, row.capacityCount, row.demandCount - row.capacityCount],
   }));
-  return <ParityPanel context={context} headers={["Period", "Estimated demand", "Estimated capacity", "Gap"]} rows={display} summary={projectionSummary(projection.periods, projection.label)} title="Demand projection" wide />;
+  return (
+    <ParityPanel
+      context={context}
+      headers={["Period", "Estimated demand", "Estimated capacity", "Gap"]}
+      rows={display}
+      summary={projectionSummary(projection.periods, projection.label)}
+      title="Demand projection"
+      wide
+    />
+  );
 }
 
 function ParityPanel({
@@ -113,10 +209,49 @@ function ParityPanel({
   const maximum = Math.max(1, ...rows.map((row) => row.magnitude));
   return (
     <section className={wide ? "statistics-parity statistics-parity--wide" : "statistics-parity"}>
-      <header><h3>{title}</h3><small>{context}</small></header>
+      <header>
+        <h3>{title}</h3>
+        <small>{context}</small>
+      </header>
       <p className="statistics-text-summary">{summary}</p>
-      <div aria-hidden="true" className="statistics-parity-chart">{rows.map((row) => <div key={row.key}><span>{row.label}</span><i><b style={{ width: `${(row.magnitude / maximum) * 100}%` }} /></i><strong>{row.chartValue}</strong></div>)}</div>
-      <details className="statistics-data-disclosure"><summary>View data</summary><div className="statistics-table-wrap"><table className="statistics-table"><caption>{title} data</caption><thead><tr>{headers.map((header) => <th key={header} scope="col">{header}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={row.key}><th scope="row">{row.label}</th>{row.values.map((cell, index) => <td key={`${row.key}-${index}`}>{cell}</td>)}</tr>)}</tbody></table></div></details>
+      <div aria-hidden="true" className="statistics-parity-chart">
+        {rows.map((row) => (
+          <div key={row.key}>
+            <span>{row.label}</span>
+            <i>
+              <b style={{ width: `${(row.magnitude / maximum) * 100}%` }} />
+            </i>
+            <strong>{row.chartValue}</strong>
+          </div>
+        ))}
+      </div>
+      <details className="statistics-data-disclosure">
+        <summary>View data</summary>
+        <div className="statistics-table-wrap">
+          <table className="statistics-table">
+            <caption>{title} data</caption>
+            <thead>
+              <tr>
+                {headers.map((header) => (
+                  <th key={header} scope="col">
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.key}>
+                  <th scope="row">{row.label}</th>
+                  {row.values.map((cell, index) => (
+                    <td key={`${row.key}-${index}`}>{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
     </section>
   );
 }
@@ -124,17 +259,20 @@ function ParityPanel({
 function comparisonSummary(rows: PeriodComparison[]) {
   const usable = rows.filter((row) => row.change !== null);
   if (usable.length === 0) return "No unsuppressed period comparison is available.";
-  const largest = usable.reduce((left, right) => Math.abs(right.change as number) > Math.abs(left.change as number) ? right : left);
+  const largest = usable.reduce((left, right) =>
+    Math.abs(right.change as number) > Math.abs(left.change as number) ? right : left,
+  );
   return `${largest.label} has the largest absolute change at ${change(largest)} versus the previous period.`;
 }
 
 function bottleneckSummary(rows: BottleneckMeasure[]) {
   const usable = rows.filter(
-    (row): row is BottleneckMeasure & { p90AgeHours: number } =>
-      row.p90AgeHours !== null,
+    (row): row is BottleneckMeasure & { p90AgeHours: number } => row.p90AgeHours !== null,
   );
   if (usable.length === 0) return "No unsuppressed bottleneck measure is available.";
-  const slowest = usable.reduce((left, right) => right.p90AgeHours > left.p90AgeHours ? right : left);
+  const slowest = usable.reduce((left, right) =>
+    right.p90AgeHours > left.p90AgeHours ? right : left,
+  );
   return `${slowest.label} has the longest 90th-percentile active age at ${slowest.p90AgeHours} hours.`;
 }
 
@@ -171,6 +309,16 @@ function change(row: PeriodComparison) {
   return `${prefix}${metric(row.change, row.unit)}`;
 }
 
-function value(item: string | number | null) { return item ?? "Not available"; }
-function hours(value: number) { return `${(value / 60).toFixed(1)} h`; }
-function formatDate(value: string) { return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`)); }
+function value(item: string | number | null) {
+  return item ?? "Not available";
+}
+function hours(value: number) {
+  return `${(value / 60).toFixed(1)} h`;
+}
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    timeZone: "UTC",
+  }).format(new Date(`${value}T00:00:00Z`));
+}

@@ -5,7 +5,7 @@ import { elapsedTime } from "../../lib/serviceTiming";
 import { formatDate, statusLabels } from "../../lib/status";
 import { StaffProductAction } from "../products/StaffProductAction";
 import { RequestOverview } from "../requests/RequestOverview";
-import { RequestMessageForm } from "../requests/RequestMessageForm";
+import { RequestConversations } from "../requests/RequestConversations";
 import type { SpecialistOptions } from "./EligibleSpecialistField";
 import { RelatedRecordPanel } from "./RelatedRecordPanel";
 import type { RoutingOptions } from "./RoutingDestinationField";
@@ -55,7 +55,8 @@ export function WorkQueueDetail({
               <span className="mono-ref">{item.requestReference}</span>
               <h2>{item.title}</h2>
               <p>
-                {statusLabels[item.stage]} · updated {formatDate(item.updatedAt, true)} · waiting in this task for {elapsedTime(item.createdAt)}
+                {statusLabels[item.stage]} · updated {formatDate(item.updatedAt, true)} · waiting in
+                this task for {elapsedTime(item.createdAt)}
               </p>
             </div>
             <StatusPill status={item.stage} />
@@ -70,18 +71,33 @@ export function WorkQueueDetail({
               session={session}
             />
             <div className="queue-detail__decision">
-              {detail ? <RequestMessageForm audience="CUSTOMER" requestId={item.requestId} /> : null}
-              {canLoadDetail ? <StaffProductAction requestId={item.requestId} requestVersion={item.requestVersion} stage={item.stage} /> : null}
-              {detail && item.stage === "TRIAGE_REVIEW" ? (
-                <RelatedRecordPanel csrfToken={session.csrfToken} userId={session.user.id} workItemId={item.id} />
+              {detail ? (
+                <RequestConversations key={item.requestId} requestId={item.requestId} />
               ) : null}
-              {canLoadDetail ? <StaffDeliverableSection deliverable={detail?.deliverable} stage={item.stage} state={detailState} /> : null}
+              {canLoadDetail ? (
+                <StaffProductAction
+                  requestId={item.requestId}
+                  requestVersion={item.requestVersion}
+                  stage={item.stage}
+                />
+              ) : null}
+              {detail && item.stage === "TRIAGE_REVIEW" ? (
+                <RelatedRecordPanel session={session} workItemId={item.id} />
+              ) : null}
+              {canLoadDetail ? (
+                <StaffDeliverableSection
+                  deliverable={detail?.deliverable}
+                  stage={item.stage}
+                  state={detailState}
+                />
+              ) : null}
               {!canLoadDetail || detail ? (
                 <WorkActionPanel
                   claimAllowed={session.user.role !== "DELIVERY_SPECIALIST"}
                   currentUserId={session.user.id}
                   disabled={disabled}
                   item={item}
+                  managedProducts={detail?.productMode === "MANAGED"}
                   onActionChange={onActionChange}
                   onClaim={() => onClaim(item)}
                   onComplete={(action) => onComplete(action, item)}
@@ -97,7 +113,14 @@ export function WorkQueueDetail({
   );
 }
 
-function RequestContext({ detail, error, item, loading, onRetry, session }: {
+function RequestContext({
+  detail,
+  error,
+  item,
+  loading,
+  onRetry,
+  session,
+}: {
   detail?: RequestDetail;
   error: boolean;
   item: WorkItem;
@@ -109,17 +132,37 @@ function RequestContext({ detail, error, item, loading, onRetry, session }: {
   if (assignedToCurrentUser) {
     if (loading) return <PageState kind="loading" title="Loading request context" />;
     if (error) {
-      return <PageState action={<button className="button" onClick={onRetry}>Try again</button>} kind="error" title="Request context could not be loaded" />;
+      return (
+        <PageState
+          action={
+            <button className="button" onClick={onRetry}>
+              Try again
+            </button>
+          }
+          kind="error"
+          title="Request context could not be loaded"
+        />
+      );
     }
     return detail ? <RequestOverview request={detail} /> : null;
   }
   if (!item.assigneeId) {
-    return session.user.role === "DELIVERY_SPECIALIST"
-      ? <PageState kind="empty" title="Manager assignment required">This request must be assigned to you by a Team Manager.</PageState>
-      : <PageState kind="empty" title="Claim to view request context">Request details remain protected until you take ownership.</PageState>;
+    return session.user.role === "DELIVERY_SPECIALIST" ? (
+      <PageState kind="empty" title="Manager assignment required">
+        This request must be assigned to you by a Team Manager.
+      </PageState>
+    ) : (
+      <PageState kind="empty" title="Claim to view request context">
+        Request details remain protected until you take ownership.
+      </PageState>
+    );
   }
   if (item.assigneeId !== session.user.id) {
-    return <PageState kind="empty" title="Request context restricted">Only the current owner can view this request.</PageState>;
+    return (
+      <PageState kind="empty" title="Request context restricted">
+        Only the current owner can view this request.
+      </PageState>
+    );
   }
   return null;
 }

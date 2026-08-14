@@ -1,0 +1,225 @@
+/* Queue, statistics, handover */
+.routing-queue > header,
+.workspace-records > header,
+.workspace-statistics > header {
+  max-width: 760px;
+  margin-bottom: 20px;
+}
+.routing-queue > header span,
+.workspace-records > header span,
+.workspace-record-form > span,
+.workspace-statistics > header span {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.routing-queue h2,
+.workspace-records h2,
+.workspace-record-form h2,
+.workspace-statistics h2 {
+  margin: 6px 0;
+  font-size: 1.15rem;
+}
+.routing-queue header p,
+.workspace-records header p,
+.workspace-statistics header p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.routing-queue > .button {
+  margin-top: 18px;
+}
+.workspace-collaboration {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 32px;
+  align-items: start;
+}
+.workspace-records ol {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.workspace-record {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  transition:
+    border-color var(--speed-fast),
+    transform var(--speed-fast);
+}
+.workspace-record:hover {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+.workspace-record > header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  align-items: baseline;
+}
+.workspace-record > header span {
+  display: inline-flex;
+  width: max-content;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
+  border-radius: 99px;
+  padding: 3px 9px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.workspace-record > header small {
+  grid-column: 2;
+  color: var(--muted);
+}
+.workspace-record > p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.workspace-record > a {
+  color: var(--accent);
+}
+.workspace-record--resolved {
+  border-color: color-mix(in srgb, var(--success) 26%, var(--border));
+  opacity: 0.72;
+}
+.workspace-record form,
+.workspace-record-form form {
+  display: grid;
+  gap: 13px;
+  margin-top: 15px;
+}
+.workspace-record-form {
+  position: sticky;
+  top: 20px;
+}
+.team-noticeboard h3 {
+  margin: 0 0 12px;
+  font-size: 0.92rem;
+}
+.team-noticeboard__column {
+  min-width: 0;
+}
+.team-noticeboard__column ol,
+.team-noticeboard__column ul {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.workspace-record h4 {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.workspace-record h4 a {
+  color: var(--accent);
+}
+.workspace-record h4 a:hover,
+.workspace-record h4 a:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.workspace-record__action {
+  margin-top: 12px;
+  font-size: 0.68rem;
+}
+.workspace-record__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.team-noticeboard__open-form {
+  margin-top: 14px;
+}
+.team-noticeboard__form {
+  display: grid;
+  gap: 13px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: var(--radius-md);
+  margin-top: 14px;
+  padding: 15px;
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+
+@media (max-width: 1050px) {
+  .team-attention-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .team-home__measures {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 900px) {
+  .team-people-layout,
+  .workspace-collaboration,
+  .team-home__columns {
+    grid-template-columns: 1fr;
+  }
+  .roster-control,
+  .workspace-record-form {
+    position: static;
+  }
+  .team-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 620px) {
+  .team-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .team-heading .form-field {
+    min-width: 0;
+  }
+  .team-metrics,
+  .team-service-strip,
+  .team-home__identity,
+  .team-attention-list,
+  .team-home__measures,
+  .team-home__planning-alerts ul {
+    grid-template-columns: 1fr;
+  }
+  .team-activity-list li,
+  .routing-monitor__content li {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+  .routing-monitor__content {
+    padding-left: 16px;
+  }
+  .routing-monitor__content .status-pill {
+    justify-self: start;
+  }
+  .end-membership-row form {
+    grid-template-columns: 1fr;
+  }
+  .team-home__iteration,
+  .team-home__planning-alerts > p {
+    flex-direction: column;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .team-attention,
+  .team-metric,
+  .team-tab,
+  .team-service-strip > a,
+  .team-attention em::after,
+  .team-service-strip > a::after,
+  .routing-monitor__group summary,
+  .routing-monitor__group summary svg {
+    transition: none;
+  }
+}

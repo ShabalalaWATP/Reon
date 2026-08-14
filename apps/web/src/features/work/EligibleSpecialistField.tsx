@@ -73,11 +73,7 @@ function SpecialistLoadState({ options }: { options: SpecialistOptions }) {
     return (
       <div className="specialist-state specialist-state--error" role="alert">
         <span>Eligible Analysts could not be loaded.</span>
-        <button
-          className="button button--secondary"
-          onClick={options.onRetry}
-          type="button"
-        >
+        <button className="button button--secondary" onClick={options.onRetry} type="button">
           Try again
         </button>
       </div>

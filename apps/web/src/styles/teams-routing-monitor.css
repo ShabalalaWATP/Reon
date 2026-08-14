@@ -1,0 +1,154 @@
+.routing-home__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+/* Routing oversight remains visually subordinate to the action queue. */
+.routing-monitor {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+.routing-monitor > header {
+  max-width: 760px;
+  margin-bottom: 4px;
+}
+.routing-monitor > header span {
+  color: var(--teal);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.routing-monitor > header h2 {
+  margin: 6px 0;
+  font-size: 1.15rem;
+}
+.routing-monitor > header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+.routing-monitor__group {
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 42%, transparent);
+}
+.routing-monitor__group:last-of-type {
+  border-bottom: 1px solid var(--border);
+}
+.routing-monitor__group summary {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 70px;
+  padding: 12px 16px;
+  cursor: pointer;
+  list-style: none;
+  transition:
+    background var(--speed-fast),
+    color var(--speed-fast);
+}
+.routing-monitor__group summary::-webkit-details-marker {
+  display: none;
+}
+.routing-monitor__group summary:hover,
+.routing-monitor__group summary:focus-visible {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+.routing-monitor__group summary svg {
+  color: var(--muted);
+  transition: transform var(--speed-fast);
+}
+.routing-monitor__group[open] summary svg {
+  transform: rotate(90deg);
+}
+.routing-monitor__group summary span,
+.routing-monitor__group summary strong,
+.routing-monitor__group summary small {
+  display: block;
+}
+.routing-monitor__group summary strong {
+  font-size: 0.82rem;
+}
+.routing-monitor__group summary small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 450;
+}
+.routing-monitor__group summary b {
+  min-width: 34px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  text-align: right;
+}
+.routing-monitor__content {
+  border-top: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  padding: 4px 16px 18px 46px;
+}
+.routing-monitor__content ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.routing-monitor__content li {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(150px, auto);
+  gap: 10px 18px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 62%, transparent);
+  padding: 16px 0;
+}
+.routing-monitor__content li:first-child {
+  border-top: 0;
+}
+.routing-monitor__content li > div span,
+.routing-monitor__content li > div a {
+  display: block;
+}
+.routing-monitor__content li > div span {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.61rem;
+}
+.routing-monitor__content li > div a {
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 760;
+}
+.routing-monitor__content .status-pill {
+  justify-self: end;
+}
+.routing-monitor__content dl {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0;
+}
+.routing-monitor__content dl div {
+  display: flex;
+  gap: 6px;
+  font-size: 0.65rem;
+}
+.routing-monitor__content dt {
+  color: var(--muted);
+}
+.routing-monitor__content dd {
+  margin: 0;
+  color: var(--text);
+}
+.routing-monitor__open {
+  grid-column: 1 / -1;
+  width: fit-content;
+  color: var(--accent);
+  font-size: 0.67rem;
+  font-weight: 720;
+}

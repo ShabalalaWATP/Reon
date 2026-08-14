@@ -14,7 +14,8 @@ const accessLabels: Record<User["role"], string> = {
 
 const roleDescriptions: Record<User["role"], string> = {
   PLATFORM_ADMIN: "Maintains accounts and governed platform configuration.",
-  REQUESTER: "Submits requests, tracks progress, responds when needed and receives released products.",
+  REQUESTER:
+    "Submits requests, tracks progress, responds when needed and receives released products.",
   INTAKE_TRIAGE: "Routes new requests from CRIOC to the appropriate command.",
   SERVICE_COORDINATION: "Coordinates requests within the selected command.",
   OPERATIONS_ALLOCATION: "Routes requests from an Ops group to a delivery team.",
@@ -23,10 +24,7 @@ const roleDescriptions: Record<User["role"], string> = {
   QUALITY_RELEASE: "Completes quality checks and releases products to Customers.",
 };
 
-export function profileAccessLabel(
-  user: User,
-  workspaces: TeamWorkspaceAccess[] = [],
-) {
+export function profileAccessLabel(user: User, workspaces: TeamWorkspaceAccess[] = []) {
   const managed = workspaces
     .filter((item) => item.workspacePosition === "MANAGER")
     .map((item) => item.teamName);
@@ -60,9 +58,7 @@ export function profileMembershipText(expected: number, names: string[], failed:
 }
 
 export function profilePositionLabel(workspaces: TeamWorkspaceAccess[]) {
-  const positions = new Set(
-    workspaces.map((item) => item.workspacePosition).filter(Boolean),
-  );
+  const positions = new Set(workspaces.map((item) => item.workspacePosition).filter(Boolean));
   if (positions.size !== 1) return positions.size > 1 ? "Mixed positions" : null;
   return sentenceCase([...positions][0]!);
 }

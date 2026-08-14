@@ -15,9 +15,18 @@ describe("calendar date boundaries", () => {
   it("uses Monday-first bounded ranges for each calendar view", () => {
     expect(calendarRange(wednesday, "week").start.getDay()).toBe(1);
     expect(calendarRange(wednesday, "week").start.getHours()).toBe(0);
-    expect(calendarRange(wednesday, "month").end.getTime() - calendarRange(wednesday, "month").start.getTime()).toBe(42 * 86_400_000);
-    expect(calendarRange(wednesday, "week").end.getTime() - calendarRange(wednesday, "week").start.getTime()).toBe(7 * 86_400_000);
-    expect(calendarRange(wednesday, "agenda").end.getTime() - calendarRange(wednesday, "agenda").start.getTime()).toBe(30 * 86_400_000);
+    expect(
+      calendarRange(wednesday, "month").end.getTime() -
+        calendarRange(wednesday, "month").start.getTime(),
+    ).toBe(42 * 86_400_000);
+    expect(
+      calendarRange(wednesday, "week").end.getTime() -
+        calendarRange(wednesday, "week").start.getTime(),
+    ).toBe(7 * 86_400_000);
+    expect(
+      calendarRange(wednesday, "agenda").end.getTime() -
+        calendarRange(wednesday, "agenda").start.getTime(),
+    ).toBe(30 * 86_400_000);
     expect(calendarRange(wednesday, "month").start.getDay()).toBe(1);
   });
 

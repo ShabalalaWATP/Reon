@@ -6,8 +6,9 @@ import { useAuth } from "../auth/AuthProvider";
 
 export function useCapabilities() {
   const { session } = useAuth();
+  const queryKeys = protectedQueryKeys(session);
   const query = useQuery({
-    queryKey: protectedQueryKeys.capabilities(session?.user.id ?? "anonymous"),
+    queryKey: queryKeys.capabilities(),
     queryFn: capabilityApi.capabilities,
     enabled: Boolean(session),
     retry: false,

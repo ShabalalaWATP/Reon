@@ -16,9 +16,14 @@ export function MistReveal() {
   useEffect(() => {
     if (phase === "hidden") return;
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-    const wait = phase === "dense"
-      ? (reduced ? REDUCED_PHASE_MS : DENSE_MS)
-      : (reduced ? REDUCED_PHASE_MS : CLEAR_MS);
+    const wait =
+      phase === "dense"
+        ? reduced
+          ? REDUCED_PHASE_MS
+          : DENSE_MS
+        : reduced
+          ? REDUCED_PHASE_MS
+          : CLEAR_MS;
     const timer = window.setTimeout(
       () => setPhase((value) => (value === "dense" ? "clearing" : "hidden")),
       wait,
@@ -30,10 +35,27 @@ export function MistReveal() {
     <div className={`mist-reveal mist-reveal--${phase}`}>
       <svg aria-hidden="true" className="mist-reveal__filter" focusable="false">
         <filter id="mist-wisp">
-          <feTurbulence baseFrequency="0.012 0.03" numOctaves="3" result="noise" seed="7" type="fractalNoise">
-            <animate attributeName="baseFrequency" dur="14s" repeatCount="indefinite" values="0.012 0.03;0.016 0.024;0.012 0.03" />
+          <feTurbulence
+            baseFrequency="0.012 0.03"
+            numOctaves="3"
+            result="noise"
+            seed="7"
+            type="fractalNoise"
+          >
+            <animate
+              attributeName="baseFrequency"
+              dur="14s"
+              repeatCount="indefinite"
+              values="0.012 0.03;0.016 0.024;0.012 0.03"
+            />
           </feTurbulence>
-          <feDisplacementMap in="SourceGraphic" in2="noise" scale="90" xChannelSelector="R" yChannelSelector="G" />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="noise"
+            scale="90"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
         </filter>
       </svg>
       <span aria-hidden="true" className="mist-reveal__layer mist-reveal__layer--far" />

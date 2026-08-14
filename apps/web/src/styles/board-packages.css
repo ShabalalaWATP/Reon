@@ -1,0 +1,141 @@
+.wip-panel form,
+.iteration-form form,
+.iteration-register form {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.wip-panel .form-field {
+  width: 150px;
+}
+.wip-panel > header p {
+  max-width: 560px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.package-form-panel {
+  max-width: 860px;
+}
+.package-form-panel form {
+  display: grid;
+  gap: 15px;
+}
+.planning-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 28px;
+  align-items: start;
+}
+.package-register {
+  display: grid;
+  gap: 16px;
+}
+.package-detail {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  background: color-mix(in srgb, var(--surface-raised) 72%, transparent);
+}
+.package-detail__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 10px;
+}
+.package-detail__priority {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.67rem;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+}
+.package-detail__request {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 720;
+  text-decoration: none;
+}
+.package-detail__request:hover,
+.package-detail__request:focus-visible {
+  text-decoration: underline;
+}
+.package-detail h3 {
+  margin: 6px 0;
+}
+.package-detail p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+.package-detail section h4 {
+  margin: 14px 0 5px;
+  font-size: 0.78rem;
+}
+.package-activity {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 0;
+  list-style: none;
+}
+.package-activity li {
+  display: grid;
+  grid-template-columns: 145px 1fr;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+  font-size: 0.72rem;
+}
+.package-activity time {
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+.reservation-panel {
+  position: sticky;
+  top: 20px;
+}
+.reservation-panel form {
+  display: grid;
+  gap: 12px;
+}
+.reservation-list {
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.reservation-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  padding: 10px 0;
+}
+.reservation-list small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+.planning-evolution-state {
+  border-left: 2px solid var(--accent);
+  padding: 18px 22px;
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+}
+.planning-evolution-state > span,
+.planning-cockpit__heading > div > span {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.planning-evolution-state h2 {
+  margin: 6px 0;
+  font-size: 1.05rem;
+}
+.planning-evolution-state p {
+  margin: 6px 0 14px;
+  color: var(--muted);
+}

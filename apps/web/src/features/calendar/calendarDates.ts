@@ -1,7 +1,4 @@
-import {
-  addLocalDays,
-  localDateTimeInputValue,
-} from "../../lib/dateInputs";
+import { addLocalDays, localDateTimeInputValue } from "../../lib/dateInputs";
 
 export type CalendarView = "month" | "week" | "agenda";
 
@@ -39,9 +36,11 @@ function startOfDay(value: Date) {
 }
 
 export function sameDay(left: Date, right: Date) {
-  return left.getFullYear() === right.getFullYear()
-    && left.getMonth() === right.getMonth()
-    && left.getDate() === right.getDate();
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  );
 }
 
 export function localInput(value: Date) {
@@ -49,11 +48,16 @@ export function localInput(value: Date) {
 }
 
 export function calendarTitle(anchor: Date, view: CalendarView) {
-  if (view === "month") return new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(anchor);
+  if (view === "month")
+    return new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(anchor);
   const range = calendarRange(anchor, view);
   return `${formatShort(range.start)} – ${formatShort(addDays(range.end, -1))}`;
 }
 
 function formatShort(value: Date) {
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(value);
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(value);
 }

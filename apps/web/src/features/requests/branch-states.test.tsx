@@ -10,25 +10,38 @@ import { RequestOverview } from "./RequestOverview";
 
 describe("request branch states", () => {
   it("shows a completed-only register with no current work", async () => {
-    mockFetch((url) => url.pathname.endsWith("/auth/me")
-      ? json(requesterSession)
-      : json({ items: [{ ...requestSummary, status: "COMPLETED" }] }));
+    mockFetch((url) =>
+      url.pathname.endsWith("/auth/me")
+        ? json(requesterSession)
+        : json({ items: [{ ...requestSummary, status: "COMPLETED" }] }),
+    );
     renderApp("/requests");
     expect(await screen.findByText("No requests in this group.")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Needs your input" })).not.toBeInTheDocument();
   });
 
   it("shows current work without creating completed history", async () => {
-    mockFetch((url) => url.pathname.endsWith("/auth/me")
-      ? json(requesterSession)
-      : json({ items: [requestSummary] }));
+    mockFetch((url) =>
+      url.pathname.endsWith("/auth/me")
+        ? json(requesterSession)
+        : json({ items: [requestSummary] }),
+    );
     renderApp("/requests");
     expect(await screen.findByRole("heading", { name: "Current requests" })).toBeInTheDocument();
     expect(screen.queryByText("Completed history")).not.toBeInTheDocument();
   });
 
   it("renders unallocated overview fallbacks", () => {
-    render(<RequestOverview request={{ ...requestDetail, currentOwner: null, assignedDeliveryTeam: null, assignedSpecialist: null }} />);
+    render(
+      <RequestOverview
+        request={{
+          ...requestDetail,
+          currentOwner: null,
+          assignedDeliveryTeam: null,
+          assignedSpecialist: null,
+        }}
+      />,
+    );
     expect(screen.getByText("Awaiting assignment")).toBeInTheDocument();
     expect(screen.getByText("Not allocated")).toBeInTheDocument();
     expect(screen.getByText("Not assigned")).toBeInTheDocument();
@@ -38,7 +51,9 @@ describe("request branch states", () => {
     const submit = vi.fn();
     const { rerender } = render(<FeedbackForm disabled={false} onSubmit={submit} />);
     fireEvent.change(screen.getByLabelText(/Rating/), { target: { value: "0" } });
-    fireEvent.change(screen.getByLabelText(/Service comments/), { target: { value: "x".repeat(2001) } });
+    fireEvent.change(screen.getByLabelText(/Service comments/), {
+      target: { value: "x".repeat(2001) },
+    });
     fireEvent.submit(screen.getByRole("button", { name: "Send feedback" }).closest("form")!);
     expect(await screen.findByText("Choose a rating from 1 to 5.")).toBeInTheDocument();
     expect(screen.getByText(/Too big/)).toBeInTheDocument();
@@ -57,13 +72,20 @@ describe("request branch states", () => {
       status: "COMPLETED" as const,
       events: [{ ...requestDetail.events[0], actorDisplayName: null }],
       deliverable: { id: "d", title: "Result", text: "Released text", releasedAt: null },
-      feedback: { id: "f", rating: 5, comments: "Service response recorded.", createdAt: requestDetail.updatedAt },
+      feedback: {
+        id: "f",
+        rating: 5,
+        comments: "Service response recorded.",
+        createdAt: requestDetail.updatedAt,
+      },
     };
-    mockFetch((url) => url.pathname.endsWith("/auth/me") ? json(requesterSession) : json(detail));
+    mockFetch((url) => (url.pathname.endsWith("/auth/me") ? json(requesterSession) : json(detail)));
     renderApp(`/requests/${detail.id}`);
     expect(await screen.findByText(/ISTARI service/)).toBeInTheDocument();
     expect(screen.getByText("Service response recorded.")).toBeInTheDocument();
-    expect(screen.getByText("The product will appear here after dissemination.")).toBeInTheDocument();
+    expect(
+      screen.getByText("The product will appear here after dissemination."),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Download product" })).not.toBeInTheDocument();
   });
 
@@ -74,7 +96,8 @@ describe("request branch states", () => {
     const detail = { ...requestDetail, status: "INFORMATION_REQUIRED" as const };
     mockFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
-      if (url.pathname.endsWith("/work-items")) return state === "error" ? json({ detail: "Unavailable" }, 503) : json({ items: [] });
+      if (url.pathname.endsWith("/work-items"))
+        return state === "error" ? json({ detail: "Unavailable" }, 503) : json({ items: [] });
       return json(detail);
     });
     renderApp(`/requests/${detail.id}`);
@@ -83,11 +106,16 @@ describe("request branch states", () => {
 
   it("claims requester work and reports a rejected claim", async () => {
     const detail = { ...requestDetail, status: "INFORMATION_REQUIRED" as const };
-    const item = { ...workItem, stage: "INFORMATION_REQUIRED" as const, availableActions: ["provide_information"] as const };
+    const item = {
+      ...workItem,
+      stage: "INFORMATION_REQUIRED" as const,
+      availableActions: ["provide_information"] as const,
+    };
     mockFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
       if (url.pathname.endsWith("/work-items")) return json({ items: [item] });
-      if (url.pathname.endsWith("/claim")) return json({ detail: { message: "Already claimed." } }, 409);
+      if (url.pathname.endsWith("/claim"))
+        return json({ detail: { message: "Already claimed." } }, 409);
       return json(detail);
     });
     const user = userEvent.setup();

@@ -6,10 +6,7 @@ import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import type { OrganisationUnit } from "../../lib/api/types";
 import { isSessionElevated, useAuth } from "../../lib/auth/AuthProvider";
 import { StepUpPanel } from "../admin/StepUpPanel";
-import {
-  buildOrganisationTree,
-  type OrganisationTreeNode,
-} from "./organisationTree";
+import { buildOrganisationTree, type OrganisationTreeNode } from "./organisationTree";
 import { RenameOrganisationUnit } from "./RenameOrganisationUnit";
 
 const kindLabels: Record<OrganisationUnit["kind"], string> = {
@@ -27,9 +24,9 @@ const staffingLabels: Record<OrganisationUnit["staffingStatus"], string> = {
 
 export function OrganisationPage() {
   const { session } = useAuth();
-  const userId = session?.user.id ?? "anonymous";
+  const queryKeys = protectedQueryKeys(session);
   const query = useQuery({
-    queryKey: protectedQueryKeys.organisationUnits(userId),
+    queryKey: queryKeys.organisationUnits(),
     queryFn: api.organisationUnits,
     enabled: Boolean(session),
   });
@@ -61,9 +58,7 @@ export function OrganisationPage() {
   const unstaffedTeams = units.filter(
     (unit) => unit.kind === "TEAM" && unit.staffingStatus === "UNSTAFFED",
   ).length;
-  const routingUnits = units.filter(
-    (unit) => unit.staffingStatus === "ROUTING_POOL",
-  ).length;
+  const routingUnits = units.filter((unit) => unit.staffingStatus === "ROUTING_POOL").length;
   const admin = session?.user.role === "PLATFORM_ADMIN";
   const editable = admin && isSessionElevated(session);
 
@@ -74,9 +69,9 @@ export function OrganisationPage() {
           <span>Organisation reference</span>
           <h1>CRIOC routing hierarchy</h1>
           <p>
-            Browse routing responsibility and analysis-team staffing. QC is a
-            shared function across the hierarchy. Analysis Team badges identify
-            delivery units and show when staffing is still awaited.
+            Browse routing responsibility and analysis-team staffing. QC is a shared function across
+            the hierarchy. Analysis Team badges identify delivery units and show when staffing is
+            still awaited.
           </p>
         </div>
       </header>
@@ -89,10 +84,22 @@ export function OrganisationPage() {
         <>
           <section aria-label="Organisation function summary">
             <dl className="organisation-summary">
-              <div><dt>Routing</dt><dd>{routingUnits}</dd></div>
-              <div><dt>Analysis Teams</dt><dd>{staffedTeams}</dd></div>
-              <div><dt>QC</dt><dd>Shared</dd></div>
-              <div><dt>Analysis Teams awaiting staffing</dt><dd>{unstaffedTeams}</dd></div>
+              <div>
+                <dt>Routing</dt>
+                <dd>{routingUnits}</dd>
+              </div>
+              <div>
+                <dt>Analysis Teams</dt>
+                <dd>{staffedTeams}</dd>
+              </div>
+              <div>
+                <dt>QC</dt>
+                <dd>Shared</dd>
+              </div>
+              <div>
+                <dt>Analysis Teams awaiting staffing</dt>
+                <dd>{unstaffedTeams}</dd>
+              </div>
             </dl>
           </section>
           <section aria-labelledby="organisation-tree-title">
@@ -101,7 +108,9 @@ export function OrganisationPage() {
               <h2 id="organisation-tree-title">Organisation units</h2>
             </div>
             <ul aria-label="Organisation hierarchy" className="organisation-tree">
-              {tree.map((node) => <OrganisationBranch editable={editable} key={node.id} node={node} />)}
+              {tree.map((node) => (
+                <OrganisationBranch editable={editable} key={node.id} node={node} />
+              ))}
             </ul>
           </section>
         </>
@@ -119,9 +128,7 @@ function OrganisationBranch({ editable, node }: { editable: boolean; node: Organ
           <strong>{node.name}</strong>
           <small>{kindLabels[node.kind]}</small>
         </div>
-        <span
-          className={`staffing-badge staffing-badge--${node.staffingStatus.toLowerCase()}`}
-        >
+        <span className={`staffing-badge staffing-badge--${node.staffingStatus.toLowerCase()}`}>
           {staffingLabels[node.staffingStatus]}
         </span>
         {editable ? <RenameOrganisationUnit unit={node} /> : null}

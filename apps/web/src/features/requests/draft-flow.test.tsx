@@ -107,7 +107,9 @@ describe("private Customer drafts", () => {
     await user.clear(title);
     await user.type(title, "Updated draft title");
     await user.click(screen.getByRole("button", { name: "Save draft" }));
-    await waitFor(() => expect(savedBody).toMatchObject({ expectedVersion: 1, title: "Updated draft title" }));
+    await waitFor(() =>
+      expect(savedBody).toMatchObject({ expectedVersion: 1, title: "Updated draft title" }),
+    );
     await user.click(screen.getByRole("button", { name: "Submit request" }));
     expect(await screen.findByRole("heading", { name: "Updated draft title" })).toBeInTheDocument();
     expect(submittedBody).toMatchObject({ expectedVersion: 2, title: "Updated draft title" });
@@ -115,11 +117,17 @@ describe("private Customer drafts", () => {
   });
 
   it("reports an unavailable draft without exposing another Customer", async () => {
-    mockFetch((url) => url.pathname.endsWith("/auth/me")
-      ? json(requesterSession)
-      : json({ detail: "Not found" }, 404), false);
+    mockFetch(
+      (url) =>
+        url.pathname.endsWith("/auth/me")
+          ? json(requesterSession)
+          : json({ detail: "Not found" }, 404),
+      false,
+    );
     renderApp("/requests/drafts/missing");
-    expect(await screen.findByRole("heading", { name: "Draft could not be loaded" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Draft could not be loaded" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Return to requests" })).toBeInTheDocument();
   });
 });

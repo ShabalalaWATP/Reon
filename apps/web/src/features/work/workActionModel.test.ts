@@ -8,25 +8,125 @@ import {
 } from "./workActionModel";
 
 const cases: Array<[WorkActionValues, unknown]> = [
-  [{ action: "request_information", reason: "Need a clearer deadline." }, { action: "request_information", reason: "Need a clearer deadline." }],
-  [{ action: "progress", destinationUnitId: "command-id", priority: "HIGH" }, { action: "progress", destinationUnitId: "command-id", priority: "HIGH" }],
-  [{ action: "close", reason: "Outside scope." }, { action: "close", reason: "Outside scope." }],
-  [{ action: "provide_information", information: "The meeting is on Friday." }, { action: "provide_information", information: "The meeting is on Friday." }],
-  [{ action: "withdraw", reason: "No longer required." }, { action: "withdraw", reason: "No longer required." }],
-  [{ action: "send_to_allocation", destinationUnitId: "ops-id", note: "Please prioritise." }, { action: "send_to_allocation", destinationUnitId: "ops-id", note: "Please prioritise." }],
-  [{ action: "return_to_triage", reason: "Category needs review." }, { action: "return_to_triage", reason: "Category needs review." }],
-  [{ action: "hold", reason: "Awaiting decision." }, { action: "hold", reason: "Awaiting decision." }],
-  [{ action: "resume", note: "Decision received." }, { action: "resume", note: "Decision received." }],
-  [{ action: "allocate", destinationUnitId: "team-id", requiredCapabilities: "Writing\nData review\n" }, { action: "allocate", destinationUnitId: "team-id", requiredCapabilities: ["Writing", "Data review"] }],
-  [{ action: "return_to_coordination", reason: "Needs service decision." }, { action: "return_to_coordination", reason: "Needs service decision." }],
-  [{ action: "assign", specialistId: "specialist-id", contributorIds: [], reason: "Accountable assignment." }, { action: "assign", specialistId: "specialist-id", contributorIds: [], reason: "Accountable assignment." }],
-  [{ action: "return_for_reallocation", reason: "Capability unavailable." }, { action: "return_for_reallocation", reason: "Capability unavailable." }],
-  [{ action: "submit", deliverableTitle: "Readiness note", deliverableText: "Complete result." }, { action: "submit", deliverableTitle: "Readiness note", deliverableText: "Complete result." }],
-  [{ action: "request_clarification", question: "Which region?", reason: "Needed for scope.", responseDeadline: "2026-09-10" }, { action: "request_clarification", question: "Which region?", reason: "Needed for scope.", responseDeadline: "2026-09-10" }],
-  [{ action: "provide_clarification", threadId: "thread-1", expectedVersion: 2, information: "The northern region." }, { action: "provide_clarification", threadId: "thread-1", expectedVersion: 2, information: "The northern region." }],
+  [
+    { action: "request_information", reason: "Need a clearer deadline." },
+    { action: "request_information", reason: "Need a clearer deadline." },
+  ],
+  [
+    { action: "progress", destinationUnitId: "command-id", priority: "HIGH" },
+    { action: "progress", destinationUnitId: "command-id", priority: "HIGH" },
+  ],
+  [
+    { action: "close", reason: "Outside scope." },
+    { action: "close", reason: "Outside scope." },
+  ],
+  [
+    { action: "provide_information", information: "The meeting is on Friday." },
+    { action: "provide_information", information: "The meeting is on Friday." },
+  ],
+  [
+    { action: "withdraw", reason: "No longer required." },
+    { action: "withdraw", reason: "No longer required." },
+  ],
+  [
+    { action: "send_to_allocation", destinationUnitId: "ops-id", note: "Please prioritise." },
+    { action: "send_to_allocation", destinationUnitId: "ops-id", note: "Please prioritise." },
+  ],
+  [
+    { action: "return_to_triage", reason: "Category needs review." },
+    { action: "return_to_triage", reason: "Category needs review." },
+  ],
+  [
+    { action: "hold", reason: "Awaiting decision." },
+    { action: "hold", reason: "Awaiting decision." },
+  ],
+  [
+    { action: "resume", note: "Decision received." },
+    { action: "resume", note: "Decision received." },
+  ],
+  [
+    {
+      action: "allocate",
+      destinationUnitId: "team-id",
+      requiredCapabilities: "Writing\nData review\n",
+    },
+    {
+      action: "allocate",
+      destinationUnitId: "team-id",
+      requiredCapabilities: ["Writing", "Data review"],
+    },
+  ],
+  [
+    { action: "return_to_coordination", reason: "Needs service decision." },
+    { action: "return_to_coordination", reason: "Needs service decision." },
+  ],
+  [
+    {
+      action: "assign",
+      specialistId: "specialist-id",
+      contributorIds: [],
+      reason: "Accountable assignment.",
+    },
+    {
+      action: "assign",
+      specialistId: "specialist-id",
+      contributorIds: [],
+      reason: "Accountable assignment.",
+    },
+  ],
+  [
+    { action: "return_for_reallocation", reason: "Capability unavailable." },
+    { action: "return_for_reallocation", reason: "Capability unavailable." },
+  ],
+  [
+    { action: "submit", deliverableTitle: "Readiness note", deliverableText: "Complete result." },
+    { action: "submit", deliverableTitle: "Readiness note", deliverableText: "Complete result." },
+  ],
+  [
+    { action: "submit", managedProduct: true },
+    { action: "submit", managedProduct: true },
+  ],
+  [
+    {
+      action: "request_clarification",
+      question: "Which region?",
+      reason: "Needed for scope.",
+      responseDeadline: "2026-09-10",
+    },
+    {
+      action: "request_clarification",
+      question: "Which region?",
+      reason: "Needed for scope.",
+      responseDeadline: "2026-09-10",
+    },
+  ],
+  [
+    {
+      action: "provide_clarification",
+      threadId: "thread-1",
+      expectedVersion: 2,
+      information: "The northern region.",
+    },
+    {
+      action: "provide_clarification",
+      threadId: "thread-1",
+      expectedVersion: 2,
+      information: "The northern region.",
+    },
+  ],
   [{ action: "approve" }, { action: "approve" }],
-  [{ action: "changes_required", reason: "Clarify the conclusion." }, { action: "changes_required", reason: "Clarify the conclusion." }],
-  [{ action: "release", recipients: "Service lead\nRequesting area" }, { action: "release", recipients: ["Service lead", "Requesting area"] }],
+  [
+    { action: "changes_required", reason: "Clarify the conclusion." },
+    { action: "changes_required", reason: "Clarify the conclusion." },
+  ],
+  [
+    { action: "release", recipients: "Service lead\nRequesting area" },
+    { action: "release", recipients: ["Service lead", "Requesting area"] },
+  ],
+  [
+    { action: "release", managedProduct: true },
+    { action: "release", managedProduct: true },
+  ],
 ];
 
 describe("work action model", () => {
@@ -35,8 +135,14 @@ describe("work action model", () => {
   });
 
   it.each([
-    "request_information", "close", "withdraw", "return_to_triage", "hold",
-    "return_to_coordination", "return_for_reallocation", "changes_required",
+    "request_information",
+    "close",
+    "withdraw",
+    "return_to_triage",
+    "hold",
+    "return_to_coordination",
+    "return_for_reallocation",
+    "changes_required",
   ] as const)("requires a reason for %s", (action) => {
     expect(workActionSchema.safeParse({ action, reason: " " }).success).toBe(false);
   });

@@ -1,45 +1,113 @@
 import type { OrganisationUnit } from "../lib/api/types";
 
 type TeamDefinition = readonly [code: string, name: string];
-type OpsDefinition = readonly [
-  code: string,
-  name: string,
-  teams: readonly TeamDefinition[],
-];
-type CommandDefinition = readonly [
-  code: string,
-  operations: readonly OpsDefinition[],
-];
+type OpsDefinition = readonly [code: string, name: string, teams: readonly TeamDefinition[]];
+type CommandDefinition = readonly [code: string, operations: readonly OpsDefinition[]];
 
 const hierarchy: readonly CommandDefinition[] = [
   [
     "JOCK",
     [
-      ["ACSA_B_OPS", "ACSA-B Ops", [["SSG_TEAM", "SSG Team"], ["CEDAR_TEAM", "Cedar Team"], ["QUARTZ_TEAM", "Quartz Team"]]],
-      ["AURORA_OPS", "Aurora Ops", [["LANTERN_TEAM", "Lantern Team"], ["MOSAIC_TEAM", "Mosaic Team"], ["COMPASS_TEAM", "Compass Team"]]],
-      ["VERTEX_OPS", "Vertex Ops", [["EMBER_TEAM", "Ember Team"], ["ATLAS_TEAM", "Atlas Team"], ["HARBOUR_TEAM", "Harbour Team"]]],
+      [
+        "ACSA_B_OPS",
+        "ACSA-B Ops",
+        [
+          ["SSG_TEAM", "SSG Team"],
+          ["CEDAR_TEAM", "Cedar Team"],
+          ["QUARTZ_TEAM", "Quartz Team"],
+        ],
+      ],
+      [
+        "AURORA_OPS",
+        "Aurora Ops",
+        [
+          ["LANTERN_TEAM", "Lantern Team"],
+          ["MOSAIC_TEAM", "Mosaic Team"],
+          ["COMPASS_TEAM", "Compass Team"],
+        ],
+      ],
+      [
+        "VERTEX_OPS",
+        "Vertex Ops",
+        [
+          ["EMBER_TEAM", "Ember Team"],
+          ["ATLAS_TEAM", "Atlas Team"],
+          ["HARBOUR_TEAM", "Harbour Team"],
+        ],
+      ],
     ],
   ],
   [
     "SYGOC",
     [
-      ["NIMBUS_OPS", "Nimbus Ops", [["BEACON_TEAM", "Beacon Team"], ["SLATE_TEAM", "Slate Team"], ["ORCHARD_TEAM", "Orchard Team"]]],
-      ["PARALLAX_OPS", "Parallax Ops", [["LUMEN_TEAM", "Lumen Team"], ["NORTHSTAR_TEAM", "Northstar Team"], ["COPPER_TEAM", "Copper Team"]]],
-      ["HORIZON_OPS", "Horizon Ops", [["ROWAN_TEAM", "Rowan Team"], ["VELA_TEAM", "Vela Team"], ["KEEL_TEAM", "Keel Team"]]],
+      [
+        "NIMBUS_OPS",
+        "Nimbus Ops",
+        [
+          ["BEACON_TEAM", "Beacon Team"],
+          ["SLATE_TEAM", "Slate Team"],
+          ["ORCHARD_TEAM", "Orchard Team"],
+        ],
+      ],
+      [
+        "PARALLAX_OPS",
+        "Parallax Ops",
+        [
+          ["LUMEN_TEAM", "Lumen Team"],
+          ["NORTHSTAR_TEAM", "Northstar Team"],
+          ["COPPER_TEAM", "Copper Team"],
+        ],
+      ],
+      [
+        "HORIZON_OPS",
+        "Horizon Ops",
+        [
+          ["ROWAN_TEAM", "Rowan Team"],
+          ["VELA_TEAM", "Vela Team"],
+          ["KEEL_TEAM", "Keel Team"],
+        ],
+      ],
     ],
   ],
   [
     "MYGOC",
     [
-      ["MERIDIAN_OPS", "Meridian Ops", [["FLINT_TEAM", "Flint Team"], ["THISTLE_TEAM", "Thistle Team"], ["GRANITE_TEAM", "Granite Team"]]],
-      ["SOLSTICE_OPS", "Solstice Ops", [["KESTREL_TEAM", "Kestrel Team"], ["JUNIPER_TEAM", "Juniper Team"], ["VALE_TEAM", "Vale Team"]]],
-      ["FRONTIER_OPS", "Frontier Ops", [["TIDAL_TEAM", "Tidal Team"], ["GROVE_TEAM", "Grove Team"], ["PRISM_TEAM", "Prism Team"]]],
+      [
+        "MERIDIAN_OPS",
+        "Meridian Ops",
+        [
+          ["FLINT_TEAM", "Flint Team"],
+          ["THISTLE_TEAM", "Thistle Team"],
+          ["GRANITE_TEAM", "Granite Team"],
+        ],
+      ],
+      [
+        "SOLSTICE_OPS",
+        "Solstice Ops",
+        [
+          ["KESTREL_TEAM", "Kestrel Team"],
+          ["JUNIPER_TEAM", "Juniper Team"],
+          ["VALE_TEAM", "Vale Team"],
+        ],
+      ],
+      [
+        "FRONTIER_OPS",
+        "Frontier Ops",
+        [
+          ["TIDAL_TEAM", "Tidal Team"],
+          ["GROVE_TEAM", "Grove Team"],
+          ["PRISM_TEAM", "Prism Team"],
+        ],
+      ],
     ],
   ],
 ];
 
 const unitId = (code: string) =>
-  `unit-${code.toLowerCase().replace(/_(ops|team)$/, "").replaceAll("_", "-")}`;
+  `unit-${code
+    .toLowerCase()
+    .replace(/_(ops|team)$/, "")
+    .replaceAll("_", "-")}`;
 
 const root: OrganisationUnit = {
   id: unitId("CRIOC"),

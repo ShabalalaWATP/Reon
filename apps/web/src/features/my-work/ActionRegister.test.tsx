@@ -24,7 +24,15 @@ const action: PersonalAction = {
 
 describe("ActionRegister", () => {
   it("renders a minimal configured register without leaking omitted fields", () => {
-    render(<MemoryRouter><ActionRegister columns={["CURRENT_OWNER"]} items={[action]} label="Waiting action register" /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <ActionRegister
+          columns={["CURRENT_OWNER"]}
+          items={[action]}
+          label="Waiting action register"
+        />
+      </MemoryRouter>,
+    );
     expect(screen.getByRole("region", { name: "Waiting action register" })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: "Current owner" })).toBeInTheDocument();
     expect(screen.getByText("Unassigned")).toBeInTheDocument();
@@ -34,12 +42,22 @@ describe("ActionRegister", () => {
   });
 
   it("distinguishes shared unit responsibility from personal ownership", () => {
-    render(<MemoryRouter><ActionRegister columns={["TITLE", "CURRENT_OWNER"]} items={[{
-      ...action,
-      actionAccess: "SHARED",
-      actionType: "CHOOSE_OPS_GROUP",
-      currentOwner: "JOCK · Awaiting owner",
-    }]} label="Incoming request register" /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <ActionRegister
+          columns={["TITLE", "CURRENT_OWNER"]}
+          items={[
+            {
+              ...action,
+              actionAccess: "SHARED",
+              actionType: "CHOOSE_OPS_GROUP",
+              currentOwner: "JOCK · Awaiting owner",
+            },
+          ]}
+          label="Incoming request register"
+        />
+      </MemoryRouter>,
+    );
     expect(screen.getByText("New request requires attention")).toBeInTheDocument();
     expect(screen.getByText("Available to JOCK")).toBeInTheDocument();
     expect(screen.getByText("JOCK · Awaiting owner")).toBeInTheDocument();

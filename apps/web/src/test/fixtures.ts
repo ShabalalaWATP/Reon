@@ -9,11 +9,7 @@ import type {
 import type { ServerCapabilities } from "../lib/api/capabilityClient";
 import { organisationUnit } from "./organisationFixtures";
 
-export {
-  organisationChildren,
-  organisationUnit,
-  organisationUnits,
-} from "./organisationFixtures";
+export { organisationChildren, organisationUnit, organisationUnits } from "./organisationFixtures";
 
 export const requesterSession: Session = {
   user: {
@@ -29,9 +25,15 @@ export const requesterSession: Session = {
   idleExpiresAt: "2099-08-07T12:00:00Z",
   idleTimeoutSeconds: 3600,
   elevatedUntil: null,
+  activeContext: "CUSTOMER",
+  availableContexts: ["CUSTOMER"],
+  contextVersion: 1,
 };
 
 export const enabledCapabilities: ServerCapabilities = {
+  conversationReads: true,
+  conversationWrites: true,
+  contextSwitching: true,
   myWork: true,
   notifications: true,
   configuration: true,
@@ -43,6 +45,8 @@ export const enabledCapabilities: ServerCapabilities = {
 
 export const staffSession: Session = {
   ...requesterSession,
+  activeContext: "STAFF",
+  availableContexts: ["STAFF", "CUSTOMER"],
   user: {
     ...requesterSession.user,
     id: "22222222-2222-4222-8222-222222222222",
@@ -55,6 +59,8 @@ export const staffSession: Session = {
 
 export const adminSession: Session = {
   ...requesterSession,
+  activeContext: "STAFF",
+  availableContexts: ["STAFF"],
   user: {
     ...requesterSession.user,
     id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -96,6 +102,7 @@ export const requestSummary: RequestSummary = {
 };
 
 export const requestDetail: RequestDetail = {
+  productMode: "LEGACY",
   ...requestSummary,
   serviceCategory: "Advisory support",
   description: "Provide a concise readiness summary covering the agreed service measures.",
@@ -118,7 +125,15 @@ export const requestDetail: RequestDetail = {
   assignedDeliveryTeam: "SSG Team",
   assignedSpecialist: { id: "44444444-4444-4444-8444-444444444444", displayName: "Lewis Ferguson" },
   contributors: [],
-  events: [{ id: "event-1", type: "SUBMITTED", message: "Request submitted", actorDisplayName: "John McGinn", createdAt: "2026-08-06T09:00:00Z" }],
+  events: [
+    {
+      id: "event-1",
+      type: "SUBMITTED",
+      message: "Request submitted",
+      actorDisplayName: "John McGinn",
+      createdAt: "2026-08-06T09:00:00Z",
+    },
+  ],
   deliverable: null,
   feedback: null,
   clarifications: [],

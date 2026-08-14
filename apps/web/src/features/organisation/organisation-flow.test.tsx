@@ -23,14 +23,14 @@ describe("organisation hierarchy", () => {
     });
 
     const view = renderApp("/organisation");
-    expect(await screen.findByRole("heading", { name: "CRIOC routing hierarchy" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "CRIOC routing hierarchy" }),
+    ).toBeInTheDocument();
     expect(organisationUnits).toHaveLength(40);
     expect(organisationUnits.filter((unit) => unit.kind === "COMMAND")).toHaveLength(3);
     expect(organisationUnits.filter((unit) => unit.kind === "OPS_GROUP")).toHaveLength(9);
     expect(organisationUnits.filter((unit) => unit.kind === "TEAM")).toHaveLength(27);
-    expect(
-      organisationUnits.filter((unit) => unit.staffingStatus === "STAFFED"),
-    ).toHaveLength(27);
+    expect(organisationUnits.filter((unit) => unit.staffingStatus === "STAFFED")).toHaveLength(27);
     const hierarchy = screen.getByRole("list", { name: "Organisation hierarchy" });
     expect(within(hierarchy).getAllByText("CRIOC")).not.toHaveLength(0);
     expect(within(hierarchy).getAllByText("JOCK")).not.toHaveLength(0);
@@ -50,7 +50,9 @@ describe("organisation hierarchy", () => {
     expect(summary).toHaveTextContent("QCShared");
     expect(summary).not.toHaveTextContent("Team staffed");
     expect(summary).not.toHaveTextContent("Routing function");
-    expect(screen.getByRole("link", { name: "Organisation directory" })).toHaveClass("nav-link--active");
+    expect(screen.getByRole("link", { name: "Organisation directory" })).toHaveClass(
+      "nav-link--active",
+    );
     expect(await axe(view.container)).toHaveNoViolations();
   });
 
@@ -65,10 +67,14 @@ describe("organisation hierarchy", () => {
     });
     const user = userEvent.setup();
     renderApp("/organisation");
-    expect(await screen.findByRole("heading", { name: "Organisation could not be loaded" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Organisation could not be loaded" }),
+    ).toBeInTheDocument();
     fail = false;
     await user.click(screen.getByRole("button", { name: "Try again" }));
-    expect(await screen.findByRole("heading", { name: "No organisation units configured" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "No organisation units configured" }),
+    ).toBeInTheDocument();
   });
 
   it("allows an Administrator to rename metadata inline without changing stable identity", async () => {
@@ -76,10 +82,13 @@ describe("organisation hierarchy", () => {
     let body: Record<string, unknown> | undefined;
     mockFetch(async (url, init) => {
       if (url.pathname.endsWith("/auth/me")) return json(adminSession);
-      if (url.pathname.endsWith("/organisation/units") && !url.pathname.includes("/admin/")) return json({ items: organisationUnits });
+      if (url.pathname.endsWith("/organisation/units") && !url.pathname.includes("/admin/"))
+        return json({ items: organisationUnits });
       if (url.pathname.endsWith(`/admin/organisation/units/${organisationUnit("SSG_TEAM").id}`)) {
         body = JSON.parse(String(init.body));
-        return reject ? json({ detail: "Name already exists" }, 409) : json({ ...organisationUnit("SSG_TEAM"), name: "SSG Operations Team", version: 2 });
+        return reject
+          ? json({ detail: "Name already exists" }, 409)
+          : json({ ...organisationUnit("SSG_TEAM"), name: "SSG Operations Team", version: 2 });
       }
       throw new Error(`${init.method ?? "GET"} ${url.pathname}`);
     });
@@ -96,11 +105,15 @@ describe("organisation hierarchy", () => {
     expect(await within(hierarchy).findByRole("alert")).toHaveTextContent("Name already exists");
     reject = false;
     await user.click(within(hierarchy).getByRole("button", { name: "Save" }));
-    expect((await within(hierarchy).findAllByText("SSG Operations Team")).length).toBeGreaterThan(0);
+    expect((await within(hierarchy).findAllByText("SSG Operations Team")).length).toBeGreaterThan(
+      0,
+    );
     expect(body).toEqual({ name: "SSG Operations Team", expectedVersion: 1 });
     await user.click(within(hierarchy).getByRole("button", { name: "Rename SSG Operations Team" }));
     await user.click(within(hierarchy).getByRole("button", { name: "Cancel" }));
-    expect(within(hierarchy).queryByLabelText("New name for SSG Operations Team")).not.toBeInTheDocument();
+    expect(
+      within(hierarchy).queryByLabelText("New name for SSG Operations Team"),
+    ).not.toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
   });
 
@@ -108,11 +121,7 @@ describe("organisation hierarchy", () => {
     const command = organisationUnit("JOCK");
     const orphan = { ...command, id: "orphan", parentId: "missing" };
     const selfParented = { ...command, id: "self", parentId: "self" };
-    const tree = buildOrganisationTree([
-      organisationUnit("CRIOC"),
-      orphan,
-      selfParented,
-    ]);
+    const tree = buildOrganisationTree([organisationUnit("CRIOC"), orphan, selfParented]);
     expect(tree.map((node) => node.id)).toEqual(["unit-crioc", "orphan", "self"]);
   });
 });

@@ -1,0 +1,163 @@
+@keyframes drawer-enter {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes board-lane-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1050px) {
+  .planning-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .planning-metric:nth-child(4) {
+    border-right: 0;
+  }
+}
+@media (max-width: 900px) {
+  .board-toolbar__heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .board-filter-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .planning-layout,
+  .planning-template-grid,
+  .planning-risk-grid,
+  .planning-scenario-layout {
+    grid-template-columns: 1fr;
+  }
+  .reservation-panel {
+    position: static;
+  }
+  .planning-cockpit__heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .planning-freshness {
+    min-width: 0;
+  }
+  .iteration-summary dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .work-inspector__actions form {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 620px) {
+  .board-command-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .board-search {
+    max-width: none;
+  }
+  .board-filter-grid,
+  .planning-form-grid,
+  .board-secondary-groups {
+    grid-template-columns: 1fr;
+  }
+  .board-workstream--packages > summary {
+    grid-template-columns: auto 1fr;
+  }
+  .board-workstream__summary-action {
+    grid-column: 2;
+  }
+  .board-workstream__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .board-workstream__actions .button {
+    width: 100%;
+  }
+  .wip-panel form,
+  .iteration-form form,
+  .iteration-register form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .wip-panel .form-field {
+    width: auto;
+  }
+  .planning-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .planning-metric,
+  .planning-metric:nth-child(4) {
+    border-right: 1px solid var(--border);
+  }
+  .planning-metric:nth-child(even) {
+    border-right: 0;
+  }
+  .planning-section > header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .scenario-conflicts li {
+    grid-template-columns: 1fr;
+  }
+  .modal-drawer__surface {
+    padding: 20px;
+  }
+  .work-inspector__summary,
+  .work-inspector__sections dl {
+    grid-template-columns: 1fr;
+  }
+  .task-hasteners > header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .iteration-progress i,
+  .board-card,
+  .board-workstream__chevron {
+    transition: none;
+  }
+  .modal-drawer__surface,
+  .kanban-column,
+  .board-workstream__body {
+    animation: none;
+  }
+}
+
+@media (max-width: 1050px) {
+  .planning-pulse {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 620px) {
+  .planning-pulse {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .package-detail__request {
+    margin-left: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .board-move-dialog,
+  .board-move-dialog__card,
+  .kanban-dropzone {
+    animation: none;
+  }
+  .board-card--draggable {
+    transition: none;
+  }
+  .board-card--dragging {
+    transform: none;
+  }
+}

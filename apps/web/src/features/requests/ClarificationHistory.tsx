@@ -9,11 +9,7 @@ const stateLabel: Record<ClarificationThread["status"], string> = {
   WITHDRAWN: "Request withdrawn",
 };
 
-export function ClarificationHistory({
-  threads,
-}: {
-  threads: ClarificationThread[];
-}) {
+export function ClarificationHistory({ threads }: { threads: ClarificationThread[] }) {
   if (threads.length === 0) return null;
   return (
     <section className="clarification-history" aria-labelledby="clarification-title">
@@ -29,17 +25,37 @@ export function ClarificationHistory({
                 <span className="mono-ref">Question {thread.sequence}</span>
                 <h3>{thread.question}</h3>
               </div>
-              <span className={`clarification-state clarification-state--${thread.status.toLowerCase()}`}>
-                {thread.status === "ANSWERED" ? <CheckCircle2 aria-hidden="true" size={15} /> : <MessageSquareText aria-hidden="true" size={15} />}
+              <span
+                className={`clarification-state clarification-state--${thread.status.toLowerCase()}`}
+              >
+                {thread.status === "ANSWERED" ? (
+                  <CheckCircle2 aria-hidden="true" size={15} />
+                ) : (
+                  <MessageSquareText aria-hidden="true" size={15} />
+                )}
                 {stateLabel[thread.status]}
               </span>
             </header>
-            <p className="clarification-reason"><strong>Why this is needed:</strong> {thread.reason}</p>
-            <p className="clarification-deadline"><CalendarClock aria-hidden="true" size={15} />Response requested by {formatDate(thread.responseDeadline)}</p>
+            <p className="clarification-reason">
+              <strong>Why this is needed:</strong> {thread.reason}
+            </p>
+            <p className="clarification-deadline">
+              <CalendarClock aria-hidden="true" size={15} />
+              Response requested by {formatDate(thread.responseDeadline)}
+            </p>
             <ol className="clarification-messages">
               {thread.messages.map((message) => (
                 <li key={message.id}>
-                  <div><strong>{message.actorDisplayName}</strong><span>{message.kind === "REQUEST" ? "Asked" : message.kind === "RESPONSE" ? "Responded" : "Withdrew"}</span></div>
+                  <div>
+                    <strong>{message.actorDisplayName}</strong>
+                    <span>
+                      {message.kind === "REQUEST"
+                        ? "Asked"
+                        : message.kind === "RESPONSE"
+                          ? "Responded"
+                          : "Withdrew"}
+                    </span>
+                  </div>
                   <p>{message.body}</p>
                   <time dateTime={message.createdAt}>{formatDate(message.createdAt, true)}</time>
                 </li>

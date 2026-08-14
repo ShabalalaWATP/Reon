@@ -19,21 +19,19 @@ const candidate = {
   matchBand: "STRONG",
   methods: ["FULL_TEXT", "STRUCTURED"],
   reasons: ["Question to answer shares 4 significant terms."],
-  evidence: [{
-    field: "Question to answer",
-    reason: "Question to answer shares 4 significant terms.",
-    excerpt: "What readiness evidence is available for the planning review?",
-  }],
+  evidence: [
+    {
+      field: "Question to answer",
+      reason: "Question to answer shares 4 significant terms.",
+      excerpt: "What readiness evidence is available for the planning review?",
+    },
+  ],
 };
 
 function view() {
   return render(
     <TestProviders>
-      <RelatedRecordPanel
-        csrfToken={staffSession.csrfToken}
-        userId={staffSession.user.id}
-        workItemId="work-one"
-      />
+      <RelatedRecordPanel session={staffSession} workItemId="work-one" />
     </TestProviders>,
   );
 }
@@ -57,7 +55,9 @@ describe("related-request comparison", () => {
     expect(comparisonSummary("", false, true)).toBe("Comparison unavailable");
     expect(comparisonSummary("", false, false)).toBe("No comparison available");
     expect(comparisonSummary("search", false, false, [strong])).toBe("1 result for “search”");
-    expect(comparisonSummary("search", false, false, [strong, possible])).toBe("2 results for “search”");
+    expect(comparisonSummary("search", false, false, [strong, possible])).toBe(
+      "2 results for “search”",
+    );
     expect(comparisonSummary("", false, false, [])).toBe("No credible matches found");
     expect(comparisonSummary("", false, false, [possible, possible])).toBe(
       "No strong matches · 2 lower-confidence suggestions",
@@ -79,14 +79,16 @@ describe("related-request comparison", () => {
         posted = JSON.parse(String(init.body));
         workspace = {
           sourceVersion: 5,
-          items: [{
-            id: "link-one",
-            target: candidate,
-            linkType: "EXISTING_OUTPUT",
-            reason: "The released product may meet the same customer need.",
-            actorDisplayName: "Scott McTominay",
-            createdAt: "2026-08-07T10:00:00Z",
-          }],
+          items: [
+            {
+              id: "link-one",
+              target: candidate,
+              linkType: "EXISTING_OUTPUT",
+              reason: "The released product may meet the same customer need.",
+              actorDisplayName: "Scott McTominay",
+              createdAt: "2026-08-07T10:00:00Z",
+            },
+          ],
         };
         return json(workspace);
       }
@@ -110,9 +112,14 @@ describe("related-request comparison", () => {
     });
     expect(resultsRegion).toHaveAttribute("tabindex", "0");
     await user.click(await screen.findByRole("button", { name: /Earlier readiness assessment/ }));
-    expect(screen.getByText("What readiness evidence is available for the planning review?")).toBeInTheDocument();
+    expect(
+      screen.getByText("What readiness evidence is available for the planning review?"),
+    ).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText(/Decision/), "EXISTING_OUTPUT");
-    await user.type(screen.getByLabelText(/Reason/), "The released product may meet the same customer need.");
+    await user.type(
+      screen.getByLabelText(/Reason/),
+      "The released product may meet the same customer need.",
+    );
     await user.click(screen.getByRole("button", { name: "Record decision" }));
     expect(
       await screen.findByText(/Scott McTominay · 07 Aug 2026, (10|11):00/),
@@ -149,7 +156,10 @@ describe("related-request comparison", () => {
       if (url.pathname.endsWith("/related-records")) {
         if (failSearch) return json({ detail: "Unavailable" }, 503);
         const query = url.searchParams.get("query");
-        return json({ mode: "TEXT_ONLY", items: query === "nothing" ? [] : [candidateWithNoProduct] });
+        return json({
+          mode: "TEXT_ONLY",
+          items: query === "nothing" ? [] : [candidateWithNoProduct],
+        });
       }
       throw new Error(`Unexpected ${url.pathname}`);
     });
@@ -163,14 +173,19 @@ describe("related-request comparison", () => {
     const input = screen.getByLabelText(/Search request history/);
     await user.type(input, "nothing");
     await user.click(screen.getByRole("button", { name: "Search records" }));
-    expect(await screen.findByText("No authorised request matches those terms.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("No authorised request matches those terms."),
+    ).toBeInTheDocument();
     await user.clear(input);
     await user.type(input, "earlier");
     await user.click(screen.getByRole("button", { name: "Search records" }));
     await user.click(await screen.findByRole("button", { name: /Earlier readiness assessment/ }));
     expect(screen.getByRole("option", { name: "Existing released product" })).toBeDisabled();
     await user.selectOptions(screen.getByLabelText(/Decision/), "NOT_RELEVANT");
-    await user.type(screen.getByLabelText(/Reason/), "This related request needs a recorded human review.");
+    await user.type(
+      screen.getByLabelText(/Reason/),
+      "This related request needs a recorded human review.",
+    );
     await user.click(screen.getByRole("button", { name: "Record decision" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Refresh this request");
     failSearch = true;
@@ -178,7 +193,9 @@ describe("related-request comparison", () => {
     await user.clear(input);
     await user.type(input, "failure");
     await user.click(screen.getByRole("button", { name: "Search records" }));
-    expect(await screen.findByText("Request comparison could not be completed.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Request comparison could not be completed."),
+    ).toBeInTheDocument();
   });
 
   it("retries a failed link register", async () => {
@@ -198,7 +215,9 @@ describe("related-request comparison", () => {
     const user = userEvent.setup();
     view();
     await expandComparison(user);
-    expect(await screen.findByRole("heading", { name: "Recorded links could not be loaded" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Recorded links could not be loaded" }),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(calls).toBe(2));
     expect(await screen.findByText("No comparison decisions recorded.")).toBeInTheDocument();
@@ -216,9 +235,9 @@ describe("related-request comparison", () => {
       }
       if (url.pathname.endsWith("/related-records")) {
         const query = url.searchParams.get("query");
-        return json(query
-          ? { mode: "TEXT_ONLY", items: [] }
-          : { mode: "HYBRID", items: [sparseCandidate] });
+        return json(
+          query ? { mode: "TEXT_ONLY", items: [] } : { mode: "HYBRID", items: [sparseCandidate] },
+        );
       }
       throw new Error(`Unexpected ${url.pathname}`);
     });
@@ -233,7 +252,9 @@ describe("related-request comparison", () => {
 
     await user.type(screen.getByLabelText(/Search request history/), "nothing");
     await user.click(screen.getByRole("button", { name: "Search records" }));
-    expect(await screen.findByText("No authorised request matches those terms.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("No authorised request matches those terms."),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Automatic matches" }));
     expect(await screen.findByText(/semantic, full-text and field matching/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Automatic matches" })).not.toBeInTheDocument();

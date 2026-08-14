@@ -10,11 +10,7 @@ export const activeBoardColumns: BoardColumn[] = [
   "MANAGER_REVIEW",
 ];
 
-export const exceptionBoardColumns: BoardColumn[] = [
-  "QUALITY_REVIEW",
-  "REWORK",
-  "ON_HOLD",
-];
+export const exceptionBoardColumns: BoardColumn[] = ["QUALITY_REVIEW", "REWORK", "ON_HOLD"];
 
 export const archiveBoardColumns: BoardColumn[] = ["COMPLETED", "CANCELLED"];
 
@@ -128,13 +124,18 @@ export function builtInBoardViews(userId: string, now = new Date()) {
 }
 
 export function boardPresetFilters(preset: string | null, userId: string) {
-  return builtInBoardViews(userId).find((view) => view.key === preset)?.filters
-    ?? emptyBoardFilters;
+  return (
+    builtInBoardViews(userId).find((view) => view.key === preset)?.filters ?? emptyBoardFilters
+  );
 }
 
 export function filtersActive(filters: BoardFilters) {
   return Boolean(
-    filters.search || filters.columns.length || filters.priorities.length
-      || filters.ownerUserId || filters.itemTypes.length || filters.dueBefore,
+    filters.search ||
+    filters.columns.length ||
+    filters.priorities.length ||
+    filters.ownerUserId ||
+    filters.itemTypes.length ||
+    filters.dueBefore,
   );
 }

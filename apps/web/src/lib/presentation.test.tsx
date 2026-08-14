@@ -4,9 +4,22 @@ import { describe, expect, it } from "vitest";
 import { PageState } from "../components/PageState";
 import { StatusJourney } from "../components/StatusJourney";
 import { StatusPill } from "../components/StatusPill";
-import { homeRouteForRole, navigationForRole, queueLabelForRole, roleLabels, roleRoutes } from "./routes";
+import {
+  homeRouteForRole,
+  navigationForRole,
+  queueLabelForRole,
+  roleLabels,
+  roleRoutes,
+} from "./routes";
 import { disabledCapabilities } from "./api/capabilityClient";
-import { formatDate, isComplete, requesterGroup, statusLabels, statusTone, trackingStatusLabel } from "./status";
+import {
+  formatDate,
+  isComplete,
+  requesterGroup,
+  statusLabels,
+  statusTone,
+  trackingStatusLabel,
+} from "./status";
 import { protectedQueryKeys } from "./api/queryKeys";
 
 describe("presentation helpers", () => {
@@ -40,7 +53,10 @@ describe("presentation helpers", () => {
       { label: "Request tracking", path: "/tracking" },
       { label: "Organisation directory", path: "/organisation" },
     ]);
-    expect(navigationForRole("DELIVERY_TEAM_LEAD")).not.toContainEqual({ label: "Request tracking", path: "/tracking" });
+    expect(navigationForRole("DELIVERY_TEAM_LEAD")).not.toContainEqual({
+      label: "Request tracking",
+      path: "/tracking",
+    });
     expect(queueLabelForRole("REQUESTER")).toBe("Work queue");
     const enabled = {
       ...disabledCapabilities,
@@ -50,22 +66,41 @@ describe("presentation helpers", () => {
       statistics: true,
     };
     expect(homeRouteForRole("REQUESTER")).toBe("/requests");
-    for (const role of (Object.keys(roleRoutes) as Array<keyof typeof roleRoutes>)
-      .filter((candidate) => candidate !== "REQUESTER")) {
+    for (const role of (Object.keys(roleRoutes) as Array<keyof typeof roleRoutes>).filter(
+      (candidate) => candidate !== "REQUESTER",
+    )) {
       expect(homeRouteForRole(role)).toBe("/overview");
     }
-    expect(navigationForRole("REQUESTER", enabled)).not.toContainEqual({ label: "My assigned actions", path: "/my-work" });
-    expect(navigationForRole("PLATFORM_ADMIN", enabled)).toContainEqual({ label: "Configuration", path: "/admin/configuration" });
-    expect(navigationForRole("DELIVERY_SPECIALIST", enabled)).toContainEqual({ label: "Product package", path: "/product-packages/new" });
-    expect(navigationForRole("DELIVERY_SPECIALIST", enabled)).toContainEqual({ label: "Home", path: "/overview" });
-    for (const role of (Object.keys(roleRoutes) as Array<keyof typeof roleRoutes>)
-      .filter((candidate) => candidate !== "REQUESTER")) {
-      expect(navigationForRole(role, enabled)).toContainEqual({ label: "Personal calendar", path: "/calendar/month" });
+    expect(navigationForRole("REQUESTER", enabled)).not.toContainEqual({
+      label: "My assigned actions",
+      path: "/my-work",
+    });
+    expect(navigationForRole("PLATFORM_ADMIN", enabled)).toContainEqual({
+      label: "Configuration",
+      path: "/admin/configuration",
+    });
+    expect(navigationForRole("DELIVERY_SPECIALIST", enabled)).toContainEqual({
+      label: "Product package",
+      path: "/product-packages/new",
+    });
+    expect(navigationForRole("DELIVERY_SPECIALIST", enabled)).toContainEqual({
+      label: "Home",
+      path: "/overview",
+    });
+    for (const role of (Object.keys(roleRoutes) as Array<keyof typeof roleRoutes>).filter(
+      (candidate) => candidate !== "REQUESTER",
+    )) {
+      expect(navigationForRole(role, enabled)).toContainEqual({
+        label: "Personal calendar",
+        path: "/calendar/month",
+      });
     }
-    expect(navigationForRole("INTAKE_TRIAGE", enabled, {
-      statisticsAvailable: true,
-      workspace: { id: "crioc", name: "CRIOC" },
-    })).toEqual([
+    expect(
+      navigationForRole("INTAKE_TRIAGE", enabled, {
+        statisticsAvailable: true,
+        workspace: { id: "crioc", name: "CRIOC" },
+      }),
+    ).toEqual([
       { label: "Home", path: "/overview" },
       { label: "My assigned actions", path: "/my-work" },
       { label: "CRIOC workspace", path: "/teams/crioc/overview" },
@@ -106,7 +141,11 @@ describe("presentation helpers", () => {
   it("renders page states, pills and journey stages", () => {
     const { rerender } = render(<PageState kind="loading" title="Loading" />);
     expect(screen.getByRole("heading", { name: "Loading" })).toBeInTheDocument();
-    rerender(<PageState kind="error" title="Failed">Try later</PageState>);
+    rerender(
+      <PageState kind="error" title="Failed">
+        Try later
+      </PageState>,
+    );
     expect(screen.getByText("Try later")).toBeInTheDocument();
     rerender(<PageState kind="empty" title="Empty" action={<button>Act</button>} />);
     expect(screen.getByRole("button", { name: "Act" })).toBeInTheDocument();
@@ -121,32 +160,26 @@ describe("presentation helpers", () => {
   });
 
   it("scopes every protected register to the authenticated identity", () => {
-    expect(protectedQueryKeys.adminUsers("user-a", "")).not.toEqual(
-      protectedQueryKeys.adminUsers("user-b", ""),
+    const userAKeys = protectedQueryKeys({
+      activeContext: "STAFF",
+      contextVersion: 1,
+      userId: "user-a",
+    });
+    const userBKeys = protectedQueryKeys({
+      activeContext: "STAFF",
+      contextVersion: 1,
+      userId: "user-b",
+    });
+    expect(userAKeys.adminUsers("")).not.toEqual(userBKeys.adminUsers(""));
+    expect(userAKeys.adminUser("managed")).not.toEqual(userBKeys.adminUser("managed"));
+    expect(userAKeys.organisationUnits()).not.toEqual(userBKeys.organisationUnits());
+    expect(userAKeys.trackedRequests()).not.toEqual(userBKeys.trackedRequests());
+    expect(userAKeys.routingOptions("item")).not.toEqual(userBKeys.routingOptions("item"));
+    expect(userAKeys.statisticsScopes()).not.toEqual(userBKeys.statisticsScopes());
+    expect(userAKeys.statistics("scope", "unit", "from", "to", "UTC")).not.toEqual(
+      userBKeys.statistics("scope", "unit", "from", "to", "UTC"),
     );
-    expect(protectedQueryKeys.adminUser("user-a", "managed")).not.toEqual(
-      protectedQueryKeys.adminUser("user-b", "managed"),
-    );
-    expect(protectedQueryKeys.organisationUnits("user-a")).not.toEqual(
-      protectedQueryKeys.organisationUnits("user-b"),
-    );
-    expect(protectedQueryKeys.trackedRequests("user-a")).not.toEqual(
-      protectedQueryKeys.trackedRequests("user-b"),
-    );
-    expect(protectedQueryKeys.routingOptions("user-a", "item")).not.toEqual(
-      protectedQueryKeys.routingOptions("user-b", "item"),
-    );
-    expect(protectedQueryKeys.statisticsScopes("user-a")).not.toEqual(
-      protectedQueryKeys.statisticsScopes("user-b"),
-    );
-    expect(protectedQueryKeys.statistics("user-a", "scope", "unit", "from", "to", "UTC")).not.toEqual(
-      protectedQueryKeys.statistics("user-b", "scope", "unit", "from", "to", "UTC"),
-    );
-    expect(protectedQueryKeys.teamWorkspaces("user-a")).not.toEqual(
-      protectedQueryKeys.teamWorkspaces("user-b"),
-    );
-    expect(protectedQueryKeys.teamPeople("user-a", "team")).not.toEqual(
-      protectedQueryKeys.teamPeople("user-b", "team"),
-    );
+    expect(userAKeys.teamWorkspaces()).not.toEqual(userBKeys.teamWorkspaces());
+    expect(userAKeys.teamPeople("team")).not.toEqual(userBKeys.teamPeople("team"));
   });
 });

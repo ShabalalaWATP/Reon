@@ -54,10 +54,7 @@ export type RelatedRecordSearchResult = {
 };
 
 export type RequestLinkType =
-  | "POSSIBLE_DUPLICATE"
-  | "RELATED_REQUEST"
-  | "EXISTING_OUTPUT"
-  | "NOT_RELEVANT";
+  "POSSIBLE_DUPLICATE" | "RELATED_REQUEST" | "EXISTING_OUTPUT" | "NOT_RELEVANT";
 
 export type RequestLink = {
   id: string;
@@ -102,7 +99,8 @@ export type WorkAction =
   | { action: "return_to_coordination"; reason: string }
   | { action: "assign"; specialistId: string; contributorIds: string[]; reason: string }
   | { action: "return_for_reallocation"; reason: string }
-  | { action: "submit"; deliverableTitle: string; deliverableText: string }
+  | { action: "submit"; managedProduct: true }
+  | { action: "submit"; managedProduct?: false; deliverableTitle: string; deliverableText: string }
   | {
       action: "request_clarification";
       question: string;
@@ -117,4 +115,5 @@ export type WorkAction =
     }
   | { action: "approve" }
   | { action: "changes_required"; reason: string }
-  | { action: "release"; recipients: string[] };
+  | { action: "release"; managedProduct: true }
+  | { action: "release"; managedProduct?: false; recipients: string[] };

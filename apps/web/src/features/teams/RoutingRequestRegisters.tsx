@@ -7,6 +7,7 @@ import { StatusPill } from "../../components/StatusPill";
 import { api } from "../../lib/api/client";
 import { flattenUniquePages } from "../../lib/api/pagination";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
+import { useAuth } from "../../lib/auth/AuthProvider";
 import type { TrackedRequest, TrackedRequestFilters } from "../../lib/api/types";
 import { formatDate } from "../../lib/status";
 
@@ -18,7 +19,9 @@ type Props = {
   userId: string;
 };
 
-export function RoutingRequestRegisters({ actionRequestIds, teamId, userId }: Props) {
+export function RoutingRequestRegisters({ actionRequestIds, teamId }: Props) {
+  const { session } = useAuth();
+  const queryKeys = protectedQueryKeys(session);
   const filters: TrackedRequestFilters = {
     currentOwner: "",
     minimumAgeDays: "",
@@ -27,7 +30,7 @@ export function RoutingRequestRegisters({ actionRequestIds, teamId, userId }: Pr
     status: "",
   };
   const query = useInfiniteQuery({
-    queryKey: protectedQueryKeys.trackedRequests(userId, JSON.stringify(filters)),
+    queryKey: queryKeys.trackedRequests(JSON.stringify(filters)),
     queryFn: ({ pageParam }) => api.trackedRequests(pageParam ?? undefined, filters),
     initialPageParam: null as string | null,
     getNextPageParam: (page) => page.nextCursor ?? undefined,
@@ -63,12 +66,25 @@ export function RoutingRequestRegisters({ actionRequestIds, teamId, userId }: Pr
         onLoadMore={() => void query.fetchNextPage()}
         title="Completed requests"
       />
-      {query.isError ? <p className="form-banner form-banner--error" role="alert">Monitored requests could not be loaded.</p> : null}
+      {query.isError ? (
+        <p className="form-banner form-banner--error" role="alert">
+          Monitored requests could not be loaded.
+        </p>
+      ) : null}
     </section>
   );
 }
 
-function RequestDisclosure({ description, hasMore, items, kind, loading, loadingMore, onLoadMore, title }: {
+function RequestDisclosure({
+  description,
+  hasMore,
+  items,
+  kind,
+  loading,
+  loadingMore,
+  onLoadMore,
+  title,
+}: {
   description: string;
   hasMore: boolean;
   items: TrackedRequest[];
@@ -80,9 +96,26 @@ function RequestDisclosure({ description, hasMore, items, kind, loading, loading
 }) {
   return (
     <details className={`routing-monitor__group routing-monitor__group--${kind}`}>
-      <summary><ChevronRight aria-hidden="true" size={18} /><span><strong>{title}</strong><small>{description}</small></span><b>{loading ? "…" : items.length}</b></summary>
+      <summary>
+        <ChevronRight aria-hidden="true" size={18} />
+        <span>
+          <strong>{title}</strong>
+          <small>{description}</small>
+        </span>
+        <b>{loading ? "…" : items.length}</b>
+      </summary>
       <div className="routing-monitor__content">
-        {items.length ? <ol>{items.map((request) => <MonitoredRequest key={request.id} request={request} />)}</ol> : <p className="inline-empty">{loading ? "Loading monitored requests…" : "No requests in this section."}</p>}
+        {items.length ? (
+          <ol>
+            {items.map((request) => (
+              <MonitoredRequest key={request.id} request={request} />
+            ))}
+          </ol>
+        ) : (
+          <p className="inline-empty">
+            {loading ? "Loading monitored requests…" : "No requests in this section."}
+          </p>
+        )}
         <LoadMoreButton hasMore={hasMore} loading={loadingMore} onLoad={onLoadMore} />
       </div>
     </details>
@@ -90,19 +123,39 @@ function RequestDisclosure({ description, hasMore, items, kind, loading, loading
 }
 
 function MonitoredRequest({ request }: { request: TrackedRequest }) {
-  const awaitingAcceptance = request.status === "COMPLETED"
-    && request.customerAcceptanceRequired
-    && !request.customerAcceptedAt;
+  const awaitingAcceptance =
+    request.status === "COMPLETED" &&
+    request.customerAcceptanceRequired &&
+    !request.customerAcceptedAt;
   return (
     <li>
-      <div><span>{request.reference}</span><Link to={`/tracking/${request.id}`}>{request.title}</Link></div>
-      <StatusPill label={awaitingAcceptance ? "Awaiting Customer acceptance" : undefined} status={request.status} />
+      <div>
+        <span>{request.reference}</span>
+        <Link to={`/tracking/${request.id}`}>{request.title}</Link>
+      </div>
+      <StatusPill
+        label={awaitingAcceptance ? "Awaiting Customer acceptance" : undefined}
+        status={request.status}
+      />
       <dl>
-        <div><dt>Current owner</dt><dd>{request.currentOwner ?? "Awaiting routing"}</dd></div>
-        <div><dt>Required by</dt><dd>{formatDate(request.requiredBy)}</dd></div>
-        <div><dt>Open</dt><dd>{request.ageDays} day{request.ageDays === 1 ? "" : "s"}</dd></div>
+        <div>
+          <dt>Current owner</dt>
+          <dd>{request.currentOwner ?? "Awaiting routing"}</dd>
+        </div>
+        <div>
+          <dt>Required by</dt>
+          <dd>{formatDate(request.requiredBy)}</dd>
+        </div>
+        <div>
+          <dt>Open</dt>
+          <dd>
+            {request.ageDays} day{request.ageDays === 1 ? "" : "s"}
+          </dd>
+        </div>
       </dl>
-      <Link className="routing-monitor__open" to={`/tracking/${request.id}`}>Open read-only history</Link>
+      <Link className="routing-monitor__open" to={`/tracking/${request.id}`}>
+        Open read-only history
+      </Link>
     </li>
   );
 }

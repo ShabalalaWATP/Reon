@@ -1,9 +1,18 @@
 export type BoardColumn =
-  | "AWAITING_ASSIGNMENT" | "BACKLOG" | "READY" | "IN_PROGRESS"
-  | "BLOCKED" | "MANAGER_REVIEW" | "QUALITY_REVIEW" | "REWORK"
-  | "ON_HOLD" | "COMPLETED" | "CANCELLED";
+  | "AWAITING_ASSIGNMENT"
+  | "BACKLOG"
+  | "READY"
+  | "IN_PROGRESS"
+  | "BLOCKED"
+  | "MANAGER_REVIEW"
+  | "QUALITY_REVIEW"
+  | "REWORK"
+  | "ON_HOLD"
+  | "COMPLETED"
+  | "CANCELLED";
 export type BoardItemType = "SERVICE_REQUEST" | "WORK_PACKAGE";
-export type WorkPackageStatus = "BACKLOG" | "READY" | "IN_PROGRESS" | "BLOCKED" | "DONE" | "CANCELLED";
+export type WorkPackageStatus =
+  "BACKLOG" | "READY" | "IN_PROGRESS" | "BLOCKED" | "DONE" | "CANCELLED";
 export type WorkPackagePriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 
 export interface BoardFilters {

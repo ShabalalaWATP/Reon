@@ -8,6 +8,8 @@ export type UserRole =
   | "DELIVERY_SPECIALIST"
   | "QUALITY_RELEASE";
 
+export type AccountContext = "CUSTOMER" | "STAFF";
+
 export type User = {
   id: string;
   username: string;
@@ -24,6 +26,9 @@ export type Session = {
   idleExpiresAt?: string;
   idleTimeoutSeconds?: number;
   elevatedUntil: string | null;
+  activeContext: AccountContext;
+  availableContexts: AccountContext[];
+  contextVersion: number;
 };
 
 export type PersonalProfile = {

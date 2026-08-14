@@ -22,10 +22,13 @@ describe("assigned Analyst production work", () => {
     mockFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(analystSession);
       if (url.pathname.endsWith("/work-items")) return json({ items: [assigned] });
-      if (url.pathname.includes("/requests/")) return json({
-        ...requestDetail,
-        contributors: [{ id: analystSession.user.id, displayName: analystSession.user.displayName }],
-      });
+      if (url.pathname.includes("/requests/"))
+        return json({
+          ...requestDetail,
+          contributors: [
+            { id: analystSession.user.id, displayName: analystSession.user.displayName },
+          ],
+        });
       throw new Error(url.pathname);
     });
 

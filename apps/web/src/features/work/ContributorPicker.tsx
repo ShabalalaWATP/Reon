@@ -12,13 +12,7 @@ type Props = {
   selectedIds: string[];
 };
 
-export function ContributorPicker({
-  error,
-  items,
-  leadAnalystId,
-  register,
-  selectedIds,
-}: Props) {
+export function ContributorPicker({ error, items, leadAnalystId, register, selectedIds }: Props) {
   const groupId = useId();
   const helpId = `${groupId}-help`;
   const errorId = `${groupId}-error`;
@@ -35,7 +29,8 @@ export function ContributorPicker({
         Contributing Analysts <small>Optional, choose up to 10</small>
       </legend>
       <p className="contributor-picker__help" id={helpId}>
-        Select every Analyst who will support the Lead. Each choice can be turned on or off independently.
+        Select every Analyst who will support the Lead. Each choice can be turned on or off
+        independently.
       </p>
       <div className="contributor-picker__options">
         {items.map((analyst) => {

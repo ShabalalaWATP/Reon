@@ -15,16 +15,22 @@ import { formatDate, trackingStatusLabel } from "../../lib/status";
 import { TrackingJourney } from "./TrackingJourney";
 import { TrackingFilters } from "./TrackingFilters";
 
-const emptyFilters: TrackedRequestFilters = { search: "", status: "", currentOwner: "", routeUnitId: "", minimumAgeDays: "" };
+const emptyFilters: TrackedRequestFilters = {
+  search: "",
+  status: "",
+  currentOwner: "",
+  routeUnitId: "",
+  minimumAgeDays: "",
+};
 
 export function TrackingPage() {
   const { session } = useAuth();
-  const userId = session?.user.id ?? "anonymous";
+  const queryKeys = protectedQueryKeys(session);
   const [filters, setFilters] = useState(emptyFilters);
   const [draftFilters, setDraftFilters] = useState(emptyFilters);
   const filterKey = JSON.stringify(filters);
   const query = useInfiniteQuery({
-    queryKey: protectedQueryKeys.trackedRequests(userId, filterKey),
+    queryKey: queryKeys.trackedRequests(filterKey),
     queryFn: ({ pageParam }) => api.trackedRequests(pageParam ?? undefined, filters),
     initialPageParam: null as string | null,
     getNextPageParam: (page) => page.nextCursor ?? undefined,
@@ -32,7 +38,7 @@ export function TrackingPage() {
     refetchInterval: 30_000,
   });
   const units = useQuery({
-    queryKey: protectedQueryKeys.organisationUnits(userId),
+    queryKey: queryKeys.organisationUnits(),
     queryFn: api.organisationUnits,
     enabled: Boolean(session),
   });
@@ -64,12 +70,28 @@ export function TrackingPage() {
           <span>Authorised route view</span>
           <h1>Request tracking</h1>
           <p>
-            Follow requests your organisation has routed through delivery and
-            reopen their submitted detail without entering the action queue.
+            Follow requests your organisation has routed through delivery and reopen their submitted
+            detail without entering the action queue.
           </p>
         </div>
       </header>
-      <TrackingFilters applied={filters} draft={draftFilters} onApply={() => setFilters({ ...draftFilters, search: draftFilters.search.trim(), currentOwner: draftFilters.currentOwner.trim() })} onChange={setDraftFilters} onClear={() => { setDraftFilters(emptyFilters); setFilters(emptyFilters); }} units={units.data?.items ?? []} />
+      <TrackingFilters
+        applied={filters}
+        draft={draftFilters}
+        onApply={() =>
+          setFilters({
+            ...draftFilters,
+            search: draftFilters.search.trim(),
+            currentOwner: draftFilters.currentOwner.trim(),
+          })
+        }
+        onChange={setDraftFilters}
+        onClear={() => {
+          setDraftFilters(emptyFilters);
+          setFilters(emptyFilters);
+        }}
+        units={units.data?.items ?? []}
+      />
       {requests.length === 0 ? (
         <PageState kind="empty" title="No requests to track">
           Submitted requests will appear here as they enter CRIOC routing.
@@ -95,16 +117,31 @@ function TrackedRequestRow({ request, viewer }: { request: TrackedRequest; viewe
     <article className="tracking-row">
       <header>
         <div className="tracking-row__identity">
-          <Link className="mono-ref" to={`/tracking/${request.id}`}>{request.reference}</Link>
-          <h2><Link to={`/tracking/${request.id}`}>{request.title}</Link></h2>
+          <Link className="mono-ref" to={`/tracking/${request.id}`}>
+            {request.reference}
+          </Link>
+          <h2>
+            <Link to={`/tracking/${request.id}`}>{request.title}</Link>
+          </h2>
           <span>Updated {formatDate(request.updatedAt, true)}</span>
         </div>
         <StatusPill label={trackingStatusLabel(request.status)} status={request.status} />
       </header>
       <dl>
-        <div><dt>Required by</dt><dd>{formatDate(request.requiredBy)}</dd></div>
-        <div><dt>Submitted</dt><dd>{formatDate(request.createdAt)}</dd></div>
-        <div><dt>Age</dt><dd>{request.ageDays} day{request.ageDays === 1 ? "" : "s"}</dd></div>
+        <div>
+          <dt>Required by</dt>
+          <dd>{formatDate(request.requiredBy)}</dd>
+        </div>
+        <div>
+          <dt>Submitted</dt>
+          <dd>{formatDate(request.createdAt)}</dd>
+        </div>
+        <div>
+          <dt>Age</dt>
+          <dd>
+            {request.ageDays} day{request.ageDays === 1 ? "" : "s"}
+          </dd>
+        </div>
       </dl>
       <TrackingJourney request={request} viewer={viewer} />
       {request.awaitingTeamStaffing ? (
@@ -112,7 +149,9 @@ function TrackedRequestRow({ request, viewer }: { request: TrackedRequest; viewe
           Awaiting team staffing
         </p>
       ) : null}
-      <Link className="tracking-open-link" to={`/tracking/${request.id}`}>Open request <ArrowUpRight aria-hidden="true" size={15} /></Link>
+      <Link className="tracking-open-link" to={`/tracking/${request.id}`}>
+        Open request <ArrowUpRight aria-hidden="true" size={15} />
+      </Link>
     </article>
   );
 }

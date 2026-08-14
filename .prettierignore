@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+**/coverage/
+playwright-report/
+test-results/
+.coverage
+coverage.json
+coverage.xml
+apps/api/
+docs/
+output/
+.tmp/
+pnpm-lock.yaml

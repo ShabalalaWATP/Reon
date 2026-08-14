@@ -76,6 +76,7 @@ export type ClarificationThread = {
 };
 
 export type RequestDetail = RequestSummary & {
+  productMode: "LEGACY" | "MANAGED";
   serviceCategory: string;
   description: string;
   questionToAnswer: string;

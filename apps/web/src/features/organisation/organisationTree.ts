@@ -4,9 +4,7 @@ export type OrganisationTreeNode = OrganisationUnit & {
   children: OrganisationTreeNode[];
 };
 
-export function buildOrganisationTree(
-  units: OrganisationUnit[],
-): OrganisationTreeNode[] {
+export function buildOrganisationTree(units: OrganisationUnit[]): OrganisationTreeNode[] {
   const nodes = new Map<string, OrganisationTreeNode>(
     units.map((unit) => [unit.id, { ...unit, children: [] }]),
   );

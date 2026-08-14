@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  addLocalDays,
-  localDateInputValue,
-  localDateTimeInputValue,
-} from "./dateInputs";
+import { addLocalDays, localDateInputValue, localDateTimeInputValue } from "./dateInputs";
 
 describe("local date input values", () => {
   it("uses local calendar and clock components", () => {

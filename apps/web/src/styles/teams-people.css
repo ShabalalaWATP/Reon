@@ -1,0 +1,257 @@
+/* People */
+.team-people-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 28px;
+  align-items: start;
+}
+.team-register > header {
+  margin-bottom: 18px;
+}
+.team-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface-muted) 55%, transparent);
+}
+.team-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+.team-table caption {
+  padding: 10px 13px;
+  color: var(--muted);
+  text-align: left;
+  font-size: 0.68rem;
+}
+.team-table th,
+.team-table td {
+  border-top: 1px solid var(--border);
+  padding: 12px 13px;
+  text-align: left;
+  vertical-align: top;
+}
+.team-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-raised);
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+.team-table tbody tr {
+  transition: background var(--speed-fast);
+}
+.team-table tbody tr:hover {
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+}
+.team-table__sort {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 750;
+  letter-spacing: 0.045em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.team-table__sort i {
+  color: color-mix(in srgb, var(--muted) 60%, transparent);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-style: normal;
+}
+.team-table__sort:hover,
+.team-table__sort:focus-visible,
+th[aria-sort]:not([aria-sort="none"]) .team-table__sort {
+  color: var(--accent);
+}
+.team-table__sort:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.team-table tbody th strong,
+.team-table tbody th small {
+  display: block;
+}
+.team-table tbody th small {
+  max-width: 260px;
+  margin-top: 4px;
+  color: var(--muted);
+  font-weight: 450;
+  line-height: 1.35;
+}
+.skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.skill-tags li {
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: 99px;
+  padding: 3px 7px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  font-size: 0.66rem;
+  white-space: nowrap;
+}
+.muted-text {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+.membership-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid currentcolor;
+  border-radius: 99px;
+  padding: 4px 9px;
+  background: color-mix(in srgb, currentcolor 8%, transparent);
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 750;
+  text-transform: capitalize;
+}
+.membership-state::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentcolor;
+}
+.membership-state--current {
+  color: var(--success);
+}
+.membership-state--scheduled {
+  color: var(--warning);
+}
+.team-person-link {
+  color: var(--text);
+  font-weight: 760;
+  text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  transition:
+    color var(--speed-fast),
+    text-decoration-color var(--speed-fast);
+}
+.team-person-link:hover,
+.team-person-link:focus-visible {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+.roster-control {
+  position: sticky;
+  top: 20px;
+}
+.roster-control form {
+  display: grid;
+  gap: 15px;
+  margin-top: 17px;
+}
+.roster-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-top: 15px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  background: color-mix(in srgb, var(--surface-muted) 70%, transparent);
+}
+.roster-mode button {
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  transition:
+    color var(--speed-fast),
+    background var(--speed-fast),
+    border-color var(--speed-fast);
+}
+.roster-mode button[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--accent) 36%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 18%, transparent),
+    color-mix(in srgb, var(--accent) 8%, transparent)
+  );
+  color: var(--text);
+  box-shadow: var(--glow);
+}
+.end-membership-row form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 12px;
+  padding: 5px;
+}
+
+/* Activity timeline */
+.team-activity-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.team-activity-list li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 20px;
+  padding: 16px 8px 16px 28px;
+  transition: background var(--speed-fast);
+}
+.team-activity-list li:hover {
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+.team-activity-list li::before {
+  content: "";
+  position: absolute;
+  top: 22px;
+  left: 8px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.team-activity-list li::after {
+  content: "";
+  position: absolute;
+  top: 38px;
+  bottom: -10px;
+  left: 12px;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 35%, var(--border)),
+    color-mix(in srgb, var(--border) 60%, transparent)
+  );
+}
+.team-activity-list li:last-child::after {
+  display: none;
+}
+.team-activity-list time {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
+.team-activity-list p {
+  margin: 5px 0;
+  color: var(--muted);
+}
+.team-activity-list small {
+  color: var(--muted);
+}

@@ -4,11 +4,7 @@ type LoadMoreButtonProps = {
   onLoad: () => void;
 };
 
-export function LoadMoreButton({
-  hasMore,
-  loading,
-  onLoad,
-}: LoadMoreButtonProps) {
+export function LoadMoreButton({ hasMore, loading, onLoad }: LoadMoreButtonProps) {
   if (!hasMore) return null;
   return (
     <button

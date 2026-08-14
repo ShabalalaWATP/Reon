@@ -14,10 +14,13 @@ describe("password assistance", () => {
       if (url.pathname.endsWith("/auth/password-assistance") && init.method === "POST") {
         if (fail) return json({ detail: "Unavailable" }, 503);
         submitted = JSON.parse(String(init.body));
-        return json({
-          status: "accepted",
-          message: "If an active account matches that email, an administrator has been notified.",
-        }, 202);
+        return json(
+          {
+            status: "accepted",
+            message: "If an active account matches that email, an administrator has been notified.",
+          },
+          202,
+        );
       }
       throw new Error(url.pathname);
     });
@@ -35,7 +38,9 @@ describe("password assistance", () => {
     await user.type(screen.getByLabelText(/Work email/), "  ADMIN2@ISTARI.EXAMPLE.TEST  ");
     await user.click(submit);
 
-    expect(await screen.findByRole("status")).toHaveTextContent("If an active account matches that email");
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "If an active account matches that email",
+    );
     expect(submitted).toEqual({ email: "ADMIN2@ISTARI.EXAMPLE.TEST" });
     expect(await axe(view.container)).toHaveNoViolations();
     await user.click(screen.getByRole("button", { name: "Back to sign in" }));

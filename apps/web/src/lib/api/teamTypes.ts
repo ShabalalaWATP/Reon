@@ -1,9 +1,4 @@
-export type ManagementAction =
-  | "STATISTICS"
-  | "ROSTER"
-  | "CALENDAR"
-  | "BOARD"
-  | "CAPACITY";
+export type ManagementAction = "STATISTICS" | "ROSTER" | "CALENDAR" | "BOARD" | "CAPACITY";
 
 export type TeamWorkspaceAccess = {
   teamId: string;
@@ -32,7 +27,12 @@ export type TeamMember = {
   membershipId: string;
   accountId: string;
   displayName: string;
-  role: "INTAKE_TRIAGE" | "SERVICE_COORDINATION" | "OPERATIONS_ALLOCATION" | "DELIVERY_TEAM_LEAD" | "DELIVERY_SPECIALIST";
+  role:
+    | "INTAKE_TRIAGE"
+    | "SERVICE_COORDINATION"
+    | "OPERATIONS_ALLOCATION"
+    | "DELIVERY_TEAM_LEAD"
+    | "DELIVERY_SPECIALIST";
   workspacePosition?: "MANAGER" | "MEMBER";
   state: MembershipState;
   effectiveFrom: string;
@@ -82,12 +82,7 @@ export type EligibleRosterAnalystList = { items: EligibleRosterAnalyst[] };
 export type TeamActivityList = { items: TeamActivity[] };
 
 export type WorkspaceRecordKind =
-  | "DESCRIPTION"
-  | "HANDOVER"
-  | "RISK"
-  | "BLOCKER"
-  | "DECISION"
-  | "LINK";
+  "DESCRIPTION" | "HANDOVER" | "RISK" | "BLOCKER" | "DECISION" | "LINK";
 
 export type WorkspaceRecord = {
   id: string;

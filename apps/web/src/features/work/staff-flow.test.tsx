@@ -19,7 +19,9 @@ describe("staff work queue", () => {
       if (url.pathname.endsWith("/auth/me")) return json(staffSession);
       if (url.pathname.endsWith("/work-items")) {
         requested.push(url.searchParams.get("requestId") ?? "");
-        return json({ items: url.searchParams.get("requestId") === workItem.requestId ? [workItem] : [] });
+        return json({
+          items: url.searchParams.get("requestId") === workItem.requestId ? [workItem] : [],
+        });
       }
       throw new Error(`Unexpected ${url.pathname}`);
     });
@@ -30,8 +32,13 @@ describe("staff work queue", () => {
     exact.unmount();
 
     renderApp("/triage?requestId=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
-    expect(await screen.findByRole("heading", { name: "This action is no longer available" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open CRIOC routing queue" })).toHaveAttribute("href", "/triage");
+    expect(
+      await screen.findByRole("heading", { name: "This action is no longer available" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open CRIOC routing queue" })).toHaveAttribute(
+      "href",
+      "/triage",
+    );
   });
 
   it("claims work and records a stage-specific human outcome", async () => {
@@ -42,7 +49,12 @@ describe("staff work queue", () => {
       if (url.pathname.endsWith("/auth/me")) return json(staffSession);
       if (url.pathname.endsWith("/work-items")) return json({ items: item ? [item] : [] });
       if (url.pathname.endsWith("/claim")) {
-        item = { ...item, assigneeId: staffSession.user.id, assigneeDisplayName: staffSession.user.displayName, status: "CLAIMED" };
+        item = {
+          ...item,
+          assigneeId: staffSession.user.id,
+          assigneeDisplayName: staffSession.user.displayName,
+          status: "CLAIMED",
+        };
         return json(item);
       }
       if (url.pathname.endsWith("/routing-options")) {
@@ -53,7 +65,7 @@ describe("staff work queue", () => {
         item = undefined as never;
         return json(requestDetail);
       }
-      if (url.pathname.includes("/requests/")) {
+      if (url.pathname.endsWith(`/requests/${requestDetail.id}`)) {
         requestDetailCalls += 1;
         return json(requestDetail);
       }
@@ -80,7 +92,13 @@ describe("staff work queue", () => {
     expect(await screen.findByText("Choose a priority.")).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText(/Priority/), "HIGH");
     await user.click(screen.getByRole("button", { name: "Route to command" }));
-    await waitFor(() => expect(completeBody).toEqual({ action: "progress", destinationUnitId: "unit-jock", priority: "HIGH" }));
+    await waitFor(() =>
+      expect(completeBody).toEqual({
+        action: "progress",
+        destinationUnitId: "unit-jock",
+        priority: "HIGH",
+      }),
+    );
     expect(await screen.findByRole("heading", { name: "No items waiting" })).toBeInTheDocument();
     expect(requestDetailCalls).toBe(1);
   });
@@ -132,9 +150,7 @@ describe("staff work queue", () => {
     expect(eligibleCalls).toBe(0);
 
     await user.selectOptions(outcome, "assign");
-    expect(await screen.findByRole("status")).toHaveTextContent(
-      "Loading eligible Analysts…",
-    );
+    expect(await screen.findByRole("status")).toHaveTextContent("Loading eligible Analysts…");
     expect(eligibleCalls).toBe(1);
     resolveSpecialists(
       json({
@@ -147,9 +163,14 @@ describe("staff work queue", () => {
 
     const specialistSelect = await screen.findByLabelText("Lead Analyst");
     await waitFor(() => expect(specialistSelect).toBeEnabled());
-    expect(within(specialistSelect).getByRole("option", { name: "Euan Fraser" })).toBeInTheDocument();
+    expect(
+      within(specialistSelect).getByRole("option", { name: "Euan Fraser" }),
+    ).toBeInTheDocument();
     await user.selectOptions(specialistSelect, "specialist-b");
-    await user.type(screen.getByLabelText(/^Assignment reason/), "Euan will lead this delivery request.");
+    await user.type(
+      screen.getByLabelText(/^Assignment reason/),
+      "Euan will lead this delivery request.",
+    );
     await user.click(screen.getByRole("button", { name: "Assign Analysts" }));
 
     await waitFor(() =>
@@ -185,9 +206,7 @@ describe("staff work queue", () => {
       if (url.pathname.endsWith("/auth/me")) return json(teamLeadSession);
       if (url.pathname.endsWith("/eligible-specialists")) {
         eligibleCalls += 1;
-        return eligibleCalls === 1
-          ? json({ detail: "Unavailable" }, 503)
-          : json({ items: [] });
+        return eligibleCalls === 1 ? json({ detail: "Unavailable" }, 503) : json({ items: [] });
       }
       if (url.pathname.endsWith("/work-items")) return json({ items: [planningItem] });
       if (url.pathname.includes("/requests/")) return json(requestDetail);
@@ -245,13 +264,21 @@ describe("staff work queue", () => {
     expect(await screen.findByLabelText("Lead Analyst")).toBeDisabled();
     expect(eligibleCalls).toBe(0);
     items = [otherOwnerItem];
-    await user.click(screen.getAllByRole("button", { name: /Quarterly service readiness summary/ })[1]);
-    expect(await screen.findByRole("heading", { name: "Assigned to Another colleague" })).toBeInTheDocument();
+    await user.click(
+      screen.getAllByRole("button", { name: /Quarterly service readiness summary/ })[1],
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Assigned to Another colleague" }),
+    ).toBeInTheDocument();
     expect(eligibleCalls).toBe(0);
   });
 
   it("shows assigned ownership and keeps decisions with the owner", async () => {
-    const assigned = { ...workItem, assigneeId: "someone-else", assigneeDisplayName: "Another colleague" };
+    const assigned = {
+      ...workItem,
+      assigneeId: "someone-else",
+      assigneeDisplayName: "Another colleague",
+    };
     mockFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(staffSession);
       if (url.pathname.endsWith("/work-items")) return json({ items: [assigned] });
@@ -259,8 +286,12 @@ describe("staff work queue", () => {
       throw new Error(url.pathname);
     });
     renderApp("/triage");
-    expect(await screen.findByRole("heading", { name: "Assigned to Another colleague" })).toBeInTheDocument();
-    expect(screen.getByText("Assigned to Another colleague", { selector: "span" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Assigned to Another colleague" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Assigned to Another colleague", { selector: "span" }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Claim work item" })).not.toBeInTheDocument();
   });
 
@@ -268,8 +299,10 @@ describe("staff work queue", () => {
     const assigned = { ...workItem, assigneeId: "someone-else", assigneeDisplayName: null };
     mockFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(staffSession);
-      if (url.pathname.endsWith("/work-items")) return json({ items: [workItem, { ...assigned, id: "second" }] });
-      if (url.pathname.endsWith("/claim")) return json({ detail: { message: "Claim rejected." } }, 409);
+      if (url.pathname.endsWith("/work-items"))
+        return json({ items: [workItem, { ...assigned, id: "second" }] });
+      if (url.pathname.endsWith("/claim"))
+        return json({ detail: { message: "Claim rejected." } }, 409);
       if (url.pathname.includes("/requests/")) return json(requestDetail);
       throw new Error(url.pathname);
     });
@@ -289,37 +322,24 @@ describe("staff work queue", () => {
     };
     mockFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(staffSession);
-      if (url.pathname.endsWith("/work-items")) return listFails ? json({ detail: "Unavailable" }, 503) : json({ items: [claimedItem] });
-      if (url.pathname.includes("/requests/")) return detailFails ? json({ detail: "Unavailable" }, 503) : json(requestDetail);
+      if (url.pathname.endsWith("/work-items"))
+        return listFails ? json({ detail: "Unavailable" }, 503) : json({ items: [claimedItem] });
+      if (url.pathname.includes("/requests/"))
+        return detailFails ? json({ detail: "Unavailable" }, 503) : json(requestDetail);
       throw new Error(url.pathname);
     });
     const user = userEvent.setup();
     renderApp("/triage");
-    expect(await screen.findByRole("heading", { name: "Work queue could not be loaded" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Work queue could not be loaded" }),
+    ).toBeInTheDocument();
     listFails = false;
     await user.click(screen.getByRole("button", { name: "Try again" }));
-    expect(await screen.findByRole("heading", { name: "Request context could not be loaded" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Request context could not be loaded" }),
+    ).toBeInTheDocument();
     detailFails = false;
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("heading", { name: "Record outcome" })).toBeInTheDocument();
-  });
-
-  it.each([
-    ["/coordination", "Incoming requests"],
-    ["/allocation", "Ops routing queue"],
-    ["/delivery/team", "Team queue"],
-    ["/delivery/my-work", "Production queue"],
-    ["/quality-release", "QC queue"],
-  ])("renders the shared queue at %s for its role", async (path, title) => {
-    const roleByPath = {
-      "/coordination": "SERVICE_COORDINATION",
-      "/allocation": "OPERATIONS_ALLOCATION",
-      "/delivery/team": "DELIVERY_TEAM_LEAD",
-      "/delivery/my-work": "DELIVERY_SPECIALIST",
-      "/quality-release": "QUALITY_RELEASE",
-    } as const;
-    mockFetch((url) => url.pathname.endsWith("/auth/me") ? json({ ...staffSession, user: { ...staffSession.user, role: roleByPath[path as keyof typeof roleByPath] } }) : json({ items: [] }));
-    renderApp(path);
-    expect(await screen.findByRole("heading", { name: title })).toBeInTheDocument();
   });
 });

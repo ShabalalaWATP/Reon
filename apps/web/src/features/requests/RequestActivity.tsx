@@ -12,11 +12,7 @@ type RequestActivityProps = {
   requestId: string;
 };
 
-export function RequestActivity({
-  initialCursor,
-  initialEvents,
-  requestId,
-}: RequestActivityProps) {
+export function RequestActivity({ initialCursor, initialEvents, requestId }: RequestActivityProps) {
   const [events, setEvents] = useState(initialEvents);
   const [cursor, setCursor] = useState(initialCursor ?? null);
   const older = useMutation({
@@ -25,15 +21,13 @@ export function RequestActivity({
       const byId = new Map(events.map((event) => [event.id, event]));
       page.events.forEach((event) => byId.set(event.id, event));
       setEvents(
-        [...byId.values()].sort((left, right) =>
-          left.createdAt.localeCompare(right.createdAt),
-        ),
+        [...byId.values()].sort((left, right) => left.createdAt.localeCompare(right.createdAt)),
       );
       setCursor(page.eventsNextCursor ?? null);
     },
   });
   return (
-    <section className="detail-section" aria-labelledby="activity-title">
+    <section className="detail-section" aria-labelledby="activity-title" id="request-activity">
       <div className="section-heading">
         <span>Immutable history</span>
         <h2 id="activity-title">Activity</h2>
@@ -49,9 +43,7 @@ export function RequestActivity({
                 <strong>{event.message}</strong>
                 <small>
                   {event.actorDisplayName ?? "ISTARI service"} ·{" "}
-                  <time dateTime={event.createdAt}>
-                    {formatDate(event.createdAt, true)}
-                  </time>
+                  <time dateTime={event.createdAt}>{formatDate(event.createdAt, true)}</time>
                 </small>
               </div>
             </li>

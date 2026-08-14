@@ -34,12 +34,24 @@ export function ModalDrawer({
     <dialog
       aria-label={label}
       className={`modal-drawer modal-drawer--${variant}`}
-      onCancel={(event) => { event.preventDefault(); onClose(); }}
-      onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
       ref={dialog}
     >
       <div className="modal-drawer__surface">
-        <button aria-label={`Close ${label}`} className="modal-drawer__close" onClick={onClose} type="button">×</button>
+        <button
+          aria-label={`Close ${label}`}
+          className="modal-drawer__close"
+          onClick={onClose}
+          type="button"
+        >
+          ×
+        </button>
         {children}
       </div>
     </dialog>

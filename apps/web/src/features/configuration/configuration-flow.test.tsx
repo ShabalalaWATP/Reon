@@ -5,20 +5,34 @@ import { describe, expect, it } from "vitest";
 
 import type { ConfigurationVersion } from "../../lib/api/configurationTypes";
 import { adminSession, enabledCapabilities, requesterSession } from "../../test/fixtures";
-import { configurationPreview, configurationVersion, workflowDefinition } from "../../test/configurationFixtures";
+import {
+  configurationPreview,
+  configurationVersion,
+  workflowDefinition,
+} from "../../test/configurationFixtures";
 import { json, mockFeatureFetch, mockFetch, renderApp } from "../../test/render";
 
-function configurationHandler(current: () => ConfigurationVersion, update?: (next: ConfigurationVersion) => void) {
+function configurationHandler(
+  current: () => ConfigurationVersion,
+  update?: (next: ConfigurationVersion) => void,
+) {
   return (url: URL, init: RequestInit) => {
     const method = init.method ?? "GET";
     if (url.pathname.endsWith("/auth/me")) return json(adminSession);
     if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
-    if (url.pathname.endsWith("/admin/configuration/versions") && method === "GET") return json({ items: [current()] });
-    if (url.pathname.endsWith("/workflow-definitions")) return json({ items: [workflowDefinition] });
+    if (url.pathname.endsWith("/admin/configuration/versions") && method === "GET")
+      return json({ items: [current()] });
+    if (url.pathname.endsWith("/workflow-definitions"))
+      return json({ items: [workflowDefinition] });
     if (url.pathname.endsWith("/preview")) return json(configurationPreview);
-    if (url.pathname.endsWith(`/versions/${current().id}`) && method === "GET") return json(current());
+    if (url.pathname.endsWith(`/versions/${current().id}`) && method === "GET")
+      return json(current());
     if (url.pathname.endsWith(`/versions/${current().id}`) && method === "PUT") {
-      const next = { ...current(), ...JSON.parse(String(init.body)), version: current().version + 1 };
+      const next = {
+        ...current(),
+        ...JSON.parse(String(init.body)),
+        version: current().version + 1,
+      };
       update?.(next);
       return json(next);
     }
@@ -31,8 +45,12 @@ describe("configuration administration journey", () => {
     mockFeatureFetch(configurationHandler(() => configurationVersion));
     const user = userEvent.setup();
     const view = renderApp("/admin/configuration/cfg-2");
-    expect(await screen.findByRole("heading", { name: "Organisation and workflow configuration" })).toBeInTheDocument();
-    expect(screen.getByText("Proposed changes", { selector: ".configuration-state" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Organisation and workflow configuration" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Proposed changes", { selector: ".configuration-state" }),
+    ).toBeInTheDocument();
     const rows = screen.getAllByRole("treeitem");
     expect(rows).toHaveLength(4);
     rows[0].focus();
@@ -49,7 +67,11 @@ describe("configuration administration journey", () => {
     await user.click(screen.getByRole("button", { name: "Show in tree" }));
     expect(screen.getByLabelText("Search organisation")).toHaveValue("");
     expect(screen.getByRole("heading", { name: "Pine Team" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Selected organisation path" })).toHaveTextContent("ISTARI · ISTARINorthern Command · NORTHNorthern Ops Group · NORTH_OPSPine Team · PINE_TEAM");
+    expect(
+      screen.getByRole("navigation", { name: "Selected organisation path" }),
+    ).toHaveTextContent(
+      "ISTARI · ISTARINorthern Command · NORTHNorthern Ops Group · NORTH_OPSPine Team · PINE_TEAM",
+    );
     expect(screen.getByText("Snapshot reference").parentElement).toHaveTextContent("b".repeat(64));
     expect(screen.getAllByText(/Outcomes fixed: approve, changes_required/)).toHaveLength(2);
     expect(await axe(view.container)).toHaveNoViolations();
@@ -73,7 +95,12 @@ describe("configuration administration journey", () => {
     await user.type(screen.getByLabelText("New display name"), "Pine Delivery Team");
     await user.click(screen.getByRole("button", { name: "Save proposed change" }));
     await waitFor(() => expect(saved).toBeDefined());
-    expect(saved).toMatchObject({ expectedVersion: 1, units: expect.arrayContaining([expect.objectContaining({ unitId: "unit-team", name: "Pine Delivery Team" })]) });
+    expect(saved).toMatchObject({
+      expectedVersion: 1,
+      units: expect.arrayContaining([
+        expect.objectContaining({ unitId: "unit-team", name: "Pine Delivery Team" }),
+      ]),
+    });
     expect(saved?.candidateGroups).toEqual(configurationVersion.candidateGroups);
   });
 
@@ -84,18 +111,62 @@ describe("configuration administration journey", () => {
       const method = init.method ?? "GET";
       if (url.pathname.endsWith("/auth/me")) return json(adminSession);
       if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
-      if (url.pathname.endsWith("/admin/configuration/versions") && method === "GET") return json({ items: [current] });
-      if (url.pathname.endsWith("/workflow-definitions")) return json({ items: [workflowDefinition] });
+      if (url.pathname.endsWith("/admin/configuration/versions") && method === "GET")
+        return json({ items: [current] });
+      if (url.pathname.endsWith("/workflow-definitions"))
+        return json({ items: [workflowDefinition] });
       if (url.pathname.endsWith("/preview")) return json(configurationPreview);
-      if (url.pathname.endsWith(`/versions/${current.id}`) && method === "GET") return json(current);
+      if (url.pathname.endsWith(`/versions/${current.id}`) && method === "GET")
+        return json(current);
       for (const action of ["validate", "submit", "approve", "activate"] as const) {
         if (url.pathname.endsWith(`/${action}`)) {
           const body = JSON.parse(String(init.body));
           actions.push({ action, body });
-          if (action === "validate") current = { ...current, status: "VALIDATED", validatedAt: "2026-08-07T10:00:00Z", version: 2, findings: [{ severity: "WARNING", code: "TEAM_UNSTAFFED", message: "Work will await staffing.", path: "units.3", unitId: "unit-team" }] };
-          if (action === "submit") current = { ...current, status: "AWAITING_APPROVAL", submittedAt: "2026-08-07T10:01:00Z", reason: body.reason as string, version: 3 };
-          if (action === "approve") current = { ...current, approval: { actorUserId: adminSession.user.id, decision: "APPROVED", reviewedVersion: 3, snapshotDigest: "a".repeat(64), reason: body.reason as string, createdAt: "2026-08-07T10:02:00Z" }, version: 4 };
-          if (action === "activate") current = { ...current, status: "ACTIVE", activatedAt: "2026-08-07T10:03:00Z", reason: body.reason as string, version: 5 };
+          if (action === "validate")
+            current = {
+              ...current,
+              status: "VALIDATED",
+              validatedAt: "2026-08-07T10:00:00Z",
+              version: 2,
+              findings: [
+                {
+                  severity: "WARNING",
+                  code: "TEAM_UNSTAFFED",
+                  message: "Work will await staffing.",
+                  path: "units.3",
+                  unitId: "unit-team",
+                },
+              ],
+            };
+          if (action === "submit")
+            current = {
+              ...current,
+              status: "AWAITING_APPROVAL",
+              submittedAt: "2026-08-07T10:01:00Z",
+              reason: body.reason as string,
+              version: 3,
+            };
+          if (action === "approve")
+            current = {
+              ...current,
+              approval: {
+                actorUserId: adminSession.user.id,
+                decision: "APPROVED",
+                reviewedVersion: 3,
+                snapshotDigest: "a".repeat(64),
+                reason: body.reason as string,
+                createdAt: "2026-08-07T10:02:00Z",
+              },
+              version: 4,
+            };
+          if (action === "activate")
+            current = {
+              ...current,
+              status: "ACTIVE",
+              activatedAt: "2026-08-07T10:03:00Z",
+              reason: body.reason as string,
+              version: 5,
+            };
           return json(current);
         }
       }
@@ -103,33 +174,69 @@ describe("configuration administration journey", () => {
     });
     const user = userEvent.setup();
     renderApp("/admin/configuration/cfg-2");
-    await user.click(await screen.findByRole("button", { name: "Validate complete configuration" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Validate complete configuration" }),
+    );
     expect(await screen.findByText("TEAM UNSTAFFED")).toBeInTheDocument();
     await screen.findByRole("button", { name: "Submit for independent approval" });
-    await user.type(screen.getByRole("textbox", { name: /Decision reason/ }), "New branch is ready for controlled review.");
+    await user.type(
+      screen.getByRole("textbox", { name: /Decision reason/ }),
+      "New branch is ready for controlled review.",
+    );
     await user.click(screen.getByRole("button", { name: "Submit for independent approval" }));
     await screen.findByRole("button", { name: "Approve proposed changes" });
-    await user.type(screen.getByRole("textbox", { name: /Decision reason/ }), "Independent review confirms the proposed changes.");
+    await user.type(
+      screen.getByRole("textbox", { name: /Decision reason/ }),
+      "Independent review confirms the proposed changes.",
+    );
     await user.click(screen.getByRole("button", { name: "Approve proposed changes" }));
     await screen.findByRole("button", { name: "Activate approved changes" });
-    await user.type(screen.getByRole("textbox", { name: /Decision reason/ }), "Activate for new requests from the effective date.");
+    await user.type(
+      screen.getByRole("textbox", { name: /Decision reason/ }),
+      "Activate for new requests from the effective date.",
+    );
     await user.click(screen.getByRole("button", { name: "Activate approved changes" }));
-    expect(await screen.findByText("Current", { selector: ".configuration-state" })).toBeInTheDocument();
-    expect(actions.map((item) => item.action)).toEqual(["validate", "submit", "approve", "activate"]);
+    expect(
+      await screen.findByText("Current", { selector: ".configuration-state" }),
+    ).toBeInTheDocument();
+    expect(actions.map((item) => item.action)).toEqual([
+      "validate",
+      "submit",
+      "approve",
+      "activate",
+    ]);
     expect(actions[0].body).toEqual({ expectedVersion: 1 });
-    expect(actions[3].body).toMatchObject({ expectedVersion: 4, reason: expect.stringContaining("Activate") });
+    expect(actions[3].body).toMatchObject({
+      expectedVersion: 4,
+      reason: expect.stringContaining("Activate"),
+    });
   });
 
   it("creates and immediately selects future proposed changes", async () => {
-    let current: ConfigurationVersion = { ...configurationVersion, id: "cfg-1", sequence: 1, status: "ACTIVE" };
+    let current: ConfigurationVersion = {
+      ...configurationVersion,
+      id: "cfg-1",
+      sequence: 1,
+      status: "ACTIVE",
+    };
     let createdBody: Record<string, unknown> | undefined;
     mockFeatureFetch((url, init) => {
       const method = init.method ?? "GET";
       if (url.pathname.endsWith("/auth/me")) return json(adminSession);
       if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
-      if (url.pathname.endsWith("/workflow-definitions")) return json({ items: [workflowDefinition] });
+      if (url.pathname.endsWith("/workflow-definitions"))
+        return json({ items: [workflowDefinition] });
       if (url.pathname.endsWith("/preview")) return json({ ...configurationPreview, changes: [] });
-      if (url.pathname.endsWith("/admin/configuration/versions") && method === "POST") { createdBody = JSON.parse(String(init.body)); current = { ...configurationVersion, id: "cfg-3", sequence: 3, label: String(createdBody!.label) }; return json(current, 201); }
+      if (url.pathname.endsWith("/admin/configuration/versions") && method === "POST") {
+        createdBody = JSON.parse(String(init.body));
+        current = {
+          ...configurationVersion,
+          id: "cfg-3",
+          sequence: 3,
+          label: String(createdBody!.label),
+        };
+        return json(current, 201);
+      }
       if (url.pathname.endsWith("/admin/configuration/versions")) return json({ items: [current] });
       if (url.pathname.endsWith(`/versions/${current.id}`)) return json(current);
       throw new Error(`${method} ${url.pathname}`);
@@ -140,9 +247,15 @@ describe("configuration administration journey", () => {
     await user.type(screen.getByLabelText("Change title"), "Autumn branch configuration");
     await user.type(screen.getByLabelText("Effective from"), "2026-10-01T09:30");
     await user.click(screen.getByRole("button", { name: "Create proposed changes" }));
-    expect(await screen.findByText("Proposed changes", { selector: ".configuration-state" })).toBeInTheDocument();
+    expect(
+      await screen.findByText("Proposed changes", { selector: ".configuration-state" }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("Configuration history")).toHaveValue("cfg-3");
-    expect(createdBody).toMatchObject({ basedOnVersionId: "cfg-1", label: "Autumn branch configuration", effectiveFrom: new Date("2026-10-01T09:30").toISOString() });
+    expect(createdBody).toMatchObject({
+      basedOnVersionId: "cfg-1",
+      label: "Autumn branch configuration",
+      effectiveFrom: new Date("2026-10-01T09:30").toISOString(),
+    });
   });
 
   it("conceals configuration from non-administrators", async () => {

@@ -22,10 +22,7 @@ export function StaffDeliverableSection({ deliverable, stage, state }: Props) {
   if (!showsStaffDeliverable(stage)) return null;
 
   return (
-    <section
-      aria-labelledby="staff-deliverable-title"
-      className="staff-deliverable detail-section"
-    >
+    <section aria-labelledby="staff-deliverable-title" className="staff-deliverable detail-section">
       <div className="section-heading">
         <span>{stageLabels[stage]}</span>
         <h2 id="staff-deliverable-title">Service product</h2>
@@ -49,9 +46,7 @@ export function StaffDeliverableSection({ deliverable, stage, state }: Props) {
           </small>
         </article>
       ) : (
-        <p className="inline-empty">
-          No submitted service product is available for this stage.
-        </p>
+        <p className="inline-empty">No submitted service product is available for this stage.</p>
       )}
     </section>
   );

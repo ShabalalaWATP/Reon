@@ -44,7 +44,7 @@ describe("requester projection refresh", () => {
     let detailCalls = 0;
     mockFetch((url) => {
       if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
-      if (url.pathname.includes("/requests/")) {
+      if (url.pathname.endsWith(`/requests/${requestDetail.id}`)) {
         detailCalls += 1;
         return json({
           ...requestDetail,
@@ -96,14 +96,10 @@ describe("requester projection refresh", () => {
 
     renderApp(`/requests/${requestDetail.id}`);
     await vi.waitFor(() => expect(workItemCalls).toBe(1), { timeout: 5_000 });
-    expect(
-      screen.getByText("No response task is currently available."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("No response task is currently available.")).toBeInTheDocument();
     await act(() => vi.advanceTimersByTimeAsync(EXPECTED_POLL_INTERVAL_MS));
     await vi.waitFor(() => expect(workItemCalls).toBe(2), { timeout: 5_000 });
-    expect(
-      screen.getByRole("heading", { name: "Record outcome" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Record outcome" })).toBeInTheDocument();
 
     await act(() => vi.advanceTimersByTimeAsync(EXPECTED_POLL_INTERVAL_MS * 3));
     expect(workItemCalls).toBe(2);

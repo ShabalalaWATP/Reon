@@ -7,9 +7,7 @@ import { LoadMoreButton } from "./LoadMoreButton";
 describe("LoadMoreButton", () => {
   it("hides at the end and exposes idle and loading states", async () => {
     const onLoad = vi.fn();
-    const { rerender } = render(
-      <LoadMoreButton hasMore={false} loading={false} onLoad={onLoad} />,
-    );
+    const { rerender } = render(<LoadMoreButton hasMore={false} loading={false} onLoad={onLoad} />);
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
 
     rerender(<LoadMoreButton hasMore loading={false} onLoad={onLoad} />);

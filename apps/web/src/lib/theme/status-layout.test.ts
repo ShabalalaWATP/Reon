@@ -3,10 +3,7 @@ import path from "node:path";
 import process from "node:process";
 import { describe, expect, it } from "vitest";
 
-const base = readFileSync(
-  path.resolve(process.cwd(), "src/styles/base.css"),
-  "utf8",
-);
+const base = readFileSync(path.resolve(process.cwd(), "src/styles/base.css"), "utf8");
 
 describe("status label layout", () => {
   it("allows long workflow labels to wrap inside their column", () => {

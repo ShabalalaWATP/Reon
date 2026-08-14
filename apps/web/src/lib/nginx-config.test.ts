@@ -4,10 +4,7 @@ import process from "node:process";
 import { describe, expect, it } from "vitest";
 
 const config = readFileSync(path.resolve(process.cwd(), "nginx.conf"), "utf8");
-const dockerfile = readFileSync(
-  path.resolve(process.cwd(), "Dockerfile"),
-  "utf8",
-);
+const dockerfile = readFileSync(path.resolve(process.cwd(), "Dockerfile"), "utf8");
 
 describe("local web container boundary", () => {
   it("rejects unrecognised hosts and hides the nginx version", () => {
@@ -64,9 +61,7 @@ describe("local web container boundary", () => {
   });
 
   it("buffers larger request and proxy bodies on the writable temporary filesystem", () => {
-    expect(config).toContain(
-      "client_body_temp_path /tmp/nginx-client-temp;",
-    );
+    expect(config).toContain("client_body_temp_path /tmp/nginx-client-temp;");
     expect(config).toContain("proxy_temp_path /tmp/nginx-proxy-temp;");
     expect(dockerfile).toContain("mkdir -p /tmp/nginx-client-temp");
   });

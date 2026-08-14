@@ -1,0 +1,113 @@
+.configuration-heading > div {
+  max-width: 780px;
+}
+.configuration-version-picker {
+  min-width: min(390px, 100%);
+}
+.configuration-version-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-block: 1px solid var(--border);
+  padding: 13px 18px;
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+.configuration-version-bar > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.configuration-version-bar > div > strong {
+  font-size: 0.8rem;
+}
+.configuration-version-bar dl {
+  display: flex;
+  gap: 28px;
+  margin: 0;
+}
+.configuration-version-bar dl div {
+  display: grid;
+  gap: 3px;
+}
+.configuration-version-bar dt {
+  color: var(--muted);
+  font-size: 0.66rem;
+}
+.configuration-version-bar dd {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.configuration-state--active {
+  border-color: color-mix(in srgb, var(--success) 45%, var(--border));
+  color: var(--success);
+}
+.configuration-state--awaiting_approval,
+.configuration-state--validated {
+  border-color: color-mix(in srgb, var(--warning) 45%, var(--border));
+  color: var(--warning);
+}
+.configuration-state--rejected {
+  border-color: color-mix(in srgb, var(--critical) 45%, var(--border));
+  color: var(--critical);
+}
+.configuration-create {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+}
+.configuration-create summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 15px;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+.configuration-create form {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 0.7fr) auto;
+  align-items: end;
+  gap: 13px;
+  border-top: 1px solid var(--border);
+  padding: 15px;
+}
+.configuration-create .form-banner {
+  grid-column: 1 / -1;
+}
+.configuration-lock-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.configuration-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(310px, 0.58fr);
+  gap: 28px;
+  align-items: start;
+}
+.configuration-editor,
+.configuration-review {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+}
+.configuration-editor {
+  display: grid;
+  gap: 24px;
+}
+.configuration-review {
+  position: sticky;
+  top: 84px;
+  display: grid;
+  gap: 19px;
+  border-top-color: var(--accent);
+  box-shadow: var(--shadow-soft);
+}

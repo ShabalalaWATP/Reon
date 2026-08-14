@@ -13,9 +13,9 @@ export function StatisticsEvolutionContainer({
   filters: StatisticsEvolutionFilters;
   session: Session;
 }) {
+  const queryKeys = protectedQueryKeys(session);
   const query = useQuery({
-    queryKey: protectedQueryKeys.statisticsEvolution(
-      session.user.id,
+    queryKey: queryKeys.statisticsEvolution(
       filters.scopeId,
       filters.unitId,
       filters.from,
@@ -37,7 +37,9 @@ export function StatisticsEvolutionContainer({
       <section className="statistics-evolution-state" role="status">
         <strong>Enhanced measures unavailable</strong>
         <span>The established scoped statistics above remain current.</span>
-        <button className="button" onClick={() => void query.refetch()} type="button">Try enhanced measures again</button>
+        <button className="button" onClick={() => void query.refetch()} type="button">
+          Try enhanced measures again
+        </button>
       </section>
     );
   }

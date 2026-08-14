@@ -14,7 +14,11 @@ describe("RouteErrorBoundary", () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     const reload = vi.fn();
 
-    render(<RouteErrorBoundary onReload={reload}><BrokenView /></RouteErrorBoundary>);
+    render(
+      <RouteErrorBoundary onReload={reload}>
+        <BrokenView />
+      </RouteErrorBoundary>,
+    );
 
     expect(screen.getByRole("heading", { name: "This page could not be displayed" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Reload workspace" }));
@@ -22,7 +26,11 @@ describe("RouteErrorBoundary", () => {
   });
 
   it("renders healthy routes normally", () => {
-    render(<RouteErrorBoundary onReload={vi.fn()}><p>Profile ready</p></RouteErrorBoundary>);
+    render(
+      <RouteErrorBoundary onReload={vi.fn()}>
+        <p>Profile ready</p>
+      </RouteErrorBoundary>,
+    );
     expect(screen.getByText("Profile ready")).toBeVisible();
   });
 });

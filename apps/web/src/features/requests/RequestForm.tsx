@@ -1,43 +1,20 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { cloneElement, type ReactElement, type ReactNode } from "react";
-import { useForm, type FieldErrors } from "react-hook-form";
-import { z } from "zod";
+import type { ReactElement } from "react";
+import { useForm } from "react-hook-form";
 
 import type { RequestCreateInput, RequestDraftInput } from "../../lib/api/types";
-import { localDateInputValue } from "../../lib/dateInputs";
+import {
+  incompleteFields,
+  invalidRequestFields,
+  requestFormDefaults,
+  requestFormSchema,
+  requestFormSections,
+  requestTextLimits,
+  type RequestFormValues,
+} from "./requestFormModel";
+import { FormErrorSummary, RequestField, RequestProgress } from "./RequestFormPresentation";
+import { RequestFormSections } from "./RequestFormSections";
 
-const today = () => localDateInputValue(new Date());
-const requiredText = (minimum: number, message: string, maximum: number) =>
-  z.string().trim().min(minimum, message).max(maximum);
-
-const schema = z.object({
-  title: requiredText(3, "Enter a clear request title.", 160),
-  description: requiredText(20, "Describe the need in at least 20 characters.", 5000),
-  questionToAnswer: requiredText(10, "State the specific question to answer.", 2000),
-  desiredOutcome: requiredText(10, "Describe the desired outcome.", 2000),
-  backgroundContext: requiredText(1, "Add the known background and context.", 5000),
-  subjectAreaOrLocation: requiredText(2, "Define the subject area or location.", 1000),
-  coverageStart: z.string().min(1, "Choose the start of the relevant period."),
-  coverageEnd: z.string().min(1, "Choose the end of the relevant period."),
-  customerUrgency: z.enum(["ROUTINE", "TIME_SENSITIVE", "IMMEDIATE"]),
-  supportedActivityOrDecision: requiredText(5, "Explain the activity or decision this will support.", 2000),
-  requiredBy: z.string().min(1, "Choose a required-by date.").refine(
-    (value) => value >= today(),
-    "The required-by date cannot be in the past.",
-  ),
-  requiredByReason: requiredText(5, "Explain why this date matters and the impact of delay.", 1000),
-  preferredDeliverableType: requiredText(2, "Choose a product type.", 80),
-  successCriteria: requiredText(5, "Describe how success will be assessed.", 2000),
-  constraintsOrCaveats: requiredText(1, "Add constraints or state that none are known.", 2000),
-  supportingInformation: requiredText(1, "Describe supporting material or state that none is available.", 2000),
-  sensitivity: z.enum(["STANDARD", "SENSITIVE", "RESTRICTED"]),
-  handlingInstructions: requiredText(1, "Add handling instructions, or state that standard handling applies.", 2000),
-}).refine((values) => !values.coverageStart || !values.coverageEnd || values.coverageEnd >= values.coverageStart, {
-  message: "The end cannot be before the start.",
-  path: ["coverageEnd"],
-});
-
-type FormValues = z.infer<typeof schema>;
 type Props = {
   disabled: boolean;
   draftDisabled?: boolean;
@@ -48,175 +25,109 @@ type Props = {
   onSubmit: (input: RequestCreateInput) => void;
 };
 
-const textLimits: Partial<Record<keyof FormValues, number>> = {
-  title: 160,
-  description: 5000,
-  questionToAnswer: 2000,
-  desiredOutcome: 2000,
-  backgroundContext: 5000,
-  subjectAreaOrLocation: 1000,
-  supportedActivityOrDecision: 2000,
-  requiredByReason: 1000,
-  successCriteria: 2000,
-  constraintsOrCaveats: 2000,
-  supportingInformation: 2000,
-  handlingInstructions: 2000,
-};
-
-type SectionDefinition = { description: string; fields: readonly (keyof FormValues)[]; id: string; title: string };
-const formSections: readonly SectionDefinition[] = [
-  { description: "Describe the need in plain language. Internal teams and routes are selected later.", fields: ["title", "description", "questionToAnswer", "desiredOutcome", "backgroundContext"], id: "need", title: "The need" },
-  { description: "Define what the work should cover and what it will support.", fields: ["subjectAreaOrLocation", "coverageStart", "coverageEnd", "supportedActivityOrDecision"], id: "scope", title: "Scope and purpose" },
-  { description: "Set urgency, timing, format and the measure of success.", fields: ["customerUrgency", "requiredBy", "preferredDeliverableType", "requiredByReason", "successCriteria"], id: "expectations", title: "Product expectations" },
-  { description: "Record caveats, available material and any handling needs.", fields: ["constraintsOrCaveats", "supportingInformation", "sensitivity", "handlingInstructions"], id: "handling", title: "Supporting information and handling" },
-];
-
-function invalidFieldNames(values: FormValues) {
-  const parsed = schema.safeParse(values);
-  return new Set(parsed.success ? [] : parsed.error.issues.map((issue) => String(issue.path[0])));
-}
-
-const fieldLabels: Record<keyof FormValues, string> = {
-  title: "Request title",
-  description: "Description of the need",
-  questionToAnswer: "Specific question to answer",
-  desiredOutcome: "Desired outcome",
-  backgroundContext: "Background and known context",
-  subjectAreaOrLocation: "Subject area or location",
-  coverageStart: "Relevant period starts",
-  coverageEnd: "Relevant period ends",
-  customerUrgency: "Customer urgency",
-  supportedActivityOrDecision: "Activity, project or decision supported",
-  requiredBy: "Latest useful delivery date",
-  requiredByReason: "Why this date matters and impact if late",
-  preferredDeliverableType: "Preferred product type",
-  successCriteria: "Success criteria",
-  constraintsOrCaveats: "Constraints or caveats",
-  supportingInformation: "Supporting information available",
-  sensitivity: "Sensitivity",
-  handlingInstructions: "Handling instructions",
-};
-
-function defaults(draft?: RequestDraftInput): FormValues {
-  return {
-    title: draft?.title ?? "",
-    description: draft?.description ?? "",
-    questionToAnswer: draft?.questionToAnswer ?? "",
-    desiredOutcome: draft?.desiredOutcome ?? "",
-    backgroundContext: draft?.backgroundContext ?? "",
-    subjectAreaOrLocation: draft?.subjectAreaOrLocation ?? "",
-    coverageStart: draft?.coverageStart ?? "",
-    coverageEnd: draft?.coverageEnd ?? "",
-    customerUrgency: draft?.customerUrgency ?? "ROUTINE",
-    supportedActivityOrDecision: draft?.supportedActivityOrDecision ?? "",
-    requiredBy: draft?.requiredBy ?? "",
-    requiredByReason: draft?.requiredByReason ?? "",
-    preferredDeliverableType: draft?.preferredDeliverableType ?? "",
-    successCriteria: draft?.successCriteria ?? "",
-    constraintsOrCaveats: draft?.constraintsOrCaveats ?? "",
-    supportingInformation: draft?.supportingInformation ?? "",
-    sensitivity: draft?.sensitivity ?? "STANDARD",
-    handlingInstructions: draft?.handlingInstructions ?? "",
-  };
-}
-
 export function RequestForm(props: Props) {
-  const { formState: { errors, isValid }, getValues, handleSubmit, register, watch } = useForm<FormValues>({
-    defaultValues: defaults(props.initialValues),
+  const {
+    formState: { errors, isValid },
+    getValues,
+    handleSubmit,
+    register,
+    watch,
+  } = useForm<RequestFormValues>({
+    defaultValues: requestFormDefaults(props.initialValues),
     mode: "onChange",
-    resolver: zodResolver(schema),
+    resolver: zodResolver(requestFormSchema),
     shouldFocusError: true,
   });
   const values = watch();
-  const invalidFields = invalidFieldNames(values);
-  const remaining = (section: SectionDefinition) => section.fields.filter((name) => invalidFields.has(name)).length;
-  const field = (name: keyof FormValues, child: ReactElement<Record<string, unknown>>) => (
-    <Field count={textLimits[name] === undefined ? undefined : { length: values[name].length, max: textLimits[name] }} error={errors[name]?.message} label={fieldLabels[name]} name={name}>{child}</Field>
-  );
+  const invalidFields = invalidRequestFields(values);
+  const remaining = (index: number) => incompleteFields(requestFormSections[index], invalidFields);
+  const field = (name: keyof RequestFormValues, child: ReactElement<Record<string, unknown>>) => {
+    const maximum = requestTextLimits[name];
+    const count = maximum ? { length: values[name].length, max: maximum } : undefined;
+    return (
+      <RequestField count={count} error={errors[name]?.message} name={name}>
+        {child}
+      </RequestField>
+    );
+  };
 
   return (
-    <form className="request-form" onSubmit={(event) => void handleSubmit(props.onSubmit)(event)} noValidate>
-      <p className="required-note"><span aria-hidden="true">*</span> Complete every field to enable submission. Incomplete work can be saved privately as a draft.</p>
-      <nav aria-label="Form progress" className="request-progress">
-        {formSections.map((section, index) => {
-          const left = remaining(section);
-          return (
-            <a className={left === 0 ? "request-progress__step request-progress__step--complete" : "request-progress__step"} href={`#request-section-${section.id}`} key={section.id}>
-              <i aria-hidden="true">{left === 0 ? "✓" : String(index + 1).padStart(2, "0")}</i>
-              <span><strong>{section.title}</strong><small>{left === 0 ? "Complete" : `${left} field${left === 1 ? "" : "s"} left`}</small></span>
-            </a>
-          );
-        })}
-      </nav>
+    <form
+      className="request-form"
+      onSubmit={(event) => void handleSubmit(props.onSubmit)(event)}
+      noValidate
+    >
+      <p className="required-note">
+        <span aria-hidden="true">*</span> Complete every field to enable submission. Incomplete work
+        can be saved privately as a draft.
+      </p>
+      <RequestProgress invalidFields={invalidFields} />
       <FormErrorSummary errors={errors} />
-      <FormSection complete={remaining(formSections[0]) === 0} section={formSections[0]}>
-        {field("title", <input {...register("title")} />)}
-        {field("description", <textarea rows={5} {...register("description")} />)}
-        {field("questionToAnswer", <textarea rows={3} {...register("questionToAnswer")} />)}
-        {field("desiredOutcome", <textarea rows={3} {...register("desiredOutcome")} />)}
-        {field("backgroundContext", <textarea rows={4} {...register("backgroundContext")} />)}
-      </FormSection>
-      <FormSection complete={remaining(formSections[1]) === 0} section={formSections[1]}>
-        {field("subjectAreaOrLocation", <textarea rows={3} {...register("subjectAreaOrLocation")} />)}
-        <div className="form-grid">
-          {field("coverageStart", <input type="date" {...register("coverageStart")} />)}
-          {field("coverageEnd", <input type="date" {...register("coverageEnd")} />)}
-        </div>
-        {field("supportedActivityOrDecision", <textarea rows={3} {...register("supportedActivityOrDecision")} />)}
-      </FormSection>
-      <FormSection complete={remaining(formSections[2]) === 0} section={formSections[2]}>
-        <div className="form-grid">
-          {field("customerUrgency", <select {...register("customerUrgency")}><option value="ROUTINE">Routine</option><option value="TIME_SENSITIVE">Time-sensitive</option><option value="IMMEDIATE">Immediate</option></select>)}
-          {field("requiredBy", <input min={today()} type="date" {...register("requiredBy")} />)}
-          {field("preferredDeliverableType", <select defaultValue="" {...register("preferredDeliverableType")}><option disabled value="">Select a type</option><option>Written report</option><option>Briefing note</option><option>Data summary</option><option>Presentation</option><option>Other</option></select>)}
-        </div>
-        {field("requiredByReason", <textarea rows={3} {...register("requiredByReason")} />)}
-        {field("successCriteria", <textarea rows={3} {...register("successCriteria")} />)}
-      </FormSection>
-      <FormSection complete={remaining(formSections[3]) === 0} section={formSections[3]}>
-        {field("constraintsOrCaveats", <textarea placeholder="Enter ‘No known constraints’ if none apply." rows={3} {...register("constraintsOrCaveats")} />)}
-        {field("supportingInformation", <textarea placeholder="Describe available material, or enter ‘None available’." rows={3} {...register("supportingInformation")} />)}
-        {field("sensitivity", <select {...register("sensitivity")}><option value="STANDARD">Standard</option><option value="SENSITIVE">Sensitive</option><option value="RESTRICTED">Restricted</option></select>)}
-        {field("handlingInstructions", <textarea placeholder="State the required handling, or enter ‘Standard handling applies’." rows={3} {...register("handlingInstructions")} />)}
-      </FormSection>
-      <div className="form-actions form-actions--request">
-        <button className="button button--primary" disabled={!isValid || props.disabled || props.draftDisabled} type="submit">{props.disabled ? "Submitting…" : "Submit request"}</button>
-        {props.onSaveDraft ? <button className="button" disabled={props.disabled || props.draftDisabled} onClick={() => props.onSaveDraft?.(getValues())} type="button">{props.draftDisabled ? "Saving…" : "Save draft"}</button> : null}
-        {props.hasDraft ? <button className="button button--danger" disabled={props.disabled || props.draftDisabled} onClick={props.onDeleteDraft} type="button">Delete draft</button> : null}
-        <p>The released product will return to your dashboard. Authorised staff handle internal routing, assignment and release.</p>
-      </div>
+      <RequestFormSections
+        complete={(index) => remaining(index) === 0}
+        field={field}
+        register={register}
+      />
+      <RequestFormActions
+        disabled={props.disabled}
+        draftDisabled={Boolean(props.draftDisabled)}
+        hasDraft={Boolean(props.hasDraft)}
+        isValid={isValid}
+        onDeleteDraft={props.onDeleteDraft}
+        onSaveDraft={props.onSaveDraft ? () => props.onSaveDraft?.(getValues()) : undefined}
+      />
     </form>
   );
 }
 
-function FormErrorSummary({ errors }: { errors: FieldErrors<FormValues> }) {
-  const fields = (Object.keys(fieldLabels) as (keyof FormValues)[]).filter((name) => errors[name]);
-  if (fields.length === 0) return null;
-  return <section className="form-error-summary" role="alert"><strong>Check the required fields</strong><ul>{fields.map((name) => <li key={name}><a href={`#request-${name}`}>{fieldLabels[name]}: {errors[name]?.message}</a></li>)}</ul></section>;
-}
-
-function FormSection({ children, complete, section }: { children: ReactNode; complete: boolean; section: SectionDefinition }) {
+function RequestFormActions({
+  disabled,
+  draftDisabled,
+  hasDraft,
+  isValid,
+  onDeleteDraft,
+  onSaveDraft,
+}: {
+  disabled: boolean;
+  draftDisabled: boolean;
+  hasDraft: boolean;
+  isValid: boolean;
+  onDeleteDraft?: () => void;
+  onSaveDraft?: () => void;
+}) {
   return (
-    <fieldset className={complete ? "form-section form-section--complete" : "form-section"} id={`request-section-${section.id}`}>
-      <legend>{section.title}{complete ? <span className="sr-only"> — complete</span> : null}</legend>
-      <p>{section.description}</p>
-      {children}
-    </fieldset>
-  );
-}
-
-function Field({ children, count, error, label, name }: { children: ReactElement<Record<string, unknown>>; count?: { length: number; max: number }; error?: string; label: string; name: keyof FormValues }) {
-  const id = `request-${name}`;
-  const errorId = `${id}-error`;
-  const nearLimit = count !== undefined && count.length >= count.max * 0.9;
-  return (
-    <div className="form-field">
-      <span className="form-field__label-row">
-        <label htmlFor={id}>{label} <b aria-hidden="true">*</b><span className="sr-only"> required</span></label>
-        {count === undefined ? null : <small aria-hidden="true" className={nearLimit ? "char-counter char-counter--limit" : "char-counter"}>{count.length.toLocaleString("en-GB")} / {count.max.toLocaleString("en-GB")}</small>}
-      </span>
-      {cloneElement(children, { id, required: true, "aria-invalid": Boolean(error), "aria-describedby": error ? errorId : undefined })}
-      {error ? <small className="field-error" id={errorId} role="alert">{error}</small> : null}
+    <div className="form-actions form-actions--request">
+      <button
+        className="button button--primary"
+        disabled={!isValid || disabled || draftDisabled}
+        type="submit"
+      >
+        {disabled ? "Submitting…" : "Submit request"}
+      </button>
+      {onSaveDraft ? (
+        <button
+          className="button"
+          disabled={disabled || draftDisabled}
+          onClick={onSaveDraft}
+          type="button"
+        >
+          {draftDisabled ? "Saving…" : "Save draft"}
+        </button>
+      ) : null}
+      {hasDraft ? (
+        <button
+          className="button button--danger"
+          disabled={disabled || draftDisabled}
+          onClick={onDeleteDraft}
+          type="button"
+        >
+          Delete draft
+        </button>
+      ) : null}
+      <p>
+        The released product will return to your dashboard. Authorised staff handle internal
+        routing, assignment and release.
+      </p>
     </div>
   );
 }

@@ -1,0 +1,64 @@
+@media (max-width: 980px) {
+  .calendar-support-grid {
+    grid-template-columns: 1fr;
+  }
+  .calendar-day {
+    min-height: 112px;
+  }
+  .calendar-event {
+    grid-template-columns: 1fr;
+  }
+  .calendar-event small {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 700px) {
+  .calendar-toolbar {
+    grid-template-columns: 1fr;
+  }
+  .calendar-toolbar > div:last-child {
+    justify-self: start;
+  }
+  .calendar-toolbar__actions {
+    flex-wrap: wrap;
+  }
+  .calendar-toolbar h2 {
+    grid-row: 1;
+  }
+  .calendar-grid {
+    grid-template-columns: 1fr;
+  }
+  .calendar-day {
+    min-height: 0;
+  }
+  .calendar-day--outside,
+  .calendar-day--free {
+    display: none;
+  }
+  .calendar-agenda article {
+    grid-template-columns: 1fr;
+  }
+  .calendar-form-grid,
+  .calendar-detail dl {
+    grid-template-columns: 1fr;
+  }
+  .calendar-detail {
+    inset: 70px 12px 12px;
+    width: auto;
+    max-height: none;
+  }
+  .modal-drawer--dialog .modal-drawer__surface {
+    padding: 22px 18px 26px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calendar-detail,
+  .modal-drawer--dialog .modal-drawer__surface {
+    animation: none;
+  }
+  .calendar-event {
+    transition: none;
+  }
+}

@@ -85,9 +85,7 @@ describe("staff deliverable review", () => {
       });
       expect(screen.getByText(context)).toBeInTheDocument();
       expect(screen.getByText("Service readiness assessment")).toBeInTheDocument();
-      expect(
-        screen.getByText("The submitted evidence and recommendations."),
-      ).toBeInTheDocument();
+      expect(screen.getByText("The submitted evidence and recommendations.")).toBeInTheDocument();
       expect(screen.getByText("Not yet disseminated")).toBeInTheDocument();
       expect(
         deliverableHeading.compareDocumentPosition(actionHeading) &
@@ -121,37 +119,20 @@ describe("staff deliverable review", () => {
     });
 
     renderApp("/delivery/team");
-    expect(
-      await screen.findByText("Loading submitted service product…"),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("heading", { name: "Record outcome" }),
-    ).not.toBeInTheDocument();
+    expect(await screen.findByText("Loading submitted service product…")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Record outcome" })).not.toBeInTheDocument();
     resolveDetail(json({ ...requestDetail, status: "LEAD_REVIEW" }));
     expect(
-      await screen.findByText(
-        "No submitted service product is available for this stage.",
-      ),
+      await screen.findByText("No submitted service product is available for this stage."),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Record outcome" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Record outcome" })).toBeInTheDocument();
   });
 
   it("handles hidden, failed and released presentation states", () => {
-    const { rerender } = render(
-      <StaffDeliverableSection
-        stage="IN_PROGRESS"
-        state="ready"
-      />,
-    );
-    expect(
-      screen.queryByRole("heading", { name: "Service product" }),
-    ).not.toBeInTheDocument();
+    const { rerender } = render(<StaffDeliverableSection stage="IN_PROGRESS" state="ready" />);
+    expect(screen.queryByRole("heading", { name: "Service product" })).not.toBeInTheDocument();
 
-    rerender(
-      <StaffDeliverableSection stage="QUALITY_REVIEW" state="error" />,
-    );
+    rerender(<StaffDeliverableSection stage="QUALITY_REVIEW" state="error" />);
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Submitted service product could not be loaded.",
     );
