@@ -1,4 +1,4 @@
-"""Exercise an alternative staffed route through the full local service stack."""
+"""Exercise the primary staffed route through the full local service stack."""
 
 from __future__ import annotations
 
@@ -26,19 +26,36 @@ async def wait_for_item(
     raise RuntimeError(f"{actor.username} did not receive the expected {stage} work")
 
 
+def request_body() -> dict[str, object]:
+    required_by = (datetime.now(UTC).date() + timedelta(days=14)).isoformat()
+    return {
+        "submissionKey": str(uuid4()),
+        "title": "Primary SSG route assurance summary",
+        "description": "Produce a synthetic summary through the primary SSG route.",
+        "questionToAnswer": "What does the synthetic primary-route evidence show?",
+        "desiredOutcome": "A reviewed product delivered through SSG Team and QC.",
+        "backgroundContext": "All information is synthetic local assurance data.",
+        "subjectAreaOrLocation": "Synthetic primary-route assurance",
+        "coverageStart": required_by,
+        "coverageEnd": required_by,
+        "customerUrgency": "ROUTINE",
+        "supportedActivityOrDecision": "A local primary-route assurance decision.",
+        "requiredBy": required_by,
+        "requiredByReason": "The local assurance review follows this date.",
+        "preferredDeliverableType": "Written response",
+        "successCriteria": "The complete SSG route is recorded and delivered.",
+        "constraintsOrCaveats": "No known constraints.",
+        "supportingInformation": "No supporting material is available.",
+        "sensitivity": "STANDARD",
+        "handlingInstructions": "Standard synthetic-data handling applies.",
+    }
+
+
 async def exercise(args: argparse.Namespace) -> dict[str, object]:
     password = os.environ.get("APP_JOURNEY_PASSWORD")
     if not password:
         raise RuntimeError("APP_JOURNEY_PASSWORD must be set")
-    usernames = (
-        "admin3",
-        "admin7",
-        "admin5",
-        "admin6",
-        "admin37",
-        "admin38",
-        "admin15",
-    )
+    usernames = ("admin2", "admin4", "admin5", "admin6", "admin8", "admin13", "admin15")
     actors = {
         username: await login(args.base_url, args.origin, username, password)
         for username in usernames
@@ -46,40 +63,7 @@ async def exercise(args: argparse.Namespace) -> dict[str, object]:
     customer, crioc, command, ops, manager, analyst, qc = (
         actors[username] for username in usernames
     )
-    required_by = (datetime.now(UTC).date() + timedelta(days=14)).isoformat()
-    request = await customer.post(
-        "/requests",
-        {
-            "submissionKey": str(uuid4()),
-            "title": "Alternative branch assurance summary",
-            "description": (
-                "Produce a synthetic service summary for the alternative route "
-                "assurance exercise."
-            ),
-            "questionToAnswer": "What does the synthetic route assurance show?",
-            "desiredOutcome": (
-                "A reviewed product delivered through the configured Beacon Team route."
-            ),
-            "backgroundContext": (
-                "All information is synthetic and suitable for local assurance."
-            ),
-            "subjectAreaOrLocation": "Synthetic route assurance",
-            "coverageStart": required_by,
-            "coverageEnd": required_by,
-            "customerUrgency": "ROUTINE",
-            "supportedActivityOrDecision": "A local route assurance decision.",
-            "requiredBy": required_by,
-            "requiredByReason": "The local assurance review follows this date.",
-            "preferredDeliverableType": "Written response",
-            "successCriteria": (
-                "The complete non-SSG route is recorded without fallback."
-            ),
-            "constraintsOrCaveats": "No known constraints.",
-            "supportingInformation": "No supporting material is available.",
-            "sensitivity": "STANDARD",
-            "handlingInstructions": "Standard synthetic-data handling applies.",
-        },
-    )
+    request = await customer.post("/requests", request_body())
     request_id = str(request["id"])
 
     item = await claim(crioc, await wait_for_item(crioc, request_id, "TRIAGE_REVIEW"))
@@ -88,8 +72,8 @@ async def exercise(args: argparse.Namespace) -> dict[str, object]:
         item,
         {
             "action": "progress",
-            "priority": "MEDIUM",
-            "destinationUnitId": await destination(crioc, item, "SYGOC"),
+            "priority": "HIGH",
+            "destinationUnitId": await destination(crioc, item, "JOCK"),
         },
     )
     item = await claim(
@@ -100,8 +84,8 @@ async def exercise(args: argparse.Namespace) -> dict[str, object]:
         item,
         {
             "action": "send_to_allocation",
-            "destinationUnitId": await destination(command, item, "NIMBUS_OPS"),
-            "note": "Route to the configured alternative operations group.",
+            "destinationUnitId": await destination(command, item, "ACSA_B_OPS"),
+            "note": "Route through the primary operations group.",
         },
     )
     item = await claim(ops, await wait_for_item(ops, request_id, "ALLOCATION_REVIEW"))
@@ -110,7 +94,7 @@ async def exercise(args: argparse.Namespace) -> dict[str, object]:
         item,
         {
             "action": "allocate",
-            "destinationUnitId": await destination(ops, item, "BEACON_TEAM"),
+            "destinationUnitId": await destination(ops, item, "SSG_TEAM"),
             "requiredCapabilities": ["Synthetic service production"],
         },
     )
@@ -119,9 +103,7 @@ async def exercise(args: argparse.Namespace) -> dict[str, object]:
     )
     specialists = await manager.get(f"/work-items/{item['id']}/eligible-specialists")
     specialist = next(
-        entry
-        for entry in specialists["items"]
-        if entry["displayName"] == "Archie Gemmill"
+        entry for entry in specialists["items"] if entry["displayName"] == "Ben Doak"
     )
     await complete(
         manager,
@@ -129,7 +111,7 @@ async def exercise(args: argparse.Namespace) -> dict[str, object]:
         {
             "action": "assign",
             "specialistId": specialist["id"],
-            "reason": "Selected for this synthetic alternative-route assurance.",
+            "reason": "Selected as the Lead Analyst for primary-route assurance.",
         },
     )
     item = await wait_for_item(analyst, request_id, "IN_PROGRESS")
@@ -138,10 +120,10 @@ async def exercise(args: argparse.Namespace) -> dict[str, object]:
         item,
         {
             "action": "submit",
-            "deliverableTitle": "Alternative route service summary",
+            "deliverableTitle": "Primary-route service summary",
             "deliverableText": (
-                "This synthetic product proves the complete SYGOC, Nimbus Ops and "
-                "Beacon Team route without SSG fallback."
+                "This synthetic product proves the complete JOCK, ACSA-B Ops "
+                "and SSG Team route."
             ),
         },
     )
@@ -158,15 +140,14 @@ async def exercise(args: argparse.Namespace) -> dict[str, object]:
     await asyncio.gather(*(actor.client.aclose() for actor in actors.values()))
     passed = (
         final["status"] == "COMPLETED"
-        and final["assignedDeliveryTeam"] == "Beacon Team"
-        and final["assignedSpecialist"]["displayName"] == "Archie Gemmill"
-        and product.headers.get("content-type", "").startswith("text/plain")
+        and final["assignedDeliveryTeam"] == "SSG Team"
+        and final["assignedSpecialist"]["displayName"] == "Ben Doak"
     )
     return {
         "assigned_specialist": final["assignedSpecialist"]["displayName"],
         "assigned_team": final["assignedDeliveryTeam"],
-        "path": "SYGOC -> Nimbus Ops -> Beacon Team",
         "passed": passed,
+        "path": "CRIOC -> JOCK -> ACSA-B Ops -> SSG Team -> QC",
         "product_download": "verified",
         "request_reference": final["reference"],
         "status": final["status"],

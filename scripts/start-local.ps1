@@ -3,12 +3,20 @@
 param(
     [switch]$NoBuild,
     [switch]$SkipWorkflowDeployment,
-    [switch]$SeedDemoData
+    [switch]$SeedDemoData,
+    [string]$ComposeProjectName = $(
+        if ($env:COMPOSE_PROJECT_NAME) { $env:COMPOSE_PROJECT_NAME }
+        else { "istari-service-local" }
+    )
 )
 
 $ErrorActionPreference = "Stop"
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $environmentPath = Join-Path $repositoryRoot ".env"
+
+if ($ComposeProjectName -notmatch "^[a-z0-9][a-z0-9_-]{0,62}$") {
+    throw "ComposeProjectName must be a bounded lower-case Compose project name."
+}
 
 if (-not (Test-Path -LiteralPath $environmentPath -PathType Leaf)) {
     throw "Create .env from .env.example and replace every CHANGE_ME value first."
@@ -133,7 +141,10 @@ foreach ($originText in $settings.TRUSTED_ORIGINS.Split(',')) {
 
 Push-Location $repositoryRoot
 try {
-    $arguments = @("compose", "up", "--detach", "--wait")
+    $arguments = @(
+        "compose", "--project-name", $ComposeProjectName,
+        "up", "--detach", "--wait"
+    )
     if (-not $NoBuild) {
         $arguments += "--build"
     }
@@ -144,9 +155,9 @@ try {
     }
 
     if (-not $SkipWorkflowDeployment) {
-        & (Join-Path $PSScriptRoot "deploy-workflow.ps1") `
-            -OperatorSubject ("local:{0}" -f [Environment]::UserName) `
-            -AttestWithCompose
+        & (Join-Path $PSScriptRoot "deploy-workflow-compose.ps1") `
+            -ComposeProjectName $ComposeProjectName `
+            -OperatorSubject ("local:{0}" -f [Environment]::UserName)
         if ($LASTEXITCODE -ne 0) {
             throw "Workflow deployment failed."
         }
@@ -167,13 +178,15 @@ try {
             Pop-Location
         }
         Write-Host "Spreading seeded history across recent weeks for statistics."
-        $apiContainer = "istari-service-local-api-1"
         Get-Content -Raw (Join-Path $repositoryRoot "scripts/lib/demo_portfolio_backdate.py") |
-            & docker exec -i $apiContainer sh -c 'cat > /tmp/backdate.py'
+            & docker compose --project-name $ComposeProjectName `
+                exec --no-TTY api sh -c 'cat > /tmp/backdate.py'
         Get-Content -Raw $planPath |
-            & docker exec -i $apiContainer sh -c 'cat > /tmp/plan.json'
-        & docker exec -e ("DATABASE_URL={0}" -f $settings.MIGRATION_DATABASE_URL) `
-            $apiContainer python /tmp/backdate.py /tmp/plan.json
+            & docker compose --project-name $ComposeProjectName `
+                exec --no-TTY api sh -c 'cat > /tmp/plan.json'
+        & docker compose --project-name $ComposeProjectName exec --no-TTY `
+            -e ("DATABASE_URL={0}" -f $settings.MIGRATION_DATABASE_URL) `
+            api python /tmp/backdate.py /tmp/plan.json
         if ($LASTEXITCODE -ne 0) {
             throw "Demo history backdating failed."
         }

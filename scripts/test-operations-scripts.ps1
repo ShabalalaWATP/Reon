@@ -1,16 +1,17 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$required = @(
+$requiredPowerShell = @(
     'backup-postgres.ps1',
     'restore-postgres.ps1',
     'check-operational-health.ps1',
     'deploy-workflow.ps1',
+    'deploy-workflow-compose.ps1',
     'workflow-attestation.ps1',
     'smoke-camunda.ps1',
     'start-local.ps1'
 )
-foreach ($name in $required) {
+foreach ($name in $requiredPowerShell) {
     $path = Join-Path $PSScriptRoot $name
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
         throw "Missing operations script: $name"
@@ -26,11 +27,22 @@ foreach ($name in $required) {
         throw "PowerShell parse failure in $name`: $($parseErrors[0].Message)"
     }
 }
+$requiredPython = @(
+    'run-local-app-journey.py',
+    'run-primary-app-journey.py',
+    'run_local_app_journey_support.py'
+)
+foreach ($name in $requiredPython) {
+    if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot $name) -PathType Leaf)) {
+        throw "Missing application journey script: $name"
+    }
+}
 
 $backup = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'backup-postgres.ps1')
 $restore = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'restore-postgres.ps1')
 $health = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'check-operational-health.ps1')
 $deployWorkflow = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'deploy-workflow.ps1')
+$deployComposeWorkflow = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'deploy-workflow-compose.ps1')
 $workflowAttestation = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'workflow-attestation.ps1')
 $smokeCamunda = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'smoke-camunda.ps1')
 $startLocal = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'start-local.ps1')
@@ -77,12 +89,31 @@ if (-not $deployWorkflow.Contains('AttestWithCompose') -or
     -not $deployWorkflow.Contains('Invoke-WorkflowAvailabilityAttestation')) {
     throw 'Local workflow attestation must run through the Compose API container.'
 }
+foreach ($requiredText in @(
+    'http://orchestration:8080/v2/process-definitions/search',
+    'http://orchestration:8080/v2/deployments',
+    'ComposeProjectName',
+    'Invoke-WorkflowAvailabilityAttestation'
+)) {
+    if (-not $deployComposeWorkflow.Contains($requiredText)) {
+        throw "Compose workflow deployment control is missing: $requiredText"
+    }
+}
 if (-not $smokeCamunda.Contains('-SkipAvailabilityAttestation')) {
     throw 'The Camunda-only smoke must explicitly declare its attestation exception.'
 }
-if (-not $startLocal.Contains('-OperatorSubject') -or
-    -not $startLocal.Contains('-AttestWithCompose')) {
-    throw 'Local startup must identify the operator and attest inside Compose.'
+if (-not $startLocal.Contains('deploy-workflow-compose.ps1') -or
+    -not $startLocal.Contains('-OperatorSubject') -or
+    -not $startLocal.Contains('-ComposeProjectName')) {
+    throw 'Local startup must identify the operator and use isolated Compose deployment.'
+}
+if (-not $deployComposeWorkflow.Contains('if ($definitions.Count -gt 0)') -or
+    -not $deployComposeWorkflow.Contains('$definitions.Count -ne 1 -or $matches.Count -ne 1') -or
+    -not $deployComposeWorkflow.Contains('Camunda contains a conflicting process definition') -or
+    -not $deployComposeWorkflow.Contains('configuration is not ready') -or
+    -not $deployComposeWorkflow.Contains('Wait-ForApplicationReadiness') -or
+    -not $deployComposeWorkflow.Contains('$deployment = Invoke-ComposeApiPython')) {
+    throw 'Compose workflow deployment must refuse conflicts before deployment.'
 }
 
 . (Join-Path $PSScriptRoot 'workflow-attestation.ps1')

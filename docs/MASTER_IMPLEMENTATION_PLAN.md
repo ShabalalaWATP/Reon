@@ -1222,3 +1222,20 @@ Status: implemented and browser-verified locally on 13 August 2026.
 - [x] Preserve intentional deep links for sessions that are already authenticated.
 - [x] Cover staff and Customer return-route regressions and verify both in the
   real local browser with a clean authenticated console.
+
+## Live QA readiness and route assurance
+
+Status: implemented and live-verified on 14 August 2026.
+
+- [x] Recover the rebuilt QA stack from configuration-unavailable to full
+  `/ready` without weakening the fail-closed configuration boundary.
+- [x] Deploy and attest the exact approved BPMN over the isolated Compose
+  workflow network without requiring host Camunda exposure.
+- [x] Reuse one exact active process on restart and refuse conflicts or an
+  existing unattested deployment without mutating workflow state.
+- [x] Exercise the primary CRIOC, JOCK, ACSA-B Ops, SSG Team, Ben Doak, Manager,
+  QC and Customer-download route through the real API, database and Camunda.
+- [x] Exercise the configured SYGOC, Nimbus Ops and Beacon Team alternative
+  through the same real application boundary.
+- [x] Render John McGinn's full profile in the rebuilt UI without the historical
+  application crash.

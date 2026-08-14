@@ -104,15 +104,22 @@ pwsh -File ./scripts/start-local.ps1
 ```
 
 The helper runs `docker compose up --detach --wait --build`, validates and
-deploys the BPMN, then records workflow availability from inside the API
-container using `-AttestWithCompose`. This attestation is required for current
-configuration readiness. Do not replace it with an unrecorded manual upload.
+deploys the BPMN over the internal Compose workflow network, then records
+workflow availability from inside the API container. It does not depend on the
+host Camunda port. Before changing anything, it inspects every deployed process
+with the configured ID and downloads its XML: one exact active match is reused,
+no match is deployed as version 1, and any conflict or unattested existing
+definition stops fail closed. The checksum-bound attestation is required for
+configuration readiness. Do not replace this with an unrecorded manual upload.
 
 Useful variants:
 
 ```powershell
 # Reuse images after source and dependency inputs are unchanged
 pwsh -File ./scripts/start-local.ps1 -NoBuild
+
+# Operate an explicitly named isolated Compose project
+pwsh -File ./scripts/start-local.ps1 -ComposeProjectName istari-qa
 
 # Only when deliberately testing without workflow deployment
 pwsh -File ./scripts/start-local.ps1 -SkipWorkflowDeployment
@@ -177,9 +184,12 @@ docker compose logs --tail 200 clamav-updater
   versions to match.
   Do not disable scanning or loosen freshness to make uploads work.
 - If readiness says `workflow: unavailable`, verify Camunda health and rerun the
-  guarded start so deployment and attestation occur together.
-- If readiness says `configuration: unavailable`, do not rewrite history. Follow
-  the configuration runbook and create a governed successor configuration.
+  guarded start for the same Compose project so validation and attestation occur
+  together.
+- If readiness says `configuration: unavailable` and no process definition has
+  been deployed, rerun guarded startup. If an existing definition is reported,
+  do not deploy another version or rewrite history. Follow the configuration
+  runbook and reconcile the exact deployment evidence.
 - If readiness says `maintenance: unavailable`, inspect the worker log and its
   database/Camunda dependencies. Do not start maintenance inside the API as a
   workaround.

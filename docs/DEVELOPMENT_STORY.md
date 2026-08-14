@@ -1266,3 +1266,14 @@ gates remain above 95 per cent for both lines and branches.
   "Signing you in" to assistive technology, blocks no input, and collapses to
   a half-second fade when reduced motion is preferred. Verified live against
   the dev stack with the mist clearing onto the Customer's My requests page.
+- Restored QA readiness on 14 August 2026 after a clean rebuild correctly left
+  the seeded workflow unavailable. The exact repository BPMN was deployed and
+  checksum-attested, `/ready` returned all four checks as healthy after a
+  Camunda restart, and both primary and alternative application routes reached
+  QC release and Customer download.
+- Replaced startup's host-port dependency with an isolated Compose deployment
+  helper. It validates the BPMN, inspects and hashes Camunda's active XML,
+  reuses one exact version-1 match, deploys only into empty state, refuses
+  conflicts or ungoverned existing state, records the exact deployment identity
+  and waits for application readiness. The real QA rerun reused the existing
+  definition without creating another version.

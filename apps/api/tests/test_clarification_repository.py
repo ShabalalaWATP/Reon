@@ -20,6 +20,8 @@ from istari_service.repositories.clarifications import (
 )
 from istari_service.schemas.work import ProvideClarification, RequestClarification
 
+REFERENCE_DATE = datetime.now(UTC).date()
+
 
 def _actor(user_id=None) -> Actor:
     return Actor(
@@ -37,7 +39,7 @@ def _request(actor: Actor, **updates: object) -> SimpleNamespace:
         "status": RequestStatus.IN_PROGRESS,
         "assigned_specialist_id": actor.id,
         "requester_id": uuid4(),
-        "required_by": datetime.now(UTC).date() + timedelta(days=7),
+        "required_by": REFERENCE_DATE + timedelta(days=7),
     }
     values.update(updates)
     return SimpleNamespace(**values)
@@ -48,7 +50,7 @@ def _request_command(**updates: object) -> RequestClarification:
         "action": "request_clarification",
         "question": "Which fictional region should be prioritised?",
         "reason": "The scope is required to complete the product.",
-        "response_deadline": datetime.now(UTC).date() + timedelta(days=2),
+        "response_deadline": REFERENCE_DATE + timedelta(days=2),
     }
     values.update(updates)
     return RequestClarification(**values)
@@ -60,8 +62,8 @@ def _request_command(**updates: object) -> RequestClarification:
     [
         ({"status": RequestStatus.LEAD_REVIEW}, {}, None),
         ({"assigned_specialist_id": uuid4()}, {}, None),
-        ({}, {"response_deadline": datetime.now(UTC).date() - timedelta(days=1)}, None),
-        ({}, {"response_deadline": datetime.now(UTC).date() + timedelta(days=8)}, None),
+        ({}, {"response_deadline": REFERENCE_DATE - timedelta(days=1)}, None),
+        ({}, {"response_deadline": REFERENCE_DATE + timedelta(days=8)}, None),
         ({}, {}, uuid4()),
     ],
 )

@@ -131,20 +131,21 @@ async def run_legal_hold(arguments: argparse.Namespace) -> dict[str, object]:
         audit_hmac_keys=settings.audit_hmac_keys,
         audit_active_key_id=settings.audit_hmac_active_key_id,
     )
-    async with factory() as session, session.begin():
-        service = LegalHoldService(session, subject=subject, authority=authority)
-        hold = (
-            await service.apply(
-                arguments.target_type,
-                arguments.target_id,
-                arguments.reason_code or "",
+    try:
+        async with factory() as session, session.begin():
+            service = LegalHoldService(session, subject=subject, authority=authority)
+            hold = (
+                await service.apply(
+                    arguments.target_type,
+                    arguments.target_id,
+                    arguments.reason_code or "",
+                )
+                if arguments.action == "apply"
+                else await service.release(arguments.target_type, arguments.target_id)
             )
-            if arguments.action == "apply"
-            else await service.release(arguments.target_type, arguments.target_id)
-        )
-        result = {"id": str(hold.id), "action": arguments.action}
-    await engine.dispose()
-    return result
+            return {"id": str(hold.id), "action": arguments.action}
+    finally:
+        await engine.dispose()
 
 
 async def async_main(arguments: argparse.Namespace) -> int:

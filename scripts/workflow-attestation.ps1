@@ -10,7 +10,8 @@ function Invoke-WorkflowAvailabilityAttestation {
         [Parameter(Mandatory)] [string]$Checksum,
         [Parameter(Mandatory)] [string]$OperatorSubject,
         [Parameter(Mandatory)] [string]$RepositoryRoot,
-        [switch]$AttestWithCompose
+        [switch]$AttestWithCompose,
+        [string]$ComposeProjectName
     )
 
     $maintenanceArguments = @(
@@ -28,8 +29,17 @@ function Invoke-WorkflowAvailabilityAttestation {
     if ($AttestWithCompose) {
         Push-Location $RepositoryRoot
         try {
-            & docker compose exec --no-TTY api `
-                python -m istari_service.maintenance @maintenanceArguments
+            $composeArguments = @("compose")
+            if ($ComposeProjectName) {
+                $composeArguments += @("--project-name", $ComposeProjectName)
+            }
+            $composeArguments += @(
+                "exec", "--no-TTY", "api", "python", "-m",
+                "istari_service.maintenance", "attest-workflow"
+            )
+            $remainingMaintenanceArguments = `
+                $maintenanceArguments[1..($maintenanceArguments.Count - 1)]
+            & docker @composeArguments @remainingMaintenanceArguments
         }
         finally {
             Pop-Location
