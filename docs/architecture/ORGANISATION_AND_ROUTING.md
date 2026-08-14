@@ -24,17 +24,18 @@ reference, and renders both the selected organisation route and the delivery
 lifecycle. An exact-route member may reopen the Customer's submitted request in
 a separate read-only view. That view does not expose workflow actions, Analyst
 clarifications, feedback, product metadata, files or links. These routing levels
-do not approve the service product. The Team Manager checks the Analyst's work,
-and the QC Manager performs final quality control and dissemination to the
-Customer. One Lead Analyst remains the accountable Camunda assignee. Up to ten
-Contributors can see the request and collaborate, but cannot complete the
-parent workflow task.
+do not approve the service product. The Team Manager checks the Analysts' work,
+one QC Team Manager performs quality control and a different QC Team Manager
+disseminates the package. One Lead Analyst remains the accountable Camunda
+assignee. Up to ten additional assigned Analysts have the same production
+controls; the Lead label changes accountability, not functionality.
 
-The Customer dashboard exposes an authenticated download for a released PDF,
-DOCX or PPTX file, or an authenticated redirect to a normalised allow-listed
-HTTPS product. Files pass quarantine, structural validation and malware scanning
-before they can enter review. The backend never fetches an analyst-supplied URL,
-and withdrawal disables every download route.
+The Customer dashboard exposes authenticated downloads for released PDF, DOCX,
+PPTX, JPEG or PNG files, or an authenticated redirect to a normalised
+allow-listed HTTPS product. Files pass quarantine, structural validation and
+malware scanning before they can enter review. The backend never fetches an
+Analyst-supplied URL, and withdrawal disables every download route. Customer
+acceptance is recorded after dissemination.
 
 At each routing stage, the application presents only effective direct children
 of the current route. The current small hierarchy uses explicit select controls;

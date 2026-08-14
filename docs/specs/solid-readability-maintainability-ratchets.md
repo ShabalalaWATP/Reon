@@ -139,8 +139,8 @@ The source-level programme has reached its zero-debt target:
 - no production frontend function exceeds complexity 12 or nesting depth four.
 
 The backend now uses focused capability ports and explicit composition modules.
-The product repository god interface has been split by package, artefact, review,
-release and storage responsibility. The ORM registration cycle has been replaced
+Product persistence is separated by package, artefact, review, release and
+storage responsibility. The ORM registration cycle has been replaced
 by a neutral base, shared enums and an explicit registry. The frontend has
 separate session lifecycle, context-switch, work-queue, conversation, product
 upload and feature-controller modules. Prettier, Ruff, strict MyPy, ESLint,

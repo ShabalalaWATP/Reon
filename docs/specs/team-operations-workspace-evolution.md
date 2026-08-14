@@ -135,12 +135,12 @@ Routing units do not receive a delivery Kanban. Their overview shows:
 Managers and Members still claim and complete their own routing decisions.
 Manager position does not add allocation or approval.
 
-## Forecasting and supporting tools
+## Internal work packages and supporting tools
 
-The advanced Planning cockpit is retained as a server capability but is not part
-of the primary MVP workspace. The daily surface uses workflow, Board, calendar,
-people and activity projections only. Any retained forecast remains advisory
-and never assigns work.
+The collapsible Work Package board is the team-owned space for scratch tasks,
+blockers, dependencies and near-term coordination. It remains separate from the
+workflow-derived Service Request board. Any capacity forecast is advisory and
+never assigns work or advances Camunda.
 
 The workspace may export content-minimal team briefs only after the existing
 statistics/export policy confirms that the actor may see the selected scope.

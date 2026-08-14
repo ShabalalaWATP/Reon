@@ -1,7 +1,7 @@
 # Workflow and Camunda guide
 
 Status: current executable workflow
-Last reviewed: 10 August 2026
+Last reviewed: 14 August 2026
 
 This guide explains how a request moves through ISTARI Service. It is written for
 product owners, delivery staff, testers, developers and operators. No knowledge
@@ -15,7 +15,7 @@ of Camunda or process modelling is assumed.
 4. [Producing and releasing the product](#producing-and-releasing-the-product)
 5. [Every human task and outcome](#every-human-task-and-outcome)
 6. [Information, hold and rework loops](#information-hold-and-rework-loops)
-7. [Lead and Contributor responsibilities](#lead-and-contributor-responsibilities)
+7. [Assigned Analyst responsibilities](#assigned-analyst-responsibilities)
 8. [What routing organisations can see afterwards](#what-routing-organisations-can-see-afterwards)
 9. [How ISTARI and Camunda share responsibility](#how-istari-and-camunda-share-responsibility)
 10. [Failure and recovery behaviour](#failure-and-recovery-behaviour)
@@ -27,10 +27,11 @@ of Camunda or process modelling is assumed.
 A Customer submits a complete request. CRIOC selects one of its current direct
 command organisations. That command selects one of its current direct Ops groups.
 The Ops group selects one of its current direct delivery teams. A Manager in that
-team names one Lead Analyst and up to ten Contributing Analysts. The Lead produces
-the product and may ask the Customer for more information. The Team Manager checks
-the result, the QC Manager performs the final review, and the Customer receives an
-authorised file download or approved product link in their dashboard. CRIOC, the
+team names one accountable Lead Analyst and up to ten additional assigned
+Analysts. They share the production controls and may ask the Customer or other
+authorised participants for information. The Team Manager checks the result, one
+QC Team Manager performs quality review, and a different QC Team Manager releases
+it. The Customer receives and accepts the exact package in their dashboard. CRIOC, the
 selected command and the selected Ops group can track progress, but they do not
 approve the product.
 
@@ -59,7 +60,7 @@ decisions submitted through ISTARI Service and validated by FastAPI.
 | Start event | The submitted request has a durable process-start command. |
 | User task | A named person must review something and record an outcome. |
 | Candidate group | The current organisation whose eligible users may take a routing task. |
-| Assignee | The individual who owns a claimed task, or the named Lead Analyst. |
+| Assignee | The individual who owns a claimed task; the Lead is the accountable production assignee. |
 | Exclusive gateway | One recorded outcome selects exactly one next path. |
 | Sequence flow | The allowed connection between two process steps. |
 | End event | The request completed, was closed without delivery, or was cancelled. |
@@ -107,15 +108,17 @@ The delivery route is deliberately shorter than the organisational routing path.
 After assignment, work does not travel back through CRIOC, command or Ops for
 approval.
 
-1. The Team Manager selects the Lead and optional Contributors.
-2. Camunda assigns the production task to the named Lead.
-3. The Lead and Contributors collaborate in the authorised request workspace.
-4. The Lead submits the product to the Team Manager.
-5. The Team Manager approves it for QC or returns it to the same Lead.
-6. The QC Manager approves dissemination or returns it to the same Lead.
-7. The QC Manager releases an approved managed file or HTTPS product link.
-8. The owning Customer sees the released item in their dashboard and can provide
-   one feedback response.
+1. The Team Manager selects the accountable Lead and optional additional Analysts.
+2. Camunda records the Lead as accountable assignee; FastAPI gives every current
+   assigned Analyst the same allowed production controls.
+3. An assigned Analyst creates an ordered package of managed files and/or
+   allowlisted HTTPS links, adds the covering note and submits it.
+4. A Team Manager approves it for QC or returns it to the same assignment.
+5. One QC Team Manager claims quality review, approves it or returns it.
+6. A different QC Team Manager claims dissemination and releases the exact
+   approved package.
+7. The owning Customer sees the artefacts and covering note, records acceptance
+   and may provide one feedback response.
 
 ## Every human task and outcome
 
@@ -139,22 +142,22 @@ names and action labels.
 | Ops Routing | `allocation_review` | Claimed user in selected Ops group | Return to command | Request Coordination |
 | Ops Routing | `allocation_review` | Claimed user in selected Ops group | Route to selected team | Team Assignment |
 | Team Assignment | `delivery_planning` | Claimed Team Manager | Return to Ops | Ops Routing |
-| Team Assignment | `delivery_planning` | Claimed Team Manager | Assign Lead and Contributors | Product Production |
-| Product Production | `delivery_work` | Named Lead Analyst | Ask Customer for information | Customer production response |
-| Product Production | `delivery_work` | Named Lead Analyst | Submit product | Manager Review |
-| Provide production information | `customer_clarification_response` | Owning Customer | Provide information | Product Production, same Lead |
+| Team Assignment | `delivery_planning` | Claimed Team Manager | Assign accountable Lead and additional Analysts | Product Production |
+| Product Production | `delivery_work` | Any currently assigned Analyst | Ask Customer for information | Customer production response |
+| Product Production | `delivery_work` | Any currently assigned Analyst | Submit product | Manager Review |
+| Provide production information | `customer_clarification_response` | Owning Customer | Provide information | Product Production, same assignment |
 | Provide production information | `customer_clarification_response` | Owning Customer | Withdraw | Cancelled |
-| Manager Review | `lead_review` | Team Manager | Changes required | Product Production, same Lead |
+| Manager Review | `lead_review` | Team Manager | Changes required | Product Production, same assignment |
 | Manager Review | `lead_review` | Team Manager | Approve | QC Review |
-| QC Review | `quality_review` | QC Manager | Changes required | Product Production, same Lead |
-| QC Review | `quality_review` | QC Manager | Approve | Dissemination |
-| Dissemination | `release` | QC Manager | Release | Completed |
+| QC Review | `quality_review` | Claimed QC Team Manager | Changes required | Product Production, same assignment |
+| QC Review | `quality_review` | Claimed QC Team Manager | Approve | Dissemination |
+| Dissemination | `release` | Different claimed QC Team Manager | Release exact approved package | Completed, awaiting Customer acceptance |
 
 ### End states
 
 | End state | What it means to the Customer |
 |---|---|
-| Completed | An authorised product is available and the service can receive feedback. |
+| Completed | An authorised product is available; Customer acceptance is recorded separately. |
 | Closed without delivery | A named routing user closed the request with a recorded reason. |
 | Cancelled | The Customer withdrew or cancelled the request with a recorded reason. |
 
@@ -181,30 +184,40 @@ the request or close it. Camunda does not set or remove the hold by time alone.
 
 ### Analyst clarification loop
 
-The assigned Lead may ask the Customer a question and set a response deadline.
+Any currently assigned Analyst may ask the Customer a question and set a response deadline.
 The Customer sees the action in their request dashboard and notifications. The
 question, reason, deadline, answer and timestamps are stored in PostgreSQL. Work
-returns to the same Lead after the Customer responds.
+returns to the same assignment after the Customer responds.
 
 ### Product rework loop
 
-Both the Team Manager and QC Manager can return a product for changes. Their
+Both the Team Manager and QC reviewer can return a product for changes. Their
 reason is mandatory and remains in the request history. Work returns to the same
-Lead, preserving accountability and avoiding a new routing decision.
+assignment, preserving accountability and avoiding a new routing decision.
 
-## Lead and Contributor responsibilities
+## Assigned Analyst responsibilities
 
-The Team Manager can select one Lead Analyst and up to ten Contributing Analysts
+The Team Manager can select one Lead Analyst and up to ten additional Analysts
 from current members of the exact delivery team.
 
 - The **Lead** is accountable for the product and is the Camunda task assignee.
-- **Contributors** can read and collaborate on the assigned request and its team
-  work, but cannot complete the Lead's Camunda task.
+- Every **assigned Analyst** has the same FastAPI and interface controls for the
+  production task. The Lead label has no functional privilege.
+- Package creation, upload, conversation and submission actions are attributable
+  to the Analyst who performs them.
 - Analysts cannot claim an unassigned delivery task. A Team Manager must assign
   them.
-- The Lead cannot also be listed as a Contributor. The interface removes the Lead
-  from Contributor selection and the API validates the same rule.
-- Assignment history records the Manager, Lead, Contributors, reason and time.
+- The Lead cannot also be listed among the additional Analysts. The interface and
+  API enforce the same rule.
+- Assignment history records the Manager, Lead, additional Analysts, reason and time.
+
+## Conversations alongside the workflow
+
+The request timeline permits audience-controlled messages to the Customer,
+current owner, Team Managers, assigned Analysts, route units and QC Team. These
+messages record collaboration without advancing or transferring the task. A
+formal Customer clarification is different: it completes a named production
+action and moves Camunda to the Customer response task until an answer arrives.
 
 ## What routing organisations can see afterwards
 

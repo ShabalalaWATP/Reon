@@ -4,6 +4,7 @@
 
 | Goal | Use | Data allowed |
 |---|---|---|
+| Prepare Windows, a MacBook or Linux | [Host setup](HOST_SETUP.md) | No application data |
 | Run the complete application on a workstation | [Local Docker](LOCAL_DOCKER.md) | Synthetic only |
 | Develop API or web code with dependencies available | [Local source development](LOCAL_SOURCE_DEVELOPMENT.md) | Synthetic only |
 | Give a private AWS evaluation to a bounded group | [AWS sandbox](AWS_SANDBOX.md) | Synthetic only |
@@ -21,6 +22,12 @@ Docker Compose is the only executable topology supplied by this repository. It
 is for development and synthetic evaluation. Private AWS EC2, GCP Compute
 Engine and Azure VM hosts can run that same loopback-bound Compose topology
 behind SSM, IAP or Bastion/SSH tunnels. These are not production patterns.
+
+The same current application runs in each supported host path: React/Nginx,
+FastAPI, the independent worker, PostgreSQL, Camunda and ClamAV. AWS and Google
+Cloud instructions do not replace PostgreSQL with a different application
+database or introduce a cloud-native product store. They host the unchanged
+synthetic topology on one private Linux VM.
 
 The production direction is Kubernetes, an external managed PostgreSQL service,
 a supported Camunda 8.9 Helm deployment, an enterprise identity provider,

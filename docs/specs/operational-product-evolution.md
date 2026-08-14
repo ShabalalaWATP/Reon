@@ -256,15 +256,15 @@ Semantically unordered template fields are canonicalised before comparison.
 Normalisation-only changes and unchanged existing staffing shortfalls must not be
 presented as newly introduced change impact.
 
-## Team planning enhancements
+## Internal work-package enhancements
 
 The existing canonical calendar, workflow-derived board and independent work
 packages remain the foundation. The enhancement adds:
 
-- one `Planning cockpit` combining backlog, iteration, due risk, WIP and near-term
-  capacity without copying authoritative records;
+- one collapsible internal Work Package board combining backlog, due risk, WIP
+  and near-term capacity without copying authoritative records;
 - team-owned package templates and checklists;
-- board swimlanes for owner, priority, request work and planning work;
+- board swimlanes for owner, priority, service requests and internal package work;
 - explicit blocker ageing and dependency warnings;
 - iteration planning, commitment review and a factual completion summary;
 - versioned capacity scenarios using memberships, calendar availability, active

@@ -2,6 +2,10 @@
 
 Status: implemented development and synthetic-evaluation topology
 
+Prepare the operating system first using the
+[Windows, macOS and Linux host guide](HOST_SETUP.md). This document covers the
+application-specific Compose topology and verification.
+
 ## What this starts
 
 Docker Compose starts PostgreSQL 17.10, Camunda 8.9.14, an internal ClamAV daemon

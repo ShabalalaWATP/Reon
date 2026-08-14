@@ -1,48 +1,45 @@
-# Simplified team workspace navigation
+# Unified team workspace navigation
+
+Status: current implemented navigation contract
+Last reviewed: 14 August 2026
 
 ## Purpose
 
-Give each staff unit one obvious operational destination. The team workspace
-contains the unit's work queue, while secondary planning and handover tools do
-not compete with the daily request workflow in the MVP interface.
+Give each staff unit one obvious operational destination. The named workspace
+contains the unit's actionable queue and role-appropriate collaboration views.
 
 ## User experience
 
-- A staff user with a current workspace sees one named workspace link in the
-  primary navigation instead of separate queue and workspace links.
-- The workspace includes an actionable `Work queue` view. Users can claim and
-  complete the same authorised work they previously handled on the standalone
-  role queue.
-- Delivery-team workspaces retain Overview, Work queue, Board, Calendar,
-  People, Statistics and Activity.
-- Routing workspaces retain Overview, Work queue, Calendar, People, Statistics
+- A staff user with a current workspace sees one named workspace link in primary
+  navigation instead of duplicate queue and workspace links.
+- The workspace includes an actionable `Work queue`. Users can claim and complete
+  only work authorised for the exact unit and actor.
+- Delivery-team workspaces contain Overview, Work queue, Board, Calendar, People,
+  Statistics and Activity.
+- Routing workspaces contain Overview, Work queue, Calendar, People, Statistics
   and Activity.
-- Planning and Handover are removed from the primary workspace navigation and
-  overview. Direct visits to those old workspace views return to Overview.
-- The Board presents package detail, blockers, dependencies, reservations and
-  activity directly. It does not fetch planning-cockpit data or link to a
-  removed Planning page.
+- The Board distinguishes workflow-derived Service Request cards from the
+  collapsible internal Work Package board used by the Analyst team.
 - Users without a current workspace retain their role queue as a safe fallback.
 
 ## Data and security boundaries
 
-- This change does not broaden work-item visibility or action authority. The
-  embedded queue uses the existing API and passes the exact authorised unit ID.
-- Server-side role, object and action authorisation remains authoritative.
-- Existing planning and workspace-record data is retained. Simplifying the MVP
-  interface does not delete audit history or stored records.
-- Legacy standalone queue routes remain available for bookmarked links and
-  notifications, but are no longer duplicated in primary navigation when a
-  workspace is available.
+- Embedding the queue does not broaden work-item visibility or action authority.
+  It uses the exact authorised unit identifier.
+- Server-side role, context, object and action authorisation remains authoritative.
+- A Service Request card changes stage only through a named workflow action.
+- An internal Work Package card may move through its own reasoned and versioned
+  coordination states, but cannot alter Camunda or Customer-visible request state.
+- Standalone queue routes remain available for notification and action deep
+  links, but are not duplicated in primary navigation when a workspace exists.
 
 ## Acceptance criteria
 
 1. A user with a workspace sees one workspace destination in the sidebar.
 2. Work can be claimed and completed from the workspace Work queue.
-3. The workspace does not display Planning or Handover tabs or overview panels.
-4. Old Planning and Handover workspace URLs redirect to Overview.
-5. Routing and delivery workspaces retain their role-appropriate operational
-   views.
-6. A staff account without a workspace can still reach its role queue.
-7. Board cards and inspectors contain no dead Planning links or hidden Planning
-   dependency.
+3. Routing and delivery workspaces expose only their current role-appropriate
+   operational views.
+4. A staff account without a workspace can still reach its authorised role queue.
+5. Service Request and Work Package boards are labelled, functionally separate
+   and accessible without drag gestures.
+6. The Work Package section is collapsible and does not advance workflow.

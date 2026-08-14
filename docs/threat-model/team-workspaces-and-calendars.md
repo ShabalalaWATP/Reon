@@ -68,7 +68,7 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 | Concurrent reservations double-book a person | Enforce non-overlap for active half-open reservation windows with a PostgreSQL partial GiST exclusion constraint; map only that named constraint to a stable conflict and roll back all losing side effects |
 | Blocker or checklist text leaks across teams | Apply exact-team ownership and grant policy on list, detail, notification and saved-view execution |
 | Iteration completion becomes an individual ranking | Report factual team commitment and completion only; do not create Analyst league tables, surveillance scores or inferred performance measures |
-| Planning notification exposes private calendar detail | Publish content-minimal assignment, blocker, due-risk, iteration and dispute events without event title, notes or private reasons |
+| Work-package notification exposes private calendar detail | Publish content-minimal assignment, blocker, due-risk and dispute events without event title, notes or private reasons |
 | Skill labels become an allocation score or leak outside the team | Bound and normalise self-declared labels, return them only through the authorised exact-team people projection and prohibit proficiency scores, inferred ranking and automated assignment |
 | Notes or calendar text reaches logs | Structured metadata logging with sensitive-field redaction and regression tests |
 
@@ -98,7 +98,7 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
   reservations, commitments and reassignment.
 - Manager-led handover audit tests and proof that no scenario, board gesture or
   planning notification mutates Camunda directly.
-- Planning-notification recipient and content-minimisation tests.
+- Work-package notification recipient and content-minimisation tests.
 - Profile skill validation plus exact-team, sibling, revoked and expired people-
   projection tests.
 - Colleague-profile exact-team, privacy, missing-record and sibling-team tests,
@@ -113,7 +113,7 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 - Fixed 5,000-occurrence and 2,500-package performance evidence with visible
   source freshness.
 - Keyboard alternatives for board and calendar, 200 per cent zoom and reduced
-  motion review, extended to every planning-cockpit command.
+  motion review, extended to every Work Package board command.
 
 ## Residual risks and gates
 

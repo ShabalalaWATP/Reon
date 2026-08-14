@@ -2,8 +2,9 @@
 
 ISTARI Service is a secure, human-led request and delivery workspace. A Customer
 submits a complete request through a structured form, authorised organisations
-route it, a delivery team produces the work, a Team Manager and QC Manager check
-it, and the Customer receives the released product in their dashboard.
+route it, assigned Analysts produce the work, a Team Manager and two different
+members of the combined QC Team review and release it, and the Customer receives
+and accepts the disseminated package in their dashboard.
 
 The repository is deliberately safe for public source control. Its organisation,
 people, requests and products are synthetic. It must not contain real operational
@@ -125,8 +126,10 @@ The assignment screen uses independent checkboxes for Contributors, shows a
 selected count and excludes the chosen Lead. Analysts do not claim unassigned
 delivery tickets. The Manager assigns them.
 
-The Lead owns the Camunda production task. Contributors can collaborate on the
-authorised request and team work, but cannot complete the Lead's parent task.
+The Lead badge identifies accountability, but it does not create a different set
+of production controls. Every currently assigned Analyst can open the task, ask
+questions, create and submit a product package and complete an allowed production
+action. Every action remains attributable to the Analyst who performed it.
 
 Team workspaces include:
 
@@ -137,10 +140,6 @@ Team workspaces include:
 - a shared calendar and availability view;
 - current team activity; and
 - scoped team statistics.
-
-The MVP navigation deliberately omits the advanced Planning and Handover
-surfaces. Their existing server-side records are retained, but daily team work
-is presented through one named workspace rather than several competing tools.
 
 During active production, any current delivery-team Manager can send a recorded
 task hastener to one assigned Analyst or to the Lead and all Contributors
@@ -165,9 +164,10 @@ Analysts. Ordinary personal events cannot be attached to a ticket.
 
 ### Product management and release
 
-The Lead can build a product package containing:
+Any assigned Analyst can build a product package containing one to ten ordered
+artefacts:
 
-- managed PDF, DOCX or PPTX files; and/or
+- managed PDF, DOCX, PPTX, JPEG or PNG files; and/or
 - approved HTTPS product links.
 
 Files enter private quarantine, are checked for size and type, and are scanned by
@@ -175,9 +175,29 @@ ClamAV. A failed or unavailable scan never releases a product. Clean files are
 promoted to private storage and remain accessible only through an authorised
 FastAPI download.
 
-The Team Manager checks the submitted package. The QC Manager performs the final
-review and dissemination. The Customer then receives the approved file or link
-inside their dashboard.
+Every current package also requires a covering note to the Customer. A Team
+Manager reviews the frozen package, one QC Team Manager performs the quality
+review, and a different QC Team Manager claims the release task and disseminates
+the exact approved package. The Customer receives the artefacts and note inside
+their dashboard and explicitly records acceptance. Rework creates an attributable
+review loop back to the assigned Analysts.
+
+### Structured request conversations
+
+Every request has one paginated, attributable conversation timeline. Authorised
+staff can address the Customer, current owner, Team Managers, assigned Analysts,
+a selected routing unit or the combined QC Team. Customer-visible messages and
+staff-only messages are distinguished by policy, not by client-side hiding. Read
+state, delivery audience, author, context and time are recorded. Conversation
+messages add information without changing ownership or workflow position.
+
+### Customer and Staff contexts
+
+An Analyst, Manager or Administrator can also hold Customer capability. The
+account menu then offers an explicit Customer/Staff switch. Switching rotates the
+session and CSRF proof, clears protected browser state and opens the correct home:
+`My requests` for Customer context and `Home` for Staff context. A staff member
+cannot use Staff authority on their own Customer request.
 
 ### Related-request review
 
@@ -213,8 +233,8 @@ checks that separation in FastAPI, not only in the interface.
 | Request Coordination User | Coordinate work inside the selected command | Claim, hold, return, close or choose an Ops group |
 | Ops Routing User | Direct work to a delivery team | Claim, return or choose a direct team |
 | Team Manager | Make delivery accountable | Assign Lead and Contributors, oversee work, review product |
-| Team Analyst | Produce the product | Work as Lead or Contributor, clarify, package and submit |
-| QC Manager | Protect release quality | Review, return, approve and disseminate |
+| Team Analyst | Produce the product | Work as Lead or assigned Analyst, converse, package and submit |
+| QC Team Manager | Protect release quality | Claim QC review or, as a different person, claim dissemination |
 | Platform Administrator | Maintain safe platform metadata | Accounts, profiles, organisation, configuration and marking |
 
 Workspace position is independent from workflow role. A routing organisation has
@@ -240,13 +260,13 @@ The workflow contains deliberate loops:
 
 - CRIOC may ask the Customer for missing information.
 - A command may place the request on hold and later resume it.
-- The Lead may ask the Customer a direct production question.
-- The Team Manager or QC Manager may return the product to the same Lead.
+- Any assigned Analyst may ask the Customer a direct production question.
+- The Team Manager or QC reviewer may return the product to the assigned Analysts.
 - The Customer may withdraw or cancel an eligible active request.
 
 After the delivery team is selected, the product does not travel back through
-CRIOC, command or Ops for approval. It goes from Lead to Team Manager to QC Manager
-to Customer.
+CRIOC, command or Ops for approval. It goes from assigned Analysts to Team
+Manager, QC review, a separate QC release Manager, then the Customer.
 
 The complete task and outcome table is in the
 [Workflow and Camunda guide](docs/architecture/WORKFLOW_AND_BPMN.md).
@@ -303,6 +323,13 @@ business use cases and returns bounded response models. Route handlers translate
 HTTP. Services and policy modules hold application rules. Repositories own
 database access. Adapters isolate Camunda, product storage and malware scanning.
 
+The current dependency baseline is Python 3.12+, FastAPI 0.116+, Pydantic 2,
+SQLAlchemy 2 async, Alembic, asyncpg and the Camunda Python SDK 9. The web uses
+Node.js 22+, pnpm 11, React 19.2, TypeScript 5.9, React Router 8, TanStack Query
+5, Zod 4 and Vite 7. Runtime dependencies are PostgreSQL 17 with pgvector 0.8,
+Camunda 8.9, ClamAV 1.5 and Nginx. Exact reproducible versions are locked in
+`apps/api/uv.lock` and `pnpm-lock.yaml`; manifests state the supported version ranges.
+
 ### Application database
 
 PostgreSQL 17 is the authority for:
@@ -311,9 +338,9 @@ PostgreSQL 17 is the authority for:
 - requests, drafts and immutable submitted revisions;
 - organisation and effective-dated configuration;
 - route, assignment and participant history;
-- clarification, notes and feedback;
-- product metadata and release records;
-- calendars, team planning and notifications;
+- typed conversations, read state, clarification and feedback;
+- ordered product packages, review, dissemination and acceptance records;
+- calendars, board work packages and notifications;
 - operational facts and dashboard projections; and
 - tamper-evident audit events.
 
@@ -336,7 +363,10 @@ stale worker from recording success after another worker takes over.
 
 ### Product storage and scanner
 
-The local environment uses a private named volume. The API streams uploads into
+The local environment uses a private named volume for managed objects and a
+small SQLite quarantine index owned by that storage adapter. SQLite is not the
+application database and never stores requests, accounts, conversations or
+workflow state. The API streams uploads into
 quarantine and asks an internal ClamAV service to scan them. The storage volume is
 not published by the web server. Downloads pass through FastAPI and repeat the
 ownership and release checks.
@@ -358,8 +388,8 @@ state. The system does not invent progress.
 
 The detailed design, trust boundaries, failure behaviour and scaling model are
 in [System architecture](docs/architecture/SYSTEM_ARCHITECTURE.md). The editable
-C4 model is in
-[`docs/architecture/structurizr/workspace.dsl`](docs/architecture/structurizr/workspace.dsl).
+C4 model, including component, interaction and deployment views, is in the
+[Structurizr architecture model](docs/architecture/structurizr/README.md).
 
 ## Security and data protection
 
@@ -487,8 +517,9 @@ The supported local path uses Docker Compose and loopback-only host ports.
 - at least 8 GB free memory for the complete stack
 - enough disk space for container images, PostgreSQL, Camunda and scanner data
 
-Windows, macOS and Linux details are in the
-[local Docker guide](docs/deployment/LOCAL_DOCKER.md).
+Windows 11, Intel and Apple-silicon MacBook, and Linux host preparation is in the
+[host setup guide](docs/deployment/HOST_SETUP.md). Continue with the
+[local Docker guide](docs/deployment/LOCAL_DOCKER.md) for the executable stack.
 
 ### 1. Clone and enter the repository
 
@@ -716,6 +747,7 @@ management tunnel. They are not production architectures and must contain only
 synthetic data.
 
 - [Deployment guide home](docs/deployment/README.md)
+- [Windows, macOS and Linux host setup](docs/deployment/HOST_SETUP.md)
 - [AWS synthetic sandbox](docs/deployment/AWS_SANDBOX.md)
 - [GCP synthetic sandbox](docs/deployment/GCP_SANDBOX.md)
 - [Azure synthetic sandbox](docs/deployment/AZURE_SANDBOX.md)
@@ -817,7 +849,9 @@ did not complete.
 | Candidate group | The organisation whose eligible users can take a shared routing task. |
 | Claim | The act of one routing user taking personal responsibility for a shared task. |
 | Lead Analyst | The person accountable for producing and submitting the product. |
-| Contributor | A supporting Analyst with request access who cannot complete the Lead task. |
+| Assigned Analyst | A Lead or additional Analyst with the same production controls; the Lead badge records accountability. |
+| Identity context | The explicit Customer or Staff authority active in one rotated session. |
+| Request conversation | An attributable, audience-controlled message on the request timeline. |
 | Projection | A database view prepared for a dashboard or queue from authoritative events. |
 | Reconciliation | Checking Camunda and PostgreSQL and safely resolving a delayed or interrupted update. |
 | Durable command | A recorded instruction that can be retried and proved without losing the user's intent. |

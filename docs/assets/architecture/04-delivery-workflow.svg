@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="780" viewBox="0 0 1600 780" role="img" aria-labelledby="title desc">
   <title id="title">Product production, review and release workflow</title>
-  <desc id="desc">A plain-English process diagram from Analyst assignment through production, optional Customer clarification, Manager review, QC release and Customer feedback.</desc>
+  <desc id="desc">A plain-English process diagram from Analyst assignment through production, Customer clarification, Manager review, separate QC review and release, and Customer acceptance.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071018"/><stop offset="1" stop-color="#0c1923"/></linearGradient>
     <filter id="shadow"><feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#000" flood-opacity=".25"/></filter>
@@ -9,35 +9,35 @@
   </defs>
   <rect width="1600" height="780" rx="24" fill="url(#bg)"/>
   <text x="64" y="60" class="eyebrow">HUMAN-LED WORKFLOW · PART 2</text><text x="64" y="101" class="title">From assignment to an authorised Customer product</text>
-  <text x="64" y="132" class="subtitle">The Lead owns the Camunda production task. Contributors collaborate through ISTARI without becoming the accountable assignee.</text>
+  <text x="64" y="132" class="subtitle">The Lead is the accountable Camunda assignee; every assigned Analyst has the same production controls in ISTARI.</text>
 
   <g filter="url(#shadow)">
     <rect x="70" y="242" width="238" height="154" rx="18" class="step"/>
     <text x="96" y="274" class="phase">TEAM MANAGER</text><text x="96" y="308" class="name">Name the delivery team</text>
-    <text x="96" y="337" class="copy">Select one Lead Analyst and any</text><text x="96" y="361" class="copy">supporting Contributors</text>
+    <text x="96" y="337" class="copy">Select one accountable Lead and</text><text x="96" y="361" class="copy">additional assigned Analysts</text>
 
     <rect x="358" y="242" width="238" height="154" rx="18" class="step"/>
-    <text x="384" y="274" class="phase">LEAD + CONTRIBUTORS</text><text x="384" y="308" class="name">Produce the product</text>
-    <text x="384" y="337" class="copy">Create managed files or an approved</text><text x="384" y="361" class="copy">link and maintain progress</text>
+    <text x="384" y="274" class="phase">ASSIGNED ANALYSTS</text><text x="384" y="308" class="name">Produce the product</text>
+    <text x="384" y="337" class="copy">Order managed files or approved links,</text><text x="384" y="361" class="copy">then add the Customer covering note</text>
 
     <rect x="646" y="242" width="238" height="154" rx="18" class="review"/>
     <text x="672" y="274" class="phase">TEAM MANAGER</text><text x="672" y="308" class="name">Check quality</text>
-    <text x="672" y="337" class="copy">Approve for QC or return clear</text><text x="672" y="361" class="copy">changes to the same Lead</text>
+    <text x="672" y="337" class="copy">Approve for QC or return clear</text><text x="672" y="361" class="copy">changes to the same assignment</text>
 
     <rect x="934" y="242" width="238" height="154" rx="18" class="review"/>
-    <text x="960" y="274" class="phase">QC MANAGER</text><text x="960" y="308" class="name">Review and release</text>
-    <text x="960" y="337" class="copy">Approve dissemination or return</text><text x="960" y="361" class="copy">the product for further work</text>
+    <text x="960" y="274" class="phase">QC TEAM</text><text x="960" y="308" class="name">Review, then release</text>
+    <text x="960" y="337" class="copy">One Manager reviews; a different</text><text x="960" y="361" class="copy">Manager releases or returns</text>
 
     <rect x="1222" y="242" width="270" height="154" rx="18" class="release"/>
-    <text x="1248" y="274" class="phase">CUSTOMER</text><text x="1248" y="308" class="name">Download and respond</text>
-    <text x="1248" y="337" class="copy">Uses the dashboard file or product link,</text><text x="1248" y="361" class="copy">then records service feedback</text>
+    <text x="1248" y="274" class="phase">CUSTOMER</text><text x="1248" y="308" class="name">Receive and accept</text>
+    <text x="1248" y="337" class="copy">Uses the dashboard artefacts and note,</text><text x="1248" y="361" class="copy">then accepts and may give feedback</text>
 
     <rect x="324" y="526" width="306" height="120" rx="16" class="loopbox"/>
     <text x="350" y="558" class="phase">OPTIONAL CLARIFICATION</text><text x="350" y="592" class="name">Ask the Customer directly</text>
     <text x="350" y="620" class="copy">Question and answer stay on the request</text>
 
     <rect x="736" y="526" width="330" height="120" rx="16" class="loopbox"/>
-    <text x="762" y="558" class="phase">REWORK LOOP</text><text x="762" y="592" class="name">Return to the same Lead</text>
+    <text x="762" y="558" class="phase">REWORK LOOP</text><text x="762" y="592" class="name">Return to assigned Analysts</text>
     <text x="762" y="620" class="copy">Comments stay with the request and remain actionable</text>
   </g>
 
@@ -53,5 +53,5 @@
 
   <line x1="70" y1="700" x2="1492" y2="700" stroke="#203746"/>
   <text x="70" y="733" class="copy">The route does not travel back through CRIOC, command or Ops for approval.</text>
-  <text x="514" y="733" class="label">Only the Team Manager and QC Manager check the product before release.</text>
+  <text x="514" y="733" class="label">Team review, QC review and a different QC releaser protect the package.</text>
 </svg>

@@ -1,7 +1,7 @@
 # ISTARI Service documentation home
 
 Status: current documentation map
-Last reviewed: 11 August 2026
+Last reviewed: 14 August 2026
 
 This is the starting point for product, delivery, engineering, security,
 operations and assurance documentation. It separates current behaviour from
@@ -18,6 +18,7 @@ without knowing its development history.
 | Understand BPMN and the Camunda workflow | [Workflow and Camunda guide](architecture/WORKFLOW_AND_BPMN.md) |
 | See the hierarchy and every synthetic account | [Organisation and routing](architecture/ORGANISATION_AND_ROUTING.md) |
 | Check what each role may do | [Role and permission matrix](reference/ROLE_PERMISSION_MATRIX.md) |
+| Prepare Windows, macOS or Linux | [Host setup](deployment/HOST_SETUP.md) |
 | Install the complete local stack | [Local Docker guide](deployment/LOCAL_DOCKER.md) |
 | Run FastAPI or React from source | [Local source development](deployment/LOCAL_SOURCE_DEVELOPMENT.md) |
 | Configure environment variables | [Configuration reference](deployment/CONFIGURATION_REFERENCE.md) |
@@ -53,7 +54,7 @@ without knowing its development history.
 
 1. Read [System architecture](architecture/SYSTEM_ARCHITECTURE.md).
 2. Open the editable
-   [Structurizr workspace](architecture/structurizr/workspace.dsl).
+   [Structurizr model and view catalogue](architecture/structurizr/README.md).
 3. Read the ADRs linked from the architecture section being changed.
 4. Use the applicable specification and threat model before editing code.
 5. Follow [Local source development](deployment/LOCAL_SOURCE_DEVELOPMENT.md).
@@ -99,7 +100,9 @@ answers one question and avoids placing the entire system on one canvas.
 | [Durable command](assets/architecture/05-durable-workflow-command.svg) | How do PostgreSQL and Camunda remain aligned? | [How ISTARI and Camunda share responsibility](architecture/WORKFLOW_AND_BPMN.md#how-istari-and-camunda-share-responsibility) |
 | [Organisation hierarchy](assets/architecture/06-organisation-routing.svg) | Which branches are visible and selectable? | [Organisation and routing](architecture/ORGANISATION_AND_ROUTING.md) |
 
-The editable C4 model is
+The editable C4 model includes system, container, web/API component, dynamic
+request-delivery and local/private-cloud deployment views. See the
+[Structurizr model guide](architecture/structurizr/README.md) and
 [`architecture/structurizr/workspace.dsl`](architecture/structurizr/workspace.dsl).
 The SVG files are committed so GitHub and offline readers can see the diagrams
 without a separate rendering service.
@@ -230,6 +233,7 @@ instruction.
 
 | Environment | Guide | Boundary |
 |---|---|---|
+| Windows, macOS and Linux host | [Host setup](deployment/HOST_SETUP.md) | Common prerequisite and troubleshooting |
 | Local Docker Compose | [Local Docker](deployment/LOCAL_DOCKER.md) | Implemented, loopback-only, synthetic data |
 | Local source development | [Source development](deployment/LOCAL_SOURCE_DEVELOPMENT.md) | Implemented developer workflow |
 | AWS private VM | [AWS sandbox](deployment/AWS_SANDBOX.md) | Synthetic evaluation only |

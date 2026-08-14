@@ -3,6 +3,9 @@
 Use this path when changing API or web code. The full Compose path remains the
 easiest way to supply PostgreSQL, Camunda and ClamAV.
 
+Use [Host setup](HOST_SETUP.md) for Windows, Intel or Apple-silicon MacBook and
+Linux runtime preparation before following this source-specific path.
+
 ## Prerequisites
 
 - Python 3.12 or later and `uv`

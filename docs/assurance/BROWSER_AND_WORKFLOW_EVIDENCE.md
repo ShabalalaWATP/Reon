@@ -14,6 +14,21 @@ The workflow and cross-browser records after the screenshots are dated evidence.
 Their recorded scope does not prove managed-product or guided-configuration
 capabilities and must not be used to close current browser or acceptance gates.
 
+## Complete context, conversation and release journey, 14 August 2026
+
+A real Chromium session exercised the current application through Customer
+submission, CRIOC, JOCK, ACSA-B Ops and SSG Team. The delivery assignment reached
+Ben Doak and the assigned-Analyst experience exposed the production controls and
+Lead accountability label correctly. Structured messages were sent through the
+request timeline, a covering note and managed package were submitted, and the
+Team Manager completed review.
+
+One QC Team Manager claimed and approved quality review. A different QC Team
+Manager claimed dissemination and released the approved package. The Customer
+opened the released product and recorded acceptance. Customer/Staff context
+switching, context-specific landing pages and protected-cache rotation were
+covered by the current frontend regression suite.
+
 ## Route lifecycle and chart presentation, 10 August 2026
 
 The rebuilt local production containers were exercised with a CRIOC routing
@@ -93,9 +108,9 @@ actions.
 ### Routing workspace
 
 CRIOC Manager `admin74` on the CRIOC Overview. The routing workspace provides a
-single operational entry point to its Queue, Calendar, People, Statistics,
-Handover and Activity views. It deliberately does not expose delivery-team
-planning or an additional Manager approval stage.
+single operational entry point to its Work queue, Calendar, People, Statistics
+and Activity views. It does not expose delivery-team package controls or add a
+Manager approval stage to routing.
 
 ![CRIOC routing workspace overview](../assets/screenshots/routing-workspace-overview.png)
 
@@ -119,10 +134,10 @@ control.
 
 ## Automated workspace-state coverage
 
-The current 326-test frontend suite passed on 10 August 2026 with 99.41 per cent
-line and 95.01 per cent branch coverage. It includes access-assistance,
+The current 490-test frontend suite passed on 14 August 2026 with 98.80 per cent
+line and 95.04 per cent branch coverage. It includes access-assistance,
 classification, routing-workspace,
-effective-membership, self-service calendar, Lead and Contributor, collaboration
+effective-membership, self-service calendar, assigned-Analyst, conversation, context-switch, collaboration
 and hierarchy-statistics regressions. The following table began as the candidate
 index recorded on 7 August 2026 and now identifies the principal current test
 locations. The frontend suite covers loading, empty, success and
@@ -132,22 +147,19 @@ boundaries.
 
 | Workspace | Principal evidence |
 | --- | --- |
-| Authentication and route policy | `app/auth-flow.test.tsx` |
-| Password assistance and classification | `app/password-assistance-flow.test.tsx`, `app/admin-flow.test.tsx`, `components/classification-control.test.tsx` |
-| Customer register and request detail | `requester-flow.test.tsx`, `branch-states.test.tsx` |
-| Drafts and mandatory form | `draft-flow.test.tsx`, `requester-flow.test.tsx` |
-| Staff queues and routing | `staff-flow.test.tsx`, `routing-options-flow.test.tsx` |
-| Product review | `staff-deliverable-flow.test.tsx` |
-| Metadata tracking | `tracking-flow.test.tsx` |
-| Statistics | `StatisticsPage.test.tsx` |
-| Team overview and People | `TeamWorkspacePage.test.tsx` |
-| Routing workspaces and queues | `RoutingWorkspacePage.test.tsx` |
-| Workspace collaboration | `TeamWorkspacePage.test.tsx`, `RoutingWorkspacePage.test.tsx` |
-| Calendar and capacity | `CalendarPage.test.tsx` |
-| Board and packages | `TeamBoardPage.test.tsx` |
-| Planning and iterations | `TeamPlanningPage.test.tsx` |
-| Platform administration | `admin-flow.test.tsx` |
-| Organisation | `organisation-flow.test.tsx` |
+| Authentication, context and route policy | `apps/web/src/app/auth-flow.test.tsx`, `apps/web/src/app/context-switch-flow.test.tsx` |
+| Password assistance and classification | `apps/web/src/features/auth/password-assistance-flow.test.tsx`, `apps/web/src/features/admin/admin-flow.test.tsx`, `apps/web/src/features/admin/classification-control.test.tsx` |
+| Customer register and request detail | `apps/web/src/features/requests/requester-flow.test.tsx`, `apps/web/src/features/requests/branch-states.test.tsx` |
+| Drafts and mandatory form | `apps/web/src/features/requests/draft-flow.test.tsx`, `apps/web/src/features/requests/requester-flow.test.tsx` |
+| Staff queues and routing | `apps/web/src/features/work/staff-flow.test.tsx`, `apps/web/src/features/work/routing-options-flow.test.tsx` |
+| Product review | `apps/web/src/features/work/staff-deliverable-flow.test.tsx` |
+| Tracking and conversations | `apps/web/src/features/tracking/tracking-flow.test.tsx`, `apps/web/src/features/tracking/tracking-conversations.test.tsx` |
+| Statistics | `apps/web/src/features/statistics/StatisticsPage.test.tsx` |
+| Team and routing workspaces | `apps/web/src/features/teams/TeamWorkspacePage.test.tsx`, `apps/web/src/features/teams/RoutingWorkspacePage.test.tsx` |
+| Calendar and capacity | `apps/web/src/features/calendar/CalendarPage.test.tsx` |
+| Board and packages | `apps/web/src/features/board/TeamBoardPage.test.tsx` |
+| Platform administration | `apps/web/src/features/admin/admin-flow.test.tsx` |
+| Organisation | `apps/web/src/features/organisation/organisation-flow.test.tsx` |
 
 ## Historical MVP environment
 

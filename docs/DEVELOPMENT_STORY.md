@@ -1333,3 +1333,20 @@ gates remain above 95 per cent for both lines and branches.
   stable managed-file upload evidence and authoritative product review cache
   updates. The final journey completed without unexpected application HTTP or
   console errors.
+- Rebuilt the current documentation authority on 14 August 2026 around the
+  executable product rather than retired interface descriptions. The README,
+  architecture, workflow, user stories, role matrix, assurance and deployment
+  guides now cover dual Customer/Staff contexts, structured request
+  conversations, equal assigned-Analyst controls, ordered multi-format packages,
+  separate QC review and release, Customer acceptance and the exact current
+  technology baseline.
+- Expanded the editable Structurizr model with web and API component views, an
+  end-to-end request-delivery view and local/private-cloud deployment views. The
+  official Structurizr CLI validated the model. Added one detailed Windows,
+  Intel and Apple-silicon MacBook, Linux, AWS and Google Cloud host path and a
+  gate that rejects stale current-state terms and missing source references.
+- Traced the remaining backend warning to a test connection opened against the
+  local product-storage adapter's SQLite quarantine index. The fixture now closes
+  the connection deterministically, while resource and unraisable-exception
+  warnings fail pytest. The complete 1,318-test backend and 490-test frontend
+  suites, root repository gate and documentation checks passed.

@@ -236,7 +236,7 @@ Done when:
 Done when:
 
 - every configured team has an authorised workspace with Overview, Board,
-  Calendar, People, Planning and Activity navigation;
+  Calendar, People, Work Package board and Activity navigation;
 - a team manager can add an existing active Analyst to their exact team, end a
   membership and schedule a transfer using a mandatory reason;
 - only Platform Administrators can create or deactivate global identities and

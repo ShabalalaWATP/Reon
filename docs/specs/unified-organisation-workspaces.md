@@ -80,18 +80,15 @@ enhancement to the same commands, never a separate authority path.
 
 ## Multiple Analysts on one request
 
-A delivery request has exactly one active Lead Analyst and up to ten active
-Contributors. Every participant must be a current member of the assigned team.
-The Lead is the sole Camunda assignee and performs workflow-stage outcomes.
-Contributors may read the authorised request, collaborate on linked work
-packages and draft artefacts, and receive safe notifications, but cannot
-complete the Lead's Camunda task.
+A delivery request has exactly one active Lead Analyst and up to ten additional
+assigned Analysts. Every participant must be a current member of the assigned
+team. The Lead is the accountable Camunda assignee, while every assigned Analyst
+has the same production controls through the application policy boundary.
 
-Managers assign the Lead and Contributors atomically with an optimistic request
-version and mandatory reason. Handover promotes a current Contributor or another
-eligible Analyst to Lead, retains history and dispatches a durable Camunda
-assignment command. Concurrent changes have one winner. Existing single
-assignments are backfilled as Lead participation.
+Managers assign the Lead and additional Analysts atomically with an optimistic
+request version and mandatory reason. Assignment changes retain history and
+dispatch a durable Camunda assignment command. Concurrent changes have one
+winner.
 
 ## Routing workspaces
 
@@ -105,13 +102,11 @@ oldest age, median routing duration and direct-child distribution. Delivery
 workspaces instead show demand, status, due risk, throughput, Manager review,
 capacity and release measures. Individual performance ranking is prohibited.
 
-## Retained advanced records
+## Authoritative operational records
 
-Existing planning and workspace-record data remains stored behind the established
-service boundaries, but Planning and Handover are not primary MVP workspace
-views. Requests, products and Camunda remain the authoritative operational
-records. Any later reintroduction requires a separately approved, understandable
-user journey.
+Requests, structured conversations, product packages, Work Package cards and
+Camunda remain the authoritative operational records for their named concerns.
+No supporting board or calendar mutation may advance workflow implicitly.
 
 ## Security and acceptance
 

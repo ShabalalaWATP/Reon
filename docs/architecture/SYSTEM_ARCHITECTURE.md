@@ -1,20 +1,22 @@
 # ISTARI Service system architecture
 
 Status: current executable architecture and explicit deployment boundaries
-Last reviewed: 11 August 2026
+Last reviewed: 14 August 2026
 
 ## 1. Purpose and scope
 
 ISTARI Service is a human-led service-request application. A Customer submits a
 structured request, authorised routing users select each organisational
-destination, a Team Manager assigns one Lead Analyst and optional Contributors,
-and QC releases a product for authenticated download. Camunda coordinates human user tasks. It does not make
-priority, route, assignment, approval or release decisions.
+destination, a Team Manager assigns one accountable Lead and additional
+Analysts, and separate members of a combined QC Team review and disseminate the
+product. The Customer then accepts delivery. Camunda coordinates human user
+tasks. It does not make priority, route, assignment, approval or release
+decisions.
 
 This document describes the executable React, FastAPI, PostgreSQL and Camunda
 system. The organisation model is in
 [Organisation and routing](ORGANISATION_AND_ROUTING.md). Detailed decisions are
-in [ADRs 0001 to 0030](../adr/). The complete process is explained in
+in the [architecture decision record index](../adr/). The complete process is explained in
 [Workflow and Camunda](WORKFLOW_AND_BPMN.md). Production gaps remain authoritative in the
 [gap register](../ENTERPRISE_READINESS_GAP_REGISTER.md).
 
@@ -77,6 +79,12 @@ supports client-side routing. That Nginx configuration recognises only local
 hostnames and is part of the local topology. It is not the target ingress or TLS
 termination design.
 
+An authenticated account has an explicit `CUSTOMER` or `STAFF` context. The
+application shell derives navigation and route access from that context. A
+context switch is a server mutation which rotates session and CSRF material,
+advances a session generation and clears context-scoped TanStack Query state.
+The browser never treats a visual role label as authority.
+
 ### FastAPI application
 
 `apps/api/src/istari_service` is composed in `main.py`:
@@ -125,12 +133,12 @@ policy cannot import FastAPI, SQLAlchemy or Camunda. Business route handlers
 cannot contain SQL or branching workflow logic. Services cannot construct SQL
 expressions, and repositories cannot depend on FastAPI or the Camunda SDK.
 
-### Product PostgreSQL
+### PostgreSQL application database
 
 PostgreSQL is authoritative for accounts, password/session state, request and
 form content, configuration revisions and pins, organisational projection,
-assignments, clarification messages, product metadata, feedback, notifications,
-planning, analytics facts, audit history and the requester-facing workflow
+assignments, typed conversations and read state, product packages, acceptance,
+feedback, notifications, board work packages, analytics facts, audit history and the requester-facing workflow
 projection. It also owns the route-scoped related-request search projection:
 weighted generated `tsvector` data is indexed with GIN, bounded narrative
 similarity uses `pg_trgm`, and optional semantic retrieval uses an HNSW pgvector
@@ -169,22 +177,43 @@ and promoted only after validation. Download is authorised through FastAPI; the
 volume is never web-published. HTTPS external-product links are restricted to an
 allowlist.
 
+The local filesystem adapter also owns a small SQLite quarantine index used to
+recover interrupted file transfers. It is an implementation detail of that
+adapter, not a second application database. Request, identity, conversation,
+package, workflow and audit data remain exclusively in PostgreSQL.
+
 The application deliberately refuses to construct this local product runtime in
 `prod`. No S3, GCS or other approved production object-store adapter, semantic
 content-disarm-and-reconstruction service, lifecycle policy or key integration
 exists in this repository.
 
 Managed-product transfer is composed from focused grant, content-transfer and
-scan/promotion coordinators. One shared transfer context owns the session
+scan/promotion coordinators. One shared transfer runtime owns the session
 factory, storage, scanner, audit, quarantine cleanup and lease recovery.
 External storage and scanner calls remain outside database transactions. The
 public facade preserves the route contract while keeping these reasons for
 change separate.
 
 Configuration lifecycle uses the same restrained pattern. Draft, validation,
-review and activation commands are separate use cases behind a compatibility
-facade. They share one repository, settings, event publisher and clock, so audit
-and transaction ownership do not drift between phases.
+review and activation commands are separate use cases using focused ports. They
+share repository, settings, event-publishing and clock contracts so audit and
+transaction ownership do not drift between phases.
+
+### Current technology baseline
+
+| Layer | Current technology |
+|---|---|
+| Browser | React 19.2, React Router 8, TanStack Query 5, React Hook Form 7, Zod 4 |
+| Web build | TypeScript 5.9, Vite 7, Vitest, Testing Library, Playwright, Nginx |
+| API and worker | Python 3.12+, FastAPI 0.116+, Pydantic 2, SQLAlchemy 2 async, asyncpg, Alembic |
+| Workflow | Camunda 8.9 and Camunda Python SDK 9, BPMN 2.0 contract |
+| Application data | PostgreSQL 17, pgvector 0.8, `pg_trgm`, full-text search |
+| Product boundary | Private filesystem adapter for local use, ClamAV 1.5, Pillow validation |
+| Toolchain | Node.js 22+, pnpm 11, `uv`, Ruff, MyPy, ESLint and Prettier |
+
+Manifests define supported ranges and lockfiles pin reproducible dependency
+graphs. Containerfiles and `docker-compose.yml` define the executable local
+runtime rather than this table.
 
 ## 4. Authorities and consistency
 
@@ -278,6 +307,16 @@ the question and full history; Camunda moves to the requester task. The response
 returns work to the same Analyst. Routing organisations observe progress but do
 not approve the delivered product.
 
+### Request conversations
+
+Conversation messages are distinct from workflow clarification. An authorised
+participant chooses one server-calculated target: Customer, current owner, Team
+Managers, assigned Analysts, a routing unit on the selected path, or the combined
+QC Team. PostgreSQL records the immutable message, author, active identity
+context, target, visibility, time and read state. Customer-visible and staff-only
+audiences are enforced by the query and policy boundary. A message can inform or
+ask a question, but cannot transfer ownership or advance Camunda.
+
 ### Organisation workspaces and assignment
 
 Every organisation unit has an effective-dated workspace roster. The global
@@ -285,14 +324,14 @@ representative role controls workflow eligibility, while the independent
 Manager or Member position controls exact-unit stewardship. A Manager may
 maintain Members and unit calendar events. Every Member may record their own
 leave, courses, training and availability. Only delivery-team Managers can
-create request-linked commitments, assign one Lead and up to ten Contributors,
+create request-linked commitments, assign one accountable Lead and up to ten additional Analysts,
 or use board, iteration and capacity controls. Routing Managers and Members both
 claim their own routing task and neither creates an extra approval step.
 
-Participant history remains in PostgreSQL. Only the active Lead is sent to
-Camunda as the task assignee. Contributors gain object-level read and
-collaboration access through the FastAPI policy boundary, not through broader
-organisation scope or a second Camunda task.
+Participant history remains in PostgreSQL. The active Lead is sent to Camunda as
+the accountable task assignee, while every currently assigned Analyst has the
+same permitted production controls through object-level FastAPI policy. The Lead
+badge therefore communicates accountability rather than elevated functionality.
 
 The same policy boundary permits a current Manager membership to read active and
 terminal requests assigned to that exact delivery team. This keeps the team's
@@ -302,7 +341,8 @@ are rechecked for every detail read.
 
 ### Product lifecycle
 
-1. An authorised user opens an upload intent with bounded metadata.
+1. Any currently assigned Analyst creates an attributable draft package and
+   opens upload intents with bounded metadata.
 2. A short metadata transaction commits an operation lease. Bytes then enter a
    private quarantine location and are size checked without retaining that
    transaction.
@@ -310,14 +350,17 @@ are rechecked for every detail read.
    unavailable scanning does not release the product.
 4. A clean artefact is promoted, then a new fenced transaction reauthorises and
    associates it with the package revision.
-5. The accountable Lead, Team Manager and QC actions follow the Camunda task
-   sequence. Contributors cannot complete the Lead's parent task.
-6. QC dissemination makes an approved file or allowlisted HTTPS link visible to
+5. The author orders one to ten managed PDF, DOCX, PPTX, JPEG or PNG files and/or
+   allowlisted HTTPS links, adds the required covering note and freezes the
+   package for review.
+6. A Team Manager reviews it. A QC Team Manager then performs quality review and
+   a different QC Team Manager claims release, preserving separation of duty.
+7. Dissemination makes the exact approved artefacts and covering note visible to
    the owning Customer dashboard.
-7. File download rechecks request ownership and product release state, commits
+8. File download rechecks request ownership and product release state, commits
    access metadata, closes the session, then streams through FastAPI.
-8. The Customer submits the single feedback record before closure rules are
-   satisfied.
+9. The Customer explicitly accepts delivery and may submit the single feedback
+   record.
 
 ## 6. Configuration sealing and routing
 
@@ -372,11 +415,10 @@ Team workspaces compose several independently authorised bounded projections.
 Delivery-team Overview combines exact-team Board totals, current membership,
 calendar occurrences and recent activity. Routing-unit Overview combines a
 unit-scoped human decision queue with its calendar and activity. The full
-actionable queue is embedded as a unit-scoped workspace view. Advanced Planning
-and Handover views are not part of the MVP navigation, although their existing
-server data is retained. The Board reads its ordinary package projection and no
-longer depends on the planning-cockpit projection. A failed source is labelled
-and does not widen another source's scope.
+actionable queue is embedded as a unit-scoped workspace view. The Board reads a
+workflow-derived Service Request board and a separately collapsible internal
+Work Package board. A failed source is labelled and does not widen another
+source's scope.
 
 The delivery Board returns two distinct facts: a cursor-bounded item page and
 complete per-column aggregates for the same search, type, priority, owner and
@@ -430,6 +472,13 @@ claims-to-role bootstrap, MFA integration, identity-provider logout, service
 account model, PAM or break-glass procedure. `ENVIRONMENT=prod` rejects demo
 accounts and insecure cookies but cannot make the missing identity integration
 exist.
+
+Accounts may be provisioned with both Customer and Staff capability. The active
+context is stored server-side and returned with available contexts in the session
+view. A switch rotates the session identifier and CSRF proof, increments the
+generation used in protected query keys and redirects to `My requests` or Staff
+`Home`. Self-request conflict policy prevents Staff authority being used on the
+same person's Customer request.
 
 Password assistance is deliberately administrative rather than self-service in
 the MVP. The public endpoint always returns the same accepted response. It
@@ -520,7 +569,9 @@ then obtain incident authority before reopening.
 
 ## 14. Deployment boundaries
 
-The supported repository path is [local Docker](../deployment/LOCAL_DOCKER.md).
+Host preparation for Windows, macOS and Linux is in
+[Workstation and Linux host setup](../deployment/HOST_SETUP.md). The supported
+repository path is [local Docker](../deployment/LOCAL_DOCKER.md).
 Private [AWS](../deployment/AWS_SANDBOX.md),
 [GCP](../deployment/GCP_SANDBOX.md) and
 [Azure](../deployment/AZURE_SANDBOX.md) host procedures are synthetic sandbox
@@ -557,6 +608,10 @@ interface for every function:
 - adapters isolate external systems whose contracts can fail or change; and
 - React components focus on rendering and interaction while API clients and
   hooks own server communication.
+
+The editable [Structurizr workspace](structurizr/workspace.dsl) contains system,
+container, component, dynamic request-delivery and deployment views. It is the C4
+model for these boundaries; the curated SVGs are the Markdown presentation set.
 
 An abstraction is introduced when it protects a real boundary, such as storage,
 workflow, identity, scanning or persistence. It is not introduced merely to make

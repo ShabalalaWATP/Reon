@@ -2,6 +2,10 @@
 
 Status: documented evaluation pattern, not a production topology
 
+Complete the Linux sections of [Host setup](HOST_SETUP.md) and the local
+[Docker topology](LOCAL_DOCKER.md) before creating cloud resources. This guide
+adds the Google Cloud private-host and IAP controls only.
+
 This procedure runs the local Compose topology on one private Compute Engine
 Linux VM and accesses it through Identity-Aware Proxy (IAP). It permits only
 synthetic, time-bounded evaluation. It is not a GKE or production design and

@@ -1,7 +1,7 @@
 # Current user stories
 
 Status: current product behaviour and acceptance catalogue
-Last reviewed: 10 August 2026
+Last reviewed: 14 August 2026
 
 This catalogue describes ISTARI Service from the point of view of the people who
 use and operate it. It uses plain English first. Technical identifiers are added
@@ -49,9 +49,10 @@ The stories describe current product behaviour. Delivery history belongs in the
 | Request Coordination User | Coordinate the request and choose a direct Ops group | Command workspace |
 | Ops Routing User | Choose a direct delivery team | Ops workspace |
 | Team Manager | Assign Analysts, oversee delivery and check the product | Team workspace |
-| Team Analyst, Lead | Produce and submit the accountable product | Team workspace and product package |
-| Team Analyst, Contributor | Collaborate on an assigned request without owning the Lead task | Assigned request and team board |
-| QC Manager | Perform final review and release the approved product | QC queue |
+| Team Analyst, Lead | Carry the accountability badge and share production controls | Team workspace and product package |
+| Team Analyst, assigned | Produce, converse and submit with the same controls as the Lead | Assigned request and team board |
+| QC Team Manager, reviewer | Perform quality review of the Manager-approved package | QC queue |
+| QC Team Manager, releaser | Independently disseminate the QC-approved package | QC queue |
 | Platform Administrator | Maintain people, teams and safe platform configuration | Administration |
 | Workspace Manager | Maintain the exact unit's roster, calendar and operational work | Organisation workspace |
 | Workspace Member | Work in the exact unit and maintain personal availability | Organisation workspace and personal calendar |
@@ -206,7 +207,7 @@ inside my request so that the full exchange is kept with the work.
 - The dashboard highlights that information is required.
 - The question, reason, requester and response deadline are visible.
 - The Customer submits an answer from the request page.
-- The answer is appended to the history and work returns to CRIOC or the same Lead,
+- The answer is appended to the history and work returns to CRIOC or the same Analyst assignment,
   depending on where the question began.
 
 **Acceptance checks**
@@ -432,7 +433,7 @@ so that I can quickly decide where to work next.
 - Tiles link to assigned actions, team queue, team workspace, personal calendar,
   statistics and organisation directory.
 
-### TM-02: Assign one Lead and several Contributors
+### TM-02: Assign one Lead and several Analysts
 
 **Need:** As a Team Manager, I want to name an accountable Lead and independently
 select several supporting Analysts so that responsibility is clear without
@@ -441,19 +442,19 @@ limiting collaboration.
 **Expected behaviour**
 
 - The Lead list contains current eligible Analysts in the exact team.
-- Contributing Analysts are ordinary checkboxes, not a modifier-key multi-select.
-- Up to ten Contributors can be selected and a selected count is visible.
-- Selecting a Lead visibly disables and removes that person from Contributors.
+- Additional Analysts are ordinary checkboxes, not a modifier-key multi-select.
+- Up to ten additional Analysts can be selected and a selected count is visible.
+- Selecting a Lead visibly disables and removes that person from the additional list.
 - A meaningful assignment reason is required.
 
 **Acceptance checks**
 
-- The API rejects a Lead who is also sent as a Contributor.
+- The API rejects a Lead who is also sent as an additional Analyst.
 - Duplicate, inactive, ended-membership or other-team participants are rejected.
 - The Camunda production task is assigned to the Lead only.
-- Contributors receive object-level collaboration access but cannot complete the
-  Lead task.
-- Assignment history lists Manager, Lead, Contributors, reason and time.
+- Every assigned Analyst receives the same object-level production controls; the
+  Lead label records accountability rather than privilege.
+- Assignment history lists Manager, Lead, additional Analysts, reason and time.
 
 ### TM-03: Review the submitted product
 
@@ -464,7 +465,7 @@ I can approve a good product or return useful changes.
 
 - The current immutable package revision and artefacts are visible.
 - Approve sends the same package to QC.
-- Changes required needs an actionable reason and returns work to the same Lead.
+- Changes required needs an actionable reason and returns work to the same assignment.
 - The Manager cannot alter the Analyst's submitted artefact in place.
 
 ### TM-04: Manage the exact team roster
@@ -548,14 +549,15 @@ queue so that accountability is unambiguous.
 
 ### TA-02: Produce a managed product
 
-**Need:** As the Lead Analyst, I want to build a controlled product package so
+**Need:** As an assigned Analyst, I want to build a controlled product package so
 that Manager and QC review the exact artefacts I submit.
 
 **Expected behaviour**
 
 - A package is tied to the assigned request and expected version.
-- The Lead can upload labelled PDF, DOCX or PPTX files within configured limits,
-  or add an approved HTTPS link.
+- The Analyst can order up to ten labelled PDF, DOCX, PPTX, JPEG or PNG files
+  within configured limits and/or add approved HTTPS links.
+- A covering note to the Customer is mandatory before submission.
 - Uploaded bytes remain quarantined until type validation and malware scan pass.
 - Submitting creates an immutable package revision for review.
 
@@ -563,19 +565,20 @@ that Manager and QC review the exact artefacts I submit.
 
 - An unavailable or failed scanner never releases the file.
 - Storage paths and quarantine identifiers are not public.
-- A Contributor cannot submit the Lead's parent Camunda task.
+- Lead and additional assigned Analysts see the same production actions, while
+  each package and mutation records the actual actor.
 
 ### TA-03: Ask the Customer for information
 
-**Need:** As the Lead, I want to ask a bounded question directly so that missing
+**Need:** As an assigned Analyst, I want to ask a bounded question directly so that missing
 detail can be resolved without restarting organisational routing.
 
 **Expected behaviour**
 
 - Question, reason and response deadline are mandatory.
 - The Customer receives a dashboard action and notification.
-- The conversation is stored on the request.
-- The response returns to the same Lead.
+- The formal clarification and response are stored on the request.
+- The response returns to the same assignment.
 
 ### TA-04: Maintain personal availability
 
@@ -594,19 +597,19 @@ details unnecessarily.
 
 ### QC-01: Review the approved package
 
-**Need:** As a QC Manager, I want the exact Manager-approved package and review
+**Need:** As a QC Team Manager, I want the exact Manager-approved package and review
 history so that I can make the final release decision.
 
 **Expected behaviour**
 
 - The current package, artefacts, Manager outcome and handling context are visible.
-- Changes required needs a reason and returns work to the same Lead.
+- Changes required needs a reason and returns work to the same assignment.
 - Approve advances to a separate dissemination action.
 - The QC Manager cannot silently edit the reviewed package.
 
 ### QC-02: Disseminate safely
 
-**Need:** As a QC Manager, I want to release a reviewed file or approved link to
+**Need:** As a different QC Team Manager, I want to release a reviewed file or approved link to
 the owning Customer so that dissemination is controlled and traceable.
 
 **Acceptance checks**
@@ -614,6 +617,7 @@ the owning Customer so that dissemination is controlled and traceable.
 - At least one valid recipient is required.
 - Only clean promoted files and allowlisted HTTPS links can be released.
 - Release records actor, package revision, recipients and time.
+- The person who performed QC review cannot claim release for the same package.
 - The Customer sees the product only after successful release finalisation.
 
 ### QC-03: Understand QC demand
@@ -626,6 +630,34 @@ can manage review and release without seeing unrelated operational branches.
 - QC figures focus on items awaiting review, returned for change, ready to release
   and disseminated.
 - Charts do not expose Customer feedback below the cohort threshold.
+
+### XC-01: Converse with the right participant
+
+**Need:** As an authorised request participant, I want to ask or inform the
+Customer, current owner, Managers, Analysts, routing unit or QC Team so that
+collaboration remains attached to the request.
+
+**Acceptance checks**
+
+- The server offers only targets within the actor's current request scope.
+- Every message records author, active context, target, staff-only or
+  Customer-visible audience, delivery time and read state.
+- A message cannot transfer ownership or complete a workflow task.
+- Pagination and unread totals are bounded and an out-of-scope request is not
+  disclosed.
+
+### XC-02: Switch between Customer and Staff responsibility
+
+**Need:** As a staff member who also submits requests, I want an explicit context
+switch so that the interface and authority always match the role I am performing.
+
+**Acceptance checks**
+
+- Customer context opens `My requests`; Staff context opens `Home`.
+- Switching rotates session and CSRF proof, advances the session generation and
+  clears protected browser state before the new context renders.
+- Staff authority cannot be applied to the same person's Customer request.
+- Accounts without both capabilities are never offered an unavailable context.
 
 ## Platform Administrator stories
 
@@ -710,7 +742,8 @@ calendar, statistics and activity are easy to find.
 - The workspace title uses the current organisation name.
 - Routing workspaces focus on queue decisions, people and availability.
 - Delivery-team workspaces add a Board and ticket-assignment controls.
-- Planning and Handover do not appear as competing MVP workspace destinations.
+- The workflow-derived Service Request board and internal Work Package board are
+  clearly separated; the Work Package board is collapsible.
 - Every tab explains its purpose and has loading, empty, denied and error states.
 
 ### WS-02: Maintain personal calendar activity
@@ -823,30 +856,30 @@ These scenarios combine several stories and are useful for acceptance testing.
 
 - **Given** John McGinn has an active Customer account and all required information
 - **When** he submits a request, CRIOC selects JOCK, JOCK selects ACSA-B Ops,
-ACSA-B Ops selects SSG Team, the SSG Manager assigns a Lead and two Contributors,
-the Lead submits a managed product, the Team Manager approves it and QC releases
-it
+ACSA-B Ops selects SSG Team, the SSG Manager assigns a Lead and two additional
+Analysts, one assigned Analyst submits a managed product, the Team Manager
+approves it, one QC Manager reviews it and a different QC Manager releases it
 - **Then** John sees the released file or link in his dashboard, can download it and
-can submit one feedback response.
+records acceptance and can submit one feedback response.
 
 The route-tracking users can follow the lifecycle but cannot approve or download
-the unreleased product. Both Contributors can collaborate but cannot complete the
-Lead's Camunda task.
+the unreleased product. All three assigned Analysts have the same production
+controls while the Lead remains visibly accountable.
 
 ### E2E-02: Analyst clarification
 
-- **Given** an SSG Lead is producing a product
-- **When** the Lead asks the Customer a question with a reason and deadline
+- **Given** SSG Analysts are producing a product
+- **When** an assigned Analyst asks the Customer a question with a reason and deadline
 - **Then** the Customer receives an exact dashboard action, the response is stored
-with the request and work returns to the same Lead.
+with the request and work returns to the same assignment.
 
 No new CRIOC, command or Ops approval is introduced.
 
 ### E2E-03: Product rework
 
-- **Given** a Lead has submitted an immutable package revision
-- **When** the Team Manager or QC Manager records changes required
-- **Then** the reason is retained, production returns to the same Lead and a new
+- **Given** an assigned Analyst has submitted an immutable package revision
+- **When** the Team Manager or QC reviewer records changes required
+- **Then** the reason is retained, production returns to the same assignment and a new
 package revision is required for the next review.
 
 The reviewed revision remains immutable and downloadable only if a later QC

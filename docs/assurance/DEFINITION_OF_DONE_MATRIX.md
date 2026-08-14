@@ -132,11 +132,11 @@ accepted while an applicable detailed gate remains open.
 | PE-DOD-44 | New requests use the activated snapshot while an existing request completes on its pinned organisation, form, workflow and notification-policy versions | Side-by-side live Camunda journeys and current-versus-as-of data oracle | OPEN |
 | PE-DOD-45 | Administrators can find a unit by name, code or kind, retain ancestor context, follow a keyboard breadcrumb and select only effective structurally valid parents without relying on the browser for security | Component, axe, forged-parent, stale-edit, 2,000-unit performance, 390-pixel and three-browser evidence | IN PROGRESS |
 
-### Planning and statistics
+### Work packages and statistics
 
 | Gate | Objective completion condition | Required evidence | Status |
 | --- | --- | --- | --- |
-| PE-DOD-50 | Planning cockpit, templates, checklists, blocker ageing, dependencies, iterations and capacity scenarios preserve calendar, package, reservation and Camunda authority | Behaviour, dependency-cycle, WIP, reservation and workflow-state comparison tests | OPEN |
+| PE-DOD-50 | Internal Work Package cards, blockers, dependencies and capacity views preserve calendar, package and Camunda authority | Behaviour, dependency-cycle, WIP and workflow-state comparison tests | OPEN |
 | PE-DOD-51 | Reassignment, handover and commitments are explicit Manager-led transactions; estimates never assign an Analyst, change priority or move a Camunda task | Concurrency and audit tests plus drag and keyboard-equivalent browser journeys | OPEN |
 | PE-DOD-52 | Capacity remains correct across leave, recurrence, transfer, active work, reservations and disputed commitments at the agreed scale fixture | Fixed-fixture oracle, concurrency report and p95 performance result | OPEN |
 | PE-DOD-53 | Every enhanced statistic is reproducible from versioned content-free facts and is scoped to exact active grants and historical organisation versions | Formula oracle, scope matrix and rebuild integrity report | OPEN |

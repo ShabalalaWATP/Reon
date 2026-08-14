@@ -1,5 +1,34 @@
 # Security scan evidence
 
+## Current maintainability candidate, 14 August 2026
+
+The complete backend suite passed 1,318 tests with 13 environment-dependent
+skips at 98.73 per cent line and 95.00 per cent branch coverage. The complete
+frontend suite passed 490 tests at 98.80 per cent line and 95.04 per cent branch
+coverage. The production web build and asset budgets passed.
+
+Ruff formatting and lint passed. MyPy passed 440 source modules. Bandit, Vulture,
+Knip, ESLint, TypeScript, OpenAPI, licence, documentation, operations, line-limit,
+secret-policy and repository quality contracts passed. PostgreSQL migrations
+0043 through 0047 passed populated upgrade, downgrade and re-upgrade, while a
+fresh upgrade and Alembic drift check also passed.
+
+A real Chromium exercise completed Customer submission, CRIOC, JOCK, ACSA-B Ops,
+SSG assignment, assigned-Analyst conversations and package creation, Team Manager
+review, one QC Manager's quality review, a different QC Manager's dissemination,
+and Customer retrieval and acceptance. The active Compose stack reported healthy
+services and API readiness returned database, workflow, configuration and
+maintenance as `ok`.
+
+The backend candidate also treats `ResourceWarning` and pytest unraisable
+exceptions as errors. The full run completed cleanly after the storage-hardening
+fixture was changed to close its SQLite quarantine-index connection
+deterministically.
+
+This evidence does not replace hosted CodeQL, current-image scanning, a fresh
+DAST run, independent penetration testing or the outstanding production gates.
+Those results are recorded only when their named jobs are actually executed.
+
 ## SOLID and Secure by Design programme, 11 August 2026
 
 The current programme candidate passed Ruff formatting and lint, MyPy across

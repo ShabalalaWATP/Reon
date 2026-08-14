@@ -68,7 +68,7 @@ below requires a focused regression or adversarial test.
 - Local orchestration initialisation is read-only and networkless where possible,
   and the browser-serving container has no direct orchestration network path.
 
-### Planning concurrency
+### Work-package concurrency
 
 - The database prevents overlapping active capacity reservations for the same
   person, including concurrent requests for different work packages.

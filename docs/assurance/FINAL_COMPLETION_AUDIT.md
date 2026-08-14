@@ -22,7 +22,7 @@ implementation defects or self-approve them.
 | One-time rating and comments | Feedback persistence, validation and browser journey | Implemented and proved |
 | Analyst requests more information | Append-only clarification thread and same-Analyst Camunda loop | Implemented and proved |
 | Scoped statistics | Exact management grants, content-free facts and chart/table parity | Implemented and proved |
-| Team shared workspace | Overview, People, Calendar, Board, Planning and Activity | Implemented and proved |
+| Team shared workspace | Overview, People, Calendar, Service Request board, Work Package board and Activity | Implemented and proved |
 | Manager adds or ends Analysts | Effective-dated membership with reason, history and workload guard | Implemented and proved |
 | Account for each Manager and Analyst | 72 documented Scottish-football identities | Implemented and proved |
 | Selectable organisation routes | Data-driven CRIOC, command, Ops and team hierarchy | Implemented and proved |

@@ -1,13 +1,26 @@
 # ISTARI Service Master Implementation Plan
 
-## Simplified team workspace, 11 August 2026
+## Current-state documentation and resource hygiene, 14 August 2026
+
+- [x] Reconcile the README, architecture, workflow, user stories, role matrix,
+  assurance and deployment guides with the executable dual-context product.
+- [x] Document the full dependency baseline and PostgreSQL, Camunda, storage,
+  conversation, package, review, release and acceptance boundaries.
+- [x] Expand the Structurizr source with component, dynamic and deployment views
+  and validate it with the official CLI.
+- [x] Provide one setup authority for Windows, Intel and Apple-silicon MacBook,
+  Linux, AWS and Google Cloud synthetic environments.
+- [x] Add a source-reference and stale-current-state documentation gate.
+- [x] Close the quarantine-index SQLite test connection deterministically and
+  make resource and unraisable-exception warnings fail backend tests.
+
+## Current team workspace, 11 August 2026
 
 - [x] Use the named workspace as the single sidebar destination when a current
   workspace is available.
 - [x] Embed the established actionable queue as an exact-unit workspace view.
-- [x] Remove Planning and Handover from routing and delivery workspace tabs and
-  overview summaries without deleting stored server records.
-- [x] Redirect old Planning and Handover workspace URLs to Overview.
+- [x] Present routing and delivery work through role-appropriate current tabs.
+- [x] Keep workflow request cards separate from collapsible internal Work Package cards.
 - [x] Retain standalone role queues for notification deep links and staff without
   a current workspace.
 - [x] Update architecture, user stories, specification and regression coverage.
@@ -23,9 +36,10 @@
   accounts, usernames, roles, memberships and Manager or Member positions.
 - [x] Provide separate readable views for system context, containers, routing,
   delivery, durable workflow commands and the organisation hierarchy, together
-  with an editable Structurizr DSL model.
+  with an editable Structurizr model containing component and deployment views.
 - [x] Document the complete human-led Camunda BPMN path, clarification and
-  rework loops, Lead and Contributor assignment, product release and feedback.
+  rework loops, assigned-Analyst controls, separate QC review and release,
+  Customer acceptance and feedback.
 - [x] Keep current application screenshots alongside browser evidence and
   refresh them whenever the corresponding surface changes materially.
 - [x] Enforce documentation links, duplication, current terminology and image
@@ -169,7 +183,7 @@ requirements are retained.
 
 ### Source-to-plan traceability
 
-| Source section | Planning effect |
+| Source section | Programme effect |
 | --- | --- |
 | Non-functional requirements, page 14 | Accessibility, response time, audit, resilience and support become measured exit gates in Phases 1 and 8 |
 | Security requirements, page 15 | Object-level access, session controls, safe content handling and defensive testing are mandatory design work, not a later hardening phase |
@@ -541,8 +555,7 @@ branch). Performance and live-browser evidence are consolidated in Expansion 8.
 
 ### Expansion 5: Team workspace and roster lifecycle
 
-- [x] Give every team an authorised Overview, Board, Calendar, People, Planning
-  and Activity workspace.
+- [x] Give every team an authorised Overview, Board, Calendar, People and Activity workspace.
 - [x] Let an exact-team Manager add an existing active Analyst, end membership or
   schedule a transfer with a mandatory reason.
 - [x] Keep global account creation, deactivation and role changes with Platform
@@ -895,15 +908,15 @@ remains subject to the enterprise gap register.
   cells, preserving errors and returning focus after close.
 - [x] Limit unit events to exact-unit Managers and request-linked commitments to
   delivery-team Managers, current Analysts and work owned by that exact team.
-- [x] Allocate one accountable Lead and up to ten Contributors, retaining
+- [x] Allocate one accountable Lead and up to ten additional Analysts, retaining
   effective history, mandatory evidence and optimistic version checks.
-- [x] Keep the Lead as the sole Camunda assignee and deny Contributors the parent
-  task outcome while granting bounded request collaboration access.
-- [x] Provide routing workspaces with Overview, Queue, Calendar, People,
-  Statistics, Handover and Activity without introducing Manager approval.
-- [x] Provide delivery workspaces with Overview, Board, Calendar, People,
-  Planning, Statistics and Activity.
-- [x] Add bounded description, handover, risk, blocker, decision and HTTPS-link
+- [x] Keep the Lead as the accountable Camunda assignee while granting every
+  currently assigned Analyst the same production controls.
+- [x] Provide routing workspaces with Overview, Work queue, Calendar, People,
+  Statistics and Activity without introducing Manager approval.
+- [x] Provide delivery workspaces with Overview, Work queue, Board, Calendar,
+  People, Statistics and Activity.
+- [x] Add bounded description, assignment, risk, blocker, decision and HTTPS-link
   records with immutable create and resolve events.
 - [x] Keep statistics inside each explicit unit-and-descendant grant, excluding
   parent and sibling branches.

@@ -1,7 +1,7 @@
 # Role and permission matrix
 
 Status: current application permissions with production boundary decisions identified
-Last reviewed: 11 August 2026
+Last reviewed: 14 August 2026
 
 ## Enforcement principles
 
@@ -14,6 +14,8 @@ Last reviewed: 11 August 2026
 - Platform administration is metadata-only and grants no request or product
   content access.
 - Denials avoid confirming whether an out-of-scope object exists.
+- An account with dual capability acts in one explicit Customer or Staff context;
+  switching context rotates session and CSRF proof and clears protected client state.
 
 ## Application permissions
 
@@ -22,6 +24,7 @@ Last reviewed: 11 August 2026
 | Authenticated user | Maintain their profile | Own active account | Subject is always the authenticated user | Profile changes remain attributable; bounded personal fields do not enter workflow or analytics |
 | Customer | Create and submit a request | Own authenticated account; every submission field valid | Requester ID becomes immutable ownership | Submission audited without narrative in admin telemetry |
 | Customer | Track, answer clarification, download and give feedback | Own request; matching workflow state; released product for download | Ownership and action-state check on every request | Download and feedback events attributable to Customer |
+| Dual-capability account | Switch between Customer and Staff context | Context appears in server-calculated available contexts | New session generation, CSRF rotation and context-scoped cache reset | Staff authority cannot be used on the actor's own Customer request |
 | CRIOC Routing User | Review, request information, close or choose a Command | Active CRIOC candidate group and personally claimed task | Destination must be an effective direct Command child | Manager and Member use the same claim-based routing action; no product approval |
 | Request Coordination User | Choose an Ops group, return, hold or close | Active candidate group for the selected Command and personally claimed task | Destination must be an effective direct Ops-group child | Manager and Member use the same action; no team or Analyst selection |
 | Ops Routing User | Choose a delivery team or return | Active candidate group for the selected Ops group and personally claimed task | Destination must be an effective direct team child | Manager and Member use the same action; unstaffed choice remains explicit |
@@ -31,9 +34,10 @@ Last reviewed: 11 August 2026
 | Team Manager | Assign one Lead and up to ten Contributors and review submitted work | Exact active team membership and candidate group; claimed task | Every participant must be a current Member of that exact team | Assignment reason, history and approval/rework outcome audited |
 | Team Manager | Manage roster, board and team calendar | Current exact-team Manager position and exact active management grant | Position, grant, membership state and optimistic revision checked | Membership and planning events attributable and reversible |
 | Team Manager | Send a task hastener to one or all assigned Analysts | Current Manager position; locked current request is in active production and assigned to the exact team | Recipients are server-resolved current Leads and Contributors who are active exact-team Delivery Specialists; every recipient projection is required | Reminder is mandatory-notified and stored in Customer-visible tamper-evident request history; ownership, assignments and Camunda state do not change |
-| Team Analyst, Lead | Produce, revise and submit a product package | Active Lead participation and active exact-team membership | Sole Camunda assignee; package state and expected revision checked | Immutable package and participation history retained |
-| Team Analyst, Contributor | Read and collaborate on an assigned request | Active Contributor participation and active exact-team membership | Cannot complete the Lead's parent Camunda task | Participation and linked work remain attributable |
-| QC Manager | Review, return, disseminate or withdraw a product | Active QC group and matching workflow/package state | Exact approved package and Customer request relationship | Manager approval cannot substitute for QC release |
+| Assigned Team Analyst | Produce, converse, revise and submit a product package | Current Lead or additional assignment and active exact-team membership | Same production controls for every assigned Analyst; package state and expected revision checked | Lead remains the accountable badge; every mutation retains its actual actor |
+| QC Team Manager, reviewer | Review, return or approve a product | Active QC group, personally claimed quality task and matching package state | Exact Team-Manager-approved package | Cannot disseminate the package they reviewed |
+| QC Team Manager, releaser | Disseminate or withdraw a product | Active QC group, personally claimed release task and ready-for-release package | Exact approved package and Customer relationship | Must be a different person from QC reviewer; Manager approval cannot substitute for QC release |
+| Authorised request participant | Send a structured conversation message | Server-calculated target among Customer, current owner, Team Managers, assigned Analysts, route unit or QC Team | Request scope, active context, target and visibility checked on every read/write | Immutable author, context, audience, time, delivery and read state |
 | Platform Administrator | Manage accounts, profiles, memberships and safe configuration metadata | Active Platform Administrator and fresh step-up for sensitive changes | Dedicated metadata schemas and action checks | No implicit request/product access; tamper-evident admin audit |
 | Platform Administrator | Change the global visual classification marking | Active Platform Administrator, CSRF and fresh step-up | Exact singleton and expected version | New value and actor recorded in the administration audit chain |
 | Platform Administrator | Receive a password-assistance notification | Active Platform Administrator | A submitted email matched an active account after shared rate limits | Notification identifies the account but never stores the submitted email in the attempt record |
@@ -50,7 +54,7 @@ Last reviewed: 11 August 2026
 | Selected Command | Operationally required fields | Yes | Command task only | No | No |
 | Selected Ops group | Operationally required fields | Yes | Ops task only | No | No |
 | Selected delivery team | Yes | Yes | Manager assigns within team | Manager review only | No |
-| QC function | Released-candidate content | Yes | Release outcome only | Final QC and dissemination | No |
+| QC function | Approved-candidate content | Yes | Quality or release outcome only | Separate QC review and dissemination claimants | No |
 | Platform Administrator | No | No content-bearing tracking | No | No | Yes |
 
 ## Configuration action detail

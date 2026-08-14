@@ -2,6 +2,10 @@
 
 Status: documented evaluation pattern, not a production topology
 
+Complete the Linux sections of [Host setup](HOST_SETUP.md) and the local
+[Docker topology](LOCAL_DOCKER.md) before creating cloud resources. This guide
+adds the AWS private-host and operator-tunnel controls only.
+
 This procedure runs the unchanged local Compose stack on one private EC2 Linux
 instance and reaches it through AWS Systems Manager Session Manager port
 forwarding. It is suitable only for synthetic, time-bounded evaluation. It does

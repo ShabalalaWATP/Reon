@@ -46,7 +46,7 @@ analytics repository.
 | Notification measures expose message content | Project event group, safe timing and resolution state only; never ingest notification subject or protected source fields |
 | Historical reorganisation rewrites metrics | Attribute facts to the immutable organisation and analytics-definition versions captured at the event; support explicit current and as-of queries |
 | A deterministic estimate is presented as a decision | Return inputs, definition version, confidence and freshness, label the value as an estimate and provide no assignment or priority mutation path |
-| Planning measures rank an Analyst | Aggregate at authorised team cohort and prohibit person dimensions, league tables and inferred performance scores |
+| Work-package measures rank an Analyst | Aggregate at authorised team cohort and prohibit person dimensions, league tables and inferred performance scores |
 | Repeated export enables small-cohort inference | Apply the same cohort suppression after every filter and comparison, bound dimensions and audit content-free export parameters |
 | Export formulas or markup become active content | Generate values through controlled serializers and escape spreadsheet-formula prefixes and PDF text; never render request-derived markup |
 | Analytics logs leak identifiers | Log grant, unit and metric keys only; never log request IDs, Customer IDs or comments |

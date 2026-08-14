@@ -69,18 +69,18 @@ linked defect where applicable. `PENDING` is not acceptance.
 | --- | --- | --- | --- | --- |
 | UAT-01 | Customer | Submit every mandatory field and see the request, title, status and immutable progress history in My requests | PENDING | PENDING |
 | UAT-02 | Customer | Cancel an eligible request with a reason and see the request close with relevant parties notified | PENDING | PENDING |
-| UAT-03 | Customer and Lead Analyst | Exchange one or more additional-information messages in the dashboard and return work to the same Lead | PENDING | PENDING |
+| UAT-03 | Customer and assigned Analyst | Exchange one or more additional-information messages in the dashboard and return work to the same Analyst assignment | PENDING | PENDING |
 | UAT-04 | CRIOC routing user | Claim a new routing decision, inspect authorised context and select JOCK without approving the request | PENDING | PENDING |
 | UAT-05 | JOCK and ACSA-B Ops routing users | Route to the next direct child while retaining lifecycle tracking and without adding approval stages | PENDING | PENDING |
 | UAT-06 | Routing users on sibling branches | Select and complete a configured sibling route while remaining unable to view sibling records | PENDING | PENDING |
-| UAT-07 | SSG Team Manager | Assign one Lead and multiple Contributors; Analysts cannot claim unassigned team work themselves | PENDING | PENDING |
-| UAT-08 | Lead and Contributor Analysts | Collaborate on assigned work while only the Lead completes the production task | PENDING | PENDING |
-| UAT-09 | Team Manager and QC Manager | Review an immutable product revision, request reasoned changes where needed and prevent self-approval | PENDING | PENDING |
-| UAT-10 | QC Manager and Customer | Release an approved file or link and confirm only the authorised Customer can access it from the dashboard | PENDING | PENDING |
+| UAT-07 | SSG Team Manager | Assign one accountable Lead and multiple additional Analysts; Analysts cannot claim unassigned team work themselves | PENDING | PENDING |
+| UAT-08 | Assigned Analysts | Collaborate and use the same production controls while the Lead remains visibly accountable | PENDING | PENDING |
+| UAT-09 | Team Manager and QC reviewer | Review an immutable product revision, request reasoned changes where needed and prevent self-approval | PENDING | PENDING |
+| UAT-10 | Separate QC releaser and Customer | Release an approved file or link, enforce a different QC reviewer and releaser, and confirm only the authorised Customer can access it | PENDING | PENDING |
 | UAT-11 | Customer | Download the released product and submit one rating with optional feedback comments | PENDING | PENDING |
 | UAT-12 | Team Manager | Sort the People register, add or schedule an eligible membership change and remain blocked from unsafe removal | PENDING | PENDING |
 | UAT-13 | Manager and Analyst | Use personal and shared calendars; visible personal events appear to the team while private details show only as Busy | PENDING | PENDING |
-| UAT-14 | Team users | Use Board, table, Planning, handover and Activity without requiring a drag gesture or changing Camunda outside named actions | PENDING | PENDING |
+| UAT-14 | Team users | Use the Service Request board, table, Work Package board and Activity without requiring a drag gesture or changing Camunda outside named actions | PENDING | PENDING |
 | UAT-15 | CRIOC, JOCK, ACSA-B Ops and team managers | See statistics for their own scope and descendants, never ancestors or sibling branches | PENDING | PENDING |
 | UAT-16 | Platform Administrator | Create and manage accounts and teams, use configuration search and breadcrumbs, and remain outside request content | PENDING | PENDING |
 | UAT-17 | All representative roles | Attempt copied identifiers and cross-scope actions; the service denies access without confirming inaccessible records exist | PENDING | PENDING |

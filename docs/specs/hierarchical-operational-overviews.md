@@ -93,8 +93,8 @@ Operational routing users are greeted by first name. Their personal assigned,
 waiting and due-soon action counts appear in a **Your workload** region. Active
 demand, due risk, completions and direct child comparison appear separately in a
 named organisation workload region which states that it is not personal workload.
-Team Managers use the existing Team overview, extended with statistics and links
-to Board, Calendar, People and Planning.
+Team Managers use the Team overview, extended with statistics and links to the
+Service Request board, Work Package board, Calendar and People.
 Team Analysts retain My actions as their default. Platform Administrators receive a
 separate administration overview with account, configuration and projection
 health links rather than a generic operational card grid. Staff overview pages do
