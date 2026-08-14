@@ -1303,3 +1303,33 @@ gates remain above 95 per cent for both lines and branches.
   (10 skipped); combined coverage reached 98.68 per cent line and 95.05
   per cent branch. All 424 frontend tests passed at 99.45 per cent line and
   95.02 per cent branch coverage, alongside the repository quality gates.
+- Implemented the SOLID, readability and maintainability programme on 14 August
+  2026. Executable architecture tests now prevent service-to-infrastructure,
+  router-to-persistence, repository-to-service, import-cycle, broad-protocol,
+  source-headroom and raw protected-query-key regressions. Every measured debt
+  map is empty.
+- Split backend use cases behind focused capability ports and explicit
+  composition, removed the ORM registration cycle, and decomposed frontend
+  session, context, queue, conversation, upload and page orchestration. Every
+  maintained source file is below 330 lines and every production frontend
+  function is within complexity 12 and nesting depth four.
+- Added canonical Prettier and Ruff formatting, a populated PostgreSQL 0043 to
+  0047 round-trip gate, and a Chromium-only full workflow lane. The root quality
+  gate, strict MyPy over 440 backend modules, Ruff, Bandit, all 1,318 backend
+  tests and all 490 frontend tests pass. Backend coverage is 98.73 per cent line
+  and 95.00 per cent branch; frontend coverage is 98.8 per cent line and 95.04
+  per cent branch. The production web build also passes its initial JavaScript
+  and CSS budgets.
+- Completed the runtime assurance on the same candidate through the WSL Docker
+  integration. PostgreSQL passed populated 0043 to 0047 upgrade, downgrade and
+  re-upgrade, a separate empty upgrade and both metadata-drift checks. The run
+  found and verified repairs for the 0046 downgrade constraint name, action-view
+  unique-constraint metadata and the missing conversation visibility index.
+- Passed the complete Chromium journey from Customer submission through CRIOC,
+  JOCK, ACSA-B Ops, SSG Team, Analyst production, Manager review, independent QC
+  review and release, Customer retrieval and acceptance. Runtime failures found
+  during this work led to PostgreSQL-safe product row locking, a correlated
+  selected-route membership predicate, mutation-safe conversation composition,
+  stable managed-file upload evidence and authoritative product review cache
+  updates. The final journey completed without unexpected application HTTP or
+  console errors.

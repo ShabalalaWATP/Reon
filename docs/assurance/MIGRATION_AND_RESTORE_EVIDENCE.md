@@ -2,9 +2,9 @@
 
 ## Current implementation evidence
 
-Current-head record reviewed on 10 August 2026.
+Current-head record reviewed on 14 August 2026.
 
-The current migration head is `0042_durable_password_assistance`. The application,
+The current migration head is `0047_action_view_contexts`. The application,
 restore script and restore verifier use that same default rather than a stale
 embedded revision. Empty-database upgrade, metadata drift and downgrade/re-upgrade
 checks run through the isolated compatibility harness as release gates. The
@@ -25,10 +25,27 @@ records. Revision 0029 installs PostgreSQL `pg_trgm` and pgvector, adds the
 all-field request-search projection, backfills every submitted request and
 creates GIN, trigram and HNSW indexes. It also extends recorded related-request
 decisions with `NOT_RELEVANT`. `scripts/restore-postgres.ps1` and the maintenance
-verifier default to the exact `0042_durable_password_assistance` revision. Revision
+verifier default to the exact `0047_action_view_contexts` revision. Revision
 0030 adds bounded self-declared user skills, revision 0031 repairs role-aware
 action audiences and queue links, and revision 0032 applies the current
 plain-language coordination presentation values.
+
+The repository now contains an executable PostgreSQL gate for revisions 0043 to
+0047. It uses two uniquely named disposable databases: one populated at 0043 for
+stepwise upgrade, downgrade and re-upgrade, and one empty database for the forward
+path. It asserts real backfills, unique and check constraints, the conversation
+delivery trigger, QC membership projection, documented downgrade losses and
+`alembic check`. The explicit PostgreSQL CI lane treats any skip as a failure.
+
+On 14 August 2026 the harness passed against disposable PostgreSQL databases
+through the WSL Docker integration. A populated database upgraded stepwise from
+0043 to 0047, downgraded to 0043 and re-upgraded to 0047. A separate empty
+database upgraded to head. Both paths passed `alembic check` with no metadata
+drift. The rehearsal also verified real backfills, constraints, indexes,
+conversation delivery triggers, QC membership projection and documented
+downgrade losses. Defects in the 0046 downgrade constraint name, action-view
+unique-constraint metadata and the 0044 conversation visibility index were found
+by this run and repaired before the successful result.
 
 The PostgreSQL backup and restore controls are implemented in:
 

@@ -540,11 +540,11 @@ because completed journeys are detected and skipped.
 
 ```powershell
 docker compose ps
-Invoke-RestMethod http://127.0.0.1:8000/live
+Invoke-RestMethod http://127.0.0.1:8000/health
 Invoke-RestMethod http://127.0.0.1:8000/ready
 ```
 
-`/live` confirms that the API process is running. `/ready` confirms that required
+`/health` confirms that the API process is running. `/ready` confirms that required
 dependencies and the worker heartbeat are ready for ordinary use. Health output
 is deliberately content-free.
 
@@ -557,7 +557,7 @@ Useful local endpoints:
 | Endpoint | Purpose |
 |---|---|
 | `http://localhost:5173` | ISTARI web application |
-| `http://127.0.0.1:8000/live` | API liveness |
+| `http://127.0.0.1:8000/health` | API liveness |
 | `http://127.0.0.1:8000/ready` | Dependency and worker readiness |
 | `http://127.0.0.1:8080` | Loopback-only local Camunda endpoint |
 
@@ -614,9 +614,9 @@ traffic according to the development configuration.
 
 ## Synthetic accounts
 
-The local seed contains 99 synthetic Scottish-football display names:
+The local seed contains 100 synthetic Scottish-football display names:
 
-- usernames: `admin1` through `admin99`;
+- usernames: `admin1` through `admin100`;
 - local-only password: `admin`;
 - `admin1`: Platform Administrator;
 - `admin2`: Customer John McGinn;
@@ -625,7 +625,8 @@ The local seed contains 99 synthetic Scottish-football display names:
 - `admin6` and `admin82`: representative ACSA-B Ops access;
 - `admin8`: SSG Team Manager Grant Hanley;
 - `admin11`: SSG Team Analyst Lewis Ferguson;
-- `admin15`: QC Manager Angus Gunn; and
+- `admin15`: QC reviewer Angus Gunn;
+- `admin100`: independent release Manager Neil Alexander; and
 - `admin16`: intentionally inactive for access-control testing.
 
 The complete account ID, name, role, organisation, workspace position and active

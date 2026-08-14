@@ -48,6 +48,7 @@ for (const required of [
   "docker compose build api web postgres orchestration clamav",
   "name: Exercise built-container canaries",
   "sh scripts/canary-built-containers.sh",
+  "python /assurance/postgres_migration_roundtrip.py",
   "alembic downgrade -1",
   "alembic upgrade head",
   "alembic check",

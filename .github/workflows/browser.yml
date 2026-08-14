@@ -1,0 +1,110 @@
+name: Real-browser workflow
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chromium-workflow:
+    name: Chromium staffed-route journey
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      COMPOSE_PROJECT_NAME: istari-browser-${{ github.run_id }}-${{ github.run_attempt }}
+      APP_DATABASE_NAME: app_browser
+      APP_DATABASE_USER: app_browser_owner
+      APP_RUNTIME_DATABASE_USER: app_browser
+      APP_BACKUP_DATABASE_USER: app_browser_backup
+      APP_MAINTENANCE_DATABASE_USER: app_browser_maintenance
+      CAMUNDA_DATABASE_NAME: camunda_browser
+      CAMUNDA_DATABASE_USER: camunda_browser
+      ENVIRONMENT: local
+      SESSION_COOKIE_SECURE: "false"
+      WEB_ORIGIN: http://127.0.0.1:5173
+      TRUSTED_ORIGINS: http://127.0.0.1:5173
+      ALLOW_DEMO_USERS: "true"
+      WORKER_HEALTH_REQUIRED: "true"
+      POSTGRES_HOST_PORT: "55433"
+      CAMUNDA_HOST_PORT: "18081"
+      CAMUNDA_MANAGEMENT_HOST_PORT: "19601"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ff378ebe6b225b0680b81c1ad4498ae0d1d3a5e3 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install the pinned Chromium runtime
+        run: pnpm --filter @istari-service/web exec playwright install --with-deps chromium
+      - name: Generate job-scoped synthetic credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          admin_password="$(openssl rand -hex 24)"
+          app_password="$(openssl rand -hex 24)"
+          runtime_password="$(openssl rand -hex 24)"
+          backup_password="$(openssl rand -hex 24)"
+          maintenance_password="$(openssl rand -hex 24)"
+          camunda_password="$(openssl rand -hex 24)"
+          demo_password="$(openssl rand -hex 24)"
+          audit_key="$(openssl rand -hex 32)"
+          pseudonym_key="$(openssl rand -hex 32)"
+          migration_url="postgresql+asyncpg://app_browser_owner:${app_password}@postgres:5432/app_browser"
+          database_url="postgresql+asyncpg://app_browser:${runtime_password}@postgres:5432/app_browser"
+          for value in "$admin_password" "$app_password" "$runtime_password" "$backup_password" "$maintenance_password" "$camunda_password" "$demo_password" "$audit_key" "$pseudonym_key" "$migration_url" "$database_url"; do
+            printf '::add-mask::%s\n' "$value"
+          done
+          {
+            printf 'POSTGRES_ADMIN_PASSWORD=%s\n' "$admin_password"
+            printf 'APP_DATABASE_PASSWORD=%s\n' "$app_password"
+            printf 'APP_RUNTIME_DATABASE_PASSWORD=%s\n' "$runtime_password"
+            printf 'APP_BACKUP_DATABASE_PASSWORD=%s\n' "$backup_password"
+            printf 'APP_MAINTENANCE_DATABASE_PASSWORD=%s\n' "$maintenance_password"
+            printf 'CAMUNDA_DATABASE_PASSWORD=%s\n' "$camunda_password"
+            printf 'DEMO_USER_PASSWORD=%s\n' "$demo_password"
+            printf 'E2E_PASSWORD=%s\n' "$demo_password"
+            printf 'AUDIT_HMAC_KEY=%s\n' "$audit_key"
+            printf 'SECURITY_PSEUDONYM_KEY=%s\n' "$pseudonym_key"
+            printf 'MIGRATION_DATABASE_URL=%s\n' "$migration_url"
+            printf 'DATABASE_URL=%s\n' "$database_url"
+          } >> "$GITHUB_ENV"
+      - name: Start the real application topology
+        run: >-
+          timeout --signal=TERM --kill-after=20s 15m docker compose
+          -f docker-compose.yml -f .github/compose.browser.yml
+          up --build --detach --wait --wait-timeout 780
+      - name: Run the bounded Chromium workflow
+        run: pnpm --filter @istari-service/web test:e2e
+      - name: Capture bounded topology diagnostics
+        if: failure()
+        run: |
+          timeout --signal=TERM --kill-after=10s 30s docker compose \
+            -f docker-compose.yml -f .github/compose.browser.yml ps || true
+          timeout --signal=TERM --kill-after=10s 45s docker compose \
+            -f docker-compose.yml -f .github/compose.browser.yml \
+            logs --no-color --tail 150 api worker web orchestration postgres || true
+      - name: Retain browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: chromium-workflow-failure-${{ github.run_attempt }}
+          path: |
+            apps/web/test-results
+            apps/web/playwright-report
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Tear down the browser topology
+        if: always()
+        run: >-
+          timeout --signal=TERM --kill-after=10s 120s docker compose
+          -f docker-compose.yml -f .github/compose.browser.yml
+          down --volumes --remove-orphans --timeout 20

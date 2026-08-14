@@ -6,6 +6,11 @@ Current capability contract. Last reviewed 10 August 2026. Operational,
 security, infrastructure and production acceptance remain governed by the
 current readiness register and release gates.
 
+The proposed `structured-conversations-packages-and-contexts.md` specification
+extends the package envelope, QC separation and dual-context rules. Until that
+amendment is accepted and implemented, this document remains the authority for
+current managed-product behaviour.
+
 ## Outcome
 
 Give every authorised user a focused operational workspace, notify them when

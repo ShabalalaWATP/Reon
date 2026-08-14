@@ -101,16 +101,19 @@ jobs:
       - run: uv run --directory apps/api mypy
       - run: uv run --directory apps/api bandit -c pyproject.toml -r src alembic
       - run: uv run --directory apps/api pytest
-      - name: Verify mandatory PostgreSQL race tests do not skip
+      - name: Verify mandatory PostgreSQL integration tests do not skip
         shell: bash
+        env:
+          ISTARI_REQUIRE_POSTGRES_TESTS: "true"
         run: |
           set -euo pipefail
-          report="${RUNNER_TEMP}/postgres-races.xml"
+          report="${RUNNER_TEMP}/postgres-integrations.xml"
           uv run --directory apps/api pytest \
             tests/test_planning_concurrency.py \
             tests/test_request_participant_postgres_locking.py \
             tests/test_password_assistance_postgres_locking.py \
             tests/test_legal_hold_postgres_permissions.py \
+            tests/test_postgres_migration_roundtrip.py \
             --no-cov --junitxml="$report"
           python - "$report" <<'PY'
           import sys
@@ -119,7 +122,7 @@ jobs:
           root = ET.parse(sys.argv[1]).getroot()
           skipped = sum(int(suite.get("skipped", "0")) for suite in root.iter("testsuite"))
           if skipped:
-              raise SystemExit(f"Mandatory PostgreSQL race tests skipped: {skipped}")
+              raise SystemExit(f"Mandatory PostgreSQL integration tests skipped: {skipped}")
           PY
       - name: Retain backend coverage
         if: always()

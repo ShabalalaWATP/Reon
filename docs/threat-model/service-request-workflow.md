@@ -100,7 +100,9 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | A notification leaks protected content | Store a minimum safe subject only; exclude request narrative, clarification text, product content, Customer identity and private calendar text from payloads, logs and metrics |
 | A copied notification deep link grants access | Recheck current recipient, role, object, assignment and organisation policy at the target endpoint; notification possession is never authority |
 | Internal coordination appears in Customer history | Persist a server-owned event audience, backfill legacy `CURRENT_OWNER` and internal event types to `STAFF_ONLY`, and filter before pagination at every Customer history query |
-| A removed or deactivated Contributor retains action or notification authority | At command dispatch and finalisation, lock and revalidate the Lead and every Contributor as active Delivery Specialists in the exact current delivery team; build action and notification audiences only from that eligible set |
+| A removed or deactivated Lead or Contributor retains action or notification authority | Treat the Lead field and non-ended participant rows as accountability evidence only; at projection, every read, command dispatch and finalisation, revalidate an effective participant assignment, active Delivery Specialist account and live membership in the request's exact assigned team |
+| A removed routing user or Team Lead retains a projected card or notification | For direct and candidate projections, revalidate live membership in the request's exact selected route unit; Team Lead access must also match the current assigned delivery team |
+| A saved staff action view appears after switching to Customer context | Namespace saved views by stable identity and effective context, backfill existing rows as staff views and apply the context predicate to list, create, update and delete operations |
 | A Customer enumerates staffing or organisation topology | Deny the global organisation reference endpoint to Customers; initialise submission routing from server-owned configuration only |
 | A workspace link targets a local service or exploits URL parser differences | Canonicalise HTTPS links before persistence and reject credentials, fragments, controls, backslashes, unapproved ports and non-global destinations |
 | Administrator uses support role as a content bypass | Separate metadata ports and routes; deny administrator request list, detail and mutation policy |
@@ -118,6 +120,8 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | Administrative account changes remove the last Manager or Analyst | Recalculate staffing from active role-qualified memberships after every relevant change; keep the team selectable and surface `Awaiting team staffing` rather than falling back |
 | Tracking access becomes cross-unit or operational access | Apply exact selected-route membership inside list, direct-detail and coordination queries; keep monitoring separate from actionable work; route membership alone never permits claim, completion or transfer; return a non-disclosing not-found response outside scope |
 | Monitoring messages leak request content or become an ownership bypass | Re-authorise every read and write against the immutable selected route and current request state; address messages only to the Customer or current owner; exclude message text from notifications, logs and telemetry; append a hash-linked event without changing workflow state |
+| A compatibility coordination retry duplicates immutable messages or exhausts quotas | Require a caller-stable client mutation UUID and pass it through the same sender-scoped idempotency check, request lock and admission controls as native conversations |
+| Compatibility coordination copies target-only text into broadly visible history | Keep the body only in the target-authorised conversation; expose a generic legacy event with the existing body hash and immutable message reference as audit evidence |
 | A previous handler seizes work through a return request | Restrict targets to the user's unit or an earlier unit on the selected route; make the request append-only and non-mutating; require current owners to use existing authorised workflow return actions; record the request and subsequent stage transitions in the hash-linked event history |
 | A statistics user selects a parent or sibling unit | Resolve the active grant server-side, require the selected unit to be its root or an authorised configured descendant through the organisation closure, and return a non-disclosing not-found response otherwise |
 | A cached hierarchy leaks a previously authorised branch | Key protected queries by actor, grant and selected unit, reauthorise every API and export read, and remove disabled or revoked units from server responses immediately |
@@ -156,17 +160,34 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | The malware service becomes a network pivot | Keep the untrusted-content clamd process non-root on a dedicated internal network, read-only signature mount and no published port or egress; give only a separate non-scanning updater outbound mirror access; use `INSTREAM` and never pass an application-controlled filesystem path |
 | Quarantined or released objects become public | Deny public bucket access, separate storage privileges and test unauthenticated object retrieval before release |
 | An artefact changes after approval | Bind Manager review and QC dissemination to the immutable package version and checksum; any change creates a new version and invalidates approval |
+| A covering note or artefact order changes after review | Bind the covering note, ordered manifest, artefact checksums and link records into one immutable package version; any change creates a new version and invalidates Manager and QC decisions |
+| A hostile image exhausts a decoder or reaches the Customer as active content | Accept only bounded PNG and JPEG, check signature, dimensions, pixels, frames, metadata and complete decoding before malware scanning; reject SVG, animation, polyglots and decoder failure |
+| An unreleased package reveals filenames, images, links, covering notes or review state | Keep package metadata staff-only until dissemination and apply object-level policy to existence, detail, download and redirect endpoints |
+| One QC Manager approves and releases the same package | Store reviewer and releaser separately and revalidate distinct active identities, exact QC Team membership, immutable package version and recipient at release |
+| A one-person QC Team silently bypasses separation | Block release, expose an `Awaiting independent releaser` state and alert the owned staffing path without borrowing authority from another unit |
+| The QC Team becomes a request-routing shortcut or invalid hierarchy edge | Keep its stable membership identity outside the configured four-level routing tree; exclude it from route destinations and operational branch aggregation |
+| Allowing QC identity administration admits arbitrary retired support units | Permit only the deterministic QC unit ID, code and Team kind for the Quality and Release role; retain configured-unit checks for every other role and do not create standard routing-management grants for QC membership |
 | A guessed or shared product object is retrieved | Authorise the active Customer, dissemination and artefact lifecycle on every download before issuing a short-lived grant or stream |
 | Download or redirect probing is hidden | Append content-free allowed, denied and unavailable access evidence; deny runtime update and delete rights on the access-event table |
 | An external product link enables SSRF | Accept constrained absolute HTTPS links but never fetch or preview them in the backend |
 | Link normalisation bypasses the allow-list | Normalise once and reject credentials, fragments, non-standard schemes, loopback, literal private-network hosts and domains outside the versioned allow-list |
 | An expired or withdrawn external product opens | Recheck recipient, release, expiry and lifecycle in the authenticated redirect and apply safe browser isolation |
 | A withdrawn managed package falls back to an older product endpoint | Treat the existence of any managed package as authoritative and forbid legacy availability or download fallback |
+| A new package policy changes an in-flight or legacy product | Pin product mode, artefact policy and workflow version at package creation; require a separate audited migration to move existing records |
 | Synthetic identity confusion | Display one environment-level mock-data notice and document that identities and public-safe sibling names are fictional; do not mark valid routes as demonstration-only |
 | Product link is guessed or shared | Serve through an authenticated, no-store application endpoint; require the originating Customer, completed state and dissemination record on every request |
 | Product acceptance is forged, replayed or inferred from access | Permit only the active originating Customer to accept the current non-withdrawn dissemination; require a unique idempotency key, append one hash-linked ticket event and never infer acceptance from download, redirect or feedback evidence |
+| Customer and staff permissions combine into ambient authority | Bind one server-validated context to the session, namespace navigation and protected caches, and require an explicit CSRF-protected context transition |
+| A deep link silently changes context | Authorise it in the active context or require an explicit context change; never accept context from an arbitrary request header |
+| A dual-eligible user routes, assigns, reviews or releases their own request | Bind requester identity permanently and deny every staff action on that request for the same stable identity, regardless of context or later role changes |
+| A dual-eligible user mutates a linked planning record for their own request | Recheck stable requester identity on package create, update, move and reservation changes, calendar commitments and task hasteners; exclude the requester as actor, owner, Contributor and reservation or commitment subject; return non-disclosing not-found responses |
+| An expired QC role holder retains a notification deep link or direct request access | Require an active account, Quality and Release role and live Manager membership in the exact QC Team both before recipient projection and on notification, action, work and request-detail reads; bind effective-time comparisons at application precision |
+| Context switching leaves protected data in the browser | Clear context-bound server state and client caches, refresh counts and reauthorise the destination before rendering |
 | Product response causes active-content execution | Return UTF-8 plain text with safe reference-derived attachment filename, `nosniff` and restrictive security headers |
 | Analyst clarification exposes product work to trackers | Store a structured thread in PostgreSQL; expose messages only to the Customer, assigned Analyst and authorised Team Manager; project state and timing metadata only to routing trackers |
+| A conversation audience is omitted or a new entry type becomes public by default | Persist the narrowest staff-only audience, require an explicit supported audience and filter by current authority before ordering, pagination or cursor construction |
+| A Customer-visible conversation leaks an internal note, assignment reason or recipient identifier | Keep typed entries and lifecycle summaries separate; expose only explicitly addressed Customer content and content-minimised public lifecycle records |
+| Revoked membership remains visible through an old conversation cursor | Reapply account, context, route, ownership, team and assignment policy to every page and treat the cursor only as a bounded ordering key |
 | Clarification response loses the delivery assignment | Persist the team and Analyst on the thread, validate them on response and route the versioned workflow loop back to that Analyst |
 | Two open clarification requests race | Lock the request, require expected state and version, and enforce one open thread per request while permitting sequential closed threads |
 | A retry creates duplicate Customer or Analyst tasks | Use stable clarification command keys and outbox uniqueness; prove repeated dispatch and reconciliation are idempotent |
@@ -264,6 +285,8 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
   command retry.
 - Analyst clarification scope, repeated-loop, same-assignment, competing-open and
   process-version tests.
+- Structured-conversation audience, direct-identifier, pagination, revocation,
+  notification minimisation and unknown-type fail-closed tests.
 - Lead and additional Analyst parity tests proving active roster membership at
   list, detail, intent, dispatch, product and clarification boundaries, plus
   immediate denial after assignment or team membership ends.
@@ -275,11 +298,19 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
   macro-enabled, encrypted, expanded, oversized, timed-out and orphan cases.
 - Upload-intent forgery, public-object probe, immutable package version,
   pre-release, cross-Customer, replaced and withdrawn download tests.
+- Mixed package order and checksum tests; covering-note version invalidation;
+  malformed, animated, excessive-dimension and deceptive-image tests; distinct
+  QC reviewer/releaser concurrency and one-person-team denial tests.
 - External-link scheme, credential, fragment, private-host, allow-list, expiry,
   no-fetch and authenticated-redirect tests.
 - Object-store and scanner interruption, quarantine, cleanup and joined restore
   rehearsals.
 - Backup restore and recovery-point verification before pilot exit.
+- Customer/staff context isolation, cache clearing, deep-link, CSRF, role-change
+  and stable-identity self-request conflict tests, including PostgreSQL races
+  proving a context switch and authenticated mutation have one serial order,
+  plus context-namespaced notification suppression so Customer preferences
+  cannot disable staff review, release or assignment alerts.
 
 Authenticated polling is not evidence of human presence. Session validation is
 read-only, while a CSRF-protected and browser-throttled activity endpoint is the
@@ -292,3 +323,41 @@ budgets before password verification. This retains brute-force protection across
 replicas without a shared global exhaustion switch and without exposing a named
 account to attacker-triggered hard lockout. Real and unknown identifiers follow
 the same verification and public-error path.
+
+### Pre-release product inspection and mixed-version packages
+
+- Exact external destinations are returned only to the current draft author, exact
+  claimed lead reviewer, or exact claimed QC reviewer/releaser. Customer and route
+  projections omit both the destination and the inspection URL.
+- Clean managed files are streamed through an authenticated no-store endpoint with
+  `nosniff`, a sandbox content policy and a constrained disposition. Unknown, denied,
+  unavailable and successful attempts create content-free access audit records.
+- Membership expiry, team removal, Manager-position downgrade, assignment change,
+  task reassignment, account disablement and self-request conflict are evaluated at
+  access or mutation time. Login-time organisation snapshots are not sufficient.
+- Package policy version is immutable. Existing rows remain version 1, new rows use
+  version 2, and unsupported versions fail closed at artefact and submit boundaries.
+- A dual-eligible stable account must be in effective Customer context to retrieve
+  its own released product. The SQL entitlement accepts eligible staff identities
+  but still requires active account, exact requester ownership, completed request,
+  matching dissemination checksum and non-withdrawn release state.
+
+### Migration and rollback integrity
+
+- Context migrations are exercised against disposable PostgreSQL databases with
+  populated pre-migration records. SQLite and migration-source inspection cannot
+  establish backfill, trigger, constraint or downgrade behaviour.
+- The mandatory PostgreSQL CI lane fails if this assurance test skips. Local runs
+  without an authorised disposable PostgreSQL service may skip without weakening
+  the release gate.
+- Customer and Staff key collisions are created before downgrade so the selected
+  retention policy is proved. Staff preferences and saved views survive; their
+  colliding Customer variants do not.
+- A downgrade past 0046 loses package policy pins. A later upgrade assigns all
+  retained packages policy 1, so operators must not describe this as reversible.
+- A downgrade past 0044 destroys conversations, delivery evidence, covering notes
+  and context state. Recovery requiring those records uses a verified backup or
+  roll-forward, not schema downgrade.
+- Active QC backfill and inactive-account exclusion are asserted separately. The
+  downgrade removes only migration-owned memberships and retains the stable QC
+  organisation unit.

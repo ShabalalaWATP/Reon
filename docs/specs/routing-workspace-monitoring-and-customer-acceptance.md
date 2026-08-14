@@ -2,6 +2,11 @@
 
 Status: implemented and assured locally, 13 August 2026.
 
+The proposed `structured-conversations-packages-and-contexts.md` amendment does
+not change the meaning of dissemination, access, acceptance or feedback defined
+here. It adds bounded conversation and actor-context rules around those existing
+records.
+
 ## Problem
 
 Routing workspaces currently show only open human tasks. After a unit routes a

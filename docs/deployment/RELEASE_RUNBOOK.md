@@ -110,6 +110,14 @@ This sequence is not executable until platform assets exist:
 - If readiness fails, do not override the probe. Inspect the named dependency,
   maintenance health and configuration seal.
 - Roll back stateless images only when the schema and workflow remain compatible.
+- Do not downgrade below 0047 if Customer saved-view collisions must be retained,
+  below 0046 if package policy pins must be retained, below 0045 if Customer
+  notification collisions must be retained, or below 0044 if conversations,
+  delivery evidence, covering notes, product modes or session contexts must be
+  retained. These are explicitly destructive boundaries.
+- At those boundaries prefer a compatible image rollback or a corrected
+  roll-forward. If data recovery is required, restore the verified pre-migration
+  backup under incident/change authority and re-run the migration assurance.
 - Restore data only under incident/change authority. Follow the joined recovery
   order in the continuity runbook, then reconcile before reopening ingress.
 - Record the outcome, user impact, candidate identity and follow-up owner.

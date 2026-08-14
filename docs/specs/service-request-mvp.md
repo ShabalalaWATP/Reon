@@ -67,8 +67,8 @@ metadata, and cannot browse request content by default.
 
 ## Synthetic user fixtures
 
-The local/test seed contains 73 Scottish-football display names. Logons are
-`admin1` through `admin99`, with the local-only shared password `admin`.
+The local/test seed contains 100 Scottish-football display names. Logons are
+`admin1` through `admin100`, with the local-only shared password `admin`.
 Every team has at least one Manager and one Analyst. SSG has three Managers and
 seven Analysts. The complete traceable roster is maintained in
 `docs/architecture/ORGANISATION_AND_ROUTING.md`.

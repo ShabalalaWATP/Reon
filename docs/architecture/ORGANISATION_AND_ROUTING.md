@@ -168,20 +168,20 @@ can be exercised. Teams never borrow SSG users.
 
 ## Complete synthetic user directory
 
-The local/test product contains the following 99 users. Every account uses its
+The local/test product contains the following 100 users. Every account uses its
 sequential logon and the local-only password `admin`. All accounts start active
 except `admin16`, which is intentionally inactive for access-control testing.
 Names are synthetic fixtures borrowed from Scottish football and do not describe
 the real people. The machine-readable source of truth is `DEMO_IDENTITIES` in
 `apps/api/src/istari_service/demo_seed.py`. The directory below deliberately
-enumerates every account. Automated seed tests assert the count of 99, the exact
-`admin1` to `admin99` sequence, unique display names, role totals, Manager and
+enumerates every account. Automated seed tests assert the count of 100, the exact
+`admin1` to `admin100` sequence, unique display names, role totals, Manager and
 Member coverage in every routing unit, and active Manager and Analyst coverage
 in every delivery team.
 
 ### Local access summary
 
-- Usernames run sequentially from `admin1` through `admin99`.
+- Usernames run sequentially from `admin1` through `admin100`.
 - Initial work emails use the synthetic-only `istari.example.test` domain, for
   example `admin1@istari.example.test`. Administrators can maintain them in the
   application.
@@ -189,7 +189,7 @@ in every delivery team.
   configuration-approval Administrator.
 - `admin4` exercises the CRIOC hierarchy view, `admin5` and `admin6` exercise
   command and Ops routing, `admin8` exercises SSG Team management, and `admin15`
-  exercises QC.
+  exercises QC review. `admin100` exercises independent release and dissemination.
 - `admin74` through `admin99` provide a named Manager and Member for every
   routing workspace, including CRIOC, each command and each Ops group.
 - These credentials are local and test fixtures. Production identity must use
@@ -211,7 +211,7 @@ in every delivery team.
 | `admin12` | Nathan Patterson | Team Analyst | SSG Team | Active |
 | `admin13` | Ben Doak | Team Analyst | SSG Team | Active |
 | `admin14` | Che Adams | Team Analyst | SSG Team | Active |
-| `admin15` | Angus Gunn | QC Manager | Shared QC | Active |
+| `admin15` | Angus Gunn | QC Manager | Combined QC Team | Active |
 | `admin16` | James Forrest | Customer | Customer | Inactive |
 | `admin17` | Lawrence Shankland | Team Manager | SSG Team | Active |
 | `admin18` | Tommy Conway | Team Analyst | SSG Team | Active |
@@ -296,6 +296,7 @@ in every delivery team.
 | `admin97` | Nigel Quashie | Ops Routing User, Member | Solstice Ops | Active |
 | `admin98` | Matt Ritchie | Ops Routing User, Manager | Frontier Ops | Active |
 | `admin99` | Oliver Burke | Ops Routing User, Member | Frontier Ops | Active |
+| `admin100` | Neil Alexander | QC Manager | Combined QC Team | Active |
 
 ## Selection and authorisation
 

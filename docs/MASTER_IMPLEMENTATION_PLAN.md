@@ -1269,3 +1269,33 @@ Status: implemented and live-verified on 14 August 2026.
   coverage of 98.68 per cent line and 95.05 per cent branch, frontend coverage
   of 99.45 per cent line and 95.02 per cent branch, and the complete repository
   static, documentation, security-oriented and contract checks.
+
+## SOLID, readability and maintainability programme
+
+Status: implementation and runtime verification complete on 14 August 2026.
+
+- [x] Add executable dependency, cycle, protocol-width, source-headroom,
+  protected-query-key and frontend-complexity ratchets.
+- [x] Reduce service-to-infrastructure, router-to-persistence,
+  repository-to-service and backend import-cycle debt to zero.
+- [x] Split broad product, conversation, work, configuration, board, calendar,
+  administration and workspace capabilities behind focused ports and explicit
+  composition modules.
+- [x] Decompose frontend authentication, context, conversation, upload, queue
+  and feature orchestration into focused controllers, hooks and renderers.
+- [x] Reduce all maintained source below 330 lines and all production frontend
+  functions to complexity 12 and nesting depth four.
+- [x] Enforce canonical Prettier and Ruff formatting without lowering coverage,
+  security or file-size gates.
+- [x] Add a mandatory PostgreSQL 0043 to 0047 populated round trip and a
+  Chromium journey from Customer submission through routing, SSG, QC, release,
+  Customer retrieval and acceptance.
+- [x] Pass the root quality gate, strict MyPy across 440 modules, Ruff, Bandit,
+  1,318 backend tests at 98.73 per cent line and 95.00 per cent branch coverage,
+  the production web build and 490 frontend tests at 98.8 per cent line and
+  95.04 per cent branch coverage.
+- [x] Capture the mandatory PostgreSQL and complete browser results against the
+  immutable candidate. PostgreSQL passed populated upgrade, downgrade,
+  re-upgrade, empty upgrade and metadata-drift checks. Chromium passed the
+  complete Customer-to-acceptance route with context, conversation, managed
+  package, review and separation-of-duty assertions.

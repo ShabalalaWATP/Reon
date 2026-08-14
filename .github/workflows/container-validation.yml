@@ -82,6 +82,11 @@ jobs:
         run: |
           set -euo pipefail
           timeout --signal=TERM --kill-after=10s 3m docker compose up --detach --wait postgres
+          admin_url="postgresql+asyncpg://postgres:${POSTGRES_ADMIN_PASSWORD}@postgres:5432/postgres"
+          timeout --signal=TERM --kill-after=20s 10m docker compose run --rm --no-deps \
+            --env "DATABASE_URL=${admin_url}" \
+            --volume "$PWD/apps/api/tests:/assurance:ro" \
+            migrator python /assurance/postgres_migration_roundtrip.py
           timeout --signal=TERM --kill-after=10s 3m docker compose run --rm --no-deps migrator
           timeout --signal=TERM --kill-after=10s 3m docker compose run --rm --no-deps migrator alembic downgrade -1
           timeout --signal=TERM --kill-after=10s 3m docker compose run --rm --no-deps migrator alembic upgrade head

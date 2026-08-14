@@ -1,6 +1,6 @@
 # Specification, decision and threat traceability
 
-Recorded on 7 August 2026 and updated on 11 August 2026. Each implemented capability is mapped to its accepted
+Recorded on 7 August 2026 and updated on 14 August 2026. Each implemented capability is mapped to its accepted
 Markdown specification, expensive-to-reverse decision record and current threat
 model. Shared foundation records apply where a feature uses an existing boundary
 rather than creating a new architectural decision.
@@ -27,6 +27,8 @@ rather than creating a new architectural decision.
 | Operator shell orientation and factual service timing | `operator-orientation-and-service-timing.md` | Existing shell and human-routing boundaries | `service-request-workflow.md` |
 | Maintainability, dead-code control and portable evaluation | `maintainability-and-portable-evaluation.md` | 0019 | `operations-and-recovery.md` |
 | Fenced maintenance, external-I/O phases and bounded operational feeds | `runtime-scaling-and-worker-hardening.md` | 0020 | `operations-and-recovery.md`, `service-request-workflow.md` |
+| Structured conversations, package envelopes, QC separation and bounded actor contexts | `structured-conversations-packages-and-contexts.md` | 0036 | `service-request-workflow.md` |
+| Executable SOLID, readability and maintainability programme | `solid-readability-maintainability-ratchets.md` | 0037 | `service-request-workflow.md`, `operations-and-recovery.md` |
 
 All referenced records exist in `docs/specs`, `docs/adr` and
 `docs/threat-model`. The [Definition of Done matrix](DEFINITION_OF_DONE_MATRIX.md),
