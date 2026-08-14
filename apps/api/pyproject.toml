@@ -67,6 +67,10 @@ addopts = [
 ]
 asyncio_default_fixture_loop_scope = "function"
 asyncio_mode = "auto"
+filterwarnings = [
+  "error::ResourceWarning",
+  "error::pytest.PytestUnraisableExceptionWarning",
+]
 pythonpath = ["src"]
 testpaths = ["tests"]
 

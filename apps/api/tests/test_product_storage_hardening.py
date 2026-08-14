@@ -10,6 +10,7 @@ import sqlite3
 import struct
 import zipfile
 from collections.abc import AsyncIterator
+from contextlib import closing
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -275,7 +276,7 @@ def test_quarantine_index_upgrades_legacy_schema_and_skips_seen_roots(tmp_path) 
     quarantine = root / "quarantine"
     quarantine.mkdir(parents=True)
     database = root / ".quarantine-index.sqlite3"
-    with sqlite3.connect(database) as connection:
+    with closing(sqlite3.connect(database)) as connection, connection:
         connection.execute(
             "CREATE TABLE quarantine_objects (object_key TEXT PRIMARY KEY)"
         )
