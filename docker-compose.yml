@@ -160,7 +160,7 @@ services:
     networks: [data, workflow]
   product-storage-init:
     <<: *runtime-security
-    image: python:3.13-alpine3.23@sha256:9fdbf2e3e82628351513560b121e2ee6ce31cac212be9e070c5a5e2769fb5e76
+    image: python:3.14-alpine3.23@sha256:6b8f06d04d5305c1d1288435388df9165ab41e681fae6439d6349d8053cc3f83
     user: "0:0"
     entrypoint:
       - /bin/sh
