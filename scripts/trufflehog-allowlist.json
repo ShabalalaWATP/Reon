@@ -21,6 +21,42 @@
       "expiresOn": "2027-02-13",
       "reason": "False-positive Lob detector match on a test function name in historical commit 9562c14.",
       "allowVerifiedFalsePositive": true
+    },
+    {
+      "fingerprint": "1f00a705a414fce4f10b2dca243dae034731d734a39878606df56e9fe5bc1c98",
+      "expiresOn": "2027-02-13",
+      "reason": "False-positive Lob match on the function name live_selected_route_membership_condition in notification_access.py at historical commit 4175263.",
+      "allowVerifiedFalsePositive": true
+    },
+    {
+      "fingerprint": "a14ac5e421d85fabe7537726c77e94b55610fbf7d1a220baefccb4492568fa2c",
+      "expiresOn": "2027-02-13",
+      "reason": "False-positive Lob match on the function name live_selected_route_membership_condition in route_access.py at historical commit 4175263.",
+      "allowVerifiedFalsePositive": true
+    },
+    {
+      "fingerprint": "5593beb9bb0788fa3b6dd91ff55dbbedc3a829fb69926d3a577a49ed15e3ff59",
+      "expiresOn": "2027-02-13",
+      "reason": "False-positive Lob match on the function name live_selected_route_membership_condition in action_scope.py at historical commit 4175263.",
+      "allowVerifiedFalsePositive": true
+    },
+    {
+      "fingerprint": "cc94e19bd06c8ab06692009b196c333a645824d7eb65dcb11c7d7c26f07c3ea0",
+      "expiresOn": "2027-02-13",
+      "reason": "False-positive Lob match on the test name test_safe_still_images_are_fully_decoded at historical commit 4175263.",
+      "allowVerifiedFalsePositive": true
+    },
+    {
+      "fingerprint": "fb0338ac7b5f402cc0e659f408556aff46cb86c787e568bfd5456ac6a1f28d83",
+      "expiresOn": "2027-02-13",
+      "reason": "False-positive Lob match on the identifier live_selected_route_membership_condition in test_participant_projection_membership.py at historical commit 4175263.",
+      "allowVerifiedFalsePositive": true
+    },
+    {
+      "fingerprint": "4fc45df06fbb52f522ecf32f14690cc846fc5c3e364da4f8be4c8ba925573240",
+      "expiresOn": "2027-02-13",
+      "reason": "False-positive Lob match on the test name test_unknown_package_policy_fails_closed at historical commit 4175263.",
+      "allowVerifiedFalsePositive": true
     }
   ]
 }

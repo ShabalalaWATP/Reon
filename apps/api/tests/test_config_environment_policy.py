@@ -13,6 +13,16 @@ from mist_service.config_environment_policy import (
 )
 
 
+def _absolute_path(*parts: str) -> Path:
+    """Build a path that is absolute on the running platform.
+
+    A literal such as ``C:/private/products`` is absolute on Windows but
+    relative on POSIX, so the production storage gate rejects it only in CI.
+    """
+
+    return Path(Path.cwd().anchor, *parts)
+
+
 def _production_controls(**updates: object) -> EnvironmentControls:
     values = {
         "production": True,
@@ -36,9 +46,9 @@ def _production_controls(**updates: object) -> EnvironmentControls:
         "security_pseudonym_key_configured": True,
         "audit_hmac_active_key_id": "active",
         "audit_hmac_key_ids": frozenset({"active"}),
-        "product_storage_path": Path("C:/private/products"),
+        "product_storage_path": _absolute_path("private", "products"),
         "request_matching_semantic_enabled": True,
-        "request_embedding_cache_path": Path("C:/private/model-cache"),
+        "request_embedding_cache_path": _absolute_path("private", "model-cache"),
     }
     values.update(updates)
     return EnvironmentControls(**values)  # type: ignore[arg-type]
