@@ -10,21 +10,21 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from conftest import ApiHarness
-from istari_service.analytics_evolution_models import (
+from mist_service.analytics_evolution_models import (
     OperationalAnalyticsFact,
     OperationalFactType,
 )
-from istari_service.domain import Actor
-from istari_service.management_seed import management_grant_id
-from istari_service.models import RequestStatus, ServiceRequest
-from istari_service.operational_analytics_reconciliation import (
+from mist_service.domain import Actor
+from mist_service.management_seed import management_grant_id
+from mist_service.models import RequestStatus, ServiceRequest
+from mist_service.operational_analytics_reconciliation import (
     reconcile_operational_analytics,
 )
-from istari_service.organisation_models import RequestRouteSelection
-from istari_service.product_runtime import ProductRuntime
-from istari_service.product_security import AllowedHttpsLinkPolicy
-from istari_service.repositories.event_store import append_request_event
-from istari_service.request_event_models import RequestEvent
+from mist_service.organisation_models import RequestRouteSelection
+from mist_service.product_runtime import ProductRuntime
+from mist_service.product_security import AllowedHttpsLinkPolicy
+from mist_service.repositories.event_store import append_request_event
+from mist_service.request_event_models import RequestEvent
 from product_test_support import (
     add_claimed_lead_review_task,
     add_claimed_release_task,

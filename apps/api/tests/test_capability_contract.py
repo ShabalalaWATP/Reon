@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from fastapi import FastAPI, Request
 
-from istari_service.config import Settings
-from istari_service.main import create_app
-from istari_service.routers.capabilities import capabilities
-from istari_service.schemas.auth import ClientCapabilities
+from mist_service.config import Settings
+from mist_service.main import create_app
+from mist_service.routers.capabilities import capabilities
+from mist_service.schemas.auth import ClientCapabilities
 
 
 def _legacy_capabilities() -> dict[str, bool]:

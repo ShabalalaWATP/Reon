@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 
-from istari_service.workflow_start_types import WorkflowStartCommand
+from mist_service.workflow_start_types import WorkflowStartCommand
 
 
 def test_workflow_start_command_round_trips_pinned_identity() -> None:

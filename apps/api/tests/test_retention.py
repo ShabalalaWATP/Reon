@@ -9,11 +9,11 @@ import pytest
 from sqlalchemy import select
 
 from conftest import ApiHarness, request_payload
-from istari_service.maintenance import parser
-from istari_service.models import OutboxStatus, Session, WorkflowOutbox
-from istari_service.operations_models import OperationalRun
-from istari_service.request_draft_models import RequestDraft
-from istari_service.retention import (
+from mist_service.maintenance import parser
+from mist_service.models import OutboxStatus, Session, WorkflowOutbox
+from mist_service.operations_models import OperationalRun
+from mist_service.request_draft_models import RequestDraft
+from mist_service.retention import (
     APPLY_CONFIRMATION,
     RetentionCounts,
     RetentionPolicy,

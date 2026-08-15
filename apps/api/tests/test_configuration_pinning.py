@@ -15,35 +15,35 @@ from configuration_support import (
     make_request,
     seed_configuration_context,
 )
-from istari_service.config import Environment, Settings
-from istari_service.configuration_models import (
+from mist_service.config import Environment, Settings
+from mist_service.configuration_models import (
     ConfigurationActivation,
     ConfigurationApproval,
     ConfigurationRegistry,
     RequestConfigurationPin,
 )
-from istari_service.configuration_readiness import configuration_runtime_is_ready
-from istari_service.configuration_request_policy import (
+from mist_service.configuration_readiness import configuration_runtime_is_ready
+from mist_service.configuration_request_policy import (
     REQUEST_POLICY_SCHEMA,
     canonical_link_domains,
 )
-from istari_service.database import (
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.errors import InvalidAdministrationChange, ObjectNotFound
-from istari_service.models import User, UserRole
-from istari_service.repositories.configuration import (
+from mist_service.errors import InvalidAdministrationChange, ObjectNotFound
+from mist_service.models import User, UserRole
+from mist_service.repositories.configuration import (
     SqlAlchemyConfigurationRepository,
 )
-from istari_service.repositories.configuration_pins import (
+from mist_service.repositories.configuration_pins import (
     SqlAlchemyConfigurationPinRepository,
 )
-from istari_service.repositories.configuration_policies import (
+from mist_service.repositories.configuration_policies import (
     load_request_configuration_policies,
 )
-from istari_service.schemas.configuration import ConfigurationReasonCommand
+from mist_service.schemas.configuration import ConfigurationReasonCommand
 
 
 @pytest.fixture

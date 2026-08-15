@@ -10,9 +10,9 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from istari_service.config import Environment, Settings
-from istari_service.worker import async_main, build_iteration, main, parser
-from istari_service.workflow.engine import WorkflowEngine
+from mist_service.config import Environment, Settings
+from mist_service.worker import async_main, build_iteration, main, parser
+from mist_service.workflow.engine import WorkflowEngine
 
 
 def settings(*, notifications_enabled: bool = False) -> Settings:
@@ -92,7 +92,7 @@ async def test_async_main_runs_once_or_continuously_and_always_cleans_up(
     monkeypatch: pytest.MonkeyPatch,
     once: bool,
 ) -> None:
-    import istari_service.worker as worker
+    import mist_service.worker as worker
 
     runtime = FakeRuntime()
     iteration = AsyncMock()
@@ -123,7 +123,7 @@ async def test_async_main_runs_once_or_continuously_and_always_cleans_up(
 async def test_async_main_cleans_database_when_runtime_startup_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import istari_service.worker as worker
+    import mist_service.worker as worker
 
     runtime = FakeRuntime(fail_enter=True)
     dispose = AsyncMock()
@@ -141,7 +141,7 @@ async def test_async_main_cleans_database_when_runtime_startup_fails(
 def test_parser_and_main_return_process_statuses(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import istari_service.worker as worker
+    import mist_service.worker as worker
 
     assert parser().parse_args(["--once"]).once is True
     monkeypatch.setattr(worker, "async_main", lambda _arguments: object())

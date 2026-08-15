@@ -9,24 +9,24 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.errors import InvalidAdministrationChange
-from istari_service.management_models import ManagementAction
-from istari_service.models import User
-from istari_service.organisation_models import (
+from mist_service.errors import InvalidAdministrationChange
+from mist_service.management_models import ManagementAction
+from mist_service.models import User
+from mist_service.organisation_models import (
     OrganisationKind,
     UserOrganisationMembership,
 )
-from istari_service.repositories.team_workspaces import (
+from mist_service.repositories.team_workspaces import (
     _merge_authority,
     _own_authority,
     _workspace_views,
 )
-from istari_service.team_membership_admin import align_admin_team_membership
-from istari_service.team_membership_seed import seed_team_membership_history
-from istari_service.team_membership_sync import synchronise_due_team_memberships
-from istari_service.team_models import TeamMembership, WorkspacePosition
-from istari_service.team_workspace_views import _as_utc
-from istari_service.workspace_workloads import active_work_counts
+from mist_service.team_membership_admin import align_admin_team_membership
+from mist_service.team_membership_seed import seed_team_membership_history
+from mist_service.team_membership_sync import synchronise_due_team_memberships
+from mist_service.team_models import TeamMembership, WorkspacePosition
+from mist_service.team_workspace_views import _as_utc
+from mist_service.workspace_workloads import active_work_counts
 
 
 async def _access(harness: ApiHarness, username: str, team_code: str) -> dict:

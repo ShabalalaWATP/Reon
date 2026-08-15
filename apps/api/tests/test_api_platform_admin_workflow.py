@@ -7,8 +7,8 @@ from uuid import UUID
 from sqlalchemy import select
 
 from conftest import ApiHarness, request_payload
-from istari_service.models import ServiceRequest, User
-from istari_service.organisation_models import OrganisationUnit
+from mist_service.models import ServiceRequest, User
+from mist_service.organisation_models import OrganisationUnit
 
 
 async def _claim_current(harness: ApiHarness) -> dict[str, object]:

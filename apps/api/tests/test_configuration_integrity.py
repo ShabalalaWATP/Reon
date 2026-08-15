@@ -10,21 +10,21 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from configuration_support import seed_configuration_context
-from istari_service.config import Environment, Settings
-from istari_service.configuration_integrity import snapshot_evidence_is_valid
-from istari_service.configuration_models import (
+from mist_service.config import Environment, Settings
+from mist_service.configuration_integrity import snapshot_evidence_is_valid
+from mist_service.configuration_models import (
     ConfigurationActivation,
     ConfigurationApproval,
     ConfigurationVersion,
 )
-from istari_service.configuration_types import ApprovalDecision
-from istari_service.database import (
+from mist_service.configuration_types import ApprovalDecision
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.models import User
-from istari_service.repositories.configuration import (
+from mist_service.models import User
+from mist_service.repositories.configuration import (
     SqlAlchemyConfigurationRepository,
 )
 

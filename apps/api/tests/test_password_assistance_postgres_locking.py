@@ -11,16 +11,16 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from istari_service.platform_security_composition import platform_security_service
-from istari_service.services.platform_security_service import (
+from mist_service.platform_security_composition import platform_security_service
+from mist_service.services.platform_security_service import (
     SOURCE_ATTEMPT_LIMIT,
 )
 
 
 async def test_password_assistance_budget_is_atomic_under_concurrent_calls() -> None:
-    database_url = os.getenv("ISTARI_POSTGRES_TEST_URL")
+    database_url = os.getenv("MIST_POSTGRES_TEST_URL")
     if not database_url:
-        pytest.skip("ISTARI_POSTGRES_TEST_URL is required for PostgreSQL race tests")
+        pytest.skip("MIST_POSTGRES_TEST_URL is required for PostgreSQL race tests")
     engine = create_async_engine(database_url)
     sessions = async_sessionmaker(engine, expire_on_commit=False)
     schema = f"password_assistance_lock_{uuid4().hex}"
@@ -73,7 +73,7 @@ async def test_password_assistance_budget_is_atomic_under_concurrent_calls() -> 
                     pseudonym_key=b"synthetic-postgres-race-test-key",
                 )
                 return await service.request_password_assistance(
-                    f"unknown-{index}@istari.example.test",
+                    f"unknown-{index}@mist.example.test",
                     source_key=source_key,
                     now=now,
                 )

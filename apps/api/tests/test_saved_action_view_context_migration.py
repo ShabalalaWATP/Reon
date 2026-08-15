@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from istari_service.action_notification_models import SavedActionView
+from mist_service.action_notification_models import SavedActionView
 
 MIGRATION = (
     Path(__file__).parents[1]

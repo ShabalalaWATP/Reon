@@ -11,15 +11,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from conftest import ApiHarness
 from in_memory_product_storage import InMemoryPrivateObjectStorage
-from istari_service.configuration_digest import configuration_digest
-from istari_service.configuration_models import (
+from mist_service.configuration_digest import configuration_digest
+from mist_service.configuration_models import (
     ConfigurationActivation,
     ConfigurationApproval,
     ConfigurationRegistry,
     ConfigurationWorkflowTemplate,
 )
-from istari_service.domain import Actor
-from istari_service.models import (
+from mist_service.domain import Actor
+from mist_service.models import (
     ProductMode,
     RequestStatus,
     ServiceRequest,
@@ -30,18 +30,18 @@ from istari_service.models import (
     WorkflowTask,
     WorkflowTaskStatus,
 )
-from istari_service.product_security import AllowedHttpsLinkPolicy, SafeDocumentScanner
-from istari_service.product_types import AccessAuditRecord
-from istari_service.repositories.auth import actor_from_user
-from istari_service.repositories.configuration import SqlAlchemyConfigurationRepository
-from istari_service.repositories.configuration_pins import (
+from mist_service.product_security import AllowedHttpsLinkPolicy, SafeDocumentScanner
+from mist_service.product_types import AccessAuditRecord
+from mist_service.repositories.auth import actor_from_user
+from mist_service.repositories.configuration import SqlAlchemyConfigurationRepository
+from mist_service.repositories.configuration_pins import (
     SqlAlchemyConfigurationPinRepository,
 )
-from istari_service.repositories.products import SqlAlchemyProductRepository
-from istari_service.repositories.request_route_initialisation import (
+from mist_service.repositories.products import SqlAlchemyProductRepository
+from mist_service.repositories.request_route_initialisation import (
     initialise_request_route,
 )
-from istari_service.services.product_service import ProductService
+from mist_service.services.product_service import ProductService
 
 PDF_MEDIA = "application/pdf"
 

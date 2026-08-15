@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from istari_service.model_registry import Base
+from mist_service.model_registry import Base
 
 
 def test_migration_owned_indexes_are_present_in_model_metadata() -> None:

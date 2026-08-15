@@ -9,15 +9,15 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
-from istari_service.legal_holds import LEGAL_HOLD_AUTHORITY, LegalHoldService
-from istari_service.postgres_permissions import permission_statements
+from mist_service.legal_holds import LEGAL_HOLD_AUTHORITY, LegalHoldService
+from mist_service.postgres_permissions import permission_statements
 
 
 @pytest.mark.asyncio
 async def test_maintenance_role_can_apply_and_release_legal_hold() -> None:
-    database_url = os.getenv("ISTARI_POSTGRES_TEST_URL")
+    database_url = os.getenv("MIST_POSTGRES_TEST_URL")
     if not database_url:
-        pytest.skip("ISTARI_POSTGRES_TEST_URL is required for PostgreSQL role tests")
+        pytest.skip("MIST_POSTGRES_TEST_URL is required for PostgreSQL role tests")
 
     engine = create_async_engine(database_url)
     role = f"legal_hold_test_{uuid4().hex[:12]}"

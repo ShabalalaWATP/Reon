@@ -14,9 +14,9 @@ from auth_test_support import (
     StubHasher,
     make_service,
 )
-from istari_service.errors import AuthenticationUnavailable
-from istari_service.login_rate_limiter import LoginRateLimitPolicy
-from istari_service.repositories.login_rate_limits import SqlAlchemyLoginAttemptLimiter
+from mist_service.errors import AuthenticationUnavailable
+from mist_service.login_rate_limiter import LoginRateLimitPolicy
+from mist_service.repositories.login_rate_limits import SqlAlchemyLoginAttemptLimiter
 
 
 class BlockingSessionFactory:

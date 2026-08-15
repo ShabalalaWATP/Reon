@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from pydantic import ValidationError
 
 from conftest import ApiHarness, request_payload
-from istari_service.domain import Actor
-from istari_service.errors import ObjectNotFound
-from istari_service.models import UserRole
-from istari_service.schemas.drafts import RequestDraftCreate
-from istari_service.services.draft_service import DraftService
+from mist_service.domain import Actor
+from mist_service.errors import ObjectNotFound
+from mist_service.models import ServiceRequest, UserRole
+from mist_service.repositories.requests import SqlAlchemyRequestRepository
+from mist_service.schemas.drafts import RequestDraftCreate
+from mist_service.services.draft_service import DraftService
 
 
 @pytest.mark.asyncio
@@ -193,6 +194,45 @@ async def test_submission_key_is_owned_and_retries_one_request(
         headers=harness.mutation_headers(),
     )
     assert concealed.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_racing_submission_key_returns_the_original_request(
+    api_harness: ApiHarness,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A duplicate that slips past the pre-check stays idempotent, not a 500."""
+
+    harness = api_harness
+    submission_key = str(uuid4())
+    payload = request_payload(submissionKey=submission_key)
+    await harness.login("admin2")
+    first = await harness.client.post(
+        "/api/v1/requests", json=payload, headers=harness.mutation_headers()
+    )
+    assert first.status_code == 201
+
+    original = SqlAlchemyRequestRepository._request_for_submission_key
+    calls = {"count": 0}
+
+    async def blind_precheck(
+        self: SqlAlchemyRequestRepository, key: UUID
+    ) -> ServiceRequest | None:
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return None
+        return await original(self, key)
+
+    monkeypatch.setattr(
+        SqlAlchemyRequestRepository, "_request_for_submission_key", blind_precheck
+    )
+    raced = await harness.client.post(
+        "/api/v1/requests", json=payload, headers=harness.mutation_headers()
+    )
+
+    assert raced.status_code == 201
+    assert raced.json()["id"] == first.json()["id"]
+    assert calls["count"] == 2
 
 
 @pytest.mark.asyncio

@@ -8,22 +8,22 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.dialects import postgresql
 
-from istari_service.errors import InvalidAction
-from istari_service.models import OutboxStatus, RequestStatus, UserRole
-from istari_service.product_errors import ProductConflict
-from istari_service.product_types import PackageStatus
-from istari_service.repositories.product_requests import ProductRequestRepositoryMixin
-from istari_service.repositories.product_workflow import (
+from mist_service.errors import InvalidAction
+from mist_service.models import OutboxStatus, RequestStatus, UserRole
+from mist_service.product_errors import ProductConflict
+from mist_service.product_types import PackageStatus
+from mist_service.repositories.product_requests import ProductRequestRepositoryMixin
+from mist_service.repositories.product_workflow import (
     validate_product_workflow_effect,
 )
-from istari_service.repositories.work_claim_projection import project_claim
-from istari_service.schemas.work import ChangesRequired, ReleaseDeliverable
-from istari_service.services.product_service_support import ProductServiceSupport
-from istari_service.workflow_attestation import (
+from mist_service.repositories.work_claim_projection import project_claim
+from mist_service.schemas.work import ChangesRequired, ReleaseDeliverable
+from mist_service.services.product_service_support import ProductServiceSupport
+from mist_service.workflow_attestation import (
     WorkflowAttestation,
     attest_workflow_availability,
 )
-from istari_service.workflow_start_validation import reject_invalid_start_identity
+from mist_service.workflow_start_validation import reject_invalid_start_identity
 
 
 class ScalarSession:

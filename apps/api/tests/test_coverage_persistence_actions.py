@@ -10,30 +10,30 @@ from uuid import UUID, uuid4
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
-from istari_service.config import Environment, Settings
-from istari_service.database import (
+from mist_service.config import Environment, Settings
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.domain import Actor
-from istari_service.errors import InvalidAction
-from istari_service.models import (
+from mist_service.domain import Actor
+from mist_service.errors import InvalidAction
+from mist_service.models import (
     DeliverableStatus,
     RequestStatus,
     ServiceRequest,
     User,
     UserRole,
 )
-from istari_service.organisation_seed import seed_organisation_units
-from istari_service.qc_membership import QC_TEAM_ID
-from istari_service.repositories.work_actions import (
+from mist_service.organisation_seed import seed_organisation_units
+from mist_service.qc_membership import QC_TEAM_ID
+from mist_service.repositories.work_actions import (
     apply_work_effect,
     event_message,
     latest_deliverable,
     validate_work_effect,
 )
-from istari_service.schemas.work import (
+from mist_service.schemas.work import (
     AllocateRequest,
     ApproveWork,
     AssignSpecialist,
@@ -47,7 +47,7 @@ from istari_service.schemas.work import (
     SendToAllocation,
     SubmitDeliverable,
 )
-from istari_service.team_models import TeamMembership, WorkspacePosition
+from mist_service.team_models import TeamMembership, WorkspacePosition
 
 
 @pytest.fixture

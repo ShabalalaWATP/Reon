@@ -5,9 +5,9 @@ from xml.etree import ElementTree
 
 import pytest
 
-from istari_service.models import RequestStatus
-from istari_service.workflow.projection import status_after_action
-from istari_service.workflow.types import WorkflowAction
+from mist_service.models import RequestStatus
+from mist_service.workflow.projection import status_after_action
+from mist_service.workflow.types import WorkflowAction
 
 BPMN = "http://www.omg.org/spec/BPMN/20100524/MODEL"
 ZEEBE = "http://camunda.org/schema/zeebe/1.0"

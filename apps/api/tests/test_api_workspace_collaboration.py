@@ -9,8 +9,8 @@ from pydantic import ValidationError
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.schemas.workspace_collaboration import WorkspaceRecordCreate
-from istari_service.workspace_collaboration_models import WorkspaceRecordEvent
+from mist_service.schemas.workspace_collaboration import WorkspaceRecordCreate
+from mist_service.workspace_collaboration_models import WorkspaceRecordEvent
 
 
 async def _workspace(harness: ApiHarness, username: str, code: str) -> dict:
@@ -223,7 +223,7 @@ def test_workspace_links_are_stored_in_canonical_https_form() -> None:
 
 def test_workspace_links_reject_invalid_idna(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "istari_service.schemas.workspace_collaboration.urlsplit",
+        "mist_service.schemas.workspace_collaboration.urlsplit",
         lambda _value: type(
             "Parsed",
             (),

@@ -16,40 +16,40 @@ from configuration_support import (
     draft_from_active,
     seed_configuration_context,
 )
-from istari_service.config import Environment, Settings
-from istari_service.configuration_digest import configuration_digest
-from istari_service.configuration_events import ConfigurationEventType
-from istari_service.configuration_models import (
+from mist_service.config import Environment, Settings
+from mist_service.configuration_digest import configuration_digest
+from mist_service.configuration_events import ConfigurationEventType
+from mist_service.configuration_models import (
     ConfigurationActivation,
     ConfigurationApproval,
     ConfigurationUnitRevision,
     ConfigurationValidationFinding,
 )
-from istari_service.configuration_types import ConfigurationStatus, FindingSeverity
-from istari_service.database import (
+from mist_service.configuration_types import ConfigurationStatus, FindingSeverity
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.domain import Actor
-from istari_service.errors import (
+from mist_service.domain import Actor
+from mist_service.errors import (
     AdministrationAccessDenied,
     AdministrationUnavailable,
     InvalidAdministrationChange,
     StaleVersion,
 )
-from istari_service.models import UserRole
-from istari_service.repositories.configuration import (
+from mist_service.models import UserRole
+from mist_service.repositories.configuration import (
     SqlAlchemyConfigurationRepository,
 )
-from istari_service.schemas.configuration import (
+from mist_service.schemas.configuration import (
     ConfigurationReasonCommand,
     ConfigurationVersionCommand,
 )
-from istari_service.services.configuration_lifecycle_service import (
+from mist_service.services.configuration_lifecycle_service import (
     ConfigurationLifecycleService,
 )
-from istari_service.services.configuration_query_service import (
+from mist_service.services.configuration_query_service import (
     ConfigurationQueryService,
 )
 

@@ -7,7 +7,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from conftest import ApiHarness
-from istari_service.board_models import WorkPackage, WorkPackageStatus
+from mist_service.board_models import WorkPackage, WorkPackageStatus
 
 
 async def workspace(harness: ApiHarness, username: str = "admin8") -> dict[str, Any]:

@@ -8,9 +8,9 @@ from typing import Any
 import httpx
 import pytest
 
-import istari_service.workflow.camunda as camunda_module
-from istari_service.workflow.camunda import CamundaWorkflowEngine
-from istari_service.workflow.errors import (
+import mist_service.workflow.camunda as camunda_module
+from mist_service.workflow.camunda import CamundaWorkflowEngine
+from mist_service.workflow.errors import (
     InvalidWorkflowTransition,
     WorkflowConflict,
     WorkflowContractError,
@@ -18,7 +18,7 @@ from istari_service.workflow.errors import (
     WorkflowRequestRejected,
     WorkflowTaskNotFound,
 )
-from istari_service.workflow.types import (
+from mist_service.workflow.types import (
     ActiveTaskQuery,
     ClaimTaskCommand,
     CompleteTaskCommand,

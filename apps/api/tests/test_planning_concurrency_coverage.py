@@ -13,32 +13,32 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import istari_service.repositories.board as board_module
-from istari_service.board_models import (
+import mist_service.repositories.board as board_module
+from mist_service.board_models import (
     ReservationStatus,
     WorkPackagePriority,
     WorkPackageStatus,
 )
-from istari_service.domain import Actor
-from istari_service.errors import (
+from mist_service.domain import Actor
+from mist_service.errors import (
     BoardItemNotFound,
     InvalidBoardChange,
     StaleVersion,
     TeamWorkspaceNotFound,
 )
-from istari_service.models import UserRole
-from istari_service.repositories.board import SqlAlchemyBoardRepository
-from istari_service.repositories.board_planning_commands import (
+from mist_service.models import UserRole
+from mist_service.repositories.board import SqlAlchemyBoardRepository
+from mist_service.repositories.board_planning_commands import (
     SqlAlchemyBoardPlanningCommandRepository,
     _constraint_name,
 )
-from istari_service.schemas.board import (
+from mist_service.schemas.board import (
     IterationCloseCommand,
     ReservationCancelCommand,
     ReservationCommand,
     WorkPackageCommand,
 )
-from istari_service.services.board_service import BoardService
+from mist_service.services.board_service import BoardService
 
 
 class _Nested(AbstractAsyncContextManager[None]):

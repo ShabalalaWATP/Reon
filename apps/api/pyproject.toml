@@ -1,7 +1,7 @@
 [project]
-name = "istari-service-api"
+name = "mist-service-api"
 version = "0.1.0"
-description = "FastAPI service for the synthetic ISTARI service-request demonstration."
+description = "FastAPI service for the synthetic Mist service-request demonstration."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -22,8 +22,8 @@ dependencies = [
 ]
 
 [project.scripts]
-istari-maintenance = "istari_service.maintenance:main"
-istari-worker = "istari_service.worker:main"
+mist-maintenance = "mist_service.maintenance:main"
+mist-worker = "mist_service.worker:main"
 
 [dependency-groups]
 dev = [
@@ -47,7 +47,7 @@ requires = ["hatchling==1.31.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/istari_service"]
+packages = ["src/mist_service"]
 
 [tool.uv]
 exclude-newer = "7 days"
@@ -58,7 +58,7 @@ default-groups = ["dev", "test"]
 addopts = [
   "--strict-config",
   "--strict-markers",
-  "--cov=istari_service",
+  "--cov=mist_service",
   "--cov-branch",
   "--cov-report=term-missing",
   "--cov-report=json:coverage.json",
@@ -77,7 +77,7 @@ testpaths = ["tests"]
 [tool.coverage.run]
 branch = true
 concurrency = ["greenlet", "thread"]
-source = ["istari_service"]
+source = ["mist_service"]
 
 [tool.coverage.report]
 exclude_also = [
@@ -115,7 +115,7 @@ select = [
 "tests/**/*.py" = ["S101", "S105", "S106"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["istari_service"]
+known-first-party = ["mist_service"]
 
 [tool.mypy]
 check_untyped_defs = true

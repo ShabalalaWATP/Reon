@@ -8,9 +8,9 @@ from typing import Any, cast
 
 import pytest
 
-from istari_service.config import Environment, Settings
-from istari_service.workflow.engine import WorkflowEngine
-from istari_service.workflow_runtime import (
+from mist_service.config import Environment, Settings
+from mist_service.workflow.engine import WorkflowEngine
+from mist_service.workflow_runtime import (
     CamundaClientFactory,
     WorkflowAdapterFactory,
     managed_camunda_engine,
@@ -46,7 +46,7 @@ class ClientDouble:
 
 @pytest.mark.parametrize("entry_point", ENTRY_POINTS)
 def test_process_entry_points_do_not_import_the_camunda_sdk(entry_point: str) -> None:
-    source = Path("src/istari_service", entry_point).read_text(encoding="utf-8")
+    source = Path("src/mist_service", entry_point).read_text(encoding="utf-8")
     tree = ast.parse(source)
     imported_modules = {
         node.module

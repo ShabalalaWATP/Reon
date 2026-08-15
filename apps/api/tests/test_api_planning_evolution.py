@@ -8,10 +8,10 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.analytics_models import AnalyticsProjectionState, ProjectionHealth
-from istari_service.analytics_projection import PROJECTION_NAME
-from istari_service.board_models import IterationStatus, TeamIteration
-from istari_service.planning_analytics_models import PlanningCapacityPreview
+from mist_service.analytics_models import AnalyticsProjectionState, ProjectionHealth
+from mist_service.analytics_projection import PROJECTION_NAME
+from mist_service.board_models import IterationStatus, TeamIteration
+from mist_service.planning_analytics_models import PlanningCapacityPreview
 from planning_evolution_data import seed_planning
 
 

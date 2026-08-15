@@ -7,8 +7,8 @@ from typing import Any
 from uuid import uuid4
 
 from conftest import ApiHarness, request_payload
-from istari_service.product_runtime import ProductRuntime
-from istari_service.product_security import AllowedHttpsLinkPolicy
+from mist_service.product_runtime import ProductRuntime
+from mist_service.product_security import AllowedHttpsLinkPolicy
 from product_test_support import set_synthetic_active_link_domains
 
 

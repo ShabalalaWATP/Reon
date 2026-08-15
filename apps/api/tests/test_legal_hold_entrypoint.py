@@ -7,7 +7,7 @@ from uuid import uuid4
 
 import pytest
 
-import istari_service.maintenance as maintenance
+import mist_service.maintenance as maintenance
 from operational_test_support import (
     FakeAsyncContext,
     FakeEngine,

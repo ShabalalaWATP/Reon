@@ -12,7 +12,7 @@ from sqlalchemy import select
 
 from api_helpers import submit_request
 from conftest import ApiHarness
-from istari_service.models import (
+from mist_service.models import (
     OutboxStatus,
     RequestStatus,
     ServiceRequest,
@@ -20,15 +20,15 @@ from istari_service.models import (
     WorkflowInstanceStatus,
     WorkflowOutbox,
 )
-from istari_service.workflow.errors import WorkflowTaskNotFound
-from istari_service.workflow.fake import FakeWorkflowEngine
-from istari_service.workflow.types import (
+from mist_service.workflow.errors import WorkflowTaskNotFound
+from mist_service.workflow.fake import FakeWorkflowEngine
+from mist_service.workflow.types import (
     CancelProcessCommand,
     ProcessStateQuery,
     WorkflowProcessSnapshot,
     WorkflowProcessState,
 )
-from istari_service.workflow_cancellation_dispatch import (
+from mist_service.workflow_cancellation_dispatch import (
     CANCELLATION_RETRY,
     CANCELLATION_SUPPORT,
     PendingCancellation,

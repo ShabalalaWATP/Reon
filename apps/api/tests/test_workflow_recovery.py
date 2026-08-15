@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from api_helpers import submit_request
 from conftest import ApiHarness, request_payload
-from istari_service.models import (
+from mist_service.models import (
     OutboxStatus,
     WorkflowInstance,
     WorkflowInstanceStatus,
@@ -17,13 +17,13 @@ from istari_service.models import (
     WorkflowTask,
     WorkflowTaskStatus,
 )
-from istari_service.request_event_models import RequestEvent
-from istari_service.workflow_command_dispatch import WorkflowCommandDispatcher
-from istari_service.workflow_command_results import (
+from mist_service.request_event_models import RequestEvent
+from mist_service.workflow_command_dispatch import WorkflowCommandDispatcher
+from mist_service.workflow_command_results import (
     RETRY_EXHAUSTED_MESSAGE,
     SUPPORT_MESSAGE,
 )
-from istari_service.workflow_recovery import (
+from mist_service.workflow_recovery import (
     RECOVERY_CONFIRMATION,
     _recoverable_task_status,
     recover_failed_workflow,

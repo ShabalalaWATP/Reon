@@ -1,0 +1,177 @@
+"""Transactional persistence of human-action workflow intents."""
+
+from __future__ import annotations
+
+from datetime import UTC, datetime, timedelta
+from uuid import UUID
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from mist_service.domain import Actor, WorkRecord
+from mist_service.errors import InvalidAction
+from mist_service.models import (
+    OutboxStatus,
+    ServiceRequest,
+    UserRole,
+    WorkflowOutbox,
+    WorkflowTaskStatus,
+)
+from mist_service.models import WorkflowTask as StoredWorkflowTask
+from mist_service.policies import can_access_work, may_complete
+from mist_service.repositories.organisation import (
+    resolve_routing_selection,
+)
+from mist_service.repositories.request_participants import active_participant_ids
+from mist_service.repositories.requests import record_from_request
+from mist_service.repositories.route_access import has_route_membership
+from mist_service.repositories.work_actions import validate_work_effect
+from mist_service.schemas.work import CompletionPayload
+from mist_service.work_command_types import (
+    RoutingSelection,
+    WorkCommandType,
+    command_payload,
+)
+from mist_service.workflow.types import WorkflowAction
+
+PENDING_MESSAGE = "A workflow action is recorded and awaiting processing."
+INITIAL_COMMAND_RECOVERY_DELAY = timedelta(seconds=5)
+
+
+async def prepare_claim_intent(
+    session: AsyncSession,
+    work: WorkRecord,
+    actor: Actor,
+) -> UUID:
+    task, request = await _locked_state(session, work)
+    if (
+        task.status is not WorkflowTaskStatus.OPEN
+        or task.assignee_user_id is not None
+        or task.candidate_role is not actor.role
+    ):
+        raise InvalidAction()
+    pool_verified = await has_route_membership(session, actor, request.id)
+    if not can_access_work(actor, request, pool_membership_verified=pool_verified):
+        raise InvalidAction()
+    task.status = WorkflowTaskStatus.CLAIM_PENDING
+    task.assignee_user_id = actor.id
+    request.workflow_error = PENDING_MESSAGE
+    outbox = _outbox(
+        work,
+        actor,
+        WorkCommandType.CLAIM_TASK,
+        completion=None,
+    )
+    session.add(outbox)
+    await session.flush()
+    return outbox.id
+
+
+async def prepare_completion_intent(
+    session: AsyncSession,
+    work: WorkRecord,
+    actor: Actor,
+    payload: CompletionPayload,
+    *,
+    managed_products_enabled: bool = False,
+) -> UUID:
+    task, request = await _locked_state(session, work)
+    action = WorkflowAction(payload.action)
+    participant_ids = frozenset({actor.id})
+    if actor.role is UserRole.DELIVERY_SPECIALIST and task.assignee_user_id != actor.id:
+        participant_ids = await active_participant_ids(session, request.id)
+    request_record = record_from_request(request, participant_ids)
+    if task.status is not WorkflowTaskStatus.CLAIMED:
+        raise InvalidAction()
+    pool_verified = await has_route_membership(session, actor, request.id)
+    if not may_complete(
+        actor,
+        request_record,
+        action.value,
+        task.assignee_user_id,
+        pool_membership_verified=pool_verified,
+    ):
+        raise InvalidAction()
+    await validate_work_effect(
+        session,
+        request,
+        actor,
+        payload,
+        managed_products_enabled=managed_products_enabled,
+    )
+    routing = await resolve_routing_selection(
+        session,
+        request,
+        payload,
+        lock=True,
+    )
+    task.status = WorkflowTaskStatus.COMPLETION_PENDING
+    request.workflow_error = PENDING_MESSAGE
+    outbox = _outbox(
+        work,
+        actor,
+        WorkCommandType.COMPLETE_TASK,
+        completion=payload,
+        routing=routing,
+    )
+    session.add(outbox)
+    await session.flush()
+    return outbox.id
+
+
+async def _locked_state(
+    session: AsyncSession,
+    work: WorkRecord,
+) -> tuple[StoredWorkflowTask, ServiceRequest]:
+    task = await session.scalar(
+        select(StoredWorkflowTask)
+        .where(StoredWorkflowTask.id == work.id)
+        .with_for_update()
+    )
+    request = await session.scalar(
+        select(ServiceRequest)
+        .where(ServiceRequest.id == work.request.id)
+        .with_for_update()
+    )
+    if (
+        task is None
+        or request is None
+        or task.task_key != work.engine_task_key
+        or task.element_id != work.element_id
+        or request.status is not work.request.status
+        or request.version != work.request.version
+        or task.expected_status is not request.status
+    ):
+        raise InvalidAction()
+    return task, request
+
+
+def _outbox(
+    work: WorkRecord,
+    actor: Actor,
+    command_type: WorkCommandType,
+    *,
+    completion: CompletionPayload | None,
+    routing: RoutingSelection | None = None,
+) -> WorkflowOutbox:
+    return WorkflowOutbox(
+        request_id=work.request.id,
+        event_type=command_type.value,
+        payload=command_payload(
+            work_id=work.id,
+            task_key=work.engine_task_key or "",
+            process_instance_key=work.process_instance_key,
+            element_id=work.element_id,
+            actor_id=actor.id,
+            request_version=work.request.version,
+            request_status=work.request.status,
+            completion=completion,
+            routing=routing,
+        ),
+        idempotency_key=f"{command_type.value.lower()}:{work.engine_task_key}",
+        status=OutboxStatus.PENDING,
+        # The originating API call explicitly dispatches an untouched command.
+        # Maintenance honours this short delay so it cannot win the initial
+        # lease, while still recovering the command if the API stops.
+        available_at=datetime.now(UTC) + INITIAL_COMMAND_RECOVERY_DELAY,
+    )

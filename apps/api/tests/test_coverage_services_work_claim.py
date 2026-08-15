@@ -8,19 +8,19 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from istari_service.domain import Actor, RequestRecord, WorkRecord
-from istari_service.errors import (
+from mist_service.domain import Actor, RequestRecord, WorkRecord
+from mist_service.errors import (
     AlreadyClaimed,
     InvalidAction,
     ObjectNotFound,
     WorkflowActionPending,
     WorkflowUnavailable,
 )
-from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
-from istari_service.schemas.work import CompletionPayload, WorkItem
-from istari_service.services.work_service import WorkService
-from istari_service.work_types import WorkBundle
-from istari_service.workflow.errors import (
+from mist_service.models import RequestStatus, UserRole, WorkflowTaskStatus
+from mist_service.schemas.work import CompletionPayload, WorkItem
+from mist_service.services.work_service import WorkService
+from mist_service.work_types import WorkBundle
+from mist_service.workflow.errors import (
     WorkflowConflict,
     WorkflowEngineUnavailable,
     WorkflowError,

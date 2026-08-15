@@ -9,34 +9,34 @@ import pytest
 from sqlalchemy import select
 
 from conftest import ApiHarness, request_payload
-from istari_service.action_notification_models import (
+from mist_service.action_notification_models import (
     NotificationAccessKind,
     NotificationEvent,
     NotificationEventGroup,
     NotificationProjectionStatus,
 )
-from istari_service.domain import Actor
-from istari_service.errors import InvalidAction, ObjectNotFound, StaleVersion
-from istari_service.models import (
+from mist_service.domain import Actor
+from mist_service.errors import InvalidAction, ObjectNotFound, StaleVersion
+from mist_service.models import (
     RequestStatus,
     ServiceRequest,
     User,
     UserRole,
 )
-from istari_service.repositories.actions import SqlAlchemyActionRepository
-from istari_service.repositories.event_store import append_request_event
-from istari_service.repositories.notification_projection import (
+from mist_service.repositories.actions import SqlAlchemyActionRepository
+from mist_service.repositories.event_store import append_request_event
+from mist_service.repositories.notification_projection import (
     RecipientRule,
     SqlAlchemyNotificationProjectionRepository,
 )
-from istari_service.repositories.notifications import (
+from mist_service.repositories.notifications import (
     SqlAlchemyNotificationRepository,
 )
-from istari_service.repositories.request_participants import (
+from mist_service.repositories.request_participants import (
     replace_request_participants,
 )
-from istari_service.request_event_models import RequestEvent
-from istari_service.request_notification_projection import (
+from mist_service.request_event_models import RequestEvent
+from mist_service.request_notification_projection import (
     _assignee_rule,
     deserialise_rule,
     publish_request_notification,
@@ -44,11 +44,11 @@ from istari_service.request_notification_projection import (
     recipient_rules_for,
     serialise_rule,
 )
-from istari_service.schemas.actions import (
+from mist_service.schemas.actions import (
     ActionFilters,
     NotificationPreferenceUpdate,
 )
-from istari_service.services.notification_service import (
+from mist_service.services.notification_service import (
     NotificationEventCommand,
     NotificationService,
     _validate_recipient_rule,

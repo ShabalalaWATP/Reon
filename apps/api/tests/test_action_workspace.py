@@ -11,37 +11,37 @@ from pydantic import ValidationError
 from sqlalchemy import delete, select
 
 from conftest import ApiHarness
-from istari_service.action_notification_models import (
+from mist_service.action_notification_models import (
     ActionSection,
     ActionSourceType,
     ProjectionHealth,
 )
-from istari_service.domain import Actor
-from istari_service.errors import InvalidAction, ObjectNotFound, StaleVersion
-from istari_service.models import User, UserRole
-from istari_service.organisation_models import (
+from mist_service.domain import Actor
+from mist_service.errors import InvalidAction, ObjectNotFound, StaleVersion
+from mist_service.models import User, UserRole
+from mist_service.organisation_models import (
     OrganisationUnit,
 )
-from istari_service.repositories.actions import SqlAlchemyActionRepository
-from istari_service.repositories.auth import actor_from_user_with_memberships
-from istari_service.repositories.projection_pagination import InvalidProjectionQuery
-from istari_service.routers.actions import (
+from mist_service.repositories.actions import SqlAlchemyActionRepository
+from mist_service.repositories.auth import actor_from_user_with_memberships
+from mist_service.repositories.projection_pagination import InvalidProjectionQuery
+from mist_service.routers.actions import (
     create_action_view,
     delete_action_view,
     get_actions,
     update_action_view,
 )
-from istari_service.schemas.actions import (
+from mist_service.schemas.actions import (
     ActionColumn,
     ActionFilters,
     SavedActionViewCommand,
     SavedActionViewUpdate,
 )
-from istari_service.services.action_service import (
+from mist_service.services.action_service import (
     ActionProjectionCommand,
     ActionService,
 )
-from istari_service.team_models import TeamMembership
+from mist_service.team_models import TeamMembership
 
 
 async def _actor(harness: ApiHarness, username: str) -> Actor:

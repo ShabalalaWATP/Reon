@@ -5,13 +5,13 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from istari_service.workflow.camunda import CamundaWorkflowEngine
-from istari_service.workflow.errors import (
+from mist_service.workflow.camunda import CamundaWorkflowEngine
+from mist_service.workflow.errors import (
     AmbiguousWorkflowProcess,
     WorkflowConflict,
     WorkflowProcessNotVisible,
 )
-from istari_service.workflow.types import StartProcessCommand
+from mist_service.workflow.types import StartProcessCommand
 from test_workflow_camunda_support import (
     PROCESS_INSTANCE_KEY,
     REQUEST_ID,

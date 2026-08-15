@@ -9,25 +9,25 @@ from types import SimpleNamespace
 
 import pytest
 
-import istari_service.product_clamav as clamav_module
-import istari_service.product_security as security_module
+import mist_service.product_clamav as clamav_module
+import mist_service.product_security as security_module
 from in_memory_product_storage import InMemoryPrivateObjectStorage
-from istari_service.product_clamav import (
+from mist_service.product_clamav import (
     ClamAvInstreamScanner,
     CompositeDocumentScanner,
 )
-from istari_service.product_errors import (
+from mist_service.product_errors import (
     ProductDependencyUnavailable,
     ProductValidationFailed,
 )
-from istari_service.product_filesystem_storage import PrivateFilesystemObjectStorage
-from istari_service.product_ports import ScannerAssurance
-from istari_service.product_runtime import clamav_product_runtime, local_product_runtime
-from istari_service.product_security import (
+from mist_service.product_filesystem_storage import PrivateFilesystemObjectStorage
+from mist_service.product_ports import ScannerAssurance
+from mist_service.product_runtime import clamav_product_runtime, local_product_runtime
+from mist_service.product_security import (
     AllowedHttpsLinkPolicy,
     SafeDocumentScanner,
 )
-from istari_service.product_types import ScanResult
+from mist_service.product_types import ScanResult
 from product_test_support import PDF_MEDIA, chunks
 
 

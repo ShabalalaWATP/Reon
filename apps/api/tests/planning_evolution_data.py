@@ -10,13 +10,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from conftest import ApiHarness, request_payload
-from istari_service.analytics_models import (
+from mist_service.analytics_models import (
     AnalyticsProjectionState,
     ProjectionHealth,
     RequestAnalyticsFact,
 )
-from istari_service.analytics_projection import PROJECTION_NAME, PROJECTION_VERSION
-from istari_service.board_models import (
+from mist_service.analytics_projection import PROJECTION_NAME, PROJECTION_VERSION
+from mist_service.board_models import (
     CapacityReservation,
     IterationStatus,
     ReservationStatus,
@@ -26,7 +26,7 @@ from istari_service.board_models import (
     WorkPackagePriority,
     WorkPackageStatus,
 )
-from istari_service.calendar_models import (
+from mist_service.calendar_models import (
     CalendarCategory,
     CalendarEvent,
     CalendarEventKind,
@@ -35,16 +35,16 @@ from istari_service.calendar_models import (
     CommitmentStatus,
     RecurrenceFrequency,
 )
-from istari_service.models import RequestStatus, ServiceRequest
-from istari_service.organisation_models import UserOrganisationMembership
-from istari_service.planning_analytics_models import (
+from mist_service.models import RequestStatus, ServiceRequest
+from mist_service.organisation_models import UserOrganisationMembership
+from mist_service.planning_analytics_models import (
     PackageBlocker,
     PackageChecklist,
     PackageChecklistItem,
     PackageTemplate,
     PackageTemplateChecklistItem,
 )
-from istari_service.schemas.requests import RequestCreate
+from mist_service.schemas.requests import RequestCreate
 
 
 async def seed_planning(harness: ApiHarness) -> tuple[UUID, UUID]:

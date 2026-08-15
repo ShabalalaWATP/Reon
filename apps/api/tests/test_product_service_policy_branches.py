@@ -9,20 +9,20 @@ from uuid import uuid4
 
 import pytest
 
-from istari_service.models import UserRole
-from istari_service.product_errors import (
+from mist_service.models import UserRole
+from mist_service.product_errors import (
     ProductConflict,
     ProductNotFound,
     ProductValidationFailed,
 )
-from istari_service.product_types import ReleaseAccessRecord
-from istari_service.schemas.products import (
+from mist_service.product_types import ReleaseAccessRecord
+from mist_service.schemas.products import (
     AcceptanceCommand,
     PackageCreate,
     SubmitPackageCommand,
 )
-from istari_service.services.product_service import ProductService
-from istari_service.services.product_service_support import ProductServiceSupport
+from mist_service.services.product_service import ProductService
+from mist_service.services.product_service_support import ProductServiceSupport
 from product_phase_test_support import DATA, repository
 
 

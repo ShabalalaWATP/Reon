@@ -4,14 +4,14 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
-from istari_service.auth_service import AuthService, PasswordHasher, hash_opaque_token
-from istari_service.domain import AccountRecord, Actor, SessionRecord
-from istari_service.login_rate_limiter import (
+from mist_service.auth_service import AuthService, PasswordHasher, hash_opaque_token
+from mist_service.domain import AccountRecord, Actor, SessionRecord
+from mist_service.login_rate_limiter import (
     LoginAttemptLimiter,
     LoginRateLimitDecision,
     LoginRateLimitPolicy,
 )
-from istari_service.models import UserRole
+from mist_service.models import UserRole
 
 TEST_PASSWORD = "synthetic-passphrase"
 
@@ -82,7 +82,7 @@ class FakeAuthRepository:
         self.lookups.append(username)
         return self.account
 
-    async def record_failure(
+    async def record_step_up_failure(
         self,
         account: AccountRecord,
         *,

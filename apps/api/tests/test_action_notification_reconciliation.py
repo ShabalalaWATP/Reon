@@ -10,21 +10,21 @@ import pytest
 from sqlalchemy import func, select
 
 from conftest import ApiHarness
-from istari_service.action_notification_models import (
+from mist_service.action_notification_models import (
     NotificationAccessKind,
     NotificationEvent,
     NotificationEventGroup,
     NotificationProjectionStatus,
     NotificationRecipient,
 )
-from istari_service.models import UserRole
-from istari_service.repositories.notification_projection import (
+from mist_service.models import UserRole
+from mist_service.repositories.notification_projection import (
     RecipientRule,
     SqlAlchemyNotificationProjectionRepository,
 )
-from istari_service.request_event_projection import NotificationProjectionReconciler
-from istari_service.request_notification_projection import serialise_rule
-from istari_service.workflow_maintenance import (
+from mist_service.request_event_projection import NotificationProjectionReconciler
+from mist_service.request_notification_projection import serialise_rule
+from mist_service.workflow_maintenance import (
     WorkflowMaintenanceHealth,
     run_workflow_maintenance,
 )

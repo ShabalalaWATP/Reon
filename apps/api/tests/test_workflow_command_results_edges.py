@@ -8,9 +8,9 @@ from uuid import uuid4
 
 import pytest
 
-import istari_service.workflow_command_results as results_module
-from istari_service.domain import RequestRecord, WorkRecord
-from istari_service.models import (
+import mist_service.workflow_command_results as results_module
+from mist_service.domain import RequestRecord, WorkRecord
+from mist_service.models import (
     OutboxStatus,
     RequestStatus,
     ServiceRequest,
@@ -19,9 +19,9 @@ from istari_service.models import (
     WorkflowOutbox,
     WorkflowTaskStatus,
 )
-from istari_service.models import WorkflowTask as StoredWorkflowTask
-from istari_service.workflow.types import WorkflowTask, WorkflowTaskState
-from istari_service.workflow_command_results import (
+from mist_service.models import WorkflowTask as StoredWorkflowTask
+from mist_service.workflow.types import WorkflowTask, WorkflowTaskState
+from mist_service.workflow_command_results import (
     RETRY_EXHAUSTED_MESSAGE,
     RETRY_MESSAGE,
     SUPPORT_MESSAGE,

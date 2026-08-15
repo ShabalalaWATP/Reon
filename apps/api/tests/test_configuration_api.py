@@ -8,8 +8,8 @@ from typing import cast
 import pytest
 
 from conftest import ApiHarness
-from istari_service.configuration_models import ApprovedWorkflowDefinition
-from istari_service.configuration_policy import WORKFLOW_COMPATIBILITY_KEY
+from mist_service.configuration_models import ApprovedWorkflowDefinition
+from mist_service.configuration_policy import WORKFLOW_COMPATIBILITY_KEY
 
 
 @pytest.mark.asyncio

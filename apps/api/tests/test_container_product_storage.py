@@ -18,8 +18,8 @@ def test_non_root_api_receives_an_initialised_private_product_volume() -> None:
     assert initialiser["read_only"] is True
     assert initialiser["cap_drop"] == ["ALL"]
     assert initialiser["cap_add"] == ["CHOWN", "DAC_OVERRIDE", "FOWNER"]
-    assert "chown -R 10001:10001 /var/lib/istari-products" in command
-    assert "product-storage:/var/lib/istari-products" in initialiser["volumes"]
+    assert "chown -R 10001:10001 /var/lib/mist-products" in command
+    assert "product-storage:/var/lib/mist-products" in initialiser["volumes"]
     assert services["api"]["depends_on"]["product-storage-init"] == {
         "condition": "service_completed_successfully"
     }

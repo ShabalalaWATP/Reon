@@ -5,11 +5,11 @@ from uuid import uuid4
 
 import pytest
 
-from istari_service.auth_service import hash_opaque_token
-from istari_service.domain import Actor, SessionRecord
-from istari_service.errors import CsrfFailed
-from istari_service.models import UserRole
-from istari_service.security import require_csrf
+from mist_service.auth_service import hash_opaque_token
+from mist_service.domain import Actor, SessionRecord
+from mist_service.errors import CsrfFailed
+from mist_service.models import UserRole
+from mist_service.security import require_csrf
 
 
 def session_record() -> SessionRecord:

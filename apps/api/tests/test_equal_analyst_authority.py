@@ -1,9 +1,9 @@
 """Equal production authority for every active assigned Analyst."""
 
 from authorisation_test_support import actor, request, work
-from istari_service.authorisation import PolicyDenial, WorkOperation
-from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
-from istari_service.policies import decide_work_access, decide_work_completion
+from mist_service.authorisation import PolicyDenial, WorkOperation
+from mist_service.models import RequestStatus, UserRole, WorkflowTaskStatus
+from mist_service.policies import decide_work_access, decide_work_completion
 
 
 def test_assigned_analyst_can_view_and_complete_shared_delivery_work() -> None:

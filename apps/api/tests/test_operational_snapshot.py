@@ -7,15 +7,15 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import select
 
 from conftest import ApiHarness, request_payload
-from istari_service.analytics_models import AnalyticsProjectionState, ProjectionHealth
-from istari_service.models import (
+from mist_service.analytics_models import AnalyticsProjectionState, ProjectionHealth
+from mist_service.models import (
     OutboxStatus,
     WorkflowInstance,
     WorkflowInstanceStatus,
     WorkflowOutbox,
 )
-from istari_service.operational_snapshot import capture_operational_snapshot
-from istari_service.operations_models import OperationalRun
+from mist_service.operational_snapshot import capture_operational_snapshot
+from mist_service.operations_models import OperationalRun
 
 
 async def test_healthy_snapshot_contains_only_bounded_operational_metrics(

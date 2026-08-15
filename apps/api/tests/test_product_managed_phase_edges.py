@@ -7,10 +7,10 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from istari_service.product_errors import ProductConflict
-from istari_service.product_types import ProductStorageUsage, UploadGrant
-from istari_service.services.product_managed_phases import ProductManagedPhases
-from istari_service.services.product_transfer_types import ManagedPreparation
+from mist_service.product_errors import ProductConflict
+from mist_service.product_types import ProductStorageUsage, UploadGrant
+from mist_service.services.product_managed_phases import ProductManagedPhases
+from mist_service.services.product_transfer_types import ManagedPreparation
 from product_phase_test_support import DATA, TOKEN, command, repository, service
 
 

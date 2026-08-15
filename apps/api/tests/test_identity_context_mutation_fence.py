@@ -11,8 +11,8 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from istari_service.models import Base, IdentityContext, Session, User, UserRole
-from istari_service.repositories.auth import SqlAlchemyAuthRepository
+from mist_service.models import Base, IdentityContext, Session, User, UserRole
+from mist_service.repositories.auth import SqlAlchemyAuthRepository
 
 
 async def test_mutation_fence_rejects_a_stale_context_version() -> None:
@@ -63,9 +63,9 @@ async def test_mutation_fence_rejects_a_stale_context_version() -> None:
 async def test_postgresql_context_switch_and_mutation_have_one_serial_order(
     switch_first: bool,
 ) -> None:
-    database_url = os.getenv("ISTARI_POSTGRES_TEST_URL")
+    database_url = os.getenv("MIST_POSTGRES_TEST_URL")
     if not database_url:
-        pytest.skip("ISTARI_POSTGRES_TEST_URL is required for PostgreSQL race tests")
+        pytest.skip("MIST_POSTGRES_TEST_URL is required for PostgreSQL race tests")
     engine = create_async_engine(database_url)
     sessions = async_sessionmaker(engine, expire_on_commit=False)
     schema = f"context_fence_{uuid4().hex}"

@@ -7,12 +7,12 @@ import pytest
 from sqlalchemy import func, select
 
 from conftest import ApiHarness
-from istari_service.models import RequestStatus, ServiceRequest
-from istari_service.product_errors import ProductNotFound
-from istari_service.product_models import ProductDissemination, ProductPackage
-from istari_service.product_types import PackageStatus
-from istari_service.repositories.products import SqlAlchemyProductRepository
-from istari_service.request_event_models import RequestEvent
+from mist_service.models import RequestStatus, ServiceRequest
+from mist_service.product_errors import ProductNotFound
+from mist_service.product_models import ProductDissemination, ProductPackage
+from mist_service.product_types import PackageStatus
+from mist_service.repositories.products import SqlAlchemyProductRepository
+from mist_service.request_event_models import RequestEvent
 from product_test_support import (
     create_product_request,
     product_actors,

@@ -18,8 +18,8 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from istari_service.repositories.board import SqlAlchemyBoardRepository
-from istari_service.repositories.board_planning_commands import _constraint_name
+from mist_service.repositories.board import SqlAlchemyBoardRepository
+from mist_service.repositories.board_planning_commands import _constraint_name
 
 MIGRATION = (
     Path(__file__).parents[1]
@@ -57,9 +57,9 @@ def test_migration_defines_partial_gist_exclusion_constraint() -> None:
 
 @pytest.mark.asyncio
 async def test_postgresql_rejects_one_of_two_concurrent_active_reservations() -> None:
-    database_url = os.getenv("ISTARI_POSTGRES_TEST_URL")
+    database_url = os.getenv("MIST_POSTGRES_TEST_URL")
     if not database_url:
-        pytest.skip("ISTARI_POSTGRES_TEST_URL is required for PostgreSQL race tests")
+        pytest.skip("MIST_POSTGRES_TEST_URL is required for PostgreSQL race tests")
 
     engine = create_async_engine(database_url)
     schema = f"reservation_race_{uuid4().hex}"
@@ -140,9 +140,9 @@ async def test_postgresql_rejects_one_of_two_concurrent_active_reservations() ->
 
 @pytest.mark.asyncio
 async def test_postgresql_named_conflict_maps_to_deterministic_board_error() -> None:
-    database_url = os.getenv("ISTARI_POSTGRES_TEST_URL")
+    database_url = os.getenv("MIST_POSTGRES_TEST_URL")
     if not database_url:
-        pytest.skip("ISTARI_POSTGRES_TEST_URL is required for PostgreSQL race tests")
+        pytest.skip("MIST_POSTGRES_TEST_URL is required for PostgreSQL race tests")
     engine = create_async_engine(database_url)
     schema = f"reservation_mapping_{uuid4().hex}"
     table = f"reservation_mapping_{uuid4().hex}"
@@ -191,9 +191,9 @@ async def test_postgresql_named_conflict_maps_to_deterministic_board_error() -> 
 
 @pytest.mark.asyncio
 async def test_postgresql_team_lock_serialises_concurrent_wip_admission() -> None:
-    database_url = os.getenv("ISTARI_POSTGRES_TEST_URL")
+    database_url = os.getenv("MIST_POSTGRES_TEST_URL")
     if not database_url:
-        pytest.skip("ISTARI_POSTGRES_TEST_URL is required for PostgreSQL race tests")
+        pytest.skip("MIST_POSTGRES_TEST_URL is required for PostgreSQL race tests")
     engine, sessions, schema, team_id = await _planning_lock_database(database_url)
     first_id, second_id = uuid4(), uuid4()
     async with engine.begin() as connection:
@@ -238,9 +238,9 @@ async def test_postgresql_team_lock_serialises_concurrent_wip_admission() -> Non
 
 @pytest.mark.asyncio
 async def test_postgresql_team_lock_serialises_dependency_cycle_checks() -> None:
-    database_url = os.getenv("ISTARI_POSTGRES_TEST_URL")
+    database_url = os.getenv("MIST_POSTGRES_TEST_URL")
     if not database_url:
-        pytest.skip("ISTARI_POSTGRES_TEST_URL is required for PostgreSQL race tests")
+        pytest.skip("MIST_POSTGRES_TEST_URL is required for PostgreSQL race tests")
     engine, sessions, schema, team_id = await _planning_lock_database(database_url)
     first_id, second_id = uuid4(), uuid4()
     ready, release = asyncio.Event(), asyncio.Event()

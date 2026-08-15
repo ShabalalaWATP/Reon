@@ -5,9 +5,9 @@ from uuid import uuid4
 import pytest
 
 from conftest import ApiHarness
-from istari_service.models import RequestStatus, ServiceRequest
-from istari_service.product_errors import ProductConflict
-from istari_service.schemas.products import ManagedArtefactCreate, PackageCreate
+from mist_service.models import RequestStatus, ServiceRequest
+from mist_service.product_errors import ProductConflict
+from mist_service.schemas.products import ManagedArtefactCreate, PackageCreate
 from product_test_support import (
     PDF_MEDIA,
     InMemoryPrivateObjectStorage,

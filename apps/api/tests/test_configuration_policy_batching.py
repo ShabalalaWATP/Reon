@@ -5,13 +5,13 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import event
 
-from istari_service.config import Environment, Settings
-from istari_service.database import (
+from mist_service.config import Environment, Settings
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.repositories.configuration_policies import (
+from mist_service.repositories.configuration_policies import (
     load_request_configuration_policies,
 )
 

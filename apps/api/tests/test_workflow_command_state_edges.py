@@ -10,20 +10,20 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.dialects import postgresql
 
-from istari_service.errors import InvalidAction
-from istari_service.models import (
+from mist_service.errors import InvalidAction
+from mist_service.models import (
     ProductMode,
     RequestStatus,
     UserRole,
     WorkflowTaskStatus,
 )
-from istari_service.schemas.work import AssignSpecialist, ReturnToCoordination
-from istari_service.work_command_types import (
+from mist_service.schemas.work import AssignSpecialist, ReturnToCoordination
+from mist_service.work_command_types import (
     PendingWorkCommand,
     RoutingSelection,
     WorkCommandType,
 )
-from istari_service.workflow_command_state import (
+from mist_service.workflow_command_state import (
     _validate_assignment,
     completion_engine_command,
     validated_command_state,

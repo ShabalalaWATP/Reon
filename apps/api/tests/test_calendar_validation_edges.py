@@ -9,8 +9,8 @@ from zoneinfo import ZoneInfo
 import pytest
 from pydantic import ValidationError
 
-from istari_service.calendar_capacity import _digest, _minutes_on_day, _utc
-from istari_service.calendar_models import (
+from mist_service.calendar_capacity import _digest, _minutes_on_day, _utc
+from mist_service.calendar_models import (
     CalendarCategory,
     CalendarEvent,
     CalendarEventKind,
@@ -20,13 +20,13 @@ from istari_service.calendar_models import (
     OccurrenceExceptionKind,
     RecurrenceFrequency,
 )
-from istari_service.calendar_recurrence import expand_event
-from istari_service.schemas.calendar import (
+from mist_service.calendar_recurrence import expand_event
+from mist_service.schemas.calendar import (
     CalendarOccurrence,
     OccurrenceEditCommand,
     PersonalEventCommand,
 )
-from istari_service.services.calendar_service import (
+from mist_service.services.calendar_service import (
     _capacity_range,
     _command,
     _range,
@@ -184,7 +184,7 @@ def test_recurrence_applies_optional_exceptions_and_dst_gap_resolution() -> None
 
 
 def test_recurrence_expansion_obeys_its_hard_safety_limit(monkeypatch) -> None:
-    monkeypatch.setattr("istari_service.calendar_recurrence.MAX_OCCURRENCES", 1)
+    monkeypatch.setattr("mist_service.calendar_recurrence.MAX_OCCURRENCES", 1)
     event = calendar_event(
         uuid4(),
         start=datetime(2026, 4, 1, 9, tzinfo=UTC),

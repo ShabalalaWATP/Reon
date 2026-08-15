@@ -6,18 +6,18 @@ from uuid import UUID
 import pytest
 
 from conftest import ApiHarness, request_payload
-from istari_service.action_notification_models import (
+from mist_service.action_notification_models import (
     NotificationAccessKind,
     NotificationEventGroup,
 )
-from istari_service.domain import Actor
-from istari_service.models import UserRole
-from istari_service.repositories.notification_projection import (
+from mist_service.domain import Actor
+from mist_service.models import UserRole
+from mist_service.repositories.notification_projection import (
     RecipientRule,
     SqlAlchemyNotificationProjectionRepository,
 )
-from istari_service.repositories.notifications import SqlAlchemyNotificationRepository
-from istari_service.services.notification_service import (
+from mist_service.repositories.notifications import SqlAlchemyNotificationRepository
+from mist_service.services.notification_service import (
     NotificationEventCommand,
     NotificationService,
 )

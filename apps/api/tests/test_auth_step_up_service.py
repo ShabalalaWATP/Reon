@@ -6,9 +6,9 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from istari_service.domain import AccountRecord
-from istari_service.errors import AdministrationAccessDenied, AuthenticationFailed
-from istari_service.models import UserRole
+from mist_service.domain import AccountRecord
+from mist_service.errors import AdministrationAccessDenied, AuthenticationFailed
+from mist_service.models import UserRole
 from test_auth_service import (
     TEST_PASSWORD,
     FakeAuthRepository,

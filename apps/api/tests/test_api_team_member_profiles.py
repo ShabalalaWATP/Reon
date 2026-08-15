@@ -27,7 +27,7 @@ async def test_colleague_profile_is_bounded_and_private(
     assert response.json() == {
         "accountId": str(analyst_id),
         "name": "Lewis Ferguson",
-        "email": "admin11@istari.example.test",
+        "email": "admin11@mist.example.test",
         "role": "DELIVERY_SPECIALIST",
         "teamId": str(ssg_id),
         "teamName": "SSG Team",

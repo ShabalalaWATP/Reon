@@ -8,10 +8,10 @@ from uuid import uuid4
 
 import pytest
 
-from istari_service.product_types import ScanDecision, ScanResult, StoredObject
-from istari_service.services.product_content_transfer import ProductContentTransfer
-from istari_service.services.product_scan_transfer import ProductScanTransfer
-from istari_service.services.product_transfer_types import (
+from mist_service.product_types import ScanDecision, ScanResult, StoredObject
+from mist_service.services.product_content_transfer import ProductContentTransfer
+from mist_service.services.product_scan_transfer import ProductScanTransfer
+from mist_service.services.product_transfer_types import (
     ContentOperation,
     ScanOperation,
 )

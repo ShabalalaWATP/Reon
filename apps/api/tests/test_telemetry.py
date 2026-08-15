@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from conftest import ApiHarness
-from istari_service.telemetry import _failure_location
+from mist_service.telemetry import _failure_location
 
 ROOT = Path(__file__).parents[3]
 
@@ -26,7 +26,7 @@ async def test_valid_correlation_is_returned_and_logs_only_the_route_template(
     caplog,
 ) -> None:
     correlation = str(uuid4())
-    with caplog.at_level(logging.INFO, logger="istari_service.access"):
+    with caplog.at_level(logging.INFO, logger="mist_service.access"):
         response = await api_harness.client.get(
             "/health",
             headers={"X-Correlation-ID": correlation},
@@ -51,7 +51,7 @@ async def test_invalid_correlation_and_unmatched_path_are_not_reflected_in_logs(
 ) -> None:
     unsafe_value = "not-valid-user-supplied"
     sensitive_path = f"/not-a-route/{uuid4()}"
-    with caplog.at_level(logging.INFO, logger="istari_service.access"):
+    with caplog.at_level(logging.INFO, logger="mist_service.access"):
         response = await api_harness.client.get(
             sensitive_path,
             headers={"X-Correlation-ID": unsafe_value},
@@ -77,7 +77,7 @@ async def test_unexpected_failure_is_structured_without_exception_content(
         raise RuntimeError(marker)
 
     with (
-        caplog.at_level(logging.ERROR, logger="istari_service.access"),
+        caplog.at_level(logging.ERROR, logger="mist_service.access"),
         pytest.raises(RuntimeError, match=marker),
     ):
         await api_harness.client.get("/synthetic-unexpected-failure")

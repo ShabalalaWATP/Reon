@@ -1,6 +1,6 @@
-# ISTARI Service API
+# Mist Service API
 
-This package is the browser-facing FastAPI boundary for the synthetic ISTARI
+This package is the browser-facing FastAPI boundary for the synthetic Mist
 service-request demonstration. PostgreSQL owns product data and the stable status
 projection. Camunda owns process position and human user-task lifecycle.
 
@@ -23,7 +23,7 @@ Start only the API when its PostgreSQL and Camunda dependencies are already
 available:
 
 ```powershell
-uv run --directory apps/api --env-file ../../.env uvicorn istari_service.main:app --reload
+uv run --directory apps/api --env-file ../../.env uvicorn mist_service.main:app --reload
 ```
 
 Source-running the worker with semantic request matching enabled also needs the
@@ -32,7 +32,7 @@ development setup, then start the worker without network-dependent model access:
 
 ```powershell
 uv run --directory apps/api python -c "from fastembed import TextEmbedding; TextEmbedding(model_name='BAAI/bge-small-en-v1.5', cache_dir='.local/request-embedding-cache')"
-uv run --directory apps/api --env-file ../../.env istari-worker
+uv run --directory apps/api --env-file ../../.env mist-worker
 ```
 
 The normal Compose image bakes and checksum-verifies this cache during its
@@ -65,7 +65,7 @@ they share a transaction.
 
 Application startup restores/seeds the sealed configuration and permits
 mock-user seeding only when configured. It does not run maintenance. The
-separately deployable `istari-worker` process owns workflow dispatch,
+separately deployable `mist-worker` process owns workflow dispatch,
 reconciliation, notification projection and due membership projection under
 durable fenced leases. `/health` is liveness. `/ready` checks PostgreSQL,
 workflow, configuration integrity and the worker heartbeat when required, and

@@ -9,14 +9,14 @@ from sqlalchemy import delete, select
 
 from api_helpers import current_item, submit_request
 from conftest import ApiHarness, request_payload
-from istari_service.models import (
+from mist_service.models import (
     ServiceRequest,
     UserRole,
     WorkflowTaskStatus,
 )
-from istari_service.models import WorkflowTask as StoredWorkflowTask
-from istari_service.team_models import TeamMembership
-from istari_service.workflow.variables import completion_variables
+from mist_service.models import WorkflowTask as StoredWorkflowTask
+from mist_service.team_models import TeamMembership
+from mist_service.workflow.variables import completion_variables
 
 
 async def _workspace(harness: ApiHarness, work_id: str) -> dict[str, Any]:

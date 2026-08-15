@@ -7,9 +7,9 @@ from uuid import uuid4
 import pytest
 
 from conftest import ApiHarness
-from istari_service.errors import ObjectNotFound
-from istari_service.repositories.profiles import SqlAlchemyProfileRepository
-from istari_service.schemas.profiles import _plain_optional
+from mist_service.errors import ObjectNotFound
+from mist_service.repositories.profiles import SqlAlchemyProfileRepository
+from mist_service.schemas.profiles import _plain_optional
 
 
 async def test_authenticated_user_can_maintain_only_their_profile(
@@ -23,7 +23,7 @@ async def test_authenticated_user_can_maintain_only_their_profile(
         "userId": str(await harness.user_id("admin2")),
         "name": "John McGinn",
         "username": "admin2",
-        "email": "admin2@istari.example.test",
+        "email": "admin2@mist.example.test",
         "role": "REQUESTER",
         "profileTeam": None,
         "rankOrGrade": None,

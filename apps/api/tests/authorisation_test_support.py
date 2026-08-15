@@ -5,8 +5,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from istari_service.domain import Actor, RequestRecord, WorkRecord
-from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
+from mist_service.domain import Actor, RequestRecord, WorkRecord
+from mist_service.models import RequestStatus, UserRole, WorkflowTaskStatus
 
 
 def actor(

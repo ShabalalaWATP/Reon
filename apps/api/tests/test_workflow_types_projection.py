@@ -7,13 +7,13 @@ from uuid import UUID
 
 import pytest
 
-from istari_service.models import RequestStatus
-from istari_service.workflow.errors import (
+from mist_service.models import RequestStatus
+from mist_service.workflow.errors import (
     InvalidWorkflowTransition,
     UnknownWorkflowElement,
     WorkflowRequestRejected,
 )
-from istari_service.workflow.projection import (
+from mist_service.workflow.projection import (
     ACTION_RESULT_STATUSES,
     DECISION_VARIABLES_BY_ELEMENT,
     ELEMENT_IDS_BY_STATUS,
@@ -24,7 +24,7 @@ from istari_service.workflow.projection import (
     status_after_action,
     status_for_element,
 )
-from istari_service.workflow.types import (
+from mist_service.workflow.types import (
     ActiveTaskQuery,
     ClaimTaskCommand,
     CompleteTaskCommand,

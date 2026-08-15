@@ -18,8 +18,8 @@ async def create_assurance_databases(
     if parsed.drivername != "postgresql+asyncpg":
         raise ValueError("migration assurance requires a PostgreSQL asyncpg URL")
     names = (
-        f"istari_migration_{uuid4().hex}",
-        f"istari_empty_{uuid4().hex}",
+        f"mist_migration_{uuid4().hex}",
+        f"mist_empty_{uuid4().hex}",
     )
     maintenance_url = parsed.set(database="postgres").render_as_string(
         hide_password=False

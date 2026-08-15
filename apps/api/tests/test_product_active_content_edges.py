@@ -9,12 +9,12 @@ from collections.abc import AsyncIterator
 
 import pytest
 
-from istari_service.product_security import (
+from mist_service.product_security import (
     MAX_FILE_BYTES,
     SafeDocumentScanner,
     normalise_product_correlation_id,
 )
-from istari_service.product_types import ScanResult
+from mist_service.product_types import ScanResult
 
 PDF_MEDIA = "application/pdf"
 DOCX_MEDIA = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"

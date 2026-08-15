@@ -10,16 +10,16 @@ from uuid import uuid4
 import pytest
 from fastapi import Request
 
-import istari_service.dependencies as dependencies
-import istari_service.mutation_dependencies as mutation_dependencies
-import istari_service.request_notification_projection as notifications
+import mist_service.dependencies as dependencies
+import mist_service.mutation_dependencies as mutation_dependencies
+import mist_service.request_notification_projection as notifications
 from conftest import ApiHarness
-from istari_service.action_notification_models import NotificationAccessKind
-from istari_service.config import Environment, Settings
-from istari_service.domain import Actor, SessionRecord
-from istari_service.errors import ObjectNotFound, SessionRequired
-from istari_service.models import RequestStatus, ServiceRequest, UserRole
-from istari_service.request_action_projection import ActionAudience
+from mist_service.action_notification_models import NotificationAccessKind
+from mist_service.config import Environment, Settings
+from mist_service.domain import Actor, SessionRecord
+from mist_service.errors import ObjectNotFound, SessionRequired
+from mist_service.models import RequestStatus, ServiceRequest, UserRole
+from mist_service.request_action_projection import ActionAudience
 
 
 def _actor(role: UserRole) -> Actor:

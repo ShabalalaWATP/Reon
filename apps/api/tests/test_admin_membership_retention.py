@@ -3,9 +3,9 @@
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.models import User
-from istari_service.team_membership_admin import align_admin_workspace_memberships
-from istari_service.team_models import TeamMembership, WorkspacePosition
+from mist_service.models import User
+from mist_service.team_membership_admin import align_admin_workspace_memberships
+from mist_service.team_models import TeamMembership, WorkspacePosition
 
 
 async def test_admin_alignment_retains_exact_current_membership(

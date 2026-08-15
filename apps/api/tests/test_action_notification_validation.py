@@ -8,17 +8,17 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
-from istari_service.errors import InvalidAction
-from istari_service.models import RequestStatus
-from istari_service.notification_catalog import render_subject
-from istari_service.repositories.notifications import _state_filter
-from istari_service.repositories.projection_pagination import (
+from mist_service.errors import InvalidAction
+from mist_service.models import RequestStatus
+from mist_service.notification_catalog import render_subject
+from mist_service.repositories.notifications import _state_filter
+from mist_service.repositories.projection_pagination import (
     InvalidProjectionQuery,
     decode_cursor,
 )
-from istari_service.request_event_models import RequestEvent
-from istari_service.request_notification_projection import notification_spec
-from istari_service.schemas.actions import (
+from mist_service.request_event_models import RequestEvent
+from mist_service.request_notification_projection import notification_spec
+from mist_service.schemas.actions import (
     ActionColumn,
     ActionFilters,
     NotificationFilterState,
@@ -28,7 +28,7 @@ from istari_service.schemas.actions import (
     NotificationStateTarget,
     SavedActionViewCommand,
 )
-from istari_service.services.notification_service import _event_types, _validate_dates
+from mist_service.services.notification_service import _event_types, _validate_dates
 
 
 @pytest.mark.parametrize(

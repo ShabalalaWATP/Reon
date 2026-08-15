@@ -10,16 +10,16 @@ from sqlalchemy import select
 
 from conftest import ApiHarness
 from in_memory_product_storage import InMemoryPrivateObjectStorage
-from istari_service.product_errors import ProductConflict, ProductValidationFailed
-from istari_service.product_models import ProductAccessEvent
-from istari_service.product_security import AllowedHttpsLinkPolicy, SafeDocumentScanner
-from istari_service.repositories.products import SqlAlchemyProductRepository
-from istari_service.schemas.products import (
+from mist_service.product_errors import ProductConflict, ProductValidationFailed
+from mist_service.product_models import ProductAccessEvent
+from mist_service.product_security import AllowedHttpsLinkPolicy, SafeDocumentScanner
+from mist_service.repositories.products import SqlAlchemyProductRepository
+from mist_service.schemas.products import (
     ExternalLinkCreate,
     ManagedArtefactCreate,
     PackageCreate,
 )
-from istari_service.services.product_service import ProductService
+from mist_service.services.product_service import ProductService
 from product_test_support import (
     PDF_MEDIA,
     RecordingAudit,

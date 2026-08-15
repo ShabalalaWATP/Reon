@@ -5,12 +5,12 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.management_models import (
+from mist_service.management_models import (
     ManagementAction,
     ManagementGrant,
     ManagementGrantAction,
 )
-from istari_service.team_models import TeamMembership, WorkspacePosition
+from mist_service.team_models import TeamMembership, WorkspacePosition
 
 
 async def test_member_cannot_use_a_misconfigured_roster_grant(

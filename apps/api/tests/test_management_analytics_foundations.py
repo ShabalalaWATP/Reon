@@ -10,27 +10,27 @@ import pytest
 from sqlalchemy import func, select
 
 from conftest import ApiHarness
-from istari_service.admin_audit import verify_admin_audit_integrity
-from istari_service.errors import (
+from mist_service.admin_audit import verify_admin_audit_integrity
+from mist_service.errors import (
     AdministrationAccessDenied,
     InvalidAdministrationChange,
     StaleVersion,
 )
-from istari_service.management_models import (
+from mist_service.management_models import (
     ManagementAction,
     ManagementGrant,
     ManagementGrantAction,
     OrganisationClosure,
 )
-from istari_service.management_seed import management_grant_id
-from istari_service.models import User
-from istari_service.organisation_models import OrganisationUnit
-from istari_service.repositories.management import (
+from mist_service.management_seed import management_grant_id
+from mist_service.models import User
+from mist_service.organisation_models import OrganisationUnit
+from mist_service.repositories.management import (
     rebuild_organisation_closure,
     resolve_management_scope,
     scoped_unit_ids,
 )
-from istari_service.repositories.management_grants import (
+from mist_service.repositories.management_grants import (
     GrantDefinition,
     create_management_grant,
     revoke_management_grant,

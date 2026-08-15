@@ -15,12 +15,12 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from conftest import ApiHarness
 from in_memory_product_storage import InMemoryPrivateObjectStorage
-from istari_service.auth_service import hash_opaque_token
-from istari_service.models import User
-from istari_service.product_ports import ScannerAssurance
-from istari_service.product_runtime import ProductRuntime
-from istari_service.product_security import AllowedHttpsLinkPolicy, SafeDocumentScanner
-from istari_service.product_types import (
+from mist_service.auth_service import hash_opaque_token
+from mist_service.models import User
+from mist_service.product_ports import ScannerAssurance
+from mist_service.product_runtime import ProductRuntime
+from mist_service.product_security import AllowedHttpsLinkPolicy, SafeDocumentScanner
+from mist_service.product_types import (
     ArtefactKind,
     ArtefactLifecycle,
     ArtefactRecord,
@@ -30,20 +30,20 @@ from istari_service.product_types import (
     StoredObject,
     UploadGrant,
 )
-from istari_service.repositories.auth import SqlAlchemyAuthRepository
-from istari_service.repositories.products import SqlAlchemyProductRepository
-from istari_service.schemas.products import (
+from mist_service.repositories.auth import SqlAlchemyAuthRepository
+from mist_service.repositories.products import SqlAlchemyProductRepository
+from mist_service.schemas.products import (
     ManagedArtefactCreate,
     PackageCreate,
     VersionCommand,
 )
-from istari_service.services.product_customer_release_service import (
+from mist_service.services.product_customer_release_service import (
     ProductCustomerReleaseService,
 )
-from istari_service.services.product_download_service import ProductDownloadService
-from istari_service.services.product_review_service import ProductReviewService
-from istari_service.services.product_transfer_context import ProductTransferContext
-from istari_service.services.product_transfer_service import ProductTransferService
+from mist_service.services.product_download_service import ProductDownloadService
+from mist_service.services.product_review_service import ProductReviewService
+from mist_service.services.product_transfer_context import ProductTransferContext
+from mist_service.services.product_transfer_service import ProductTransferService
 from product_test_support import (
     PDF_MEDIA,
     RecordingAudit,

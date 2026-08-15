@@ -7,22 +7,22 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from configuration_support import draft_from_active, seed_configuration_context
-from istari_service.config import Environment, Settings
-from istari_service.database import (
+from mist_service.config import Environment, Settings
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.errors import InvalidAdministrationChange
-from istari_service.repositories.configuration import SqlAlchemyConfigurationRepository
-from istari_service.schemas.configuration import (
+from mist_service.errors import InvalidAdministrationChange
+from mist_service.repositories.configuration import SqlAlchemyConfigurationRepository
+from mist_service.schemas.configuration import (
     ConfigurationDraftReplace,
     ConfigurationVersionCommand,
 )
-from istari_service.services.configuration_lifecycle_service import (
+from mist_service.services.configuration_lifecycle_service import (
     ConfigurationLifecycleService,
 )
-from istari_service.text_safety import normalise_display_name
+from mist_service.text_safety import normalise_display_name
 from test_configuration_lifecycle import _reason
 
 

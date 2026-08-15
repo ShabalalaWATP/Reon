@@ -7,7 +7,7 @@ from uuid import uuid4
 
 import pytest
 
-from istari_service.audit_types import (
+from mist_service.audit_types import (
     AdminAuditEvidence,
     validate_audit_details,
 )

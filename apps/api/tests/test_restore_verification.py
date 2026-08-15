@@ -5,8 +5,8 @@ from __future__ import annotations
 from sqlalchemy import text, update
 
 from conftest import ApiHarness, request_payload
-from istari_service.request_event_models import RequestEvent
-from istari_service.restore_verification import verify_restored_database
+from mist_service.request_event_models import RequestEvent
+from mist_service.restore_verification import verify_restored_database
 
 
 async def _seed_revision(harness: ApiHarness, revision: str) -> None:

@@ -7,11 +7,11 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from in_memory_product_storage import InMemoryPrivateObjectStorage
-from istari_service.product_cleanup import ProductUploadCleanup
-from istari_service.product_models import ProductArtefact, ProductUploadIntent
-from istari_service.product_types import ArtefactLifecycle
-from istari_service.repositories.products import SqlAlchemyProductRepository
-from istari_service.schemas.products import PackageCreate
+from mist_service.product_cleanup import ProductUploadCleanup
+from mist_service.product_models import ProductArtefact, ProductUploadIntent
+from mist_service.product_types import ArtefactLifecycle
+from mist_service.repositories.products import SqlAlchemyProductRepository
+from mist_service.schemas.products import PackageCreate
 from product_test_support import (
     RecordingAudit,
     chunks,

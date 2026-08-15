@@ -15,9 +15,9 @@ from configuration_support import (
     seed_configuration_context,
 )
 from conftest import ApiHarness
-from istari_service.configuration_models import RequestConfigurationPin
-from istari_service.models import ServiceRequest, User
-from istari_service.organisation_models import RequestRouteSelection
+from mist_service.configuration_models import RequestConfigurationPin
+from mist_service.models import ServiceRequest, User
+from mist_service.organisation_models import RequestRouteSelection
 
 
 async def test_configured_team_rename_preserves_old_and_new_pin_access(

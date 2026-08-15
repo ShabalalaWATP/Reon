@@ -9,19 +9,19 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
-from istari_service.config import Environment, Settings
-from istari_service.database import (
+from mist_service.config import Environment, Settings
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
-from istari_service.organisation_models import UserOrganisationMembership
-from istari_service.organisation_seed import organisation_id, seed_organisation_units
-from istari_service.repositories.projection_pagination import encode_cursor
-from istari_service.repositories.work import SqlAlchemyWorkRepository
-from istari_service.schemas.work import ProgressRequest
-from istari_service.team_models import TeamMembership
+from mist_service.models import RequestStatus, UserRole, WorkflowTaskStatus
+from mist_service.organisation_models import UserOrganisationMembership
+from mist_service.organisation_seed import organisation_id, seed_organisation_units
+from mist_service.repositories.projection_pagination import encode_cursor
+from mist_service.repositories.work import SqlAlchemyWorkRepository
+from mist_service.schemas.work import ProgressRequest
+from mist_service.team_models import TeamMembership
 from test_work_repository import (
     actor_from,
     make_user,

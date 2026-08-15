@@ -4,9 +4,9 @@ from typing import Any, cast
 
 import pytest
 
-import istari_service.main as main_module
-from istari_service.main import create_app
-from istari_service.workflow.fake import FakeWorkflowEngine
+import mist_service.main as main_module
+from mist_service.main import create_app
+from mist_service.workflow.fake import FakeWorkflowEngine
 from test_coverage_lifecycle import (
     FastHasher,
     SessionFactoryDouble,

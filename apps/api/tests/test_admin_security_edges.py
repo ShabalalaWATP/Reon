@@ -8,30 +8,30 @@ import pytest
 from sqlalchemy import delete, select
 
 from conftest import ApiHarness
-from istari_service.admin_audit import (
+from mist_service.admin_audit import (
     append_admin_event,
     initialise_admin_audit_anchor,
     verify_admin_audit_integrity,
 )
-from istari_service.admin_models import (
+from mist_service.admin_models import (
     ADMIN_AUDIT_ANCHOR_ID,
     AdminAuditAnchor,
     AdminAuditEvent,
     AdminIdentitySequence,
 )
-from istari_service.admin_sequence import initialise_admin_identity_sequence
-from istari_service.audit import canonical_anchor_mac
-from istari_service.auth_service import PasswordHasher
-from istari_service.domain import Actor
-from istari_service.errors import InvalidAdministrationChange
-from istari_service.models import User, UserRole
-from istari_service.repositories.admin import SqlAlchemyAdminRepository
-from istari_service.repositories.admin_application import (
+from mist_service.admin_sequence import initialise_admin_identity_sequence
+from mist_service.audit import canonical_anchor_mac
+from mist_service.auth_service import PasswordHasher
+from mist_service.domain import Actor
+from mist_service.errors import InvalidAdministrationChange
+from mist_service.models import User, UserRole
+from mist_service.repositories.admin import SqlAlchemyAdminRepository
+from mist_service.repositories.admin_application import (
     SqlAlchemyAdminApplication,
 )
-from istari_service.repositories.event_store import audit_key_for_session
-from istari_service.schemas.admin import AdminStatusPatch
-from istari_service.services.admin_service import AdminService
+from mist_service.repositories.event_store import audit_key_for_session
+from mist_service.schemas.admin import AdminStatusPatch
+from mist_service.services.admin_service import AdminService
 
 
 async def _login_admin(harness: ApiHarness) -> None:

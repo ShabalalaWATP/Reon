@@ -9,17 +9,17 @@ from sqlalchemy import select
 
 from api_helpers import current_item, submit_request
 from conftest import ApiHarness, request_payload
-from istari_service.models import (
+from mist_service.models import (
     OutboxStatus,
     RequestStatus,
     ServiceRequest,
     WorkflowOutbox,
     WorkflowTask,
 )
-from istari_service.workflow.lookup import TaskLookupPolicy
-from istari_service.workflow_command_dispatch import WorkflowCommandDispatcher
-from istari_service.workflow_dispatch import WorkflowOutboxDispatcher
-from istari_service.workflow_maintenance import WorkflowReconciler
+from mist_service.workflow.lookup import TaskLookupPolicy
+from mist_service.workflow_command_dispatch import WorkflowCommandDispatcher
+from mist_service.workflow_dispatch import WorkflowOutboxDispatcher
+from mist_service.workflow_maintenance import WorkflowReconciler
 
 
 async def _create_without_dispatch(harness: ApiHarness) -> UUID:

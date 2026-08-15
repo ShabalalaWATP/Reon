@@ -6,7 +6,7 @@ import ast
 import re
 from pathlib import Path
 
-from istari_service.maintenance import parser
+from mist_service.maintenance import parser
 
 ROOT = Path(__file__).parents[3]
 
@@ -44,7 +44,7 @@ def test_postgres_tools_receive_only_a_password_free_service_reference() -> None
     for name in ("backup-postgres.ps1", "restore-postgres.ps1"):
         script = (ROOT / "scripts" / name).read_text("utf-8")
         assert "--dbname=$env:" not in script
-        assert "--dbname=service=istari_maintenance" in script
+        assert "--dbname=service=mist_maintenance" in script
         assert "New-PostgresServiceFile" in script
         assert "Remove-Item -LiteralPath $serviceFile" in script
     helper = (ROOT / "scripts/lib/PostgresServiceFile.ps1").read_text("utf-8")
@@ -58,7 +58,7 @@ def test_remote_recovery_requires_authenticated_transport_and_manifests() -> Non
     pester = (ROOT / "scripts/tests/PostgresRecovery.Tests.ps1").read_text("utf-8")
     assert "@('localhost', '127.0.0.1', '[::1]')" in service_helper
     assert "sslmode=verify-full" in service_helper
-    assert "ISTARI_POSTGRES_APPROVED_SSL_ROOT_CERT" in service_helper
+    assert "MIST_POSTGRES_APPROVED_SSL_ROOT_CERT" in service_helper
     assert "HMACSHA256" in manifest_helper
     assert "FixedTimeEquals" in manifest_helper
     assert "coordinated dump and manifest hash change" in pester

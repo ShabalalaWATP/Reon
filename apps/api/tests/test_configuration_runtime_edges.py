@@ -9,15 +9,15 @@ from uuid import uuid4
 
 import pytest
 
-from istari_service.configuration_readiness import configuration_runtime_is_ready
-from istari_service.configuration_request_policy import (
+from mist_service.configuration_readiness import configuration_runtime_is_ready
+from mist_service.configuration_request_policy import (
     canonical_link_domains,
     parse_request_configuration_policy,
 )
-from istari_service.configuration_types import ConfigurationStatus
-from istari_service.errors import InvalidAction
-from istari_service.organisation_models import OrganisationKind
-from istari_service.workflow_start_identity import (
+from mist_service.configuration_types import ConfigurationStatus
+from mist_service.errors import InvalidAction
+from mist_service.organisation_models import OrganisationKind
+from mist_service.workflow_start_identity import (
     pinned_start_identity_matches,
     pinned_workflow_identity,
 )

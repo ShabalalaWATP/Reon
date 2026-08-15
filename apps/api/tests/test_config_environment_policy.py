@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from istari_service.config_environment_policy import (
+from mist_service.config_environment_policy import (
     EnvironmentControls,
     normalise_browser_boundaries,
     validate_environment_controls,

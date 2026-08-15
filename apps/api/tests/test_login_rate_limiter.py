@@ -21,21 +21,21 @@ from auth_test_support import (
     StubLoginLimiter,
     make_service,
 )
-from istari_service.auth_service import AuthService, PasswordHasher
-from istari_service.config import Environment, Settings
-from istari_service.database import (
+from mist_service.auth_service import AuthService, PasswordHasher
+from mist_service.config import Environment, Settings
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.errors import AuthenticationFailed, AuthenticationRateLimited
-from istari_service.login_rate_limit_models import LoginRateLimit
-from istari_service.login_rate_limiter import (
+from mist_service.errors import AuthenticationFailed, AuthenticationRateLimited
+from mist_service.login_rate_limit_models import LoginRateLimit
+from mist_service.login_rate_limiter import (
     LoginRateLimitDecision,
     LoginRateLimitPolicy,
     LoginRateLimitUnavailable,
 )
-from istari_service.repositories.login_rate_limits import (
+from mist_service.repositories.login_rate_limits import (
     SqlAlchemyLoginAttemptLimiter,
     _dialect_insert,
     _retry_after,

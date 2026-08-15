@@ -9,15 +9,15 @@ from uuid import uuid4
 
 import pytest
 
-from istari_service.product_errors import ProductConflict, ProductNotFound
-from istari_service.product_types import (
+from mist_service.product_errors import ProductConflict, ProductNotFound
+from mist_service.product_types import (
     ScanDecision,
     ScanResult,
     StoredObject,
 )
-from istari_service.schemas.products import PackageView, VersionCommand
-from istari_service.services.product_content_phases import ProductContentPhases
-from istari_service.services.product_transfer_types import (
+from mist_service.schemas.products import PackageView, VersionCommand
+from mist_service.services.product_content_phases import ProductContentPhases
+from mist_service.services.product_transfer_types import (
     ContentOperation,
     ScanOperation,
 )

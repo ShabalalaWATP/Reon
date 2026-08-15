@@ -11,30 +11,30 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from conftest import ApiHarness
 from in_memory_product_storage import InMemoryPrivateObjectStorage
-from istari_service.action_notification_models import (
+from mist_service.action_notification_models import (
     NotificationAccessKind,
     NotificationEventGroup,
 )
-from istari_service.models import RequestStatus, ServiceRequest, User, WorkflowInstance
-from istari_service.product_errors import ProductConflict, ProductNotFound
-from istari_service.product_models import ProductPackage
-from istari_service.product_types import PackageStatus
-from istari_service.qc_membership import QC_TEAM_ID
-from istari_service.repositories.auth import actor_from_user_with_memberships
-from istari_service.repositories.notification_projection import (
+from mist_service.models import RequestStatus, ServiceRequest, User, WorkflowInstance
+from mist_service.product_errors import ProductConflict, ProductNotFound
+from mist_service.product_models import ProductPackage
+from mist_service.product_types import PackageStatus
+from mist_service.qc_membership import QC_TEAM_ID
+from mist_service.repositories.auth import actor_from_user_with_memberships
+from mist_service.repositories.notification_projection import (
     RecipientRule,
     SqlAlchemyNotificationProjectionRepository,
 )
-from istari_service.repositories.notifications import SqlAlchemyNotificationRepository
-from istari_service.repositories.products import SqlAlchemyProductRepository
-from istari_service.repositories.requests import SqlAlchemyRequestRepository
-from istari_service.repositories.work import SqlAlchemyWorkRepository
-from istari_service.schemas.products import (
+from mist_service.repositories.notifications import SqlAlchemyNotificationRepository
+from mist_service.repositories.products import SqlAlchemyProductRepository
+from mist_service.repositories.requests import SqlAlchemyRequestRepository
+from mist_service.repositories.work import SqlAlchemyWorkRepository
+from mist_service.schemas.products import (
     ApprovalCommand,
     DisseminationCommand,
     ExternalLinkCreate,
 )
-from istari_service.team_models import TeamMembership, WorkspacePosition
+from mist_service.team_models import TeamMembership, WorkspacePosition
 from product_test_support import (
     RecordingAudit,
     add_claimed_lead_review_task,

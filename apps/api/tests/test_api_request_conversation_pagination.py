@@ -10,8 +10,8 @@ from sqlalchemy.dialects import postgresql, sqlite
 
 from api_helpers import reach_delivery_work
 from conftest import ApiHarness
-from istari_service.repositories.conversation_pages import bounded_message_query
-from istari_service.services import conversation_limits
+from mist_service.repositories.conversation_pages import bounded_message_query
+from mist_service.services import conversation_limits
 
 
 def test_bounded_message_window_compiles_for_supported_databases() -> None:

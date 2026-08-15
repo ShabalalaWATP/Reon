@@ -11,18 +11,18 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from conftest import ApiHarness
-from istari_service.analytics_evolution_models import OperationalFactType
-from istari_service.board_models import IterationStatus, TeamIteration
-from istari_service.calendar_models import CalendarCapacitySnapshot
-from istari_service.models import ServiceRequest
-from istari_service.operational_analytics_facts import (
+from mist_service.analytics_evolution_models import OperationalFactType
+from mist_service.board_models import IterationStatus, TeamIteration
+from mist_service.calendar_models import CalendarCapacitySnapshot
+from mist_service.models import ServiceRequest
+from mist_service.operational_analytics_facts import (
     OperationalFactInput,
     OperationalScope,
     append_operational_fact,
     request_operational_scope,
     unit_operational_scope,
 )
-from istari_service.operational_analytics_projection import (
+from mist_service.operational_analytics_projection import (
     project_capacity_snapshot_facts,
     project_closed_iteration_facts,
     project_notification_response_fact,
@@ -30,13 +30,13 @@ from istari_service.operational_analytics_projection import (
     project_product_access_fact,
     project_request_operational_event,
 )
-from istari_service.operational_analytics_reconciliation import (
+from mist_service.operational_analytics_reconciliation import (
     reconcile_operational_analytics,
 )
-from istari_service.organisation_models import OrganisationKind
-from istari_service.product_models import ProductAccessEvent
-from istari_service.product_types import AccessKind, AccessOutcome
-from istari_service.request_event_models import RequestEvent
+from mist_service.organisation_models import OrganisationKind
+from mist_service.product_models import ProductAccessEvent
+from mist_service.product_types import AccessKind, AccessOutcome
+from mist_service.request_event_models import RequestEvent
 
 
 class _ScalarResult:
@@ -187,7 +187,7 @@ async def test_projectors_skip_unrecognised_or_unscoped_sources(
 async def test_product_access_projects_release_to_access_duration(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from istari_service import operational_analytics_projection as projection
+    from mist_service import operational_analytics_projection as projection
 
     released_at = datetime(2026, 1, 1, 9, tzinfo=UTC)
     accessed_at = released_at + timedelta(minutes=8)

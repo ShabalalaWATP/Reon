@@ -12,19 +12,19 @@ from configuration_support import (
     seed_configuration_context,
 )
 from conftest import ApiHarness, request_payload
-from istari_service.configuration_models import (
+from mist_service.configuration_models import (
     ApprovedWorkflowDefinition,
     RequestConfigurationPin,
 )
-from istari_service.models import (
+from mist_service.models import (
     OutboxStatus,
     WorkflowInstance,
     WorkflowInstanceStatus,
     WorkflowOutbox,
 )
-from istari_service.workflow.fake import FakeWorkflowEngine
-from istari_service.workflow.lookup import TaskLookupPolicy
-from istari_service.workflow_dispatch import WorkflowOutboxDispatcher
+from mist_service.workflow.fake import FakeWorkflowEngine
+from mist_service.workflow.lookup import TaskLookupPolicy
+from mist_service.workflow_dispatch import WorkflowOutboxDispatcher
 
 
 async def test_direct_and_draft_requests_dispatch_the_pinned_workflow(

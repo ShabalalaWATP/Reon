@@ -11,16 +11,16 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
-from istari_service.audit import canonical_event_hash, verify_event_chain
-from istari_service.audit_types import AuditEventEvidence
-from istari_service.config import Environment, Settings
-from istari_service.database import (
+from mist_service.audit import canonical_event_hash, verify_event_chain
+from mist_service.audit_types import AuditEventEvidence
+from mist_service.config import Environment, Settings
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.errors import FeedbackUnavailable
-from istari_service.models import (
+from mist_service.errors import FeedbackUnavailable
+from mist_service.models import (
     Deliverable,
     DeliverableStatus,
     Feedback,
@@ -31,15 +31,15 @@ from istari_service.models import (
     WorkflowInstance,
     WorkflowOutbox,
 )
-from istari_service.organisation_seed import seed_organisation_units
-from istari_service.repositories.event_store import (
+from mist_service.organisation_seed import seed_organisation_units
+from mist_service.repositories.event_store import (
     append_request_event,
     audit_key_for_session,
 )
-from istari_service.repositories.request_views import build_request_detail
-from istari_service.repositories.requests import SqlAlchemyRequestRepository
-from istari_service.request_event_models import RequestEvent
-from istari_service.schemas.requests import FeedbackCreate, RequestCreate, Sensitivity
+from mist_service.repositories.request_views import build_request_detail
+from mist_service.repositories.requests import SqlAlchemyRequestRepository
+from mist_service.request_event_models import RequestEvent
+from mist_service.schemas.requests import FeedbackCreate, RequestCreate, Sensitivity
 from pin_test_support import StaticConfigurationPins
 from synthetic_user_support import actor_from, make_user
 

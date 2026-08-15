@@ -8,14 +8,14 @@ from uuid import uuid4
 
 import pytest
 
-from istari_service.config import Environment, Settings
-from istari_service.domain import Actor
-from istari_service.errors import ObjectNotFound
-from istari_service.models import UserRole
-from istari_service.repositories.configuration import (
+from mist_service.config import Environment, Settings
+from mist_service.domain import Actor
+from mist_service.errors import ObjectNotFound
+from mist_service.models import UserRole
+from mist_service.repositories.configuration import (
     SqlAlchemyConfigurationRepository,
 )
-from istari_service.services.configuration_query_service import (
+from mist_service.services.configuration_query_service import (
     ConfigurationQueryService,
 )
 

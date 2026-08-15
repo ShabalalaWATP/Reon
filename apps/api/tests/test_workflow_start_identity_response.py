@@ -5,8 +5,8 @@ from typing import Any
 import httpx
 import pytest
 
-from istari_service.workflow.errors import WorkflowContractError
-from istari_service.workflow.types import StartProcessCommand
+from mist_service.workflow.errors import WorkflowContractError
+from mist_service.workflow.types import StartProcessCommand
 from test_workflow_camunda_support import (
     REQUEST_ID,
     REQUESTER_ID,

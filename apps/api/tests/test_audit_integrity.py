@@ -8,10 +8,10 @@ from sqlalchemy import delete, select, update
 
 from api_helpers import submit_request
 from conftest import ApiHarness
-from istari_service.models import RequestStatus, ServiceRequest
-from istari_service.repositories.event_store import verify_request_event_integrity
-from istari_service.request_event_audience import RequestEventAudience
-from istari_service.request_event_models import RequestEvent
+from mist_service.models import RequestStatus, ServiceRequest
+from mist_service.repositories.event_store import verify_request_event_integrity
+from mist_service.request_event_audience import RequestEventAudience
+from mist_service.request_event_models import RequestEvent
 
 
 async def test_audit_anchor_detects_status_tampering(

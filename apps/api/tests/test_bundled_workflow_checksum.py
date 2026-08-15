@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-from istari_service.configuration_seed import BUNDLED_BPMN_CHECKSUM
+from mist_service.configuration_seed import BUNDLED_BPMN_CHECKSUM
 
 
 def test_bundled_workflow_checksum_matches_approved_seed() -> None:

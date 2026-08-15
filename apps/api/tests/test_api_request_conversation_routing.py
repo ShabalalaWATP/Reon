@@ -10,12 +10,12 @@ from sqlalchemy import select, update
 
 from api_helpers import reach_delivery_work
 from conftest import ApiHarness
-from istari_service.conversation_models import (
+from mist_service.conversation_models import (
     RequestConversationDelivery,
     RequestConversationMessage,
 )
-from istari_service.models import RequestStatus, ServiceRequest
-from istari_service.request_participant_models import (
+from mist_service.models import RequestStatus, ServiceRequest
+from mist_service.request_participant_models import (
     RequestParticipant,
     RequestParticipantRole,
 )

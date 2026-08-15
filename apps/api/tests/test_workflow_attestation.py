@@ -8,10 +8,10 @@ import pytest
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.configuration_models import ApprovedWorkflowDefinition
-from istari_service.configuration_policy import WORKFLOW_COMPATIBILITY_KEY
-from istari_service.operations_models import OperationalRun
-from istari_service.workflow_attestation import (
+from mist_service.configuration_models import ApprovedWorkflowDefinition
+from mist_service.configuration_policy import WORKFLOW_COMPATIBILITY_KEY
+from mist_service.operations_models import OperationalRun
+from mist_service.workflow_attestation import (
     ATTESTATION_CONFIRMATION,
     WorkflowAttestation,
     attest_workflow_availability,

@@ -7,19 +7,19 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from conftest import ApiHarness
-from istari_service.models import (
+from mist_service.models import (
     Deliverable,
     DeliverableStatus,
     ProductMode,
     RequestStatus,
     ServiceRequest,
 )
-from istari_service.product_models import (
+from mist_service.product_models import (
     ProductArtefact,
     ProductDissemination,
     ProductPackage,
 )
-from istari_service.product_types import ArtefactKind, ArtefactLifecycle, PackageStatus
+from mist_service.product_types import ArtefactKind, ArtefactLifecycle, PackageStatus
 from product_test_support import chunks, create_product_request, product_actors
 
 

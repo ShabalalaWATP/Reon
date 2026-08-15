@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from istari_service.request_security import RequestBodyLimitMiddleware
+from mist_service.request_security import RequestBodyLimitMiddleware
 
 
 async def test_non_http_scope_is_forwarded_unchanged() -> None:

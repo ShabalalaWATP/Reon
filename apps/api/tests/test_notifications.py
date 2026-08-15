@@ -9,32 +9,32 @@ import pytest
 from sqlalchemy import select
 
 from conftest import ApiHarness, request_payload
-from istari_service.action_notification_models import (
+from mist_service.action_notification_models import (
     NotificationAccessKind,
     NotificationEvent,
     NotificationEventGroup,
     NotificationProjectionStatus,
     ProjectionHealth,
 )
-from istari_service.domain import Actor
-from istari_service.errors import ObjectNotFound, StaleVersion
-from istari_service.models import User, UserRole
-from istari_service.repositories.notification_projection import (
+from mist_service.domain import Actor
+from mist_service.errors import ObjectNotFound, StaleVersion
+from mist_service.models import User, UserRole
+from mist_service.repositories.notification_projection import (
     RecipientRule,
     SqlAlchemyNotificationProjectionRepository,
 )
-from istari_service.repositories.notification_reconciliation import (
+from mist_service.repositories.notification_reconciliation import (
     SqlAlchemyNotificationReconciler,
 )
-from istari_service.repositories.notifications import SqlAlchemyNotificationRepository
-from istari_service.schemas.actions import (
+from mist_service.repositories.notifications import SqlAlchemyNotificationRepository
+from mist_service.schemas.actions import (
     NotificationFilterState,
     NotificationPreferenceUpdate,
     NotificationStateAction,
     NotificationStateCommand,
     NotificationStateTarget,
 )
-from istari_service.services.notification_service import (
+from mist_service.services.notification_service import (
     NotificationEventCommand,
     NotificationService,
 )

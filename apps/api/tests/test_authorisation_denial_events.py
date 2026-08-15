@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from api_helpers import current_item, submit_request
 from conftest import ApiHarness
-from istari_service.compliance_models import SecurityEvent
+from mist_service.compliance_models import SecurityEvent
 
 
 async def test_request_and_work_denials_record_bounded_evidence(

@@ -12,14 +12,14 @@ from uuid import uuid4
 
 import pytest
 
-from istari_service.product_errors import (
+from mist_service.product_errors import (
     ProductConflict,
     ProductNotFound,
     ProductValidationFailed,
 )
-from istari_service.product_types import ScanDecision, ScanResult, StoredObject
-from istari_service.schemas.products import VersionCommand
-from istari_service.services.product_upload_service import ProductUploadOperations
+from mist_service.product_types import ScanDecision, ScanResult, StoredObject
+from mist_service.schemas.products import VersionCommand
+from mist_service.services.product_upload_service import ProductUploadOperations
 from product_phase_test_support import CHECKSUM, DATA, TOKEN, command, repository
 
 

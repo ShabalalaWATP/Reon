@@ -11,12 +11,12 @@ from sqlalchemy import select
 
 from conftest import ApiHarness
 from in_memory_product_storage import InMemoryPrivateObjectStorage
-from istari_service.models import RequestStatus, ServiceRequest
-from istari_service.product_errors import ProductConflict, ProductNotFound
-from istari_service.product_models import ProductDissemination
-from istari_service.product_types import AccessOutcome, PackageStatus
-from istari_service.request_event_models import RequestEvent
-from istari_service.schemas.products import (
+from mist_service.models import RequestStatus, ServiceRequest
+from mist_service.product_errors import ProductConflict, ProductNotFound
+from mist_service.product_models import ProductDissemination
+from mist_service.product_types import AccessOutcome, PackageStatus
+from mist_service.request_event_models import RequestEvent
+from mist_service.schemas.products import (
     ApprovalCommand,
     DisseminationCommand,
     ExternalLinkCreate,

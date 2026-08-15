@@ -7,13 +7,13 @@ from typing import Any
 import httpx
 import pytest
 
-import istari_service.workflow.camunda as camunda_module
-from istari_service.workflow.errors import (
+import mist_service.workflow.camunda as camunda_module
+from mist_service.workflow.errors import (
     AmbiguousWorkflowProcess,
     WorkflowContractError,
     WorkflowEngineUnavailable,
 )
-from istari_service.workflow.types import (
+from mist_service.workflow.types import (
     ProcessStateQuery,
     WorkflowProcessSnapshot,
     WorkflowProcessState,

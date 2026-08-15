@@ -8,11 +8,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-from istari_service.database import create_session_factory
-from istari_service.login_rate_limit_models import LoginRateLimit
-from istari_service.login_rate_limiter import LoginRateLimitPolicy
-from istari_service.models import Base
-from istari_service.repositories.login_rate_limits import SqlAlchemyLoginAttemptLimiter
+from mist_service.database import create_session_factory
+from mist_service.login_rate_limit_models import LoginRateLimit
+from mist_service.login_rate_limiter import LoginRateLimitPolicy
+from mist_service.models import Base
+from mist_service.repositories.login_rate_limits import SqlAlchemyLoginAttemptLimiter
 
 pytestmark = pytest.mark.asyncio
 

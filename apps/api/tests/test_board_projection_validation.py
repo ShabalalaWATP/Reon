@@ -8,14 +8,14 @@ from uuid import UUID, uuid4
 import pytest
 from pydantic import ValidationError
 
-from istari_service.board_models import (
+from mist_service.board_models import (
     BoardColumn,
     WorkPackage,
     WorkPackagePriority,
     WorkPackageStatus,
 )
-from istari_service.board_policy import require
-from istari_service.board_projection import (
+from mist_service.board_policy import require
+from mist_service.board_projection import (
     PACKAGE_COLUMNS,
     ProjectedBoardItem,
     apply_filters,
@@ -25,8 +25,8 @@ from istari_service.board_projection import (
     paginate,
     request_projection,
 )
-from istari_service.models import RequestStatus, ServiceRequest
-from istari_service.schemas.board import (
+from mist_service.models import RequestStatus, ServiceRequest
+from mist_service.schemas.board import (
     BoardConfigurationCommand,
     BoardFilters,
     BoardItem,

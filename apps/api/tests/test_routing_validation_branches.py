@@ -9,33 +9,33 @@ from uuid import UUID
 
 import pytest
 
-import istari_service.workflow_command_state as command_state_module
-from istari_service.domain import WorkRecord
-from istari_service.errors import AlreadyClaimed, InvalidAction, ObjectNotFound
-from istari_service.models import (
+import mist_service.workflow_command_state as command_state_module
+from mist_service.domain import WorkRecord
+from mist_service.errors import AlreadyClaimed, InvalidAction, ObjectNotFound
+from mist_service.models import (
     RequestStatus,
     UserRole,
     WorkflowTaskStatus,
 )
-from istari_service.schemas.organisation import RoutingOptionsWorkspace
-from istari_service.schemas.work import (
+from mist_service.schemas.organisation import RoutingOptionsWorkspace
+from mist_service.schemas.work import (
     CloseRequest,
     CompletionPayload,
     ProgressRequest,
 )
-from istari_service.services.work_service import WorkService
-from istari_service.work_command_types import (
+from mist_service.services.work_service import WorkService
+from mist_service.work_command_types import (
     RoutingSelection,
     WorkCommandType,
     command_payload,
     parse_command,
 )
-from istari_service.workflow.types import (
+from mist_service.workflow.types import (
     CompleteTaskCommand,
     WorkflowAction,
     WorkflowRouteSelection,
 )
-from istari_service.workflow_command_state import validated_command_state
+from mist_service.workflow_command_state import validated_command_state
 from test_coverage_services_work_claim import (
     FakeCommandDispatcher,
     FakeWorkRepository,

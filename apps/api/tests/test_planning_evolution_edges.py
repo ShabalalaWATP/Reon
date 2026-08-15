@@ -8,27 +8,27 @@ from uuid import uuid4
 
 import pytest
 
-from istari_service.board_models import WorkPackageStatus
-from istari_service.domain import Actor
-from istari_service.errors import TeamWorkspaceNotFound
-from istari_service.management_models import ManagementAction
-from istari_service.models import UserRole
-from istari_service.planning_analytics_models import PackageBlocker
-from istari_service.planning_capacity import (
+from mist_service.board_models import WorkPackageStatus
+from mist_service.domain import Actor
+from mist_service.errors import TeamWorkspaceNotFound
+from mist_service.management_models import ManagementAction
+from mist_service.models import UserRole
+from mist_service.planning_analytics_models import PackageBlocker
+from mist_service.planning_capacity import (
     PlanningCapacityDay,
     PlanningCapacityProjection,
 )
-from istari_service.planning_policy import (
+from mist_service.planning_policy import (
     authorise_planning_preview,
     authorise_planning_read,
 )
-from istari_service.planning_projection import (
+from mist_service.planning_projection import (
     blocker_warnings,
     capacity_conflicts,
     dependency_warnings,
 )
-from istari_service.repositories.management import ManagementScope
-from istari_service.repositories.planning import (
+from mist_service.repositories.management import ManagementScope
+from mist_service.repositories.planning import (
     PackagePlanningRows,
     SqlAlchemyPlanningRepository,
 )
@@ -72,7 +72,7 @@ async def test_exact_grant_read_and_preview_requires_both_actions(
         return next(scopes)
 
     monkeypatch.setattr(
-        "istari_service.planning_policy.resolve_management_scope", resolve
+        "mist_service.planning_policy.resolve_management_scope", resolve
     )
     with pytest.raises(TeamWorkspaceNotFound):
         await authorise_planning_preview(session, actor, team_id, uuid4())

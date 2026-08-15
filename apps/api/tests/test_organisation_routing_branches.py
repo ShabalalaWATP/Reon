@@ -8,26 +8,26 @@ from uuid import UUID, uuid4
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from istari_service.errors import InvalidAction
-from istari_service.models import RequestStatus, ServiceRequest
-from istari_service.organisation_models import (
+from mist_service.errors import InvalidAction
+from mist_service.models import RequestStatus, ServiceRequest
+from mist_service.organisation_models import (
     OrganisationKind,
     OrganisationUnit,
     RequestRouteSelection,
     StaffingStatus,
 )
-from istari_service.repositories.organisation import (
+from mist_service.repositories.organisation import (
     apply_routing_selection,
     clear_route_from,
     resolve_routing_selection,
 )
-from istari_service.schemas.work import (
+from mist_service.schemas.work import (
     AllocateRequest,
     CompletionPayload,
     ProgressRequest,
     SendToAllocation,
 )
-from istari_service.work_command_types import RoutingSelection
+from mist_service.work_command_types import RoutingSelection
 from test_work_repository import make_request
 
 

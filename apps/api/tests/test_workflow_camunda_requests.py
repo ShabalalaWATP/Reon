@@ -7,7 +7,7 @@ from typing import Any
 import httpx
 import pytest
 
-from istari_service.workflow.types import (
+from mist_service.workflow.types import (
     ActiveTaskQuery,
     ClaimTaskCommand,
     CompleteTaskCommand,

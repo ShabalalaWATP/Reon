@@ -9,12 +9,12 @@ import pytest
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.analytics_evolution_models import (
+from mist_service.analytics_evolution_models import (
     AnalyticsAggregateExport,
     AnalyticsExportAuditEvent,
     AnalyticsExportStatus,
 )
-from istari_service.management_seed import management_grant_id
+from mist_service.management_seed import management_grant_id
 from statistics_evolution_data import seed_evolution_statistics
 
 

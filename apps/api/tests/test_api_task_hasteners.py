@@ -6,7 +6,7 @@ from sqlalchemy import update
 
 from api_helpers import perform, reach_delivery_planning
 from conftest import ApiHarness
-from istari_service.models import ServiceRequest
+from mist_service.models import ServiceRequest
 
 
 async def test_any_exact_team_manager_can_hasten_one_or_all_assigned_analysts(

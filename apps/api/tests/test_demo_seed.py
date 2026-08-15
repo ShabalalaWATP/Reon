@@ -13,17 +13,17 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.pool import StaticPool
 
-from istari_service.auth_service import PasswordHasher
-from istari_service.demo_seed import DEMO_IDENTITIES, seed_demo_users
-from istari_service.models import Base, User, UserRole
-from istari_service.organisation_models import (
+from mist_service.auth_service import PasswordHasher
+from mist_service.demo_seed import DEMO_IDENTITIES, seed_demo_users
+from mist_service.models import Base, User, UserRole
+from mist_service.organisation_models import (
     OrganisationKind,
     OrganisationUnit,
     StaffingStatus,
     UserOrganisationMembership,
 )
-from istari_service.organisation_seed import seed_organisation_units
-from istari_service.team_models import TeamMembership, WorkspacePosition
+from mist_service.organisation_seed import seed_organisation_units
+from mist_service.team_models import TeamMembership, WorkspacePosition
 
 TEST_SHARED_PASSWORD = "admin"  # nosec B105
 

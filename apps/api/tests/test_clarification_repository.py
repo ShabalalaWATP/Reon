@@ -9,16 +9,16 @@ from uuid import uuid4
 
 import pytest
 
-from istari_service.clarification_models import ClarificationStatus
-from istari_service.domain import Actor
-from istari_service.errors import InvalidAction
-from istari_service.models import RequestStatus, UserRole
-from istari_service.repositories.clarifications import (
+from mist_service.clarification_models import ClarificationStatus
+from mist_service.domain import Actor
+from mist_service.errors import InvalidAction
+from mist_service.models import RequestStatus, UserRole
+from mist_service.repositories.clarifications import (
     apply_clarification_effect,
     validate_clarification_effect,
     withdraw_open_clarification,
 )
-from istari_service.schemas.work import ProvideClarification, RequestClarification
+from mist_service.schemas.work import ProvideClarification, RequestClarification
 
 REFERENCE_DATE = datetime.now(UTC).date()
 

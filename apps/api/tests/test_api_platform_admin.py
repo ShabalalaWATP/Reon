@@ -7,12 +7,12 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.admin_audit import verify_admin_audit_integrity
-from istari_service.admin_management_grants import STANDARD_MANAGER_GRANT_REASON
-from istari_service.admin_models import AdminAuditEvent
-from istari_service.management_models import ManagementGrant, ManagementGrantAction
-from istari_service.models import Session, User
-from istari_service.organisation_models import (
+from mist_service.admin_audit import verify_admin_audit_integrity
+from mist_service.admin_management_grants import STANDARD_MANAGER_GRANT_REASON
+from mist_service.admin_models import AdminAuditEvent
+from mist_service.management_models import ManagementGrant, ManagementGrantAction
+from mist_service.models import Session, User
+from mist_service.organisation_models import (
     OrganisationUnit,
     StaffingStatus,
     UserOrganisationMembership,
@@ -103,7 +103,7 @@ async def test_admin_crud_contract_version_validation_and_session_revocation(
     assert created.status_code == 201, created.text
     account = created.json()
     assert account["username"] == "admin101"
-    assert account["email"] == "admin101@istari.example.test"
+    assert account["email"] == "admin101@mist.example.test"
     assert account["displayName"] == "Fictional New User"
     assert account["scope"] == "Requesting Area C"
     assert account["isActive"] is True

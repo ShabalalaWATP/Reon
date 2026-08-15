@@ -8,25 +8,25 @@ from uuid import UUID, uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from istari_service.config import Settings
-from istari_service.configuration_events import ConfigurationLifecycleEvent
-from istari_service.configuration_models import ApprovedWorkflowDefinition
-from istari_service.configuration_policy import WORKFLOW_COMPATIBILITY_KEY
-from istari_service.configuration_seed import seed_baseline_configuration
-from istari_service.domain import Actor
-from istari_service.models import ServiceRequest, User, UserRole
-from istari_service.organisation_seed import seed_organisation_units
-from istari_service.repositories.configuration import (
+from mist_service.config import Settings
+from mist_service.configuration_events import ConfigurationLifecycleEvent
+from mist_service.configuration_models import ApprovedWorkflowDefinition
+from mist_service.configuration_policy import WORKFLOW_COMPATIBILITY_KEY
+from mist_service.configuration_seed import seed_baseline_configuration
+from mist_service.domain import Actor
+from mist_service.models import ServiceRequest, User, UserRole
+from mist_service.organisation_seed import seed_organisation_units
+from mist_service.repositories.configuration import (
     SqlAlchemyConfigurationRepository,
 )
-from istari_service.schemas.configuration import (
+from mist_service.schemas.configuration import (
     ConfigurationDraftCreate,
     ConfigurationReasonCommand,
     ConfigurationVersionCommand,
     ConfigurationVersionDetail,
     WorkflowTemplateInput,
 )
-from istari_service.services.configuration_lifecycle_service import (
+from mist_service.services.configuration_lifecycle_service import (
     ConfigurationLifecycleService,
 )
 

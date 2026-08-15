@@ -6,20 +6,20 @@ import pytest
 from sqlalchemy import select
 
 from conftest import ApiHarness, request_payload
-from istari_service.errors import InvalidAction
-from istari_service.models import RequestStatus, ServiceRequest, User
-from istari_service.repositories.request_participants import (
+from mist_service.errors import InvalidAction
+from mist_service.models import RequestStatus, ServiceRequest, User
+from mist_service.repositories.request_participants import (
     active_participant_ids,
     eligible_participant_ids,
     replace_request_participants,
     validate_participant_selection,
     validate_request_participants,
 )
-from istari_service.request_participant_models import (
+from mist_service.request_participant_models import (
     RequestParticipant,
     RequestParticipantRole,
 )
-from istari_service.schemas.requests import RequestCreate
+from mist_service.schemas.requests import RequestCreate
 
 
 async def test_reassignment_preserves_history_and_one_active_lead(

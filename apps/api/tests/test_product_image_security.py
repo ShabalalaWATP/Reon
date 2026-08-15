@@ -10,11 +10,11 @@ from io import BytesIO
 import pytest
 from PIL import Image, PngImagePlugin
 
-from istari_service.product_security import (
+from mist_service.product_security import (
     SafeDocumentScanner,
     validate_managed_metadata,
 )
-from istari_service.product_types import ScanResult
+from mist_service.product_types import ScanResult
 
 
 def _image(format_name: str, *, metadata: bool = False) -> bytes:

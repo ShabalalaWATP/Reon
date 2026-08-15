@@ -10,36 +10,36 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from istari_service.analytics_evolution_models import (
+from mist_service.analytics_evolution_models import (
     OperationalAnalyticsFact,
     OperationalFactType,
 )
-from istari_service.domain import Actor
-from istari_service.errors import ObjectNotFound, StatisticsQueryInvalid
-from istari_service.models import RequestStatus, UserRole
-from istari_service.organisation_models import OrganisationKind
-from istari_service.repositories import statistics_evolution as repository_module
-from istari_service.repositories.statistics_evolution import (
+from mist_service.domain import Actor
+from mist_service.errors import ObjectNotFound, StatisticsQueryInvalid
+from mist_service.models import RequestStatus, UserRole
+from mist_service.organisation_models import OrganisationKind
+from mist_service.repositories import statistics_evolution as repository_module
+from mist_service.repositories.statistics_evolution import (
     SqlAlchemyStatisticsEvolutionRepository,
 )
-from istari_service.schemas.statistics import StatisticsScope, StatisticsUnit
-from istari_service.schemas.statistics_evolution import StatisticsExportCommand
-from istari_service.services.statistics_evolution_service import (
+from mist_service.schemas.statistics import StatisticsScope, StatisticsUnit
+from mist_service.schemas.statistics_evolution import StatisticsExportCommand
+from mist_service.services.statistics_evolution_service import (
     StatisticsEvolutionService,
 )
-from istari_service.statistics_evolution_calculations import (
+from mist_service.statistics_evolution_calculations import (
     _bottleneck_rows,
     _interval_seconds,
 )
-from istari_service.statistics_hierarchy import (
+from mist_service.statistics_hierarchy import (
     selected_statistics_unit,
     statistics_breadcrumb,
 )
-from istari_service.statistics_operational_calculations import (
+from mist_service.statistics_operational_calculations import (
     capacity_rows,
     notification_rows,
 )
-from istari_service.statistics_throughput import throughput_rows
+from mist_service.statistics_throughput import throughput_rows
 
 
 def _fact() -> OperationalAnalyticsFact:

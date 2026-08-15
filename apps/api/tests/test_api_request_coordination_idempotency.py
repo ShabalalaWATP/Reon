@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 
 from api_helpers import reach_delivery_work
 from conftest import ApiHarness
-from istari_service.request_event_models import RequestEvent
+from mist_service.request_event_models import RequestEvent
 
 
 async def test_coordination_retry_reuses_event_without_revealing_body(

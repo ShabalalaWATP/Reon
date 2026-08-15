@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from istari_service.product_image_security import (
+from mist_service.product_image_security import (
     _jpeg_ends_exactly,
     _png_ends_exactly,
     _safe_jfif,

@@ -9,26 +9,26 @@ import pytest
 from sqlalchemy import select
 
 from conftest import ApiHarness, request_payload
-from istari_service.models import (
+from mist_service.models import (
     RequestStatus,
     ServiceRequest,
     WorkflowInstance,
     WorkflowInstanceStatus,
 )
-from istari_service.models import (
+from mist_service.models import (
     WorkflowTask as StoredWorkflowTask,
 )
-from istari_service.repositories.work import OWNER_BY_STATUS
-from istari_service.repositories.work_intents import PENDING_MESSAGE
-from istari_service.workflow.engine import WorkflowEngine
-from istari_service.workflow.errors import WorkflowEngineUnavailable, WorkflowError
-from istari_service.workflow.projection import NEXT_TASK_RECONCILIATION_MESSAGE
-from istari_service.workflow.types import (
+from mist_service.repositories.work import OWNER_BY_STATUS
+from mist_service.repositories.work_intents import PENDING_MESSAGE
+from mist_service.workflow.engine import WorkflowEngine
+from mist_service.workflow.errors import WorkflowEngineUnavailable, WorkflowError
+from mist_service.workflow.projection import NEXT_TASK_RECONCILIATION_MESSAGE
+from mist_service.workflow.types import (
     ActiveTaskQuery,
     WorkflowTask,
     WorkflowTaskState,
 )
-from istari_service.workflow_maintenance import WorkflowReconciler
+from mist_service.workflow_maintenance import WorkflowReconciler
 
 
 async def create_request(harness: ApiHarness) -> UUID:

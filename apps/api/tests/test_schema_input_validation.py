@@ -9,8 +9,8 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
-from istari_service.schemas.requests import RequestCreate, Sensitivity
-from istari_service.schemas.work import (
+from mist_service.schemas.requests import RequestCreate, Sensitivity
+from mist_service.schemas.work import (
     AllocateRequest,
     CloseRequest,
     ReleaseDeliverable,

@@ -10,17 +10,17 @@ from sqlalchemy import func, select
 
 from api_helpers import perform, reach_delivery_work
 from conftest import ApiHarness
-from istari_service.analytics_evolution_models import (
+from mist_service.analytics_evolution_models import (
     OperationalAnalyticsFact,
     OperationalFactType,
 )
-from istari_service.board_models import WorkPackage, WorkPackageStatus
-from istari_service.management_seed import management_grant_id
-from istari_service.operational_analytics_reconciliation import (
+from mist_service.board_models import WorkPackage, WorkPackageStatus
+from mist_service.management_seed import management_grant_id
+from mist_service.operational_analytics_reconciliation import (
     reconcile_operational_analytics,
 )
-from istari_service.product_models import ProductAccessEvent
-from istari_service.product_types import AccessKind, AccessOutcome
+from mist_service.product_models import ProductAccessEvent
+from mist_service.product_types import AccessKind, AccessOutcome
 
 
 async def test_real_activity_populates_only_the_exact_statistics_scope(

@@ -11,19 +11,19 @@ from unittest.mock import AsyncMock
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
-from istari_service.config import Environment, Settings
-from istari_service.database import (
+from mist_service.config import Environment, Settings
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.maintenance_models import MaintenanceJobState
-from istari_service.repositories.maintenance_leases import (
+from mist_service.maintenance_models import MaintenanceJobState
+from mist_service.repositories.maintenance_leases import (
     HEARTBEAT_JOB,
     MaintenanceLease,
     SqlAlchemyMaintenanceLeaseRepository,
 )
-from istari_service.worker_runtime import (
+from mist_service.worker_runtime import (
     LEASE_LOST,
     MaintenanceJob,
     MaintenanceLeaseLostError,

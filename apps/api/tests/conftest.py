@@ -15,20 +15,20 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from istari_service.auth_service import PasswordHasher
-from istari_service.config import Environment, Settings
-from istari_service.configuration_models import ApprovedWorkflowDefinition
-from istari_service.database import (
+from mist_service.auth_service import PasswordHasher
+from mist_service.config import Environment, Settings
+from mist_service.configuration_models import ApprovedWorkflowDefinition
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.main import create_app
-from istari_service.models import User
-from istari_service.organisation_models import OrganisationUnit
-from istari_service.workflow.fake import FakeWorkflowEngine
-from istari_service.workflow.lookup import TaskLookupPolicy
-from istari_service.workflow_dispatch import WorkflowOutboxDispatcher
+from mist_service.main import create_app
+from mist_service.models import User
+from mist_service.organisation_models import OrganisationUnit
+from mist_service.workflow.fake import FakeWorkflowEngine
+from mist_service.workflow.lookup import TaskLookupPolicy
+from mist_service.workflow_dispatch import WorkflowOutboxDispatcher
 
 DEMO_PASSWORD = "Synthetic-demo-passphrase-42"
 ORIGIN = "http://test.local"

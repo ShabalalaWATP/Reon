@@ -8,13 +8,13 @@ from uuid import UUID
 import pytest
 from sqlalchemy.exc import DBAPIError
 
-from istari_service.models import OutboxStatus, WorkflowOutbox
-from istari_service.work_command_types import WorkCommandType
-from istari_service.workflow.errors import (
+from mist_service.models import OutboxStatus, WorkflowOutbox
+from mist_service.work_command_types import WorkCommandType
+from mist_service.workflow.errors import (
     WorkflowEngineUnavailable,
     WorkflowRequestRejected,
 )
-from istari_service.workflow_command_dispatch import WorkflowCommandDispatcher
+from mist_service.workflow_command_dispatch import WorkflowCommandDispatcher
 
 OUTBOX_ID = UUID("00000000-0000-4000-8000-000000000211")
 REQUEST_ID = UUID("00000000-0000-4000-8000-000000000212")

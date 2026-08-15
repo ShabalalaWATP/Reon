@@ -6,22 +6,22 @@ from uuid import uuid4
 
 import pytest
 
-from istari_service.domain import Actor
-from istari_service.errors import (
+from mist_service.domain import Actor
+from mist_service.errors import (
     InvalidAction,
     ObjectNotFound,
     WorkflowActionPending,
     WorkflowUnavailable,
 )
-from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
-from istari_service.schemas.work import (
+from mist_service.models import RequestStatus, UserRole, WorkflowTaskStatus
+from mist_service.schemas.work import (
     AssignSpecialist,
     ProgressRequest,
     ProvideInformation,
     WithdrawRequest,
 )
-from istari_service.services.work_service import WorkService
-from istari_service.workflow.errors import (
+from mist_service.services.work_service import WorkService
+from mist_service.workflow.errors import (
     WorkflowConflict,
     WorkflowEngineUnavailable,
     WorkflowError,

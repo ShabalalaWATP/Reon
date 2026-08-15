@@ -4,17 +4,17 @@ from __future__ import annotations
 
 import pytest
 
-from istari_service.workflow.errors import (
+from mist_service.workflow.errors import (
     AmbiguousWorkflowTask,
     UnexpectedWorkflowTask,
     WorkflowTaskNotVisible,
 )
-from istari_service.workflow.lookup import (
+from mist_service.workflow.lookup import (
     TaskLookupPolicy,
     single_active_task,
     wait_for_active_task,
 )
-from istari_service.workflow.types import (
+from mist_service.workflow.types import (
     ActiveTaskQuery,
     WorkflowTask,
     WorkflowTaskState,

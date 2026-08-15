@@ -9,18 +9,18 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
-from istari_service.config import Environment, Settings
-from istari_service.database import (
+from mist_service.config import Environment, Settings
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.domain import Actor
-from istari_service.errors import ObjectNotFound, StaleVersion
-from istari_service.models import User, UserRole
-from istari_service.organisation_seed import seed_organisation_units
-from istari_service.repositories.drafts import SqlAlchemyDraftRepository
-from istari_service.schemas.drafts import (
+from mist_service.domain import Actor
+from mist_service.errors import ObjectNotFound, StaleVersion
+from mist_service.models import User, UserRole
+from mist_service.organisation_seed import seed_organisation_units
+from mist_service.repositories.drafts import SqlAlchemyDraftRepository
+from mist_service.schemas.drafts import (
     RequestDraftCreate,
     RequestDraftSubmit,
     RequestDraftUpdate,

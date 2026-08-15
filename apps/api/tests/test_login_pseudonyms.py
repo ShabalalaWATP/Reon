@@ -5,7 +5,7 @@ from ipaddress import ip_network
 import pytest
 from fastapi import Request
 
-from istari_service.login_rate_limiter import credential_budget_key, login_source_key
+from mist_service.login_rate_limiter import credential_budget_key, login_source_key
 
 PSEUDONYM_KEY = b"p" * 32
 

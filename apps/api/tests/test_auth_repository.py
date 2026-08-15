@@ -9,9 +9,9 @@ import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-from istari_service.domain import AccountRecord, Actor
-from istari_service.models import Base, Session, User, UserRole
-from istari_service.repositories.auth import (
+from mist_service.domain import AccountRecord, Actor
+from mist_service.models import Base, Session, User, UserRole
+from mist_service.repositories.auth import (
     SqlAlchemyAuthRepository,
     account_from_user,
     actor_from_user,
@@ -136,7 +136,7 @@ async def test_failure_state_updates_and_missing_accounts_are_safe(
     now = datetime.now(UTC)
 
     for _ in range(4):
-        await repository.record_failure(
+        await repository.record_step_up_failure(
             account,
             now=now,
             lockout_threshold=5,
@@ -146,7 +146,7 @@ async def test_failure_state_updates_and_missing_accounts_are_safe(
     assert user.failed_login_count == 4
     assert user.locked_until is None
 
-    await repository.record_failure(
+    await repository.record_step_up_failure(
         account,
         now=now,
         lockout_threshold=5,
@@ -162,7 +162,7 @@ async def test_failure_state_updates_and_missing_accounts_are_safe(
     assert user.locked_until is None
 
     missing = orphan_account()
-    await repository.record_failure(
+    await repository.record_step_up_failure(
         missing,
         now=now,
         lockout_threshold=5,

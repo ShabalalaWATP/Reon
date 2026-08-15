@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from api_helpers import current_item, submit_request
 from conftest import ORIGIN, ApiHarness, request_payload
-from istari_service.models import Session, User
+from mist_service.models import Session, User
 
 
 async def test_generic_login_failure_for_unknown_disabled_and_wrong_password(
@@ -121,9 +121,11 @@ async def test_logout_revokes_cookie_session(api_harness: ApiHarness) -> None:
     assert (await harness.client.get("/api/v1/auth/me")).status_code == 401
 
 
-async def test_failed_login_state_is_committed_before_error_response(
+async def test_public_login_failures_never_lock_the_account(
     api_harness: ApiHarness,
 ) -> None:
+    """Someone who knows only a username must not be able to lock the account."""
+
     harness = api_harness
     for _ in range(5):
         response = await harness.client.post(
@@ -139,7 +141,7 @@ async def test_failed_login_state_is_committed_before_error_response(
         user = await session.scalar(select(User).where(User.username == "admin2"))
         assert user is not None
         assert user.failed_login_count == 0
-        assert user.locked_until is not None
+        assert user.locked_until is None
 
     locked = await harness.client.post(
         "/api/v1/auth/login",

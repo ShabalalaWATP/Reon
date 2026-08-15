@@ -9,7 +9,7 @@ from sqlalchemy import func, select
 
 from api_helpers import current_item, submit_request
 from conftest import ApiHarness
-from istari_service.models import (
+from mist_service.models import (
     OutboxStatus,
     RequestStatus,
     ServiceRequest,
@@ -17,10 +17,10 @@ from istari_service.models import (
     WorkflowTask,
     WorkflowTaskStatus,
 )
-from istari_service.repositories.work import SqlAlchemyWorkRepository
-from istari_service.request_event_models import RequestEvent
-from istari_service.workflow.types import ActiveTaskQuery
-from istari_service.workflow_command_dispatch import WorkflowCommandDispatcher
+from mist_service.repositories.work import SqlAlchemyWorkRepository
+from mist_service.request_event_models import RequestEvent
+from mist_service.workflow.types import ActiveTaskQuery
+from mist_service.workflow_command_dispatch import WorkflowCommandDispatcher
 
 
 async def _outbox(

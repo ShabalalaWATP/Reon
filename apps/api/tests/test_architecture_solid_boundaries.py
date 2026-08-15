@@ -19,7 +19,7 @@ from architecture_debt_baseline import (
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-BACKEND = PROJECT_ROOT / "apps/api/src/istari_service"
+BACKEND = PROJECT_ROOT / "apps/api/src/mist_service"
 FRONTEND = PROJECT_ROOT / "apps/web/src"
 
 
@@ -128,8 +128,10 @@ def _strong_components(graph: dict[str, set[str]]) -> set[tuple[str, ...]]:
     return components
 
 
-def _protocol_widths() -> dict[str, int]:
-    widths: dict[str, int] = {}
+def _protocol_declarations() -> dict[str, tuple[set[str], set[str]]]:
+    """Collect each Protocol's own method names and its Protocol base names."""
+
+    declarations: dict[str, tuple[set[str], set[str]]] = {}
     for path in _backend_paths():
         for node in _tree(path).body:
             if not isinstance(node, ast.ClassDef):
@@ -139,13 +141,39 @@ def _protocol_widths() -> dict[str, int]:
             }
             if "Protocol" not in bases:
                 continue
-            count = sum(
-                isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef))
+            own = {
+                child.name
                 for child in node.body
-            )
-            if count > 12:
-                widths[f"{_module(path)}:{node.name}"] = count
-    return widths
+                if isinstance(child, ast.FunctionDef | ast.AsyncFunctionDef)
+            }
+            declarations[f"{_module(path)}:{node.name}"] = (own, bases - {"Protocol"})
+    return declarations
+
+
+def _protocol_widths() -> dict[str, int]:
+    """Measure ports by every method a consumer receives, inherited ones included.
+
+    A composition-facing union declares no methods of its own, so counting only
+    the class body would report it as empty and hide the real contract width
+    from the ceiling below.
+    """
+
+    declarations = _protocol_declarations()
+    by_name = {key.split(":")[-1]: key for key in declarations}
+
+    def methods(key: str, seen: frozenset[str] = frozenset()) -> set[str]:
+        if key in seen:
+            return set()
+        own, bases = declarations[key]
+        inherited: set[str] = set()
+        for base in bases:
+            base_key = by_name.get(base)
+            if base_key is not None:
+                inherited |= methods(base_key, seen | {key})
+        return own | inherited
+
+    widths = {key: len(methods(key)) for key in declarations}
+    return {key: width for key, width in widths.items() if width > 12}
 
 
 def _source_over_headroom() -> dict[str, int]:
@@ -198,7 +226,7 @@ def test_services_do_not_add_concrete_infrastructure_dependencies() -> None:
     actual = _debt_import_counts(
         "services",
         (
-            "istari_service.repositories",
+            "mist_service.repositories",
             *composition_modules,
             "sqlalchemy",
         ),
@@ -210,7 +238,7 @@ def test_services_do_not_add_concrete_infrastructure_dependencies() -> None:
 
 
 def test_repositories_do_not_add_reverse_service_dependencies() -> None:
-    actual = _debt_import_counts("repositories", ("istari_service.services",))
+    actual = _debt_import_counts("repositories", ("mist_service.services",))
     assert actual == REPOSITORY_SERVICE_DEBT, (
         "Repository service-import counts changed. Reduce the debt map after "
         f"remediation or reject new reverse coupling. Actual={actual}"
@@ -219,7 +247,7 @@ def test_repositories_do_not_add_reverse_service_dependencies() -> None:
 
 def test_routers_do_not_add_concrete_persistence_dependencies() -> None:
     actual = _debt_import_counts(
-        "routers", ("istari_service.repositories", "sqlalchemy")
+        "routers", ("mist_service.repositories", "sqlalchemy")
     )
     assert actual == ROUTER_INFRASTRUCTURE_DEBT, (
         "Router infrastructure-import counts changed. Move construction to "

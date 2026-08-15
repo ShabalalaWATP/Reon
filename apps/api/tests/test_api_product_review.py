@@ -11,10 +11,10 @@ import pytest
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.product_models import ProductAccessEvent
-from istari_service.product_runtime import ProductRuntime
-from istari_service.product_security import AllowedHttpsLinkPolicy
-from istari_service.product_types import AccessOutcome
+from mist_service.product_models import ProductAccessEvent
+from mist_service.product_runtime import ProductRuntime
+from mist_service.product_security import AllowedHttpsLinkPolicy
+from mist_service.product_types import AccessOutcome
 from product_test_support import create_product_request, product_actors
 
 pytestmark = pytest.mark.anyio

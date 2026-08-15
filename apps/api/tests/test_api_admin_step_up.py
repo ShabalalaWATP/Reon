@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.models import Session, User
+from mist_service.models import Session, User
 
 
 async def _ssg(harness: ApiHarness) -> dict[str, object]:

@@ -5,15 +5,15 @@ from __future__ import annotations
 from sqlalchemy import func, select
 
 from conftest import ApiHarness
-from istari_service.action_notification_models import (
+from mist_service.action_notification_models import (
     NotificationEvent,
     NotificationRecipient,
 )
-from istari_service.admin_models import AdminAuditEvent
-from istari_service.database import SECURITY_PSEUDONYM_KEY_INFO
-from istari_service.models import User, UserRole
-from istari_service.platform_security_composition import platform_security_service
-from istari_service.platform_security_models import (
+from mist_service.admin_models import AdminAuditEvent
+from mist_service.database import SECURITY_PSEUDONYM_KEY_INFO
+from mist_service.models import User, UserRole
+from mist_service.platform_security_composition import platform_security_service
+from mist_service.platform_security_models import (
     PasswordAssistanceAttempt,
     PlatformClassificationSetting,
 )
@@ -102,10 +102,10 @@ async def test_password_assistance_is_neutral_bounded_and_admin_only(
             json={"email": email},
         )
         for email in (
-            "ADMIN2@ISTARI.EXAMPLE.TEST",
-            "admin2@istari.example.test",
-            "admin16@istari.example.test",
-            "unknown@istari.example.test",
+            "ADMIN2@MIST.EXAMPLE.TEST",
+            "admin2@mist.example.test",
+            "admin16@mist.example.test",
+            "unknown@mist.example.test",
         )
     ]
     assert all(response.status_code == 202 for response in responses)
@@ -198,7 +198,7 @@ async def test_password_assistance_source_budget_keeps_the_public_result_neutral
     results = [
         await harness.client.post(
             "/api/v1/auth/password-assistance",
-            json={"email": f"unknown-{index}@istari.example.test"},
+            json={"email": f"unknown-{index}@mist.example.test"},
         )
         for index in range(6)
     ]

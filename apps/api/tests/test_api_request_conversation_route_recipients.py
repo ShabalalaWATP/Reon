@@ -9,8 +9,8 @@ from sqlalchemy import select, update
 
 from api_helpers import reach_delivery_work
 from conftest import ApiHarness
-from istari_service.conversation_models import RequestConversationDelivery
-from istari_service.team_models import TeamMembership
+from mist_service.conversation_models import RequestConversationDelivery
+from mist_service.team_models import TeamMembership
 
 
 async def test_route_snapshots_exclude_scheduled_and_expired_members(

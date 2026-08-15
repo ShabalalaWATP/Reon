@@ -66,4 +66,4 @@ USER app
 
 EXPOSE 8000
 
-CMD ["uvicorn", "istari_service.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
+CMD ["uvicorn", "mist_service.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

@@ -12,19 +12,19 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from in_memory_product_storage import InMemoryPrivateObjectStorage
-from istari_service.product_clamav import (
+from mist_service.product_clamav import (
     ClamAvInstreamScanner,
     CompositeDocumentScanner,
 )
-from istari_service.product_errors import ProductValidationFailed
-from istari_service.product_filesystem_storage import PrivateFilesystemObjectStorage
-from istari_service.product_security import (
+from mist_service.product_errors import ProductValidationFailed
+from mist_service.product_filesystem_storage import PrivateFilesystemObjectStorage
+from mist_service.product_security import (
     PPTX_MEDIA_TYPE,
     AllowedHttpsLinkPolicy,
     SafeDocumentScanner,
     validate_managed_metadata,
 )
-from istari_service.product_types import ScanResult
+from mist_service.product_types import ScanResult
 
 PDF_MEDIA = "application/pdf"
 DOCX_MEDIA = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"

@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
-from istari_service.schemas.products import SubmitPackageCommand
+from mist_service.schemas.products import SubmitPackageCommand
 
 
 def test_covering_note_is_trimmed_and_cannot_be_only_whitespace() -> None:

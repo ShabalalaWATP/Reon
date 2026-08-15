@@ -11,11 +11,11 @@ import pytest
 from sqlalchemy import true
 from sqlalchemy.dialects import postgresql
 
-from istari_service.domain import Actor
-from istari_service.models import RequestStatus, UserRole
-from istari_service.policies import can_view_request
-from istari_service.repositories import request_scope
-from istari_service.repositories.requests import SqlAlchemyRequestRepository
+from mist_service.domain import Actor
+from mist_service.models import RequestStatus, UserRole
+from mist_service.policies import can_view_request
+from mist_service.repositories import request_scope
+from mist_service.repositories.requests import SqlAlchemyRequestRepository
 
 
 def _actor(role: UserRole, *, scope: str = "SSG Team") -> Actor:

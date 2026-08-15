@@ -11,15 +11,15 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
-from istari_service.config import Environment, Settings
-from istari_service.database import (
+from mist_service.config import Environment, Settings
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.domain import Actor
-from istari_service.errors import InvalidAction
-from istari_service.models import (
+from mist_service.domain import Actor
+from mist_service.errors import InvalidAction
+from mist_service.models import (
     RequestStatus,
     ServiceRequest,
     User,
@@ -28,23 +28,23 @@ from istari_service.models import (
     WorkflowInstanceStatus,
     WorkflowTaskStatus,
 )
-from istari_service.models import (
+from mist_service.models import (
     WorkflowTask as StoredTask,
 )
-from istari_service.organisation_models import (
+from mist_service.organisation_models import (
     RequestRouteSelection,
     UserOrganisationMembership,
 )
-from istari_service.organisation_seed import organisation_id, seed_organisation_units
-from istari_service.repositories.task_projection import next_task_projection
-from istari_service.repositories.work import SqlAlchemyWorkRepository
-from istari_service.repositories.work_views import build_work_bundle
-from istari_service.schemas.work import (
+from mist_service.organisation_seed import organisation_id, seed_organisation_units
+from mist_service.repositories.task_projection import next_task_projection
+from mist_service.repositories.work import SqlAlchemyWorkRepository
+from mist_service.repositories.work_views import build_work_bundle
+from mist_service.schemas.work import (
     ProgressRequest,
     WithdrawRequest,
 )
-from istari_service.team_models import TeamMembership
-from istari_service.workflow.types import WorkflowTask, WorkflowTaskState
+from mist_service.team_models import TeamMembership
+from mist_service.workflow.types import WorkflowTask, WorkflowTaskState
 
 
 @pytest.fixture

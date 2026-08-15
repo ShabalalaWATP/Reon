@@ -8,9 +8,9 @@ from uuid import uuid4
 from sqlalchemy import select
 
 from conftest import ApiHarness, request_payload
-from istari_service.calendar_models import CalendarCapacityPreview
-from istari_service.models import RequestStatus, ServiceRequest
-from istari_service.schemas.requests import RequestCreate
+from mist_service.calendar_models import CalendarCapacityPreview
+from mist_service.models import RequestStatus, ServiceRequest
+from mist_service.schemas.requests import RequestCreate
 
 
 def event_payload(

@@ -11,22 +11,22 @@ from sqlalchemy import delete, select
 
 from api_helpers import submit_request
 from conftest import ApiHarness
-from istari_service.analytics_projection import project_request_analytics
-from istari_service.errors import InvalidAdministrationChange, ObjectNotFound
-from istari_service.management_models import ManagementAction
-from istari_service.management_seed import seed_management_grants
-from istari_service.models import User
-from istari_service.organisation_models import (
+from mist_service.analytics_projection import project_request_analytics
+from mist_service.errors import InvalidAdministrationChange, ObjectNotFound
+from mist_service.management_models import ManagementAction
+from mist_service.management_seed import seed_management_grants
+from mist_service.models import User
+from mist_service.organisation_models import (
     OrganisationKind,
     OrganisationUnit,
     RequestRouteSelection,
     StaffingStatus,
 )
-from istari_service.repositories.management import (
+from mist_service.repositories.management import (
     rebuild_organisation_closure,
     resolve_management_scope,
 )
-from istari_service.repositories.management_grants import (
+from mist_service.repositories.management_grants import (
     GrantDefinition,
     create_management_grant,
     revoke_management_grant,

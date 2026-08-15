@@ -9,19 +9,19 @@ from uuid import uuid4
 
 import pytest
 
-import istari_service.services.board_planning_service as planning_module
-import istari_service.services.board_service as board_module
-from istari_service.board_models import WorkPackageStatus
-from istari_service.domain import Actor
-from istari_service.errors import BoardItemNotFound
-from istari_service.models import UserRole
-from istari_service.schemas.board import (
+import mist_service.services.board_planning_service as planning_module
+import mist_service.services.board_service as board_module
+from mist_service.board_models import WorkPackageStatus
+from mist_service.domain import Actor
+from mist_service.errors import BoardItemNotFound
+from mist_service.models import UserRole
+from mist_service.schemas.board import (
     ReservationCancelCommand,
     ReservationCommand,
     WorkPackageMove,
 )
-from istari_service.services.board_planning_service import BoardPlanningService
-from istari_service.services.board_service import BoardService
+from mist_service.services.board_planning_service import BoardPlanningService
+from mist_service.services.board_service import BoardService
 
 
 def _actor(actor_id: object) -> Actor:

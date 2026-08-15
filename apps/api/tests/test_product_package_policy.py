@@ -9,10 +9,10 @@ import pytest
 
 from conftest import ApiHarness
 from in_memory_product_storage import InMemoryPrivateObjectStorage
-from istari_service.product_errors import ProductConflict, ProductValidationFailed
-from istari_service.product_models import ProductPackage
-from istari_service.product_package_policy import require_supported_policy
-from istari_service.schemas.products import (
+from mist_service.product_errors import ProductConflict, ProductValidationFailed
+from mist_service.product_models import ProductPackage
+from mist_service.product_package_policy import require_supported_policy
+from mist_service.schemas.products import (
     ExternalLinkCreate,
     ManagedArtefactCreate,
     PackageCreate,

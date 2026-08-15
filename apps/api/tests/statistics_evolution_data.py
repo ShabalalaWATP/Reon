@@ -8,20 +8,20 @@ from uuid import UUID, uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from conftest import ApiHarness, request_payload
-from istari_service.analytics_evolution_models import (
+from mist_service.analytics_evolution_models import (
     AnalyticsDefinitionVersion,
     OperationalAnalyticsFact,
     OperationalFactType,
 )
-from istari_service.analytics_models import (
+from mist_service.analytics_models import (
     AnalyticsProjectionState,
     ProjectionHealth,
     RequestAnalyticsFact,
     RequestStageInterval,
 )
-from istari_service.analytics_projection import PROJECTION_NAME, PROJECTION_VERSION
-from istari_service.models import RequestStatus, ServiceRequest
-from istari_service.schemas.requests import RequestCreate
+from mist_service.analytics_projection import PROJECTION_NAME, PROJECTION_VERSION
+from mist_service.models import RequestStatus, ServiceRequest
+from mist_service.schemas.requests import RequestCreate
 
 
 async def seed_evolution_statistics(harness: ApiHarness) -> None:

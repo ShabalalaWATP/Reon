@@ -7,11 +7,11 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.models import User
-from istari_service.organisation_models import UserOrganisationMembership
-from istari_service.team_membership_projection import refresh_membership_projection
-from istari_service.team_membership_sync import synchronise_due_team_memberships
-from istari_service.team_models import TeamMembership
+from mist_service.models import User
+from mist_service.organisation_models import UserOrganisationMembership
+from mist_service.team_membership_projection import refresh_membership_projection
+from mist_service.team_membership_sync import synchronise_due_team_memberships
+from mist_service.team_models import TeamMembership
 
 
 async def test_projection_selects_a_stable_unit_when_no_preference_is_supplied(

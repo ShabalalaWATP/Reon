@@ -9,12 +9,12 @@ from uuid import uuid4
 
 import pytest
 
-from istari_service.domain import Actor
-from istari_service.errors import AdministrationAccessDenied, StaleVersion
-from istari_service.models import UserRole
-from istari_service.platform_security_models import PlatformClassification
-from istari_service.schemas.platform_security import PlatformClassificationUpdate
-from istari_service.services.platform_security_service import PlatformSecurityService
+from mist_service.domain import Actor
+from mist_service.errors import AdministrationAccessDenied, StaleVersion
+from mist_service.models import UserRole
+from mist_service.platform_security_models import PlatformClassification
+from mist_service.schemas.platform_security import PlatformClassificationUpdate
+from mist_service.services.platform_security_service import PlatformSecurityService
 
 
 def repository() -> SimpleNamespace:

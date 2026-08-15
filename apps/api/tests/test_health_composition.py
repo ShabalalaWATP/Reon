@@ -7,7 +7,7 @@ from typing import Any, cast
 
 import pytest
 
-import istari_service.health_composition as health_composition
+import mist_service.health_composition as health_composition
 
 
 class HealthSessionDouble:

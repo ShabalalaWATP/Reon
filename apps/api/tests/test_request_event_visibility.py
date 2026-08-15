@@ -5,16 +5,16 @@ from collections.abc import AsyncIterator
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
-from istari_service.config import Environment, Settings
-from istari_service.database import (
+from mist_service.config import Environment, Settings
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.models import RequestStatus, UserRole
-from istari_service.organisation_seed import seed_organisation_units
-from istari_service.repositories.event_store import append_request_event
-from istari_service.request_event_audience import RequestEventAudience
+from mist_service.models import RequestStatus, UserRole
+from mist_service.organisation_seed import seed_organisation_units
+from mist_service.repositories.event_store import append_request_event
+from mist_service.request_event_audience import RequestEventAudience
 from synthetic_user_support import make_user
 from test_request_repository import create_request
 

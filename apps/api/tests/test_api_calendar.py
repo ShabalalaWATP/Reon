@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import UTC, date, datetime, timedelta
 
 from conftest import ApiHarness, request_payload
-from istari_service.models import RequestStatus, ServiceRequest
-from istari_service.schemas.requests import RequestCreate
+from mist_service.models import RequestStatus, ServiceRequest
+from mist_service.schemas.requests import RequestCreate
 
 
 def _event(

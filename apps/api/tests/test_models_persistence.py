@@ -12,13 +12,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from istari_service.config import Environment, Settings
-from istari_service.database import (
+from mist_service.config import Environment, Settings
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.models import (
+from mist_service.models import (
     Base,
     Deliverable,
     DeliverableStatus,
@@ -35,8 +35,8 @@ from istari_service.models import (
     WorkflowTask,
     WorkflowTaskStatus,
 )
-from istari_service.request_event_audience import RequestEventAudience
-from istari_service.request_event_models import RequestEvent
+from mist_service.request_event_audience import RequestEventAudience
+from mist_service.request_event_models import RequestEvent
 
 
 @pytest.fixture

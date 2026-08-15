@@ -9,9 +9,9 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from conftest import ApiHarness
-from istari_service.models import RequestStatus, ServiceRequest
-from istari_service.product_runtime import ProductRuntime
-from istari_service.product_security import AllowedHttpsLinkPolicy
+from mist_service.models import RequestStatus, ServiceRequest
+from mist_service.product_runtime import ProductRuntime
+from mist_service.product_security import AllowedHttpsLinkPolicy
 from product_test_support import (
     create_product_request,
     product_actors,

@@ -9,31 +9,31 @@ import pytest
 from sqlalchemy import func, select
 from sqlalchemy.orm.attributes import set_committed_value
 
-import istari_service.retention as retention_module
+import mist_service.retention as retention_module
 from api_helpers import submit_request
 from conftest import ApiHarness
-from istari_service.clarification_models import (
+from mist_service.clarification_models import (
     ClarificationMessage,
     ClarificationMessageKind,
     ClarificationStatus,
     ClarificationThread,
 )
-from istari_service.compliance_models import (
+from mist_service.compliance_models import (
     LegalHold,
     SecurityEvent,
     SecurityOutcome,
     _protect_hold,
 )
-from istari_service.legal_holds import LEGAL_HOLD_AUTHORITY, LegalHoldService
-from istari_service.models import ServiceRequest
-from istari_service.retention import (
+from mist_service.legal_holds import LEGAL_HOLD_AUTHORITY, LegalHoldService
+from mist_service.models import ServiceRequest
+from mist_service.retention import (
     DISPOSAL_AUTHORITY,
     DisposalIdentity,
     RetentionCounts,
     RetentionPolicy,
     SqlAlchemyRetentionRepository,
 )
-from istari_service.security_events import SecurityEventCommand, SecurityEventRecorder
+from mist_service.security_events import SecurityEventCommand, SecurityEventRecorder
 
 
 async def test_legal_hold_lifecycle_and_authority(api_harness: ApiHarness) -> None:

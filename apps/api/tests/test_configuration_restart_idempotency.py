@@ -3,9 +3,9 @@
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.configuration_seed import restore_active_configuration_projection
-from istari_service.management_models import OrganisationClosure
-from istari_service.organisation_models import OrganisationUnit
+from mist_service.configuration_seed import restore_active_configuration_projection
+from mist_service.management_models import OrganisationClosure
+from mist_service.organisation_models import OrganisationUnit
 
 
 async def test_unchanged_configuration_restore_preserves_versions_and_closure(

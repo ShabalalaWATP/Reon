@@ -9,15 +9,15 @@ import pytest
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.account_request_models import AccountRequest
-from istari_service.config import Environment, Settings
-from istari_service.errors import AdministrationUnavailable
-from istari_service.models import User, UserRole
-from istari_service.repositories.account_requests import (
+from mist_service.account_request_models import AccountRequest
+from mist_service.config import Environment, Settings
+from mist_service.errors import AdministrationUnavailable
+from mist_service.models import User, UserRole
+from mist_service.repositories.account_requests import (
     SqlAlchemyAccountRequestRepository,
 )
-from istari_service.schemas.account_requests import AccountRequestCreate
-from istari_service.services.account_request_service import AccountRequestService
+from mist_service.schemas.account_requests import AccountRequestCreate
+from mist_service.services.account_request_service import AccountRequestService
 
 
 async def test_account_requests_are_generic_and_reviewed_by_an_administrator(

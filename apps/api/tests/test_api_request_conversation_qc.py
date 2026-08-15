@@ -9,10 +9,10 @@ from sqlalchemy import select, update
 
 from api_helpers import reach_delivery_work
 from conftest import ApiHarness
-from istari_service.conversation_models import RequestConversationDelivery
-from istari_service.models import RequestStatus, ServiceRequest
-from istari_service.qc_membership import QC_TEAM_ID
-from istari_service.team_models import TeamMembership
+from mist_service.conversation_models import RequestConversationDelivery
+from mist_service.models import RequestStatus, ServiceRequest
+from mist_service.qc_membership import QC_TEAM_ID
+from mist_service.team_models import TeamMembership
 
 
 async def _expire_qc_membership(harness: ApiHarness, user_id: UUID) -> None:

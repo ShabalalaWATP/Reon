@@ -9,8 +9,8 @@ from sqlalchemy import select
 
 from api_helpers import perform, reach_delivery_work, reach_quality_review
 from conftest import ApiHarness
-from istari_service.action_notification_models import NotificationEvent
-from istari_service.clarification_models import (
+from mist_service.action_notification_models import NotificationEvent
+from mist_service.clarification_models import (
     ClarificationStatus,
     ClarificationThread,
 )

@@ -9,18 +9,18 @@ from uuid import uuid4
 
 import pytest
 
-import istari_service.services.configuration_activation_service as activation_module
-from istari_service.config import Environment, Settings
-from istari_service.configuration_types import (
+import mist_service.services.configuration_activation_service as activation_module
+from mist_service.config import Environment, Settings
+from mist_service.configuration_types import (
     ApprovalDecision,
     ConfigurationStatus,
     FindingSeverity,
 )
-from istari_service.domain import Actor
-from istari_service.errors import InvalidAdministrationChange
-from istari_service.models import UserRole
-from istari_service.schemas.configuration import ConfigurationReasonCommand
-from istari_service.services.configuration_activation_service import (
+from mist_service.domain import Actor
+from mist_service.errors import InvalidAdministrationChange
+from mist_service.models import UserRole
+from mist_service.schemas.configuration import ConfigurationReasonCommand
+from mist_service.services.configuration_activation_service import (
     ConfigurationActivationService,
 )
 

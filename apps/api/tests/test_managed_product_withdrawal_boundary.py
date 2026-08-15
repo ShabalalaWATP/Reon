@@ -4,13 +4,13 @@ from dataclasses import replace
 from datetime import UTC, datetime
 
 from conftest import ApiHarness
-from istari_service.models import (
+from mist_service.models import (
     Deliverable,
     DeliverableStatus,
     RequestStatus,
 )
-from istari_service.product_runtime import ProductRuntime
-from istari_service.product_security import AllowedHttpsLinkPolicy
+from mist_service.product_runtime import ProductRuntime
+from mist_service.product_security import AllowedHttpsLinkPolicy
 from product_test_support import create_product_request, product_actors
 from test_api_managed_products import (
     _approve_and_release,

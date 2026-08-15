@@ -9,29 +9,29 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from istari_service.config import Environment, Settings
-from istari_service.database import (
+from mist_service.config import Environment, Settings
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.errors import InvalidAction, ObjectNotFound
-from istari_service.models import RequestStatus, UserRole
-from istari_service.organisation_models import (
+from mist_service.errors import InvalidAction, ObjectNotFound
+from mist_service.models import RequestStatus, UserRole
+from mist_service.organisation_models import (
     RequestRouteSelection,
     UserOrganisationMembership,
 )
-from istari_service.organisation_seed import organisation_id, seed_organisation_units
-from istari_service.repositories.request_views import build_request_detail
-from istari_service.request_coordination_composition import (
+from mist_service.organisation_seed import organisation_id, seed_organisation_units
+from mist_service.repositories.request_views import build_request_detail
+from mist_service.request_coordination_composition import (
     request_coordination_service,
 )
-from istari_service.schemas.coordination import (
+from mist_service.schemas.coordination import (
     CoordinationAudience,
     CoordinationMessageCreate,
     ReturnRequestCreate,
 )
-from istari_service.team_models import TeamMembership, WorkspacePosition
+from mist_service.team_models import TeamMembership, WorkspacePosition
 from test_work_repository import actor_from, make_request, make_user
 
 

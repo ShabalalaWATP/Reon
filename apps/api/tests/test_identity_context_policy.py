@@ -4,10 +4,10 @@ from uuid import uuid4
 
 import pytest
 
-from istari_service.authorisation import RequestOperation
-from istari_service.domain import Actor, RequestRecord
-from istari_service.models import RequestStatus, UserRole
-from istari_service.policies import (
+from mist_service.authorisation import RequestOperation
+from mist_service.domain import Actor, RequestRecord
+from mist_service.models import RequestStatus, UserRole
+from mist_service.policies import (
     allowed_actions,
     decide_request_access,
     decide_work_completion,

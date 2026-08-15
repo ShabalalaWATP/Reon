@@ -8,23 +8,23 @@ from uuid import UUID
 
 import pytest
 
-import istari_service.workflow_maintenance as maintenance_module
+import mist_service.workflow_maintenance as maintenance_module
 from conftest import ApiHarness
-from istari_service.models import (
+from mist_service.models import (
     OutboxStatus,
     RequestStatus,
     ServiceRequest,
     WorkflowOutbox,
 )
-from istari_service.work_command_types import WorkCommandType
-from istari_service.workflow.errors import (
+from mist_service.work_command_types import WorkCommandType
+from mist_service.workflow.errors import (
     WorkflowContractError,
     WorkflowRequestRejected,
 )
-from istari_service.workflow.types import StartedProcess
-from istari_service.workflow_command_dispatch import WorkflowCommandDispatcher
-from istari_service.workflow_dispatch import PendingStart, WorkflowOutboxDispatcher
-from istari_service.workflow_maintenance import WorkflowReconciler
+from mist_service.workflow.types import StartedProcess
+from mist_service.workflow_command_dispatch import WorkflowCommandDispatcher
+from mist_service.workflow_dispatch import PendingStart, WorkflowOutboxDispatcher
+from mist_service.workflow_maintenance import WorkflowReconciler
 from test_coverage_dispatch_reconcile import (
     SearchEngine,
     prepare_candidate,

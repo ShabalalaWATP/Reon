@@ -10,8 +10,8 @@ from sqlalchemy import select
 
 from api_helpers import submit_request
 from conftest import ApiHarness, request_payload
-from istari_service.action_notification_models import NotificationEvent
-from istari_service.board_models import (
+from mist_service.action_notification_models import NotificationEvent
+from mist_service.board_models import (
     CapacityReservation,
     ReservationStatus,
     WorkPackage,
@@ -19,13 +19,13 @@ from istari_service.board_models import (
     WorkPackagePriority,
     WorkPackageStatus,
 )
-from istari_service.clarification_models import (
+from mist_service.clarification_models import (
     ClarificationStatus,
     ClarificationThread,
 )
-from istari_service.domain import Actor
-from istari_service.errors import ObjectNotFound
-from istari_service.models import (
+from mist_service.domain import Actor
+from mist_service.errors import ObjectNotFound
+from mist_service.models import (
     OutboxStatus,
     RequestStatus,
     ServiceRequest,
@@ -36,13 +36,13 @@ from istari_service.models import (
     WorkflowTask,
     WorkflowTaskStatus,
 )
-from istari_service.repositories.request_cancellation import (
+from mist_service.repositories.request_cancellation import (
     _record_workflow_cancellation,
     cancel_request,
 )
-from istari_service.request_event_models import RequestEvent
-from istari_service.schemas.requests import RequestCancel
-from istari_service.workflow_cancellation_dispatch import (
+from mist_service.request_event_models import RequestEvent
+from mist_service.schemas.requests import RequestCancel
+from mist_service.workflow_cancellation_dispatch import (
     WorkflowCancellationDispatcher,
 )
 

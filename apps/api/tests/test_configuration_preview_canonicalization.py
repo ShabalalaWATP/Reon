@@ -4,18 +4,18 @@ from uuid import UUID
 
 import pytest
 
-from istari_service.configuration_digest import _record
-from istari_service.configuration_projection import (
+from mist_service.configuration_digest import _record
+from mist_service.configuration_projection import (
     preview_configuration,
     preview_configuration_schedule,
 )
-from istari_service.configuration_types import (
+from mist_service.configuration_types import (
     CandidateGroupPurpose,
     CandidateGroupSpec,
     HierarchyEdgeSpec,
     PreviewChangeType,
 )
-from istari_service.schemas import configuration as schemas
+from mist_service.schemas import configuration as schemas
 from test_configuration_projection_schema import _draft_values
 from test_configuration_validation import LATER, NOW, OPS_ID, _codes, _spec, _validate
 

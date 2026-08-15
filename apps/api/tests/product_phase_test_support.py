@@ -8,9 +8,9 @@ from typing import Any, cast
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
-from istari_service.domain import Actor
-from istari_service.models import ProductMode, RequestStatus, UserRole
-from istari_service.product_types import (
+from mist_service.domain import Actor
+from mist_service.models import ProductMode, RequestStatus, UserRole
+from mist_service.product_types import (
     ArtefactKind,
     ArtefactLifecycle,
     ArtefactRecord,
@@ -20,12 +20,12 @@ from istari_service.product_types import (
     ProductStorageUsage,
     UploadIntentRecord,
 )
-from istari_service.schemas.products import (
+from mist_service.schemas.products import (
     ArtefactView,
     ManagedArtefactCreate,
     PackageView,
 )
-from istari_service.services.product_content_phases import ProductContentPhases
+from mist_service.services.product_content_phases import ProductContentPhases
 
 CHECKSUM = "a" * 64
 TOKEN = "synthetic-upload-token"

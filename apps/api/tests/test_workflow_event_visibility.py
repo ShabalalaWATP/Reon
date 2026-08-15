@@ -2,9 +2,9 @@
 
 import pytest
 
-from istari_service.request_event_audience import RequestEventAudience
-from istari_service.workflow.types import WorkflowAction
-from istari_service.workflow_event_visibility import work_event_audience
+from mist_service.request_event_audience import RequestEventAudience
+from mist_service.workflow.types import WorkflowAction
+from mist_service.workflow_event_visibility import work_event_audience
 
 
 @pytest.mark.parametrize(

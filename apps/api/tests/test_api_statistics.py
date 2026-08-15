@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from conftest import ApiHarness
-from istari_service.management_seed import management_grant_id
+from mist_service.management_seed import management_grant_id
 from statistics_test_support import seed_statistics
 
 

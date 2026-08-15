@@ -14,22 +14,22 @@ from configuration_support import (
     seed_configuration_context,
 )
 from conftest import ApiHarness
-from istari_service.configuration_models import RequestConfigurationPin
-from istari_service.configuration_types import CandidateGroupPurpose
-from istari_service.management_models import OrganisationClosure
-from istari_service.models import ServiceRequest
-from istari_service.organisation_models import (
+from mist_service.configuration_models import RequestConfigurationPin
+from mist_service.configuration_types import CandidateGroupPurpose
+from mist_service.management_models import OrganisationClosure
+from mist_service.models import ServiceRequest
+from mist_service.organisation_models import (
     OrganisationKind,
     OrganisationUnit,
     StaffingStatus,
 )
-from istari_service.organisation_seed import organisation_id
-from istari_service.schemas.configuration import (
+from mist_service.organisation_seed import organisation_id
+from mist_service.schemas.configuration import (
     CandidateGroupInput,
     HierarchyEdgeInput,
     UnitRevisionInput,
 )
-from istari_service.workflow.variables import completion_variables
+from mist_service.workflow.variables import completion_variables
 
 
 async def test_activation_materialises_staffs_and_routes_new_team_from_pin(

@@ -13,28 +13,28 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from conftest import ApiHarness, request_payload
-from istari_service.domain import Actor
-from istari_service.models import ServiceRequest, UserRole
-from istari_service.related_record_scoring import (
+from mist_service.domain import Actor
+from mist_service.models import ServiceRequest, UserRole
+from mist_service.related_record_scoring import (
     FIELD_WEIGHTS,
     SearchCandidate,
     _match_band,
     score_candidates,
     significant_terms,
 )
-from istari_service.repositories.related_record_search import RelatedRecordSearch
-from istari_service.request_embeddings import FastEmbedRequestEmbeddingProvider
-from istari_service.request_search_indexer import (
+from mist_service.repositories.related_record_search import RelatedRecordSearch
+from mist_service.request_embeddings import FastEmbedRequestEmbeddingProvider
+from mist_service.request_search_indexer import (
     PendingSearchDocument,
     RequestSearchIndexer,
 )
-from istari_service.request_search_models import (
+from mist_service.request_search_models import (
     EMBEDDING_DIMENSIONS,
     EmbeddingState,
     RequestSearchDocument,
 )
-from istari_service.request_search_text import MAX_SEARCH_TEXT_CHARACTERS
-from istari_service.schemas.related_records import RelatedRecordMatchBand
+from mist_service.request_search_text import MAX_SEARCH_TEXT_CHARACTERS
+from mist_service.schemas.related_records import RelatedRecordMatchBand
 
 
 class StubProvider:
@@ -128,7 +128,7 @@ class FakeTextEmbedding:
 async def test_fastembed_boundary_is_lazy_offline_and_validates_vectors(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Any
 ) -> None:
-    import istari_service.request_embeddings as embedding_module
+    import mist_service.request_embeddings as embedding_module
 
     FakeTextEmbedding.created.clear()
     FakeTextEmbedding.values = [[0.1] * EMBEDDING_DIMENSIONS]

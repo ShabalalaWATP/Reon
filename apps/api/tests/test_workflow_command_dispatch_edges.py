@@ -10,30 +10,30 @@ from uuid import uuid4
 
 import pytest
 
-import istari_service.workflow_command_execution as execution_module
-from istari_service.domain import Actor
-from istari_service.models import RequestStatus, UserRole
-from istari_service.schemas.work import (
+import mist_service.workflow_command_execution as execution_module
+from mist_service.domain import Actor
+from mist_service.models import RequestStatus, UserRole
+from mist_service.schemas.work import (
     CloseRequest,
     ProgressRequest,
     ReleaseDeliverable,
 )
-from istari_service.work_command_types import PendingWorkCommand, WorkCommandType
-from istari_service.workflow.engine import WorkflowEngine
-from istari_service.workflow.errors import (
+from mist_service.work_command_types import PendingWorkCommand, WorkCommandType
+from mist_service.workflow.engine import WorkflowEngine
+from mist_service.workflow.errors import (
     WorkflowConflict,
     WorkflowEngineUnavailable,
     WorkflowTaskNotFound,
     WorkflowTaskNotVisible,
 )
-from istari_service.workflow.lookup import TaskLookupPolicy
-from istari_service.workflow.types import (
+from mist_service.workflow.lookup import TaskLookupPolicy
+from mist_service.workflow.types import (
     WorkflowProcessSnapshot,
     WorkflowProcessState,
     WorkflowTask,
     WorkflowTaskState,
 )
-from istari_service.workflow_command_execution import (
+from mist_service.workflow_command_execution import (
     ClaimSucceeded,
     CommandRetry,
     CompetingClaim,

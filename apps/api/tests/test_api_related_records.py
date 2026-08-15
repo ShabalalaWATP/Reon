@@ -7,7 +7,7 @@ from typing import Any
 from uuid import UUID
 
 from conftest import ApiHarness, request_payload
-from istari_service.models import Deliverable, DeliverableStatus
+from mist_service.models import Deliverable, DeliverableStatus
 
 
 async def _submit(harness: ApiHarness, title: str, **updates: Any) -> dict[str, Any]:

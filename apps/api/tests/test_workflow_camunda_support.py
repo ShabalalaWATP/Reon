@@ -11,7 +11,7 @@ from uuid import UUID
 import httpx
 from camunda_orchestration_sdk import CamundaAsyncClient
 
-from istari_service.workflow.camunda import CamundaWorkflowEngine
+from mist_service.workflow.camunda import CamundaWorkflowEngine
 
 REQUEST_ID = UUID("00000000-0000-4000-8000-000000000001")
 REQUESTER_ID = UUID("00000000-0000-4000-8000-000000000002")

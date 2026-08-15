@@ -10,10 +10,10 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from istari_service.board_models import BoardColumn, WorkPackage
-from istari_service.board_projection import ProjectedBoardItem, encode_cursor
-from istari_service.repositories.board_page import SqlAlchemyBoardPageRepository
-from istari_service.schemas.board import BoardFilters, BoardItem, BoardItemType
+from mist_service.board_models import BoardColumn, WorkPackage
+from mist_service.board_projection import ProjectedBoardItem, encode_cursor
+from mist_service.repositories.board_page import SqlAlchemyBoardPageRepository
+from mist_service.schemas.board import BoardFilters, BoardItem, BoardItemType
 
 
 class ScalarSession:

@@ -7,17 +7,17 @@ from uuid import UUID
 
 import pytest
 
-from istari_service.models import RequestStatus
-from istari_service.workflow.engine import WorkflowEngine
-from istari_service.workflow.errors import (
+from mist_service.models import RequestStatus
+from mist_service.workflow.engine import WorkflowEngine
+from mist_service.workflow.errors import (
     InvalidWorkflowTransition,
     UnexpectedWorkflowTask,
     WorkflowConflict,
     WorkflowEngineUnavailable,
     WorkflowTaskNotFound,
 )
-from istari_service.workflow.fake import FakeWorkflowEngine
-from istari_service.workflow.types import (
+from mist_service.workflow.fake import FakeWorkflowEngine
+from mist_service.workflow.types import (
     ActiveTaskQuery,
     ClaimTaskCommand,
     CompleteTaskCommand,

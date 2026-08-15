@@ -12,7 +12,7 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from istari_service.repositories.request_participants import (
+from mist_service.repositories.request_participants import (
     validate_request_participants,
 )
 
@@ -27,9 +27,9 @@ from istari_service.repositories.request_participants import (
 async def test_participant_validation_serialises_authority_revocation(
     mutation: str,
 ) -> None:
-    database_url = os.getenv("ISTARI_POSTGRES_TEST_URL")
+    database_url = os.getenv("MIST_POSTGRES_TEST_URL")
     if not database_url:
-        pytest.skip("ISTARI_POSTGRES_TEST_URL is required for PostgreSQL race tests")
+        pytest.skip("MIST_POSTGRES_TEST_URL is required for PostgreSQL race tests")
     engine = create_async_engine(database_url)
     sessions = async_sessionmaker(engine, expire_on_commit=False)
     schema = f"participant_lock_{uuid4().hex}"

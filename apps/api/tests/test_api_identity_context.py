@@ -3,8 +3,8 @@
 from sqlalchemy import select
 
 from conftest import ORIGIN, ApiHarness, request_payload
-from istari_service.compliance_models import SecurityEvent
-from istari_service.models import Session
+from mist_service.compliance_models import SecurityEvent
+from mist_service.models import Session
 
 
 async def test_staff_switches_to_customer_and_back_with_rotated_secrets(

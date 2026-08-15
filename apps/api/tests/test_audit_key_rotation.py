@@ -10,13 +10,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api_helpers import submit_request
 from conftest import ApiHarness
-from istari_service.admin_audit import append_admin_event, verify_admin_audit_integrity
-from istari_service.audit import (
+from mist_service.admin_audit import append_admin_event, verify_admin_audit_integrity
+from mist_service.audit import (
     AUDIT_ACTIVE_KEY_ID_INFO,
     AUDIT_KEY_INFO,
     AUDIT_KEYRING_INFO,
 )
-from istari_service.repositories.event_store import (
+from mist_service.repositories.event_store import (
     active_audit_key_for_session,
     verify_request_event_integrity,
 )

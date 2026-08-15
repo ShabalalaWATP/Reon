@@ -10,19 +10,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api_helpers import perform, reach_delivery_work
 from conftest import ApiHarness
-from istari_service.analytics_models import (
+from mist_service.analytics_models import (
     AnalyticsProjectionState,
     ProjectionHealth,
     RequestAnalyticsFact,
     RequestStageInterval,
 )
-from istari_service.analytics_projection import (
+from mist_service.analytics_projection import (
     PROJECTION_NAME,
     project_request_analytics,
     rebuild_analytics_projections,
 )
-from istari_service.clarification_models import ClarificationThread
-from istari_service.models import RequestStatus, ServiceRequest
+from mist_service.clarification_models import ClarificationThread
+from mist_service.models import RequestStatus, ServiceRequest
 
 
 async def test_projection_is_idempotent_scoped_and_content_free(

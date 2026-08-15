@@ -9,29 +9,29 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
-from istari_service.config import Environment, Settings
-from istari_service.database import (
+from mist_service.config import Environment, Settings
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.domain import Actor
-from istari_service.errors import ObjectNotFound
-from istari_service.models import RequestStatus, UserRole
-from istari_service.organisation_models import (
+from mist_service.domain import Actor
+from mist_service.errors import ObjectNotFound
+from mist_service.models import RequestStatus, UserRole
+from mist_service.organisation_models import (
     RequestRouteSelection,
     UserOrganisationMembership,
 )
-from istari_service.organisation_seed import organisation_id, seed_organisation_units
-from istari_service.repositories.organisation import SqlAlchemyOrganisationRepository
-from istari_service.repositories.organisation_tracking_repository import (
+from mist_service.organisation_seed import organisation_id, seed_organisation_units
+from mist_service.repositories.organisation import SqlAlchemyOrganisationRepository
+from mist_service.repositories.organisation_tracking_repository import (
     SqlAlchemyOrganisationTrackingRepository,
 )
-from istari_service.repositories.request_route_initialisation import (
+from mist_service.repositories.request_route_initialisation import (
     initialise_request_route,
 )
-from istari_service.repositories.route_access import has_route_membership
-from istari_service.services.organisation_service import (
+from mist_service.repositories.route_access import has_route_membership
+from mist_service.services.organisation_service import (
     OrganisationReferenceRepository,
     OrganisationService,
     OrganisationTrackingRepository,

@@ -9,26 +9,26 @@ import pytest
 from sqlalchemy import delete, select
 
 from conftest import ApiHarness
-from istari_service.admin_audit import (
+from mist_service.admin_audit import (
     admin_event_hash,
     append_admin_event,
     verify_admin_audit_integrity,
 )
-from istari_service.admin_models import AdminIdentitySequence
-from istari_service.auth_service import PasswordHasher
-from istari_service.domain import Actor
-from istari_service.models import User, UserRole
-from istari_service.repositories.admin import SqlAlchemyAdminRepository
-from istari_service.repositories.admin_application import (
+from mist_service.admin_models import AdminIdentitySequence
+from mist_service.auth_service import PasswordHasher
+from mist_service.domain import Actor
+from mist_service.models import User, UserRole
+from mist_service.repositories.admin import SqlAlchemyAdminRepository
+from mist_service.repositories.admin_application import (
     SqlAlchemyAdminApplication,
 )
-from istari_service.schemas.admin import (
+from mist_service.schemas.admin import (
     AdminOrganisationRename,
     AdminStatusPatch,
     AdminUserCreate,
     AdminUserPatch,
 )
-from istari_service.services.admin_service import AdminService
+from mist_service.services.admin_service import AdminService
 
 
 async def test_direct_service_happy_paths_cover_transactional_continuations(

@@ -2,8 +2,8 @@
 
 from uuid import uuid4
 
-from istari_service.domain import Actor
-from istari_service.models import User, UserRole
+from mist_service.domain import Actor
+from mist_service.models import User, UserRole
 
 
 def make_user(role: UserRole, *, scope: str = "Area A") -> User:

@@ -10,10 +10,10 @@ from sqlalchemy import event, func, select
 
 from api_helpers import reach_delivery_work
 from conftest import ApiHarness, request_payload
-from istari_service.conversation_models import RequestConversationMessage
-from istari_service.repositories.event_store import verify_request_event_integrity
-from istari_service.request_event_models import RequestEvent
-from istari_service.schemas.conversations import ConversationMessageCreate
+from mist_service.conversation_models import RequestConversationMessage
+from mist_service.repositories.event_store import verify_request_event_integrity
+from mist_service.request_event_models import RequestEvent
+from mist_service.schemas.conversations import ConversationMessageCreate
 
 
 @pytest.mark.parametrize(

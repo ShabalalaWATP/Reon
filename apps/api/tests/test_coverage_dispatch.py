@@ -10,7 +10,7 @@ import pytest
 from sqlalchemy import func, select
 
 from conftest import ApiHarness, request_payload
-from istari_service.models import (
+from mist_service.models import (
     OutboxStatus,
     RequestStatus,
     ServiceRequest,
@@ -18,20 +18,24 @@ from istari_service.models import (
     WorkflowOutbox,
     WorkflowTaskStatus,
 )
-from istari_service.models import (
+from mist_service.models import (
     WorkflowTask as StoredWorkflowTask,
 )
-from istari_service.workflow.engine import WorkflowEngine
-from istari_service.workflow.errors import WorkflowConflict
-from istari_service.workflow.lookup import TaskLookupPolicy
-from istari_service.workflow.types import (
+from mist_service.workflow.engine import WorkflowEngine
+from mist_service.workflow.errors import WorkflowConflict
+from mist_service.workflow.lookup import TaskLookupPolicy
+from mist_service.workflow.types import (
     StartedProcess,
     StartedProcessQuery,
     StartProcessCommand,
     WorkflowTask,
     WorkflowTaskState,
 )
-from istari_service.workflow_dispatch import PendingStart, WorkflowOutboxDispatcher
+from mist_service.workflow_dispatch import (
+    PendingStart,
+    WorkflowOutboxDispatcher,
+    add_task_projection,
+)
 
 
 async def create_request(harness: ApiHarness) -> UUID:
@@ -314,16 +318,10 @@ async def test_projection_handles_assignees_and_existing_tasks(
         request.status = RequestStatus.TRIAGE_REVIEW
         claimed = visible_task(assignee=str(assignee_id), suffix="claimed")
         invalid = visible_task(assignee="not-a-user-id", suffix="invalid")
-        await WorkflowOutboxDispatcher._add_projection(
-            session, request, instance, claimed
-        )
+        await add_task_projection(session, request, instance, claimed)
         await session.flush()
-        await WorkflowOutboxDispatcher._add_projection(
-            session, request, instance, claimed
-        )
-        await WorkflowOutboxDispatcher._add_projection(
-            session, request, instance, invalid
-        )
+        await add_task_projection(session, request, instance, claimed)
+        await add_task_projection(session, request, instance, invalid)
 
     async with api_harness.sessions() as session:
         tasks = (

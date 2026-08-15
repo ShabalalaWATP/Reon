@@ -5,8 +5,8 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from istari_service.workflow.errors import WorkflowContractError
-from istari_service.workflow.types import CancelProcessCommand
+from mist_service.workflow.errors import WorkflowContractError
+from mist_service.workflow.types import CancelProcessCommand
 from test_workflow_camunda_support import (
     PROCESS_INSTANCE_KEY,
     request_json,

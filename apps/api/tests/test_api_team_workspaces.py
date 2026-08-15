@@ -7,15 +7,15 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import select
 
 from conftest import ApiHarness, request_payload
-from istari_service.models import RequestStatus, ServiceRequest
-from istari_service.organisation_models import (
+from mist_service.models import RequestStatus, ServiceRequest
+from mist_service.organisation_models import (
     OrganisationUnit,
     StaffingStatus,
     UserOrganisationMembership,
 )
-from istari_service.schemas.requests import RequestCreate
-from istari_service.team_membership_sync import synchronise_due_team_memberships
-from istari_service.team_models import TeamActivityEvent
+from mist_service.schemas.requests import RequestCreate
+from mist_service.team_membership_sync import synchronise_due_team_memberships
+from mist_service.team_models import TeamActivityEvent
 
 
 async def _workspace(harness: ApiHarness, username: str, team_code: str) -> dict:

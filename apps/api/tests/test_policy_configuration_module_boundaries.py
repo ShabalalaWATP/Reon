@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import istari_service.policies as policies
-import istari_service.request_access_policy as request_policy
-import istari_service.schemas.configuration as configuration
-import istari_service.schemas.configuration_inputs as configuration_inputs
-import istari_service.schemas.configuration_results as configuration_results
-import istari_service.work_access_policy as work_policy
-from istari_service.config import Environment, Settings
-from istari_service.main import create_app
+import mist_service.policies as policies
+import mist_service.request_access_policy as request_policy
+import mist_service.schemas.configuration as configuration
+import mist_service.schemas.configuration_inputs as configuration_inputs
+import mist_service.schemas.configuration_results as configuration_results
+import mist_service.work_access_policy as work_policy
+from mist_service.config import Environment, Settings
+from mist_service.main import create_app
 
 
 def test_policy_facade_preserves_public_callable_identities() -> None:

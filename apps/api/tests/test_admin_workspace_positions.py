@@ -7,9 +7,9 @@ from uuid import UUID
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.management_models import ManagementAction, ManagementGrant
-from istari_service.repositories.management import resolve_management_scope
-from istari_service.team_models import TeamMembership, WorkspacePosition
+from mist_service.management_models import ManagementAction, ManagementGrant
+from mist_service.repositories.management import resolve_management_scope
+from mist_service.team_models import TeamMembership, WorkspacePosition
 
 
 async def test_administrator_can_appoint_and_remove_a_routing_manager(

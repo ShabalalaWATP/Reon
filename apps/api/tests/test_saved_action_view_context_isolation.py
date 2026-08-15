@@ -6,13 +6,13 @@ import pytest
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.action_notification_models import ActionSection
-from istari_service.domain import Actor
-from istari_service.errors import ObjectNotFound
-from istari_service.models import User, UserRole
-from istari_service.repositories.actions import SqlAlchemyActionRepository
-from istari_service.repositories.auth import actor_from_user_with_memberships
-from istari_service.schemas.actions import (
+from mist_service.action_notification_models import ActionSection
+from mist_service.domain import Actor
+from mist_service.errors import ObjectNotFound
+from mist_service.models import User, UserRole
+from mist_service.repositories.actions import SqlAlchemyActionRepository
+from mist_service.repositories.auth import actor_from_user_with_memberships
+from mist_service.schemas.actions import (
     ActionColumn,
     ActionFilters,
     SavedActionViewCommand,

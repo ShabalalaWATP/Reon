@@ -2,11 +2,11 @@
 
 from collections import Counter
 
-from istari_service.demo_seed import DEMO_IDENTITIES
-from istari_service.models import UserRole
-from istari_service.organisation_models import OrganisationKind
-from istari_service.organisation_seed import UNIT_DEFINITIONS
-from istari_service.team_models import WorkspacePosition
+from mist_service.demo_seed import DEMO_IDENTITIES
+from mist_service.models import UserRole
+from mist_service.organisation_models import OrganisationKind
+from mist_service.organisation_seed import UNIT_DEFINITIONS
+from mist_service.team_models import WorkspacePosition
 
 
 def test_demo_identity_contract_covers_every_workspace() -> None:

@@ -9,11 +9,11 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from istari_service.calendar_capacity import (
+from mist_service.calendar_capacity import (
     CalendarCapacityService,
     _digest,
 )
-from istari_service.calendar_models import (
+from mist_service.calendar_models import (
     CalendarCategory,
     CalendarEvent,
     CalendarEventKind,
@@ -22,23 +22,23 @@ from istari_service.calendar_models import (
     CommitmentStatus,
     RecurrenceFrequency,
 )
-from istari_service.domain import Actor
-from istari_service.errors import (
+from mist_service.domain import Actor
+from mist_service.errors import (
     CalendarItemNotFound,
     InvalidCalendarChange,
     InvalidRosterChange,
     StaleVersion,
 )
-from istari_service.management_models import ManagementAction
-from istari_service.models import UserRole
-from istari_service.repositories.calendar import SqlAlchemyCalendarRepository
-from istari_service.roster_disposition import reject_active_roster_assignments
-from istari_service.schemas.calendar import (
+from mist_service.management_models import ManagementAction
+from mist_service.models import UserRole
+from mist_service.repositories.calendar import SqlAlchemyCalendarRepository
+from mist_service.roster_disposition import reject_active_roster_assignments
+from mist_service.schemas.calendar import (
     CommitmentDecisionCommand,
     OccurrenceCancelCommand,
 )
-from istari_service.schemas.team_workspaces import TeamWorkspaceAccess
-from istari_service.services.calendar_service import CalendarService
+from mist_service.schemas.team_workspaces import TeamWorkspaceAccess
+from mist_service.services.calendar_service import CalendarService
 
 
 def calendar_event(

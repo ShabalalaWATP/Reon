@@ -14,24 +14,24 @@ from configuration_support import (
     draft_from_active,
     seed_configuration_context,
 )
-from istari_service.config import Environment, Settings
-from istari_service.configuration_types import ConfigurationStatus
-from istari_service.database import (
+from mist_service.config import Environment, Settings
+from mist_service.configuration_types import ConfigurationStatus
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
 )
-from istari_service.errors import StaleVersion
-from istari_service.repositories.configuration import (
+from mist_service.errors import StaleVersion
+from mist_service.repositories.configuration import (
     SqlAlchemyConfigurationRepository,
 )
-from istari_service.schemas.configuration import (
+from mist_service.schemas.configuration import (
     ConfigurationDraftCreate,
     ConfigurationReasonCommand,
     ConfigurationVersionCommand,
     ConfigurationVersionDetail,
 )
-from istari_service.services.configuration_lifecycle_service import (
+from mist_service.services.configuration_lifecycle_service import (
     ConfigurationLifecycleService,
 )
 

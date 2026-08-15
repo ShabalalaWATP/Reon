@@ -7,11 +7,11 @@ from collections.abc import AsyncIterable, AsyncIterator
 from datetime import UTC, datetime
 from secrets import token_urlsafe
 
-from istari_service.product_errors import (
+from mist_service.product_errors import (
     ProductDependencyUnavailable,
     ProductValidationFailed,
 )
-from istari_service.product_types import DownloadStream, StoredObject, UploadGrant
+from mist_service.product_types import DownloadStream, StoredObject, UploadGrant
 
 
 class InMemoryPrivateObjectStorage:

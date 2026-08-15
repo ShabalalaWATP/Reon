@@ -8,10 +8,10 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from istari_service.domain import Actor, RequestRecord
-from istari_service.errors import FeedbackUnavailable, ObjectNotFound
-from istari_service.models import RequestStatus, UserRole
-from istari_service.schemas.requests import (
+from mist_service.domain import Actor, RequestRecord
+from mist_service.errors import FeedbackUnavailable, ObjectNotFound
+from mist_service.models import RequestStatus, UserRole
+from mist_service.schemas.requests import (
     FeedbackCreate,
     FeedbackView,
     RequestCreate,
@@ -19,7 +19,7 @@ from istari_service.schemas.requests import (
     RequestSummary,
     Sensitivity,
 )
-from istari_service.services.request_service import RequestService
+from mist_service.services.request_service import RequestService
 
 
 def actor(

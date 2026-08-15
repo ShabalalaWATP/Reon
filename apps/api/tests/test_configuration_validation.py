@@ -6,14 +6,14 @@ from uuid import UUID
 
 import pytest
 
-import istari_service.configuration_validation as workflow_validation
-from istari_service.configuration_policy import (
+import mist_service.configuration_validation as workflow_validation
+from mist_service.configuration_policy import (
     CORE_REQUEST_FIELDS,
     HUMAN_TASK_OUTCOMES,
     WORKFLOW_COMPATIBILITY_KEY,
     WORKFLOW_SCHEMA_ID,
 )
-from istari_service.configuration_types import (
+from mist_service.configuration_types import (
     ApprovedWorkflowSpec,
     CandidateGroupPurpose,
     CandidateGroupSpec,
@@ -24,8 +24,8 @@ from istari_service.configuration_types import (
     UnitRevisionSpec,
     WorkflowTemplateSpec,
 )
-from istari_service.configuration_validation import validate_configuration
-from istari_service.organisation_models import OrganisationKind
+from mist_service.configuration_validation import validate_configuration
+from mist_service.organisation_models import OrganisationKind
 
 NOW = datetime(2026, 1, 1, tzinfo=UTC)
 LATER = NOW + timedelta(days=30)

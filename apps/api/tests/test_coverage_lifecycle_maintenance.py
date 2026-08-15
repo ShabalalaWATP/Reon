@@ -8,8 +8,8 @@ from typing import Any, cast
 
 import pytest
 
-import istari_service.workflow_maintenance as maintenance_module
-from istari_service.workflow_maintenance import (
+import mist_service.workflow_maintenance as maintenance_module
+from mist_service.workflow_maintenance import (
     WorkflowMaintenanceHealth,
     run_workflow_maintenance,
 )

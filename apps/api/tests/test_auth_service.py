@@ -13,18 +13,18 @@ from auth_test_support import (
     make_service,
     make_session,
 )
-from istari_service.auth_service import (
+from mist_service.auth_service import (
     DUMMY_HASH_INPUT,
     PasswordHasher,
     hash_opaque_token,
 )
-from istari_service.domain import AccountRecord
-from istari_service.errors import (
+from mist_service.domain import AccountRecord
+from mist_service.errors import (
     AuthenticationFailed,
     AuthenticationRateLimited,
     SessionRequired,
 )
-from istari_service.login_rate_limiter import (
+from mist_service.login_rate_limiter import (
     LoginRateLimitDecision,
     LoginRateLimitPolicy,
 )
@@ -103,22 +103,20 @@ async def test_credential_budget_is_consumed_only_after_neutral_hashing() -> Non
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("account", "valid_pair", "records_failure"),
+    ("account", "valid_pair"),
     [
-        (None, False, False),
-        (make_account(), False, True),
-        (make_account(active=False), True, False),
+        (None, False),
+        (make_account(), False),
+        (make_account(active=False), True),
         (
             make_account(locked_until=datetime.now(UTC) + timedelta(hours=1)),
             True,
-            False,
         ),
     ],
 )
 async def test_login_failures_are_generic(
     account: AccountRecord | None,
     valid_pair: bool,
-    records_failure: bool,
 ) -> None:
     repository = FakeAuthRepository(account)
     stored_hash = account.password_hash if account else "dummy-hash"
@@ -134,35 +132,31 @@ async def test_login_failures_are_generic(
         await service.login("requester.1@example.test", TEST_PASSWORD)
 
     assert str(raised.value) == "Unable to sign in with those credentials."
-    assert bool(repository.failures) is records_failure
-    assert repository.security_commits == int(records_failure)
+    assert repository.failures == []
+    assert repository.security_commits == 0
     assert repository.created == []
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    ("starting_count", "expected_count", "expect_lock"),
-    [(0, 1, False), (2, 0, True)],
-)
-async def test_failed_password_counts_and_locks_at_threshold(
-    starting_count: int,
-    expected_count: int,
-    expect_lock: bool,
-) -> None:
+@pytest.mark.parametrize("starting_count", [0, 2])
+async def test_public_login_never_locks_a_named_account(starting_count: int) -> None:
+    """Repeated public failures must leave account lock fields untouched.
+
+    Someone who knows only a username must not be able to hard-lock the
+    account, revoke its other sessions or block privileged step-up. Public
+    brute force is bounded by the source and credential budgets instead.
+    """
+
     account = make_account(failed_count=starting_count)
     repository = FakeAuthRepository(account)
     service = make_service(repository, StubHasher())
-    before = datetime.now(UTC)
 
-    with pytest.raises(AuthenticationFailed):
-        await service.login(account.actor.username, TEST_PASSWORD)
+    for _ in range(5):
+        with pytest.raises(AuthenticationFailed):
+            await service.login(account.actor.username, TEST_PASSWORD)
 
-    count, locked_until = repository.failures[0]
-    assert repository.security_commits == 1
-    assert count == expected_count
-    assert (locked_until is not None) is expect_lock
-    if locked_until is not None:
-        assert locked_until >= before + timedelta(seconds=299)
+    assert repository.failures == []
+    assert repository.security_commits == 0
 
 
 @pytest.mark.asyncio

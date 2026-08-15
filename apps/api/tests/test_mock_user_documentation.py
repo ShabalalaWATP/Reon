@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from istari_service.demo_seed import DEMO_IDENTITIES
+from mist_service.demo_seed import DEMO_IDENTITIES
 
 ROOT = Path(__file__).parents[3]
 DIRECTORY = ROOT / "docs/architecture/ORGANISATION_AND_ROUTING.md"

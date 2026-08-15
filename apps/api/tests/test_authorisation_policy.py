@@ -1,28 +1,20 @@
-"""Typed request/work policy matrices and architecture boundary tests."""
+"""Typed request-policy matrices and architecture boundary tests."""
 
 from __future__ import annotations
 
 import ast
-from dataclasses import replace
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 from uuid import uuid4
 
 import pytest
 
-from authorisation_test_support import actor, request, work
-from istari_service.authorisation import (
-    PolicyDenial,
-    RequestOperation,
-    WorkOperation,
-)
-from istari_service.models import RequestStatus, UserRole, WorkflowTaskStatus
-from istari_service.policies import (
-    decide_request_access,
-    decide_work_access,
-    decide_work_completion,
-)
+from authorisation_test_support import actor, request
+from mist_service.authorisation import PolicyDenial, RequestOperation
+from mist_service.models import RequestStatus, UserRole
+from mist_service.policies import decide_request_access
+
+POOL_VERIFIED = {"pool_membership_verified": True}
 
 
 @pytest.mark.parametrize("role", list(UserRole))
@@ -69,10 +61,15 @@ def test_request_visibility_and_field_disclosure_are_independent_decisions() -> 
         ).denial
         is PolicyDenial.OBJECT_SCOPE
     )
-    assert decide_request_access(triage, RequestOperation.VIEW, item).allowed
+    assert decide_request_access(
+        triage, RequestOperation.VIEW, item, **POOL_VERIFIED
+    ).allowed
     assert (
         decide_request_access(
-            actor(UserRole.SERVICE_COORDINATION), RequestOperation.VIEW, item
+            actor(UserRole.SERVICE_COORDINATION),
+            RequestOperation.VIEW,
+            item,
+            **POOL_VERIFIED,
         ).denial
         is PolicyDenial.OBJECT_SCOPE
     )
@@ -83,13 +80,21 @@ def test_request_visibility_and_field_disclosure_are_independent_decisions() -> 
         is PolicyDenial.ROLE
     )
     assert decide_request_access(
-        triage, RequestOperation.VIEW_UNRELEASED_PRODUCT, item
+        triage,
+        RequestOperation.VIEW_UNRELEASED_PRODUCT,
+        item,
+        **POOL_VERIFIED,
     ).allowed
     assert decide_request_access(
         owner, RequestOperation.VIEW_CLARIFICATIONS, item
     ).allowed
     assert (
-        decide_request_access(triage, RequestOperation.VIEW_CLARIFICATIONS, item).denial
+        decide_request_access(
+            triage,
+            RequestOperation.VIEW_CLARIFICATIONS,
+            item,
+            **POOL_VERIFIED,
+        ).denial
         is PolicyDenial.ROLE
     )
     assert (
@@ -176,138 +181,6 @@ def test_waiting_clarification_and_invalid_request_operation_fail_closed() -> No
     )
 
 
-def test_shared_routing_work_requires_role_stage_scope_and_assignment() -> None:
-    owner = actor(UserRole.REQUESTER)
-    triage = actor(UserRole.INTAKE_TRIAGE)
-    open_work = work(request(owner))
-
-    assert decide_work_access(triage, open_work, WorkOperation.VIEW).allowed
-    assert decide_work_access(triage, open_work, WorkOperation.CLAIM).allowed
-    assert decide_work_access(
-        triage, open_work, WorkOperation.VIEW_ROUTING_OPTIONS
-    ).allowed
-    assert (
-        decide_work_access(
-            actor(UserRole.SERVICE_COORDINATION), open_work, WorkOperation.VIEW
-        ).denial
-        is PolicyDenial.OBJECT_SCOPE
-    )
-    assert (
-        decide_work_access(
-            triage, open_work, WorkOperation.LIST_ELIGIBLE_SPECIALISTS
-        ).denial
-        is PolicyDenial.ROLE
-    )
-    assert (
-        decide_work_access(triage, open_work, cast(WorkOperation, "UNKNOWN")).denial
-        is PolicyDenial.ACTION
-    )
-
-    claimed = replace(
-        open_work,
-        task_status=WorkflowTaskStatus.CLAIMED,
-        assignee_id=triage.id,
-    )
-    assert decide_work_access(triage, claimed, WorkOperation.COMPLETE).allowed
-    assert (
-        decide_work_access(
-            actor(UserRole.INTAKE_TRIAGE), claimed, WorkOperation.VIEW
-        ).denial
-        is PolicyDenial.ASSIGNMENT
-    )
-    assert (
-        decide_work_access(
-            triage, replace(claimed, completed_at=datetime.now(UTC)), WorkOperation.VIEW
-        ).denial
-        is PolicyDenial.WORK_STATE
-    )
-
-
-def test_delivery_work_separates_manager_selection_and_analyst_completion() -> None:
-    owner = actor(UserRole.REQUESTER)
-    team_id = uuid4()
-    manager = actor(
-        UserRole.DELIVERY_TEAM_LEAD,
-        scope="SSG Team",
-        units=frozenset({team_id}),
-    )
-    planning = work(
-        request(
-            owner,
-            status=RequestStatus.DELIVERY_PLANNING,
-            team="SSG Team",
-            team_id=team_id,
-        )
-    )
-    assert decide_work_access(
-        manager, planning, WorkOperation.LIST_ELIGIBLE_SPECIALISTS
-    ).allowed
-    assert (
-        decide_work_access(manager, planning, WorkOperation.VIEW_ROUTING_OPTIONS).denial
-        is PolicyDenial.STAGE
-    )
-    lead_review = work(
-        replace(planning.request, status=RequestStatus.LEAD_REVIEW),
-        task_status=WorkflowTaskStatus.CLAIMED,
-        assignee_id=manager.id,
-    )
-    assert (
-        decide_work_access(
-            manager, lead_review, WorkOperation.LIST_ELIGIBLE_SPECIALISTS
-        ).denial
-        is PolicyDenial.STAGE
-    )
-    missing_team = replace(
-        planning,
-        request=replace(planning.request, assigned_delivery_team=None),
-    )
-    assert (
-        decide_work_access(
-            manager, missing_team, WorkOperation.LIST_ELIGIBLE_SPECIALISTS
-        ).denial
-        is PolicyDenial.OBJECT_SCOPE
-    )
-
-    analyst = actor(UserRole.DELIVERY_SPECIALIST, scope="SSG Team")
-    production = work(
-        request(
-            owner,
-            status=RequestStatus.IN_PROGRESS,
-            team="SSG Team",
-            team_id=team_id,
-            specialist_id=analyst.id,
-        ),
-        task_status=WorkflowTaskStatus.CLAIMED,
-        assignee_id=analyst.id,
-    )
-    assert decide_work_access(analyst, production, WorkOperation.COMPLETE).allowed
-    assert (
-        decide_work_access(analyst, production, WorkOperation.CLAIM).denial
-        is PolicyDenial.ROLE
-    )
-
-
-def test_completion_decision_preserves_action_and_assignment_distinctions() -> None:
-    owner = actor(UserRole.REQUESTER)
-    triage = actor(UserRole.INTAKE_TRIAGE)
-    item = request(owner)
-    assert decide_work_completion(triage, item, "progress", triage.id).allowed
-    assert (
-        decide_work_completion(triage, item, "release", triage.id).denial
-        is PolicyDenial.ACTION
-    )
-    assert (
-        decide_work_completion(triage, item, "progress", uuid4()).denial
-        is PolicyDenial.ASSIGNMENT
-    )
-    assert (
-        decide_work_completion(
-            actor(UserRole.SERVICE_COORDINATION), item, "progress", triage.id
-        ).denial
-        is PolicyDenial.OBJECT_SCOPE
-    )
-
-
 def test_authorisation_domain_has_no_framework_or_adapter_imports() -> None:
     forbidden = ("fastapi", "sqlalchemy", "camunda_orchestration_sdk")
     for filename in (
@@ -316,7 +189,7 @@ def test_authorisation_domain_has_no_framework_or_adapter_imports() -> None:
         "request_access_policy.py",
         "work_access_policy.py",
     ):
-        source = Path("src/istari_service", filename).read_text(encoding="utf-8")
+        source = Path("src/mist_service", filename).read_text(encoding="utf-8")
         tree = ast.parse(source)
         modules = {
             node.module

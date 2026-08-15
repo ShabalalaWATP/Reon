@@ -6,15 +6,15 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from conftest import ApiHarness, request_payload
-from istari_service.analytics_models import (
+from mist_service.analytics_models import (
     AnalyticsProjectionState,
     ProjectionHealth,
     RequestAnalyticsFact,
     RequestStageInterval,
 )
-from istari_service.analytics_projection import PROJECTION_NAME, PROJECTION_VERSION
-from istari_service.models import RequestStatus, ServiceRequest
-from istari_service.schemas.requests import RequestCreate
+from mist_service.analytics_projection import PROJECTION_NAME, PROJECTION_VERSION
+from mist_service.models import RequestStatus, ServiceRequest
+from mist_service.schemas.requests import RequestCreate
 
 
 async def seed_statistics(harness: ApiHarness) -> None:

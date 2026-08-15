@@ -6,9 +6,9 @@ import pytest
 from sqlalchemy import select
 
 from conftest import ApiHarness
-from istari_service.product_access_audit import SqlAlchemyProductAccessAudit
-from istari_service.product_models import ProductAccessEvent
-from istari_service.product_types import (
+from mist_service.product_access_audit import SqlAlchemyProductAccessAudit
+from mist_service.product_models import ProductAccessEvent
+from mist_service.product_types import (
     AccessAuditRecord,
     AccessKind,
     AccessOutcome,

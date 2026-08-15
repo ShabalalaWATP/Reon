@@ -9,14 +9,14 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from conftest import ApiHarness
-from istari_service.action_notification_models import (
+from mist_service.action_notification_models import (
     ActionProjection,
     ActionSection,
     ActionSourceType,
 )
-from istari_service.domain import Actor
-from istari_service.models import RequestStatus, ServiceRequest, UserRole
-from istari_service.request_action_projection import (
+from mist_service.domain import Actor
+from mist_service.models import RequestStatus, ServiceRequest, UserRole
+from mist_service.request_action_projection import (
     ActionAudience,
     _action_link,
     _action_type,
@@ -26,7 +26,7 @@ from istari_service.request_action_projection import (
     as_utc,
     waiting_analyst,
 )
-from istari_service.services.action_service import _current_owner
+from mist_service.services.action_service import _current_owner
 
 
 def _request(status: RequestStatus, *, assigned: UUID | None = None) -> ServiceRequest:

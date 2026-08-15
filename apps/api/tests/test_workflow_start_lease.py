@@ -8,8 +8,8 @@ import pytest
 from sqlalchemy import select
 
 from conftest import ApiHarness, request_payload
-from istari_service.models import OutboxStatus, WorkflowOutbox
-from istari_service.workflow_start_lease import claim_pending_start
+from mist_service.models import OutboxStatus, WorkflowOutbox
+from mist_service.workflow_start_lease import claim_pending_start
 
 
 async def test_invalid_start_command_fails_the_claimed_outbox(
@@ -25,7 +25,7 @@ async def test_invalid_start_command_fails_the_claimed_outbox(
     assert response.status_code == 201
 
     monkeypatch.setattr(
-        "istari_service.workflow_start_lease.reject_invalid_start_identity",
+        "mist_service.workflow_start_lease.reject_invalid_start_identity",
         lambda *_args: False,
     )
     async with api_harness.sessions() as session, session.begin():

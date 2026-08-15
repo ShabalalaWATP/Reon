@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from istari_service.config import Settings
-from istari_service.schemas.account_requests import AccountRequestCreate
-from istari_service.schemas.related_records import RequestLinkCreate
-from istari_service.telemetry import OperationalTelemetryMiddleware
-from istari_service.workflow.types import CancelProcessCommand
+from mist_service.config import Settings
+from mist_service.schemas.account_requests import AccountRequestCreate
+from mist_service.schemas.related_records import RequestLinkCreate
+from mist_service.telemetry import OperationalTelemetryMiddleware
+from mist_service.workflow.types import CancelProcessCommand
 
 
 def test_blank_and_short_boundary_values_fail_closed() -> None:

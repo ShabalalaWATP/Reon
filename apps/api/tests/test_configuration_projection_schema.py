@@ -8,10 +8,10 @@ from uuid import UUID
 import pytest
 from pydantic import ValidationError
 
-import istari_service.configuration_policy as policy
-import istari_service.configuration_projection as projection
-import istari_service.schemas.configuration as schemas
-from istari_service.configuration_types import (
+import mist_service.configuration_policy as policy
+import mist_service.configuration_projection as projection
+import mist_service.schemas.configuration as schemas
+from mist_service.configuration_types import (
     CandidateGroupPurpose,
     CandidateGroupSpec,
     ConfigurationStatus,
@@ -19,8 +19,8 @@ from istari_service.configuration_types import (
     PreviewChangeType,
     StaffingCount,
 )
-from istari_service.models import UserRole
-from istari_service.organisation_models import OrganisationKind
+from mist_service.models import UserRole
+from mist_service.organisation_models import OrganisationKind
 from test_configuration_validation import (
     COMMAND_ID,
     LATER,

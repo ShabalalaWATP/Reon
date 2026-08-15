@@ -8,7 +8,7 @@ from fastapi import FastAPI
 
 from api_helpers import perform
 from conftest import ApiHarness, request_payload
-from istari_service.routers.actions import router as personal_router
+from mist_service.routers.actions import router as personal_router
 
 
 def _install_personal_routes(harness: ApiHarness) -> None:

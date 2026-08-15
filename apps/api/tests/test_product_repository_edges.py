@@ -8,10 +8,10 @@ from uuid import uuid4
 import pytest
 
 from conftest import ApiHarness
-from istari_service.product_errors import ProductConflict, ProductNotFound
-from istari_service.product_models import ProductPackage, ProductUploadIntent
-from istari_service.product_types import ScanDecision, ScanResult
-from istari_service.repositories.products import SqlAlchemyProductRepository
+from mist_service.product_errors import ProductConflict, ProductNotFound
+from mist_service.product_models import ProductPackage, ProductUploadIntent
+from mist_service.product_types import ScanDecision, ScanResult
+from mist_service.repositories.products import SqlAlchemyProductRepository
 from product_test_support import create_product_request, product_actors
 
 

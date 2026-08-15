@@ -8,8 +8,8 @@ from uuid import uuid4
 
 import pytest
 
-import istari_service.maintenance as maintenance
-import istari_service.postgres_permissions as permissions
+import mist_service.maintenance as maintenance
+import mist_service.postgres_permissions as permissions
 from operational_test_support import (
     FakeAsyncContext,
     FakeEngine,
@@ -241,14 +241,14 @@ async def test_permission_application_executes_reviewed_grants_and_disposes(
 ) -> None:
     engine = FakeEngine()
     monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://owner:test@db/app")
-    monkeypatch.setenv("APP_RUNTIME_DATABASE_USER", "istari_runtime")
-    monkeypatch.setenv("APP_BACKUP_DATABASE_USER", "istari_backup")
+    monkeypatch.setenv("APP_RUNTIME_DATABASE_USER", "mist_runtime")
+    monkeypatch.setenv("APP_BACKUP_DATABASE_USER", "mist_backup")
     monkeypatch.setattr(permissions, "create_async_engine", lambda *_a, **_k: engine)
 
     await permissions.apply_permissions()
 
     assert engine.statements == list(
-        permissions.permission_statements("istari_runtime", "istari_backup")
+        permissions.permission_statements("mist_runtime", "mist_backup")
     )
     assert engine.disposed
 
@@ -258,8 +258,8 @@ async def test_permission_application_rejects_wrong_dialect_and_disposes(
 ) -> None:
     engine = FakeEngine("sqlite")
     monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://owner:test@db/app")
-    monkeypatch.setenv("APP_RUNTIME_DATABASE_USER", "istari_runtime")
-    monkeypatch.setenv("APP_BACKUP_DATABASE_USER", "istari_backup")
+    monkeypatch.setenv("APP_RUNTIME_DATABASE_USER", "mist_runtime")
+    monkeypatch.setenv("APP_BACKUP_DATABASE_USER", "mist_backup")
     monkeypatch.setattr(permissions, "create_async_engine", lambda *_a, **_k: engine)
     with pytest.raises(ValueError, match="require PostgreSQL"):
         await permissions.apply_permissions()

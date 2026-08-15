@@ -5,7 +5,7 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-SOURCE = Path("src/istari_service")
+SOURCE = Path("src/mist_service")
 FRAMEWORKS = ("fastapi", "sqlalchemy", "camunda_orchestration_sdk")
 DOMAIN_POLICY_FILES = (
     "authorisation.py",

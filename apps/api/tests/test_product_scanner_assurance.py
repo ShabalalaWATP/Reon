@@ -13,17 +13,17 @@ import pytest
 from fastapi import Request
 from pydantic import SecretStr
 
-from istari_service.config import Environment, Settings
-from istari_service.domain import Actor
-from istari_service.main import create_app
-from istari_service.models import UserRole
-from istari_service.product_errors import ProductDependencyUnavailable
-from istari_service.product_ports import ScannerAssurance
-from istari_service.product_runtime import ProductRuntime, local_product_runtime
-from istari_service.product_types import ScanDecision, ScanResult
-from istari_service.routers.capabilities import capabilities
-from istari_service.schemas.products import ManagedArtefactCreate, VersionCommand
-from istari_service.services.product_service import ProductService
+from mist_service.config import Environment, Settings
+from mist_service.domain import Actor
+from mist_service.main import create_app
+from mist_service.models import UserRole
+from mist_service.product_errors import ProductDependencyUnavailable
+from mist_service.product_ports import ScannerAssurance
+from mist_service.product_runtime import ProductRuntime, local_product_runtime
+from mist_service.product_types import ScanDecision, ScanResult
+from mist_service.routers.capabilities import capabilities
+from mist_service.schemas.products import ManagedArtefactCreate, VersionCommand
+from mist_service.services.product_service import ProductService
 
 
 class ApprovedCdrScanner:
@@ -48,7 +48,7 @@ class ApprovedCdrScanner:
 def production_settings(private_root: Path, **overrides: Any) -> Settings:
     values: dict[str, Any] = {
         "environment": Environment.PROD,
-        "database_url": "postgresql+asyncpg://service@db/istari?ssl=verify-full",
+        "database_url": "postgresql+asyncpg://service@db/mist?ssl=verify-full",
         "allow_demo_users": False,
         "session_cookie_secure": True,
         "camunda_auth_mode": "BASIC",

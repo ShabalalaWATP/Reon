@@ -14,16 +14,16 @@ from sqlalchemy.dialects.postgresql.asyncpg import PGDialect_asyncpg
 from sqlalchemy.engine import make_url
 from sqlalchemy.schema import CreateTable
 
-import istari_service.database as database_module
-from istari_service.config import Environment, Settings, get_settings
-from istari_service.database import (
+import mist_service.database as database_module
+from mist_service.config import Environment, Settings, get_settings
+from mist_service.database import (
     create_database_engine,
     create_schema,
     create_session_factory,
     dispose_database,
     session_scope,
 )
-from istari_service.models import Base, User, UserRole
+from mist_service.models import Base, User, UserRole
 
 
 def sqlite_settings(url: str = "sqlite+aiosqlite:///:memory:") -> Settings:
@@ -46,10 +46,10 @@ def make_user(username: str) -> User:
 
 
 def production_settings(**overrides: Any) -> Settings:
-    product_storage_path = Path(tempfile.gettempdir()).resolve() / "istari-products"
+    product_storage_path = Path(tempfile.gettempdir()).resolve() / "mist-products"
     values: dict[str, Any] = {
         "environment": Environment.PROD,
-        "database_url": "postgresql+asyncpg://service@db/istari?ssl=verify-full",
+        "database_url": "postgresql+asyncpg://service@db/mist?ssl=verify-full",
         "allow_demo_users": False,
         "session_cookie_secure": True,
         "camunda_auth_mode": "BASIC",
@@ -118,15 +118,15 @@ def test_settings_normalise_origins_modes_and_aliases() -> None:
         ({"session_cookie_secure": False}, "secure session cookies"),
         ({"database_url": "sqlite+aiosqlite:///:memory:"}, "PostgreSQL"),
         (
-            {"database_url": "postgresql+asyncpg://service@db/istari"},
+            {"database_url": "postgresql+asyncpg://service@db/mist"},
             "ssl=verify-full",
         ),
         (
-            {"database_url": ("postgresql+asyncpg://service@db/istari?ssl=disable")},
+            {"database_url": ("postgresql+asyncpg://service@db/mist?ssl=disable")},
             "ssl=verify-full",
         ),
         (
-            {"database_url": ("postgresql+asyncpg://service@db/istari?ssl=require")},
+            {"database_url": ("postgresql+asyncpg://service@db/mist?ssl=require")},
             "ssl=verify-full",
         ),
         ({"camunda_rest_address": "http://workflow.local"}, "must use HTTPS"),
@@ -296,7 +296,7 @@ def test_engine_builder_selects_pool_options_correctly(
 
     postgres = Settings(
         environment=Environment.TEST,
-        database_url="postgresql+asyncpg://service@localhost/istari",
+        database_url="postgresql+asyncpg://service@localhost/mist",
         database_pool_size=7,
         database_max_overflow=9,
         allow_demo_users=False,

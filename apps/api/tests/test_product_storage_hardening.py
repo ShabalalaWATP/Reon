@@ -15,11 +15,11 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from istari_service.product_errors import ProductValidationFailed
-from istari_service.product_filesystem_storage import PrivateFilesystemObjectStorage
-from istari_service.product_security import SafeDocumentScanner
-from istari_service.product_types import ScanResult
-from istari_service.product_zip_preflight import central_directory_preflight
+from mist_service.product_errors import ProductValidationFailed
+from mist_service.product_filesystem_storage import PrivateFilesystemObjectStorage
+from mist_service.product_security import SafeDocumentScanner
+from mist_service.product_types import ScanResult
+from mist_service.product_zip_preflight import central_directory_preflight
 
 DOCX_MEDIA = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 PDF_MEDIA = "application/pdf"
@@ -210,7 +210,7 @@ async def test_filesystem_index_bounds_high_cardinality_enumeration(
         raise AssertionError("enumeration traversed the object directory tree")
 
     monkeypatch.setattr(
-        "istari_service.product_filesystem_storage.os.scandir", forbidden_scandir
+        "mist_service.product_filesystem_storage.os.scandir", forbidden_scandir
     )
     first = storage.quarantine_keys(limit=7)
     second = storage.quarantine_keys(limit=7, after=first[-1])

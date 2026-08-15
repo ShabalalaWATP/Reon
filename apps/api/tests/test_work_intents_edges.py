@@ -9,20 +9,20 @@ from uuid import uuid4
 
 import pytest
 
-from istari_service.domain import Actor, RequestRecord, WorkRecord
-from istari_service.errors import InvalidAction
-from istari_service.models import (
+from mist_service.domain import Actor, RequestRecord, WorkRecord
+from mist_service.errors import InvalidAction
+from mist_service.models import (
     ProductMode,
     RequestStatus,
     UserRole,
     WorkflowTaskStatus,
 )
-from istari_service.repositories.work_intents import (
+from mist_service.repositories.work_intents import (
     PENDING_MESSAGE,
     prepare_claim_intent,
     prepare_completion_intent,
 )
-from istari_service.schemas.work import CloseRequest
+from mist_service.schemas.work import CloseRequest
 
 
 class IntentSession:

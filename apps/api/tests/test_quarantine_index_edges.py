@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from istari_service.product_filesystem_storage import PrivateFilesystemObjectStorage
+from mist_service.product_filesystem_storage import PrivateFilesystemObjectStorage
 
 
 def test_quarantine_index_resumes_an_already_staged_legacy_root(tmp_path) -> None:

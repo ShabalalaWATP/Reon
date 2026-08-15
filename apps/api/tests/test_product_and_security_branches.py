@@ -14,27 +14,27 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from api_helpers import current_item, submit_request
 from conftest import ApiHarness
-from istari_service.audit import AUDIT_KEY_INFO
-from istari_service.config import Settings
-from istari_service.domain import Actor, ProductDownload, RequestRecord
-from istari_service.errors import ObjectNotFound
-from istari_service.models import (
+from mist_service.audit import AUDIT_KEY_INFO
+from mist_service.config import Settings
+from mist_service.domain import Actor, ProductDownload, RequestRecord
+from mist_service.errors import ObjectNotFound
+from mist_service.models import (
     Deliverable,
     DeliverableStatus,
     RequestStatus,
     ServiceRequest,
     UserRole,
 )
-from istari_service.policies import allowed_actions
-from istari_service.repositories.event_store import (
+from mist_service.policies import allowed_actions
+from mist_service.repositories.event_store import (
     append_request_event,
     audit_key_for_session,
     verify_request_event_integrity,
 )
-from istari_service.repositories.requests import SqlAlchemyRequestRepository
-from istari_service.response_security import SecurityHeadersMiddleware
-from istari_service.services.request_service import RequestRepository, RequestService
-from istari_service.team_models import TeamMembership
+from mist_service.repositories.requests import SqlAlchemyRequestRepository
+from mist_service.response_security import SecurityHeadersMiddleware
+from mist_service.services.request_service import RequestRepository, RequestService
+from mist_service.team_models import TeamMembership
 
 
 class ProductRepository:

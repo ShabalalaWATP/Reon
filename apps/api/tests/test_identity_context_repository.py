@@ -11,11 +11,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-from istari_service.compliance_models import SecurityEvent
-from istari_service.domain import SessionRecord
-from istari_service.identity_context_service import IdentityContextService
-from istari_service.models import Base, IdentityContext, Session, User, UserRole
-from istari_service.repositories.auth import SqlAlchemyAuthRepository
+from mist_service.compliance_models import SecurityEvent
+from mist_service.domain import SessionRecord
+from mist_service.identity_context_service import IdentityContextService
+from mist_service.models import Base, IdentityContext, Session, User, UserRole
+from mist_service.repositories.auth import SqlAlchemyAuthRepository
 
 
 @pytest_asyncio.fixture

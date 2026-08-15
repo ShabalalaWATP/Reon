@@ -13,15 +13,15 @@ from fastapi import Response
 from pydantic import SecretStr
 from sqlalchemy.exc import SQLAlchemyError
 
-import istari_service.health_composition as health_composition
-import istari_service.main as main_module
-from istari_service.auth_service import PasswordHasher
-from istari_service.config import Environment, Settings
-from istari_service.errors import AuthenticationFailed, ServiceError
-from istari_service.main import create_app
-from istari_service.routers.health import health, readiness
-from istari_service.workflow.fake import FakeWorkflowEngine
-from istari_service.workflow_client import camunda_client_configuration
+import mist_service.health_composition as health_composition
+import mist_service.main as main_module
+from mist_service.auth_service import PasswordHasher
+from mist_service.config import Environment, Settings
+from mist_service.errors import AuthenticationFailed, ServiceError
+from mist_service.main import create_app
+from mist_service.routers.health import health, readiness
+from mist_service.workflow.fake import FakeWorkflowEngine
+from mist_service.workflow_client import camunda_client_configuration
 
 
 class FastHasher(PasswordHasher):
@@ -137,7 +137,7 @@ def test_production_disables_interactive_api_schema_surfaces(tmp_path: Path) -> 
     application = create_app(
         settings=Settings(
             environment=Environment.PROD,
-            database_url=("postgresql+asyncpg://service@db/istari?ssl=verify-full"),
+            database_url=("postgresql+asyncpg://service@db/mist?ssl=verify-full"),
             allow_demo_users=False,
             session_cookie_secure=True,
             web_origin="https://staff.example.test",
@@ -149,7 +149,7 @@ def test_production_disables_interactive_api_schema_surfaces(tmp_path: Path) -> 
             camunda_password=SecretStr("synthetic-secret"),
             audit_hmac_key=SecretStr("a" * 32),
             security_pseudonym_key=SecretStr("s" * 32),
-            product_storage_path=str(tmp_path / "istari-products"),
+            product_storage_path=str(tmp_path / "mist-products"),
             request_embedding_cache_path=str(tmp_path / "model-cache"),
             worker_health_required=True,
         ),

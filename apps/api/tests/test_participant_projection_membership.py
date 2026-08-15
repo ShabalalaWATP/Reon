@@ -10,15 +10,15 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from conftest import ApiHarness, request_payload
-from istari_service.action_notification_models import (
+from mist_service.action_notification_models import (
     ActionSection,
     ActionSourceType,
     NotificationAccessKind,
     NotificationEvent,
     NotificationEventGroup,
 )
-from istari_service.domain import Actor
-from istari_service.models import (
+from mist_service.domain import Actor
+from mist_service.models import (
     RequestStatus,
     ServiceRequest,
     User,
@@ -28,23 +28,23 @@ from istari_service.models import (
     WorkflowTask,
     WorkflowTaskStatus,
 )
-from istari_service.organisation_models import RequestRouteSelection
-from istari_service.repositories.actions import SqlAlchemyActionRepository
-from istari_service.repositories.auth import actor_from_user_with_memberships
-from istari_service.repositories.notification_projection import (
+from mist_service.organisation_models import RequestRouteSelection
+from mist_service.repositories.actions import SqlAlchemyActionRepository
+from mist_service.repositories.auth import actor_from_user_with_memberships
+from mist_service.repositories.notification_projection import (
     RecipientRule,
     SqlAlchemyNotificationProjectionRepository,
 )
-from istari_service.repositories.notifications import SqlAlchemyNotificationRepository
-from istari_service.repositories.request_participants import (
+from mist_service.repositories.notifications import SqlAlchemyNotificationRepository
+from mist_service.repositories.request_participants import (
     replace_request_participants,
 )
-from istari_service.repositories.route_access import (
+from mist_service.repositories.route_access import (
     live_selected_route_membership_condition,
 )
-from istari_service.schemas.actions import ActionFilters
-from istari_service.schemas.requests import RequestCreate
-from istari_service.team_models import TeamMembership
+from mist_service.schemas.actions import ActionFilters
+from mist_service.schemas.requests import RequestCreate
+from mist_service.team_models import TeamMembership
 
 
 def test_delivery_membership_predicate_correlates_assigned_team() -> None:
