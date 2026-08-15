@@ -14,3 +14,27 @@ vulnerabilities:
   - id: CVE-2026-33748
     expired_at: 2026-09-13
     statement: The pinned upstream frontend postdates the fixed BuildKit release, but Trivy cannot order its pseudo-version.
+  - id: CVE-2026-33818
+    expired_at: 2026-09-13
+    statement: Upstream builds the frontend with Go 1.26.5; the standard-library fix ships in 1.26.6 and upstream has not yet rebuilt. Revisit at expiry.
+  - id: CVE-2026-39821
+    expired_at: 2026-09-13
+    statement: Upstream builds the frontend with Go 1.26.5; the standard-library fix ships in 1.26.6 and upstream has not yet rebuilt. Revisit at expiry.
+  - id: CVE-2026-46600
+    expired_at: 2026-09-13
+    statement: Upstream builds the frontend with Go 1.26.5; the standard-library fix ships in 1.26.6 and upstream has not yet rebuilt. Revisit at expiry.
+  - id: CVE-2026-56853
+    expired_at: 2026-09-13
+    statement: Upstream builds the frontend with Go 1.26.5; the standard-library fix ships in 1.26.6 and upstream has not yet rebuilt. Revisit at expiry.
+  - id: CVE-2026-56858
+    expired_at: 2026-09-13
+    statement: Upstream builds the frontend with Go 1.26.5; the standard-library fix ships in 1.26.6 and upstream has not yet rebuilt. Revisit at expiry.
+  - id: CVE-2026-56859
+    expired_at: 2026-09-13
+    statement: Upstream builds the frontend with Go 1.26.5; the standard-library fix ships in 1.26.6 and upstream has not yet rebuilt. Revisit at expiry.
+  - id: CVE-2026-56860
+    expired_at: 2026-09-13
+    statement: Upstream builds the frontend with Go 1.26.5; the standard-library fix ships in 1.26.6 and upstream has not yet rebuilt. Revisit at expiry.
+  - id: CVE-2026-56862
+    expired_at: 2026-09-13
+    statement: Upstream builds the frontend with Go 1.26.5; the standard-library fix ships in 1.26.6 and upstream has not yet rebuilt. Revisit at expiry.
