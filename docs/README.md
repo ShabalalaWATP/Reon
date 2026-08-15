@@ -1,4 +1,4 @@
-# ISTARI Service documentation home
+# Mist Service documentation home
 
 Status: current documentation map
 Last reviewed: 14 August 2026
@@ -93,11 +93,11 @@ answers one question and avoids placing the entire system on one canvas.
 
 | View | Question answered | Detailed guide |
 |---|---|---|
-| [System context](assets/architecture/01-system-context.svg) | Who uses ISTARI and what systems sit around it? | [System architecture](architecture/SYSTEM_ARCHITECTURE.md#2-system-context) |
+| [System context](assets/architecture/01-system-context.svg) | Who uses Mist and what systems sit around it? | [System architecture](architecture/SYSTEM_ARCHITECTURE.md#2-system-context) |
 | [Container view](assets/architecture/02-container-view.svg) | What runs and how do containers communicate? | [Executable components](architecture/SYSTEM_ARCHITECTURE.md#3-executable-components) |
 | [Routing workflow](assets/architecture/03-routing-workflow.svg) | How does a Customer request reach a team? | [Routing the request](architecture/WORKFLOW_AND_BPMN.md#routing-the-request) |
 | [Delivery workflow](assets/architecture/04-delivery-workflow.svg) | How is the product produced, checked and released? | [Producing and releasing](architecture/WORKFLOW_AND_BPMN.md#producing-and-releasing-the-product) |
-| [Durable command](assets/architecture/05-durable-workflow-command.svg) | How do PostgreSQL and Camunda remain aligned? | [How ISTARI and Camunda share responsibility](architecture/WORKFLOW_AND_BPMN.md#how-istari-and-camunda-share-responsibility) |
+| [Durable command](assets/architecture/05-durable-workflow-command.svg) | How do PostgreSQL and Camunda remain aligned? | [How Mist and Camunda share responsibility](architecture/WORKFLOW_AND_BPMN.md#how-mist-and-camunda-share-responsibility) |
 | [Organisation hierarchy](assets/architecture/06-organisation-routing.svg) | Which branches are visible and selectable? | [Organisation and routing](architecture/ORGANISATION_AND_ROUTING.md) |
 
 The editable C4 model includes system, container, web/API component, dynamic

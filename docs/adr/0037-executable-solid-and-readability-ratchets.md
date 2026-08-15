@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-ISTARI Service has strong tests and clear external adapter boundaries, but the
+Mist Service has strong tests and clear external adapter boundaries, but the
 August 2026 maintainability review found that the existing architecture fitness
 tests did not prevent application services from importing concrete persistence,
 repositories from importing service records, broad protocols, package cycles or

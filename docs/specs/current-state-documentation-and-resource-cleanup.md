@@ -5,7 +5,7 @@ Last reviewed: 14 August 2026
 
 ## Objective
 
-Provide one coherent, current description of ISTARI Service and eliminate the
+Provide one coherent, current description of Mist Service and eliminate the
 SQLite resource warning found during the maintainability candidate verification.
 Current-state guides must describe executable code and supported deployment
 paths, not removed implementation details.

@@ -1,11 +1,11 @@
-# ISTARI Service system architecture
+# Mist Service system architecture
 
 Status: current executable architecture and explicit deployment boundaries
 Last reviewed: 14 August 2026
 
 ## 1. Purpose and scope
 
-ISTARI Service is a human-led service-request application. A Customer submits a
+Mist Service is a human-led service-request application. A Customer submits a
 structured request, authorised routing users select each organisational
 destination, a Team Manager assigns one accountable Lead and additional
 Analysts, and separate members of a combined QC Team review and disseminate the
@@ -45,7 +45,7 @@ failure, trust and scaling detail needed to change or run it safely.
 
 ## 2. System context
 
-![ISTARI Service system context](../assets/architecture/01-system-context.svg)
+![Mist Service system context](../assets/architecture/01-system-context.svg)
 
 The browser calls FastAPI only. It never calls Camunda or PostgreSQL. Application
 code never reads Camunda-owned database tables. The local Compose deployment
@@ -59,7 +59,7 @@ supported, validated interfaces.
 
 ## 3. Executable components
 
-![ISTARI Service container view](../assets/architecture/02-container-view.svg)
+![Mist Service container view](../assets/architecture/02-container-view.svg)
 
 The word **container** here means a separately running application or data
 service, not simply a Docker image. The same logical boundaries must remain when
@@ -87,7 +87,7 @@ The browser never treats a visual role label as authority.
 
 ### FastAPI application
 
-`apps/api/src/istari_service` is composed in `main.py`:
+`apps/api/src/mist_service` is composed in `main.py`:
 
 - `routers/` handles HTTP translation and dependencies;
 - `schemas/` validates API requests and responses;
@@ -353,8 +353,8 @@ are rechecked for every detail read.
 5. The author orders one to ten managed PDF, DOCX, PPTX, JPEG or PNG files and/or
    allowlisted HTTPS links, adds the required covering note and freezes the
    package for review.
-6. A Team Manager reviews it. A QC Team Manager then performs quality review and
-   a different QC Team Manager claims release, preserving separation of duty.
+6. A Team Manager reviews it. A QC Manager then performs quality review and
+   a different QC Manager claims release, preserving separation of duty.
 7. Dissemination makes the exact approved artefacts and covering note visible to
    the owning Customer dashboard.
 8. File download rechecks request ownership and product release state, commits
@@ -387,7 +387,7 @@ remain inside the outer adapter and are not copied into application state.
 
 Application startup restores or seeds the active configuration projection and
 seeds synthetic accounts only when explicitly allowed. It starts no maintenance
-loop. The separate `istari-worker` executable coordinates:
+loop. The separate `mist-worker` executable coordinates:
 
 - process-start outbox dispatch;
 - human workflow-command dispatch;

@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-ISTARI Service stores an accountable Lead Analyst and an append-only roster of
+Mist Service stores an accountable Lead Analyst and an append-only roster of
 active Lead and Contributor assignments. Camunda user tasks support one technical
 assignee, so the application previously treated that assignee as the only person
 who could complete production work. This contradicted the intended team model

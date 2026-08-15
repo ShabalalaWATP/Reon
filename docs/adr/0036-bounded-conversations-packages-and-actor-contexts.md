@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-ISTARI Service already has exact-route monitoring, non-blocking coordination, a
+Mist Service already has exact-route monitoring, non-blocking coordination, a
 workflow-blocking clarification loop, immutable managed packages, independent
 QC dissemination and explicit Customer acceptance. The next product increment
 needs a coherent request conversation, a richer package envelope, several QC

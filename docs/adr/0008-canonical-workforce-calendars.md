@@ -8,7 +8,7 @@ Accepted.
 
 Teams need personal and shared calendars, commitments and capacity signals.
 Copied team absence records drift, leak private text and make transfers difficult.
-The existing Coeus behaviour provides a useful contract, but ISTARI Service needs
+The existing Coeus behaviour provides a useful contract, but Mist Service needs
 an independent, smaller implementation aligned with its own permissions and
 terminology.
 

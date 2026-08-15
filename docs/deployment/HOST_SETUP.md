@@ -3,7 +3,7 @@
 Status: current setup authority for the executable Docker Compose topology
 Last reviewed: 14 August 2026
 
-This guide prepares Windows, macOS and Linux hosts for ISTARI Service. It is the
+This guide prepares Windows, macOS and Linux hosts for Mist Service. It is the
 common prerequisite for local use and for the private AWS and Google Cloud
 synthetic-evaluation guides. The repository supplies one executable topology:
 Docker Compose. It is suitable for development and synthetic evaluation only.
@@ -113,15 +113,15 @@ Clone from the approved repository endpoint. Never put a personal access token
 in the clone URL, shell history or `.env`.
 
 ```powershell
-git clone <approved-repository-url> Istari-Service
-Set-Location Istari-Service
+git clone <approved-repository-url> Mist-Service
+Set-Location Mist-Service
 Copy-Item .env.example .env
 ```
 
 On macOS or Linux, the final two commands can be:
 
 ```bash
-cd Istari-Service
+cd Mist-Service
 cp .env.example .env
 chmod 600 .env
 ```

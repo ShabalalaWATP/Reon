@@ -1,4 +1,130 @@
-# ISTARI Service Master Implementation Plan
+# Mist Service Master Implementation Plan
+
+## Current position, 15 August 2026
+
+The delivered system is the complete local synthetic application: React web
+client, FastAPI backend, PostgreSQL 17, Camunda 8.9 and ClamAV, running end to
+end through Compose. This is a local-first synthetic build, not a production
+deployment.
+
+Session-verified regression evidence:
+
+- 1,323 backend tests passing (13 skipped) at 98.13 per cent line and branch
+  coverage.
+- 542 frontend tests passing at 98.81 per cent line and 95.06 per cent branch
+  coverage.
+- Every locally runnable repository gate green: formatting, lint, type,
+  dead-code, line-limit, documentation, terminology, OpenAPI contract,
+  complexity and quality-gate self-tests. The licence gate is verified in CI;
+  its local run was blocked by a machine-specific pnpm store fault, not by the
+  repository.
+
+The newest applied migration is `0047_saved_action_view_contexts.py`,
+following `0045_notification_preference_contexts.py` and
+`0046_product_package_policy.py` (`apps/api/alembic/versions`).
+
+Remaining decisions before a connected or production deployment, identity
+provider, hosting, secrets management, a distinct migration owner, staging
+penetration evidence and named acceptance, are tracked in the
+[enterprise readiness gap register](ENTERPRISE_READINESS_GAP_REGISTER.md) and
+summarised under
+[Production readiness, intentionally separate](#production-readiness-intentionally-separate)
+below.
+
+Use the [Contents](#contents) table to navigate. Sections further down record
+how the system reached this position; several carry evidence numbers and
+status wording that were accurate only when written. Those are corrected in
+place rather than deleted, since they remain a useful record of delivery
+history.
+
+## Contents
+
+This plan combines a static baseline (product principles, phases, gates) with
+a chronological log of dated delivery milestones recorded as work completed.
+The log is not laid out in strict chronological order; use the dates below,
+not position in the file, to judge recency.
+
+| Section | Date |
+| --- | --- |
+| [Current position](#current-position-15-august-2026) | 15 Aug 2026 |
+| [Authentication, coordination and maintainability remediation](#authentication-coordination-and-maintainability-remediation-15-august-2026) | 15 Aug 2026 |
+| [Current-state documentation and resource hygiene](#current-state-documentation-and-resource-hygiene-14-august-2026) | 14 Aug 2026 |
+| [Current team workspace](#current-team-workspace-11-august-2026) | 11 Aug 2026 |
+| [Current documentation authority](#current-documentation-authority-10-august-2026) | 10 Aug 2026 |
+| [Accessibility plan and evidence](#accessibility-plan-and-evidence-11-august-2026) | 11 Aug 2026 |
+| [SOLID and Secure by Design improvement programme](#solid-and-secure-by-design-improvement-programme-11-august-2026) | 11 Aug 2026 |
+| [Customer navigation restraint](#customer-navigation-restraint-11-august-2026) | 11 Aug 2026 |
+| [Route lifecycle tracking and analytical presentation](#route-lifecycle-tracking-and-analytical-presentation-10-august-2026) | 10 Aug 2026 |
+| [GitHub quality and dependency automation](#github-quality-and-dependency-automation-9-august-2026) | 9 Aug 2026 |
+| [Operational assurance and documentation maintenance](#operational-assurance-and-documentation-maintenance-8-august-2026) | 8 Aug 2026 |
+| [Outcome](#outcome) | Reference |
+| [Evidence and handling](#evidence-and-handling) | Reference |
+| [Product principles](#product-principles) | Reference |
+| [Architecture baseline](#architecture-baseline) | Reference |
+| [Baseline decisions for implementation](#baseline-decisions-for-implementation) | Reference |
+| [Phase 0: Repository and decision foundation](#phase-0-repository-and-decision-foundation) | Phase gate |
+| [Phase 1: Reproducible secure platform](#phase-1-reproducible-secure-platform) | Phase gate |
+| [Phase 2: Customer intake and visibility](#phase-2-customer-intake-and-visibility) | Phase gate |
+| [Phase 3: CRIOC and request coordination](#phase-3-crioc-and-request-coordination) | Phase gate |
+| [Phase 4: Camunda routing and resilience](#phase-4-camunda-routing-and-resilience) | Phase gate |
+| [Phase 5: Ops routing and product delivery](#phase-5-ops-routing-and-product-delivery) | Phase gate |
+| [Phase 6: Manager check, QC, dissemination and feedback](#phase-6-manager-check-qc-dissemination-and-feedback) | Phase gate |
+| [Phase 7: Supporting administration and operations](#phase-7-supporting-administration-and-operations) | Phase gate |
+| [Phase 8: Assurance, pilot and hand-off](#phase-8-assurance-pilot-and-hand-off) | Phase gate |
+| [Security verification matrix](#security-verification-matrix) | Reference |
+| [Pilot scenarios](#pilot-scenarios) | Reference |
+| [Pilot measures](#pilot-measures) | Reference |
+| [Delivered: expansion programme (Expansions 0 to 8)](#delivered-expansion-programme-expansions-0-to-8) | Delivered |
+| [Delivered: expanded product capabilities](#delivered-expanded-product-capabilities) | Delivered |
+| [Production readiness, intentionally separate](#production-readiness-intentionally-separate) | Reference |
+| [Capabilities outside the implemented baseline](#capabilities-outside-the-implemented-baseline) | Reference |
+| [Definition of complete](#definition-of-complete) | Reference |
+| [Guided configuration and enterprise documentation milestone](#guided-configuration-and-enterprise-documentation-milestone) | 7 Aug 2026 |
+| [Operator orientation and factual timing milestone](#operator-orientation-and-factual-timing-milestone) | 8 Aug 2026 |
+| [Maintainability and portable evaluation milestone](#maintainability-and-portable-evaluation-milestone) | 8 Aug 2026 |
+| [Simplicity and runtime-efficiency deep dive](#simplicity-and-runtime-efficiency-deep-dive) | 8 Aug 2026 |
+| [August security-remediation milestone](#august-security-remediation-milestone) | 9 Aug 2026 |
+| [Unified organisation workspace milestone](#unified-organisation-workspace-milestone) | 9 Aug 2026 |
+| [Access assistance and global classification milestone](#access-assistance-and-global-classification-milestone) | 10 Aug 2026 |
+| [Explainable related-request matching milestone](#explainable-related-request-matching-milestone) | Undated |
+| [Action-oriented team workspace milestone](#action-oriented-team-workspace-milestone) | 10 Aug 2026 |
+| [Role-aware action navigation milestone](#role-aware-action-navigation-milestone) | 10 Aug 2026 |
+| [Compact previous-request evidence milestone](#compact-previous-request-evidence-milestone) | 10 Aug 2026 |
+| [Workspace-authority identity milestone](#workspace-authority-identity-milestone) | 10 Aug 2026 |
+| [Personalised overview and primary-navigation milestone](#personalised-overview-and-primary-navigation-milestone) | 10 Aug 2026 |
+| [Explicit personal-calendar visibility milestone](#explicit-personal-calendar-visibility-milestone) | 10 Aug 2026 |
+| [Plain-language request coordination milestone](#plain-language-request-coordination-milestone) | 10 Aug 2026 |
+| [Separated delivery-board milestone](#separated-delivery-board-milestone) | 13 Aug 2026 |
+| [Request-tracking journey milestone](#request-tracking-journey-milestone) | 13 Aug 2026 |
+| [Routing workspace monitoring and Customer acceptance milestone](#routing-workspace-monitoring-and-customer-acceptance-milestone) | 13 Aug 2026 |
+| [Deterministic post-login landing fix](#deterministic-post-login-landing-fix) | 13 Aug 2026 |
+| [Live QA readiness and route assurance](#live-qa-readiness-and-route-assurance) | 14 Aug 2026 |
+| [Workflow runtime reliability remediation](#workflow-runtime-reliability-remediation) | 14 Aug 2026 |
+| [SOLID, readability and maintainability programme](#solid-readability-and-maintainability-programme) | 14 Aug 2026 |
+
+## Authentication, coordination and maintainability remediation, 15 August 2026
+
+Status: implemented and verified locally on 15 August 2026.
+
+- [x] Close the authentication lockout regression: public sign-in no longer
+  writes account lock fields.
+- [x] Make shared-pool object scope fail closed, with explicit membership
+  evidence required rather than assumed.
+- [x] Deduplicate outbox lease fencing and retry backoff into one shared
+  module.
+- [x] Make concurrent duplicate request submission idempotent.
+- [x] Make coordination schemas strict.
+- [x] Extend the architecture width checker to count inherited Protocol
+  methods. This exposed nine wide union ports, now measured and capped in the
+  shrink-only architecture debt baseline rather than hidden from it.
+- [x] Add frontend payload validation, a route-scoped error boundary, route
+  announcement accessibility (page titles and focus), account menu focus
+  handling, a conversation polling gate and a paged actions cache key split.
+- [x] Correct documentation: the pnpm version, the `--env-file` FastAPI start
+  command, local start guidance, QC Manager naming and single-test guidance.
+
+Evidence: see [Current position](#current-position-15-august-2026) for the
+resulting aggregate test and coverage figures.
 
 ## Current-state documentation and resource hygiene, 14 August 2026
 
@@ -32,7 +158,7 @@
 - [x] Keep development chronology in `DEVELOPMENT_STORY.md`; keep current
   product behaviour in the README, architecture, workflow, user stories,
   specifications and operating guides.
-- [x] Maintain one complete synthetic account directory containing all 99
+- [x] Maintain one complete synthetic account directory containing all 100
   accounts, usernames, roles, memberships and Manager or Member positions.
 - [x] Provide separate readable views for system context, containers, routing,
   delivery, durable workflow commands and the organisation hierarchy, together
@@ -144,7 +270,7 @@
 - [x] Exercise PostgreSQL role validation, reviewed grant execution, dialect
   rejection and guaranteed engine disposal.
 - [x] Establish one authoritative complete synthetic-account directory and test
-  it against all 99 seeded identities.
+  it against all 100 seeded identities.
 - [x] Maintain one roster authority and an automated long-form documentation
   duplication gate.
 - [x] Prove that Markdown documentation is exempt from the hand-written source
@@ -153,7 +279,7 @@
 ## Outcome
 
 Deliver a secure, deliberately limited service-request product outside Coeus.
-It uses ISTARI's visual character, a structured mandatory request form, a
+It uses Mist's visual character, a structured mandatory request form, a
 Customer-owned status dashboard and a named human workflow.
 
 This plan distinguishes the foundational vertical slice from the complete pilot
@@ -172,7 +298,7 @@ phase result cannot substitute for a current aggregate gate.
 
 The plan combines:
 
-- the ISTARI visual system, interaction patterns and synthetic users;
+- the Mist visual system, interaction patterns and synthetic users;
 - the supplied MVP definition, reviewed as a sensitive source;
 - current official Camunda release and integration guidance;
 - secure-by-design, SOLID and repository quality requirements.
@@ -254,9 +380,9 @@ The hierarchy, post-delivery assurance path and safe activation rules are define
 
 ## Phase 0: Repository and decision foundation
 
-- [x] Create the sibling repository at `C:\AlexDev\Istari-Service`.
+- [x] Create the sibling repository at `C:\AlexDev\Mist-Service`.
 - [x] Confirm that the Coeus worktree remains unchanged.
-- [x] Audit ISTARI login, shell, dashboards, queues, tokens and user fixtures.
+- [x] Audit Mist login, shell, dashboards, queues, tokens and user fixtures.
 - [x] Define representative terminology, primary roles and supporting admin role.
 - [x] Record application/workflow ownership, secure modular boundaries and threats.
 - [x] Pin local Camunda 8.9.14 and PostgreSQL 17 architecture.
@@ -290,7 +416,7 @@ gates pass; non-local insecure configuration fails closed.
 
 ## Phase 2: Customer intake and visibility
 
-- [x] Port the ISTARI login composition and restrained application shell using
+- [x] Port the Mist login composition and restrained application shell using
   neutral service language and reduced-motion-safe animation.
 - [x] Let a Customer save, resume, edit and delete their own draft.
 - [x] Validate the complete form in Zod for usability and Pydantic authoritatively.
@@ -460,13 +586,21 @@ authorisation become mandatory only if files are approved in a later specificati
 Baselines and targets must be agreed before the pilot starts. Measures are
 operational metadata and must not expose request content.
 
-## Active expansion programme
+## Delivered: expansion programme (Expansions 0 to 8)
 
-This workstream extends the bounded workflow MVP without changing its human-led
-routing principle. The Customer supplies structured demand. Routing levels track
-and direct it. A delivery-team Analyst produces the service product, the Team
-Manager checks it, and the Quality and Release Manager disseminates it. Work does
-not travel back through CRIOC, command or Ops for approval.
+Status: Expansions 0 to 7 are complete and checked off below. Expansion 8's
+technical, coverage, security, browser and recovery evidence is also complete;
+only named product, security, operational and user-acceptance sign-off remains
+open (its own final checklist item, and the aggregate acceptance gates
+`DOD-50` to `DOD-54` in the
+[Definition of Done matrix](assurance/DEFINITION_OF_DONE_MATRIX.md)).
+
+This workstream extended the bounded workflow MVP without changing its
+human-led routing principle. The Customer supplies structured demand. Routing
+levels track and direct it. A delivery-team Analyst produces the service
+product, the Team Manager checks it, and the Quality and Release Manager
+disseminates it. Work does not travel back through CRIOC, command or Ops for
+approval.
 
 ### Expansion 0: Rebaseline and authority
 
@@ -654,33 +788,49 @@ public remote with a fully passing hosted CI run. Named stakeholder sign-off
 remains open.
 These are not inferred from technical evidence.
 
-## Active next product expansion
+## Delivered: expanded product capabilities
 
-The active programme adds role-specific personal workspaces, an auditable
-notification centre, managed PDF, DOCX and PPTX dissemination or approved HTTPS
-product links, effective-dated organisation and bounded workflow configuration,
+Status: implemented and running behind independent production-off feature
+flags since 9 August 2026. This phase's own scope is code-complete; it is
+extended and hardened by most of the dated milestone sections below (Guided
+configuration, Operator orientation, Maintainability, Simplicity,
+August security-remediation, Unified organisation workspace, Access
+assistance, Explainable related-request matching, Action-oriented team
+workspace, Role-aware action navigation, Personalised overview, Explicit
+personal-calendar visibility, Plain-language request coordination, Separated
+delivery-board, Request-tracking journey and Routing workspace monitoring). It
+is not yet part of the accepted connected-environment MVP baseline.
+
+This phase added role-specific personal workspaces, an auditable notification
+centre, managed PDF, DOCX and PPTX dissemination or approved HTTPS product
+links, effective-dated organisation and bounded workflow configuration,
 team-planning enhancements and further scoped operational statistics.
 
 This work is specified in
 [Operational product capabilities](specs/operational-product-evolution.md) and its
 completion state is tracked in the
-[detailed capability gates](assurance/DEFINITION_OF_DONE_MATRIX.md#detailed-current-capability-gates).
-A local release candidate is implemented behind disabled-by-default production
-flags, but it is not part of the accepted MVP baseline. No phase is accepted
-until its own
-migrations, permission matrix, security, accessibility, browser, recovery,
-performance and named-acceptance evidence passes.
+[detailed capability gates](assurance/DEFINITION_OF_DONE_MATRIX.md#detailed-current-capability-gates),
+where several `PE-DOD` rows (notification delivery, managed-file scanning,
+organisation/workflow configuration and statistics evidence) remain `OPEN` or
+`IN PROGRESS`. No phase is accepted until its own migrations, permission
+matrix, security, accessibility, browser, recovery, performance and
+named-acceptance evidence passes.
 
-The latest complete local regression evidence is 880 backend tests at 98.84 per
-cent line and 95.19 per cent branch coverage, plus 288 frontend tests at 99.49
-per cent statements and 95.06 per cent branches. Migrations 0012 to 0021 pass
-the repository's empty SQLite upgrade, schema drift, downgrade and re-upgrade
-gates. Independent code-quality, workflow and security reviews produced findings
-that are addressed in the current working tree; immutable-candidate review and
-named acceptance remain open. Fresh PostgreSQL migration and runtime-denial
-evidence passes. One-winner activation, deployed Camunda sibling routing, target
-scanner/object storage, full supported-browser state-changing journeys,
-multi-store recovery and named acceptance gates remain open.
+The local regression evidence recorded when this phase's first slice closed
+was 880 backend tests at 98.84 per cent line and 95.19 per cent branch
+coverage, plus 288 frontend tests at 99.49 per cent statements and 95.06 per
+cent branches, with migrations 0012 to 0021 passing the repository's empty
+SQLite upgrade, schema drift, downgrade and re-upgrade gates. That evidence is
+long superseded: the current aggregate is 1,323 backend tests and migrations
+through 0047, recorded in
+[Current position](#current-position-15-august-2026) at the top of this plan.
+Independent code-quality, workflow and security reviews at the time produced
+findings that were addressed in the working tree. Fresh PostgreSQL migration
+and runtime-denial evidence passed. One-winner activation, deployed Camunda
+sibling routing, target scanner/object storage, full supported-browser
+state-changing journeys, multi-store recovery and named acceptance gates
+remained open at that point and are tracked to closure through the detailed
+capability gates referenced above.
 
 ## Production readiness, intentionally separate
 

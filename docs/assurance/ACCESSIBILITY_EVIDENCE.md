@@ -2,7 +2,7 @@
 
 ## Position
 
-ISTARI is designed towards the [Web Content Accessibility Guidelines (WCAG)
+Mist is designed towards the [Web Content Accessibility Guidelines (WCAG)
 2.2](https://www.w3.org/TR/WCAG22/) Level AA. The evidence below supports the
 current technical position. It is not a claim of formal conformance or a
 replacement for an accessibility audit by disabled users and a named reviewer.
@@ -54,7 +54,7 @@ React build. The stack was healthy and served from Docker at
 | 2.1.1 Keyboard | Navigation, forms, board and calendar actions use native links, buttons and form controls. No workflow requires pointer-only drag and drop. | Automated and representative manual evidence |
 | 2.1.2 No Keyboard Trap | Dialog and menu tests cover keyboard dismissal and focus behaviour. Assistive-technology confirmation remains required. | Partial technical evidence |
 | 2.4.1 Bypass Blocks | Authenticated pages provide a focus-revealed skip link to `#main-content`, followed by named navigation and main landmarks. | Automated and production evidence |
-| 2.4.2 Page Titled | The application has a descriptive ISTARI Service document title. Route-specific titles should be reviewed before production acceptance. | Partial technical evidence |
+| 2.4.2 Page Titled | The application has a descriptive Mist Service document title. Route-specific titles should be reviewed before production acceptance. | Partial technical evidence |
 | 2.4.3 Focus Order | Native DOM order follows the visual sequence, and the skip link precedes repeated navigation. Representative keyboard order has been reviewed. | Technical evidence present |
 | 2.4.6 Headings and Labels | Pages use descriptive headings and visible labels. axe-core is run in 25 frontend test files. | Automated evidence present |
 | 2.4.7 Focus Visible | A high-contrast global `:focus-visible` treatment is applied to interactive controls. The skip link only enters view when focused. | Automated and visual evidence |

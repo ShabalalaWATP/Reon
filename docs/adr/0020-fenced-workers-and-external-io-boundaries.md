@@ -14,7 +14,7 @@ maintenance and dependency latency.
 
 ## Decision
 
-1. Run maintenance in a separate `istari-worker` process.
+1. Run maintenance in a separate `mist-worker` process.
 2. Store named maintenance job leases and heartbeat state in PostgreSQL.
 3. Use owner plus monotonically increasing generation as the fencing token.
 4. Retain per-row outbox leases for parallel workflow dispatch.

@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-QC dissemination proves that ISTARI Service released a product to the intended
+QC dissemination proves that Mist Service released a product to the intended
 Customer. It does not prove that the Customer accepted the product. Product
 access and feedback are different actions and cannot safely be used as proxies.
 The human workflow is already complete at dissemination, so adding another

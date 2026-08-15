@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
-  <title id="title">ISTARI organisation routing hierarchy</title>
+  <title id="title">Mist organisation routing hierarchy</title>
   <desc id="desc">A focused organisation tree showing CRIOC, command organisations, Ops groups and delivery teams, with the SSG operational route highlighted.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071018"/><stop offset="1" stop-color="#0c1923"/></linearGradient>

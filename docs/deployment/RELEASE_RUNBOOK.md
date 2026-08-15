@@ -27,9 +27,9 @@ test results and approvals without recording secrets or request content.
    uv run --directory apps/api bandit -c pyproject.toml -r src alembic
    uv run --directory apps/api pip-audit
    uv run --directory apps/api pytest
-   pnpm --filter @istari-service/web test
-   pnpm --filter @istari-service/web build
-   pnpm --filter @istari-service/web contract:openapi
+   pnpm --filter @mist-service/web test
+   pnpm --filter @mist-service/web build
+   pnpm --filter @mist-service/web contract:openapi
    pnpm smoke-contract
    ```
 

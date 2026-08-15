@@ -12,9 +12,9 @@ outage. Default workflow-start and workflow-command attempts were increased from
 recovery command was added for an exact failed request:
 
 ```powershell
-uv run --directory apps/api python -m istari_service.maintenance `
+uv run --directory apps/api python -m mist_service.maintenance `
   workflow-recovery --request-id <uuid>
-uv run --directory apps/api python -m istari_service.maintenance `
+uv run --directory apps/api python -m mist_service.maintenance `
   workflow-recovery --request-id <uuid> --apply `
   --confirm REQUEUE_FAILED_WORKFLOW
 ```

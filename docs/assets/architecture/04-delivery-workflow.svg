@@ -9,7 +9,7 @@
   </defs>
   <rect width="1600" height="780" rx="24" fill="url(#bg)"/>
   <text x="64" y="60" class="eyebrow">HUMAN-LED WORKFLOW · PART 2</text><text x="64" y="101" class="title">From assignment to an authorised Customer product</text>
-  <text x="64" y="132" class="subtitle">The Lead is the accountable Camunda assignee; every assigned Analyst has the same production controls in ISTARI.</text>
+  <text x="64" y="132" class="subtitle">The Lead is the accountable Camunda assignee; every assigned Analyst has the same production controls in Mist.</text>
 
   <g filter="url(#shadow)">
     <rect x="70" y="242" width="238" height="154" rx="18" class="step"/>

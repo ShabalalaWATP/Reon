@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This is the single authoritative completion register for ISTARI Service. The
+This is the single authoritative completion register for Mist Service. The
 `DOD` rows record aggregate programme gates. The `PE-DOD` rows retain the more
 detailed current-capability conditions that support those aggregate gates. A row
 closes only when its exact condition is proved by the named evidence. Historical
@@ -176,8 +176,8 @@ The minimum final command set is:
 pnpm install --frozen-lockfile
 uv sync --project apps/api --all-groups --frozen
 pnpm check
-pnpm --filter @istari-service/web test
-pnpm --filter @istari-service/web build
+pnpm --filter @mist-service/web test
+pnpm --filter @mist-service/web build
 uv run --directory apps/api ruff format --check .
 uv run --directory apps/api ruff check .
 uv run --directory apps/api mypy src

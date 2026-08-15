@@ -3,7 +3,7 @@
 Status: current product behaviour and acceptance catalogue
 Last reviewed: 14 August 2026
 
-This catalogue describes ISTARI Service from the point of view of the people who
+This catalogue describes Mist Service from the point of view of the people who
 use and operate it. It uses plain English first. Technical identifiers are added
 only where they help testers and developers connect a story to a route, policy or
 workflow task.
@@ -51,8 +51,8 @@ The stories describe current product behaviour. Delivery history belongs in the
 | Team Manager | Assign Analysts, oversee delivery and check the product | Team workspace |
 | Team Analyst, Lead | Carry the accountability badge and share production controls | Team workspace and product package |
 | Team Analyst, assigned | Produce, converse and submit with the same controls as the Lead | Assigned request and team board |
-| QC Team Manager, reviewer | Perform quality review of the Manager-approved package | QC queue |
-| QC Team Manager, releaser | Independently disseminate the QC-approved package | QC queue |
+| QC Manager, reviewer | Perform quality review of the Manager-approved package | QC queue |
+| QC Manager, releaser | Independently disseminate the QC-approved package | QC queue |
 | Platform Administrator | Maintain people, teams and safe platform configuration | Administration |
 | Workspace Manager | Maintain the exact unit's roster, calendar and operational work | Organisation workspace |
 | Workspace Member | Work in the exact unit and maintain personal availability | Organisation workspace and personal calendar |
@@ -95,7 +95,7 @@ page so that an Administrator can review my access need.
 
 - The person chooses `Request account` without needing an existing session.
 - Name, work email and the required request details are validated.
-- ISTARI stores a bounded account-request record and notifies Administrators.
+- Mist stores a bounded account-request record and notifies Administrators.
 - The response does not reveal whether a similar account already exists.
 
 **Acceptance checks**
@@ -234,7 +234,7 @@ do not continue work that I no longer need.
 - Another Customer cannot cancel the request.
 - A request already disseminated or terminal cannot be cancelled through a stale
   page.
-- If Camunda is unavailable, ISTARI records a durable cancellation command and
+- If Camunda is unavailable, Mist records a durable cancellation command and
   shows pending completion rather than reporting success early.
 
 ### CUST-08: Receive the product and give feedback
@@ -597,7 +597,7 @@ details unnecessarily.
 
 ### QC-01: Review the approved package
 
-**Need:** As a QC Team Manager, I want the exact Manager-approved package and review
+**Need:** As a QC Manager, I want the exact Manager-approved package and review
 history so that I can make the final release decision.
 
 **Expected behaviour**
@@ -609,7 +609,7 @@ history so that I can make the final release decision.
 
 ### QC-02: Disseminate safely
 
-**Need:** As a different QC Team Manager, I want to release a reviewed file or approved link to
+**Need:** As a different QC Manager, I want to release a reviewed file or approved link to
 the owning Customer so that dissemination is controlled and traceable.
 
 **Acceptance checks**
@@ -906,7 +906,7 @@ A later organisation rename or move does not rewrite the request's pinned route.
 ### E2E-06: Camunda interruption
 
 - **Given** an authorised person records a valid workflow outcome
-- **When** Camunda becomes unavailable after ISTARI commits durable intent
+- **When** Camunda becomes unavailable after Mist commits durable intent
 - **Then** the request shows pending or support-owned failure, the outcome is not
 repeated blindly, and reconciliation proves the exact engine state before the
 visible projection advances.

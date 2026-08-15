@@ -50,11 +50,11 @@ screens are retained in source control, with one current image for each surface.
 
 ### Login
 
-Blank login form in the graphite ISTARI visual system. No credential is shown.
+Blank login form in the graphite Mist visual system. No credential is shown.
 The green `OFFICIAL` strip is visible at the top and the secondary forgotten
 password action remains subordinate to sign-in.
 
-![ISTARI login screen](../assets/screenshots/login.png)
+![Mist login screen](../assets/screenshots/login.png)
 
 ### Password assistance
 

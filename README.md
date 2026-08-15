@@ -1,6 +1,6 @@
-# ISTARI Service
+# Mist Service
 
-ISTARI Service is a secure, human-led request and delivery workspace. A Customer
+Mist Service is a secure, human-led request and delivery workspace. A Customer
 submits a complete request through a structured form, authorised organisations
 route it, assigned Analysts produce the work, a Team Manager and two different
 members of the combined QC Team review and release it, and the Customer receives
@@ -17,7 +17,7 @@ content, private service details, production credentials or classified material.
 > production decisions are explicit in the
 > [enterprise readiness gap register](docs/ENTERPRISE_READINESS_GAP_REGISTER.md).
 
-![ISTARI Service system context](docs/assets/architecture/01-system-context.svg)
+![Mist Service system context](docs/assets/architecture/01-system-context.svg)
 
 ## Contents
 
@@ -176,8 +176,8 @@ promoted to private storage and remain accessible only through an authorised
 FastAPI download.
 
 Every current package also requires a covering note to the Customer. A Team
-Manager reviews the frozen package, one QC Team Manager performs the quality
-review, and a different QC Team Manager claims the release task and disseminates
+Manager reviews the frozen package, one QC Manager performs the quality
+review, and a different QC Manager claims the release task and disseminates
 the exact approved package. The Customer receives the artefacts and note inside
 their dashboard and explicitly records acceptance. Rework creates an attributable
 review loop back to the assigned Analysts.
@@ -234,7 +234,7 @@ checks that separation in FastAPI, not only in the interface.
 | Ops Routing User | Direct work to a delivery team | Claim, return or choose a direct team |
 | Team Manager | Make delivery accountable | Assign Lead and Contributors, oversee work, review product |
 | Team Analyst | Produce the product | Work as Lead or assigned Analyst, converse, package and submit |
-| QC Team Manager | Protect release quality | Claim QC review or, as a different person, claim dissemination |
+| QC Manager | Protect release quality | Claim QC review or, as a different person, claim dissemination |
 | Platform Administrator | Maintain safe platform metadata | Accounts, profiles, organisation, configuration and marking |
 
 Workspace position is independent from workflow role. A routing organisation has
@@ -275,7 +275,7 @@ The complete task and outcome table is in the
 
 ### Sign-in
 
-![ISTARI sign-in](docs/assets/screenshots/login.png)
+![Mist sign-in](docs/assets/screenshots/login.png)
 
 The sign-in page provides account access, account-request and forgotten-password
 routes. A thin global classification bar appears above both public and protected
@@ -305,7 +305,7 @@ More current application views are catalogued in
 The browser talks to one API. That API is the security boundary for application
 data and actions.
 
-![ISTARI Service container architecture](docs/assets/architecture/02-container-view.svg)
+![Mist Service container architecture](docs/assets/architecture/02-container-view.svg)
 
 ### Web application
 
@@ -375,7 +375,7 @@ ownership and release checks.
 
 ![Durable workflow command and reconciliation](docs/assets/architecture/05-durable-workflow-command.svg)
 
-PostgreSQL and Camunda cannot share one database transaction. ISTARI therefore:
+PostgreSQL and Camunda cannot share one database transaction. Mist therefore:
 
 1. authorises the person and exact action;
 2. commits durable intent and audit context;
@@ -393,7 +393,7 @@ C4 model, including component, interaction and deployment views, is in the
 
 ## Security and data protection
 
-ISTARI applies security at the API and data boundaries.
+Mist applies security at the API and data boundaries.
 
 ### Access control
 
@@ -468,7 +468,7 @@ and [security scan evidence](docs/assurance/SECURITY_SCAN_EVIDENCE.md).
 ## Repository structure
 
 ```text
-Istari-Service/
+Mist-Service/
 ├── apps/
 │   ├── api/                  FastAPI application, worker, migrations and tests
 │   └── web/                  React application, styles and browser tests
@@ -587,7 +587,7 @@ Useful local endpoints:
 
 | Endpoint | Purpose |
 |---|---|
-| `http://localhost:5173` | ISTARI web application |
+| `http://localhost:5173` | Mist web application |
 | `http://127.0.0.1:8000/health` | API liveness |
 | `http://127.0.0.1:8000/ready` | Dependency and worker readiness |
 | `http://127.0.0.1:8080` | Loopback-only local Camunda endpoint |
@@ -612,7 +612,7 @@ API or web application runs on the host.
 - Python 3.12 or later
 - `uv`
 - Node.js 22 or later
-- Corepack and pnpm 10
+- Corepack and pnpm 11
 
 ### Install dependencies
 
@@ -630,14 +630,18 @@ the exact dependency profile and apply migrations.
 
 ### Start FastAPI
 
+The API needs the host-reachable runtime settings in `.env.source`, described in
+[Local source development](docs/deployment/LOCAL_SOURCE_DEVELOPMENT.md). Without
+it the default `.env` resolves Compose service names that the host cannot reach.
+
 ```powershell
-uv run --directory apps/api uvicorn istari_service.main:app --reload
+uv run --directory apps/api --env-file ../../.env.source uvicorn mist_service.main:app --reload
 ```
 
 ### Start React
 
 ```powershell
-pnpm --filter @istari-service/web dev
+pnpm --filter @mist-service/web dev
 ```
 
 The Vite development server opens on its configured local port and forwards API
@@ -715,12 +719,27 @@ behaviour. Backend line and branch coverage must each remain at least 95 per cen
 ### Frontend tests
 
 ```powershell
-pnpm --filter @istari-service/web test
+pnpm --filter @mist-service/web test
 ```
 
 Vitest and React Testing Library cover role journeys, forms, accessibility,
 loading, empty, denied, conflict, success and failure states. Frontend line and
 branch coverage must each remain at least 95 per cent.
+
+### Running one test while developing
+
+Both suites enforce their coverage gate on every run, so a single-file run fails
+the gate even when the test itself passes. Disable coverage for the narrow run
+and rely on the full suite before pushing:
+
+```powershell
+uv run --directory apps/api pytest tests/test_auth_service.py --no-cov
+pnpm --filter @mist-service/web exec vitest run src/lib/api/queryKeys.test.ts
+```
+
+`pnpm exec vitest` bypasses the `--coverage` flag in the `test` script. Run
+Vitest from `apps/web`: started from the repository root it loses the jsdom
+environment and every DOM test fails.
 
 ### Additional security and release checks
 

@@ -3,7 +3,7 @@
 Status: current executable workflow
 Last reviewed: 14 August 2026
 
-This guide explains how a request moves through ISTARI Service. It is written for
+This guide explains how a request moves through Mist Service. It is written for
 product owners, delivery staff, testers, developers and operators. No knowledge
 of Camunda or process modelling is assumed.
 
@@ -17,7 +17,7 @@ of Camunda or process modelling is assumed.
 6. [Information, hold and rework loops](#information-hold-and-rework-loops)
 7. [Assigned Analyst responsibilities](#assigned-analyst-responsibilities)
 8. [What routing organisations can see afterwards](#what-routing-organisations-can-see-afterwards)
-9. [How ISTARI and Camunda share responsibility](#how-istari-and-camunda-share-responsibility)
+9. [How Mist and Camunda share responsibility](#how-mist-and-camunda-share-responsibility)
 10. [Failure and recovery behaviour](#failure-and-recovery-behaviour)
 11. [Changing the organisation safely](#changing-the-organisation-safely)
 12. [Source and verification](#source-and-verification)
@@ -30,7 +30,7 @@ The Ops group selects one of its current direct delivery teams. A Manager in tha
 team names one accountable Lead Analyst and up to ten additional assigned
 Analysts. They share the production controls and may ask the Customer or other
 authorised participants for information. The Team Manager checks the result, one
-QC Team Manager performs quality review, and a different QC Team Manager releases
+QC Manager performs quality review, and a different QC Manager releases
 it. The Customer receives and accepts the exact package in their dashboard. CRIOC, the
 selected command and the selected Ops group can track progress, but they do not
 approve the product.
@@ -42,7 +42,7 @@ to describe a process as events, human tasks, decision points and connecting
 paths. The executable process is stored in
 [`workflow/service-request.bpmn`](../../workflow/service-request.bpmn).
 
-**Camunda** is the workflow engine that runs that BPMN process. In ISTARI it does
+**Camunda** is the workflow engine that runs that BPMN process. In Mist it does
 three important things:
 
 - remembers which human task is currently active;
@@ -51,11 +51,11 @@ three important things:
 
 Camunda does **not** read the request and decide where it should go. It does not
 choose priority, team, Analyst, approval or recipient. Those are named human
-decisions submitted through ISTARI Service and validated by FastAPI.
+decisions submitted through Mist Service and validated by FastAPI.
 
 ### A small BPMN vocabulary
 
-| BPMN term | Plain-English meaning in ISTARI |
+| BPMN term | Plain-English meaning in Mist |
 |---|---|
 | Start event | The submitted request has a durable process-start command. |
 | User task | A named person must review something and record an outcome. |
@@ -114,8 +114,8 @@ approval.
 3. An assigned Analyst creates an ordered package of managed files and/or
    allowlisted HTTPS links, adds the covering note and submits it.
 4. A Team Manager approves it for QC or returns it to the same assignment.
-5. One QC Team Manager claims quality review, approves it or returns it.
-6. A different QC Team Manager claims dissemination and releases the exact
+5. One QC Manager claims quality review, approves it or returns it.
+6. A different QC Manager claims dissemination and releases the exact
    approved package.
 7. The owning Customer sees the artefacts and covering note, records acceptance
    and may provide one feedback response.
@@ -149,9 +149,9 @@ names and action labels.
 | Provide production information | `customer_clarification_response` | Owning Customer | Withdraw | Cancelled |
 | Manager Review | `lead_review` | Team Manager | Changes required | Product Production, same assignment |
 | Manager Review | `lead_review` | Team Manager | Approve | QC Review |
-| QC Review | `quality_review` | Claimed QC Team Manager | Changes required | Product Production, same assignment |
-| QC Review | `quality_review` | Claimed QC Team Manager | Approve | Dissemination |
-| Dissemination | `release` | Different claimed QC Team Manager | Release exact approved package | Completed, awaiting Customer acceptance |
+| QC Review | `quality_review` | Claimed QC Manager | Changes required | Product Production, same assignment |
+| QC Review | `quality_review` | Claimed QC Manager | Approve | Dissemination |
+| Dissemination | `release` | Different claimed QC Manager | Release exact approved package | Completed, awaiting Customer acceptance |
 
 ### End states
 
@@ -162,7 +162,7 @@ names and action labels.
 | Cancelled | The Customer withdrew or cancelled the request with a recorded reason. |
 
 Customer-initiated cancellation is also available through the request dashboard
-when the request is in an allowed active state. ISTARI records the reason,
+when the request is in an allowed active state. Mist records the reason,
 completes or terminates the applicable process path safely, updates the visible
 status and notifies relevant participants.
 
@@ -239,9 +239,9 @@ Statistics follow the same hierarchy rule:
 - A delivery team sees its own work.
 - A unit never sees its parent or sibling branches.
 
-## How ISTARI and Camunda share responsibility
+## How Mist and Camunda share responsibility
 
-| Responsibility | ISTARI PostgreSQL and FastAPI | Camunda |
+| Responsibility | Mist PostgreSQL and FastAPI | Camunda |
 |---|---:|---:|
 | Request form and immutable submitted revision | Yes | No |
 | User identity, role, scope and effective team membership | Yes | Receives bounded candidate/assignee values |
@@ -259,7 +259,7 @@ bytes are never stored as Camunda variables.
 
 ![Durable workflow command and reconciliation](../assets/architecture/05-durable-workflow-command.svg)
 
-PostgreSQL and Camunda cannot commit one shared database transaction. ISTARI uses
+PostgreSQL and Camunda cannot commit one shared database transaction. Mist uses
 a durable command pattern instead:
 
 1. authorise the actor and validate the current version;
@@ -279,7 +279,7 @@ state instead of invented progress.
 | The Camunda search view is delayed | Reconciliation waits for proof; it does not select a different task. |
 | The browser repeats a submission | Idempotency and expected-version checks prevent duplicate workflow progress. |
 | A worker stops after the external call | Its lease expires and another worker proves the actual engine state before finalising. |
-| An organisation is unstaffed | The route remains visible as awaiting staffing; ISTARI does not borrow another team's users. |
+| An organisation is unstaffed | The route remains visible as awaiting staffing; Mist does not borrow another team's users. |
 | A user loses membership or is deactivated | Authorisation is checked again before finalisation and the action fails closed. |
 | A stale task link is opened | No accessible task is returned; the interface explains that the action has ended or moved. |
 

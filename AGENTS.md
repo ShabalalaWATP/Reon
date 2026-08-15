@@ -1,4 +1,4 @@
-# ISTARI Service Repository Instructions
+# Mist Service Repository Instructions
 
 These instructions supplement Alex Orr's global Codex instructions.
 
@@ -30,9 +30,15 @@ These instructions supplement Alex Orr's global Codex instructions.
   not under test.
 - Maintain at least 95 per cent line and branch coverage independently for
   backend and frontend application code.
-- Keep hand-written source files at or below 350 lines. Markdown documentation is
-  exempt and may exceed 400 lines when required for traceability; organise long
-  documents with clear headings instead of splitting one authority into copies.
+- Keep hand-written source files at or below 350 lines. Do not split one
+  cohesive concern across files just to satisfy the cap: a file that would lose
+  cohesion by splitting may instead carry a named entry in the exceptional
+  allowlist in `scripts/check-file-lines.mjs`, up to a hard ceiling of 400
+  lines. Markdown documentation is exempt and may exceed 400 lines when
+  required for traceability; organise long documents with clear headings
+  instead of splitting one authority into copies. Alembic migrations under
+  `apps/api/alembic/versions` are also exempt, because one migration is a
+  single ordered change that must stay atomic.
 - Every feature begins with a spec. Material decisions require an ADR, and
   security-sensitive work requires a threat-model update.
 - Meet WCAG 2.2 AA for pilot journeys and target a p95 below two seconds for
@@ -68,5 +74,7 @@ These instructions supplement Alex Orr's global Codex instructions.
 - Install: `pnpm install` and `uv sync --project apps/api --all-groups`
 - All static checks: `pnpm check`
 - Backend tests: `uv run --directory apps/api pytest`
-- Frontend tests: `pnpm --filter @istari-service/web test`
-- Local stack: `docker compose up --build`
+- Frontend tests: `pnpm --filter @mist-service/web test`
+- Local stack: `pwsh -File ./scripts/start-local.ps1` (add `-SeedDemoData` for the
+  demo portfolio). Plain `docker compose up --build` starts the containers but
+  deploys no BPMN, so readiness fails and requests cannot start.

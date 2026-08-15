@@ -4,7 +4,7 @@
 
 Customers can cancel their own submitted request before it reaches a terminal
 state, record why it is no longer required and see the request close
-immediately. ISTARI durably terminates the corresponding Camunda process and
+immediately. Mist durably terminates the corresponding Camunda process and
 notifies the Customer and the staff already involved in its route. Every signed
 in user can also maintain bounded personal profile information without changing
 their role, access or governed organisation membership.

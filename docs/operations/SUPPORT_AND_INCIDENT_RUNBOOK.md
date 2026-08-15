@@ -75,7 +75,7 @@ change.
   use capped delay and cover approximately 13 minutes. Never fabricate task
   state.
 - If an exact request exhausted its workflow retries during a longer outage,
-  inspect it first with `python -m istari_service.maintenance workflow-recovery
+  inspect it first with `python -m mist_service.maintenance workflow-recovery
   --request-id <uuid>`. Requeue only after Camunda is healthy, using `--apply
   --confirm REQUEUE_FAILED_WORKFLOW`. The command refuses non-failed work,
   rechecks state in a transaction and appends a content-free recovery event.

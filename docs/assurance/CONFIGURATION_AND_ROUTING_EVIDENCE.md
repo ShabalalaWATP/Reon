@@ -42,8 +42,8 @@ representative acceptance remains open.
 
 The final local gates used Python 3.13.3, Node 22.20.0 and pnpm 11.16.0 on
 Windows. Principal commands were `pnpm check`, `uv run --directory apps/api
-pytest`, `pnpm --filter @istari-service/web test`, `pnpm --filter
-@istari-service/web build`, Ruff format/check, MyPy, Bandit, the OpenAPI contract,
+pytest`, `pnpm --filter @mist-service/web test`, `pnpm --filter
+@mist-service/web build`, Ruff format/check, MyPy, Bandit, the OpenAPI contract,
 the Camunda smoke contract and both BPMN validator suites.
 
 Local SHA-256 evidence artefacts:

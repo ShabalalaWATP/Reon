@@ -251,7 +251,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
   Production may keep allow-listed, non-fetched external links enabled while
   managed-file upload routes fail closed when semantic/CDR assurance is absent.
 - Approved external destinations remain third-party trust boundaries. QC must
-  attest Customer access and handling suitability; ISTARI Service cannot prove
+  attest Customer access and handling suitability; Mist Service cannot prove
   the destination's continued availability or content after redirect.
 - Clean-object promotion and its database scan record are not yet one durable
   atomic operation. Before production object storage is enabled, introduce a

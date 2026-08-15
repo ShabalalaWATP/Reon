@@ -28,13 +28,13 @@ login password. Do not place connection strings in command history or evidence.
 Preview eligible counts without changing data:
 
 ```powershell
-uv run --directory apps/api istari-maintenance retention
+uv run --directory apps/api mist-maintenance retention
 ```
 
 Apply the approved policy only after reviewing the dry run:
 
 ```powershell
-uv run --directory apps/api istari-maintenance retention --apply `
+uv run --directory apps/api mist-maintenance retention --apply `
   --confirm APPLY_RETENTION
 ```
 
@@ -54,19 +54,19 @@ never an ordinary application role.
 
 ## Backup
 
-Set `ISTARI_BACKUP_DATABASE_URL` for the read-only backup identity. For any host
+Set `MIST_BACKUP_DATABASE_URL` for the read-only backup identity. For any host
 other than the exact local exceptions `localhost`, `127.0.0.1` and `[::1]`, the
 URL must include `sslmode=verify-full` and `sslrootcert` pointing to the same
-existing CA bundle named by `ISTARI_POSTGRES_APPROVED_SSL_ROOT_CERT`.
+existing CA bundle named by `MIST_POSTGRES_APPROVED_SSL_ROOT_CERT`.
 
 Load a separately controlled, random key of at least 32 bytes as base64 in
-`ISTARI_BACKUP_INTEGRITY_KEY_BASE64`. Keep it in the operational secret store,
+`MIST_BACKUP_INTEGRITY_KEY_BASE64`. Keep it in the operational secret store,
 separate from backup storage and the database credentials. For example, generate
 the value inside the approved secret-management boundary, not in repository
 configuration. Then run:
 
 ```powershell
-pwsh -File scripts/backup-postgres.ps1 -OutputDirectory C:\istari-backups
+pwsh -File scripts/backup-postgres.ps1 -OutputDirectory C:\mist-backups
 ```
 
 Retain the `.dump` and matching `.sha256.json` together in controlled storage.
@@ -93,13 +93,13 @@ has lawfully expired. Losing an old key makes its historic chain unverifiable.
 ## Isolated restore rehearsal
 
 Create a new empty PostgreSQL database with a dedicated restore owner. Set
-`ISTARI_RESTORE_DATABASE_URL` for that database, applying the same remote TLS and
+`MIST_RESTORE_DATABASE_URL` for that database, applying the same remote TLS and
 approved CA-path rule. Load the original backup integrity key from the separate
 secret store, then run:
 
 ```powershell
 pwsh -File scripts/restore-postgres.ps1 `
-  -BackupFile C:\istari-backups\istari-YYYYMMDDTHHMMSSZ.dump `
+  -BackupFile C:\mist-backups\mist-YYYYMMDDTHHMMSSZ.dump `
   -EvidenceDirectory .local-evidence\restore `
   -Confirmation RESTORE_ISOLATED_DATABASE
 ```
@@ -115,7 +115,7 @@ recovery usable.
 Run the content-free database snapshot with:
 
 ```powershell
-uv run --directory apps/api istari-maintenance health-snapshot
+uv run --directory apps/api mist-maintenance health-snapshot
 ```
 
 For the local stack, `scripts/check-operational-health.ps1` also checks API

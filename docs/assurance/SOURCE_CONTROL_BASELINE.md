@@ -9,7 +9,7 @@ Recorded on 7 August 2026. The initial local source baseline is:
 | Branch | `main` |
 | Root commit | `cdfea322d13e8812ee82aae377dd58b419247e54` |
 | Tree | `4dbe5bf6a9d470af2067be7be16603a32bc897e2` |
-| Subject | `feat: establish ISTARI Service MVP baseline` |
+| Subject | `feat: establish Mist Service MVP baseline` |
 | Parents | None, this is the repository root commit |
 | Inventory | 445 files, 65,110 inserted lines |
 

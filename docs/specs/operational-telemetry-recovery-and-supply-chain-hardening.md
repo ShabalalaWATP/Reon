@@ -11,7 +11,7 @@ topology. It does not turn the local Compose stack into a production template.
 ## Required outcomes
 
 - Uvicorn and Nginx raw access logs are disabled. The API emits one JSON event
-  through `istari_service.access`, using the matched route template or the fixed
+  through `mist_service.access`, using the matched route template or the fixed
   value `unmatched`, never the request target or query string.
 - Built runtime images are exercised by canaries after build. The live canary
   starts the built web and API images on a temporary internal network, sends an

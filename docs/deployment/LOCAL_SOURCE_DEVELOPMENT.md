@@ -52,7 +52,7 @@ On macOS/Linux, use `cp .env.example .env`. Configure `.env` as described in the
 
    ```powershell
    docker compose stop web
-   pnpm --filter @istari-service/web dev
+   pnpm --filter @mist-service/web dev
    ```
 
    Vite serves the development frontend according to its package configuration.
@@ -61,7 +61,7 @@ On macOS/Linux, use `cp .env.example .env`. Configure `.env` as described in the
    Camunda.
 
    The proxy defaults to `http://localhost:8000`. For an isolated source API on
-   another local port, set `ISTARI_API_PROXY` in the Vite process environment,
+   another local port, set `MIST_API_PROXY` in the Vite process environment,
    for example `http://localhost:18000`. This is a development-build input, not
    a browser-exposed API credential.
 
@@ -71,7 +71,7 @@ On macOS/Linux, use `cp .env.example .env`. Configure `.env` as described in the
 
    ```dotenv
    ENVIRONMENT=local
-   DATABASE_URL=postgresql+asyncpg://<runtime-user>:<url-encoded-password>@127.0.0.1:5432/istari_service
+   DATABASE_URL=postgresql+asyncpg://<runtime-user>:<url-encoded-password>@127.0.0.1:5432/mist_service
    CAMUNDA_REST_ADDRESS=http://127.0.0.1:8080
    WEB_ORIGIN=http://localhost:5173
    TRUSTED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
@@ -93,7 +93,7 @@ On macOS/Linux, use `cp .env.example .env`. Configure `.env` as described in the
    API with the runtime URL in `.env.source`:
 
    ```powershell
-   uv run --directory apps/api --env-file ../../.env.source uvicorn istari_service.main:app --reload
+   uv run --directory apps/api --env-file ../../.env.source uvicorn mist_service.main:app --reload
    ```
 
    When qualifying a migration against a separate host-reachable database,
@@ -103,7 +103,7 @@ On macOS/Linux, use `cp .env.example .env`. Configure `.env` as described in the
 
    ```powershell
    uv run --directory apps/api --env-file ../../.env.migrate alembic upgrade head
-   uv run --directory apps/api --env-file ../../.env.migrate python -m istari_service.postgres_permissions
+   uv run --directory apps/api --env-file ../../.env.migrate python -m mist_service.postgres_permissions
    ```
 
    Stop using the migration environment immediately afterwards. The running API
@@ -115,7 +115,7 @@ On macOS/Linux, use `cp .env.example .env`. Configure `.env` as described in the
 
    ```powershell
    docker compose stop worker
-   uv run --directory apps/api --env-file ../../.env.source istari-worker
+   uv run --directory apps/api --env-file ../../.env.source mist-worker
    ```
 
    Restore the Compose worker after the source process stops. Never run a source
@@ -129,7 +129,7 @@ does not auto-migrate; Compose uses its explicit one-shot `migrator` service.
 Fast feedback:
 
 ```powershell
-pnpm --filter @istari-service/web test
+pnpm --filter @mist-service/web test
 uv run --directory apps/api pytest
 ```
 
@@ -142,7 +142,7 @@ uv run --directory apps/api ruff check .
 uv run --directory apps/api mypy
 uv run --directory apps/api bandit -c pyproject.toml -r src alembic
 uv run --directory apps/api pip-audit
-pnpm --filter @istari-service/web build
+pnpm --filter @mist-service/web build
 ```
 
 Coverage gates are 95 per cent lines and branches independently for backend and

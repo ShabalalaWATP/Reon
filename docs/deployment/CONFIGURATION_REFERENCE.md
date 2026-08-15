@@ -86,7 +86,7 @@ compatibility option, not an accepted enterprise identity design.
 | `TRUSTED_ORIGINS` | local loopback origins | Exact comma-separated CORS/CSRF origins. Production requires HTTPS. |
 | `ALLOWED_HOSTS` | derived plus explicit local hosts | Exact trusted Host header names. Production requires a non-empty wildcard-free list. |
 | `SESSION_COOKIE_SECURE` | `false` locally | Must be `true` in production. |
-| `SESSION_COOKIE_NAME` | `istari_session` | Cookie name. Plan changes carefully because they invalidate existing sessions. |
+| `SESSION_COOKIE_NAME` | `mist_session` | Cookie name. Plan changes carefully because they invalidate existing sessions. |
 | `SESSION_COOKIE_SAMESITE` | `lax` | `lax` or `strict`; `none` is intentionally rejected. |
 | `SESSION_TTL_SECONDS` | `28800` | Absolute lifetime, 300 to 86400 seconds. Forwarded by Compose. |
 | `SESSION_IDLE_SECONDS` | `3600` | Idle lifetime, 60 to 86400 seconds. Forwarded by Compose. |
@@ -133,7 +133,7 @@ Do not set `ALLOW_DEMO_USERS=true` outside an isolated synthetic environment.
 
 | Variable | Default | Meaning and constraint |
 |---|---|---|
-| `PRODUCT_STORAGE_PATH` | `/var/lib/istari-products` in Compose | Private filesystem root. Must be absolute in production, although the built-in runtime is still rejected there. |
+| `PRODUCT_STORAGE_PATH` | `/var/lib/mist-products` in Compose | Private filesystem root. Must be absolute in production, although the built-in runtime is still rejected there. |
 | `PRODUCT_ALLOWED_EXTERNAL_DOMAINS` | `products.example.test` locally | Comma-separated exact host allowlist for HTTPS product links. |
 | `PRODUCT_UPLOAD_TTL_SECONDS` | `600` | Upload-intent lifetime, 60 to 3600 seconds. |
 | `PRODUCT_MAX_FILE_BYTES` | `26214400` | Per-file limit, up to 25 MiB. |

@@ -2,7 +2,7 @@
 
 ## Outcome
 
-During an actively claimed CRIOC intake task, ISTARI automatically compares the
+During an actively claimed CRIOC intake task, Mist automatically compares the
 new request with every previous submitted request the actor is authorised to
 see. It ranks strong candidates using the complete Customer-submitted
 requirement, explains the fields that contributed to each match and lets the

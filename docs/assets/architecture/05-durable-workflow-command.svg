@@ -8,8 +8,8 @@
     <style>.title{font:700 30px Inter,Segoe UI,sans-serif;fill:#f4f8fb}.subtitle{font:400 15px Inter,Segoe UI,sans-serif;fill:#91a9b8}.eyebrow{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:2px;fill:#36c7ff}.number{font:800 24px ui-monospace,Consolas,monospace;fill:#36c7ff}.name{font:700 17px Inter,Segoe UI,sans-serif;fill:#f4f8fb}.copy{font:400 12.5px Inter,Segoe UI,sans-serif;fill:#aebfca}.step{fill:#10222e;stroke:#36718d;stroke-width:1.5}.database{fill:#14261f;stroke:#43c98b;stroke-width:1.5}.engine{fill:#1a2032;stroke:#7787cf;stroke-width:1.5}.line{fill:none;stroke:#64c9ed;stroke-width:2.2;marker-end:url(#arrow)}.safe{font:700 12px Inter,Segoe UI,sans-serif;fill:#53d89a}.warning{font:600 12px Inter,Segoe UI,sans-serif;fill:#e4b85f}</style>
   </defs>
   <rect width="1540" height="820" rx="24" fill="url(#bg)"/>
-  <text x="64" y="60" class="eyebrow">CONSISTENCY PATTERN</text><text x="64" y="101" class="title">How ISTARI keeps PostgreSQL and Camunda aligned</text>
-  <text x="64" y="132" class="subtitle">The systems cannot share one transaction. ISTARI records durable intent first, performs the external call, then proves the result.</text>
+  <text x="64" y="60" class="eyebrow">CONSISTENCY PATTERN</text><text x="64" y="101" class="title">How Mist keeps PostgreSQL and Camunda aligned</text>
+  <text x="64" y="132" class="subtitle">The systems cannot share one transaction. Mist records durable intent first, performs the external call, then proves the result.</text>
 
   <g filter="url(#shadow)">
     <rect x="64" y="226" width="250" height="172" rx="18" class="step"/>

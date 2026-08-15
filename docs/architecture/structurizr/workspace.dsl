@@ -1,11 +1,11 @@
-workspace "ISTARI Service" "Current executable architecture for the synthetic service-request application" {
+workspace "Mist Service" "Current executable architecture for the synthetic service-request application" {
     model {
         customer = person "Customer" "Submits requests, joins request conversations, receives products and accepts delivery."
         staff = person "Authorised staff member" "Routes demand, produces work, reviews packages or releases products in Staff context."
         administrator = person "Platform administrator" "Maintains identity and configuration metadata without request-content authority."
         operator = person "Runtime operator" "Deploys, observes, backs up and restores the service."
 
-        istari = softwareSystem "ISTARI Service" "Human-led request, delivery and dissemination workspace." {
+        mist = softwareSystem "Mist Service" "Human-led request, delivery and dissemination workspace." {
             web = container "Web application" "Context-aware forms, dashboards, queues, conversations and workspaces." "React 19, TypeScript 5.9, Vite 7, Nginx" {
                 shell = component "Application shell and routes" "Builds Customer or Staff navigation and enforces route presentation." "React Router 8"
                 features = component "Feature modules" "Requests, routing, tracking, delivery boards, packages, calendars, organisation and administration." "React 19"
@@ -52,7 +52,7 @@ workspace "ISTARI Service" "Current executable architecture for the synthetic se
         }
 
         camunda = softwareSystem "Camunda 8.9" "Owns BPMN process position and human user-task lifecycle."
-        camundaDatabase = softwareSystem "Camunda database" "Camunda-owned storage, never read by ISTARI application code."
+        camundaDatabase = softwareSystem "Camunda database" "Camunda-owned storage, never read by Mist application code."
 
         customer -> web "Uses in Customer context"
         staff -> web "Uses in Staff context"
@@ -96,17 +96,17 @@ workspace "ISTARI Service" "Current executable architecture for the synthetic se
     }
 
     views {
-        systemContext istari "SystemContext" {
+        systemContext mist "SystemContext" {
             include *
             autolayout lr
-            title "ISTARI Service system context"
+            title "Mist Service system context"
             description "People and systems around the current service."
         }
 
-        container istari "Containers" {
+        container mist "Containers" {
             include *
             autolayout lr
-            title "ISTARI Service containers"
+            title "Mist Service containers"
             description "Executable containers and their supported interfaces."
         }
 
@@ -124,7 +124,7 @@ workspace "ISTARI Service" "Current executable architecture for the synthetic se
             description "Thin HTTP adapters around services, policies, focused ports and adapters."
         }
 
-        dynamic istari "RequestDelivery" "Customer request to accepted product" {
+        dynamic mist "RequestDelivery" "Customer request to accepted product" {
             customer -> web "Submits a validated request"
             web -> api "Creates immutable submission"
             api -> database "Commits request, audit and process-start intent"

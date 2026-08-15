@@ -24,7 +24,7 @@ bodies containing operational detail into an unrestricted ticket.
 docker compose ps
 Invoke-WebRequest http://localhost:8000/health -UseBasicParsing
 Invoke-WebRequest http://localhost:8000/ready -UseBasicParsing
-uv run --directory apps/api python -m istari_service.maintenance status
+uv run --directory apps/api python -m mist_service.maintenance status
 ```
 
 Expected local results are running or healthy containers, HTTP 200 for health,

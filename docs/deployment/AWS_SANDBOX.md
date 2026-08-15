@@ -84,14 +84,14 @@ On the instance:
 
 6. Enable Docker at boot only if the sandbox owner requires restart recovery.
 
-## 4. Transfer and configure ISTARI
+## 4. Transfer and configure Mist
 
 Use an approved private Git endpoint or controlled artefact transfer. Do not put
 a personal access token in shell history, user data or `.env`.
 
 ```bash
-git clone <approved-repository-url> Istari-Service
-cd Istari-Service
+git clone <approved-repository-url> Mist-Service
+cd Mist-Service
 cp .env.example .env
 chmod 600 .env
 ```

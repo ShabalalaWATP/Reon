@@ -180,7 +180,7 @@ approval.
 - Links must be absolute HTTPS URLs on an administrator-managed allow-list.
 - User information, embedded credentials, fragments, non-standard schemes,
   loopback addresses and literal private-network hosts are rejected.
-- ISTARI Service stores and displays the normalised destination domain, product
+- Mist Service stores and displays the normalised destination domain, product
   label, optional expiry and the approving actor.
 - The backend never fetches or previews the destination, avoiding an SSRF and
   content-ingestion boundary.

@@ -1,4 +1,4 @@
-# ISTARI Service Expansion: Definitions of Done
+# Mist Service Expansion: Definitions of Done
 
 ## Purpose
 
@@ -115,7 +115,7 @@ the MVP pilot uses these thresholds:
 
 - Each new workspace records a visual thesis, content plan and interaction thesis
   before component work starts.
-- Operational surfaces use the existing graphite ISTARI hierarchy, one cyan
+- Operational surfaces use the existing graphite Mist hierarchy, one cyan
   action accent, restrained dividers and dense readable rows rather than a grid
   of decorative cards.
 - Loading, empty, success, stale, conflict, permission-denied and recoverable error

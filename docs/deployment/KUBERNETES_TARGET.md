@@ -4,7 +4,7 @@ Status: target architecture only, not implemented or validated
 
 The repository contains no application Helm chart, Kubernetes manifests or
 infrastructure as code. These steps describe the intended delivery sequence and
-must not be used to claim that ISTARI supports production Kubernetes today.
+must not be used to claim that Mist supports production Kubernetes today.
 Camunda's own supported-version, licence and production guidance remains
 authoritative.
 
@@ -27,7 +27,7 @@ flowchart TB
 
 PostgreSQL, Camunda primary state and product objects are separate authorities.
 They require a joined recovery plan. The application already packages
-maintenance as the separately deployable `istari-worker` executable. A
+maintenance as the separately deployable `mist-worker` executable. A
 production chart still needs to define its probes, resources, disruption
 policy, connection budget and replica strategy.
 

@@ -4,7 +4,7 @@ Status: accepted for the synthetic MVP on 10 August 2026.
 
 ## Outcome
 
-ISTARI provides a quiet `Forgotten password?` action on the sign-in page and a
+Mist provides a quiet `Forgotten password?` action on the sign-in page and a
 thin, persistent classification strip above every public and authenticated
 surface. The default marking is `OFFICIAL`. A Platform Administrator with a
 fresh step-up session can change the marking for every user.
@@ -20,7 +20,7 @@ of individual request content.
   request.
 - Administrators can set or correct an email while creating or editing an
   account.
-- Existing synthetic identities use `adminN@istari.example.test`.
+- Existing synthetic identities use `adminN@mist.example.test`.
 - A user can see their own email on their profile. Platform Administrators can
   see account emails through the identity register. Other users cannot query
   another account's email.
@@ -75,7 +75,7 @@ The platform stores exactly one versioned global marking:
   sequence.
 - Status changes use a short colour transition that is disabled when reduced
   motion is requested.
-- The new controls reuse ISTARI typography, spacing, focus and error patterns.
+- The new controls reuse Mist typography, spacing, focus and error patterns.
 - Every authenticated page provides a focus-revealed `Skip to main content`
   link before repeated navigation. Its target is programmatically focusable.
 - At widths down to 320 CSS pixels, page content reflows without document-level

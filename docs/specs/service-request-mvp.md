@@ -6,7 +6,7 @@ Current product contract. Last reviewed 11 August 2026.
 
 ## Objective
 
-Provide a focused ISTARI service-request product with a structured Customer
+Provide a focused Mist service-request product with a structured Customer
 form, clear human-led routing, accountable production, quality review and secure
 release.
 
@@ -22,13 +22,13 @@ create broad access to request content.
 ## Visual thesis
 
 A calm, precise service workspace built from graphite surfaces, disciplined cyan
-accents, mono request references and clear stage hierarchy, retaining ISTARI's
+accents, mono request references and clear stage hierarchy, retaining Mist's
 recognisable character without defence, artificial-assistant or command-centre
 language.
 
 ## Content plan
 
-1. Login: ISTARI brand, neutral value points and account access.
+1. Login: Mist brand, neutral value points and account access.
 2. My requests: status summary, active request register and one submission action.
 3. Request form: the need, outcome, deadline, context and delivery expectations.
 4. Request workspace: overview, current owner, activity, service product and feedback.
@@ -191,7 +191,7 @@ query scope remain role-specific.
 ## Acceptance criteria
 
 - The new repository exists outside the Coeus directory and Coeus is unchanged.
-- Login preserves the ISTARI composition with neutral copy and accessible motion.
+- Login preserves the Mist composition with neutral copy and accessible motion.
 - A Customer can submit the complete form and view only their requests.
 - A Customer can save and resume a private draft without starting Camunda.
 - Each representative role sees only its applicable queue and actions.

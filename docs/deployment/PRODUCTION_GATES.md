@@ -2,7 +2,7 @@
 
 Status: blocking acceptance checklist
 
-Passing local tests is necessary but not sufficient. ISTARI must not contain real
+Passing local tests is necessary but not sufficient. Mist must not contain real
 service content or be called enterprise-ready until every applicable row below
 has dated evidence, an accountable owner and explicit acceptance.
 

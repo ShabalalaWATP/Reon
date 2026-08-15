@@ -2,7 +2,7 @@
 
 ## Outcome
 
-Customers can request an ISTARI account from the sign-in page and submit a complete service brief without choosing an internal organisation, team or recipient. Administrators can review access requests. Internal routing remains a human decision after submission.
+Customers can request an Mist account from the sign-in page and submit a complete service brief without choosing an internal organisation, team or recipient. Administrators can review access requests. Internal routing remains a human decision after submission.
 
 ## Service-request acceptance criteria
 

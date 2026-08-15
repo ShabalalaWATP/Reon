@@ -4,7 +4,7 @@ Status: current editable C4 model
 Last reviewed: 14 August 2026
 
 [`workspace.dsl`](workspace.dsl) is the machine-readable architecture source for
-ISTARI Service. It describes the system context, runtime containers, web and API
+Mist Service. It describes the system context, runtime containers, web and API
 components, an end-to-end delivery interaction and the two documented executable
 deployment shapes.
 
@@ -12,7 +12,7 @@ deployment shapes.
 
 | Key | Purpose |
 |---|---|
-| `SystemContext` | People, ISTARI and Camunda trust relationships |
+| `SystemContext` | People, Mist and Camunda trust relationships |
 | `Containers` | Web, API, worker, PostgreSQL, product storage and scanner |
 | `WebComponents` | Routing shell, feature modules, auth/context and typed API state |
 | `ApiComponents` | HTTP, services, policies, ports, composition and adapters |

@@ -5,7 +5,7 @@ Last reviewed: 8 August 2026
 
 ## Objective
 
-Remove avoidable database and API-replica coupling from the ISTARI pilot while
+Remove avoidable database and API-replica coupling from the Mist pilot while
 preserving human-led routing, object-level authorisation, durable recovery and
 the existing user journeys. This milestone implements the accepted
 simplification findings except atomic concurrent Board WIP enforcement, which
@@ -58,7 +58,7 @@ is explicitly outside scope.
 
 ## Worker contract
 
-The `istari-worker` process owns workflow-start dispatch, workflow-command
+The `mist-worker` process owns workflow-start dispatch, workflow-command
 dispatch, task reconciliation, notification projection and scheduled membership
 projection. Each loop:
 

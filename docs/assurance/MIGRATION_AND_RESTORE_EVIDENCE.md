@@ -53,7 +53,7 @@ The PostgreSQL backup and restore controls are implemented in:
 - `scripts/restore-postgres.ps1`;
 - `scripts/test-operations-scripts.ps1`;
 - `scripts/lib/PostgresServiceFile.ps1`;
-- `apps/api/src/istari_service/restore_verification.py`.
+- `apps/api/src/mist_service/restore_verification.py`.
 
 The scripts require a custom-format archive, validate its catalogue, protect the
 result with a SHA-256 manifest, refuse a non-empty restore target, verify the

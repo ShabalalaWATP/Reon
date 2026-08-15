@@ -48,10 +48,10 @@ The Bastion tunnel terminates on SSH port 22, not the web application.
 Open a local tunnel to the VM's SSH service:
 
 ```powershell
-$vmId = az vm show --resource-group istari-sandbox-rg `
-  --name istari-sandbox-vm --query id --output tsv
-az network bastion tunnel --name istari-sandbox-bastion `
-  --resource-group istari-sandbox-rg `
+$vmId = az vm show --resource-group mist-sandbox-rg `
+  --name mist-sandbox-vm --query id --output tsv
+az network bastion tunnel --name mist-sandbox-bastion `
+  --resource-group mist-sandbox-rg `
   --target-resource-id $vmId --resource-port 22 --port 50022
 ```
 
@@ -72,11 +72,11 @@ pwsh --version
 git --version
 ```
 
-## 4. Configure and start ISTARI
+## 4. Configure and start Mist
 
 ```bash
-git clone <approved-repository-url> Istari-Service
-cd Istari-Service
+git clone <approved-repository-url> Mist-Service
+cd Mist-Service
 cp .env.example .env
 chmod 600 .env
 ```

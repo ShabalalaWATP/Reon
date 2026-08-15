@@ -71,8 +71,8 @@ Review Docker Desktop licensing before enterprise or government use.
 ## 2. Obtain and configure the repository
 
 ```powershell
-git clone <approved-repository-url> Istari-Service
-Set-Location Istari-Service
+git clone <approved-repository-url> Mist-Service
+Set-Location Mist-Service
 Copy-Item .env.example .env
 ```
 
@@ -123,7 +123,7 @@ Useful variants:
 pwsh -File ./scripts/start-local.ps1 -NoBuild
 
 # Operate an explicitly named isolated Compose project
-pwsh -File ./scripts/start-local.ps1 -ComposeProjectName istari-qa
+pwsh -File ./scripts/start-local.ps1 -ComposeProjectName mist-qa
 
 # Only when deliberately testing without workflow deployment
 pwsh -File ./scripts/start-local.ps1 -SkipWorkflowDeployment

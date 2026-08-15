@@ -1,4 +1,4 @@
-# ISTARI Service acceptance record
+# Mist Service acceptance record
 
 Status: prepared for review, not signed
 
@@ -28,7 +28,7 @@ Complete this table before representative testing begins.
 
 | Item | Candidate |
 | --- | --- |
-| Application | ISTARI Service |
+| Application | Mist Service |
 | Git revision | PENDING immutable commit |
 | Candidate build or image identifiers | PENDING |
 | Test environment and date | PENDING |

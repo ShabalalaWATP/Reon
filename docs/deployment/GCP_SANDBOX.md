@@ -14,7 +14,7 @@ as code.
 
 Use Google's [IAP TCP forwarding guide](https://cloud.google.com/iap/docs/using-tcp-forwarding)
 as the platform authority. This procedure carries an SSH local-forward through
-IAP because ISTARI deliberately listens on VM loopback rather than on the VM
+IAP because Mist deliberately listens on VM loopback rather than on the VM
 network interface.
 
 ## 1. Prerequisites and approval
@@ -26,7 +26,7 @@ Cloud CLI on the operator workstation:
 ```powershell
 gcloud version
 gcloud auth login
-gcloud config set project istari-sandbox-example
+gcloud config set project mist-sandbox-example
 gcloud auth list
 ```
 
@@ -60,7 +60,7 @@ those bindings or create public firewall rules.
 Connect through IAP:
 
 ```powershell
-gcloud compute ssh istari-sandbox-vm `
+gcloud compute ssh mist-sandbox-vm `
   --zone europe-west2-a `
   --tunnel-through-iap
 ```
@@ -89,8 +89,8 @@ Use approved source or artefact transfer. `gcloud compute scp
 `.env`, Git credential, local product or database dump unintentionally.
 
 ```bash
-git clone <approved-repository-url> Istari-Service
-cd Istari-Service
+git clone <approved-repository-url> Mist-Service
+cd Mist-Service
 cp .env.example .env
 chmod 600 .env
 ```
@@ -115,7 +115,7 @@ Run an SSH local-forwarding session over IAP on the operator workstation and
 leave it active:
 
 ```powershell
-gcloud compute ssh istari-sandbox-vm `
+gcloud compute ssh mist-sandbox-vm `
   --zone europe-west2-a `
   --tunnel-through-iap `
   -- -N -L 5173:127.0.0.1:5173

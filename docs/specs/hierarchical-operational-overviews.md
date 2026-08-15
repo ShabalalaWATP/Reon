@@ -6,7 +6,7 @@ Approved implementation specification, 9 August 2026.
 
 ## Outcome
 
-ISTARI provides a restrained role-specific landing experience for immediate
+Mist provides a restrained role-specific landing experience for immediate
 orientation and a separate statistics workspace for detailed reporting. A
 statistics grant authorises its root organisation unit and, when configured,
 every descendant beneath that root. It never authorises a parent or sibling.

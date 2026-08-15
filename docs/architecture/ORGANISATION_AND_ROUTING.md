@@ -25,7 +25,7 @@ lifecycle. An exact-route member may reopen the Customer's submitted request in
 a separate read-only view. That view does not expose workflow actions, Analyst
 clarifications, feedback, product metadata, files or links. These routing levels
 do not approve the service product. The Team Manager checks the Analysts' work,
-one QC Team Manager performs quality control and a different QC Team Manager
+one QC Manager performs quality control and a different QC Manager
 disseminates the package. One Lead Analyst remains the accountable Camunda
 assignee. Up to ten additional assigned Analysts have the same production
 controls; the Lead label changes accountability, not functionality.
@@ -174,7 +174,7 @@ sequential logon and the local-only password `admin`. All accounts start active
 except `admin16`, which is intentionally inactive for access-control testing.
 Names are synthetic fixtures borrowed from Scottish football and do not describe
 the real people. The machine-readable source of truth is `DEMO_IDENTITIES` in
-`apps/api/src/istari_service/demo_seed.py`. The directory below deliberately
+`apps/api/src/mist_service/demo_seed.py`. The directory below deliberately
 enumerates every account. Automated seed tests assert the count of 100, the exact
 `admin1` to `admin100` sequence, unique display names, role totals, Manager and
 Member coverage in every routing unit, and active Manager and Analyst coverage
@@ -183,8 +183,8 @@ in every delivery team.
 ### Local access summary
 
 - Usernames run sequentially from `admin1` through `admin100`.
-- Initial work emails use the synthetic-only `istari.example.test` domain, for
-  example `admin1@istari.example.test`. Administrators can maintain them in the
+- Initial work emails use the synthetic-only `mist.example.test` domain, for
+  example `admin1@mist.example.test`. Administrators can maintain them in the
   application.
 - `admin1` is the Platform Administrator and `admin73` is the independent
   configuration-approval Administrator.
