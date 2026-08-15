@@ -15,12 +15,12 @@ function fingerprint(finding) {
   if (!git || !finding?.DetectorName || !raw) {
     throw new Error("A TruffleHog finding lacks stable Git fingerprint fields.");
   }
-  // A match inside a commit message carries no file path. Anchor it to a
-  // stable label so it fails closed and can be excepted exactly, rather
-  // than crashing the gate.
-  const file = git.file || "commit-message";
+  // The fingerprint is the detector plus the exact matched value, nothing
+  // positional. Paths and commits shift with renames and checkout depth,
+  // which made one allow-list unable to satisfy scans of differing history;
+  // the matched value itself is what a reviewer actually approved.
   return createHash("sha256")
-    .update([file, finding.DetectorName, raw].join("|"), "utf8")
+    .update([finding.DetectorName, raw].join("|"), "utf8")
     .digest("hex");
 }
 

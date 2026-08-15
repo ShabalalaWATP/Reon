@@ -2,85 +2,43 @@
   "version": 1,
   "entries": [
     {
-      "fingerprint": "141f1f3a42f094e4d7cfdbcbdbd707992d642e613b994a226742e110b30b99f4",
+      "fingerprint": "8faeb04550008dc23ee3656091338a2fa6503693664f3831b391464010d022e3",
       "expiresOn": "2027-02-13",
-      "reason": "Synthetic example.test URL-validation fixture in historical commit 9562c14; no real account or credential."
-    },
-    {
-      "fingerprint": "645ae6f95c0834e018431b1fdd9d7ca1347625fc9ca5873a4ecfa5a39c1af5b5",
-      "expiresOn": "2027-02-13",
-      "reason": "Synthetic example.test PostgreSQL recovery-policy fixture in historical commit 89532e2."
-    },
-    {
-      "fingerprint": "245267f3a301b3a9e805004e9f32cbb46deb57c3d43d70fd6392ff59a2f7edef",
-      "expiresOn": "2027-02-13",
-      "reason": "Synthetic parameterised PostgreSQL recovery-policy fixture in historical commit 9562c14."
-    },
-    {
-      "fingerprint": "7a83d3e03cc5e665f49deb92d73ff3cf808b281318f661dae1e4115277a74040",
-      "expiresOn": "2027-02-13",
-      "reason": "False-positive Lob detector match on a test function name in historical commit 9562c14.",
+      "reason": "False-positive Lob match on the Python identifier live_selected_route_membership_condition, a route-access helper name appearing in source, tests, this allow-list and one commit message.",
       "allowVerifiedFalsePositive": true
     },
     {
-      "fingerprint": "1f00a705a414fce4f10b2dca243dae034731d734a39878606df56e9fe5bc1c98",
+      "fingerprint": "e8185d13404b85db183e4410dcd55b9c50eb5b297bb9d5b5fb810a1ce7b5d737",
       "expiresOn": "2027-02-13",
-      "reason": "False-positive Lob match on the function name of the selected-route membership helper (prefix live_, suffix _condition) in notification_access.py at historical commit 4175263.",
+      "reason": "False-positive Lob match on the test function name test_unknown_package_policy_fails_closed.",
       "allowVerifiedFalsePositive": true
     },
     {
-      "fingerprint": "a14ac5e421d85fabe7537726c77e94b55610fbf7d1a220baefccb4492568fa2c",
+      "fingerprint": "495dcde50a382ae1f2fd6a97294fb628cf3c9f36556b5e723505571d34ab0b1d",
       "expiresOn": "2027-02-13",
-      "reason": "False-positive Lob match on the function name of the selected-route membership helper (prefix live_, suffix _condition) in route_access.py at historical commit 4175263.",
+      "reason": "False-positive Lob match on the test function name test_safe_still_images_are_fully_decoded.",
       "allowVerifiedFalsePositive": true
     },
     {
-      "fingerprint": "5593beb9bb0788fa3b6dd91ff55dbbedc3a829fb69926d3a577a49ed15e3ff59",
+      "fingerprint": "931b3039230703513d4dc09bb659a54f08ba21839b9cbaac62a2617634128239",
       "expiresOn": "2027-02-13",
-      "reason": "False-positive Lob match on the function name of the selected-route membership helper (prefix live_, suffix _condition) in action_scope.py at historical commit 4175263.",
+      "reason": "False-positive Lob match on the test function name test_workspace_links_reject_invalid_idna.",
       "allowVerifiedFalsePositive": true
     },
     {
-      "fingerprint": "cc94e19bd06c8ab06692009b196c333a645824d7eb65dcb11c7d7c26f07c3ea0",
+      "fingerprint": "863f71ff003569f4bef46eb53dc4c02864b98a04efffe809044119391230cf87",
       "expiresOn": "2027-02-13",
-      "reason": "False-positive Lob match on the test name test_safe_still_images_are_fully_decoded at historical commit 4175263.",
-      "allowVerifiedFalsePositive": true
+      "reason": "Synthetic example.test URL-validation fixture with a placeholder password and no real account."
     },
     {
-      "fingerprint": "fb0338ac7b5f402cc0e659f408556aff46cb86c787e568bfd5456ac6a1f28d83",
+      "fingerprint": "0e77d8b32bf0fde71f5cbd335f4cee22e593189a97592521f298253d11dd8b68",
       "expiresOn": "2027-02-13",
-      "reason": "False-positive Lob match on the identifier of the selected-route membership helper (prefix live_, suffix _condition) in test_participant_projection_membership.py at historical commit 4175263.",
-      "allowVerifiedFalsePositive": true
+      "reason": "Synthetic example.test PostgreSQL recovery-policy fixture with placeholder credentials."
     },
     {
-      "fingerprint": "4fc45df06fbb52f522ecf32f14690cc846fc5c3e364da4f8be4c8ba925573240",
+      "fingerprint": "e916b88f2d3b69b1f635478ba181a68e75087eb218f057109dfdbb25222d59f0",
       "expiresOn": "2027-02-13",
-      "reason": "False-positive Lob match on the test name test_unknown_package_policy_fails_closed at historical commit 4175263.",
-      "allowVerifiedFalsePositive": true
-    },
-    {
-      "fingerprint": "0376490e6f4dd7e7d7abd71dcb2669c6012fd76f0f4fe99152c899d11c603a4b",
-      "expiresOn": "2027-02-13",
-      "reason": "False-positive Lob match on a function name quoted in the commit message of 23c9c0f; the raw is a Python identifier, not a credential.",
-      "allowVerifiedFalsePositive": true
-    },
-    {
-      "fingerprint": "09d185645da09dd5c1500a252f7d2bbbeb7321cc52afcdea4c845859849227c1",
-      "expiresOn": "2027-02-13",
-      "reason": "False-positive Lob match on identifier text inside this allow-list's own reasons as committed in 23c9c0f; reworded since.",
-      "allowVerifiedFalsePositive": true
-    },
-    {
-      "fingerprint": "17a79dd759a4d2d9467221210e22e4776b03bbbeb32c730326458efbb005a972",
-      "expiresOn": "2027-02-13",
-      "reason": "False-positive Lob match on identifier text inside this allow-list's own reasons as committed in 23c9c0f; reworded since.",
-      "allowVerifiedFalsePositive": true
-    },
-    {
-      "fingerprint": "46a4ab796dc438a4cb811eb6d50bde4fea69199deeb42b4c7700b63651f91943",
-      "expiresOn": "2027-02-13",
-      "reason": "False-positive Lob match on identifier text inside this allow-list's own reasons as committed in 23c9c0f; reworded since.",
-      "allowVerifiedFalsePositive": true
+      "reason": "Synthetic parameterised PostgreSQL recovery-policy fixture with placeholder credentials."
     }
   ]
 }

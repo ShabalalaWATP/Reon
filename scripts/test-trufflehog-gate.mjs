@@ -23,13 +23,8 @@ const finding = {
 };
 
 function idFor(value) {
-  const git = value.SourceMetadata.Data.Git;
   return createHash("sha256")
-    .update(
-      [git.file, value.DetectorName, value.RawV2 || value.Raw].join(
-        "|",
-      ),
-    )
+    .update([value.DetectorName, value.RawV2 || value.Raw].join("|"))
     .digest("hex");
 }
 
@@ -82,15 +77,17 @@ try {
   );
   assert.notEqual(run().status, 0);
 
-  // A commit-message match has no file path: it must fail closed under a
-  // stable placeholder fingerprint, and pass only with an exact exception.
+  // A commit-message match has no file path: it must still fail closed and
+  // pass only with an exact exception for its detector and matched value.
+  const messageRaw = `${raw}-in-a-commit-message`;
   const messageFinding = {
     ...finding,
     Verified: true,
+    RawV2: messageRaw,
     SourceMetadata: { Data: { Git: { commit: "b".repeat(40) } } },
   };
   const messageId = createHash("sha256")
-    .update(["commit-message", finding.DetectorName, raw].join("|"))
+    .update([finding.DetectorName, messageRaw].join("|"))
     .digest("hex");
   await write([messageFinding], []);
   assert.notEqual(run().status, 0);

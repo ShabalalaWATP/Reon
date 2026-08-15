@@ -44,6 +44,10 @@ jobs:
       SECURITY_PSEUDONYM_KEY: ci-pseudonym-validation-separate-at-least-32-bytes
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The secret-scan gate built below walks reachable history; a shallow
+          # clone would observe a different finding set from the CI scan.
+          fetch-depth: 0
       - run: timeout --signal=TERM --kill-after=10s 2m docker compose config --quiet
       - run: >-
           timeout --signal=TERM --kill-after=30s 15m docker compose

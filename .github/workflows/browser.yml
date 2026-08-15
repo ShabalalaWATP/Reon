@@ -82,6 +82,11 @@ jobs:
           timeout --signal=TERM --kill-after=20s 15m docker compose
           -f docker-compose.yml -f .github/compose.browser.yml
           up --build --detach --wait --wait-timeout 780
+      - name: Deploy and attest the workflow definition
+        run: >-
+          pwsh -File scripts/deploy-workflow-compose.ps1
+          -ComposeProjectName "$COMPOSE_PROJECT_NAME"
+          -OperatorSubject "github-actions-browser-journey"
       - name: Run the bounded Chromium workflow
         run: pnpm --filter @mist-service/web test:e2e
       - name: Capture bounded topology diagnostics

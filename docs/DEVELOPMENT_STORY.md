@@ -3,6 +3,31 @@
 Entries are ordered newest first: the most recent date is at the top of the
 file and the earliest is at the bottom.
 
+## 15 August 2026: continuous integration restoration
+
+- Pushing the rebrand revealed that every workflow on main had been failing
+  since before the session began. Four inherited faults were fixed: a test
+  helper hardcoded Windows drive paths that are relative on Linux; the
+  history secret scan flagged Python identifiers as verified Lob secrets;
+  the real-browser journey had never passed since the workflow-availability
+  gate landed, because no automated topology performed the operator
+  attestation; and four backend files had drifted from the canonical
+  formatter style.
+- One fault was self-inflicted and caught the same day: response payload
+  validation had pulled the schema library into the eager bundle, 72
+  kilobytes over budget. The validators were rewritten as hand-rolled
+  checks and the initial bundle returned under its ceiling.
+- The secret-scan gate now fingerprints findings by detector and exact
+  matched value rather than by file path, because paths shift with renames
+  and checkout depth, which had made one allow-list unable to satisfy scans
+  of differing history. Commit-message findings fail closed instead of
+  crashing the gate, container validation checks out full history to match
+  the CI scan, and the allow-list was regenerated down to seven exact
+  entries, each a verified synthetic value.
+- The browser topology now deploys and attests the workflow definition
+  through the same operations script the local stack uses, keeping the
+  fail-closed attestation design while letting the journey run.
+
 ## 15 August 2026: rebrand to Mist
 
 - Renamed the product from ISTARI to Mist across application code,
