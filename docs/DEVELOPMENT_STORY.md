@@ -27,6 +27,15 @@ file and the earliest is at the bottom.
 - The browser topology now deploys and attests the workflow definition
   through the same operations script the local stack uses, keeping the
   fail-closed attestation design while letting the journey run.
+- Once attestation unblocked the journey, three more inherited faults
+  surfaced and were fixed: the browser topology disabled managed file
+  uploads while the journey expects the upload path, so the flag and its
+  contract pin now match every other environment; the demo portfolio seeder
+  used one QC Manager for both quality review and release, which the
+  separation-of-duty control rightly refuses, so the walk now uses a second
+  QC Manager for release; and the actionlint and Gitleaks tool images were
+  rebuilt on a patched Go base after newly published standard-library
+  advisories failed the image scan.
 
 ## 15 August 2026: rebrand to Mist
 

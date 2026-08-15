@@ -20,7 +20,7 @@ services:
     environment:
       ACTION_WORKSPACE_ENABLED: "true"
       MANAGED_PRODUCTS_ENABLED: "true"
-      MANAGED_FILE_UPLOADS_ENABLED: "false"
+      MANAGED_FILE_UPLOADS_ENABLED: "true"
       NOTIFICATIONS_ENABLED: "true"
       PRODUCT_ALLOWED_EXTERNAL_DOMAINS: products.example.test
 
@@ -30,7 +30,7 @@ services:
     environment:
       ACTION_WORKSPACE_ENABLED: "true"
       MANAGED_PRODUCTS_ENABLED: "true"
-      MANAGED_FILE_UPLOADS_ENABLED: "false"
+      MANAGED_FILE_UPLOADS_ENABLED: "true"
       NOTIFICATIONS_ENABLED: "true"
 
   web:

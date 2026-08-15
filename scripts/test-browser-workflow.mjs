@@ -36,7 +36,7 @@ assert.match(workflow, /actions\/upload-artifact@[a-f0-9]{40}/u);
 
 for (const required of [
   'MANAGED_PRODUCTS_ENABLED: "true"',
-  'MANAGED_FILE_UPLOADS_ENABLED: "false"',
+  'MANAGED_FILE_UPLOADS_ENABLED: "true"',
   "PRODUCT_ALLOWED_EXTERNAL_DOMAINS: products.example.test",
 ]) {
   assert.ok(compose.includes(required), `browser Compose override is missing: ${required}`);

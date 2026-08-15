@@ -29,12 +29,12 @@ from mist_service.database import SessionFactory
 from mist_service.models import (
     Deliverable,
     Feedback,
-    RequestEvent,
     ServiceRequest,
     WorkflowTask,
     WorkflowTaskStatus,
 )
 from mist_service.repositories.event_store import audit_key_for_session
+from mist_service.request_event_models import RequestEvent
 
 
 def event_times(count: int, start: datetime, span: timedelta, seed: str) -> list[datetime]:

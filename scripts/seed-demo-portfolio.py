@@ -141,7 +141,8 @@ async def build_actors(args: argparse.Namespace, password: str) -> tuple[dict[st
     usernames = await username_by_display_name(admin)
     await admin.client.aclose()
     display_names = {"John McGinn", "Billy Gilmour", "Scott McTominay",
-                     "Callum McGregor", "Angus Gunn", *ALLOCATION_COVER}
+                     "Callum McGregor", "Angus Gunn", "Neil Alexander",
+                     *ALLOCATION_COVER}
     display_names.update(lead for _c, _g, _o, lead, _m in TEAMS)
     display_names.update(member for _c, _g, _o, _l, member in TEAMS)
     actors: dict[str, Actor] = {}
@@ -164,6 +165,7 @@ def journey_actors(actors: dict[str, Actor], requester: str, resolve) -> Journey
         specialist_names={code: member for code, _g, _o, _l, member in TEAMS},
         resolve=resolve,
         quality=actors["Angus Gunn"],
+        release=actors["Neil Alexander"],
     )
 
 

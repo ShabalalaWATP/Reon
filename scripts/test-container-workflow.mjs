@@ -148,7 +148,7 @@ const actionlintDockerfile = await readFile(
   join(repositoryRoot, "scripts/actionlint.Dockerfile"),
   "utf8",
 );
-assert.match(actionlintDockerfile, /FROM golang:1\.26\.5-alpine3\.23@sha256:/u);
+assert.match(actionlintDockerfile, /FROM golang:1\.26\.6-alpine3\.23@sha256:/u);
 assert.match(
   actionlintDockerfile,
   /go install github\.com\/rhysd\/actionlint\/cmd\/actionlint@v1\.7\.12/u,
@@ -161,7 +161,7 @@ const gitleaksDockerfile = await readFile(
 );
 assert.match(
   gitleaksDockerfile,
-  /FROM golang:1\.26\.5-alpine3\.23@sha256:[a-f0-9]{64} AS build/u,
+  /FROM golang:1\.26\.6-alpine3\.23@sha256:[a-f0-9]{64} AS build/u,
 );
 assert.match(gitleaksDockerfile, /FROM alpine:3\.23@sha256:[a-f0-9]{64} AS tool/u);
 assert.match(gitleaksDockerfile, /zricethezav\/gitleaks\/v8@v8\.30\.1/u);

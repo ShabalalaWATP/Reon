@@ -117,10 +117,16 @@ async def wait_for_item(
     actor: Actor, request_id: str, stage: str, attempts: int = 120
 ) -> dict[str, Any]:
     for _attempt in range(attempts):
-        data = await actor.get("/work-items")
-        for item in data["items"]:
-            if item["requestId"] == request_id and item["stage"] == stage:
-                return item
+        cursor: str | None = None
+        while True:
+            params = {"cursor": cursor} if cursor else {}
+            data = await actor.get("/work-items", params=params)
+            for item in data["items"]:
+                if item["requestId"] == request_id and item["stage"] == stage:
+                    return item
+            cursor = data.get("nextCursor")
+            if not cursor:
+                break
         await asyncio.sleep(0.5)
     raise RuntimeError(
         f"{actor.username} did not receive {stage} work for request {request_id}"
@@ -184,6 +190,9 @@ class JourneyActors:
     specialist_names: dict[str, str]
     resolve: Any  # async callable mapping a display name to a logged-in Actor
     quality: Actor
+    # Release must be a different QC Manager: the separation-of-duty control
+    # hides a request's release work from whoever approved its quality review.
+    release: Actor
 
 
 async def analyst_for(actors: JourneyActors, team: str, request_id: str, resumed: bool) -> Actor:
@@ -332,9 +341,9 @@ async def run_journey(actors: JourneyActors, plan: JourneyPlan) -> dict[str, Any
         item = await wait_for_item(actors.quality, request_id, "QUALITY_REVIEW")
         await claim(actors.quality, item)
         await complete(actors.quality, item, {"action": "approve"})
-    item = await wait_for_item(actors.quality, request_id, "READY_FOR_RELEASE")
-    await claim(actors.quality, item)
-    await complete(actors.quality, item, {
+    item = await wait_for_item(actors.release, request_id, "READY_FOR_RELEASE")
+    await claim(actors.release, item)
+    await complete(actors.release, item, {
         "action": "release", "recipients": ["Requesting Customer"],
     })
 
