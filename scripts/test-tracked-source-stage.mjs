@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const stageScript = join(scriptDirectory, "stage-tracked-source.mjs");
-const fixture = await mkdtemp(join(tmpdir(), "istari-tracked-source-"));
+const fixture = await mkdtemp(join(tmpdir(), "mist-tracked-source-"));
 const repository = join(fixture, "repository");
 const staged = join(fixture, "staged");
 

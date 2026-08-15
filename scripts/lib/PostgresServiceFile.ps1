@@ -68,11 +68,11 @@ function New-PostgresServiceFile([string]$DatabaseUrl) {
         if ([string]::IsNullOrWhiteSpace($queryValues['sslrootcert'])) {
             throw 'Non-loopback PostgreSQL URLs require sslrootcert.'
         }
-        if ([string]::IsNullOrWhiteSpace($env:ISTARI_POSTGRES_APPROVED_SSL_ROOT_CERT)) {
-            throw 'Set ISTARI_POSTGRES_APPROVED_SSL_ROOT_CERT to the approved CA bundle path.'
+        if ([string]::IsNullOrWhiteSpace($env:MIST_POSTGRES_APPROVED_SSL_ROOT_CERT)) {
+            throw 'Set MIST_POSTGRES_APPROVED_SSL_ROOT_CERT to the approved CA bundle path.'
         }
         $approvedTrustPath = [System.IO.Path]::GetFullPath(
-            $env:ISTARI_POSTGRES_APPROVED_SSL_ROOT_CERT
+            $env:MIST_POSTGRES_APPROVED_SSL_ROOT_CERT
         )
         $suppliedTrustPath = [System.IO.Path]::GetFullPath($queryValues['sslrootcert'])
         if ($suppliedTrustPath -cne $approvedTrustPath -or
@@ -94,7 +94,7 @@ function New-PostgresServiceFile([string]$DatabaseUrl) {
     }
     $path = [System.IO.Path]::GetTempFileName()
     try {
-        $lines = @('[istari_maintenance]')
+        $lines = @('[mist_maintenance]')
         foreach ($item in $values.GetEnumerator()) {
             $lines += "$($item.Key)=$(ConvertTo-LibpqServiceValue ([string]$item.Value))"
         }

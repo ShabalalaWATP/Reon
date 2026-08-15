@@ -2,9 +2,9 @@
 set -eu
 
 suffix="$$"
-network="istari-canary-$suffix"
-api_container="istari-canary-api-$suffix"
-web_container="istari-canary-web-$suffix"
+network="mist-canary-$suffix"
+api_container="mist-canary-api-$suffix"
+web_container="mist-canary-web-$suffix"
 
 cleanup() {
     docker rm --force "$web_container" "$api_container" >/dev/null 2>&1 || true
@@ -23,23 +23,23 @@ assert_non_root() {
     esac
 }
 
-api_command="$(docker image inspect istari-service-local-api --format '{{json .Config.Cmd}}')"
+api_command="$(docker image inspect mist-service-local-api --format '{{json .Config.Cmd}}')"
 printf '%s' "$api_command" | grep -F -- '"--no-access-log"' >/dev/null
-docker run --rm --network none --entrypoint sh istari-service-local-web \
+docker run --rm --network none --entrypoint sh mist-service-local-web \
     -c 'test "$(grep -c "access_log off;" /etc/nginx/conf.d/default.conf)" -eq 2'
 docker run --rm --network none --entrypoint postgres \
-    istari/postgres-local:17.10-pgvector0.8.1-alpine3.23 --version
+    mist/postgres-local:17.10-pgvector0.8.1-alpine3.23 --version
 docker run --rm --network none --entrypoint java \
-    istari/camunda-local:8.9.14 -version
+    mist/camunda-local:8.9.14 -version
 docker run --rm --network none --entrypoint clamscan \
-    istari/clamav-local:1.5.3 --version
+    mist/clamav-local:1.5.3 --version
 
 for image in \
-    istari-service-local-api \
-    istari-service-local-web \
-    istari/postgres-local:17.10-pgvector0.8.1-alpine3.23 \
-    istari/camunda-local:8.9.14 \
-    istari/clamav-local:1.5.3
+    mist-service-local-api \
+    mist-service-local-web \
+    mist/postgres-local:17.10-pgvector0.8.1-alpine3.23 \
+    mist/camunda-local:8.9.14 \
+    mist/clamav-local:1.5.3
 do
     assert_non_root "$image"
 done
@@ -50,12 +50,12 @@ done
 docker network create --internal "$network" >/dev/null
 docker run --detach --name "$api_container" --network "$network" \
     --network-alias api --read-only --tmpfs /tmp:mode=1777 \
-    --entrypoint python istari-service-local-api -c \
-    "import logging; logging.basicConfig(level=logging.INFO, format='%(message)s'); from starlette.applications import Starlette; from istari_service.telemetry import OperationalTelemetryMiddleware; import uvicorn; app=OperationalTelemetryMiddleware(Starlette()); uvicorn.run(app, host='0.0.0.0', port=8000, access_log=False)" \
+    --entrypoint python mist-service-local-api -c \
+    "import logging; logging.basicConfig(level=logging.INFO, format='%(message)s'); from starlette.applications import Starlette; from mist_service.telemetry import OperationalTelemetryMiddleware; import uvicorn; app=OperationalTelemetryMiddleware(Starlette()); uvicorn.run(app, host='0.0.0.0', port=8000, access_log=False)" \
     >/dev/null
 docker run --detach --name "$web_container" --network "$network" \
     --read-only --tmpfs /tmp:uid=101,gid=101,mode=1777 \
-    istari-service-local-web >/dev/null
+    mist-service-local-web >/dev/null
 
 attempt=0
 until docker exec "$web_container" wget --quiet --spider http://127.0.0.1:8080/; do

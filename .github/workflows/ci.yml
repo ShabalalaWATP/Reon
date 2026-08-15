@@ -43,8 +43,8 @@ jobs:
       - run: pwsh -File workflow/test-validator.ps1
       - name: Validate GitHub Actions workflows
         run: |
-          docker build --file scripts/actionlint.Dockerfile --tag istari-actionlint:ci .
-          docker run --rm -v "$PWD:/repo" istari-actionlint:ci
+          docker build --file scripts/actionlint.Dockerfile --tag mist-actionlint:ci .
+          docker run --rm -v "$PWD:/repo" mist-actionlint:ci
 
   frontend:
     name: Frontend tests
@@ -58,7 +58,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @istari-service/web test
+      - run: pnpm --filter @mist-service/web test
       - name: Retain frontend coverage
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -76,19 +76,19 @@ jobs:
       postgres:
         image: pgvector/pgvector:pg17
         env:
-          POSTGRES_DB: istari_race_tests
-          POSTGRES_USER: istari_tests
+          POSTGRES_DB: mist_race_tests
+          POSTGRES_USER: mist_tests
           POSTGRES_PASSWORD: synthetic-ci-password
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U istari_tests -d istari_race_tests"
+          --health-cmd "pg_isready -U mist_tests -d mist_race_tests"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 12
     env:
-      ISTARI_POSTGRES_TEST_URL: >-
-        postgresql+asyncpg://istari_tests:synthetic-ci-password@127.0.0.1:5432/istari_race_tests
+      MIST_POSTGRES_TEST_URL: >-
+        postgresql+asyncpg://mist_tests:synthetic-ci-password@127.0.0.1:5432/mist_race_tests
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
@@ -104,7 +104,7 @@ jobs:
       - name: Verify mandatory PostgreSQL integration tests do not skip
         shell: bash
         env:
-          ISTARI_REQUIRE_POSTGRES_TESTS: "true"
+          MIST_REQUIRE_POSTGRES_TESTS: "true"
         run: |
           set -euo pipefail
           report="${RUNNER_TEMP}/postgres-integrations.xml"
@@ -246,7 +246,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      COMPOSE_PROJECT_NAME: istari-camunda-smoke
+      COMPOSE_PROJECT_NAME: mist-camunda-smoke
       APP_DATABASE_NAME: app_smoke
       APP_DATABASE_USER: app_smoke_owner
       APP_RUNTIME_DATABASE_USER: app_smoke

@@ -15,8 +15,8 @@ $ErrorActionPreference = 'Stop'
 if ($Confirmation -cne 'RESTORE_ISOLATED_DATABASE') {
     throw 'Exact RESTORE_ISOLATED_DATABASE confirmation is required.'
 }
-if ([string]::IsNullOrWhiteSpace($env:ISTARI_RESTORE_DATABASE_URL)) {
-    throw 'Set ISTARI_RESTORE_DATABASE_URL for an empty, isolated target.'
+if ([string]::IsNullOrWhiteSpace($env:MIST_RESTORE_DATABASE_URL)) {
+    throw 'Set MIST_RESTORE_DATABASE_URL for an empty, isolated target.'
 }
 foreach ($command in @('psql', 'pg_restore', 'uv')) {
     if (-not (Get-Command $command -ErrorAction SilentlyContinue)) {
@@ -39,12 +39,12 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $previousServiceFile = $env:PGSERVICEFILE
-$serviceFile = New-PostgresServiceFile $env:ISTARI_RESTORE_DATABASE_URL
+$serviceFile = New-PostgresServiceFile $env:MIST_RESTORE_DATABASE_URL
 $env:PGSERVICEFILE = $serviceFile
 try {
 
 $tableCount = & psql `
-    --dbname=service=istari_maintenance `
+    --dbname=service=mist_maintenance `
     --tuples-only `
     --no-align `
     --command="SELECT count(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public';"
@@ -56,7 +56,7 @@ if ([int]$tableCount.Trim() -ne 0) {
 }
 
 & pg_restore `
-    --dbname=service=istari_maintenance `
+    --dbname=service=mist_maintenance `
     --exit-on-error `
     --no-owner `
     --no-acl `
@@ -75,9 +75,9 @@ $stamp = [DateTimeOffset]::UtcNow.ToString('yyyyMMddTHHmmssZ')
 $evidenceFile = Join-Path $evidence "restore-verification-$stamp.json"
 $previousDatabaseUrl = $env:DATABASE_URL
 try {
-    $env:DATABASE_URL = $env:ISTARI_RESTORE_DATABASE_URL
+    $env:DATABASE_URL = $env:MIST_RESTORE_DATABASE_URL
     $verification = & uv run --directory (Join-Path $repoRoot 'apps/api') `
-        istari-maintenance verify-restore `
+        mist-maintenance verify-restore `
         --expected-revision $ExpectedRevision
     if ($LASTEXITCODE -ne 0) {
         throw 'Restored database integrity verification failed.'

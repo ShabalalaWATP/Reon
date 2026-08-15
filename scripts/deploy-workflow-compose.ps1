@@ -1,7 +1,7 @@
 #requires -Version 7.4
 [CmdletBinding()]
 param(
-    [string]$ComposeProjectName = "istari-service-local",
+    [string]$ComposeProjectName = "mist-service-local",
     [string]$BpmnPath = (Join-Path $PSScriptRoot "../workflow/service-request.bpmn"),
     [string]$ExpectedProcessId = "service-request-v1",
     [int]$ExpectedProcessVersion = 1,
@@ -151,7 +151,7 @@ import secrets
 import urllib.request
 
 content = base64.b64decode("$bpmnBase64")
-boundary = "istari-" + secrets.token_hex(16)
+boundary = "mist-" + secrets.token_hex(16)
 separator = ("--" + boundary + "\r\n").encode()
 body = b"".join([
     separator,

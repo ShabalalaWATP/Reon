@@ -1,12 +1,12 @@
 # LOCAL DEVELOPMENT ONLY. This topology exposes an unauthenticated Camunda API
 # on host loopback and is not a production deployment template.
-name: istari-service-local
+name: mist-service-local
 x-runtime-security: &runtime-security
   cap_drop: [ALL]
   security_opt: [no-new-privileges:true]
 x-api-image: &api-image
   build: {context: ., dockerfile: apps/api/Dockerfile}
-  image: istari-service-local-api
+  image: mist-service-local-api
 x-runtime-environment: &runtime-environment
   ENVIRONMENT: ${ENVIRONMENT:?Set ENVIRONMENT in .env}
   DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
@@ -28,7 +28,7 @@ x-clamav-runtime: &clamav-runtime
   build:
     context: .
     dockerfile: infra/clamav/Dockerfile
-  image: istari/clamav-local:1.5.3
+  image: mist/clamav-local:1.5.3
   user: "100:101"
   restart: unless-stopped
   read_only: true
@@ -37,7 +37,7 @@ x-clamav-runtime: &clamav-runtime
 services:
   postgres-data-init:
     <<: *runtime-security
-    image: istari/postgres-local:17.10-pgvector0.8.1-alpine3.23
+    image: mist/postgres-local:17.10-pgvector0.8.1-alpine3.23
     pull_policy: never
     user: "0:0"
     entrypoint:
@@ -61,7 +61,7 @@ services:
     build:
       context: .
       dockerfile: infra/postgres/Dockerfile
-    image: istari/postgres-local:17.10-pgvector0.8.1-alpine3.23
+    image: mist/postgres-local:17.10-pgvector0.8.1-alpine3.23
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Set POSTGRES_ADMIN_PASSWORD in .env}
@@ -102,7 +102,7 @@ services:
       - data
   camunda-data-init:
     <<: *runtime-security
-    image: istari/camunda-local:8.9.14
+    image: mist/camunda-local:8.9.14
     pull_policy: never
     user: "0:0"
     entrypoint:
@@ -128,7 +128,7 @@ services:
     build:
       context: .
       dockerfile: infra/camunda/Dockerfile
-    image: istari/camunda-local:8.9.14
+    image: mist/camunda-local:8.9.14
     environment:
       CAMUNDA_DATABASE_NAME: ${CAMUNDA_DATABASE_NAME:?Set CAMUNDA_DATABASE_NAME in .env}
       CAMUNDA_DATABASE_USER: ${CAMUNDA_DATABASE_USER:?Set CAMUNDA_DATABASE_USER in .env}
@@ -166,9 +166,9 @@ services:
       - /bin/sh
       - -c
       - >-
-        mkdir -p /var/lib/istari-products &&
-        chmod 0750 /var/lib/istari-products &&
-        chown -R 10001:10001 /var/lib/istari-products
+        mkdir -p /var/lib/mist-products &&
+        chmod 0750 /var/lib/mist-products &&
+        chown -R 10001:10001 /var/lib/mist-products
     network_mode: none
     read_only: true
     cap_add:
@@ -176,7 +176,7 @@ services:
       - DAC_OVERRIDE
       - FOWNER
     volumes:
-      - product-storage:/var/lib/istari-products
+      - product-storage:/var/lib/mist-products
     restart: "no"
   api:
     <<: [*runtime-security, *api-image]
@@ -184,7 +184,7 @@ services:
       <<: *runtime-environment
       DATABASE_POOL_SIZE: ${DATABASE_POOL_SIZE:-20}
       DATABASE_MAX_OVERFLOW: ${DATABASE_MAX_OVERFLOW:-30}
-      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-istari_session}
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-mist_session}
       SESSION_COOKIE_SAMESITE: ${SESSION_COOKIE_SAMESITE:-lax}
       SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-28800}
       SESSION_IDLE_SECONDS: ${SESSION_IDLE_SECONDS:-3600}
@@ -197,7 +197,7 @@ services:
       TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,api}
       MAX_REQUEST_BODY_BYTES: ${MAX_REQUEST_BODY_BYTES:-1048576}
-      PRODUCT_STORAGE_PATH: ${PRODUCT_STORAGE_PATH:-/var/lib/istari-products}
+      PRODUCT_STORAGE_PATH: ${PRODUCT_STORAGE_PATH:-/var/lib/mist-products}
       PRODUCT_ALLOWED_EXTERNAL_DOMAINS: ${PRODUCT_ALLOWED_EXTERNAL_DOMAINS:-products.example.test}
       PRODUCT_UPLOAD_TTL_SECONDS: ${PRODUCT_UPLOAD_TTL_SECONDS:-600}
       PRODUCT_MAX_FILE_BYTES: ${PRODUCT_MAX_FILE_BYTES:-26214400}
@@ -236,14 +236,14 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
     volumes:
-      - product-storage:/var/lib/istari-products
+      - product-storage:/var/lib/mist-products
     read_only: true
     tmpfs:
       - /tmp:mode=1777
     networks: [data, scanner, service, workflow]
   worker:
     <<: [*runtime-security, *api-image]
-    command: ["istari-worker"]
+    command: ["mist-worker"]
     environment:
       <<: *runtime-environment
       DATABASE_POOL_SIZE: ${WORKER_DATABASE_POOL_SIZE:-5}
@@ -253,7 +253,7 @@ services:
       REQUEST_EMBEDDING_THREADS: ${REQUEST_EMBEDDING_THREADS:-2}
       REQUEST_EMBEDDING_BATCH_SIZE: ${REQUEST_EMBEDDING_BATCH_SIZE:-8}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,worker}
-      PRODUCT_STORAGE_PATH: ${PRODUCT_STORAGE_PATH:-/var/lib/istari-products}
+      PRODUCT_STORAGE_PATH: ${PRODUCT_STORAGE_PATH:-/var/lib/mist-products}
     depends_on:
       orchestration:
         condition: service_healthy
@@ -266,7 +266,7 @@ services:
     tmpfs:
       - /tmp:mode=1777
     volumes:
-      - product-storage:/var/lib/istari-products
+      - product-storage:/var/lib/mist-products
     networks: [data, workflow]
   clamav-updater:
     <<: [*runtime-security, *clamav-runtime]
@@ -297,7 +297,7 @@ services:
     command:
       - sh
       - -c
-      - alembic upgrade head && python -m istari_service.postgres_permissions
+      - alembic upgrade head && python -m mist_service.postgres_permissions
     environment:
       DATABASE_URL: ${MIGRATION_DATABASE_URL:?Set MIGRATION_DATABASE_URL in .env}
       APP_RUNTIME_DATABASE_USER: ${APP_RUNTIME_DATABASE_USER:?Set APP_RUNTIME_DATABASE_USER in .env}
@@ -317,7 +317,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    image: istari-service-local-web
+    image: mist-service-local-web
     ports:
       - "127.0.0.1:5173:8080"
     healthcheck:

@@ -133,7 +133,7 @@ Invoke-WorkflowAvailabilityAttestation `
     -RepositoryRoot (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path `
     -AttestWithCompose
 if ($dockerCalls.Count -ne 1 -or
-    ($dockerCalls[0] -join ' ') -notmatch '^compose exec --no-TTY api python -m istari_service\.maintenance attest-workflow ') {
+    ($dockerCalls[0] -join ' ') -notmatch '^compose exec --no-TTY api python -m mist_service\.maintenance attest-workflow ') {
     throw 'Compose attestation did not invoke the expected API-container command.'
 }
 if ((Get-Location).Path -ne $startingLocation) {

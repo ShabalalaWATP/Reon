@@ -10,8 +10,8 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from istari_service.audit import canonical_anchor_mac, canonical_event_hash
-from istari_service.models import (
+from mist_service.audit import canonical_anchor_mac, canonical_event_hash
+from mist_service.models import (
     RequestEvent,
     RequestStatus,
     ServiceRequest,
@@ -22,14 +22,14 @@ from istari_service.models import (
     WorkflowTask,
     WorkflowTaskStatus,
 )
-from istari_service.organisation_models import (
+from mist_service.organisation_models import (
     OrganisationUnit,
     RequestRouteSelection,
 )
-from istari_service.repositories.event_store import audit_key_for_session
-from istari_service.request_draft_models import RequestDraft
+from mist_service.repositories.event_store import audit_key_for_session
+from mist_service.request_draft_models import RequestDraft
 
-FIXTURE_NAMESPACE = "https://istari.example/performance/"
+FIXTURE_NAMESPACE = "https://mist.example/performance/"
 
 
 def fixture_id(kind: str, sequence: int) -> UUID:

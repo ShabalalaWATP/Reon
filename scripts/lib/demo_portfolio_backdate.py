@@ -23,10 +23,10 @@ from uuid import UUID
 
 from sqlalchemy import select, update
 
-from istari_service.analytics_projection import project_request_analytics
-from istari_service.audit import canonical_anchor_mac, canonical_event_hash
-from istari_service.database import SessionFactory
-from istari_service.models import (
+from mist_service.analytics_projection import project_request_analytics
+from mist_service.audit import canonical_anchor_mac, canonical_event_hash
+from mist_service.database import SessionFactory
+from mist_service.models import (
     Deliverable,
     Feedback,
     RequestEvent,
@@ -34,7 +34,7 @@ from istari_service.models import (
     WorkflowTask,
     WorkflowTaskStatus,
 )
-from istari_service.repositories.event_store import audit_key_for_session
+from mist_service.repositories.event_store import audit_key_for_session
 
 
 def event_times(count: int, start: datetime, span: timedelta, seed: str) -> list[datetime]:

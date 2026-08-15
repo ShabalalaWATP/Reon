@@ -18,7 +18,7 @@ function Assert-InvalidMutation {
     & $Mutate $mutated
     $temporaryPath = Join-Path (
         [IO.Path]::GetTempPath()
-    ) "istari-bpmn-$([Guid]::NewGuid().ToString('N')).bpmn"
+    ) "mist-bpmn-$([Guid]::NewGuid().ToString('N')).bpmn"
     try {
         $mutated.Save($temporaryPath)
         $actualMessage = $null

@@ -7,8 +7,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-if ([string]::IsNullOrWhiteSpace($env:ISTARI_BACKUP_DATABASE_URL)) {
-    throw 'Set ISTARI_BACKUP_DATABASE_URL for the least-privileged backup identity.'
+if ([string]::IsNullOrWhiteSpace($env:MIST_BACKUP_DATABASE_URL)) {
+    throw 'Set MIST_BACKUP_DATABASE_URL for the least-privileged backup identity.'
 }
 if (-not (Get-Command pg_dump -ErrorAction SilentlyContinue)) {
     throw 'pg_dump is required.'
@@ -25,11 +25,11 @@ if (-not (Test-Path -LiteralPath $target)) {
 }
 $target = (Resolve-Path -LiteralPath $target).Path
 $stamp = [DateTimeOffset]::UtcNow.ToString('yyyyMMddTHHmmssZ')
-$temporary = Join-Path $target "istari-$stamp.dump.partial"
-$backup = Join-Path $target "istari-$stamp.dump"
+$temporary = Join-Path $target "mist-$stamp.dump.partial"
+$backup = Join-Path $target "mist-$stamp.dump"
 $manifest = "$backup.sha256.json"
 $previousServiceFile = $env:PGSERVICEFILE
-$serviceFile = New-PostgresServiceFile $env:ISTARI_BACKUP_DATABASE_URL
+$serviceFile = New-PostgresServiceFile $env:MIST_BACKUP_DATABASE_URL
 $env:PGSERVICEFILE = $serviceFile
 
 function Protect-BackupFile([string]$Path) {
@@ -57,7 +57,7 @@ function Protect-BackupFile([string]$Path) {
 
 try {
     & pg_dump `
-        --dbname=service=istari_maintenance `
+        --dbname=service=mist_maintenance `
         --format=custom `
         --no-owner `
         --no-acl `

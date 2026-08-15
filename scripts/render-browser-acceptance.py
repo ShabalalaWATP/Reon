@@ -51,7 +51,7 @@ def render_junit(data: dict[str, Any]) -> None:
     suite = ElementTree.Element(
         "testsuite",
         {
-            "name": "ISTARI cross-browser staff acceptance",
+            "name": "Mist cross-browser staff acceptance",
             "tests": str(len(journeys)),
             "failures": "0",
             "errors": "0",
@@ -112,7 +112,7 @@ def render_html(data: dict[str, Any]) -> None:
     )
     document = f"""<!doctype html>
 <html lang="en-GB">
-<head><meta charset="utf-8"><title>ISTARI cross-browser acceptance</title>
+<head><meta charset="utf-8"><title>Mist cross-browser acceptance</title>
 <style>
 body{{font:16px/1.5 system-ui;margin:2rem;max-width:1100px;color:#17202a}}
 h1{{margin-bottom:.25rem}} .pass{{color:#08783e;font-weight:700}}
@@ -120,7 +120,7 @@ table{{border-collapse:collapse;width:100%;margin:1.5rem 0}} th,td{{border:1px s
 th{{background:#eef3f6}} code{{overflow-wrap:anywhere}} .meta{{color:#425466}}
 </style></head>
 <body><main>
-<h1>ISTARI cross-browser staff acceptance</h1>
+<h1>Mist cross-browser staff acceptance</h1>
 <p class="pass">PASS: 2 complete state-changing journeys, 0 failures.</p>
 <p class="meta">Recorded 7 August 2026 against React, FastAPI, PostgreSQL 17.9 and Camunda 8.9.14.</p>
 <table><thead><tr><th>Browser</th><th>Request</th><th>Route</th><th>Analyst</th><th>Clarification messages</th><th>Feedback</th><th>Result</th></tr></thead>

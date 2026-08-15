@@ -35,7 +35,7 @@ function Invoke-WorkflowAvailabilityAttestation {
             }
             $composeArguments += @(
                 "exec", "--no-TTY", "api", "python", "-m",
-                "istari_service.maintenance", "attest-workflow"
+                "mist_service.maintenance", "attest-workflow"
             )
             $remainingMaintenanceArguments = `
                 $maintenanceArguments[1..($maintenanceArguments.Count - 1)]
@@ -47,7 +47,7 @@ function Invoke-WorkflowAvailabilityAttestation {
     }
     else {
         $apiDirectory = Join-Path $RepositoryRoot "apps/api"
-        & uv run --directory $apiDirectory python -m istari_service.maintenance `
+        & uv run --directory $apiDirectory python -m mist_service.maintenance `
             @maintenanceArguments
     }
     if ($LASTEXITCODE -ne 0) {

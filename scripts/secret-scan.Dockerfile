@@ -4,7 +4,7 @@
 # with patched Go and x/* modules.
 FROM golang:1.26.5-alpine3.23@sha256:622e56dbc11a8cfe87cafa2331e9a201877271cbff918af53d3be315f3da88cc AS build
 WORKDIR /build
-RUN go mod init istari.local/gitleaks-build \
+RUN go mod init mist.local/gitleaks-build \
     && go get github.com/zricethezav/gitleaks/v8@v8.30.1 \
     && go get golang.org/x/crypto@v0.52.0 golang.org/x/text@v0.39.0 \
     && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" \

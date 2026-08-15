@@ -1,4 +1,4 @@
-"""Run a bounded, content-free read-load rehearsal against a local ISTARI API."""
+"""Run a bounded, content-free read-load rehearsal against a local Mist API."""
 
 from __future__ import annotations
 

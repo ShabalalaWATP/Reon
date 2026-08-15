@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-image="istari/postgres-component:17.10-pgvector0.8.1"
+image="mist/postgres-component:17.10-pgvector0.8.1"
 suffix="${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-0}-$$"
-container_name="istari-postgres-component-${suffix}"
+container_name="mist-postgres-component-${suffix}"
 volume_name="${container_name}-data"
 
 docker build --file infra/postgres/Dockerfile --tag "$image" . >/dev/null

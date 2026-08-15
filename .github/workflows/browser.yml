@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
-      COMPOSE_PROJECT_NAME: istari-browser-${{ github.run_id }}-${{ github.run_attempt }}
+      COMPOSE_PROJECT_NAME: mist-browser-${{ github.run_id }}-${{ github.run_attempt }}
       APP_DATABASE_NAME: app_browser
       APP_DATABASE_USER: app_browser_owner
       APP_RUNTIME_DATABASE_USER: app_browser
@@ -44,7 +44,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Install the pinned Chromium runtime
-        run: pnpm --filter @istari-service/web exec playwright install --with-deps chromium
+        run: pnpm --filter @mist-service/web exec playwright install --with-deps chromium
       - name: Generate job-scoped synthetic credentials
         shell: bash
         run: |
@@ -83,7 +83,7 @@ jobs:
           -f docker-compose.yml -f .github/compose.browser.yml
           up --build --detach --wait --wait-timeout 780
       - name: Run the bounded Chromium workflow
-        run: pnpm --filter @istari-service/web test:e2e
+        run: pnpm --filter @mist-service/web test:e2e
       - name: Capture bounded topology diagnostics
         if: failure()
         run: |

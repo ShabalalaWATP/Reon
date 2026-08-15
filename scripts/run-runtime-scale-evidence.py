@@ -18,9 +18,9 @@ from runtime_scale_measurements import (
 from runtime_scale_plans import query_plan_evidence
 from sqlalchemy import func, select, text
 
-from istari_service.database import SessionFactory, dispose_database, engine
-from istari_service.models import RequestEvent, ServiceRequest, WorkflowTask
-from istari_service.request_draft_models import RequestDraft
+from mist_service.database import SessionFactory, dispose_database, engine
+from mist_service.models import RequestEvent, ServiceRequest, WorkflowTask
+from mist_service.request_draft_models import RequestDraft
 
 
 async def run(target: int) -> dict[str, Any]:

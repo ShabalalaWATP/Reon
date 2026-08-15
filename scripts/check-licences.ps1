@@ -14,7 +14,7 @@ $approvedPatterns = @(
 )
 $reviewedUnknown = @{
     'camunda-orchestration-sdk' = 'Camunda License 1.0, selected workflow dependency'
-    'istari-service-api' = 'Private first-party application'
+    'mist-service-api' = 'Private first-party application'
 }
 # These two locked wheels publish incomplete licence metadata. Their installed
 # licence files were reviewed as Apache-2.0 (fastembed) and MIT

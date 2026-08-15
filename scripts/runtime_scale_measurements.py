@@ -14,20 +14,20 @@ from uuid import UUID
 from sqlalchemy import Select, event, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
-from istari_service.board_models import WorkPackage
-from istari_service.models import RequestEvent, ServiceRequest, User, WorkflowTask
-from istari_service.organisation_models import OrganisationUnit
-from istari_service.repositories.admin import SqlAlchemyAdminRepository
-from istari_service.repositories.auth import SqlAlchemyAuthRepository
-from istari_service.repositories.board import SqlAlchemyBoardRepository
-from istari_service.repositories.drafts import SqlAlchemyDraftRepository
-from istari_service.repositories.organisation import SqlAlchemyOrganisationRepository
-from istari_service.repositories.projection_pagination import encode_cursor
-from istari_service.repositories.requests import SqlAlchemyRequestRepository
-from istari_service.repositories.work import SqlAlchemyWorkRepository
-from istari_service.request_draft_models import RequestDraft
-from istari_service.schemas.board import BoardFilters, BoardItemType
-from istari_service.worker_runtime import MaintenanceJob, WorkerIteration
+from mist_service.board_models import WorkPackage
+from mist_service.models import RequestEvent, ServiceRequest, User, WorkflowTask
+from mist_service.organisation_models import OrganisationUnit
+from mist_service.repositories.admin import SqlAlchemyAdminRepository
+from mist_service.repositories.auth import SqlAlchemyAuthRepository
+from mist_service.repositories.board import SqlAlchemyBoardRepository
+from mist_service.repositories.drafts import SqlAlchemyDraftRepository
+from mist_service.repositories.organisation import SqlAlchemyOrganisationRepository
+from mist_service.repositories.projection_pagination import encode_cursor
+from mist_service.repositories.requests import SqlAlchemyRequestRepository
+from mist_service.repositories.work import SqlAlchemyWorkRepository
+from mist_service.request_draft_models import RequestDraft
+from mist_service.schemas.board import BoardFilters, BoardItemType
+from mist_service.worker_runtime import MaintenanceJob, WorkerIteration
 
 SessionFactory = async_sessionmaker[AsyncSession]
 MeasuredCall = Callable[[AsyncSession], Awaitable[object]]

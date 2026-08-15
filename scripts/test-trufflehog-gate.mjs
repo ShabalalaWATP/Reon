@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const gate = join(scriptDirectory, "check-trufflehog-findings.mjs");
 const dockerfile = join(scriptDirectory, "trufflehog-scan.Dockerfile");
-const root = await mkdtemp(join(tmpdir(), "istari-trufflehog-gate-"));
+const root = await mkdtemp(join(tmpdir(), "mist-trufflehog-gate-"));
 const findingsPath = join(root, "findings.jsonl");
 const allowlistPath = join(root, "allowlist.json");
 const raw = `https://${["test-user", "test-pass"].join(":")}@example.test/a`;

@@ -22,7 +22,7 @@ for (const required of [
   "timeout-minutes: 35",
   "playwright install --with-deps chromium",
   "docker-compose.yml -f .github/compose.browser.yml up --build --detach --wait",
-  "pnpm --filter @istari-service/web test:e2e",
+  "pnpm --filter @mist-service/web test:e2e",
   "if: failure()",
   "if: always()",
   "down --volumes --remove-orphans",

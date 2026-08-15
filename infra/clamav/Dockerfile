@@ -10,10 +10,10 @@ RUN sed -i \
         -e '/^NotifyClamd /d' \
         /etc/clamav/freshclam.conf
 
-COPY --chmod=0555 infra/clamav/healthcheck.sh /usr/local/bin/istari-clamav-healthcheck
+COPY --chmod=0555 infra/clamav/healthcheck.sh /usr/local/bin/mist-clamav-healthcheck
 
 USER 100:101
 ENTRYPOINT ["/init-unprivileged"]
 
 HEALTHCHECK --start-period=5m --interval=1m --timeout=5s --retries=3 \
-    CMD ["istari-clamav-healthcheck"]
+    CMD ["mist-clamav-healthcheck"]

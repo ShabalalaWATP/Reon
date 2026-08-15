@@ -52,32 +52,32 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          docker build --file apps/api/Dockerfile --target build --tag istari-build-api:ci .
-          docker build --file apps/web/Dockerfile --target build --tag istari-build-web:ci .
-          docker build --file infra/postgres/Dockerfile --target vector-build --tag istari-build-postgres:ci .
-          docker build --file scripts/actionlint.Dockerfile --tag istari-tool-actionlint:ci .
-          docker build --file scripts/secret-scan.Dockerfile --target tool --tag istari-tool-gitleaks:ci .
-          docker build --file scripts/trufflehog-scan.Dockerfile --target tool --tag istari-tool-trufflehog:ci .
-          docker build --file scripts/trufflehog-scan.Dockerfile --target gate --tag istari-tool-trufflehog-gate:ci .
+          docker build --file apps/api/Dockerfile --target build --tag mist-build-api:ci .
+          docker build --file apps/web/Dockerfile --target build --tag mist-build-web:ci .
+          docker build --file infra/postgres/Dockerfile --target vector-build --tag mist-build-postgres:ci .
+          docker build --file scripts/actionlint.Dockerfile --tag mist-tool-actionlint:ci .
+          docker build --file scripts/secret-scan.Dockerfile --target tool --tag mist-tool-gitleaks:ci .
+          docker build --file scripts/trufflehog-scan.Dockerfile --target tool --tag mist-tool-trufflehog:ci .
+          docker build --file scripts/trufflehog-scan.Dockerfile --target gate --tag mist-tool-trufflehog-gate:ci .
           docker pull ghcr.io/astral-sh/uv:0.12.1@sha256:cf4eedcaa81655197f625739489effcbe71b61ceb1506f332c3facae5deceded
-          docker tag ghcr.io/astral-sh/uv:0.12.1@sha256:cf4eedcaa81655197f625739489effcbe71b61ceb1506f332c3facae5deceded istari-tool-uv:ci
+          docker tag ghcr.io/astral-sh/uv:0.12.1@sha256:cf4eedcaa81655197f625739489effcbe71b61ceb1506f332c3facae5deceded mist-tool-uv:ci
           docker pull docker/dockerfile-upstream:master@sha256:655d8ec53fd4a740c5e5a7031454a72020caf93841bad4a9f7f4f4d85929c083
-          docker tag docker/dockerfile-upstream:master@sha256:655d8ec53fd4a740c5e5a7031454a72020caf93841bad4a9f7f4f4d85929c083 istari-tool-dockerfile-frontend:ci
+          docker tag docker/dockerfile-upstream:master@sha256:655d8ec53fd4a740c5e5a7031454a72020caf93841bad4a9f7f4f4d85929c083 mist-tool-dockerfile-frontend:ci
       - name: Exercise built-container canaries
         run: sh scripts/canary-built-containers.sh
       - name: Validate signed ClamAV definition age
         shell: bash
         run: |
           set -euo pipefail
-          test "$(docker image inspect istari/clamav-local:1.5.3 --format '{{.Config.User}}')" = "100:101"
+          test "$(docker image inspect mist/clamav-local:1.5.3 --format '{{.Config.User}}')" = "100:101"
           # The inner container shell expands output.
           # shellcheck disable=SC2016
           timeout --signal=TERM --kill-after=10s 2m docker run --rm --network none \
             --entrypoint sh \
             --env CLAMAV_HEALTH_CHECK_DAEMON=false \
             --env CLAMAV_SIGNATURE_MAX_AGE_HOURS=48 \
-            istari/clamav-local:1.5.3 \
-            -c 'touch /var/lib/clamav/daily.cvd; if output="$(istari-clamav-healthcheck 4102444800 2>&1)"; then exit 1; fi; printf "%s\n" "$output" | grep -Fq "signatures exceed the permitted age"'
+            mist/clamav-local:1.5.3 \
+            -c 'touch /var/lib/clamav/daily.cvd; if output="$(mist-clamav-healthcheck 4102444800 2>&1)"; then exit 1; fi; printf "%s\n" "$output" | grep -Fq "signatures exceed the permitted age"'
       - name: Validate migration reversibility and metadata
         run: |
           set -euo pipefail
@@ -93,47 +93,47 @@ jobs:
           timeout --signal=TERM --kill-after=10s 3m docker compose run --rm --no-deps api alembic check
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
-          image-ref: istari-service-local-api
+          image-ref: mist-service-local-api
           severity: HIGH,CRITICAL
           exit-code: "1"
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
-          image-ref: istari-service-local-web
+          image-ref: mist-service-local-web
           severity: HIGH,CRITICAL
           exit-code: "1"
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
-          image-ref: istari/postgres-local:17.10-pgvector0.8.1-alpine3.23
+          image-ref: mist/postgres-local:17.10-pgvector0.8.1-alpine3.23
           severity: HIGH,CRITICAL
           exit-code: "1"
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
-          image-ref: istari/camunda-local:8.9.14
+          image-ref: mist/camunda-local:8.9.14
           severity: HIGH,CRITICAL
           exit-code: "1"
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
-          image-ref: istari/clamav-local:1.5.3
+          image-ref: mist/clamav-local:1.5.3
           severity: HIGH,CRITICAL
           exit-code: "1"
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
-          image-ref: istari-build-api:ci
+          image-ref: mist-build-api:ci
           severity: HIGH,CRITICAL
           exit-code: "1"
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
-          image-ref: istari-build-web:ci
+          image-ref: mist-build-web:ci
           severity: HIGH,CRITICAL
           exit-code: "1"
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
-          image-ref: istari-build-postgres:ci
+          image-ref: mist-build-postgres:ci
           severity: HIGH,CRITICAL
           exit-code: "1"
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
-          image-ref: istari-tool-actionlint:ci
+          image-ref: mist-tool-actionlint:ci
           severity: HIGH,CRITICAL
           exit-code: "1"
           # Built with the newest patched Go release. Only upstream findings
@@ -141,27 +141,27 @@ jobs:
           ignore-unfixed: true
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
-          image-ref: istari-tool-gitleaks:ci
+          image-ref: mist-tool-gitleaks:ci
           severity: HIGH,CRITICAL
           exit-code: "1"
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
-          image-ref: istari-tool-trufflehog:ci
+          image-ref: mist-tool-trufflehog:ci
           severity: HIGH,CRITICAL
           exit-code: "1"
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
-          image-ref: istari-tool-trufflehog-gate:ci
+          image-ref: mist-tool-trufflehog-gate:ci
           severity: HIGH,CRITICAL
           exit-code: "1"
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
-          image-ref: istari-tool-uv:ci
+          image-ref: mist-tool-uv:ci
           severity: HIGH,CRITICAL
           exit-code: "1"
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
-          image-ref: istari-tool-dockerfile-frontend:ci
+          image-ref: mist-tool-dockerfile-frontend:ci
           severity: HIGH,CRITICAL
           exit-code: "1"
           trivyignores: scripts/dockerfile-frontend.trivyignore.yaml
@@ -173,20 +173,20 @@ jobs:
           while IFS='=' read -r name image; do
             trivy image --format cyclonedx --output "sbom/${name}.cdx.json" "$image"
           done <<'IMAGES'
-          api=istari-service-local-api
-          web=istari-service-local-web
-          postgres=istari/postgres-local:17.10-pgvector0.8.1-alpine3.23
-          camunda=istari/camunda-local:8.9.14
-          clamav=istari/clamav-local:1.5.3
-          api-builder=istari-build-api:ci
-          web-builder=istari-build-web:ci
-          postgres-builder=istari-build-postgres:ci
-          actionlint-tool=istari-tool-actionlint:ci
-          gitleaks-tool=istari-tool-gitleaks:ci
-          trufflehog-tool=istari-tool-trufflehog:ci
-          trufflehog-gate-tool=istari-tool-trufflehog-gate:ci
-          uv-tool=istari-tool-uv:ci
-          dockerfile-frontend-tool=istari-tool-dockerfile-frontend:ci
+          api=mist-service-local-api
+          web=mist-service-local-web
+          postgres=mist/postgres-local:17.10-pgvector0.8.1-alpine3.23
+          camunda=mist/camunda-local:8.9.14
+          clamav=mist/clamav-local:1.5.3
+          api-builder=mist-build-api:ci
+          web-builder=mist-build-web:ci
+          postgres-builder=mist-build-postgres:ci
+          actionlint-tool=mist-tool-actionlint:ci
+          gitleaks-tool=mist-tool-gitleaks:ci
+          trufflehog-tool=mist-tool-trufflehog:ci
+          trufflehog-gate-tool=mist-tool-trufflehog-gate:ci
+          uv-tool=mist-tool-uv:ci
+          dockerfile-frontend-tool=mist-tool-dockerfile-frontend:ci
           IMAGES
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

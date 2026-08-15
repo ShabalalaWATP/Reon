@@ -14,15 +14,15 @@ from performance_request_fixture import seed_request_feeds
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from istari_service.auth_service import PasswordHasher
-from istari_service.board_models import (
+from mist_service.auth_service import PasswordHasher
+from mist_service.board_models import (
     WorkPackage,
     WorkPackageActivity,
     WorkPackageActivityType,
     WorkPackagePriority,
     WorkPackageStatus,
 )
-from istari_service.calendar_models import (
+from mist_service.calendar_models import (
     CalendarCategory,
     CalendarEvent,
     CalendarEventKind,
@@ -31,12 +31,12 @@ from istari_service.calendar_models import (
     CommitmentStatus,
     RecurrenceFrequency,
 )
-from istari_service.database import session_scope
-from istari_service.models import User, UserRole
-from istari_service.organisation_models import OrganisationUnit
-from istari_service.team_models import TeamMembership
+from mist_service.database import session_scope
+from mist_service.models import User, UserRole
+from mist_service.organisation_models import OrganisationUnit
+from mist_service.team_models import TeamMembership
 
-FIXTURE_NAMESPACE = "https://istari.example/performance/"
+FIXTURE_NAMESPACE = "https://mist.example/performance/"
 SSG_CODE = "SSG_TEAM"
 
 

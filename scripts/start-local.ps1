@@ -6,7 +6,7 @@ param(
     [switch]$SeedDemoData,
     [string]$ComposeProjectName = $(
         if ($env:COMPOSE_PROJECT_NAME) { $env:COMPOSE_PROJECT_NAME }
-        else { "istari-service-local" }
+        else { "mist-service-local" }
     )
 )
 

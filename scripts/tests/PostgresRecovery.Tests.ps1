@@ -19,10 +19,10 @@ Describe 'PostgreSQL recovery transport policy' {
         }
     }
     BeforeEach {
-        $script:previousApprovedCert = $env:ISTARI_POSTGRES_APPROVED_SSL_ROOT_CERT
+        $script:previousApprovedCert = $env:MIST_POSTGRES_APPROVED_SSL_ROOT_CERT
     }
     AfterEach {
-        $env:ISTARI_POSTGRES_APPROVED_SSL_ROOT_CERT = $script:previousApprovedCert
+        $env:MIST_POSTGRES_APPROVED_SSL_ROOT_CERT = $script:previousApprovedCert
     }
 
     It 'allows only the three exact loopback hosts without TLS parameters' {
@@ -46,7 +46,7 @@ Describe 'PostgreSQL recovery transport policy' {
     It 'requires verify-full and the exact approved existing trust path remotely' {
         $certificate = Join-Path $TestDrive 'approved-ca.pem'
         Set-Content -LiteralPath $certificate -Value 'synthetic test CA'
-        $env:ISTARI_POSTGRES_APPROVED_SSL_ROOT_CERT = $certificate
+        $env:MIST_POSTGRES_APPROVED_SSL_ROOT_CERT = $certificate
         $encodedCertificate = [uri]::EscapeDataString($certificate)
 
         Assert-ThrowsLike {
@@ -90,23 +90,23 @@ Describe 'Authenticated backup manifests' {
         }
     }
     BeforeEach {
-        $script:previousIntegrityKey = $env:ISTARI_BACKUP_INTEGRITY_KEY_BASE64
-        $env:ISTARI_BACKUP_INTEGRITY_KEY_BASE64 = [Convert]::ToBase64String([byte[]](1..32))
-        $script:backupPath = Join-Path $TestDrive 'istari.dump'
+        $script:previousIntegrityKey = $env:MIST_BACKUP_INTEGRITY_KEY_BASE64
+        $env:MIST_BACKUP_INTEGRITY_KEY_BASE64 = [Convert]::ToBase64String([byte[]](1..32))
+        $script:backupPath = Join-Path $TestDrive 'mist.dump'
         Set-Content -LiteralPath $script:backupPath -Value 'synthetic backup'
         $script:hash = (Get-FileHash -Algorithm SHA256 $script:backupPath).Hash.ToLowerInvariant()
     }
     AfterEach {
-        $env:ISTARI_BACKUP_INTEGRITY_KEY_BASE64 = $script:previousIntegrityKey
+        $env:MIST_BACKUP_INTEGRITY_KEY_BASE64 = $script:previousIntegrityKey
     }
 
     It 'accepts an unchanged dump and authenticated manifest' {
-        $manifest = New-AuthenticatedBackupManifest 'istari.dump' '2026-08-13T00:00:00Z' $script:hash
+        $manifest = New-AuthenticatedBackupManifest 'mist.dump' '2026-08-13T00:00:00Z' $script:hash
         Assert-DoesNotThrow { Assert-AuthenticatedBackupManifest $manifest $script:backupPath }
     }
 
     It 'rejects a tampered dump' {
-        $manifest = New-AuthenticatedBackupManifest 'istari.dump' '2026-08-13T00:00:00Z' $script:hash
+        $manifest = New-AuthenticatedBackupManifest 'mist.dump' '2026-08-13T00:00:00Z' $script:hash
         Add-Content -LiteralPath $script:backupPath -Value 'tamper'
         Assert-ThrowsLike {
             Assert-AuthenticatedBackupManifest $manifest $script:backupPath
@@ -114,7 +114,7 @@ Describe 'Authenticated backup manifests' {
     }
 
     It 'rejects a coordinated dump and manifest hash change without the key' {
-        $manifest = New-AuthenticatedBackupManifest 'istari.dump' '2026-08-13T00:00:00Z' $script:hash
+        $manifest = New-AuthenticatedBackupManifest 'mist.dump' '2026-08-13T00:00:00Z' $script:hash
         Add-Content -LiteralPath $script:backupPath -Value 'tamper'
         $manifest.hash = (Get-FileHash -Algorithm SHA256 $script:backupPath).Hash.ToLowerInvariant()
         Assert-ThrowsLike {

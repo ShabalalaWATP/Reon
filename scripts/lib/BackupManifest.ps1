@@ -1,14 +1,14 @@
 Set-StrictMode -Version Latest
 
 function Get-BackupIntegrityKey {
-    if ([string]::IsNullOrWhiteSpace($env:ISTARI_BACKUP_INTEGRITY_KEY_BASE64)) {
-        throw 'Set ISTARI_BACKUP_INTEGRITY_KEY_BASE64 from the operational secret store.'
+    if ([string]::IsNullOrWhiteSpace($env:MIST_BACKUP_INTEGRITY_KEY_BASE64)) {
+        throw 'Set MIST_BACKUP_INTEGRITY_KEY_BASE64 from the operational secret store.'
     }
     try {
-        $key = [Convert]::FromBase64String($env:ISTARI_BACKUP_INTEGRITY_KEY_BASE64)
+        $key = [Convert]::FromBase64String($env:MIST_BACKUP_INTEGRITY_KEY_BASE64)
     }
     catch {
-        throw 'ISTARI_BACKUP_INTEGRITY_KEY_BASE64 must be valid base64.'
+        throw 'MIST_BACKUP_INTEGRITY_KEY_BASE64 must be valid base64.'
     }
     if ($key.Length -lt 32) {
         throw 'The backup integrity key must contain at least 256 bits.'

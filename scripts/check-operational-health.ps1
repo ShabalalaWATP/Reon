@@ -16,7 +16,7 @@ if ($ready.status -ne 'ready') {
 }
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $snapshot = & uv run --directory (Join-Path $repoRoot 'apps/api') `
-    istari-maintenance health-snapshot
+    mist-maintenance health-snapshot
 if ($LASTEXITCODE -ne 0) {
     throw "Operational database snapshot raised an alert: $snapshot"
 }
