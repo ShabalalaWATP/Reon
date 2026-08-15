@@ -1,9 +1,17 @@
-import { z } from "zod";
-
-import { payloadParser } from "./payloadContract";
+import {
+  arrayOf,
+  isBoolean,
+  isNumber,
+  isOneOf,
+  isString,
+  nullOr,
+  optional,
+  payloadParser,
+  shape,
+} from "./payloadContract";
 import type { RequestDetail, WorkItem } from "./types";
 
-const requestStatusSchema = z.enum([
+const isRequestStatus = isOneOf([
   "ROUTING_PENDING",
   "TRIAGE_REVIEW",
   "INFORMATION_REQUIRED",
@@ -22,7 +30,7 @@ const requestStatusSchema = z.enum([
   "CANCELLED",
 ]);
 
-const workStageSchema = z.enum([
+const isWorkStage = isOneOf([
   "TRIAGE_REVIEW",
   "INFORMATION_REQUIRED",
   "COORDINATION_REVIEW",
@@ -37,7 +45,7 @@ const workStageSchema = z.enum([
   "READY_FOR_RELEASE",
 ]);
 
-const workActionNameSchema = z.enum([
+const isWorkActionName = isOneOf([
   "request_information",
   "progress",
   "close",
@@ -59,112 +67,112 @@ const workActionNameSchema = z.enum([
   "release",
 ]);
 
-const personSchema = z.object({ id: z.string(), displayName: z.string() });
+const isPerson = shape({ id: isString, displayName: isString });
 
-const requestEventSchema = z.object({
-  id: z.string(),
-  type: z.string(),
-  message: z.string(),
-  actorDisplayName: z.string().nullable(),
-  createdAt: z.string(),
+const isRequestEvent = shape({
+  id: isString,
+  type: isString,
+  message: isString,
+  actorDisplayName: nullOr(isString),
+  createdAt: isString,
 });
 
-const deliverableSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  text: z.string(),
-  releasedAt: z.string().nullable(),
+const isDeliverable = shape({
+  id: isString,
+  title: isString,
+  text: isString,
+  releasedAt: nullOr(isString),
 });
 
-const feedbackSchema = z.object({
-  id: z.string(),
-  rating: z.number(),
-  comments: z.string(),
-  createdAt: z.string(),
+const isFeedback = shape({
+  id: isString,
+  rating: isNumber,
+  comments: isString,
+  createdAt: isString,
 });
 
-const clarificationMessageSchema = z.object({
-  id: z.string(),
-  kind: z.enum(["REQUEST", "RESPONSE", "WITHDRAWAL"]),
-  body: z.string(),
-  actorDisplayName: z.string(),
-  createdAt: z.string(),
+const isClarificationMessage = shape({
+  id: isString,
+  kind: isOneOf(["REQUEST", "RESPONSE", "WITHDRAWAL"]),
+  body: isString,
+  actorDisplayName: isString,
+  createdAt: isString,
 });
 
-const clarificationThreadSchema = z.object({
-  id: z.string(),
-  sequence: z.number(),
-  question: z.string(),
-  reason: z.string(),
-  responseDeadline: z.string(),
-  status: z.enum(["OPEN", "ANSWERED", "WITHDRAWN"]),
-  version: z.number(),
-  assignedSpecialist: personSchema,
-  messages: z.array(clarificationMessageSchema),
-  createdAt: z.string(),
-  closedAt: z.string().nullable(),
+const isClarificationThread = shape({
+  id: isString,
+  sequence: isNumber,
+  question: isString,
+  reason: isString,
+  responseDeadline: isString,
+  status: isOneOf(["OPEN", "ANSWERED", "WITHDRAWN"]),
+  version: isNumber,
+  assignedSpecialist: isPerson,
+  messages: arrayOf(isClarificationMessage),
+  createdAt: isString,
+  closedAt: nullOr(isString),
 });
 
-const requestDetailSchema: z.ZodType<RequestDetail> = z.object({
-  id: z.string(),
-  reference: z.string(),
-  title: z.string(),
-  status: requestStatusSchema,
-  currentOwner: z.string().nullable(),
-  requiredBy: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  version: z.number(),
-  needsRequesterInput: z.boolean(),
-  productAvailable: z.boolean(),
-  feedbackSubmitted: z.boolean(),
-  productMode: z.enum(["LEGACY", "MANAGED"]),
-  serviceCategory: z.string(),
-  description: z.string(),
-  questionToAnswer: z.string(),
-  desiredOutcome: z.string(),
-  backgroundContext: z.string(),
-  subjectAreaOrLocation: z.string(),
-  coverageStart: z.string(),
-  coverageEnd: z.string(),
-  customerUrgency: z.enum(["ROUTINE", "TIME_SENSITIVE", "IMMEDIATE"]),
-  supportedActivityOrDecision: z.string(),
-  requiredByReason: z.string(),
-  preferredDeliverableType: z.string(),
-  successCriteria: z.string(),
-  constraintsOrCaveats: z.string(),
-  supportingInformation: z.string(),
-  sensitivity: z.enum(["STANDARD", "SENSITIVE", "RESTRICTED"]),
-  handlingInstructions: z.string(),
-  requester: personSchema,
-  assignedDeliveryTeam: z.string().nullable(),
-  assignedSpecialist: personSchema.nullable(),
-  contributors: z.array(personSchema),
-  events: z.array(requestEventSchema),
-  eventsNextCursor: z.string().nullable().optional(),
-  deliverable: deliverableSchema.nullable(),
-  feedback: feedbackSchema.nullable(),
-  clarifications: z.array(clarificationThreadSchema),
-  workflowError: z.string().nullable(),
+const isRequestDetail = shape({
+  id: isString,
+  reference: isString,
+  title: isString,
+  status: isRequestStatus,
+  currentOwner: nullOr(isString),
+  requiredBy: isString,
+  createdAt: isString,
+  updatedAt: isString,
+  version: isNumber,
+  needsRequesterInput: isBoolean,
+  productAvailable: isBoolean,
+  feedbackSubmitted: isBoolean,
+  productMode: isOneOf(["LEGACY", "MANAGED"]),
+  serviceCategory: isString,
+  description: isString,
+  questionToAnswer: isString,
+  desiredOutcome: isString,
+  backgroundContext: isString,
+  subjectAreaOrLocation: isString,
+  coverageStart: isString,
+  coverageEnd: isString,
+  customerUrgency: isOneOf(["ROUTINE", "TIME_SENSITIVE", "IMMEDIATE"]),
+  supportedActivityOrDecision: isString,
+  requiredByReason: isString,
+  preferredDeliverableType: isString,
+  successCriteria: isString,
+  constraintsOrCaveats: isString,
+  supportingInformation: isString,
+  sensitivity: isOneOf(["STANDARD", "SENSITIVE", "RESTRICTED"]),
+  handlingInstructions: isString,
+  requester: isPerson,
+  assignedDeliveryTeam: nullOr(isString),
+  assignedSpecialist: nullOr(isPerson),
+  contributors: arrayOf(isPerson),
+  events: arrayOf(isRequestEvent),
+  eventsNextCursor: optional(nullOr(isString)),
+  deliverable: nullOr(isDeliverable),
+  feedback: nullOr(isFeedback),
+  clarifications: arrayOf(isClarificationThread),
+  workflowError: nullOr(isString),
 });
 
-const workItemSchema: z.ZodType<WorkItem> = z.object({
-  id: z.string(),
-  requestId: z.string(),
-  requestReference: z.string(),
-  requestVersion: z.number(),
-  title: z.string(),
-  stage: workStageSchema,
-  status: z.string(),
-  assigneeId: z.string().nullable(),
-  assigneeDisplayName: z.string().nullable(),
-  deliveryTeam: z.string().nullable(),
-  availableActions: z.array(workActionNameSchema),
-  assignedToCurrentUser: z.boolean().optional(),
-  assignmentRole: z.enum(["LEAD_ANALYST", "ANALYST"]).nullable().optional(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
+const isWorkItem = shape({
+  id: isString,
+  requestId: isString,
+  requestReference: isString,
+  requestVersion: isNumber,
+  title: isString,
+  stage: isWorkStage,
+  status: isString,
+  assigneeId: nullOr(isString),
+  assigneeDisplayName: nullOr(isString),
+  deliveryTeam: nullOr(isString),
+  availableActions: arrayOf(isWorkActionName),
+  assignedToCurrentUser: optional(isBoolean),
+  assignmentRole: optional(nullOr(isOneOf(["LEAD_ANALYST", "ANALYST"]))),
+  createdAt: isString,
+  updatedAt: isString,
 });
 
-export const parseRequestDetail = payloadParser("request", requestDetailSchema);
-export const parseWorkItem = payloadParser("work item", workItemSchema);
+export const parseRequestDetail = payloadParser<RequestDetail>("request", isRequestDetail);
+export const parseWorkItem = payloadParser<WorkItem>("work item", isWorkItem);

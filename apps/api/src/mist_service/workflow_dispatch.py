@@ -236,6 +236,7 @@ class WorkflowOutboxDispatcher:
 
         return await lock_start_lease(session, pending)
 
+
 async def add_task_projection(
     session: AsyncSession,
     request: ServiceRequest,

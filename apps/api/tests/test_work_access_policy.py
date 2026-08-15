@@ -8,6 +8,8 @@ from typing import cast
 from uuid import uuid4
 
 import pytest
+
+from authorisation_test_support import actor, request, work
 from mist_service.authorisation import (
     PolicyDenial,
     RequestOperation,
@@ -24,9 +26,8 @@ from mist_service.policies import (
     is_object_scoped,
 )
 
-from authorisation_test_support import actor, request, work
-
 POOL_VERIFIED = {"pool_membership_verified": True}
+
 
 def test_shared_routing_work_requires_role_stage_scope_and_assignment() -> None:
     owner = actor(UserRole.REQUESTER)
@@ -174,12 +175,14 @@ def test_completion_decision_preserves_action_and_assignment_distinctions() -> N
     ).allowed
     assert (
         decide_work_completion(
-            triage, item, "release", triage.id, **POOL_VERIFIED).denial
+            triage, item, "release", triage.id, **POOL_VERIFIED
+        ).denial
         is PolicyDenial.ACTION
     )
     assert (
         decide_work_completion(
-            triage, item, "progress", uuid4(), **POOL_VERIFIED).denial
+            triage, item, "progress", uuid4(), **POOL_VERIFIED
+        ).denial
         is PolicyDenial.ASSIGNMENT
     )
     assert (
@@ -214,4 +217,3 @@ def test_pool_roles_are_denied_without_membership_evidence(role: UserRole) -> No
     assert not decide_request_access(pooled, RequestOperation.VIEW, item).allowed
     assert is_object_scoped(pooled, item, **POOL_VERIFIED)
     assert can_access_work(pooled, item, **POOL_VERIFIED)
-

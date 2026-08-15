@@ -246,9 +246,7 @@ def test_repositories_do_not_add_reverse_service_dependencies() -> None:
 
 
 def test_routers_do_not_add_concrete_persistence_dependencies() -> None:
-    actual = _debt_import_counts(
-        "routers", ("mist_service.repositories", "sqlalchemy")
-    )
+    actual = _debt_import_counts("routers", ("mist_service.repositories", "sqlalchemy"))
     assert actual == ROUTER_INFRASTRUCTURE_DEBT, (
         "Router infrastructure-import counts changed. Move construction to "
         f"composition or reject new coupling. Actual={actual}"

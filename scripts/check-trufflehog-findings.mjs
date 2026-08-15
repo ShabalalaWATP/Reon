@@ -12,15 +12,16 @@ if (!findingsPath || !allowlistPath) {
 function fingerprint(finding) {
   const git = finding?.SourceMetadata?.Data?.Git;
   const raw = finding?.RawV2 || finding?.Raw;
-  const fields = [
-    git?.file,
-    finding?.DetectorName,
-    raw,
-  ];
-  if (fields.some((value) => !value)) {
+  if (!git || !finding?.DetectorName || !raw) {
     throw new Error("A TruffleHog finding lacks stable Git fingerprint fields.");
   }
-  return createHash("sha256").update(fields.join("|"), "utf8").digest("hex");
+  // A match inside a commit message carries no file path. Anchor it to a
+  // stable label so it fails closed and can be excepted exactly, rather
+  // than crashing the gate.
+  const file = git.file || "commit-message";
+  return createHash("sha256")
+    .update([file, finding.DetectorName, raw].join("|"), "utf8")
+    .digest("hex");
 }
 
 function parseFindings(content) {
@@ -106,5 +107,5 @@ try {
 
 function gitLocation(finding) {
   const git = finding?.SourceMetadata?.Data?.Git;
-  return `${git?.commit ?? "missing-commit"}:${git?.file ?? "missing-file"}`;
+  return `${git?.commit ?? "missing-commit"}:${git?.file ?? "commit-message"}`;
 }

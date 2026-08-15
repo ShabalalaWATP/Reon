@@ -37,9 +37,7 @@ class Settings(BaseSettings):
     )
 
     environment: Environment = Environment.LOCAL
-    database_url: str = (
-        "postgresql+asyncpg://mist_service@localhost:5432/mist_service"
-    )
+    database_url: str = "postgresql+asyncpg://mist_service@localhost:5432/mist_service"
     database_pool_size: int = Field(default=20, ge=1, le=50)
     database_max_overflow: int = Field(default=30, ge=0, le=50)
     trusted_origins: Annotated[frozenset[str], NoDecode] = Field(

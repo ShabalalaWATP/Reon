@@ -82,6 +82,31 @@ try {
   );
   assert.notEqual(run().status, 0);
 
+  // A commit-message match has no file path: it must fail closed under a
+  // stable placeholder fingerprint, and pass only with an exact exception.
+  const messageFinding = {
+    ...finding,
+    Verified: true,
+    SourceMetadata: { Data: { Git: { commit: "b".repeat(40) } } },
+  };
+  const messageId = createHash("sha256")
+    .update(["commit-message", finding.DetectorName, raw].join("|"))
+    .digest("hex");
+  await write([messageFinding], []);
+  assert.notEqual(run().status, 0);
+  await write(
+    [messageFinding],
+    [
+      {
+        fingerprint: messageId,
+        expiresOn: "2099-01-01",
+        reason: "Synthetic commit-message fixture with no external value.",
+        allowVerifiedFalsePositive: true,
+      },
+    ],
+  );
+  assert.equal(run().status, 0);
+
   await write(
     [
       {
