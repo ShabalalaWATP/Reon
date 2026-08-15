@@ -126,7 +126,9 @@ describe("canonical workforce calendar", () => {
     await waitFor(() =>
       expect(calls.some((call) => call.path.endsWith("/capacity/commits"))).toBe(true),
     );
-  });
+    // This walk types through three forms; overloaded shared CI runners
+    // have twice exceeded the suite's fifteen-second budget.
+  }, 30_000);
 
   it("supports occurrence edits while keeping shared personal events read-only", async () => {
     const calls: Array<{ path: string; body: Record<string, unknown> }> = [];
