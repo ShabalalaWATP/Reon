@@ -3,7 +3,7 @@ const clouds = Array.from({ length: 6 }, (_, index) => ({
   top: `${(index * 37) % 82}%`,
   width: `${180 + (index % 3) * 95}px`,
   height: `${68 + (index % 4) * 26}px`,
-  duration: `${34 + index * 9}s`,
+  duration: `${24 + index * 7}s`,
   delay: `${-(index * 11)}s`,
   opacity: 0.45 + (index % 3) * 0.18,
 }));

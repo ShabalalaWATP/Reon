@@ -52,7 +52,7 @@ export function TrackingActivity({ initialCursor, initialEvents, requestId }: Pr
                   </p>
                 ) : null}
                 <small>
-                  {event.actorDisplayName ?? "ISTARI service"} ·{" "}
+                  {event.actorDisplayName ?? "Mist service"} ·{" "}
                   <time dateTime={event.createdAt}>{formatDate(event.createdAt, true)}</time>
                 </small>
               </div>

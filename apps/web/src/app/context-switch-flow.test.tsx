@@ -88,9 +88,7 @@ describe("Customer and staff context switching", () => {
     expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
     expect(screen.getByText("Customer context")).toBeInTheDocument();
     expect(screen.queryByText("staff only")).not.toBeInTheDocument();
-    expect(window.localStorage.getItem("istari:auth-state")).toMatch(
-      /^context-changed:CUSTOMER:5:/,
-    );
+    expect(window.localStorage.getItem("mist:auth-state")).toMatch(/^context-changed:CUSTOMER:5:/);
   });
 
   it("detaches an old query client before a context switch completes", async () => {
@@ -154,7 +152,7 @@ describe("Customer and staff context switching", () => {
     act(() =>
       window.dispatchEvent(
         new StorageEvent("storage", {
-          key: "istari:auth-state",
+          key: "mist:auth-state",
           newValue: "signed-out:123",
         }),
       ),
@@ -213,9 +211,7 @@ describe("Customer and staff context switching", () => {
 
     expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
     expect(await screen.findByRole("alert")).toHaveTextContent("workspace could not be switched");
-    expect(window.localStorage.getItem("istari:auth-state")).toMatch(
-      /^context-changed:CUSTOMER:5:/,
-    );
+    expect(window.localStorage.getItem("mist:auth-state")).toMatch(/^context-changed:CUSTOMER:5:/);
   });
 
   it("fails closed when a failed switch cannot reconcile the session", async () => {
@@ -256,7 +252,7 @@ describe("Customer and staff context switching", () => {
     act(() =>
       window.dispatchEvent(
         new StorageEvent("storage", {
-          key: "istari:auth-state",
+          key: "mist:auth-state",
           newValue: "context-changed:CUSTOMER:5:123",
         }),
       ),
@@ -283,7 +279,7 @@ describe("Customer and staff context switching", () => {
     act(() =>
       window.dispatchEvent(
         new StorageEvent("storage", {
-          key: "istari:auth-state",
+          key: "mist:auth-state",
           newValue: "context-changed:CUSTOMER:5:123",
         }),
       ),

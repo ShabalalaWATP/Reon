@@ -5,21 +5,24 @@ import { ConversationComposer } from "./ConversationComposer";
 import { ConversationTimeline, type ReplySelection } from "./ConversationTimeline";
 import type { ConversationView } from "./conversationWorkspaceModel";
 import { useRequestConversations } from "./useRequestConversations";
+import type { RequestStatus } from "../../lib/api/types";
 import { useCapabilities } from "../../lib/capabilities/useCapabilities";
 import "./conversations.css";
 
 type Props = {
   activityHref?: string;
   requestId: string;
+  status?: RequestStatus;
 };
 
-export function RequestConversations({ activityHref, requestId }: Props) {
+export function RequestConversations({ activityHref, requestId, status }: Props) {
   const { capabilities, isPending } = useCapabilities();
   if (isPending || !capabilities.conversationReads) return null;
   return (
     <EnabledRequestConversations
       activityHref={activityHref}
       requestId={requestId}
+      status={status}
       writesEnabled={capabilities.conversationWrites}
     />
   );
@@ -28,11 +31,12 @@ export function RequestConversations({ activityHref, requestId }: Props) {
 function EnabledRequestConversations({
   activityHref,
   requestId,
+  status,
   writesEnabled,
 }: Props & { writesEnabled: boolean }) {
   const [view, setView] = useState<ConversationView>("CUSTOMER");
   const [reply, setReply] = useState<ReplySelection | null>(null);
-  const workspace = useRequestConversations(requestId, view, writesEnabled);
+  const workspace = useRequestConversations(requestId, view, writesEnabled, status);
 
   const changeView = (next: ConversationView) => {
     setView(next);

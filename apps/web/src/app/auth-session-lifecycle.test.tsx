@@ -14,13 +14,13 @@ describe("authentication session lifecycle", () => {
     expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
     act(() =>
       window.dispatchEvent(
-        new StorageEvent("storage", { key: "istari:auth-state", newValue: "signed-in:123" }),
+        new StorageEvent("storage", { key: "mist:auth-state", newValue: "signed-in:123" }),
       ),
     );
     expect(screen.getByRole("heading", { name: "My requests" })).toBeInTheDocument();
     act(() =>
       window.dispatchEvent(
-        new StorageEvent("storage", { key: "istari:auth-state", newValue: "signed-out:124" }),
+        new StorageEvent("storage", { key: "mist:auth-state", newValue: "signed-out:124" }),
       ),
     );
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
@@ -94,7 +94,7 @@ describe("authentication session lifecycle", () => {
     act(() =>
       window.dispatchEvent(
         new StorageEvent("storage", {
-          key: "istari:auth-state",
+          key: "mist:auth-state",
           newValue: "signed-out:after-elevation",
         }),
       ),

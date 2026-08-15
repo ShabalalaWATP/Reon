@@ -250,8 +250,8 @@ function PersonalDetailsSection({
       {showForm ? (
         <>
           <p className="profile-note">
-            Add optional information about yourself. These details do not change your ISTARI access
-            or where requests are routed.
+            Add optional information about yourself. These details do not change your Mist access or
+            where requests are routed.
           </p>
           <PersonalProfileForm
             disabled={saving}

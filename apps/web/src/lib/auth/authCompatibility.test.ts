@@ -62,7 +62,7 @@ describe("authentication compatibility boundaries", () => {
     expect(
       parseAuthSyncEvent(
         new StorageEvent("storage", {
-          key: "istari:auth-state",
+          key: "mist:auth-state",
           newValue: "signed-out:123",
         }),
       ),
@@ -70,7 +70,7 @@ describe("authentication compatibility boundaries", () => {
     expect(
       parseAuthSyncEvent(
         new StorageEvent("storage", {
-          key: "istari:auth-state",
+          key: "mist:auth-state",
           newValue: "context-changed:CUSTOMER:2:123",
         }),
       ),
@@ -78,18 +78,18 @@ describe("authentication compatibility boundaries", () => {
     expect(
       parseAuthSyncEvent(
         new StorageEvent("storage", {
-          key: "istari:auth-state",
+          key: "mist:auth-state",
           newValue: "signed-in:123",
         }),
       ),
     ).toEqual({ kind: "unrelated" });
 
     broadcastSignedIn();
-    expect(localStorage.getItem("istari:auth-state")).toBe("signed-in:123");
+    expect(localStorage.getItem("mist:auth-state")).toBe("signed-in:123");
     broadcastSignedOut();
-    expect(localStorage.getItem("istari:auth-state")).toBe("signed-out:123");
+    expect(localStorage.getItem("mist:auth-state")).toBe("signed-out:123");
     broadcastContextChanged(requesterSession);
-    expect(localStorage.getItem("istari:auth-state")).toBe("context-changed:CUSTOMER:1:123");
+    expect(localStorage.getItem("mist:auth-state")).toBe("context-changed:CUSTOMER:1:123");
   });
 
   it("normalises capabilities independently and defaults unknown values off", async () => {

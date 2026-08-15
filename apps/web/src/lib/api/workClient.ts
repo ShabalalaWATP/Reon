@@ -14,9 +14,12 @@ import type {
   WorkAction,
   WorkItem,
 } from "./types";
+import { parseRequestDetail, parseWorkItem } from "./payloadSchemas";
 import { apiRequest, pagedPath } from "./transport";
 
 export const workApi = {
+  // Deliberately no parse hook: a list must degrade per item, not reject the
+  // whole queue. RoutingTeamHome renders unknown stages through boardLabel().
   workItems: (cursor?: string, unitId?: string, requestId?: string) =>
     apiRequest<ListResponse<WorkItem>>(
       pagedPath("/work-items", cursor, {
@@ -93,11 +96,13 @@ export const workApi = {
     apiRequest<WorkItem>(`/work-items/${encodeURIComponent(id)}/claim`, {
       csrfToken,
       method: "POST",
+      parse: parseWorkItem,
     }),
   completeWorkItem: (id: string, action: WorkAction, csrfToken: string) =>
     apiRequest<RequestDetail>(`/work-items/${encodeURIComponent(id)}/complete`, {
       body: action,
       csrfToken,
       method: "POST",
+      parse: parseRequestDetail,
     }),
 };

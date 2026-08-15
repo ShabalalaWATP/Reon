@@ -41,6 +41,43 @@ export const roleLabels: Record<UserRole, string> = {
   QUALITY_RELEASE: "QC Manager",
 };
 
+const APP_NAME = "Mist Service";
+
+// Ordered by specificity: the first matching pattern names the page.
+const routeTitles: readonly (readonly [RegExp, string])[] = [
+  [/^\/login$/u, "Sign in"],
+  [/^\/overview$/u, "Home"],
+  [/^\/my-work$/u, "My assigned actions"],
+  [/^\/profile$/u, "Profile"],
+  [/^\/notifications$/u, "Notifications"],
+  [/^\/organisation$/u, "Organisation directory"],
+  [/^\/calendar(?:\/|$)/u, "Personal calendar"],
+  [/^\/statistics$/u, "Operational statistics"],
+  [/^\/teams\/[^/]+\/people(?:\/|$)/u, "Team member profile"],
+  [/^\/teams(?:\/|$)/u, "Team workspace"],
+  [/^\/admin\/users\/new$/u, "New user account"],
+  [/^\/admin\/users(?:\/|$)/u, "User accounts"],
+  [/^\/admin\/configuration(?:\/|$)/u, "Configuration"],
+  [/^\/product-packages(?:\/|$)/u, "Product package"],
+  [/^\/tracking\/[^/]+$/u, "Tracked request"],
+  [/^\/tracking$/u, "Request tracking"],
+  [/^\/triage$/u, "CRIOC routing queue"],
+  [/^\/coordination$/u, "Incoming requests"],
+  [/^\/allocation$/u, "Ops routing queue"],
+  [/^\/delivery\/team$/u, "Team work queue"],
+  [/^\/delivery\/my-work$/u, "Production queue"],
+  [/^\/quality-release$/u, "Quality and release queue"],
+  [/^\/requests\/new$/u, "New request"],
+  [/^\/requests\/drafts(?:\/|$)/u, "Request draft"],
+  [/^\/requests\/[^/]+$/u, "Request detail"],
+  [/^\/requests$/u, "My requests"],
+];
+
+export function documentTitleForRoute(pathname: string) {
+  const match = routeTitles.find(([pattern]) => pattern.test(pathname));
+  return match ? `${match[1]} · ${APP_NAME}` : APP_NAME;
+}
+
 export type NavigationItem = { label: string; path: string };
 
 export type NavigationContext = {

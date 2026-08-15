@@ -25,8 +25,8 @@ export const configurationVersion: ConfigurationVersion = {
   units: [
     {
       unitId: "unit-root",
-      code: "ISTARI",
-      name: "ISTARI",
+      code: "Mist",
+      name: "Mist",
       kind: "ROOT",
       effectiveFrom,
       effectiveUntil: null,
@@ -74,7 +74,7 @@ export const configurationVersion: ConfigurationVersion = {
     { parentUnitId: "unit-ops", childUnitId: "unit-team", effectiveFrom, effectiveUntil: null },
   ],
   candidateGroups: [
-    { unitId: "unit-root", purpose: "ROUTING", candidateGroup: "istari-routing" },
+    { unitId: "unit-root", purpose: "ROUTING", candidateGroup: "mist-routing" },
     { unitId: "unit-command", purpose: "ROUTING", candidateGroup: "north-routing" },
     { unitId: "unit-ops", purpose: "ROUTING", candidateGroup: "north-ops-routing" },
     { unitId: "unit-team", purpose: "MANAGER", candidateGroup: "pine-managers" },
@@ -144,7 +144,7 @@ export const configurationVersion: ConfigurationVersion = {
 
 export const workflowDefinition: WorkflowDefinition = {
   id: "workflow-1",
-  processId: "istari-service-request",
+  processId: "mist-service-request",
   processDefinitionKey: "deployment-key",
   processVersion: 4,
   compatibilityKey: "istari-human-route-v1",

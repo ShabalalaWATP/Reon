@@ -81,7 +81,7 @@ describe("request branch states", () => {
     };
     mockFetch((url) => (url.pathname.endsWith("/auth/me") ? json(requesterSession) : json(detail)));
     renderApp(`/requests/${detail.id}`);
-    expect(await screen.findByText(/ISTARI service/)).toBeInTheDocument();
+    expect(await screen.findByText(/Mist service/)).toBeInTheDocument();
     expect(screen.getByText("Service response recorded.")).toBeInTheDocument();
     expect(
       screen.getByText("The product will appear here after dissemination."),

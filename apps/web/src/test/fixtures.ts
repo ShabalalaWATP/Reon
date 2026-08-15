@@ -75,7 +75,7 @@ export const adminSession: Session = {
 export const adminManagedUser: AdminUser = {
   id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
   username: "admin2",
-  email: "admin2@istari.example.test",
+  email: "admin2@mist.example.test",
   displayName: "John McGinn",
   role: "REQUESTER",
   scope: "Customer Group A",

@@ -35,18 +35,18 @@ describe("password assistance", () => {
     await user.type(screen.getByLabelText(/Work email/), "not-an-email");
     expect(await screen.findByRole("alert")).toHaveTextContent("Enter a valid work email.");
     await user.clear(screen.getByLabelText(/Work email/));
-    await user.type(screen.getByLabelText(/Work email/), "  ADMIN2@ISTARI.EXAMPLE.TEST  ");
+    await user.type(screen.getByLabelText(/Work email/), "  ADMIN2@MIST.EXAMPLE.TEST  ");
     await user.click(submit);
 
     expect(await screen.findByRole("status")).toHaveTextContent(
       "If an active account matches that email",
     );
-    expect(submitted).toEqual({ email: "ADMIN2@ISTARI.EXAMPLE.TEST" });
+    expect(submitted).toEqual({ email: "ADMIN2@MIST.EXAMPLE.TEST" });
     expect(await axe(view.container)).toHaveNoViolations();
     await user.click(screen.getByRole("button", { name: "Back to sign in" }));
     expect(screen.getByRole("heading", { name: "Sign in" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Forgotten password?" }));
-    await user.type(screen.getByLabelText(/Work email/), "admin2@istari.example.test");
+    await user.type(screen.getByLabelText(/Work email/), "admin2@mist.example.test");
     fail = true;
     await user.click(screen.getByRole("button", { name: "Notify administrator" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Unable to send the request");

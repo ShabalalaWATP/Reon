@@ -127,7 +127,7 @@ export function AccountRequestForm() {
         <span>New Customer access</span>
         <h2 id="login-title">Request an account</h2>
         <p>
-          Tell the administrator who you are and why you need ISTARI access. Internal teams and
+          Tell the administrator who you are and why you need Mist access. Internal teams and
           routing are not part of this request.
         </p>
       </header>

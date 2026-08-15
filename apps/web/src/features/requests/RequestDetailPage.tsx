@@ -54,6 +54,7 @@ export function RequestDetailPage() {
             activityHref="#request-activity"
             key={request.id}
             requestId={request.id}
+            status={request.status}
           />
           <RequestActivity
             initialCursor={request.eventsNextCursor}

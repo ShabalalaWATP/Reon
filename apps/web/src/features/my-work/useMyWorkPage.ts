@@ -21,7 +21,7 @@ export function useMyWorkPage() {
   const [columns, setColumns] = useState<ActionColumn[]>(actionColumns);
   const [selectedView, setSelectedView] = useState("");
   const query = useInfiniteQuery({
-    queryKey: queryKeys.actions(JSON.stringify(filters)),
+    queryKey: queryKeys.actionPages(JSON.stringify(filters)),
     queryFn: ({ pageParam }) =>
       actionNotificationApi.actions({ ...filters, cursor: pageParam ?? undefined }),
     initialPageParam: null as string | null,

@@ -65,7 +65,7 @@ describe("configuration presentation model", () => {
     const draft = draftFrom(configurationVersion);
     draft.units[0].name = "Changed";
     draft.workflowTemplate.taskLabels.release = "Changed";
-    expect(configurationVersion.units[0].name).toBe("ISTARI");
+    expect(configurationVersion.units[0].name).toBe("Mist");
     expect(configurationVersion.workflowTemplate.taskLabels.release).toBe("Release");
     expect(
       unitState({ ...configurationVersion.units[0], effectiveUntil: "2026-10-01T00:00:00Z" }),
@@ -135,7 +135,7 @@ describe("configuration presentation model", () => {
         "unit-team",
         configurationVersion.effectiveFrom,
       ).map((unit) => unit.name),
-    ).toEqual(["ISTARI", "Northern Command", "Northern Ops Group", "Pine Team"]);
+    ).toEqual(["Mist", "Northern Command", "Northern Ops Group", "Pine Team"]);
     const cyclicEdges = [
       ...configurationVersion.edges,
       {

@@ -59,8 +59,8 @@ const allowedRoots = [
 export function safeWorkspaceHref(value: string | null) {
   if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\"))
     return null;
-  const url = new URL(value, "https://istari.local");
-  if (url.origin !== "https://istari.local") return null;
+  const url = new URL(value, "https://mist.local");
+  if (url.origin !== "https://mist.local") return null;
   return allowedRoots.some((root) => url.pathname === root || url.pathname.startsWith(`${root}/`))
     ? `${url.pathname}${url.search}${url.hash}`
     : null;

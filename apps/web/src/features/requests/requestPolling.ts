@@ -1,7 +1,14 @@
-import type { ListResponse, RequestDetail, RequestSummary, WorkItem } from "../../lib/api/types";
+import type {
+  ListResponse,
+  RequestDetail,
+  RequestStatus,
+  RequestSummary,
+  WorkItem,
+} from "../../lib/api/types";
 import { isComplete } from "../../lib/status";
 
 const REQUESTER_POLL_INTERVAL_MS = 5_000;
+const CONVERSATION_POLL_INTERVAL_MS = 30_000;
 
 export function requestListPollInterval(
   data: ListResponse<RequestSummary> | { pages: ListResponse<RequestSummary>[] } | undefined,
@@ -14,6 +21,10 @@ export function requestListPollInterval(
 
 export function requestDetailPollInterval(data: RequestDetail | undefined) {
   return data && !isComplete(data.status) ? REQUESTER_POLL_INTERVAL_MS : false;
+}
+
+export function conversationPollInterval(status?: RequestStatus) {
+  return status && isComplete(status) ? false : CONVERSATION_POLL_INTERVAL_MS;
 }
 
 export function clarificationTaskPollInterval(

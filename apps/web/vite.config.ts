@@ -1,7 +1,7 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
-const apiProxy = process.env.ISTARI_API_PROXY ?? "http://localhost:8000";
+const apiProxy = process.env.MIST_API_PROXY ?? "http://localhost:8000";
 
 export default defineConfig({
   plugins: [react()],

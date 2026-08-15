@@ -55,7 +55,7 @@ describe("team member profile", () => {
           return json({
             accountId: "analyst-ssg",
             name: "Lewis Ferguson",
-            email: "admin11@istari.example.test",
+            email: "admin11@mist.example.test",
             role: "DELIVERY_SPECIALIST",
             teamId: access.teamId,
             teamName: access.teamName,
@@ -101,7 +101,7 @@ describe("team member profile", () => {
           return json({
             accountId: "analyst-ssg",
             name: "Lewis Ferguson",
-            email: "admin11@istari.example.test",
+            email: "admin11@mist.example.test",
             role: "DELIVERY_SPECIALIST",
             teamId: access.teamId,
             teamName: access.teamName,

@@ -3,8 +3,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "../../lib/api/client";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
-import type { ConversationMessageInput, ConversationWorkspace } from "../../lib/api/types";
+import type {
+  ConversationMessageInput,
+  ConversationWorkspace,
+  RequestStatus,
+} from "../../lib/api/types";
 import { useAuth } from "../../lib/auth/AuthProvider";
+import { conversationPollInterval } from "./requestPolling";
 import {
   conversationsForView,
   markConversationRead,
@@ -16,12 +21,11 @@ import {
   type ConversationView,
 } from "./conversationWorkspaceModel";
 
-const FRESHNESS_INTERVAL_MS = 30_000;
-
 export function useRequestConversations(
   requestId: string,
   view: ConversationView,
   writesEnabled = true,
+  status?: RequestStatus,
 ) {
   const { session } = useAuth();
   const client = useQueryClient();
@@ -34,7 +38,7 @@ export function useRequestConversations(
     queryKey: key,
     queryFn: () => api.requestConversations(requestId),
     enabled: Boolean(session),
-    refetchInterval: FRESHNESS_INTERVAL_MS,
+    refetchInterval: conversationPollInterval(status),
   });
   const mutation = useMutation({
     mutationKey: [...key, "send"],

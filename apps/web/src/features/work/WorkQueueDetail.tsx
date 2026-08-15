@@ -72,7 +72,11 @@ export function WorkQueueDetail({
             />
             <div className="queue-detail__decision">
               {detail ? (
-                <RequestConversations key={item.requestId} requestId={item.requestId} />
+                <RequestConversations
+                  key={item.requestId}
+                  requestId={item.requestId}
+                  status={detail.status}
+                />
               ) : null}
               {canLoadDetail ? (
                 <StaffProductAction

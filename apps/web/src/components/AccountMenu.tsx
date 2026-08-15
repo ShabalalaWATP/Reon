@@ -36,6 +36,7 @@ export function AccountMenu({
 }: Props) {
   const [open, setOpen] = useState(false);
   const container = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const menuId = useId();
   const user = session.user;
@@ -45,6 +46,7 @@ export function AccountMenu({
   useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
     if (!open) return undefined;
+    panel.current!.focus();
     const closeOutside = (event: PointerEvent) => {
       if (!container.current!.contains(event.target as Node)) setOpen(false);
     };
@@ -101,7 +103,9 @@ export function AccountMenu({
           aria-label="Account details"
           className="account-menu__popover"
           id={menuId}
+          ref={panel}
           role="dialog"
+          tabIndex={-1}
         >
           <div className="account-menu__header">
             <span aria-hidden="true" className="account-avatar account-avatar--large">

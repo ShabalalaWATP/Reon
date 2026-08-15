@@ -25,6 +25,7 @@ export function protectedQueryKeys(input: QueryScopeInput) {
   return {
     root: () => root,
     actions: (filtersKey: string) => [...root, "my-actions", filtersKey] as const,
+    actionPages: (filtersKey: string) => [...root, "my-actions", filtersKey, "pages"] as const,
     actionsRoot: () => [...root, "my-actions"] as const,
     capabilities: () => [...root, "capabilities"] as const,
     configurationVersions: () => [...root, "configuration-versions"] as const,

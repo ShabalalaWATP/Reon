@@ -11,6 +11,7 @@ import type {
   RequestDraftUpdateInput,
   RequestSummary,
 } from "./types";
+import { parseRequestDetail } from "./payloadSchemas";
 import { apiRequest, pagedPath } from "./transport";
 
 export const requestApi = {
@@ -45,6 +46,7 @@ export const requestApi = {
         undefined,
         eventCursor ? { eventCursor } : {},
       ),
+      { parse: parseRequestDetail },
     ),
   createRequest: (input: RequestCreateInput, csrfToken: string) =>
     apiRequest<RequestDetail>("/requests", { body: input, csrfToken, method: "POST" }),

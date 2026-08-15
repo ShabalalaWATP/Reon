@@ -40,6 +40,39 @@ describe("protected query keys", () => {
     expect(staff).not.toEqual(nextStaff);
   });
 
+  it("keeps flat and paged action cache shapes distinct for every filter key", () => {
+    const keys = protectedQueryKeys(staffScope);
+    const filterKeys = ["", "overview", "quality-overview", "pages", '{"sections":[]}'];
+    const flat = filterKeys.map((filters) => keys.actions(filters));
+    const paged = filterKeys.map((filters) => keys.actionPages(filters));
+
+    expect(keys.actions("overview")).toEqual([
+      "protected",
+      "user-1",
+      "STAFF",
+      7,
+      "my-actions",
+      "overview",
+    ]);
+    expect(keys.actionPages("overview")).toEqual([
+      "protected",
+      "user-1",
+      "STAFF",
+      7,
+      "my-actions",
+      "overview",
+      "pages",
+    ]);
+    // A flat key can never reach the paged length, so no filter string can make the two collide.
+    for (const pagedKey of paged) {
+      for (const flatKey of flat) expect(pagedKey).not.toEqual(flatKey);
+    }
+    const rootKey = [...keys.actionsRoot()];
+    for (const key of [...flat, ...paged]) {
+      expect(key.slice(0, rootKey.length)).toEqual(rootKey);
+    }
+  });
+
   it("keeps list and paged work-item cache shapes distinct", () => {
     const keys = protectedQueryKeys(staffScope);
 

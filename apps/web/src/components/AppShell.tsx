@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 
 import { AccountMenu } from "./AccountMenu";
 import { useShellData } from "./useShellData";
+import { RouteErrorBoundary } from "../app/RouteErrorBoundary";
 import type { AccountContext, Session } from "../lib/api/types";
 import { useAuth } from "../lib/auth/AuthProvider";
 import { isNavigationItemActive, type NavigationItem } from "../lib/routes";
@@ -45,6 +46,7 @@ function AuthenticatedShell(props: ShellProps) {
   const { auth, locationPath } = props;
   const { session } = props;
   const shell = useShellData(session, locationPath);
+  const [pageRecovery, setPageRecovery] = useState(0);
   const signOut = async () => {
     props.setLogoutError(false);
     try {
@@ -68,10 +70,10 @@ function AuthenticatedShell(props: ShellProps) {
         Skip to main content
       </a>
       <aside aria-label="Account and navigation" className="nav-rail">
-        <NavLink aria-label="ISTARI home" className="shell-brand" to="/">
-          <img alt="" height="42" src="/istari-logo-64.png" width="42" />
+        <NavLink aria-label="Mist home" className="shell-brand" to="/">
+          <img alt="" height="42" src="/mist-logo-64.png" width="42" />
           <span>
-            <strong>ISTARI</strong>
+            <strong>Mist</strong>
             <small>Service workspace</small>
           </span>
         </NavLink>
@@ -134,7 +136,14 @@ function AuthenticatedShell(props: ShellProps) {
           key={session.contextVersion}
           tabIndex={-1}
         >
-          <Outlet />
+          <RouteErrorBoundary
+            actionLabel="Try this page again"
+            description="The rest of the workspace is still available. Try this page again, or choose another destination."
+            onReload={() => setPageRecovery((current) => current + 1)}
+            resetKey={`${locationPath}#${pageRecovery}`}
+          >
+            <Outlet />
+          </RouteErrorBoundary>
         </div>
       </div>
     </div>

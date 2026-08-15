@@ -46,7 +46,7 @@ describe("task hasteners", () => {
     const completed = { ...requestDetail, status: "COMPLETED" as const, events: [history] };
     const view = render(panel(member, completed));
     expect(screen.getByText(/Hastener sent to Lewis Ferguson/)).toBeInTheDocument();
-    expect(screen.getByText(/ISTARI service/)).toBeInTheDocument();
+    expect(screen.getByText(/Mist service/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Send hastener" })).not.toBeInTheDocument();
 
     view.rerender(panel({ ...manager, unitKind: "COMMAND" }, completed));

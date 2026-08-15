@@ -11,9 +11,9 @@ RUN npm install --global pnpm@11.21.0 \
         /usr/local/bin/yarn /usr/local/bin/yarnpkg
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json apps/web/package.json
-RUN pnpm install --filter @istari-service/web... --frozen-lockfile
+RUN pnpm install --filter @mist-service/web... --frozen-lockfile
 COPY apps/web apps/web
-RUN pnpm --filter @istari-service/web build
+RUN pnpm --filter @mist-service/web build
 
 FROM nginx:1.31.3-alpine@sha256:4a73073bd557c65b759505da037898b61f1be6cbcc3c2c3aeac22d2a470c1752
 COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf

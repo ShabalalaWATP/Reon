@@ -10,7 +10,7 @@ import { useAuth } from "../../lib/auth/AuthProvider";
 import { revealThroughMist } from "../../lib/mistReveal";
 import { homeRouteForRole } from "../../lib/routes";
 import { useTheme } from "../../lib/theme/ThemeProvider";
-import { ParticleField } from "./ParticleField";
+import { CloudField } from "./CloudField";
 import { AccountRequestForm, PasswordAssistanceForm } from "./LoginAccessForms";
 
 const schema = z.object({
@@ -131,11 +131,11 @@ function ThemeButton({ theme, toggleTheme }: { theme: "dark" | "light"; toggleTh
 function LoginIntroduction() {
   return (
     <section className="login-intro" aria-labelledby="brand-title">
-      <ParticleField />
+      <CloudField />
       <div className="login-logo-orbit">
-        <img alt="" height="224" src="/istari-logo-256.png" width="224" />
+        <img alt="" height="224" src="/mist-logo-256.png" width="224" />
       </div>
-      <h1 id="brand-title">ISTARI</h1>
+      <h1 id="brand-title">Mist</h1>
       <p className="login-kicker">Request. Coordinate. Deliver.</p>
       <p className="login-pitch">
         A precise workspace for submitting service needs and following product development to
@@ -202,7 +202,7 @@ function SignInForm({ controller }: { controller: LoginController }) {
       <header>
         <span>Account access</span>
         <h2 id="login-title">Sign in</h2>
-        <p>Use your assigned ISTARI account to continue.</p>
+        <p>Use your assigned Mist account to continue.</p>
       </header>
       <label className="form-field" htmlFor="username">
         Account ID
@@ -252,7 +252,7 @@ function PasswordField({ controller }: { controller: LoginController }) {
 }
 
 function SignInButton({ controller }: { controller: LoginController }) {
-  let label = "Sign in to ISTARI";
+  let label = "Sign in to Mist";
   if (controller.status === "loading") label = "Checking session…";
   else if (controller.isSubmitting) label = "Signing in…";
   return (

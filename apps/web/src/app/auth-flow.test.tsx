@@ -36,20 +36,20 @@ describe("authentication and route policy", () => {
     const view = renderApp("/login");
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
-    await user.click(screen.getByRole("button", { name: "Sign in to ISTARI" }));
+    await user.click(screen.getByRole("button", { name: "Sign in to Mist" }));
     expect(await screen.findByText("Enter your account ID.")).toBeInTheDocument();
     await user.type(screen.getByLabelText(/Account ID/), "admin2");
     await user.type(screen.getByLabelText(/Password/), "wrong");
     await user.click(screen.getByRole("button", { name: "Show password" }));
     expect(screen.getByLabelText(/Password/)).toHaveAttribute("type", "text");
     await user.click(screen.getByRole("button", { name: "Hide password" }));
-    await user.click(screen.getByRole("button", { name: "Sign in to ISTARI" }));
+    await user.click(screen.getByRole("button", { name: "Sign in to Mist" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Unable to sign in");
     expect(screen.getByLabelText(/Password/)).toHaveValue("");
     expect(screen.getByLabelText(/Password/)).toHaveAttribute("type", "password");
     rejectLogin = false;
     await user.type(screen.getByLabelText(/Password/), "synthetic-password");
-    await user.click(screen.getByRole("button", { name: "Sign in to ISTARI" }));
+    await user.click(screen.getByRole("button", { name: "Sign in to Mist" }));
     expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
   });
 
@@ -69,7 +69,7 @@ describe("authentication and route policy", () => {
       renderApp(path);
       await user.type(await screen.findByLabelText(/Account ID/), session.user.username);
       await user.type(screen.getByLabelText(/Password/), "synthetic-password");
-      await user.click(screen.getByRole("button", { name: "Sign in to ISTARI" }));
+      await user.click(screen.getByRole("button", { name: "Sign in to Mist" }));
       expect(await screen.findByRole("link", { name: destination })).toHaveAttribute(
         "aria-current",
         "page",
@@ -78,7 +78,7 @@ describe("authentication and route policy", () => {
   );
 
   it("redirects anonymous protected access and toggles the login theme", async () => {
-    window.localStorage.setItem("istari-service-theme", "light");
+    window.localStorage.setItem("mist-service-theme", "light");
     mockFetch(() => json({ detail: "Signed out" }, 401));
     const user = userEvent.setup();
     renderApp("/requests");
@@ -146,6 +146,7 @@ describe("authentication and route policy", () => {
       "page",
     );
     await user.click(screen.getByRole("button", { name: /Open account menu/ }));
+    expect(screen.getByRole("dialog", { name: "Account details" })).toHaveFocus();
     expect(screen.getByRole("dialog", { name: "Account details" })).toHaveTextContent(
       requesterSession.user.username,
     );
@@ -162,6 +163,7 @@ describe("authentication and route policy", () => {
     expect(screen.getByRole("dialog", { name: "Account details" })).toBeInTheDocument();
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog", { name: "Account details" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Open account menu/ })).toHaveFocus();
     await user.click(screen.getByRole("button", { name: /Open account menu/ }));
     await user.click(document.body);
     expect(screen.queryByRole("dialog", { name: "Account details" })).not.toBeInTheDocument();
@@ -259,7 +261,7 @@ describe("authentication and route policy", () => {
 
     await user.type(screen.getByLabelText(/Account ID/), secondSession.user.username);
     await user.type(screen.getByLabelText(/Password/), "admin");
-    await user.click(screen.getByRole("button", { name: "Sign in to ISTARI" }));
+    await user.click(screen.getByRole("button", { name: "Sign in to Mist" }));
 
     expect(
       await screen.findByRole("heading", { name: "Loading your requests" }),

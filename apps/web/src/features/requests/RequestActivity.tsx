@@ -42,7 +42,7 @@ export function RequestActivity({ initialCursor, initialEvents, requestId }: Req
               <div>
                 <strong>{event.message}</strong>
                 <small>
-                  {event.actorDisplayName ?? "ISTARI service"} ·{" "}
+                  {event.actorDisplayName ?? "Mist service"} ·{" "}
                   <time dateTime={event.createdAt}>{formatDate(event.createdAt, true)}</time>
                 </small>
               </div>

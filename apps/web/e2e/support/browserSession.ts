@@ -39,7 +39,7 @@ export async function signIn(page: Page, username: string, password: string) {
   await page.goto("/login");
   await page.getByLabel("Account ID").fill(username);
   await page.getByLabel("Password", { exact: true }).fill(password);
-  await page.getByRole("button", { name: "Sign in to ISTARI" }).click();
+  await page.getByRole("button", { name: "Sign in to Mist" }).click();
   await expect(page.getByRole("button", { name: /^Open account menu for /u })).toBeVisible();
 }
 

@@ -1,8 +1,11 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
 interface RouteErrorBoundaryProps {
+  actionLabel?: string;
   children: ReactNode;
+  description?: string;
   onReload: () => void;
+  resetKey?: string;
 }
 
 interface RouteErrorBoundaryState {
@@ -20,7 +23,13 @@ export class RouteErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, information: ErrorInfo) {
-    console.error("The active ISTARI view could not be rendered.", error, information);
+    console.error("The active Mist view could not be rendered.", error, information);
+  }
+
+  componentDidUpdate(previous: RouteErrorBoundaryProps) {
+    if (this.state.failed && previous.resetKey !== this.props.resetKey) {
+      this.setState({ failed: false });
+    }
   }
 
   render() {
@@ -32,11 +41,14 @@ export class RouteErrorBoundary extends Component<
           <div>
             <span>View unavailable</span>
             <h1>This page could not be displayed</h1>
-            <p>Your session is still active. Reload the workspace to try the request again.</p>
+            <p>
+              {this.props.description ??
+                "Your session is still active. Reload the workspace to try the request again."}
+            </p>
           </div>
         </header>
         <button className="button button--primary" onClick={this.props.onReload} type="button">
-          Reload workspace
+          {this.props.actionLabel ?? "Reload workspace"}
         </button>
       </main>
     );

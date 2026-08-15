@@ -10,7 +10,7 @@ const openApiCommand = [
   apiRoot,
   "python",
   "-c",
-  "import json; from istari_service.main import app; print(json.dumps(app.openapi()))",
+  "import json; from mist_service.main import app; print(json.dumps(app.openapi()))",
 ];
 const result = spawnSync("uv", openApiCommand, { encoding: "utf8" });
 

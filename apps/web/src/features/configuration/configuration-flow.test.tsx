@@ -70,7 +70,7 @@ describe("configuration administration journey", () => {
     expect(
       screen.getByRole("navigation", { name: "Selected organisation path" }),
     ).toHaveTextContent(
-      "ISTARI · ISTARINorthern Command · NORTHNorthern Ops Group · NORTH_OPSPine Team · PINE_TEAM",
+      "Mist · MistNorthern Command · NORTHNorthern Ops Group · NORTH_OPSPine Team · PINE_TEAM",
     );
     expect(screen.getByText("Snapshot reference").parentElement).toHaveTextContent("b".repeat(64));
     expect(screen.getAllByText(/Outcomes fixed: approve, changes_required/)).toHaveLength(2);

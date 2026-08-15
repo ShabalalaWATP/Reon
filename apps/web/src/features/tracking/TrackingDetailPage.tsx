@@ -66,6 +66,7 @@ export function TrackingDetailPage() {
         activityHref="#tracking-activity"
         key={request.id}
         requestId={request.id}
+        status={request.status}
       />
       <TrackingCoordination request={request} />
       <TrackingActivity

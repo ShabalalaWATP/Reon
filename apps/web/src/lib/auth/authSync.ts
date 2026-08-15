@@ -1,6 +1,6 @@
 import type { Session } from "../api/types";
 
-const AUTH_SYNC_KEY = "istari:auth-state";
+const AUTH_SYNC_KEY = "mist:auth-state";
 
 type AuthSyncMessage = { kind: "context-changed" } | { kind: "signed-out" } | { kind: "unrelated" };
 

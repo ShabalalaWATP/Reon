@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isNavigationItemActive } from "./routes";
+import { documentTitleForRoute, isNavigationItemActive } from "./routes";
 
 describe("primary navigation state", () => {
   it.each([
@@ -12,5 +12,40 @@ describe("primary navigation state", () => {
     ["/tracking", "/triage", false],
   ])("matches %s against %s", (pathname, path, expected) => {
     expect(isNavigationItemActive(pathname, path)).toBe(expected);
+  });
+});
+
+describe("route document titles", () => {
+  it.each([
+    ["/login", "Sign in · Mist Service"],
+    ["/overview", "Home · Mist Service"],
+    ["/my-work", "My assigned actions · Mist Service"],
+    ["/profile", "Profile · Mist Service"],
+    ["/notifications", "Notifications · Mist Service"],
+    ["/organisation", "Organisation directory · Mist Service"],
+    ["/calendar/month", "Personal calendar · Mist Service"],
+    ["/statistics", "Operational statistics · Mist Service"],
+    ["/teams/team-1/people/member-1", "Team member profile · Mist Service"],
+    ["/teams/team-1/overview", "Team workspace · Mist Service"],
+    ["/admin/users/new", "New user account · Mist Service"],
+    ["/admin/users/user-1", "User accounts · Mist Service"],
+    ["/admin/configuration", "Configuration · Mist Service"],
+    ["/product-packages/new", "Product package · Mist Service"],
+    ["/tracking", "Request tracking · Mist Service"],
+    ["/tracking/request-1", "Tracked request · Mist Service"],
+    ["/triage", "CRIOC routing queue · Mist Service"],
+    ["/coordination", "Incoming requests · Mist Service"],
+    ["/allocation", "Ops routing queue · Mist Service"],
+    ["/delivery/team", "Team work queue · Mist Service"],
+    ["/delivery/my-work", "Production queue · Mist Service"],
+    ["/quality-release", "Quality and release queue · Mist Service"],
+    ["/requests", "My requests · Mist Service"],
+    ["/requests/new", "New request · Mist Service"],
+    ["/requests/drafts/draft-1", "Request draft · Mist Service"],
+    ["/requests/request-1", "Request detail · Mist Service"],
+    ["/", "Mist Service"],
+    ["/unknown/page", "Mist Service"],
+  ])("names %s", (pathname, expected) => {
+    expect(documentTitleForRoute(pathname)).toBe(expected);
   });
 });

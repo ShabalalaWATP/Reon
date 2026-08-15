@@ -49,7 +49,7 @@ export function AccountRequestRegister() {
         <h2 id="account-requests-title">Pending account requests</h2>
         <p>
           Approval creates a Customer account with the next MVP account ID. Arrange the assigned
-          credentials with the requester outside ISTARI.
+          credentials with the requester outside Mist.
         </p>
       </div>
       {pending.length ? (

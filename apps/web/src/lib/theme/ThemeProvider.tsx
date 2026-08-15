@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 type Theme = "dark" | "light";
 type ThemeContextValue = { theme: Theme; toggleTheme: () => void };
 
-const storageKey = "istari-service-theme";
+const storageKey = "mist-service-theme";
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function storedTheme(): Theme {

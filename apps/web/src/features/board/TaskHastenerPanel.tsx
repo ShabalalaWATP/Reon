@@ -183,7 +183,7 @@ function HastenerHistory({ events }: { events: RequestDetail["events"] }) {
         <li key={event.id}>
           <p>{event.message}</p>
           <small>
-            {event.actorDisplayName ?? "ISTARI service"} ·{" "}
+            {event.actorDisplayName ?? "Mist service"} ·{" "}
             <time dateTime={event.createdAt}>{formatDate(event.createdAt, true)}</time>
           </small>
         </li>

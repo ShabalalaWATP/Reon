@@ -77,7 +77,7 @@ export function ExternalLinkForm({
         {pending ? "Checking link…" : "Add approved link"}
       </button>
       <p className="product-assurance">
-        ISTARI records the destination domain but never fetches or previews its content.
+        Mist records the destination domain but never fetches or previews its content.
       </p>
     </form>
   );

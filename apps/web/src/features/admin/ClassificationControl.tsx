@@ -49,7 +49,7 @@ export function ClassificationControl() {
           <span>Global visual marking</span>
           <h2 id="classification-control-title">Platform classification</h2>
           <p className="field-hint">
-            This label appears above every ISTARI page. It does not change request permissions or
+            This label appears above every Mist page. It does not change request permissions or
             handling rules.
           </p>
         </div>

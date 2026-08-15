@@ -16,14 +16,14 @@ describe("route announcement", () => {
     const view = renderApp("/requests");
 
     expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
-    expect(document.title).toBe("My requests · ISTARI Service");
+    expect(document.title).toBe("My requests · Mist Service");
     expect(view.container.querySelector("#main-content")).not.toHaveFocus();
 
     const navigation = screen.getByRole("navigation", { name: "Primary navigation" });
     await user.click(within(navigation).getByRole("link", { name: "New request" }));
 
     expect(await screen.findByRole("heading", { name: "New service request" })).toBeInTheDocument();
-    expect(document.title).toBe("New request · ISTARI Service");
+    expect(document.title).toBe("New request · Mist Service");
     expect(view.container.querySelector("#main-content")).toHaveFocus();
   });
 
@@ -32,7 +32,7 @@ describe("route announcement", () => {
     const view = renderApp("/requests");
 
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
-    expect(document.title).toBe("Sign in · ISTARI Service");
+    expect(document.title).toBe("Sign in · Mist Service");
     expect(view.container.querySelector("#main-content")).toBeNull();
   });
 });

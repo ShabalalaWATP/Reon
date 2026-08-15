@@ -3,6 +3,7 @@ import { Navigate, Outlet, Route, Routes, useNavigate } from "react-router";
 
 import { AppShell } from "../components/AppShell";
 import { PageState } from "../components/PageState";
+import { useRouteAnnouncement } from "../lib/a11y/useRouteAnnouncement";
 import type { ServerCapabilities } from "../lib/api/capabilityClient";
 import type { UserRole } from "../lib/api/types";
 import { useAuth } from "../lib/auth/AuthProvider";
@@ -108,8 +109,9 @@ const staffMyWorkRoles: UserRole[] = [
 ];
 
 export function AppRoutes() {
+  useRouteAnnouncement();
   return (
-    <Suspense fallback={<PageState kind="loading" title="Opening ISTARI" />}>
+    <Suspense fallback={<PageState kind="loading" title="Opening Mist" />}>
       <ContextLandingNavigation />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
@@ -257,7 +259,7 @@ function RequireAuth() {
         Protected workspace data is being cleared before your other role opens.
       </PageState>
     );
-  if (status === "loading") return <PageState kind="loading" title="Opening ISTARI" />;
+  if (status === "loading") return <PageState kind="loading" title="Opening Mist" />;
   if (!session) return <Navigate replace to="/login" />;
   return <Outlet />;
 }
@@ -284,7 +286,7 @@ function RoleGate({ allowed }: { allowed: UserRole[] }) {
 
 function CapabilityGate({ capability }: { capability: CapabilityName }) {
   const { capabilities, isPending } = useCapabilities();
-  if (isPending) return <PageState kind="loading" title="Opening ISTARI" />;
+  if (isPending) return <PageState kind="loading" title="Opening Mist" />;
   return capabilities[capability] ? <Outlet /> : <HomeRedirect />;
 }
 

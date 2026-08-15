@@ -12,7 +12,7 @@ import {
 } from "./profileModel";
 
 const personalProfile = {
-  email: "admin2@istari.example.test",
+  email: "admin2@mist.example.test",
   profileTeam: null,
   rankOrGrade: null,
   serviceNumber: null,

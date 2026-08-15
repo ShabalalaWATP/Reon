@@ -75,7 +75,7 @@ export function PersonalProfileForm({
           <input aria-invalid={Boolean(errors.profileTeam)} {...register("profileTeam")} />
           <FieldMessage
             error={errors.profileTeam?.message}
-            hint="Your own team or area, not an ISTARI routing choice."
+            hint="Your own team or area, not an Mist routing choice."
           />
         </label>
         <label className="form-field">

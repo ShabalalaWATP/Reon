@@ -63,7 +63,7 @@ export function MistReveal() {
       <span aria-hidden="true" className="mist-reveal__layer mist-reveal__layer--near" />
       <span aria-hidden="true" className="mist-reveal__layer mist-reveal__layer--drift" />
       <p className="mist-reveal__status" role="status">
-        <strong>ISTARI</strong>
+        <strong>Mist</strong>
         <span>Signing you in…</span>
       </p>
     </div>

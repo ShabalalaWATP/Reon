@@ -1,5 +1,5 @@
 const API_ROOT = "/api/v1";
-export const SESSION_EXPIRED_EVENT = "istari:session-expired";
+export const SESSION_EXPIRED_EVENT = "mist:session-expired";
 
 export function pagedPath(path: string, cursor?: string, values: Record<string, string> = {}) {
   const parameters = cursor ? { ...values, cursor } : values;
@@ -13,9 +13,12 @@ export function productDownloadUrl(requestId: string) {
   return `${API_ROOT}/requests/${encodeURIComponent(requestId)}/product`;
 }
 
-type RequestOptions = Omit<RequestInit, "body"> & {
+type RequestOptions<T = unknown> = Omit<RequestInit, "body"> & {
   body?: unknown;
   csrfToken?: string;
+  // Supply a parser to hold a response to its contract. Omitting it keeps the
+  // caller's declared type as an unchecked assertion.
+  parse?: (value: unknown) => T;
 };
 
 export class ApiError extends Error {
@@ -29,7 +32,7 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+export async function apiRequest<T>(path: string, options: RequestOptions<T> = {}): Promise<T> {
   const response = await fetch(`${API_ROOT}${path}`, {
     ...options,
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
@@ -41,7 +44,8 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     throw await responseError(response);
   }
   if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+  const payload: unknown = await response.json();
+  return options.parse ? options.parse(payload) : (payload as T);
 }
 
 function requestHeaders(options: RequestOptions) {
