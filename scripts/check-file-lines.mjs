@@ -43,6 +43,10 @@ const checked = new Set([
   ".yml",
 ]);
 const checkedNames = new Set(["Dockerfile"]);
+// Named exceptions for cohesive files where a split would separate one
+// concern. Entries are ceilings up to the 400-line exceptional limit; shrink
+// or remove them, never widen the map casually.
+const exceptionalLimits = new Map([["apps/web/src/styles/login.css", 400]]);
 const failures = [];
 
 function displayPath(path) {
@@ -80,7 +84,8 @@ async function check(path, requiredTarget = false) {
   const lines = value.length === 0 ? [] : value.split(/\r\n|\n|\r/u);
   if (lines.at(-1) === "") lines.pop();
   const count = lines.length;
-  if (count > 350) failures.push(`${displayPath(path)}: ${count} lines`);
+  const limit = exceptionalLimits.get(displayPath(path)) ?? 350;
+  if (count > limit) failures.push(`${displayPath(path)}: ${count} lines`);
 }
 
 async function walk(path) {

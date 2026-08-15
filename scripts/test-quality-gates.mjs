@@ -66,7 +66,7 @@ function expectFailure(result, expected) {
   assert.match(result.stderr, expected);
 }
 
-const fixtureRoot = await mkdtemp(join(tmpdir(), "istari-quality-gates-"));
+const fixtureRoot = await mkdtemp(join(tmpdir(), "mist-quality-gates-"));
 try {
   await createFixture(fixtureRoot);
   assert.equal(run(lineGate, fixtureRoot).status, 0);
@@ -82,6 +82,15 @@ try {
   // Documentation is an evidence artefact, not hand-written application source.
   await writeFile(join(fixtureRoot, "docs/long-evidence.md"), "evidence\n".repeat(500));
   assert.equal(run(lineGate, fixtureRoot).status, 0);
+
+  // A named exceptional file may reach 400 lines; the band is a ceiling.
+  const exceptionalFixture = join(fixtureRoot, "apps/web/src/styles/login.css");
+  await mkdir(join(fixtureRoot, "apps/web/src/styles"), { recursive: true });
+  await writeFile(exceptionalFixture, "body { color: black; }\n".repeat(400));
+  assert.equal(run(lineGate, fixtureRoot).status, 0);
+  await writeFile(exceptionalFixture, "body { color: black; }\n".repeat(401));
+  expectFailure(run(lineGate, fixtureRoot), /login\.css: 401 lines/u);
+  await rm(exceptionalFixture);
 
   await writeFile(
     join(fixtureRoot, "apps/web/src/legacy.ts"),
