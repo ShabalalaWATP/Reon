@@ -42,6 +42,8 @@ async def test_request_policy_loading_chunks_broad_visibility_sets() -> None:
     event.listen(engine.sync_engine, "before_cursor_execute", capture_statement)
     try:
         async with sessions() as session:
+            assert await load_request_configuration_policies(session, set()) == {}
+            assert statements == []
             policies = await load_request_configuration_policies(
                 session,
                 {uuid4() for _ in range(501)},
@@ -50,5 +52,6 @@ async def test_request_policy_loading_chunks_broad_visibility_sets() -> None:
         event.remove(engine.sync_engine, "before_cursor_execute", capture_statement)
         await engine.dispose()
 
+    # Two pin batches, and no unit-name lookup when no pin was found.
     assert policies == {}
     assert len(statements) == 2

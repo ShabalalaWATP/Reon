@@ -103,8 +103,6 @@ def _with_display_names(
 ) -> RequestConfigurationPolicy:
     """Units without a live row keep their pinned name."""
 
-    if not names:
-        return policy
     return replace(
         policy,
         units=MappingProxyType(

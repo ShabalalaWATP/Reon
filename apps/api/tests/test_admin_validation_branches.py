@@ -86,6 +86,28 @@ async def test_valid_routing_membership_and_display_only_update(
     assert changed.json()["displayName"] == "Renamed Branch Account"
     assert changed.json()["email"] == "renamed.branch@example.test"
 
+    # An update may keep the account's own email, but not take another's.
+    def _update(email: str, version: int) -> dict[str, object]:
+        return {
+            **_body(role="INTAKE_TRIAGE", units=[crioc], scope="CRIOC"),
+            "email": email,
+            "expectedVersion": version,
+        }
+
+    taken = await harness.client.patch(
+        f"/api/v1/admin/users/{account['id']}",
+        json=_update("admin2@mist.example.test", changed.json()["version"]),
+        headers=harness.mutation_headers(),
+    )
+    assert taken.status_code == 409
+    assert "already assigned" in taken.json()["detail"]["message"]
+    kept = await harness.client.patch(
+        f"/api/v1/admin/users/{account['id']}",
+        json=_update("renamed.branch@example.test", changed.json()["version"]),
+        headers=harness.mutation_headers(),
+    )
+    assert kept.status_code == 200, kept.text
+
 
 async def test_qc_accounts_require_exact_qc_manager_membership(
     api_harness: ApiHarness,

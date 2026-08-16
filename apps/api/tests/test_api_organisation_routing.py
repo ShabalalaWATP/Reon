@@ -190,6 +190,22 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
         "availableActions",
     }.isdisjoint(tracked_detail.json())
 
+    # History pages by cursor: the second page continues after the first and
+    # never repeats an event.
+    first_page = await harness.client.get(
+        f"/api/v1/tracked-requests/{request_id}?eventLimit=1"
+    )
+    assert first_page.status_code == 200
+    assert len(first_page.json()["events"]) == 1
+    cursor = first_page.json()["eventsNextCursor"]
+    assert cursor
+    second_page = await harness.client.get(
+        f"/api/v1/tracked-requests/{request_id}?eventLimit=1&eventCursor={cursor}"
+    )
+    assert second_page.status_code == 200
+    assert len(second_page.json()["events"]) == 1
+    assert second_page.json()["events"][0]["id"] != first_page.json()["events"][0]["id"]
+
     async with harness.sessions() as session:
         task = await session.scalar(
             select(StoredWorkflowTask).where(

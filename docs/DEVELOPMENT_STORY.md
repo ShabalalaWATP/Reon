@@ -76,6 +76,17 @@ file and the earliest is at the bottom.
   team access resolves by unit identifier and the name comparison is only
   the fallback for rows without one, where the live name is the consistent
   choice anyway.
+- Two smaller CI repairs followed. The real-browser journey looked for the
+  correspondence controls on staff work detail, which now sit in a collapsed
+  section so the human decision leads; a closed details element hides its
+  content from role queries, so the journey opens the section before working
+  inside it. The backend's independent branch-coverage gate had been sitting
+  at exactly 95.00% and dipped beneath it; rather than lower the threshold,
+  behaviour that had no test gained one: retiring a unit through governed
+  activation (it disappears for new requests while a request pinned before
+  still routes through it), refusing a duplicate email on account update,
+  refusing to seed when a current and a legacy demo identity are different
+  accounts, and paging tracking history by cursor.
 
 ## 16 August 2026: QC positions, sign-in mist and a clean local dataset
 
