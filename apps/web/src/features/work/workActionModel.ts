@@ -71,6 +71,16 @@ const actionValidators: Partial<Record<WorkActionName, ActionValidator>> = {
   progress: (values, context) => {
     requireField(values, context, "destinationUnitId", "Choose a destination unit.");
     requireField(values, context, "priority", "Choose a priority.");
+    // The message is optional, but a supplied one must say something the
+    // receiving command can act on, matching the API's minimum length.
+    const note = values.note?.trim() ?? "";
+    if (note && note.length < 3) {
+      context.addIssue({
+        code: "custom",
+        message: "Add a fuller message, or leave it blank.",
+        path: ["note"],
+      });
+    }
   },
   send_to_allocation: (values, context) => {
     requireField(values, context, "destinationUnitId", "Choose a destination unit.");
@@ -210,6 +220,8 @@ const actionBuilders: Record<WorkActionName, ActionBuilder> = {
     action: "progress",
     destinationUnitId: values.destinationUnitId!,
     priority: values.priority!,
+    // Optional: omitted entirely when blank so the API applies its default label.
+    ...(values.note?.trim() ? { note: values.note.trim() } : {}),
   }),
   close: reasonAction("close"),
   provide_information: (values) => ({

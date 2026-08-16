@@ -76,6 +76,14 @@ export function ProgressFields(props: WorkActionFieldGroupProps) {
           <option value="URGENT">Urgent</option>
         </select>
       </ActionField>
+      <ActionField
+        errors={errors}
+        label="Message to the receiving command (optional)"
+        name="note"
+        register={register}
+      >
+        <textarea rows={3} {...register("note")} />
+      </ActionField>
     </>
   );
 }

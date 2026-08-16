@@ -83,6 +83,7 @@ export type WorkAction =
       action: "progress";
       destinationUnitId: string;
       priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+      note?: string;
     }
   | { action: "close"; reason: string }
   | { action: "provide_information"; information: string }

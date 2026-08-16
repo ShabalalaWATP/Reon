@@ -17,6 +17,24 @@ const cases: Array<[WorkActionValues, unknown]> = [
     { action: "progress", destinationUnitId: "command-id", priority: "HIGH" },
   ],
   [
+    {
+      action: "progress",
+      destinationUnitId: "command-id",
+      priority: "HIGH",
+      note: "  Customer needs this before the planning conference.  ",
+    },
+    {
+      action: "progress",
+      destinationUnitId: "command-id",
+      priority: "HIGH",
+      note: "Customer needs this before the planning conference.",
+    },
+  ],
+  [
+    { action: "progress", destinationUnitId: "command-id", priority: "HIGH", note: "   " },
+    { action: "progress", destinationUnitId: "command-id", priority: "HIGH" },
+  ],
+  [
     { action: "close", reason: "Outside scope." },
     { action: "close", reason: "Outside scope." },
   ],
@@ -166,6 +184,16 @@ describe("work action model", () => {
   it("accepts outcomes without required fields", () => {
     expect(workActionSchema.safeParse({ action: "approve" }).success).toBe(true);
     expect(workActionSchema.safeParse({ action: "resume" }).success).toBe(false);
+  });
+
+  it("lets a routing message be omitted but rejects one too short to act on", () => {
+    const base = { action: "progress", destinationUnitId: "command-id", priority: "HIGH" };
+    expect(workActionSchema.safeParse(base).success).toBe(true);
+    expect(workActionSchema.safeParse({ ...base, note: "" }).success).toBe(true);
+    expect(workActionSchema.safeParse({ ...base, note: "Please expedite." }).success).toBe(true);
+    const short = workActionSchema.safeParse({ ...base, note: "ok" });
+    expect(short.success).toBe(false);
+    if (!short.success) expect(short.error.issues[0]?.path).toEqual(["note"]);
   });
 
   it("identifies only actions that require a destination", () => {

@@ -21,6 +21,9 @@ class ProgressRequest(StrictApiModel):
     action: Literal["progress"]
     priority: Literal["LOW", "MEDIUM", "HIGH", "URGENT"]
     destination_unit_id: UUID
+    # Optional: a routing decision with nothing to add is legitimate, and the
+    # activity record then carries the default label for the receiving team.
+    note: str | None = Field(default=None, min_length=3, max_length=2000)
 
 
 class CloseRequest(StrictApiModel):
