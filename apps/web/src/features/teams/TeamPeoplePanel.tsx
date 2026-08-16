@@ -134,6 +134,13 @@ function RosterForm({ controller }: { controller: ReturnType<typeof useRosterCon
 }
 
 function MemberSelect({ controller }: { controller: ReturnType<typeof useRosterController> }) {
+  if (controller.emptyReason) {
+    return (
+      <p className="inline-empty roster-empty" role="status">
+        {controller.emptyReason}
+      </p>
+    );
+  }
   return (
     <label className="form-field">
       Member<span className="field-hint">Required</span>

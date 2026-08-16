@@ -3,7 +3,11 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import type { Session } from "../../lib/api/types";
-import type { TeamMember, TeamWorkspaceAccess } from "../../lib/api/teamTypes";
+import type {
+  EligibleRosterAnalyst,
+  TeamMember,
+  TeamWorkspaceAccess,
+} from "../../lib/api/teamTypes";
 import { enabledCapabilities, requesterSession } from "../../test/fixtures";
 import { json, mockFeatureFetch, renderApp } from "../../test/render";
 
@@ -69,16 +73,46 @@ describe("workspace People register", () => {
     expect(screen.queryByRole("heading", { name: "Change roster" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "End membership" })).not.toBeInTheDocument();
   });
+
+  it("explains an empty roster instead of showing a dead select on the only unit of its kind", async () => {
+    // The routing root is the sole unit of its kind: every compatible Member
+    // already sits here, so neither adding nor transferring has a candidate.
+    const placedHere: EligibleRosterAnalyst = {
+      accountId: "crioc-user",
+      displayName: "Willie Ormond",
+      currentTeamId: "crioc",
+      currentTeamName: "CRIOC",
+      currentMembershipId: "member-willie",
+      currentMembershipVersion: 1,
+      activeWorkCount: 0,
+    };
+    mockPeople(baseAccess, [placedHere]);
+    const user = userEvent.setup();
+    renderApp("/teams/crioc/people");
+    await screen.findByRole("heading", { name: "Change roster" });
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Every compatible Member already belongs to this workspace.",
+    );
+    expect(screen.queryByLabelText(/^Member/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add Member" })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Schedule transfer" }));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "No compatible Member sits in another workspace of this kind, so there is nobody to transfer.",
+    );
+    expect(screen.getByRole("button", { name: "Confirm transfer" })).toBeDisabled();
+  });
 });
 
-function mockPeople(access: TeamWorkspaceAccess) {
+function mockPeople(access: TeamWorkspaceAccess, eligible: EligibleRosterAnalyst[] = []) {
   return mockFeatureFetch(
     async (url) => {
       if (url.pathname.endsWith("/auth/me")) return json(session);
       if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
       if (url.pathname.endsWith("/team-workspaces")) return json({ items: [access] });
       if (url.pathname.endsWith("/people")) return json({ items: people });
-      if (url.pathname.endsWith("/eligible-analysts")) return json({ items: [] });
+      if (url.pathname.endsWith("/eligible-analysts")) return json({ items: eligible });
       throw new Error(`Unexpected ${url.pathname}`);
     },
     true,

@@ -153,9 +153,7 @@ describe("personal profile", () => {
     expect(await screen.findByRole("heading", { name: "Alan Rough" })).toBeInTheDocument();
     expect(await screen.findByText("JIOC Routing User · Manager")).toBeInTheDocument();
     expect(await screen.findByText("Manager in CRIOC")).toBeInTheDocument();
-    expect(
-      await screen.findByText("JIOC routing; Manager controls for CRIOC"),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("JIOC routing; Manager controls for CRIOC")).toBeInTheDocument();
   });
 
   it("makes loading and unavailable staff assignments explicit", async () => {

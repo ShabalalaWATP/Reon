@@ -33,6 +33,18 @@ file and the earliest is at the bottom.
   codes are demoted to a small tag; every level shows how many units it
   holds. Placement is computed in the tree model, where it is unit tested for
   a single unit, several units and none.
+- The People panel's roster controls could show two empty selects with no
+  explanation. On the JIOC routing workspace that is the correct state:
+  every user has exactly one home workspace, JIOC is the only unit of its
+  kind, and all four routing users already sit in it, so there is nobody to
+  add and nowhere to transfer from. The panel now says so, in words specific
+  to the situation (nobody exists yet; everyone already belongs here; someone
+  is elsewhere so use Schedule transfer; no other workspace of this kind
+  holds anyone), rather than presenting a dead control. The reasoning is a
+  pure function in its own module with the controller as its consumer, and
+  the start-up owner-label reconciler is now stubbed alongside the other
+  start-up steps in the lifecycle tests, which had failed because their
+  minimal session double has no `execute`.
 
 ## 16 August 2026: QC positions, sign-in mist and a clean local dataset
 

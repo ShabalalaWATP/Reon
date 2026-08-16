@@ -10,8 +10,9 @@ import type {
 } from "../../lib/api/teamTypes";
 import { useAuth } from "../../lib/auth/AuthProvider";
 import { canManageRoster } from "./peopleSorting";
+import { rosterEmptyReason, type RosterMode, rosterOptions } from "./rosterEmptyReason";
 
-export type RosterMode = "add" | "transfer";
+export type { RosterMode } from "./rosterEmptyReason";
 
 export function useRosterController(access: TeamWorkspaceAccess) {
   const { session } = useAuth();
@@ -58,6 +59,7 @@ export function useRosterController(access: TeamWorkspaceAccess) {
     error: mutation.isError ? rosterErrorMessage(mutation.error) : undefined,
     mode,
     options: rosterOptions(eligible.data?.items ?? [], mode, access.teamId),
+    emptyReason: rosterEmptyReason(eligible.data?.items ?? [], mode, access.teamId),
     people: people.data?.items ?? [],
     peopleError: people.isError,
     peoplePending: people.isPending,
@@ -157,11 +159,6 @@ function assertTransferDetails(
   if (!analyst.currentMembershipId || analyst.currentMembershipVersion === null || !effectiveFrom) {
     throw new Error("Complete the transfer details.");
   }
-}
-
-function rosterOptions(items: EligibleRosterAnalyst[], mode: RosterMode, teamId: string) {
-  if (mode === "add") return items.filter((item) => item.currentTeamId === null);
-  return items.filter((item) => item.currentTeamId !== null && item.currentTeamId !== teamId);
 }
 
 function rosterErrorMessage(error: Error) {
