@@ -293,7 +293,10 @@ Organisation changes are effective-dated and versioned. An Administrator prepare
 proposed changes, a different authorised Administrator approves the sealed
 revision, and activation applies it from its effective time. A request pins the
 configuration revision active when that request begins. It does not silently
-change route because a team is renamed, moved or retired later.
+change route because a team is renamed, moved or retired later. The pin fixes
+structure: which units exist, their hierarchy, staffing and candidate groups.
+Unit display names are read from the live organisation when a pin is loaded, so
+a rename reaches every request without altering any stored pin.
 
 The BPMN process is deliberately organisation-neutral. It asks for a valid direct
 child at each routing stage. Adding a new command, Ops group or team therefore

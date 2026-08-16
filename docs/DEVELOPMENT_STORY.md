@@ -45,6 +45,37 @@ file and the earliest is at the bottom.
   the start-up owner-label reconciler is now stubbed alongside the other
   start-up steps in the lifecycle tests, which had failed because their
   minimal session double has no `execute`.
+- The rename sweep had two remaining blind spots, both outside `src`. The
+  real-browser journey still selected destination options by the old display
+  names (JOCK, ACSA-B Ops, SSG Team) and failed on the first one; it now uses
+  the live names. Separately, the governed activation path carried a team
+  rename into member scope but not into the assigned-team snapshot that each
+  request stores for tracking and correspondence audiences, while the inline
+  administrator rename did both. Activation now carries the rename to every
+  request routed to the team that still holds the old name, and the governed
+  rename test routes a request to the team first to prove it. The performance
+  fixture also stops writing the owner label as a literal and reads it from
+  the owner table, and a stale table-of-contents anchor in the user stories
+  was repaired. The BPMN task label and `crioc-routing` candidate group were
+  deliberately left alone: the group is a stable identifier and the BPMN
+  bytes are bound to the approved workflow definition by checksum, so that
+  label is a governed workflow change, and Mist never displays it.
+- The last place a routing user could meet an old name was the routing
+  destination list itself. Every request is pinned to the configuration
+  active when it was submitted, and routing options, the route trail and the
+  team-name snapshot written on routing were all read from that pin,
+  including unit names. A request submitted before a rename therefore
+  offered "JOCK" while every other screen said DIGOC, and which name a
+  request showed depended on whether it was routed before or after the
+  rename. Pins now fix structure only: which units exist, their hierarchy,
+  staffing and candidate groups. Display names are overlaid from the live
+  organisation when a pin is loaded, in one place, and the stored pin never
+  changes. Two tests that had pinned the old wording as if it were the
+  contract now assert the live name while keeping every structural and
+  pin-immutability assertion; the name is not an authorising property, since
+  team access resolves by unit identifier and the name comparison is only
+  the fallback for rows without one, where the live name is the consistent
+  choice anyway.
 
 ## 16 August 2026: QC positions, sign-in mist and a clean local dataset
 

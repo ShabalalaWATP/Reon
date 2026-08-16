@@ -197,7 +197,9 @@ async def test_activation_materialises_staffs_and_routes_new_team_from_pin(
     option = next(
         item for item in options.json()["items"] if item["id"] == str(new_team_id)
     )
-    assert option["name"] == "Synthetic Team"
+    # Structure, staffing and candidate groups come from the pin; only the
+    # display name follows the live unit.
+    assert option["name"] == "Later Live Name"
     assert option["staffingStatus"] == "STAFFED"
     await _complete(
         harness,
@@ -215,7 +217,7 @@ async def test_activation_materialises_staffs_and_routes_new_team_from_pin(
     async with harness.sessions() as session:
         request = await session.get(ServiceRequest, request_id)
         assert request is not None
-        assert request.assigned_delivery_team == "Synthetic Team"
+        assert request.assigned_delivery_team == "Later Live Name"
         assert request.awaiting_team_staffing is False
 
     await harness.login(str(lead["username"]))

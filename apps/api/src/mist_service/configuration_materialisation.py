@@ -20,10 +20,11 @@ from mist_service.configuration_types import (
     StaffingCount,
     UnitRevisionSpec,
 )
-from mist_service.models import User, UserRole
+from mist_service.models import ServiceRequest, User, UserRole
 from mist_service.organisation_models import (
     OrganisationKind,
     OrganisationUnit,
+    RequestRouteSelection,
     StaffingStatus,
     UserOrganisationMembership,
 )
@@ -77,6 +78,10 @@ async def materialise_configuration_units(
                 old_name=prior_name,
                 name=revision.name,
             )
+            if revision.kind is OrganisationKind.TEAM:
+                await _update_request_team_labels(
+                    session, revision.unit_id, old_name=prior_name, name=revision.name
+                )
     configured_ids = set(configured)
     for unit_id, unit in existing.items():
         if unit_id not in configured_ids and unit.is_configured:
@@ -114,6 +119,35 @@ async def _update_member_scopes(
         update(User)
         .where(User.id.in_(member_ids), membership_rule, User.scope != name)
         .values(scope=name, version=User.version + 1)
+        .execution_options(synchronize_session=False)
+    )
+
+
+async def _update_request_team_labels(
+    session: AsyncSession,
+    unit_id: UUID,
+    *,
+    old_name: str,
+    name: str,
+) -> None:
+    """Carry a team rename into the requests assigned to it.
+
+    A request stores its assigned team name as a snapshot so tracking and
+    correspondence audiences can read it without a join. Requests routed to
+    the renamed team that still carry the old name follow it, matching the
+    inline administrator rename.
+    """
+
+    request_ids = select(RequestRouteSelection.request_id).where(
+        RequestRouteSelection.unit_id == unit_id
+    )
+    await session.execute(
+        update(ServiceRequest)
+        .where(
+            ServiceRequest.id.in_(request_ids),
+            ServiceRequest.assigned_delivery_team == old_name,
+        )
+        .values(assigned_delivery_team=name)
         .execution_options(synchronize_session=False)
     )
 

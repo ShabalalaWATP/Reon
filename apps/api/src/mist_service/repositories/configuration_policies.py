@@ -1,8 +1,17 @@
-"""Persistence access for immutable per-request configuration policies."""
+"""Persistence access for immutable per-request configuration policies.
+
+A pin fixes the structure a request is routed through: which units exist,
+their hierarchy, staffing and candidate groups. A unit's name is only what
+people read, so it is overlaid from the live organisation on load; a rename
+made after the pin then reaches this request too, instead of showing one name
+here and another everywhere else. The stored pin itself never changes.
+"""
 
 from __future__ import annotations
 
-from collections.abc import Set
+from collections.abc import Mapping, Set
+from dataclasses import replace
+from types import MappingProxyType
 from uuid import UUID
 
 from sqlalchemy import select
@@ -14,6 +23,7 @@ from mist_service.configuration_request_policy import (
     RequestConfigurationPolicy,
     parse_request_configuration_policy,
 )
+from mist_service.organisation_models import OrganisationUnit
 
 PIN_QUERY_BATCH_SIZE = 500
 
@@ -29,7 +39,9 @@ async def load_request_configuration_policy(
     )
     if pin is None or "requestPolicySchema" not in pin.snapshot:
         return None
-    return parse_request_configuration_policy(pin.snapshot)
+    policy = parse_request_configuration_policy(pin.snapshot)
+    names = await _live_unit_names(session, set(policy.units))
+    return _with_display_names(policy, names)
 
 
 async def load_request_configuration_policies(
@@ -57,7 +69,12 @@ async def load_request_configuration_policies(
                 if "requestPolicySchema" in pin.snapshot
             }
         )
-    return policies
+    unit_ids = {unit_id for policy in policies.values() for unit_id in policy.units}
+    names = await _live_unit_names(session, unit_ids)
+    return {
+        request_id: _with_display_names(policy, names)
+        for request_id, policy in policies.items()
+    }
 
 
 async def load_request_product_policy(
@@ -66,3 +83,34 @@ async def load_request_product_policy(
 ) -> PinnedProductPolicy | None:
     policy = await load_request_configuration_policy(session, request_id)
     return policy.product if policy is not None else None
+
+
+async def _live_unit_names(
+    session: AsyncSession, unit_ids: Set[UUID]
+) -> dict[UUID, str]:
+    if not unit_ids:
+        return {}
+    rows = await session.execute(
+        select(OrganisationUnit.id, OrganisationUnit.name).where(
+            OrganisationUnit.id.in_(unit_ids)
+        )
+    )
+    return {unit_id: str(name) for unit_id, name in rows.all()}
+
+
+def _with_display_names(
+    policy: RequestConfigurationPolicy, names: Mapping[UUID, str]
+) -> RequestConfigurationPolicy:
+    """Units without a live row keep their pinned name."""
+
+    if not names:
+        return policy
+    return replace(
+        policy,
+        units=MappingProxyType(
+            {
+                unit_id: replace(unit, name=names.get(unit_id, unit.name))
+                for unit_id, unit in policy.units.items()
+            }
+        ),
+    )
