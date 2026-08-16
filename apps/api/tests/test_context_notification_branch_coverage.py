@@ -9,6 +9,7 @@ from uuid import uuid4
 
 import pytest
 from fastapi import Request
+from sqlalchemy import select
 
 import mist_service.dependencies as dependencies
 import mist_service.mutation_dependencies as mutation_dependencies
@@ -19,7 +20,9 @@ from mist_service.config import Environment, Settings
 from mist_service.domain import Actor, SessionRecord
 from mist_service.errors import ObjectNotFound, SessionRequired
 from mist_service.models import RequestStatus, ServiceRequest, UserRole
+from mist_service.qc_membership import QC_TEAM_ID
 from mist_service.request_action_projection import ActionAudience
+from mist_service.team_models import TeamMembership, WorkspacePosition
 
 
 def _actor(role: UserRole) -> Actor:
@@ -135,10 +138,49 @@ async def test_quality_scope_resolves_exact_qc_team(api_harness: ApiHarness) -> 
             "Combined QC Team",
             UserRole.QUALITY_RELEASE,
         )
-    assert len(rules) == 2
+    # The generic scope path stays conservative: managers only.
+    assert len(rules) == 3
     assert all(
         rule.access_kind is NotificationAccessKind.ROUTE_MEMBER for rule in rules
     )
+
+
+async def test_qc_users_hear_about_review_but_never_release(
+    api_harness: ApiHarness,
+) -> None:
+    """Review events reach every live QC member; release events reach Managers only.
+
+    A QC User cannot see or act on release work, so a release notification to
+    them would leak the existence of work outside their scope.
+    """
+
+    async with api_harness.sessions() as session:
+        review = await notifications._route_rules(
+            session, QC_TEAM_ID, UserRole.QUALITY_RELEASE, manager_only=False
+        )
+        release = await notifications._route_rules(
+            session, QC_TEAM_ID, UserRole.QUALITY_RELEASE, manager_only=True
+        )
+        managers = set(
+            await session.scalars(
+                select(TeamMembership.user_id).where(
+                    TeamMembership.team_id == QC_TEAM_ID,
+                    TeamMembership.effective_until.is_(None),
+                    TeamMembership.workspace_position == WorkspacePosition.MANAGER,
+                )
+            )
+        )
+        everyone = set(
+            await session.scalars(
+                select(TeamMembership.user_id).where(
+                    TeamMembership.team_id == QC_TEAM_ID,
+                    TeamMembership.effective_until.is_(None),
+                )
+            )
+        )
+    assert {rule.user_id for rule in review} == everyone
+    assert {rule.user_id for rule in release} == managers
+    assert managers < everyone
 
 
 async def test_non_quality_scope_resolves_active_role_scope_users() -> None:

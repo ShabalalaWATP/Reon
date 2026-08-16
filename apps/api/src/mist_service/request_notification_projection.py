@@ -183,23 +183,27 @@ async def cancellation_recipient_rules(
         RequestStatus.QUALITY_REVIEW,
         RequestStatus.READY_FOR_RELEASE,
     }:
-        scopes = list(
-            await session.scalars(
-                select(User.scope)
-                .where(
-                    User.role == UserRole.QUALITY_RELEASE,
-                    User.is_active.is_(True),
-                )
-                .distinct()
+        # Every live QC member reviews, so review events reach QC Users and
+        # QC Managers alike. Release is manager-only, so release events must
+        # not reach a QC User who can neither see nor act on that work.
+        release_event = event.prior_status is RequestStatus.READY_FOR_RELEASE
+        rules.extend(
+            await _route_rules(
+                session,
+                QC_TEAM_ID,
+                UserRole.QUALITY_RELEASE,
+                manager_only=release_event,
             )
         )
-        for scope in scopes:
-            rules.extend(await _scope_rules(session, scope, UserRole.QUALITY_RELEASE))
     return rules
 
 
 async def _route_rules(
-    session: AsyncSession, unit_id: UUID, role: UserRole
+    session: AsyncSession,
+    unit_id: UUID,
+    role: UserRole,
+    *,
+    manager_only: bool = True,
 ) -> list[RecipientRule]:
     query = (
         select(User.id, User.scope)
@@ -215,7 +219,7 @@ async def _route_rules(
             User.is_active.is_(True),
         )
     )
-    if role is UserRole.QUALITY_RELEASE:
+    if role is UserRole.QUALITY_RELEASE and manager_only:
         query = query.where(
             TeamMembership.workspace_position == WorkspacePosition.MANAGER
         )

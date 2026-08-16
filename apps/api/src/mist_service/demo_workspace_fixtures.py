@@ -155,3 +155,27 @@ ROUTING_IDENTITY_FIXTURES = tuple(
         WorkspaceIdentityFixture(member, role, scope, code, False),
     )
 )
+
+# The combined QC workspace mirrors a delivery team: QC Managers hold release
+# accountability, QC Users perform quality review. Angus Gunn and Neil Alexander
+# are seeded earlier in the base directory; these fixtures complete the roster.
+_QC_SCOPE = "Combined QC Team"
+QC_IDENTITY_FIXTURES = (
+    WorkspaceIdentityFixture(
+        "Zander Clark", UserRole.QUALITY_RELEASE, _QC_SCOPE, "QC_TEAM", True
+    ),
+    *(
+        WorkspaceIdentityFixture(
+            name, UserRole.QUALITY_RELEASE, _QC_SCOPE, "QC_TEAM", False
+        )
+        for name in (
+            "Liam Kelly",
+            "Anthony Ralston",
+            "John Souttar",
+            "Lewis Morgan",
+            "Ryan Fraser",
+            "Kevin Nisbet",
+            "Josh Doig",
+        )
+    ),
+)

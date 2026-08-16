@@ -15,7 +15,12 @@ file and the earliest is at the bottom.
   pinned by tests that show a QC User the review task but an empty release
   queue. The seed now provides three QC Managers and seven QC Users as
   admin101 to admin108, appended so earlier usernames stay stable, and the
-  interface names people by position wherever a QC member is shown.
+  interface names people by position wherever a QC member is shown. The full
+  suite exposed a fourth hard-coded manager assumption in notification
+  routing, which would have left QC Users unaware that review work had
+  arrived; QC notification recipients are now stage-aware, so review events
+  reach every live QC member while release events reach Managers only, and a
+  test pins both halves.
 - Confirmed the review loop end to end against the BPMN and projection: a
   QC changes-required decision returns work to the Analysts on the same
   rework path a Manager return uses, so the Manager reviews every resubmission

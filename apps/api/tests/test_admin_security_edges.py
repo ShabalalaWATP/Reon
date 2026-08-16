@@ -173,12 +173,12 @@ async def test_sequence_reconciles_upward_and_is_monotonic(
         assert sequence is not None
         sequence.next_value = 1
         await initialise_admin_identity_sequence(session)
-        assert sequence.next_value == 101
+        assert sequence.next_value == 109
         repository = SqlAlchemyAdminRepository(session)
-        assert await repository.next_username() == "admin101"
-        assert await repository.next_username() == "admin102"
+        assert await repository.next_username() == "admin109"
+        assert await repository.next_username() == "admin110"
         await initialise_admin_identity_sequence(session)
-        assert sequence.next_value == 103
+        assert sequence.next_value == 111
 
 
 async def test_initialisers_create_absent_rows(api_harness: ApiHarness) -> None:

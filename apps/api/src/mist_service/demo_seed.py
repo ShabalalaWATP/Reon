@@ -11,6 +11,7 @@ from mist_service.auth_service import PasswordHasher
 from mist_service.demo_membership_seed import seed_demo_memberships
 from mist_service.demo_workspace_fixtures import (
     DELIVERY_IDENTITY_FIXTURES,
+    QC_IDENTITY_FIXTURES,
     ROUTING_IDENTITY_FIXTURES,
     SSG_IDENTITY_FIXTURES,
 )
@@ -179,15 +180,6 @@ _BASE_IDENTITIES = (
 )
 
 _APPROVER_SCOPE = "Platform configuration approval"
-_QC_USER_NAMES = (
-    "Liam Kelly",
-    "Anthony Ralston",
-    "John Souttar",
-    "Lewis Morgan",
-    "Ryan Fraser",
-    "Kevin Nisbet",
-    "Josh Doig",
-)
 
 
 DEMO_IDENTITIES = tuple(
@@ -233,24 +225,16 @@ DEMO_IDENTITIES = tuple(
                 units=("QC_TEAM",),
                 manager=True,
             ),
-            # The combined QC workspace mirrors a delivery team: three QC
-            # Managers hold release accountability, seven QC Users perform
-            # quality review. Appended last so earlier usernames stay stable.
-            _identity(
-                "Zander Clark",
-                UserRole.QUALITY_RELEASE,
-                "Combined QC Team",
-                units=("QC_TEAM",),
-                manager=True,
-            ),
+            # Appended last so earlier usernames stay stable.
             *(
                 _identity(
-                    name,
-                    UserRole.QUALITY_RELEASE,
-                    "Combined QC Team",
-                    units=("QC_TEAM",),
+                    fixture.display_name,
+                    fixture.role,
+                    fixture.scope,
+                    units=(fixture.unit_code,),
+                    manager=fixture.manager,
                 )
-                for name in _QC_USER_NAMES
+                for fixture in QC_IDENTITY_FIXTURES
             ),
         ),
         start=1,
