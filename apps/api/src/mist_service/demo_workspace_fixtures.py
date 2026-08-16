@@ -49,29 +49,29 @@ SSG_IDENTITY_FIXTURES = (
     WorkspaceIdentityFixture(
         "Lawrence Shankland",
         UserRole.DELIVERY_TEAM_LEAD,
-        "SSG Team",
+        "OSG Team",
         "SSG_TEAM",
         True,
     ),
     WorkspaceIdentityFixture(
-        "Tommy Conway", UserRole.DELIVERY_SPECIALIST, "SSG Team", "SSG_TEAM", False
+        "Tommy Conway", UserRole.DELIVERY_SPECIALIST, "OSG Team", "SSG_TEAM", False
     ),
     WorkspaceIdentityFixture(
-        "Steve Clarke", UserRole.DELIVERY_SPECIALIST, "SSG Team", "SSG_TEAM", False
+        "Steve Clarke", UserRole.DELIVERY_SPECIALIST, "OSG Team", "SSG_TEAM", False
     ),
     WorkspaceIdentityFixture(
-        "Derek McInnes", UserRole.DELIVERY_SPECIALIST, "SSG Team", "SSG_TEAM", False
+        "Derek McInnes", UserRole.DELIVERY_SPECIALIST, "OSG Team", "SSG_TEAM", False
     ),
 )
 
 _ROUTING_STAFF = (
-    ("CRIOC", "CRIOC", UserRole.INTAKE_TRIAGE, "Alan Rough", "Willie Ormond"),
-    ("JOCK", "JOCK", UserRole.SERVICE_COORDINATION, "Craig Levein", "Walter Smith"),
+    ("CRIOC", "JIOC", UserRole.INTAKE_TRIAGE, "Alan Rough", "Willie Ormond"),
+    ("JOCK", "DIGOC", UserRole.SERVICE_COORDINATION, "Craig Levein", "Walter Smith"),
     ("SYGOC", "SYGOC", UserRole.SERVICE_COORDINATION, "Alex Ferguson", "Tommy Burns"),
     ("MYGOC", "MYGOC", UserRole.SERVICE_COORDINATION, "Jock Stein", "Bill Shankly"),
     (
         "ACSA_B_OPS",
-        "ACSA-B Ops",
+        "NCGI-A Ops",
         UserRole.OPERATIONS_ALLOCATION,
         "Willie Johnston",
         "Asa Hartford",

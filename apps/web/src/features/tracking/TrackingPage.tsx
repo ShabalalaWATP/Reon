@@ -94,7 +94,7 @@ export function TrackingPage() {
       />
       {requests.length === 0 ? (
         <PageState kind="empty" title="No requests to track">
-          Submitted requests will appear here as they enter CRIOC routing.
+          Submitted requests will appear here as they enter JIOC routing.
         </PageState>
       ) : (
         <section aria-label="Tracked requests" className="tracking-register">

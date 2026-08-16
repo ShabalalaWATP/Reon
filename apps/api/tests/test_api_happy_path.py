@@ -133,7 +133,7 @@ async def test_complete_representative_workflow_and_feedback(
     first_contributor_id = await harness.user_id("admin12")
     second_contributor_id = await harness.user_id("admin13")
     lead_session = await harness.login("admin8")
-    assert lead_session["user"]["scope"] == "SSG Team"
+    assert lead_session["user"]["scope"] == "OSG Team"
     assert "SSG_TEAM" not in str(lead_session)
     await _complete(
         harness,
@@ -187,7 +187,7 @@ async def test_complete_representative_workflow_and_feedback(
     assert ben_workspace["items"][0]["actionAccess"] == "PERSONAL"
 
     specialist_session = await harness.login("admin11")
-    assert specialist_session["user"]["scope"] == "SSG Team"
+    assert specialist_session["user"]["scope"] == "OSG Team"
     assert "SSG_TEAM" not in str(specialist_session)
     lead_item = await _claim_current(harness)
     assert lead_item["assigneeId"] == str(specialist_id)
@@ -296,7 +296,7 @@ async def test_complete_representative_workflow_and_feedback(
     assert detail.json()["status"] == "COMPLETED"
     assert detail.json()["deliverable"] is None
     assert detail.json()["productMode"] == "MANAGED"
-    assert detail.json()["assignedDeliveryTeam"] == "SSG Team"
+    assert detail.json()["assignedDeliveryTeam"] == "OSG Team"
     assert detail.json()["productAvailable"] is True
     assert "SSG_TEAM" not in detail.text
 

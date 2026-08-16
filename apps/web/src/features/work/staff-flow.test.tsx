@@ -35,7 +35,7 @@ describe("staff work queue", () => {
     expect(
       await screen.findByRole("heading", { name: "This action is no longer available" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open CRIOC routing queue" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Open JIOC routing queue" })).toHaveAttribute(
       "href",
       "/triage",
     );
@@ -73,7 +73,7 @@ describe("staff work queue", () => {
     });
     const user = userEvent.setup();
     renderApp("/triage");
-    expect(await screen.findByRole("heading", { name: "CRIOC routing queue" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "JIOC routing queue" })).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: "Claim work item" })).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Claim to view request context" }),

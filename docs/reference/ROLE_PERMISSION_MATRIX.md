@@ -25,7 +25,7 @@ Last reviewed: 14 August 2026
 | Customer | Create and submit a request | Own authenticated account; every submission field valid | Requester ID becomes immutable ownership | Submission audited without narrative in admin telemetry |
 | Customer | Track, answer clarification, download and give feedback | Own request; matching workflow state; released product for download | Ownership and action-state check on every request | Download and feedback events attributable to Customer |
 | Dual-capability account | Switch between Customer and Staff context | Context appears in server-calculated available contexts | New session generation, CSRF rotation and context-scoped cache reset | Staff authority cannot be used on the actor's own Customer request |
-| CRIOC Routing User | Review, request information, close or choose a Command | Active CRIOC candidate group and personally claimed task | Destination must be an effective direct Command child | Manager and Member use the same claim-based routing action; no product approval |
+| JIOC Routing User | Review, request information, close or choose a Command | Active JIOC candidate group and personally claimed task | Destination must be an effective direct Command child | Manager and Member use the same claim-based routing action; no product approval |
 | Request Coordination User | Choose an Ops group, return, hold or close | Active candidate group for the selected Command and personally claimed task | Destination must be an effective direct Ops-group child | Manager and Member use the same action; no team or Analyst selection |
 | Ops Routing User | Choose a delivery team or return | Active candidate group for the selected Ops group and personally claimed task | Destination must be an effective direct team child | Manager and Member use the same action; unstaffed choice remains explicit |
 | Workspace Member | Create, edit and cancel personal calendar activity | Current effective membership in the exact unit | Subject is always the authenticated user; no request link or alternate subject accepted | Private detail is redacted from shared views |
@@ -50,7 +50,7 @@ Last reviewed: 14 August 2026
 | Scope | May see request content | May track progress | May route | May approve product | May administer configuration |
 |---|---:|---:|---:|---:|---:|
 | Customer owning request | Yes | Yes | No | No | No |
-| CRIOC on selected path | Operationally required fields | Yes | CRIOC task only | No | No |
+| JIOC on selected path | Operationally required fields | Yes | JIOC task only | No | No |
 | Selected Command | Operationally required fields | Yes | Command task only | No | No |
 | Selected Ops group | Operationally required fields | Yes | Ops task only | No | No |
 | Selected delivery team | Yes | Yes | Manager assigns within team | Manager review only | No |

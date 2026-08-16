@@ -63,13 +63,13 @@ async def test_configured_team_rename_preserves_old_and_new_pin_access(
     assert listed.status_code == 200
     work_by_request = {UUID(item["requestId"]): item for item in listed.json()["items"]}
     assert set(work_by_request) == {old_id, new_id}
-    assert work_by_request[old_id]["deliveryTeam"] == "SSG Team"
+    assert work_by_request[old_id]["deliveryTeam"] == "OSG Team"
     assert work_by_request[new_id]["deliveryTeam"] == "SSG Service Team"
 
     old_detail = await harness.client.get(f"/api/v1/requests/{old_id}")
     new_detail = await harness.client.get(f"/api/v1/requests/{new_id}")
     assert old_detail.status_code == new_detail.status_code == 200
-    assert old_detail.json()["assignedDeliveryTeam"] == "SSG Team"
+    assert old_detail.json()["assignedDeliveryTeam"] == "OSG Team"
     assert new_detail.json()["assignedDeliveryTeam"] == "SSG Service Team"
     async with harness.sessions() as session:
         versions = {
@@ -106,7 +106,7 @@ async def test_configured_team_rename_preserves_old_and_new_pin_access(
         assert await _selected_team(session, new_id) == team_id
         assert old_pin.configuration_version_id == activated.based_on_version_id
         assert new_pin.configuration_version_id == activated.id
-        assert _pinned_team_name(old_pin, team_id) == "SSG Team"
+        assert _pinned_team_name(old_pin, team_id) == "OSG Team"
         assert _pinned_team_name(new_pin, team_id) == "SSG Service Team"
         users = list(
             await session.scalars(

@@ -20,10 +20,10 @@ organisation expand without hard-coded teams or unsafe workflow editing.
 
 The human-led route is:
 
-`Customer -> CRIOC -> command -> Ops group -> delivery team -> Team Analyst ->
+`Customer -> JIOC -> command -> Ops group -> delivery team -> Team Analyst ->
 Team Manager -> Quality and Release Manager -> Customer`.
 
-CRIOC, command and Ops users route and track. They do not approve the product.
+JIOC, command and Ops users route and track. They do not approve the product.
 Camunda coordinates named human tasks and never chooses a route, priority,
 assignee, approval or recipient.
 
@@ -74,7 +74,7 @@ released-product and feedback actions stay attached to the relevant request.
 
 | Role | Action groups |
 | --- | --- |
-| CRIOC Routing User | New submissions, claimed intake, held work and due-risk routing |
+| JIOC Routing User | New submissions, claimed intake, held work and due-risk routing |
 | Request Coordination User | Requests awaiting an Ops choice, held work and returns |
 | Ops Routing User | Requests awaiting a team choice, staffing waits and returns |
 | Team Manager | Team intake, assignment, due risk, Manager review and rework |

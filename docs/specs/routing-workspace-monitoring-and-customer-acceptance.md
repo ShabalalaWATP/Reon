@@ -46,7 +46,7 @@ an artefact or submitting optional feedback is not an acceptance decision.
 
 ## Acceptance criteria
 
-- CRIOC, JOCK and ACSA-B Ops can distinguish work they must action from active
+- JIOC, DIGOC and NCGI-A Ops can distinguish work they must action from active
   requests already routed onwards.
 - Passive active and completed sections are closed on initial render and can be
   opened independently with keyboard or pointer input.

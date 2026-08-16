@@ -18,7 +18,7 @@ from mist_service.repositories import request_scope
 from mist_service.repositories.requests import SqlAlchemyRequestRepository
 
 
-def _actor(role: UserRole, *, scope: str = "SSG Team") -> Actor:
+def _actor(role: UserRole, *, scope: str = "OSG Team") -> Actor:
     return Actor(uuid4(), "user@example.test", "Synthetic User", role, scope)
 
 
@@ -38,7 +38,7 @@ def _request(actor: Actor) -> SimpleNamespace:
         id=uuid4(),
         requester_id=uuid4(),
         status=RequestStatus.CUSTOMER_INFORMATION_REQUIRED,
-        assigned_delivery_team="SSG Team",
+        assigned_delivery_team="OSG Team",
         assigned_delivery_team_id=uuid4(),
         assigned_specialist_id=actor.id,
         version=4,

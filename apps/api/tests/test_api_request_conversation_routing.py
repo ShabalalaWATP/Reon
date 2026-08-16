@@ -73,7 +73,7 @@ async def test_assigned_analyst_replies_read_state_and_lifecycle_targets(
     crioc_target = next(
         target
         for target in workspace.json()["allowedTargets"]
-        if target["type"] == "ROUTE_UNIT" and target["label"] == "CRIOC"
+        if target["type"] == "ROUTE_UNIT" and target["label"] == "JIOC"
     )
     assigned = await _post_target(
         harness, request_id, {"targetType": "ASSIGNED_ANALYSTS"}
@@ -215,7 +215,7 @@ async def test_assigned_analyst_replies_read_state_and_lifecycle_targets(
     await harness.login("admin8")
 
     await _set_status(
-        harness, request_id, RequestStatus.DELIVERY_PLANNING, "SSG Team Managers"
+        harness, request_id, RequestStatus.DELIVERY_PLANNING, "OSG Team Managers"
     )
     await _post_target(harness, request_id, {"targetType": "CURRENT_OWNER"})
     async with harness.sessions() as session, session.begin():
@@ -236,7 +236,7 @@ async def test_assigned_analyst_replies_read_state_and_lifecycle_targets(
     for target_type in ("QC_TEAM", "CURRENT_OWNER"):
         await _post_target(harness, request_id, {"targetType": target_type})
 
-    await _set_status(harness, request_id, RequestStatus.TRIAGE_REVIEW, "CRIOC Routing")
+    await _set_status(harness, request_id, RequestStatus.TRIAGE_REVIEW, "JIOC Routing")
     await harness.login("admin4")
     await _post_target(harness, request_id, {"targetType": "CURRENT_OWNER"})
 

@@ -22,7 +22,7 @@ const queueRoutes: Partial<Record<UserRole, string>> = {
 };
 
 const queueLabels: Partial<Record<UserRole, string>> = {
-  INTAKE_TRIAGE: "CRIOC routing queue",
+  INTAKE_TRIAGE: "JIOC routing queue",
   SERVICE_COORDINATION: "Incoming requests",
   OPERATIONS_ALLOCATION: "Ops routing queue",
   DELIVERY_TEAM_LEAD: "Team work queue",
@@ -33,7 +33,7 @@ const queueLabels: Partial<Record<UserRole, string>> = {
 export const roleLabels: Record<UserRole, string> = {
   PLATFORM_ADMIN: "Platform Administrator",
   REQUESTER: "Customer",
-  INTAKE_TRIAGE: "CRIOC Routing User",
+  INTAKE_TRIAGE: "JIOC Routing User",
   SERVICE_COORDINATION: "Request Coordination User",
   OPERATIONS_ALLOCATION: "Ops Routing User",
   DELIVERY_TEAM_LEAD: "Team Manager",
@@ -74,7 +74,7 @@ const routeTitles: readonly (readonly [RegExp, string])[] = [
   [/^\/product-packages(?:\/|$)/u, "Product package"],
   [/^\/tracking\/[^/]+$/u, "Tracked request"],
   [/^\/tracking$/u, "Request tracking"],
-  [/^\/triage$/u, "CRIOC routing queue"],
+  [/^\/triage$/u, "JIOC routing queue"],
   [/^\/coordination$/u, "Incoming requests"],
   [/^\/allocation$/u, "Ops routing queue"],
   [/^\/delivery\/team$/u, "Team work queue"],

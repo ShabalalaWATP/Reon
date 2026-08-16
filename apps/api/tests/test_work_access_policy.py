@@ -107,14 +107,14 @@ def test_delivery_work_separates_manager_selection_and_analyst_completion() -> N
     team_id = uuid4()
     manager = actor(
         UserRole.DELIVERY_TEAM_LEAD,
-        scope="SSG Team",
+        scope="OSG Team",
         units=frozenset({team_id}),
     )
     planning = work(
         request(
             owner,
             status=RequestStatus.DELIVERY_PLANNING,
-            team="SSG Team",
+            team="OSG Team",
             team_id=team_id,
         )
     )
@@ -147,12 +147,12 @@ def test_delivery_work_separates_manager_selection_and_analyst_completion() -> N
         is PolicyDenial.OBJECT_SCOPE
     )
 
-    analyst = actor(UserRole.DELIVERY_SPECIALIST, scope="SSG Team")
+    analyst = actor(UserRole.DELIVERY_SPECIALIST, scope="OSG Team")
     production = work(
         request(
             owner,
             status=RequestStatus.IN_PROGRESS,
-            team="SSG Team",
+            team="OSG Team",
             team_id=team_id,
             specialist_id=analyst.id,
         ),

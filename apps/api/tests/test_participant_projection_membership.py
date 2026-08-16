@@ -53,7 +53,7 @@ def test_delivery_membership_predicate_correlates_assigned_team() -> None:
         "analyst",
         "Synthetic Analyst",
         UserRole.DELIVERY_SPECIALIST,
-        "SSG Team",
+        "OSG Team",
     )
     statement = select(
         live_selected_route_membership_condition(
@@ -95,7 +95,7 @@ async def _project_for_participant(
         action_type="PRODUCE_PRODUCT",
         reference=request.reference,
         safe_title=None,
-        current_owner="SSG Team",
+        current_owner="OSG Team",
         required_by=request.required_by,
         last_changed_at=now,
         completed_at=None,
@@ -160,8 +160,8 @@ async def test_lead_expiry_and_contributor_removal_hide_stored_projections(
             reference=f"SR-PARTICIPANT-{uuid4().hex[:8]}",
             requester_id=requester_id,
             status=RequestStatus.IN_PROGRESS,
-            current_owner="SSG Team",
-            assigned_delivery_team="SSG Team",
+            current_owner="OSG Team",
+            assigned_delivery_team="OSG Team",
             assigned_delivery_team_id=team_id,
             assigned_specialist_id=lead_id,
             **RequestCreate.model_validate(request_payload()).model_dump(),

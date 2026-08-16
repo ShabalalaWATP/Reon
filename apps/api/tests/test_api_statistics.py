@@ -16,17 +16,17 @@ async def test_scope_catalogues_are_explicit_and_cross_branch_access_is_denied(
     harness = api_harness
     expected = {
         "admin1": ["Whole platform"],
-        "admin4": ["CRIOC"],
-        "admin5": ["JOCK", "SYGOC", "MYGOC"],
+        "admin4": ["JIOC"],
+        "admin5": ["DIGOC", "SYGOC", "MYGOC"],
         "admin6": [
-            "ACSA-B Ops",
+            "NCGI-A Ops",
             "Aurora Ops",
             "Vertex Ops",
             "Nimbus Ops",
             "Parallax Ops",
         ],
         "admin10": ["Horizon Ops", "Meridian Ops", "Solstice Ops", "Frontier Ops"],
-        "admin8": ["SSG Team"],
+        "admin8": ["OSG Team"],
         "admin2": [],
     }
     for username, names in expected.items():
@@ -74,7 +74,7 @@ async def test_dashboards_show_only_the_authorised_operational_branch(
     assert ncgi.status_code == 200, ncgi.text
     body = ncgi.json()
     metrics = {item["key"]: item for item in body["summary"]}
-    assert body["scope"]["name"] == "ACSA-B Ops"
+    assert body["scope"]["name"] == "NCGI-A Ops"
     assert metrics["received"]["value"] == 6
     assert metrics["active"]["value"] == 1
     assert metrics["completed"]["value"] == 5
@@ -87,7 +87,7 @@ async def test_dashboards_show_only_the_authorised_operational_branch(
         "suppressed": False,
     }
     assert [child["name"] for child in body["children"]] == [
-        "SSG Team",
+        "OSG Team",
         "Cedar Team",
         "Quartz Team",
     ]
@@ -106,7 +106,7 @@ async def test_dashboards_show_only_the_authorised_operational_branch(
     )
     assert jock.status_code == 200
     assert {child["name"]: child["received"] for child in jock.json()["children"]} == {
-        "ACSA-B Ops": 6,
+        "NCGI-A Ops": 6,
         "Aurora Ops": 1,
         "Vertex Ops": 0,
     }
@@ -132,7 +132,7 @@ async def test_dashboards_show_only_the_authorised_operational_branch(
     assert platform.status_code == 200
     assert platform.json()["summary"][0]["value"] == 10
     assert [child["name"] for child in platform.json()["children"]] == [
-        "JOCK",
+        "DIGOC",
         "SYGOC",
         "MYGOC",
     ]
@@ -194,12 +194,12 @@ async def test_statistics_grant_can_select_descendants_but_not_siblings(
         params={**dates, "scopeId": crioc_scope, "unitId": str(ssg_id)},
     )
     assert descendant.status_code == 200, descendant.text
-    assert descendant.json()["selectedUnit"]["name"] == "SSG Team"
+    assert descendant.json()["selectedUnit"]["name"] == "OSG Team"
     assert [item["name"] for item in descendant.json()["breadcrumb"]] == [
-        "CRIOC",
-        "JOCK",
-        "ACSA-B Ops",
-        "SSG Team",
+        "JIOC",
+        "DIGOC",
+        "NCGI-A Ops",
+        "OSG Team",
     ]
     assert descendant.json()["summary"][0]["value"] == 6
 

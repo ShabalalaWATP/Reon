@@ -178,7 +178,7 @@ export const actionLabels: Record<WorkActionName, string> = {
   provide_information: "Provide information",
   withdraw: "Withdraw request",
   send_to_allocation: "Route to Ops group",
-  return_to_triage: "Return to CRIOC",
+  return_to_triage: "Return to JIOC",
   hold: "Place on hold",
   resume: "Resume request coordination",
   allocate: "Route to team",

@@ -33,15 +33,24 @@ class UnitDefinition:
     analyst_group: str | None = None
 
 
+# Display names are separate from stable unit codes. Codes are internal
+# identifiers that appear in migrations, routing tables and tests; only the
+# name shown to people changes when the organisation is renamed. These names
+# apply to a fresh install. Once the governed configuration owns the
+# organisation, renames go through the administrator rename, which cascades
+# to member scope, sessions and assigned requests.
+ROOT_NAME = "JIOC"
+COMMAND_NAMES = {"JOCK": "DIGOC"}
+
 TREE = (
     (
         "JOCK",
         (
             (
                 "ACSA_B_OPS",
-                "ACSA-B Ops",
+                "NCGI-A Ops",
                 (
-                    ("SSG_TEAM", "SSG Team"),
+                    ("SSG_TEAM", "OSG Team"),
                     ("CEDAR_TEAM", "Cedar Team"),
                     ("QUARTZ_TEAM", "Quartz Team"),
                 ),
@@ -141,7 +150,7 @@ def _unit_definitions() -> tuple[UnitDefinition, ...]:
     definitions = [
         UnitDefinition(
             "CRIOC",
-            "CRIOC",
+            ROOT_NAME,
             OrganisationKind.ROOT,
             None,
             StaffingStatus.ROUTING_POOL,
@@ -152,7 +161,7 @@ def _unit_definitions() -> tuple[UnitDefinition, ...]:
         definitions.append(
             UnitDefinition(
                 command_code,
-                command_code,
+                COMMAND_NAMES.get(command_code, command_code),
                 OrganisationKind.COMMAND,
                 "CRIOC",
                 StaffingStatus.ROUTING_POOL,

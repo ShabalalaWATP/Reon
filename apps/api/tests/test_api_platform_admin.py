@@ -130,7 +130,7 @@ async def test_admin_crud_contract_version_validation_and_session_revocation(
     )
     assert updated.status_code == 200, updated.text
     changed = updated.json()
-    assert changed["scope"] == "SSG Team"
+    assert changed["scope"] == "OSG Team"
     assert changed["version"] == 2
     assert changed["memberships"][0]["organisationUnitKind"] == "TEAM"
 

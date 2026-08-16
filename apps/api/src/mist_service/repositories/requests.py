@@ -113,7 +113,7 @@ class SqlAlchemyRequestRepository(RequestCustomerRepositoryMixin):
             requester_id=actor.id,
             product_mode=self._default_product_mode,
             status=RequestStatus.ROUTING_PENDING,
-            current_owner="CRIOC Routing",
+            current_owner="JIOC Routing",
             **values,
         )
         try:

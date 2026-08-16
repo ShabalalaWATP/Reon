@@ -38,14 +38,14 @@ def test_staff_context_cannot_process_its_own_customer_request(
         username="dual-context@example.test",
         display_name="Dual Context User",
         role=role,
-        scope="SSG Team",
+        scope="OSG Team",
         organisation_unit_ids=frozenset({team_id}),
     )
     request = RequestRecord(
         id=uuid4(),
         requester_id=user_id,
         status=status,
-        assigned_delivery_team="SSG Team",
+        assigned_delivery_team="OSG Team",
         assigned_delivery_team_id=team_id,
         assigned_specialist_id=user_id,
         participant_ids=frozenset({user_id}),

@@ -7,7 +7,7 @@ recognisable language without changing routing, staffing or authorisation data.
 
 ## Requirements
 
-1. CRIOC, command and Ops routing units are labelled **Routing**.
+1. JIOC, command and Ops routing units are labelled **Routing**.
 2. Staffed delivery units are labelled **Analysis Team**.
 3. An unstaffed delivery unit remains visibly identified as **Analysis Team ·
    Awaiting staffing**.

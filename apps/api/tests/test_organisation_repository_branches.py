@@ -98,7 +98,7 @@ async def test_unit_listing_and_routing_options_include_empty_paths(
             request.id, RequestStatus.TRIAGE_REVIEW
         )
         assert [(unit.name, unit.code) for unit in workspace.route] == [
-            ("CRIOC", "CRIOC")
+            ("JIOC", "CRIOC")
         ]
         assert [option.code for option in workspace.items] == [
             "JOCK",
@@ -163,7 +163,7 @@ async def test_tracking_enforces_membership_and_maps_the_selected_route(
         tracked_request = next(item for item in tracked if item.id == request.id)
         assert tracked_request.title == request.title
         assert tracked_request.awaiting_team_staffing is True
-        assert [unit.name for unit in tracked_request.route] == ["CRIOC", "JOCK"]
+        assert [unit.name for unit in tracked_request.route] == ["JIOC", "DIGOC"]
         detail = await repository.get_tracked_request_detail(
             actor_from(triage_user, organisation_id("CRIOC")), request.id
         )

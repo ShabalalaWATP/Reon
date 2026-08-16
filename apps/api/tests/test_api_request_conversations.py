@@ -180,7 +180,7 @@ async def test_conversations_are_idempotent_scoped_and_customer_safe(
     route_labels = {
         target["label"] for target in targets if target["type"] == "ROUTE_UNIT"
     }
-    assert route_labels == {"CRIOC", "JOCK", "ACSA-B Ops"}
+    assert route_labels == {"JIOC", "DIGOC", "NCGI-A Ops"}
 
     forged = await harness.client.post(
         f"/api/v1/requests/{request_id}/conversations/messages",

@@ -151,10 +151,10 @@ describe("personal profile", () => {
 
     renderApp("/profile");
     expect(await screen.findByRole("heading", { name: "Alan Rough" })).toBeInTheDocument();
-    expect(await screen.findByText("CRIOC Routing User · Manager")).toBeInTheDocument();
+    expect(await screen.findByText("JIOC Routing User · Manager")).toBeInTheDocument();
     expect(await screen.findByText("Manager in CRIOC")).toBeInTheDocument();
     expect(
-      await screen.findByText("CRIOC routing; Manager controls for CRIOC"),
+      await screen.findByText("JIOC routing; Manager controls for CRIOC"),
     ).toBeInTheDocument();
   });
 

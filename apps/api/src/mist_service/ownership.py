@@ -3,8 +3,8 @@
 from mist_service.models import RequestStatus
 
 OWNER_BY_STATUS = {
-    RequestStatus.ROUTING_PENDING: "CRIOC Routing",
-    RequestStatus.TRIAGE_REVIEW: "CRIOC Routing",
+    RequestStatus.ROUTING_PENDING: "JIOC Routing",
+    RequestStatus.TRIAGE_REVIEW: "JIOC Routing",
     RequestStatus.INFORMATION_REQUIRED: "Customer",
     RequestStatus.COORDINATION_REVIEW: "Request Coordination",
     RequestStatus.ON_HOLD: "Request Coordination",

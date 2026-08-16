@@ -159,8 +159,8 @@ The root quality gate, strict backend static checks, security scan, production
 web build and complete frontend suite pass. The containerised PostgreSQL 0043 to
 0047 round trip passed against PostgreSQL, including populated upgrade,
 downgrade, re-upgrade, empty-database upgrade and metadata-drift checks. The
-complete Chromium journey passed from Customer submission through CRIOC, JOCK,
-ACSA-B Ops, SSG Team, Analyst production, Manager review, independent QC review
+complete Chromium journey passed from Customer submission through JIOC, DIGOC,
+NCGI-A Ops, OSG Team, Analyst production, Manager review, independent QC review
 and release, Customer retrieval and acceptance. These runtime checks exposed and
 then verified repairs for PostgreSQL locking, selected-route membership,
 conversation mutation, managed-upload and product review read-after-write

@@ -43,7 +43,7 @@ async def test_switch_context_is_entitled_rotated_and_optimistic(
         display_name="Synthetic Analyst",
         password_hash="stored-hash",
         role=UserRole.DELIVERY_SPECIALIST,
-        scope="SSG Team",
+        scope="OSG Team",
         customer_context_enabled=True,
         is_active=True,
     )
@@ -97,7 +97,7 @@ async def test_success_audit_failure_rolls_back_undisclosed_rotated_secrets(
         display_name="Synthetic Atomic User",
         password_hash="stored-hash",
         role=UserRole.DELIVERY_SPECIALIST,
-        scope="SSG Team",
+        scope="OSG Team",
         customer_context_enabled=True,
         is_active=True,
     )

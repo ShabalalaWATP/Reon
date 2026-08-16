@@ -64,7 +64,7 @@ def request(status: RequestStatus, *, aware: bool = True) -> ServiceRequest:
         sensitivity="STANDARD",
         handling_instructions="Synthetic content only.",
         status=status,
-        current_owner="SSG Team",
+        current_owner="OSG Team",
         priority="HIGH",
         updated_at=now if aware else now.replace(tzinfo=None),
         version=2,

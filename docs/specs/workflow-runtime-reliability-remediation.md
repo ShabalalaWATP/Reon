@@ -67,7 +67,7 @@ role permissions or the durable outbox recovery model.
 - The primary and alternative journey scripts run against the rebuilt Compose
   stack using their defaults.
 - The final rebuilt stack completed five consecutive SYGOC, Nimbus Ops and
-  Beacon Team journeys plus two consecutive CRIOC, JOCK, ACSA-B Ops, SSG Team
+  Beacon Team journeys plus two consecutive JIOC, DIGOC, NCGI-A Ops, OSG Team
   and QC journeys, with verified Customer downloads and no 5xx or deadlock log
   entries.
 - A clean authenticated Customer browser context opened a completed SSG request,

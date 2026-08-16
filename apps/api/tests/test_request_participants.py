@@ -36,8 +36,8 @@ async def test_reassignment_preserves_history_and_one_active_lead(
             reference="SR-PARTICIPANT-HISTORY-001",
             requester_id=requester_id,
             status=RequestStatus.IN_PROGRESS,
-            current_owner="SSG Team",
-            assigned_delivery_team="SSG Team",
+            current_owner="OSG Team",
+            assigned_delivery_team="OSG Team",
             **RequestCreate.model_validate(request_payload()).model_dump(),
         )
         session.add(request)
@@ -97,8 +97,8 @@ async def test_participant_authority_fails_closed_for_empty_and_stale_sets(
             reference="SR-PARTICIPANT-AUTHORITY-001",
             requester_id=requester_id,
             status=RequestStatus.IN_PROGRESS,
-            current_owner="SSG Team",
-            assigned_delivery_team="SSG Team",
+            current_owner="OSG Team",
+            assigned_delivery_team="OSG Team",
             assigned_delivery_team_id=team_id,
             assigned_specialist_id=lead_id,
             **RequestCreate.model_validate(request_payload()).model_dump(),

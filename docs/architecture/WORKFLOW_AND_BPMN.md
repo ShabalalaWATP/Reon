@@ -24,14 +24,14 @@ of Camunda or process modelling is assumed.
 
 ## The workflow in one paragraph
 
-A Customer submits a complete request. CRIOC selects one of its current direct
+A Customer submits a complete request. JIOC selects one of its current direct
 command organisations. That command selects one of its current direct Ops groups.
 The Ops group selects one of its current direct delivery teams. A Manager in that
 team names one accountable Lead Analyst and up to ten additional assigned
 Analysts. They share the production controls and may ask the Customer or other
 authorised participants for information. The Team Manager checks the result, one
 QC Manager performs quality review, and a different QC Manager releases
-it. The Customer receives and accepts the exact package in their dashboard. CRIOC, the
+it. The Customer receives and accepts the exact package in their dashboard. JIOC, the
 selected command and the selected Ops group can track progress, but they do not
 approve the product.
 
@@ -66,8 +66,8 @@ decisions submitted through Mist Service and validated by FastAPI.
 | End event | The request completed, was closed without delivery, or was cancelled. |
 
 The gateways are rules about valid outcomes, not automated business decisions.
-For example, the CRIOC gateway can follow `request information`, `close` or
-`progress`. A CRIOC user chooses one of those outcomes. Camunda only follows the
+For example, the JIOC gateway can follow `request information`, `close` or
+`progress`. A JIOC user chooses one of those outcomes. Camunda only follows the
 matching path.
 
 ## Routing the request
@@ -78,7 +78,7 @@ matching path.
 
 Each routing user chooses one organisation immediately below their current unit:
 
-1. CRIOC chooses a command, such as JOCK, SYGOC or MYGOC.
+1. JIOC chooses a command, such as DIGOC, SYGOC or MYGOC.
 2. The selected command chooses one of its own Ops groups.
 3. The selected Ops group chooses one of its own delivery teams.
 
@@ -89,14 +89,14 @@ the selected destination is a direct child before it records the decision.
 
 The complete configured hierarchy is in
 [Organisation and routing](ORGANISATION_AND_ROUTING.md). The initial operational
-route is CRIOC → JOCK → ACSA-B Ops → SSG Team. Every configured sibling remains a
+route is JIOC → DIGOC → NCGI-A Ops → OSG Team. Every configured sibling remains a
 real staffed destination with its own users, queue and Camunda candidate group.
 
 ### Who owns an unclaimed routing item?
 
 Before a person claims a routing task, the responsible organisation owns it. The
 interface therefore describes the item as awaiting that organisation, for example
-`JOCK awaiting action`. It is not shown as personal work owned by an unnamed
+`DIGOC awaiting action`. It is not shown as personal work owned by an unnamed
 individual. After a successful claim, the named person owns the human task until
 they record the outcome or the task is safely recovered.
 
@@ -105,7 +105,7 @@ they record the outcome or the task is safely recovered.
 ![Product production, review and release workflow](../assets/architecture/04-delivery-workflow.svg)
 
 The delivery route is deliberately shorter than the organisational routing path.
-After assignment, work does not travel back through CRIOC, command or Ops for
+After assignment, work does not travel back through JIOC, command or Ops for
 approval.
 
 1. The Team Manager selects the accountable Lead and optional additional Analysts.
@@ -128,12 +128,12 @@ names and action labels.
 
 | Human task | BPMN ID | Responsible person | Available outcome | Next step |
 |---|---|---|---|---|
-| CRIOC Routing | `intake_review` | Claimed CRIOC Routing User | Request information | Customer response |
-| CRIOC Routing | `intake_review` | Claimed CRIOC Routing User | Close | Closed without delivery |
-| CRIOC Routing | `intake_review` | Claimed CRIOC Routing User | Progress to selected command | Request Coordination |
-| Provide requested information | `requester_response` | Owning Customer | Provide information | CRIOC Routing |
+| JIOC Routing | `intake_review` | Claimed JIOC Routing User | Request information | Customer response |
+| JIOC Routing | `intake_review` | Claimed JIOC Routing User | Close | Closed without delivery |
+| JIOC Routing | `intake_review` | Claimed JIOC Routing User | Progress to selected command | Request Coordination |
+| Provide requested information | `requester_response` | Owning Customer | Provide information | JIOC Routing |
 | Provide requested information | `requester_response` | Owning Customer | Withdraw | Cancelled |
-| Request Coordination | `coordination_review` | Claimed user in selected command | Return to CRIOC | CRIOC Routing |
+| Request Coordination | `coordination_review` | Claimed user in selected command | Return to JIOC | JIOC Routing |
 | Request Coordination | `coordination_review` | Claimed user in selected command | Place on hold | Resolve coordination hold |
 | Request Coordination | `coordination_review` | Claimed user in selected command | Close | Closed without delivery |
 | Request Coordination | `coordination_review` | Claimed user in selected command | Route to selected Ops group | Ops Routing |
@@ -170,10 +170,10 @@ status and notifies relevant participants.
 
 Loops are normal workflow paths, not errors.
 
-### CRIOC information loop
+### JIOC information loop
 
-CRIOC may ask the Customer to complete or clarify the initial request. The full
-response is appended to the request history. The request then returns to CRIOC so
+JIOC may ask the Customer to complete or clarify the initial request. The full
+response is appended to the request history. The request then returns to JIOC so
 that a human can reconsider it with the new information.
 
 ### Command hold loop
@@ -221,7 +221,7 @@ action and moves Camunda to the Customer response task until an answer arrives.
 
 ## What routing organisations can see afterwards
 
-CRIOC, the selected command and the selected Ops group retain route-scoped
+JIOC, the selected command and the selected Ops group retain route-scoped
 tracking after their routing action. Tracking shows the request title, reference,
 current stage, responsible organisation and lifecycle path. It allows an
 authorised route member to reopen the submitted request detail needed for
@@ -233,7 +233,7 @@ outside their authorised operational need.
 
 Statistics follow the same hierarchy rule:
 
-- CRIOC sees its own figures and all descendants.
+- JIOC sees its own figures and all descendants.
 - A command sees itself and its own Ops groups and teams.
 - An Ops group sees itself and its own delivery teams.
 - A delivery team sees its own work.

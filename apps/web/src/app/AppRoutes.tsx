@@ -177,8 +177,8 @@ export function AppRoutes() {
                 element={
                   <StaffQueuePage
                     description="Review new Customer demand, request information or route it to the appropriate command."
-                    eyebrow="CRIOC routing"
-                    title="CRIOC routing queue"
+                    eyebrow="JIOC routing"
+                    title="JIOC routing queue"
                   />
                 }
               />

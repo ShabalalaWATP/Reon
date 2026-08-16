@@ -35,8 +35,8 @@ stage and role identifiers inside the technical boundary.
 ## Acceptance criteria
 
 - No deprecated coordination terminology remains in user-facing text.
-- JOCK, SYGOC, MYGOC and future configured units are shown by their actual
-  configured names, with no hard-coded JOCK special case.
+- DIGOC, SYGOC, MYGOC and future configured units are shown by their actual
+  configured names, with no hard-coded DIGOC special case.
 - Existing and newly submitted requests use the same ownership presentation.
 - Backend and frontend tests cover shared and personal ownership, queue labels
   and friendly action labels.

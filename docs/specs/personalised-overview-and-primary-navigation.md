@@ -58,7 +58,7 @@ member-profile destinations are staff operational tools and add no value to the
 Customer request journey. A Customer opening any staff URL directly returns to
 `My requests`; the hidden link is not treated as the authorisation control.
 
-Legacy role queue labels name their purpose, for example `CRIOC routing queue`,
+Legacy role queue labels name their purpose, for example `JIOC routing queue`,
 `Incoming requests` and `Ops routing queue`. They remain available for deep
 links and accounts without a current workspace. The labels do not alter route,
 role, object or action authorisation.

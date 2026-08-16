@@ -108,14 +108,14 @@ def test_team_visibility_requires_exact_membership_or_participation() -> None:
     team_id = uuid4()
     manager = actor(
         UserRole.DELIVERY_TEAM_LEAD,
-        scope="SSG Team",
+        scope="OSG Team",
         units=frozenset({team_id}),
     )
-    analyst = actor(UserRole.DELIVERY_SPECIALIST, scope="SSG Team")
+    analyst = actor(UserRole.DELIVERY_SPECIALIST, scope="OSG Team")
     item = request(
         owner,
         status=RequestStatus.IN_PROGRESS,
-        team="SSG Team",
+        team="OSG Team",
         team_id=team_id,
         specialist_id=analyst.id,
         participants=frozenset({analyst.id}),
@@ -147,17 +147,17 @@ def test_team_visibility_requires_exact_membership_or_participation() -> None:
 
 def test_waiting_clarification_and_invalid_request_operation_fail_closed() -> None:
     owner = actor(UserRole.REQUESTER)
-    analyst = actor(UserRole.DELIVERY_SPECIALIST, scope="SSG Team")
+    analyst = actor(UserRole.DELIVERY_SPECIALIST, scope="OSG Team")
     waiting = request(
         owner,
         status=RequestStatus.CUSTOMER_INFORMATION_REQUIRED,
-        team="SSG Team",
+        team="OSG Team",
         specialist_id=analyst.id,
     )
     assert decide_request_access(analyst, RequestOperation.VIEW, waiting).allowed
     assert (
         decide_request_access(
-            actor(UserRole.DELIVERY_SPECIALIST, scope="SSG Team"),
+            actor(UserRole.DELIVERY_SPECIALIST, scope="OSG Team"),
             RequestOperation.VIEW,
             waiting,
         ).denial

@@ -29,7 +29,7 @@ describe("presentation helpers", () => {
     expect(roleLabels).toEqual({
       PLATFORM_ADMIN: "Platform Administrator",
       REQUESTER: "Customer",
-      INTAKE_TRIAGE: "CRIOC Routing User",
+      INTAKE_TRIAGE: "JIOC Routing User",
       SERVICE_COORDINATION: "Request Coordination User",
       OPERATIONS_ALLOCATION: "Ops Routing User",
       DELIVERY_TEAM_LEAD: "Team Manager",
@@ -48,7 +48,7 @@ describe("presentation helpers", () => {
     ]);
     expect(navigationForRole("INTAKE_TRIAGE")).toEqual([
       { label: "Home", path: "/overview" },
-      { label: "CRIOC routing queue", path: "/triage" },
+      { label: "JIOC routing queue", path: "/triage" },
       { label: "Personal calendar", path: "/calendar/month" },
       { label: "Request tracking", path: "/tracking" },
       { label: "Organisation directory", path: "/organisation" },
@@ -113,7 +113,7 @@ describe("presentation helpers", () => {
 
   it("groups and labels statuses without exposing raw values", () => {
     expect(statusLabels).toMatchObject({
-      TRIAGE_REVIEW: "CRIOC routing",
+      TRIAGE_REVIEW: "JIOC routing",
       COORDINATION_REVIEW: "Request coordination",
       ALLOCATION_REVIEW: "Ops routing",
       DELIVERY_PLANNING: "Team assignment",

@@ -40,32 +40,135 @@
   padding-left: 24px;
 }
 .organisation-unit {
-  display: grid;
-  grid-template-columns: minmax(86px, 0.25fr) minmax(180px, 1fr) auto;
-  gap: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
   align-items: center;
   min-height: 72px;
   border-bottom: 1px solid var(--border);
+  border-left: 3px solid transparent;
   padding: 12px 14px;
   transition:
     background var(--speed-fast),
+    border-color var(--speed-fast),
     padding-left var(--speed-fast);
 }
 .organisation-unit:hover {
   padding-left: 18px;
   background: color-mix(in srgb, var(--accent) 7%, transparent);
 }
+.organisation-unit__identity {
+  flex: 1 1 220px;
+  min-width: 0;
+}
 .organisation-unit strong,
 .organisation-unit small {
   display: block;
 }
 .organisation-unit strong {
-  font-size: 0.92rem;
+  font-size: 0.95rem;
+}
+.organisation-unit--root strong {
+  font-size: 1.1rem;
+  letter-spacing: 0.01em;
 }
 .organisation-unit small {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: center;
   margin-top: 4px;
   color: var(--muted);
   font-size: 0.72rem;
+}
+.organisation-unit small .mono-ref {
+  font-size: 0.66rem;
+  opacity: 0.8;
+}
+.organisation-unit__count {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+}
+/* The viewer's branch is lit from the root down: ancestors carry a soft
+   accent rail, the viewer's own unit is unmistakable. */
+.organisation-unit--path {
+  border-left-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.organisation-unit--here {
+  border-left-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.organisation-unit--here strong {
+  color: var(--accent);
+}
+.organisation-here-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 99px;
+  padding: 5px 10px;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.organisation-place {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: start;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface-raised));
+}
+.organisation-place > svg {
+  margin-top: 4px;
+  color: var(--accent);
+}
+.organisation-place > div > span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+.organisation-place h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+.organisation-place__trail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.organisation-place__trail li + li::before {
+  content: "›";
+  margin: 0 8px;
+  color: var(--accent);
+}
+.organisation-place__trail li[aria-current="location"] {
+  color: var(--text);
+  font-weight: 700;
+}
+.organisation-place small {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.76rem;
 }
 .staffing-badge {
   display: inline-flex;

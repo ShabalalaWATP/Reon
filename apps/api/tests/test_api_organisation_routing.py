@@ -54,7 +54,7 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
     triage = await current_item(harness)
     command_workspace = await _workspace(harness, triage["id"])
     assert [(unit["name"], unit["code"]) for unit in command_workspace["route"]] == [
-        ("CRIOC", "CRIOC")
+        ("JIOC", "CRIOC")
     ]
     command_options = command_workspace["items"]
     assert [option["code"] for option in command_options] == [
@@ -174,7 +174,7 @@ async def test_alternative_route_is_exact_and_uses_own_team_without_fallback(
     assert tracked["currentOwner"] == "Team Manager"
     assert tracked["awaitingTeamStaffing"] is False
     assert [unit["name"] for unit in tracked["route"]] == [
-        "CRIOC",
+        "JIOC",
         "SYGOC",
         "Nimbus Ops",
         "Beacon Team",
@@ -256,6 +256,6 @@ async def test_organisation_reference_data_is_authenticated_and_complete(
     assert len(items) == 40
     assert sum(item["staffingStatus"] == "STAFFED" for item in items) == 27
     assert next(item for item in items if item["code"] == "SSG_TEAM")["name"] == (
-        "SSG Team"
+        "OSG Team"
     )
     assert all("candidateGroup" not in item for item in items)

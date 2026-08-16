@@ -17,7 +17,7 @@ role queue and organisation workspace clearly.
 
 ### Routing user opens an available action
 
-As a CRIOC Routing User, I want an action link to open the matching CRIOC queue
+As a JIOC Routing User, I want an action link to open the matching JIOC queue
 item so that I can claim and route the intended request without finding it again.
 
 ### Assigned user returns to their action
@@ -37,8 +37,8 @@ ended or my access changed, rather than being shown an unrelated queue item.
 
 ### User understands the navigation
 
-As a member of CRIOC, I want to see **My assigned actions**,
-**CRIOC routing queue** and **CRIOC workspace** so that I can distinguish an action
+As a member of JIOC, I want to see **My assigned actions**,
+**JIOC routing queue** and **JIOC workspace** so that I can distinguish an action
 inbox, routing decisions and unit collaboration.
 
 ## Functional requirements
@@ -46,7 +46,7 @@ inbox, routing decisions and unit collaboration.
 1. Customer actions continue to link to their authorised request page.
 2. Staff workflow actions link to the role queue with an opaque request UUID in
    the `requestId` query parameter.
-3. CRIOC, command, Ops, Team Manager, Team Analyst and QC actions use their own
+3. JIOC, command, Ops, Team Manager, Team Analyst and QC actions use their own
    queue route.
 4. The work-list API accepts an optional `requestId` filter and applies it inside
    the existing actor-scoped query.
@@ -77,9 +77,9 @@ inbox, routing decisions and unit collaboration.
 
 ## Acceptance criteria
 
-- Opening a CRIOC action for request A shows request A in the CRIOC queue.
+- Opening a JIOC action for request A shows request A in the JIOC queue.
 - It never shows request B as a fallback.
-- Claimed work disappears from another eligible CRIOC user's action register.
+- Claimed work disappears from another eligible JIOC user's action register.
 - The assignee sees the same action marked **Assigned to you**.
 - All supported staff roles receive the correct queue deep link.
 - The sidebar distinguishes personal actions from the named unit workspace. The

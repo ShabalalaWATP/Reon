@@ -26,7 +26,7 @@ async def test_route_snapshots_exclude_scheduled_and_expired_members(
     crioc = next(
         target
         for target in workspace.json()["allowedTargets"]
-        if target["type"] == "ROUTE_UNIT" and target["label"] == "CRIOC"
+        if target["type"] == "ROUTE_UNIT" and target["label"] == "JIOC"
     )
     now = datetime.now(UTC)
     async with harness.sessions() as session, session.begin():

@@ -97,7 +97,7 @@ The organisation hierarchy is data-driven. At each stage the current routing
 user chooses one direct child of their own unit:
 
 ```text
-CRIOC
+JIOC
   → selected command
     → selected Ops group
       → selected delivery team
@@ -109,7 +109,7 @@ fallback. A route cannot skip a level or cross into a sibling branch.
 The initial operational route is:
 
 ```text
-CRIOC → JOCK → ACSA-B Ops → SSG Team
+JIOC → DIGOC → NCGI-A Ops → OSG Team
 ```
 
 The complete tree, visibility rules and all synthetic users are in
@@ -229,7 +229,7 @@ checks that separation in FastAPI, not only in the interface.
 | Role | Purpose | Main actions |
 |---|---|---|
 | Customer | Ask for work and receive the result | Draft, submit, track, answer, cancel, download, give feedback |
-| CRIOC Routing User | Understand and direct new demand | Claim, review, request information, close or choose a command |
+| JIOC Routing User | Understand and direct new demand | Claim, review, request information, close or choose a command |
 | Request Coordination User | Coordinate work inside the selected command | Claim, hold, return, close or choose an Ops group |
 | Ops Routing User | Direct work to a delivery team | Claim, return or choose a direct team |
 | Team Manager | Make delivery accountable | Assign Lead and Contributors, oversee work, review product |
@@ -259,14 +259,14 @@ failure behaviour for every role.
 
 The workflow contains deliberate loops:
 
-- CRIOC may ask the Customer for missing information.
+- JIOC may ask the Customer for missing information.
 - A command may place the request on hold and later resume it.
 - Any assigned Analyst may ask the Customer a direct production question.
 - The Team Manager or QC reviewer may return the product to the assigned Analysts.
 - The Customer may withdraw or cancel an eligible active request.
 
 After the delivery team is selected, the product does not travel back through
-CRIOC, command or Ops for approval. It goes from assigned Analysts to Team
+JIOC, command or Ops for approval. It goes from assigned Analysts to Team
 Manager, QC review, a separate QC release Manager, then the Customer.
 
 The complete task and outcome table is in the
@@ -656,11 +656,11 @@ The local seed contains 108 synthetic Scottish-football display names:
 - local-only password: `admin`;
 - `admin1`: Platform Administrator;
 - `admin2`: Customer John McGinn;
-- `admin4` and `admin74`: representative CRIOC access;
-- `admin5` and `admin76`: representative JOCK access;
-- `admin6` and `admin82`: representative ACSA-B Ops access;
-- `admin8`: SSG Team Manager Grant Hanley;
-- `admin11`: SSG Team Analyst Lewis Ferguson;
+- `admin4` and `admin74`: representative JIOC access;
+- `admin5` and `admin76`: representative DIGOC access;
+- `admin6` and `admin82`: representative NCGI-A Ops access;
+- `admin8`: OSG Team Manager Grant Hanley;
+- `admin11`: OSG Team Analyst Lewis Ferguson;
 - `admin15`, `admin100` and `admin101`: QC Managers Angus Gunn, Neil Alexander
   and Zander Clark, any of whom may review, and one of whom, not the reviewer,
   releases;

@@ -31,13 +31,13 @@ tamper-evident journey without regaining action authority.
 - A return request is not a transfer. It records the named upstream destination
   and reason for the current owner and every authorised route participant.
 - The current owner fulfils it through the existing explicit return controls.
-  Requests can travel back through ACSA-B Ops and JOCK to CRIOC without allowing
+  Requests can travel back through NCGI-A Ops and DIGOC to JIOC without allowing
   a previous handler to seize or silently mutate live work.
 - Nobody who merely monitored or previously routed a request may seize it.
 
 ## Acceptance criteria
 
-1. CRIOC, JOCK and ACSA-B Ops can each monitor a request after routing it onward.
+1. JIOC, DIGOC and NCGI-A Ops can each monitor a request after routing it onward.
 2. A user outside the selected route receives the same non-disclosing not-found
    response for list and detail access.
 3. Filters compose and cursor pagination retains the selected filters.

@@ -302,12 +302,12 @@ async def test_claim_defensively_rejects_a_preassigned_visible_bundle(
 
 @pytest.mark.asyncio
 async def test_analyst_cannot_claim_an_open_task_even_if_it_is_projected() -> None:
-    specialist = actor(UserRole.DELIVERY_SPECIALIST, scope="SSG Team")
+    specialist = actor(UserRole.DELIVERY_SPECIALIST, scope="OSG Team")
     value = bundle(
         specialist,
         status=RequestStatus.IN_PROGRESS,
         specialist_id=specialist.id,
-        team="SSG Team",
+        team="OSG Team",
     )
     repository = FakeWorkRepository(value)
     repository.bundles = [value]

@@ -51,14 +51,14 @@ async def test_specialist_listing_is_active_team_scoped_and_ordered(
     _, factory = work_database
     async with factory() as session:
         await seed_organisation_units(session)
-        second = make_user(UserRole.DELIVERY_SPECIALIST, "SSG Team")
+        second = make_user(UserRole.DELIVERY_SPECIALIST, "OSG Team")
         second.display_name = "Synthetic Bravo"
-        first = make_user(UserRole.DELIVERY_SPECIALIST, "SSG Team")
+        first = make_user(UserRole.DELIVERY_SPECIALIST, "OSG Team")
         first.display_name = "Synthetic Alpha"
-        inactive = make_user(UserRole.DELIVERY_SPECIALIST, "SSG Team")
+        inactive = make_user(UserRole.DELIVERY_SPECIALIST, "OSG Team")
         inactive.is_active = False
         another_team = make_user(UserRole.DELIVERY_SPECIALIST, "Cedar Team")
-        wrong_role = make_user(UserRole.DELIVERY_TEAM_LEAD, "SSG Team")
+        wrong_role = make_user(UserRole.DELIVERY_TEAM_LEAD, "OSG Team")
         session.add_all([second, first, inactive, another_team, wrong_role])
         await session.flush()
         session.add_all(
@@ -90,7 +90,7 @@ async def test_specialist_listing_is_active_team_scoped_and_ordered(
         await session.flush()
 
         actors = await SqlAlchemyWorkRepository(session).list_active_specialists(
-            "SSG Team"
+            "OSG Team"
         )
         assert [actor.display_name for actor in actors] == [
             "Synthetic Alpha",

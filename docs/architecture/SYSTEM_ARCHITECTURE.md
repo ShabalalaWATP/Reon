@@ -278,7 +278,7 @@ claim causes the next atomic request-event projection to address only the named
 assignee and mark it `PERSONAL`.
 
 Customer actions link to the Customer request page. Staff actions link to the
-appropriate CRIOC, command, Ops, Team Manager, Team Analyst or QC queue with the
+appropriate JIOC, command, Ops, Team Manager, Team Analyst or QC queue with the
 request UUID as a selector. `GET /work-items?requestId=...` applies that selector
 inside the existing actor-scoped task query. A copied UUID therefore cannot
 broaden access. A missing, completed or differently assigned task returns no
@@ -289,7 +289,7 @@ The navigation separates personal work from shared unit work:
 
 - **My assigned actions** is the sidebar route to the personal and explicitly
   shared action register;
-- the organisation-named workspace, such as **CRIOC workspace**, contains the
+- the organisation-named workspace, such as **JIOC workspace**, contains the
   actionable unit queue, people, calendar, statistics and activity;
 - standalone purpose-named queue routes remain compatible with notification and
   bookmarked deep links, but are not duplicated in the sidebar when a current

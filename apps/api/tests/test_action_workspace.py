@@ -181,7 +181,7 @@ async def test_action_role_membership_and_account_are_rechecked(
             action_type="TEAM_INTAKE",
             reference="SR-TEAM",
             safe_title=None,
-            current_owner="SSG Team",
+            current_owner="OSG Team",
             required_by=None,
             last_changed_at=now,
             completed_at=None,
@@ -199,7 +199,7 @@ async def test_action_role_membership_and_account_are_rechecked(
         manager_workspace = await ActionService(repository).workspace(
             manager, ActionFilters(), limit=10, cursor=None, now=now
         )
-        assert manager_workspace.items[0].current_owner == "SSG Team · Awaiting owner"
+        assert manager_workspace.items[0].current_owner == "OSG Team · Awaiting owner"
 
         await session.execute(
             delete(TeamMembership).where(

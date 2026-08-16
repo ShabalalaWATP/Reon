@@ -266,26 +266,28 @@ class SqlAlchemyAdminRepository(AdminReadRepositoryMixin):
         old_name: str,
         new_name: str,
     ) -> None:
-        member_ids: set[UUID] = set()
-        if unit.kind is OrganisationKind.TEAM:
-            member_ids = set(
-                await self.session.scalars(
-                    select(User.id)
-                    .join(
-                        UserOrganisationMembership,
-                        UserOrganisationMembership.user_id == User.id,
-                    )
-                    .where(
-                        UserOrganisationMembership.unit_id == unit.id,
-                        User.role.in_(
-                            [
-                                UserRole.DELIVERY_TEAM_LEAD,
-                                UserRole.DELIVERY_SPECIALIST,
-                            ]
-                        ),
-                    )
-                )
+        # Team members carry the unit name as an authorising scope, so every
+        # Manager and Analyst follows the rename. Members of any other unit
+        # carry it only as a display label, and only where that label was the
+        # old name; a shared scope such as a multi-unit routing pool is kept.
+        membership = select(User.id).join(
+            UserOrganisationMembership,
+            UserOrganisationMembership.user_id == User.id,
+        )
+        member_query = (
+            membership.where(
+                UserOrganisationMembership.unit_id == unit.id,
+                User.role.in_(
+                    [UserRole.DELIVERY_TEAM_LEAD, UserRole.DELIVERY_SPECIALIST]
+                ),
             )
+            if unit.kind is OrganisationKind.TEAM
+            else membership.where(
+                UserOrganisationMembership.unit_id == unit.id,
+                User.scope == old_name,
+            )
+        )
+        member_ids = set(await self.session.scalars(member_query))
         if member_ids:
             await self.session.execute(
                 update(User)

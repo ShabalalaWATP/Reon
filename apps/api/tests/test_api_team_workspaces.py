@@ -37,7 +37,7 @@ async def test_workspace_access_overview_people_activity_and_scope_boundaries(
 ) -> None:
     harness = api_harness
     ssg = await _workspace(harness, "admin8", "SSG_TEAM")
-    assert ssg["teamName"] == "SSG Team"
+    assert ssg["teamName"] == "OSG Team"
     assert ssg["grantId"]
     assert set(ssg["permissions"]) == {
         "STATISTICS",
@@ -292,8 +292,8 @@ async def test_active_service_work_blocks_roster_removal_and_transfer(
                 reference="SR-ROSTER-BLOCK-001",
                 requester_id=requester_id,
                 status=RequestStatus.IN_PROGRESS,
-                current_owner="SSG Team",
-                assigned_delivery_team="SSG Team",
+                current_owner="OSG Team",
+                assigned_delivery_team="OSG Team",
                 assigned_specialist_id=analyst_id,
                 **RequestCreate.model_validate(request_payload()).model_dump(),
             )

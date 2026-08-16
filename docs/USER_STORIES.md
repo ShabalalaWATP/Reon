@@ -14,7 +14,7 @@ workflow task.
 2. [People and responsibilities](#people-and-responsibilities)
 3. [Rules shared by every story](#rules-shared-by-every-story)
 4. [Customer stories](#customer-stories)
-5. [CRIOC routing stories](#crioc-routing-stories)
+5. [JIOC routing stories](#crioc-routing-stories)
 6. [Command coordination stories](#command-coordination-stories)
 7. [Ops routing stories](#ops-routing-stories)
 8. [Team Manager stories](#team-manager-stories)
@@ -45,7 +45,7 @@ The stories describe current product behaviour. Delivery history belongs in the
 | Person | Main responsibility | Primary workspace |
 |---|---|---|
 | Customer | State a complete need and receive the released product | My requests |
-| CRIOC Routing User | Review new demand and choose a direct command | CRIOC workspace |
+| JIOC Routing User | Review new demand and choose a direct command | JIOC workspace |
 | Request Coordination User | Coordinate the request and choose a direct Ops group | Command workspace |
 | Ops Routing User | Choose a direct delivery team | Ops workspace |
 | Team Manager | Assign Analysts, oversee delivery and check the product | Team workspace |
@@ -59,8 +59,8 @@ The stories describe current product behaviour. Delivery history belongs in the
 | Runtime operator | Deploy, observe, back up and restore the service | Controlled operational tooling |
 
 The representative workflow role and the workspace position are separate. For
-example, a person can be a CRIOC Routing User and also hold the Manager position in
-the CRIOC workspace. The workflow role controls routing actions. The workspace
+example, a person can be a JIOC Routing User and also hold the Manager position in
+the JIOC workspace. The workflow role controls routing actions. The workspace
 position controls roster and collaboration administration.
 
 ## Rules shared by every story
@@ -199,7 +199,7 @@ my request needs input, is being worked on or has completed.
 
 ### CUST-06: Answer a question
 
-**Need:** As a Customer, I want questions from CRIOC or the assigned Lead to appear
+**Need:** As a Customer, I want questions from JIOC or the assigned Lead to appear
 inside my request so that the full exchange is kept with the work.
 
 **Expected behaviour**
@@ -207,7 +207,7 @@ inside my request so that the full exchange is kept with the work.
 - The dashboard highlights that information is required.
 - The question, reason, requester and response deadline are visible.
 - The Customer submits an answer from the request page.
-- The answer is appended to the history and work returns to CRIOC or the same Analyst assignment,
+- The answer is appended to the history and work returns to JIOC or the same Analyst assignment,
   depending on where the question began.
 
 **Acceptance checks**
@@ -276,17 +276,17 @@ current information without unrelated staff-operational tools adding noise.
   Administrator using the dedicated administration path.
 - The Customer profile remains available from the account menu.
 
-## CRIOC routing stories
+## JIOC routing stories
 
-### CRIOC-01: Review a newly submitted request
+### JIOC-01: Review a newly submitted request
 
-**Need:** As a CRIOC Routing User, I want new requests in a shared CRIOC queue so
+**Need:** As a JIOC Routing User, I want new requests in a shared JIOC queue so
 that one named person can review and direct each request.
 
 **Expected behaviour**
 
-- An unclaimed item is described as awaiting CRIOC action.
-- A CRIOC user claims the item before recording a decision.
+- An unclaimed item is described as awaiting JIOC action.
+- A JIOC user claims the item before recording a decision.
 - The reviewer can read the submitted revision and current request history needed
   for routing.
 - The reviewer can request information, close with a reason or select one direct
@@ -294,14 +294,14 @@ that one named person can review and direct each request.
 
 **Acceptance checks**
 
-- A non-CRIOC account cannot list, claim or complete the task.
-- Two CRIOC users cannot both become the assignee.
+- A non-JIOC account cannot list, claim or complete the task.
+- Two JIOC users cannot both become the assignee.
 - The selected command is revalidated as a current effective direct child.
 - The decision, actor, destination and reason are audited.
 
-### CRIOC-02: Examine possible related requests
+### JIOC-02: Examine possible related requests
 
-**Need:** As a CRIOC reviewer, I want a compact optional comparison with previous
+**Need:** As a JIOC reviewer, I want a compact optional comparison with previous
 authorised requests so that I can record whether existing work is relevant.
 
 **Expected behaviour**
@@ -321,9 +321,9 @@ authorised requests so that I can record whether existing work is relevant.
 - Each new submitted request is added to the searchable projection.
 - Semantic enrichment failure leaves full-text matching available.
 
-### CRIOC-03: Track the selected branch
+### JIOC-03: Track the selected branch
 
-**Need:** As a CRIOC user, I want to follow a request after routing so that I can
+**Need:** As a JIOC user, I want to follow a request after routing so that I can
 see where it sits without becoming a product approver.
 
 **Expected behaviour**
@@ -331,12 +331,12 @@ see where it sits without becoming a product approver.
 - Tracking shows title, reference, current stage, responsible organisation and a
   visual route journey.
 - The reference and title open the authorised tracking detail.
-- CRIOC can see aggregate statistics for itself and descendants.
+- JIOC can see aggregate statistics for itself and descendants.
 - Product review and dissemination controls never appear.
 
 **Acceptance checks**
 
-- CRIOC sees JOCK, SYGOC and MYGOC branches, because they are descendants.
+- JIOC sees DIGOC, SYGOC and MYGOC branches, because they are descendants.
 - The tracking permission does not expose unreleased files or Customer feedback.
 
 ## Command coordination stories
@@ -350,13 +350,13 @@ understand the request and choose the appropriate direct Ops group.
 
 - The shared queue identifies the command currently responsible.
 - A named user claims the task before acting.
-- The user can route to a direct Ops group, return to CRIOC, place on hold or close
+- The user can route to a direct Ops group, return to JIOC, place on hold or close
   with the required reason.
 - Every configured direct Ops group is selectable when effective.
 
 **Acceptance checks**
 
-- JOCK cannot choose an Ops group belonging to SYGOC or MYGOC.
+- DIGOC cannot choose an Ops group belonging to SYGOC or MYGOC.
 - A stale or forged destination is rejected by FastAPI.
 - Manager and Member positions have the same routing decision. The Manager
   position does not add an approval step.
@@ -380,8 +380,8 @@ descendants so that I can manage my demand without seeing sibling commands.
 
 **Acceptance checks**
 
-- JOCK sees JOCK, its Ops groups and delivery teams.
-- JOCK cannot see SYGOC or MYGOC statistics.
+- DIGOC sees DIGOC, its Ops groups and delivery teams.
+- DIGOC cannot see SYGOC or MYGOC statistics.
 - Each graph has readable labels and an accessible table equivalent.
 - Small feedback cohorts are suppressed rather than identifying individuals.
 
@@ -401,7 +401,7 @@ the responsible Manager receives the assignment task.
 
 **Acceptance checks**
 
-- ACSA-B Ops can select SSG, Cedar or Quartz, but cannot select a team in another
+- NCGI-A Ops can select SSG, Cedar or Quartz, but cannot select a team in another
   Ops branch.
 - An unstaffed direct team remains visible as awaiting staffing and never borrows
   SSG users.
@@ -414,8 +414,8 @@ so that I can see demand, timeliness and current distribution.
 
 **Acceptance checks**
 
-- ACSA-B Ops sees ACSA-B Ops, SSG, Cedar and Quartz data.
-- It does not see CRIOC totals, other commands or sibling Ops groups.
+- NCGI-A Ops sees NCGI-A Ops, SSG, Cedar and Quartz data.
+- It does not see JIOC totals, other commands or sibling Ops groups.
 - Figures use content-free facts and do not reveal request narrative.
 
 ## Team Manager stories
@@ -733,7 +733,7 @@ I can identify operational problems without becoming a support super-user.
 
 ### WS-01: Use an organisation workspace
 
-**Need:** As a person assigned to CRIOC, a command, an Ops group or a delivery
+**Need:** As a person assigned to JIOC, a command, an Ops group or a delivery
 team, I want one workspace for the unit so that its work queue, people,
 calendar, statistics and activity are easy to find.
 
@@ -855,8 +855,8 @@ These scenarios combine several stories and are useful for acceptance testing.
 ### E2E-01: Standard SSG delivery
 
 - **Given** John McGinn has an active Customer account and all required information
-- **When** he submits a request, CRIOC selects JOCK, JOCK selects ACSA-B Ops,
-ACSA-B Ops selects SSG Team, the SSG Manager assigns a Lead and two additional
+- **When** he submits a request, JIOC selects DIGOC, DIGOC selects NCGI-A Ops,
+NCGI-A Ops selects OSG Team, the SSG Manager assigns a Lead and two additional
 Analysts, one assigned Analyst submits a managed product, the Team Manager
 approves it, one QC Manager reviews it and a different QC Manager releases it
 - **Then** John sees the released file or link in his dashboard, can download it and
@@ -873,7 +873,7 @@ controls while the Lead remains visibly accountable.
 - **Then** the Customer receives an exact dashboard action, the response is stored
 with the request and work returns to the same assignment.
 
-No new CRIOC, command or Ops approval is introduced.
+No new JIOC, command or Ops approval is introduced.
 
 ### E2E-03: Product rework
 
@@ -887,12 +887,12 @@ release explicitly selects an approved clean artefact.
 
 ### E2E-04: Sibling branch isolation
 
-- **Given** one request is routed through JOCK and another through SYGOC
-- **When** a JOCK user opens tracking, statistics, search or a copied request URL
-- **Then** only the JOCK branch is accessible. SYGOC records are absent or return a
+- **Given** one request is routed through DIGOC and another through SYGOC
+- **When** a DIGOC user opens tracking, statistics, search or a copied request URL
+- **Then** only the DIGOC branch is accessible. SYGOC records are absent or return a
 non-enumerating denial.
 
-CRIOC can see both branches because both are its descendants.
+JIOC can see both branches because both are its descendants.
 
 ### E2E-05: Team staffing change during work
 
@@ -924,7 +924,7 @@ Another Customer, a stale page or a terminal request cannot perform the action.
 
 - **Given** a current SSG Analyst creates a personal appointment
 - **When** they mark it private
-- **Then** the full entry remains in their personal calendar and the SSG Team
+- **Then** the full entry remains in their personal calendar and the OSG Team
 calendar shows only `Busy` and the time.
 
 If the same Analyst creates visible leave or training, the title and details

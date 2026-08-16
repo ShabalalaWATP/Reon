@@ -69,11 +69,13 @@ async def materialise_configuration_units(
             groups=groups.get(revision.unit_id, {}),
             staffing=staffing.get(revision.unit_id, StaffingCount()),
         )
-        if revision.kind is OrganisationKind.TEAM and prior_name != revision.name:
-            await _update_team_member_scopes(
+        if prior_name is not None and prior_name != revision.name:
+            await _update_member_scopes(
                 session,
                 revision.unit_id,
-                revision.name,
+                kind=revision.kind,
+                old_name=prior_name,
+                name=revision.name,
             )
     configured_ids = set(configured)
     for unit_id, unit in existing.items():
@@ -84,21 +86,33 @@ async def materialise_configuration_units(
     await rebuild_organisation_closure(session)
 
 
-async def _update_team_member_scopes(
+async def _update_member_scopes(
     session: AsyncSession,
-    team_id: UUID,
+    unit_id: UUID,
+    *,
+    kind: OrganisationKind,
+    old_name: str,
     name: str,
 ) -> None:
+    """Carry a unit rename into member scope.
+
+    Team members hold the unit name as an authorising scope, so every Manager
+    and Analyst follows the rename. Members of any other unit hold it only as
+    a display label, so only those whose label was the old name follow; a
+    shared scope for a multi-unit routing pool is left alone.
+    """
+
     member_ids = select(UserOrganisationMembership.user_id).where(
-        UserOrganisationMembership.unit_id == team_id
+        UserOrganisationMembership.unit_id == unit_id
+    )
+    membership_rule = (
+        User.role.in_([UserRole.DELIVERY_TEAM_LEAD, UserRole.DELIVERY_SPECIALIST])
+        if kind is OrganisationKind.TEAM
+        else User.scope == old_name
     )
     await session.execute(
         update(User)
-        .where(
-            User.id.in_(member_ids),
-            User.role.in_([UserRole.DELIVERY_TEAM_LEAD, UserRole.DELIVERY_SPECIALIST]),
-            User.scope != name,
-        )
+        .where(User.id.in_(member_ids), membership_rule, User.scope != name)
         .values(scope=name, version=User.version + 1)
         .execution_options(synchronize_session=False)
     )

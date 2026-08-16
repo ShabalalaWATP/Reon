@@ -61,7 +61,7 @@ describe("route-scoped request tracking", () => {
 
     const view = renderApp("/tracking");
     expect(await screen.findByRole("heading", { name: "Request tracking" })).toBeInTheDocument();
-    expect(screen.getByText("CRIOC routing queue")).toBeInTheDocument();
+    expect(screen.getByText("JIOC routing queue")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: trackedRequest.reference })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: trackedRequest.title })).toHaveAttribute(
       "href",

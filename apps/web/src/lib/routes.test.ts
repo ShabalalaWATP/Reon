@@ -33,7 +33,7 @@ describe("route document titles", () => {
     ["/product-packages/new", "Product package · Mist Service"],
     ["/tracking", "Request tracking · Mist Service"],
     ["/tracking/request-1", "Tracked request · Mist Service"],
-    ["/triage", "CRIOC routing queue · Mist Service"],
+    ["/triage", "JIOC routing queue · Mist Service"],
     ["/coordination", "Incoming requests · Mist Service"],
     ["/allocation", "Ops routing queue · Mist Service"],
     ["/delivery/team", "Team work queue · Mist Service"],
@@ -61,6 +61,6 @@ describe("member labels", () => {
   it("leaves every other role on its representative label regardless of position", () => {
     expect(memberLabel("DELIVERY_SPECIALIST", "MEMBER")).toBe("Team Analyst");
     expect(memberLabel("DELIVERY_TEAM_LEAD", "MANAGER")).toBe("Team Manager");
-    expect(memberLabel("INTAKE_TRIAGE", "MEMBER")).toBe("CRIOC Routing User");
+    expect(memberLabel("INTAKE_TRIAGE", "MEMBER")).toBe("JIOC Routing User");
   });
 });

@@ -2,11 +2,11 @@
 
 ## Outcome
 
-During an actively claimed CRIOC intake task, Mist automatically compares the
+During an actively claimed JIOC intake task, Mist automatically compares the
 new request with every previous submitted request the actor is authorised to
 see. It ranks strong candidates using the complete Customer-submitted
 requirement, explains the fields that contributed to each match and lets the
-named CRIOC user record a possible duplicate, related request, existing released
+named JIOC user record a possible duplicate, related request, existing released
 product or not-relevant decision.
 
 Matching remains advisory. It never closes, merges, prioritises or routes a
@@ -79,7 +79,7 @@ worker or model outage cannot block submission, routing or text search.
 
 ## Users and permissions
 
-- Only an active CRIOC Routing User who owns the current `TRIAGE_REVIEW` task may
+- Only an active JIOC Routing User who owns the current `TRIAGE_REVIEW` task may
   retrieve suggestions, search or add decisions for that request.
 - Every lexical query, vector query, comparison and save re-applies the actor's
   route-membership condition before content or scores leave persistence.
@@ -137,11 +137,11 @@ conflict and success states.
    field-level explanations on a fixed synthetic relevance corpus.
 4. Text ranking remains usable when every embedding is absent or the indexer is
    unavailable.
-5. Another CRIOC user without ownership, every other role and users outside the
+5. Another JIOC user without ownership, every other role and users outside the
    route receive no candidate content or score.
 6. Search and comparison cannot leak sibling or unrelated route content through
    results, timing-sensitive counts, excerpts or errors.
-7. A named CRIOC user can record each decision type; the action remains
+7. A named JIOC user can record each decision type; the action remains
    informational and cannot change workflow state.
 8. PostgreSQL full-text and vector indexes, empty upgrade, downgrade, re-upgrade
    and drift checks pass.

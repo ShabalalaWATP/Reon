@@ -30,7 +30,7 @@ def _actor(actor_id: object) -> Actor:
         "dual-context-specialist",
         "Dual Context Specialist",
         UserRole.DELIVERY_SPECIALIST,
-        "SSG Team",
+        "OSG Team",
     )
 
 

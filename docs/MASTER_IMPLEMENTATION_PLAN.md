@@ -65,7 +65,7 @@ not position in the file, to judge recency.
 | [Phase 0: Repository and decision foundation](#phase-0-repository-and-decision-foundation) | Phase gate |
 | [Phase 1: Reproducible secure platform](#phase-1-reproducible-secure-platform) | Phase gate |
 | [Phase 2: Customer intake and visibility](#phase-2-customer-intake-and-visibility) | Phase gate |
-| [Phase 3: CRIOC and request coordination](#phase-3-crioc-and-request-coordination) | Phase gate |
+| [Phase 3: JIOC and request coordination](#phase-3-crioc-and-request-coordination) | Phase gate |
 | [Phase 4: Camunda routing and resilience](#phase-4-camunda-routing-and-resilience) | Phase gate |
 | [Phase 5: Ops routing and product delivery](#phase-5-ops-routing-and-product-delivery) | Phase gate |
 | [Phase 6: Manager check, QC, dissemination and feedback](#phase-6-manager-check-qc-dissemination-and-feedback) | Phase gate |
@@ -229,7 +229,7 @@ resulting aggregate test and coverage figures.
 - [x] Make request title the primary tracking identity while retaining linked
   references, ownership, required date and submission date.
 - [x] Show the selected organisation route and delivery lifecycle for every
-  request visible to an exact CRIOC, command or Ops route member.
+  request visible to an exact JIOC, command or Ops route member.
 - [x] Add a direct, read-only historical detail route whose backend query repeats
   route membership and whose schema excludes actions, clarification, feedback
   and product content.
@@ -239,7 +239,7 @@ resulting aggregate test and coverage figures.
 - [x] Retain labelled legends, content-free summaries, accessible table parity,
   keyboard focus and reduced-motion behaviour.
 - [x] Pass backend and frontend coverage gates, repository quality gates,
-  production build, live CRIOC link navigation and browser console review.
+  production build, live JIOC link navigation and browser console review.
 
 ## GitHub quality and dependency automation, 9 August 2026
 
@@ -322,7 +322,7 @@ requirements are retained.
 - One structured record is the source of truth from draft through dissemination.
 - All categorisation, priority, routing, allocation, acceptance, approval and
   dissemination decisions are made by named people.
-- The first operational path is CRIOC → JOCK → ACSA-B Ops → SSG Team. Every
+- The first operational path is JIOC → DIGOC → NCGI-A Ops → OSG Team. Every
   synthetic sibling is staffed, selectable and receives its own Camunda task.
   Later staffing gaps wait visibly instead of borrowing SSG users.
 - Customers see only their records. Staff see only records within their role,
@@ -369,10 +369,10 @@ pilot:
 | Release | Explicit human action makes an approved output visible to authorised recipients |
 | Scope | Customer area for Customers; delivery team or shared queue for staff |
 | Intake schema | The thirteen fields in the approved product spec are mandatory |
-| Priority and dates | CRIOC sets priority; Customer gives required date and reason; no automatic service target |
+| Priority and dates | JIOC sets priority; Customer gives required date and reason; no automatic service target |
 | Notifications | In-app states only for MVP |
 | Related work | People search and record links; no automated matching |
-| Organisation | CRIOC is the root; all configured children route and every team has a synthetic Manager and Analyst; SSG has three Managers and seven Analysts |
+| Organisation | JIOC is the root; all configured children route and every team has a synthetic Manager and Analyst; SSG has three Managers and seven Analysts |
 
 The hierarchy, post-delivery assurance path and safe activation rules are defined in
 [Organisation and Routing](architecture/ORGANISATION_AND_ROUTING.md) and
@@ -430,9 +430,9 @@ gates pass; non-local insecure configuration fails closed.
 Exit: draft and submission journeys survive refresh and retry; list, detail and
 mutation tests prove ownership and scope isolation.
 
-## Phase 3: CRIOC and request coordination
+## Phase 3: JIOC and request coordination
 
-- [x] CRIOC Routing Users claim and review submitted demand.
+- [x] JIOC Routing Users claim and review submitted demand.
 - [x] Record priority, completeness outcome, routing destination and reasons.
 - [x] Automatically compare all submitted request fields across the authorised
   historical corpus, explain ranked matches and record duplicate, related
@@ -487,7 +487,7 @@ stale, duplicate, cross-team and invalid-transition actions are denied.
   their own output.
 - [x] Show disseminated content through an authenticated application-owned
   download only to its originating Customer.
-- [x] Keep CRIOC, command and Ops trackers read-only and remove them from the
+- [x] Keep JIOC, command and Ops trackers read-only and remove them from the
   approval path after routing. Exact-route members may reopen the original
   submission, but not actions, clarification, feedback or product content.
 - [x] Record Customer dissemination and permit one feedback response after completion.
@@ -562,7 +562,7 @@ authorisation become mandatory only if files are approved in a later specificati
 1. Save, resume, submit and track a complete request.
 2. Request and answer clarification without losing the original revision.
 3. Search authorised records and link a possible duplicate or related item.
-4. Route through JOCK → ACSA-B Ops → SSG Team, assign an Analyst and query work.
+4. Route through DIGOC → NCGI-A Ops → OSG Team, assign an Analyst and query work.
 5. Complete a route through an alternative command, Ops group and staffed team;
    prove distinct Manager and Analyst candidate groups with no SSG fallback.
 6. Record time-stamped progress notes and observe route-scoped, read-only
@@ -599,7 +599,7 @@ This workstream extended the bounded workflow MVP without changing its
 human-led routing principle. The Customer supplies structured demand. Routing
 levels track and direct it. A delivery-team Analyst produces the service
 product, the Team Manager checks it, and the Quality and Release Manager
-disseminates it. Work does not travel back through CRIOC, command or Ops for
+disseminates it. Work does not travel back through JIOC, command or Ops for
 approval.
 
 ### Expansion 0: Rebaseline and authority
@@ -612,7 +612,7 @@ approval.
 - [x] Accept management-grant, analytics, calendar and workflow-derived board
   decisions.
 - [x] Update workflow, analytics and team-workspace threat models.
-- [x] Seed exact management grants for CRIOC, command, Ops and team managers.
+- [x] Seed exact management grants for JIOC, command, Ops and team managers.
 
 Evidence: expansion specification, ADRs, threat models, organisation fixtures and
 scope-policy tests.
@@ -664,10 +664,10 @@ reconciliation evidence.
 
 ### Expansion 4: Scope-aware statistics workspaces
 
-- [x] Provide CRIOC managers with authorised CRIOC and descendant statistics.
-- [x] Provide JOCK, SYGOC and MYGOC managers only their command and descendant
+- [x] Provide JIOC managers with authorised JIOC and descendant statistics.
+- [x] Provide DIGOC, SYGOC and MYGOC managers only their command and descendant
   statistics.
-- [x] Provide ACSA-B Ops, Aurora Ops, Nimbus Ops and other Ops managers only their
+- [x] Provide NCGI-A Ops, Aurora Ops, Nimbus Ops and other Ops managers only their
   own group and direct-team statistics.
 - [x] Provide Team Managers only their exact-team statistics and Platform
   Administrators selectable content-free aggregates from the configured root.
@@ -681,7 +681,7 @@ reconciliation evidence.
   cohorts.
 
 Evidence: the cross-branch API matrix and aggregate fixture oracle cover Platform,
-CRIOC, command, Ops and Team boundaries. The React dashboard provides grant-aware
+JIOC, command, Ops and Team boundaries. The React dashboard provides grant-aware
 navigation, bounded date and time-zone controls, freshness state, chart/table
 parity and small-cohort suppression. The full gates pass at 474 backend tests
 (98.75% line, 95.51% branch) and 161 frontend tests (99.37% line, 95.52%
@@ -932,7 +932,7 @@ Status: local implementation and focused browser evidence ready on 8 August
   and popover containment.
 - [x] Complete the full repository gates and target PostgreSQL/Camunda recovery
   rehearsal, including a fresh-stack alternative route and breadcrumb payload.
-- [ ] Obtain representative CRIOC, Command, Ops, Customer and accessibility
+- [ ] Obtain representative JIOC, Command, Ops, Customer and accessibility
   acceptance.
 
 ## Maintainability and portable evaluation milestone
@@ -1049,7 +1049,7 @@ evidence is recorded in the assurance documents. Connected-environment rollout
 remains subject to the enterprise gap register.
 
 - [x] Make effective-dated Manager and Member membership authoritative for every
-  CRIOC, command, Ops and delivery-team workspace.
+  JIOC, command, Ops and delivery-team workspace.
 - [x] Seed one named Manager and Member in every routing unit, preserve all
   existing identities and extend the sequential local directory to `admin99`.
 - [x] Give every current workspace member calendar self-service for leave,
@@ -1081,11 +1081,11 @@ remains subject to the enterprise gap register.
 - [x] Pass repository policy, formatting, lint, type, dead-code, line-limit,
   documentation, licence, dependency-audit, Bandit, build and bundle gates.
 - [x] Rebuild the local Compose application, confirm all services healthy,
-  exercise the Camunda route contract and inspect CRIOC and SSG workspaces in
+  exercise the Camunda route contract and inspect JIOC and SSG workspaces in
   Chromium with no unexpected authenticated-page console error.
 - [x] Upgrade a disposable PostgreSQL database from empty to revision 0027,
   downgrade to 0023, re-upgrade and confirm no model drift.
-- [ ] Obtain representative user acceptance from CRIOC, command, Ops, SSG and QC
+- [ ] Obtain representative user acceptance from JIOC, command, Ops, SSG and QC
   users before connected-environment rollout.
 
 ## Access assistance and global classification milestone
@@ -1119,7 +1119,7 @@ rollout remains subject to the enterprise gap register.
 
 ## Explainable related-request matching milestone
 
-- [x] Keep the CRIOC progress API and interface free from uncontrolled category
+- [x] Keep the JIOC progress API and interface free from uncontrolled category
   input while retaining safe compatibility with stored records.
 - [x] Create one all-field search projection atomically with every submitted
   request and backfill the existing corpus through migration 0029.
@@ -1130,7 +1130,7 @@ rollout remains subject to the enterprise gap register.
 - [x] Reapply claimed-task and route-membership authorisation to source,
   candidates, explanations and recorded decisions.
 - [x] Show automatic top matches, match strength, contributing methods, bounded
-  field evidence and optional all-field search in the CRIOC workspace.
+  field evidence and optional all-field search in the JIOC workspace.
 - [x] Keep matching advisory and store possible duplicate, related request,
   existing released product and not-relevant human decisions without changing
   workflow position.
@@ -1179,7 +1179,7 @@ Status: implemented and assured locally on 10 August 2026. Representative-user
 acceptance remains required.
 
 - [x] Use role-specific action, queue and workspace labels, including `My
-  assigned actions`, `CRIOC routing queue` and `CRIOC workspace`.
+  assigned actions`, `JIOC routing queue` and `JIOC workspace`.
 - [x] Project every operational action to its role-owned queue with an exact,
   server-authorised `requestId` selector instead of a Customer-only detail URL.
 - [x] Keep shared, unclaimed work visible to the authorised unit while making a
@@ -1194,19 +1194,19 @@ acceptance remains required.
 - [x] Record the access-control analysis in the workflow threat model and the
   projection, selection and navigation boundaries in system architecture.
 - [x] Exercise admin4 in the local browser and prove that Open selects Russian
-  Troop Movements in the CRIOC routing queue rather than redirecting to Overview.
+  Troop Movements in the JIOC routing queue rather than redirecting to Overview.
 - [x] Pass 951 backend tests at 98.88 per cent statement and 95.06 per cent
   branch coverage, plus 338 frontend tests at 99.46 per cent line and 95.00 per
   cent branch coverage.
 - [x] Pass formatting, Ruff, MyPy, Bandit, ESLint, TypeScript, dead-code,
   line-limit, documentation, licence, OpenAPI, Dependabot, secret-scan contract,
   dependency-audit, production-build and PostgreSQL schema-drift gates.
-- [ ] Obtain acceptance from representative CRIOC, command, Ops, delivery and QC
+- [ ] Obtain acceptance from representative JIOC, command, Ops, delivery and QC
   users for the final labels and linked-action recovery message.
 
 ## Compact previous-request evidence milestone
 
-Status: implemented and assured locally on 10 August 2026. Representative CRIOC
+Status: implemented and assured locally on 10 August 2026. Representative JIOC
 acceptance remains required.
 
 - [x] Keep automatic comparison running without automatically exposing a long
@@ -1221,14 +1221,14 @@ acceptance remains required.
   semantics without changing the API or workflow.
 - [x] Pass the complete 339-test frontend suite at 99.46 per cent line and 95.02
   per cent branch coverage, plus TypeScript, ESLint and line-limit checks.
-- [ ] Obtain representative CRIOC acceptance for the summary wording and expanded
+- [ ] Obtain representative JIOC acceptance for the summary wording and expanded
   result height at normal operational display sizes.
 
 ## Workspace-authority identity milestone
 
 Status: implemented and assured locally on 10 August 2026.
 
-- [x] Preserve `CRIOC Routing User` as the representative workflow role while
+- [x] Preserve `JIOC Routing User` as the representative workflow role while
   displaying the independent, permission-bearing Manager or Member position.
 - [x] Combine role and position in the compact account identity and name each
   organisation-position pair explicitly in the account details and profile.
@@ -1257,7 +1257,7 @@ acceptance remains required.
 - [x] Pass 368 frontend tests at 99.52 per cent line and 95.06 per cent branch
   coverage, including accessible tile navigation, capability-derived links,
   zero states and reduced-motion styling.
-- [ ] Obtain representative CRIOC, command, Ops, QC and Administrator acceptance
+- [ ] Obtain representative JIOC, command, Ops, QC and Administrator acceptance
   for the final wording and information hierarchy.
 
 ## Explicit personal-calendar visibility milestone
@@ -1298,7 +1298,7 @@ acceptance remains required.
 - [x] Pass 953 backend tests plus the defensive ownership regression at 98.87
   per cent line and 95.02 per cent branch coverage, 369 frontend tests at 99.52
   per cent line and 95.06 per cent branch coverage, and all repository checks.
-- [ ] Obtain representative JOCK, SYGOC and MYGOC acceptance for the final
+- [ ] Obtain representative DIGOC, SYGOC and MYGOC acceptance for the final
   queue and ownership wording.
 
 ## Separated delivery-board milestone
@@ -1348,7 +1348,7 @@ acceptance remains required.
 - [x] Verify desktop and 390-pixel browser layouts with a clean console, pass
   all 395 frontend tests, and pass the build, bundle-budget and repository
   quality gates.
-- [ ] Obtain representative CRIOC, JOCK and ACSA-B Ops acceptance for the new
+- [ ] Obtain representative JIOC, DIGOC and NCGI-A Ops acceptance for the new
   tracking hierarchy and stage wording.
 
 ## Routing workspace monitoring and Customer acceptance milestone
@@ -1396,7 +1396,7 @@ Status: implemented and live-verified on 14 August 2026.
   workflow network without requiring host Camunda exposure.
 - [x] Reuse one exact active process on restart and refuse conflicts or an
   existing unattested deployment without mutating workflow state.
-- [x] Exercise the primary CRIOC, JOCK, ACSA-B Ops, SSG Team, Ben Doak, Manager,
+- [x] Exercise the primary JIOC, DIGOC, NCGI-A Ops, OSG Team, Ben Doak, Manager,
   QC and Customer-download route through the real API, database and Camunda.
 - [x] Exercise the configured SYGOC, Nimbus Ops and Beacon Team alternative
   through the same real application boundary.

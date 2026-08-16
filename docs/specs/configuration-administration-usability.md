@@ -166,12 +166,12 @@ may help a person find a destination, but must never rank, recommend or select i
 
 ### HRU-01: Route through direct children only
 
-As a CRIOC, Command or Ops Routing User, I need to see only the valid immediate
+As a JIOC, Command or Ops Routing User, I need to see only the valid immediate
 children of the current route so that I cannot accidentally skip a level.
 
 Acceptance criteria:
 
-1. CRIOC lists effective Commands, a Command lists its effective Ops groups, and
+1. JIOC lists effective Commands, a Command lists its effective Ops groups, and
    an Ops group lists its effective teams.
 2. Every configured sibling remains selectable, including fictional seeded
    branches and an explicitly marked unstaffed team.
@@ -245,7 +245,7 @@ Acceptance criteria:
 
 ### HRU-07: Request more information without losing the route
 
-As a CRIOC Routing User or assigned Analyst, I need a stored clarification thread
+As a JIOC Routing User or assigned Analyst, I need a stored clarification thread
 so that the Customer can respond within the dashboard and routing context remains
 attributable.
 
@@ -258,7 +258,7 @@ Acceptance criteria:
 
 ### HRU-08: Track without approval authority
 
-As CRIOC, selected Command or selected Ops staff, I need scoped progress visibility
+As JIOC, selected Command or selected Ops staff, I need scoped progress visibility
 after routing so that I can coordinate work without approving the product.
 
 Acceptance criteria:

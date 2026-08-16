@@ -121,7 +121,7 @@ async def test_administrator_cannot_invert_delivery_workspace_positions(
             json={
                 "displayName": f"Invalid {role}",
                 "role": role,
-                "scope": "SSG Team",
+                "scope": "OSG Team",
                 "organisationUnitIds": [str(ssg_id)],
                 "workspacePosition": position,
             },

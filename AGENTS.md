@@ -5,7 +5,7 @@ These instructions supplement Alex Orr's global Codex instructions.
 ## Product boundary
 
 - This is a synthetic, public-repository-safe service-request MVP.
-- Use the agreed representative language: Customer, CRIOC Routing User, Request
+- Use the agreed representative language: Customer, JIOC Routing User, Request
   Coordination User, Ops Routing User, Team Manager, Team Analyst, QC User,
   QC Manager, service product and dissemination. Keep technical enum values stable
   where changing them would add migration risk.

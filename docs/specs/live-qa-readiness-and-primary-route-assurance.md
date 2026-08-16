@@ -16,9 +16,9 @@ the primary SSG route and a configured alternative route.
    exists, and stops without mutation on conflicts or unattested existing state.
 4. A rebuilt QA stack reports database, workflow, configuration and maintenance
    checks as `ok`.
-5. The primary journey exercises Customer, CRIOC, JOCK, ACSA-B Ops, SSG Team,
+5. The primary journey exercises Customer, JIOC, DIGOC, NCGI-A Ops, OSG Team,
    Ben Doak as Lead Analyst, Manager review, QC and Customer download.
-6. The alternative journey exercises Customer, CRIOC, SYGOC, Nimbus Ops,
+6. The alternative journey exercises Customer, JIOC, SYGOC, Nimbus Ops,
    Beacon Team, Manager review, QC and Customer download.
 7. Journey scripts use the current public request and assignment schemas.
 8. Local passwords remain environment inputs and are never written to reports.

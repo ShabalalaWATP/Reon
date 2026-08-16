@@ -8,12 +8,12 @@ from mist_service.policies import decide_work_access, decide_work_completion
 
 def test_assigned_analyst_can_view_and_complete_shared_delivery_work() -> None:
     owner = actor(UserRole.REQUESTER)
-    lead = actor(UserRole.DELIVERY_SPECIALIST, scope="SSG Team")
-    analyst = actor(UserRole.DELIVERY_SPECIALIST, scope="SSG Team")
+    lead = actor(UserRole.DELIVERY_SPECIALIST, scope="OSG Team")
+    analyst = actor(UserRole.DELIVERY_SPECIALIST, scope="OSG Team")
     delivery = request(
         owner,
         status=RequestStatus.IN_PROGRESS,
-        team="SSG Team",
+        team="OSG Team",
         specialist_id=lead.id,
         participants=frozenset({lead.id, analyst.id}),
     )
@@ -27,7 +27,7 @@ def test_assigned_analyst_can_view_and_complete_shared_delivery_work() -> None:
     assert decide_work_access(analyst, shared, WorkOperation.COMPLETE).allowed
     assert decide_work_completion(analyst, delivery, "submit", lead.id).allowed
 
-    outsider = actor(UserRole.DELIVERY_SPECIALIST, scope="SSG Team")
+    outsider = actor(UserRole.DELIVERY_SPECIALIST, scope="OSG Team")
     assert (
         decide_work_completion(outsider, delivery, "submit", lead.id).denial
         is PolicyDenial.OBJECT_SCOPE

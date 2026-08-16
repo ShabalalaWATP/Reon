@@ -54,7 +54,7 @@ desktop and narrow-screen widths.
 | Role | Objective | MVP activity | Value |
 | --- | --- | --- | --- |
 | Customer | Receive a timely response | Submit, track, download and give feedback | Complete requests and visible progress |
-| CRIOC Routing User | Understand and direct incoming demand | Review, categorise, request information or select a command | One source of truth and less administration |
+| JIOC Routing User | Understand and direct incoming demand | Review, categorise, request information or select a command | One source of truth and less administration |
 | Request Coordination User | Direct work to the appropriate Ops group | Hold, resume, track and select a direct Ops group | Visible demand, ownership and progress |
 | Ops Routing User | Direct work to the appropriate team | Select any direct team and track progress | Clear demand and workload ownership |
 | Team Manager | Assign and oversee delivery | Assign Analysts and check their service product | One view of origin, ownership and delivery |
@@ -126,13 +126,13 @@ and download authorisation.
 
 ```text
 Submit request
-  -> CRIOC routing
-     -> Information required -> Customer response -> CRIOC routing
+  -> JIOC routing
+     -> Information required -> Customer response -> JIOC routing
      -> Closed without delivery
      -> Select command
         -> Request coordination
            -> On hold -> Request coordination
-           -> Return to CRIOC
+           -> Return to JIOC
            -> Select direct Ops group
               -> Ops routing
                  -> Return to request coordination
@@ -161,7 +161,7 @@ task. Camunda must not infer or recommend a route.
 The Customer dashboard groups these into Needs your input, In progress and
 Completed without exposing engine terminology.
 
-CRIOC, Request Coordination and Ops Routing Users retain a separate route-scoped,
+JIOC, Request Coordination and Ops Routing Users retain a separate route-scoped,
 read-only tracker after their routing action. It shows title, reference,
 ownership and lifecycle and permits an exact-route member to reopen the original
 submitted request. It excludes actions, clarification, feedback and product

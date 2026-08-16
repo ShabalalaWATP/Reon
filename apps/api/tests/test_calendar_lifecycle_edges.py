@@ -143,8 +143,8 @@ async def test_team_calendar_enforces_exact_manager_and_subject_authority(
             reference="SR-CALENDAR-AUTHORITY",
             requester_id=requester_id,
             status=RequestStatus.IN_PROGRESS,
-            current_owner="SSG Team",
-            assigned_delivery_team="SSG Team",
+            current_owner="OSG Team",
+            assigned_delivery_team="OSG Team",
             assigned_delivery_team_id=ssg_unit_id,
             **RequestCreate.model_validate(request_payload()).model_dump(),
         )

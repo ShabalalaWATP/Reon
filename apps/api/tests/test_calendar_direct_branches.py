@@ -181,7 +181,7 @@ async def test_commitment_decision_and_team_change_authority_branches() -> None:
         username="admin-test",
         display_name="Synthetic Analyst",
         role=UserRole.DELIVERY_SPECIALIST,
-        scope="SSG Team",
+        scope="OSG Team",
     )
     event = calendar_event(actor.id, kind=CalendarEventKind.COMMITMENT)
     event.commitment_status = CommitmentStatus.PENDING
@@ -217,7 +217,7 @@ async def test_commitment_decision_and_team_change_authority_branches() -> None:
         return_value=TeamWorkspaceAccess(
             teamId=team_id,
             teamCode="SSG_TEAM",
-            teamName="SSG Team",
+            teamName="OSG Team",
             unitKind="TEAM",
             workspacePosition="MEMBER",
             grantId=None,
@@ -231,7 +231,7 @@ async def test_commitment_decision_and_team_change_authority_branches() -> None:
     workspaces.require_read.return_value = TeamWorkspaceAccess(
         teamId=team_id,
         teamCode="SSG_TEAM",
-        teamName="SSG Team",
+        teamName="OSG Team",
         unitKind="TEAM",
         workspacePosition="MANAGER",
         grantId=grant_id,
@@ -264,7 +264,7 @@ async def test_requester_stable_identity_is_excluded_from_commitments() -> None:
         username="dual-context-manager",
         display_name="Dual Context Manager",
         role=UserRole.DELIVERY_TEAM_LEAD,
-        scope="SSG Team",
+        scope="OSG Team",
     )
     request_id, other_user_id = uuid4(), uuid4()
     calendar = MagicMock()

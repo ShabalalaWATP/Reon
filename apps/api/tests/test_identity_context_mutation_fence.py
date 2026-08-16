@@ -28,7 +28,7 @@ async def test_mutation_fence_rejects_a_stale_context_version() -> None:
                 display_name="Synthetic Fence User",
                 password_hash="synthetic",
                 role=UserRole.DELIVERY_SPECIALIST,
-                scope="SSG Team",
+                scope="OSG Team",
                 customer_context_enabled=True,
                 is_active=True,
             )

@@ -3,6 +3,30 @@
 Entries are ordered newest first: the most recent date is at the top of the
 file and the earliest is at the bottom.
 
+## 16 August 2026: organisation renames and a directory that shows your place
+
+- Renamed four organisation units for display: JIOC (formerly CRIOC), DIGOC
+  (formerly JOCK), NCGI-A Ops (formerly ACSA-B Ops) and OSG Team (formerly
+  SSG Team). Unit codes are unchanged, because they are stable identifiers
+  that appear in an applied migration, the routing tables and the tests;
+  only what people read changed, in the seed, the interface, the reference
+  documents and the identity scopes that must match the team name.
+- The rename exposed how the organisation is owned. Once a governed
+  configuration is active the seed steps back, and the inline administrator
+  rename refuses configured units, so the live rename went through the
+  configuration workflow: drafted and validated by one administrator,
+  independently approved and activated by another. Both rename cascades,
+  activation and inline, updated member scope for teams only, leaving routing
+  pool members with a stale display scope; each now carries the rename to any
+  member whose scope was the old name while leaving shared scopes alone, and
+  a test drives the governed flow end to end to prove it.
+- The organisation directory now shows each viewer their place: a summary
+  card with the path from the root to their unit, the branch lit from the
+  root down, and an unmistakable marker on their own unit. Names lead and
+  codes are demoted to a small tag; every level shows how many units it
+  holds. Placement is computed in the tree model, where it is unit tested for
+  a single unit, several units and none.
+
 ## 16 August 2026: QC positions, sign-in mist and a clean local dataset
 
 - Split the combined QC workspace into two positions that mirror delivery

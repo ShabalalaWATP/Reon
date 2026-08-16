@@ -105,7 +105,7 @@ describe("My actions", () => {
     const view = renderApp("/my-work");
 
     expect(await screen.findByRole("heading", { name: "My actions" })).toBeInTheDocument();
-    expect(screen.getAllByText("CRIOC Routing User")).toHaveLength(2);
+    expect(screen.getAllByText("JIOC Routing User")).toHaveLength(2);
     expect(screen.getByRole("button", { name: /Needs attention 1/ })).toBeInTheDocument();
     expect(screen.getByText("Available to CRIOC")).toBeInTheDocument();
     expect(screen.getAllByText("Assigned to you")).toHaveLength(2);

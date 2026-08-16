@@ -319,7 +319,7 @@ async def test_service_create_rejects_cycle_after_aggregate_lock() -> None:
                 "synthetic-specialist",
                 "Synthetic Specialist",
                 UserRole.DELIVERY_SPECIALIST,
-                "SSG Team",
+                "OSG Team",
             ),
             team_id,
             _work_command(),

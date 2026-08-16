@@ -24,7 +24,7 @@ describe("organisation hierarchy", () => {
 
     const view = renderApp("/organisation");
     expect(
-      await screen.findByRole("heading", { name: "CRIOC routing hierarchy" }),
+      await screen.findByRole("heading", { name: "JIOC routing hierarchy" }),
     ).toBeInTheDocument();
     expect(organisationUnits).toHaveLength(40);
     expect(organisationUnits.filter((unit) => unit.kind === "COMMAND")).toHaveLength(3);
