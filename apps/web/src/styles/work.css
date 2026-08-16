@@ -144,17 +144,54 @@
   color: var(--muted);
   font-size: 0.78rem;
 }
+/* The human decision leads: it and its supporting panels sit first, then the
+   submitted request spans the full width so the narrative reads properly,
+   then correspondence follows, collapsed until it is wanted. */
 .queue-detail__content {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.72fr);
   gap: 24px;
   padding-top: 22px;
 }
 .queue-detail__decision {
   display: grid;
-  align-self: start;
   gap: 20px;
   min-width: 0;
+}
+.queue-detail__correspondence {
+  min-width: 0;
+  border-top: 1px solid var(--border);
+}
+.queue-detail__correspondence > summary {
+  display: grid;
+  gap: 4px;
+  padding: 20px 0 16px;
+  cursor: pointer;
+  list-style: none;
+}
+.queue-detail__correspondence > summary::-webkit-details-marker {
+  display: none;
+}
+.queue-detail__correspondence > summary > span {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+.queue-detail__correspondence > summary > strong {
+  font-size: 1.05rem;
+}
+.queue-detail__correspondence > summary > strong::before {
+  content: "+ ";
+  color: var(--muted);
+}
+.queue-detail__correspondence[open] > summary > strong::before {
+  content: "− ";
+}
+.queue-detail__correspondence > .detail-section {
+  border-top: 0;
+  padding-top: 0;
 }
 .staff-deliverable {
   padding-top: 16px;
@@ -163,8 +200,6 @@
   overflow-wrap: anywhere;
 }
 .action-panel {
-  position: sticky;
-  top: 90px;
   align-self: start;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);

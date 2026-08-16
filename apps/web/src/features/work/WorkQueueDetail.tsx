@@ -62,32 +62,10 @@ export function WorkQueueDetail({
             <StatusPill status={item.stage} />
           </header>
           <div className="queue-detail__content">
-            <RequestContext
-              detail={detail}
-              error={detailError}
-              item={item}
-              loading={detailLoading}
-              onRetry={onRetryDetail}
-              session={session}
-            />
             <div className="queue-detail__decision">
-              {detail ? (
-                <RequestConversations
-                  key={item.requestId}
-                  requestId={item.requestId}
-                  status={detail.status}
-                />
-              ) : null}
-              {canLoadDetail ? (
-                <StaffProductAction
-                  requestId={item.requestId}
-                  requestVersion={item.requestVersion}
-                  stage={item.stage}
-                />
-              ) : null}
-              {detail && item.stage === "TRIAGE_REVIEW" ? (
-                <RelatedRecordPanel session={session} workItemId={item.id} />
-              ) : null}
+              {/* A review decision must follow the work it judges, so the
+                  submitted product leads at review stages. At routing stages
+                  there is no product yet and the decision leads directly. */}
               {canLoadDetail ? (
                 <StaffDeliverableSection
                   deliverable={detail?.deliverable}
@@ -109,7 +87,38 @@ export function WorkQueueDetail({
                   specialistOptions={specialistOptions}
                 />
               ) : null}
+              {canLoadDetail ? (
+                <StaffProductAction
+                  requestId={item.requestId}
+                  requestVersion={item.requestVersion}
+                  stage={item.stage}
+                />
+              ) : null}
+              {detail && item.stage === "TRIAGE_REVIEW" ? (
+                <RelatedRecordPanel session={session} workItemId={item.id} />
+              ) : null}
             </div>
+            <RequestContext
+              detail={detail}
+              error={detailError}
+              item={item}
+              loading={detailLoading}
+              onRetry={onRetryDetail}
+              session={session}
+            />
+            {detail ? (
+              <details className="queue-detail__correspondence">
+                <summary>
+                  <span>Recorded correspondence</span>
+                  <strong>Request information from the Customer or another team</strong>
+                </summary>
+                <RequestConversations
+                  key={item.requestId}
+                  requestId={item.requestId}
+                  status={detail.status}
+                />
+              </details>
+            ) : null}
           </div>
         </>
       ) : null}

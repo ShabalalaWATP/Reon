@@ -161,7 +161,7 @@ describe("requester experience", () => {
     const user = userEvent.setup();
     const view = renderApp(`/requests/${requestDetail.id}`);
     expect(await screen.findByRole("heading", { name: requestDetail.title })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Request details" })).toBeInTheDocument();
     expect(screen.getByText("Request submitted")).toBeInTheDocument();
     expect(await screen.findByText("Readiness summary")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Download" })).toHaveAttribute(

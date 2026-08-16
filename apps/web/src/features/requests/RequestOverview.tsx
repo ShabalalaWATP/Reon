@@ -9,8 +9,8 @@ export function RequestOverview({ request }: { request: RequestDetail }) {
   return (
     <section className="detail-section" aria-labelledby="overview-title">
       <div className="section-heading">
-        <span>Submitted revision</span>
-        <h2 id="overview-title">Overview</h2>
+        <span>Submitted request</span>
+        <h2 id="overview-title">Request details</h2>
       </div>
       <dl className="overview-grid">
         <div>
