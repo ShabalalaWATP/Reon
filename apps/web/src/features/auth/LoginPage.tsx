@@ -7,7 +7,7 @@ import { z } from "zod";
 
 import { ApiError } from "../../lib/api/client";
 import { useAuth } from "../../lib/auth/AuthProvider";
-import { revealThroughMist } from "../../lib/mistReveal";
+import { dismissMist, gatherMist, revealThroughMist } from "../../lib/mistReveal";
 import { homeRouteForRole } from "../../lib/routes";
 import { useTheme } from "../../lib/theme/ThemeProvider";
 import { CloudField } from "./CloudField";
@@ -64,11 +64,15 @@ function useLoginController() {
   });
   async function submit(values: FormValues) {
     setAuthError(null);
+    // Raise the mist before the request so the landing page is never painted
+    // in the open; the overlay only clears once the sign-in is confirmed.
+    gatherMist();
     try {
       const nextSession = await login(values);
       revealThroughMist();
       void navigate(homeRouteForRole(nextSession.user.role), { replace: true });
     } catch (error) {
+      dismissMist();
       resetField("password");
       setShowPassword(false);
       setAuthError(error instanceof ApiError ? error.message : "Unable to sign in. Try again.");

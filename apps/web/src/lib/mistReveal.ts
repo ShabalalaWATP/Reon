@@ -1,29 +1,46 @@
-type Listener = () => void;
+/**
+ * Signals for the sign-in mist overlay.
+ *
+ * `gather` raises opaque mist the moment a sign-in is attempted, before any
+ * network call, so the destination page is never painted in the open. `reveal`
+ * confirms the sign-in and starts the slow clearing over the new page.
+ * `dismiss` drops the mist when the attempt fails. The overlay is lazily
+ * loaded, so a signal that arrives before any listener exists is latched and
+ * delivered once to the first subscriber.
+ */
+export type MistSignal = "gather" | "reveal" | "dismiss";
+
+type Listener = (signal: MistSignal) => void;
 
 const listeners = new Set<Listener>();
-let pending = false;
+let pending: MistSignal | null = null;
 
-/**
- * Announce a sign-in so the mist overlay can roll in.
- *
- * The overlay is a lazily loaded component, so the first reveal of a session
- * usually fires before any listener exists. The announcement is latched until
- * a subscriber arrives, then delivered once, so the transition cannot be lost
- * to load timing.
- */
-export function revealThroughMist() {
+function emit(signal: MistSignal) {
   if (listeners.size === 0) {
-    pending = true;
+    pending = signal;
     return;
   }
-  listeners.forEach((listener) => listener());
+  listeners.forEach((listener) => listener(signal));
 }
 
-export function onMistReveal(listener: Listener) {
+export function gatherMist() {
+  emit("gather");
+}
+
+export function revealThroughMist() {
+  emit("reveal");
+}
+
+export function dismissMist() {
+  emit("dismiss");
+}
+
+export function onMistSignal(listener: Listener) {
   listeners.add(listener);
-  if (pending) {
-    pending = false;
-    listener();
+  if (pending !== null) {
+    const signal = pending;
+    pending = null;
+    listener(signal);
   }
   return () => {
     listeners.delete(listener);

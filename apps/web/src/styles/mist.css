@@ -11,7 +11,10 @@
   inset: 0;
   background: radial-gradient(120% 90% at 50% 10%, #101a2c 0%, #070b14 55%, #04060c 100%);
 }
-.mist-reveal--dense {
+/* The mist gathers over the login page while sign-in is in flight, so the
+   soft roll-in belongs there. By the time it turns dense the new page is
+   already behind full opacity and must not be glimpsed through a fade. */
+.mist-reveal--gathering {
   animation: mist-roll-in 0.55s ease-out both;
 }
 .mist-reveal__filter {

@@ -2,19 +2,31 @@ import { useEffect, useState } from "react";
 
 import "../styles/mist.css";
 
-import { onMistReveal } from "../lib/mistReveal";
+import { type MistSignal, onMistSignal } from "../lib/mistReveal";
 
 const DENSE_MS = 1900;
 const CLEAR_MS = 3900;
 const REDUCED_PHASE_MS = 250;
 
-type Phase = "hidden" | "dense" | "clearing";
+/**
+ * gathering: opaque mist raised while a sign-in is in flight; holds until a
+ * signal resolves it, so the destination is never painted uncovered.
+ * dense: the sign-in succeeded and the mist lingers over the new page.
+ * clearing: the mist parts to reveal the page beneath.
+ */
+type Phase = "hidden" | "gathering" | "dense" | "clearing";
+
+const PHASE_FOR_SIGNAL: Record<MistSignal, Phase> = {
+  gather: "gathering",
+  reveal: "dense",
+  dismiss: "hidden",
+};
 
 export function MistReveal() {
   const [phase, setPhase] = useState<Phase>("hidden");
-  useEffect(() => onMistReveal(() => setPhase("dense")), []);
+  useEffect(() => onMistSignal((signal) => setPhase(PHASE_FOR_SIGNAL[signal])), []);
   useEffect(() => {
-    if (phase === "hidden") return;
+    if (phase === "hidden" || phase === "gathering") return;
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
     const wait =
       phase === "dense"

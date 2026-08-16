@@ -2,7 +2,7 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { onMistReveal, revealThroughMist } from "../lib/mistReveal";
+import { onMistSignal, revealThroughMist } from "../lib/mistReveal";
 import { requesterSession } from "../test/fixtures";
 import { json, mockFetch, renderApp } from "../test/render";
 import { MistReveal } from "./MistReveal";
@@ -110,6 +110,54 @@ describe("mist reveal transition", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Signing you in…");
   });
 
+  it("gathers opaque mist before sign-in resolves so the landing page is never seen", async () => {
+    // The complaint this pins: mist that arrives after the session commits lets
+    // the destination paint in the open for a frame. Hold the sign-in response
+    // open and require the fog to be up while it is still pending.
+    stubMotionPreference(false);
+    let releaseLogin: (value: Response) => void = () => undefined;
+    const pendingLogin = new Promise<Response>((resolve) => {
+      releaseLogin = resolve;
+    });
+    mockFetch((url, init) => {
+      if (url.pathname.endsWith("/auth/me")) return json({ detail: "Signed out" }, 401);
+      if (url.pathname.endsWith("/auth/login") && init.method === "POST") return pendingLogin;
+      if (url.pathname.endsWith("/requests")) return json({ items: [] });
+      throw new Error(`Unexpected ${url.pathname}`);
+    });
+    const user = userEvent.setup();
+    renderApp("/login");
+    await user.type(await screen.findByLabelText(/Account ID/), "admin2");
+    await user.type(screen.getByLabelText(/Password/), "synthetic-password");
+    await user.click(screen.getByRole("button", { name: "Sign in to Mist" }));
+
+    expect(overlay()).toHaveClass("mist-reveal--gathering");
+    expect(screen.getByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+
+    await act(async () => releaseLogin(json(requesterSession)));
+    expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
+    expect(overlay()).toHaveClass("mist-reveal--dense");
+  });
+
+  it("drops the mist again when sign-in fails so the error is not hidden", async () => {
+    stubMotionPreference(false);
+    mockFetch((url, init) => {
+      if (url.pathname.endsWith("/auth/me")) return json({ detail: "Signed out" }, 401);
+      if (url.pathname.endsWith("/auth/login") && init.method === "POST") {
+        return json({ detail: { code: "AUTHENTICATION_FAILED", message: "No." } }, 401);
+      }
+      throw new Error(`Unexpected ${url.pathname}`);
+    });
+    const user = userEvent.setup();
+    renderApp("/login");
+    await user.type(await screen.findByLabelText(/Account ID/), "admin2");
+    await user.type(screen.getByLabelText(/Password/), "wrong");
+    await user.click(screen.getByRole("button", { name: "Sign in to Mist" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("No.");
+    expect(overlay()).toBeNull();
+  });
+
   it("stops listening after unmount and tolerates a missing matchMedia", () => {
     vi.useFakeTimers();
     vi.stubGlobal("matchMedia", undefined);
@@ -119,7 +167,7 @@ describe("mist reveal transition", () => {
     view.unmount();
     expect(overlay()).toBeNull();
     expect(() => revealThroughMist()).not.toThrow();
-    const stop = onMistReveal(() => undefined);
+    const stop = onMistSignal(() => undefined);
     stop();
   });
 });
