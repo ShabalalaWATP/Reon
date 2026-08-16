@@ -14,7 +14,7 @@ workflow task.
 2. [People and responsibilities](#people-and-responsibilities)
 3. [Rules shared by every story](#rules-shared-by-every-story)
 4. [Customer stories](#customer-stories)
-5. [JIOC routing stories](#crioc-routing-stories)
+5. [JIOC routing stories](#jioc-routing-stories)
 6. [Command coordination stories](#command-coordination-stories)
 7. [Ops routing stories](#ops-routing-stories)
 8. [Team Manager stories](#team-manager-stories)

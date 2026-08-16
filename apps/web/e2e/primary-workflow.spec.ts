@@ -33,7 +33,7 @@ test("complete staffed route preserves identity, correspondence and release boun
   const title = `Synthetic browser route ${runId}`;
   const customerMessage = `Customer-visible synthetic update ${runId}.`;
   const customerReply = `Synthetic Customer acknowledgement ${runId}.`;
-  const internalMessage = `Internal SSG Manager question ${runId}.`;
+  const internalMessage = `Internal OSG Manager question ${runId}.`;
   let requestId = "";
 
   await test.step("Customer signs in and submits a structured request", async () => {
@@ -41,35 +41,35 @@ test("complete staffed route preserves identity, correspondence and release boun
     requestId = await submitCustomerRequest(page, title);
   });
 
-  await test.step("CRIOC routes the request to JOCK", async () => {
+  await test.step("JIOC routes the request to DIGOC", async () => {
     await switchIdentity(page, "admin4", password);
     await openWorkItem(page, "/triage", requestId, title);
-    await routeWorkItem(page, "Route to command", /^JOCK ·/u, {
+    await routeWorkItem(page, "Route to command", /^DIGOC ·/u, {
       kind: "select",
       label: "Priority",
       value: "High",
     });
   });
 
-  await test.step("JOCK routes the request to ACSA-B Ops", async () => {
+  await test.step("DIGOC routes the request to NCGI-A Ops", async () => {
     await switchIdentity(page, "admin5", password);
     await openWorkItem(page, "/coordination", requestId, title);
-    await routeWorkItem(page, "Route to Ops group", /^ACSA-B Ops ·/u, {
+    await routeWorkItem(page, "Route to Ops group", /^NCGI-A Ops ·/u, {
       label: "Routing note",
       value: "Synthetic route to the primary operations group.",
     });
   });
 
-  await test.step("ACSA-B Ops routes the request to SSG Team", async () => {
+  await test.step("NCGI-A Ops routes the request to OSG Team", async () => {
     await switchIdentity(page, "admin6", password);
     await openWorkItem(page, "/allocation", requestId, title);
-    await routeWorkItem(page, "Route to team", /^SSG Team ·/u, {
+    await routeWorkItem(page, "Route to team", /^OSG Team ·/u, {
       label: "Required capabilities",
       value: "Synthetic browser assurance\nStructured writing",
     });
   });
 
-  await test.step("SSG Manager assigns Ben Doak as Lead Analyst", async () => {
+  await test.step("OSG Manager assigns Ben Doak as Lead Analyst", async () => {
     await switchIdentity(page, "admin8", password);
     await openWorkItem(page, "/delivery/team", requestId, title);
     await assignLeadAnalyst(
@@ -100,7 +100,7 @@ test("complete staffed route preserves identity, correspondence and release boun
     await sendConversation(
       page,
       "Internal",
-      /^SSG Team Managers$/u,
+      /^OSG Team Managers$/u,
       `Synthetic Manager question ${runId}`,
       internalMessage,
     );
@@ -131,7 +131,7 @@ test("complete staffed route preserves identity, correspondence and release boun
     await submitOutcome(page, "Submit product");
   });
 
-  await test.step("SSG Manager sees internal history and approves the exact package", async () => {
+  await test.step("OSG Manager sees internal history and approves the exact package", async () => {
     await switchIdentity(page, "admin8", password);
     await openWorkItem(page, "/delivery/team", requestId, title);
     await expectConversationAfterReload(page, internalMessage, "Internal");

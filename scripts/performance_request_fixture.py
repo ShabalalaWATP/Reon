@@ -26,6 +26,7 @@ from mist_service.organisation_models import (
     OrganisationUnit,
     RequestRouteSelection,
 )
+from mist_service.ownership import OWNER_BY_STATUS
 from mist_service.repositories.event_store import audit_key_for_session
 from mist_service.request_draft_models import RequestDraft
 
@@ -118,7 +119,7 @@ async def _seed_requests(
                 sensitivity="STANDARD",
                 handling_instructions="Synthetic data only.",
                 status=RequestStatus.TRIAGE_REVIEW,
-                current_owner="CRIOC Routing",
+                current_owner=OWNER_BY_STATUS[RequestStatus.TRIAGE_REVIEW],
                 created_at=changed_at,
                 updated_at=changed_at,
             )
@@ -200,7 +201,7 @@ async def _seed_tasks(session: AsyncSession, request_ids: list[UUID]) -> int:
                 workflow_instance_id=fixture_id("instance", sequence),
                 task_key=f"performance-task-{sequence:06d}",
                 element_id="triage_review",
-                name="CRIOC routing review",
+                name="JIOC routing review",
                 candidate_role=UserRole.INTAKE_TRIAGE,
                 expected_status=RequestStatus.TRIAGE_REVIEW,
                 status=WorkflowTaskStatus.OPEN,

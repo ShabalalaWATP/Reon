@@ -39,6 +39,13 @@ process contract.
 | `quality_review` | QC Review | None | `qc-reviewers` |
 | `release` | Dissemination | None | `release-managers` |
 
+The `intake_review` label and the `crioc-routing` candidate group keep the
+historic CRIOC wording although the unit is now displayed as JIOC. Candidate
+groups are stable identifiers, and the BPMN bytes are bound to the approved
+workflow definition by checksum, so relabelling the task is a governed
+workflow change rather than a display rename. Mist never shows this label;
+users see the unit's display name and the "JIOC Routing" owner label.
+
 ## Permitted variables
 
 Opaque identity and routing values:
