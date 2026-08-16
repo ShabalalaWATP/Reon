@@ -6,7 +6,11 @@ import {
   switchContext,
   switchIdentity,
 } from "./support/browserSession";
-import { expectConversationAfterReload, sendConversation } from "./support/conversationUi";
+import {
+  expectConversationAfterReload,
+  revealCorrespondence,
+  sendConversation,
+} from "./support/conversationUi";
 import {
   buildAndSubmitPackage,
   disseminatePackage,
@@ -124,6 +128,7 @@ test("complete staffed route preserves identity, correspondence and release boun
   await test.step("Analyst assembles and submits an immutable product package", async () => {
     await switchIdentity(page, "admin13", password);
     await openWorkItem(page, "/delivery/my-work", requestId, title);
+    await revealCorrespondence(page);
     await expect(page.getByText(customerReply, { exact: true })).toBeVisible();
     await buildAndSubmitPackage(page, runId);
     await openWorkItem(page, "/delivery/my-work", requestId, title);

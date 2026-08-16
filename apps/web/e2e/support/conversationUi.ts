@@ -8,7 +8,7 @@ import { selectOptionMatching } from "./browserSession";
  * role queries, so open it before working inside. Customer pages mount the
  * panel open and have no summary to click.
  */
-async function revealCorrespondence(page: Page) {
+export async function revealCorrespondence(page: Page) {
   const summary = page.locator("details.queue-detail__correspondence:not([open]) > summary");
   if ((await summary.count()) > 0) await summary.first().click();
 }
