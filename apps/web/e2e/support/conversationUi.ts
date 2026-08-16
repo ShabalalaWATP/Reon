@@ -9,8 +9,13 @@ import { selectOptionMatching } from "./browserSession";
  * panel open and have no summary to click.
  */
 export async function revealCorrespondence(page: Page) {
-  const summary = page.locator("details.queue-detail__correspondence:not([open]) > summary");
-  if ((await summary.count()) > 0) await summary.first().click();
+  const closedSummary = page.locator("details.queue-detail__correspondence:not([open]) > summary");
+  const sendButton = page.getByRole("button", { name: "Send message" });
+  // After a reload the panel arrives asynchronously: wait until either the
+  // collapsed summary (staff pages) or the open panel's control (Customer
+  // pages) is visible, then open the section if it is still closed.
+  await expect(closedSummary.or(sendButton).first()).toBeVisible();
+  if ((await closedSummary.count()) > 0) await closedSummary.first().click();
 }
 
 export async function sendConversation(
