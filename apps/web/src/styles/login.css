@@ -326,10 +326,10 @@
   border-radius: 50%;
   background: radial-gradient(
     ellipse closest-side,
-    color-mix(in srgb, var(--text) 24%, transparent),
+    color-mix(in srgb, var(--text) 34%, transparent),
     transparent 74%
   );
-  filter: blur(26px);
+  filter: blur(30px);
   animation: cloud-drift ease-in-out infinite alternate;
 }
 @media (prefers-reduced-motion: reduce) {
