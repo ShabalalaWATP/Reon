@@ -31,6 +31,9 @@ async def test_lifespan_restores_active_configuration_without_fixture_reseed(
     async def initialise(session: object) -> None:
         initialised.append(session)
 
+    async def no_reconcile(_session: object) -> int:
+        return 0
+
     monkeypatch.setattr(
         main_module,
         "restore_active_configuration_projection",
@@ -39,6 +42,7 @@ async def test_lifespan_restores_active_configuration_without_fixture_reseed(
     monkeypatch.setattr(main_module, "seed_organisation_units", forbidden)
     monkeypatch.setattr(main_module, "seed_baseline_configuration", forbidden)
     monkeypatch.setattr(main_module, "initialise_platform_classification", initialise)
+    monkeypatch.setattr(main_module, "reconcile_owner_labels", no_reconcile)
     application = create_app(
         settings=make_settings(),
         session_factory=cast(Any, SessionFactoryDouble()),
@@ -73,6 +77,7 @@ async def test_lifespan_refreshes_projection_after_demo_user_seed(
     monkeypatch.setattr(main_module, "initialise_admin_identity_sequence", no_seed)
     monkeypatch.setattr(main_module, "initialise_admin_audit_anchor", no_seed)
     monkeypatch.setattr(main_module, "initialise_platform_classification", no_seed)
+    monkeypatch.setattr(main_module, "reconcile_owner_labels", no_seed)
     application = create_app(
         settings=make_settings(allow_demo_users=True),
         session_factory=cast(Any, SessionFactoryDouble()),

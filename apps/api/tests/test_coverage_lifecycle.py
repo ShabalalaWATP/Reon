@@ -42,6 +42,7 @@ def disable_organisation_seed(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(main_module, "initialise_admin_identity_sequence", no_seed)
     monkeypatch.setattr(main_module, "initialise_admin_audit_anchor", no_seed)
     monkeypatch.setattr(main_module, "initialise_platform_classification", no_seed)
+    monkeypatch.setattr(main_module, "reconcile_owner_labels", no_seed)
 
 
 def make_settings(**updates: Any) -> Settings:
