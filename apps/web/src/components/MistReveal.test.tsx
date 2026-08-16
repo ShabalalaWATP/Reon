@@ -1,7 +1,10 @@
 import { act, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { onMistReveal, revealThroughMist } from "../lib/mistReveal";
+import { requesterSession } from "../test/fixtures";
+import { json, mockFetch, renderApp } from "../test/render";
 import { MistReveal } from "./MistReveal";
 
 afterEach(() => {
@@ -80,6 +83,31 @@ describe("mist reveal transition", () => {
     first.unmount();
     render(<MistReveal />);
     expect(overlay()).toBeNull();
+  });
+
+  it("survives the sign-in re-key of the session subtree in the real app shell", async () => {
+    // Sign-in rotates the protected query client, which re-keys everything
+    // under AuthProvider. An overlay mounted inside that subtree receives the
+    // reveal and is unmounted in the same commit, so it never shows. This
+    // drives the genuine login path through the production composition.
+    stubMotionPreference(false);
+    mockFetch((url, init) => {
+      if (url.pathname.endsWith("/auth/me")) return json({ detail: "Signed out" }, 401);
+      if (url.pathname.endsWith("/auth/login") && init.method === "POST") {
+        return json(requesterSession);
+      }
+      if (url.pathname.endsWith("/requests")) return json({ items: [] });
+      throw new Error(`Unexpected ${url.pathname}`);
+    });
+    const user = userEvent.setup();
+    renderApp("/login");
+    await user.type(await screen.findByLabelText(/Account ID/), "admin2");
+    await user.type(screen.getByLabelText(/Password/), "synthetic-password");
+    await user.click(screen.getByRole("button", { name: "Sign in to Mist" }));
+
+    expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
+    expect(overlay()).toHaveClass("mist-reveal--dense");
+    expect(screen.getByRole("status")).toHaveTextContent("Signing you in…");
   });
 
   it("stops listening after unmount and tolerates a missing matchMedia", () => {

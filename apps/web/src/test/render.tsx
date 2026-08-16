@@ -7,6 +7,7 @@ import { vi } from "vitest";
 
 import { AppRoutes } from "../app/AppRoutes";
 import { ClassificationBanner } from "../components/ClassificationBanner";
+import { MistReveal } from "../components/MistReveal";
 import { AuthProvider } from "../lib/auth/AuthProvider";
 import { ThemeProvider } from "../lib/theme/ThemeProvider";
 
@@ -167,6 +168,8 @@ export function renderApp(
     },
   }),
 ) {
+  // Mirrors App.tsx: the reveal sits outside AuthProvider so the sign-in
+  // re-key of that subtree cannot unmount it. Keep the two in step.
   return render(
     <ThemeProvider>
       <QueryClientProvider client={client}>
@@ -181,6 +184,7 @@ export function renderApp(
           </AuthProvider>
         </MemoryRouter>
       </QueryClientProvider>
+      <MistReveal />
     </ThemeProvider>,
   );
 }

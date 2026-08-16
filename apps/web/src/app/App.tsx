@@ -28,13 +28,16 @@ export function App() {
                   <AppRoutes />
                 </RouteErrorBoundary>
               </div>
-              <Suspense fallback={null}>
-                <MistReveal />
-              </Suspense>
             </div>
           </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>
+      {/* The reveal is app chrome, not session state. Sign-in re-keys the
+          AuthProvider subtree, which would unmount an overlay placed inside it
+          in the same commit that shows it, so it must live above that boundary. */}
+      <Suspense fallback={null}>
+        <MistReveal />
+      </Suspense>
     </ThemeProvider>
   );
 }
