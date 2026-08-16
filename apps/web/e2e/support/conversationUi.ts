@@ -2,6 +2,17 @@ import { expect, type Page } from "@playwright/test";
 
 import { selectOptionMatching } from "./browserSession";
 
+/**
+ * Staff work detail keeps correspondence in a collapsed section so the human
+ * decision stays at the top; a closed details element hides its content from
+ * role queries, so open it before working inside. Customer pages mount the
+ * panel open and have no summary to click.
+ */
+async function revealCorrespondence(page: Page) {
+  const summary = page.locator("details.queue-detail__correspondence:not([open]) > summary");
+  if ((await summary.count()) > 0) await summary.first().click();
+}
+
 export async function sendConversation(
   page: Page,
   view: "Customer" | "Internal" | null,
@@ -9,6 +20,7 @@ export async function sendConversation(
   subject: string,
   body: string,
 ) {
+  await revealCorrespondence(page);
   const sendButton = page.getByRole("button", { name: "Send message" });
   await expect(sendButton).toBeEnabled();
   if (view) {
@@ -44,6 +56,7 @@ export async function expectConversationAfterReload(
   view: "Customer" | "Internal" | null = null,
 ) {
   await page.reload();
+  await revealCorrespondence(page);
   if (view) {
     await page.getByRole("button", { name: view, exact: true }).click();
   }
