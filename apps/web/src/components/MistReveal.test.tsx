@@ -28,7 +28,9 @@ describe("mist reveal transition", () => {
     expect(overlay()).toBeNull();
 
     act(() => revealThroughMist());
-    expect(screen.getByRole("status")).toHaveTextContent("Signing you in…");
+    expect(screen.getByRole("status", { name: "Signing you in" })).toHaveTextContent(
+      "Creating clarity in the mist",
+    );
     expect(overlay()).toHaveClass("mist-reveal--dense");
 
     act(() => void vi.advanceTimersByTime(1900));
@@ -71,7 +73,9 @@ describe("mist reveal transition", () => {
 
     render(<MistReveal />);
     expect(overlay()).toHaveClass("mist-reveal--dense");
-    expect(screen.getByRole("status")).toHaveTextContent("Signing you in…");
+    expect(screen.getByRole("status", { name: "Signing you in" })).toHaveTextContent(
+      "Creating clarity in the mist",
+    );
   });
 
   it("consumes a latched reveal exactly once", () => {
@@ -107,7 +111,9 @@ describe("mist reveal transition", () => {
 
     expect(await screen.findByRole("heading", { name: "My requests" })).toBeInTheDocument();
     expect(overlay()).toHaveClass("mist-reveal--dense");
-    expect(screen.getByRole("status")).toHaveTextContent("Signing you in…");
+    expect(screen.getByRole("status", { name: "Signing you in" })).toHaveTextContent(
+      "Creating clarity in the mist",
+    );
   });
 
   it("gathers opaque mist before sign-in resolves so the landing page is never seen", async () => {

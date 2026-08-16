@@ -74,9 +74,9 @@ export function MistReveal() {
       <span aria-hidden="true" className="mist-reveal__layer mist-reveal__layer--mid" />
       <span aria-hidden="true" className="mist-reveal__layer mist-reveal__layer--near" />
       <span aria-hidden="true" className="mist-reveal__layer mist-reveal__layer--drift" />
-      <p className="mist-reveal__status" role="status">
+      <p aria-label="Signing you in" className="mist-reveal__status" role="status">
         <strong>Mist</strong>
-        <span>Signing you in…</span>
+        <span aria-hidden="true">Creating clarity in the mist</span>
       </p>
     </div>
   );
