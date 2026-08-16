@@ -20,6 +20,13 @@ file and the earliest is at the bottom.
   pool members with a stale display scope; each now carries the rename to any
   member whose scope was the old name while leaving shared scopes alone, and
   a test drives the governed flow end to end to prove it.
+- The renamed ownership label exposed one more snapshot: a request's
+  current owner is a status-derived label stored in a column so tracking can
+  filter on it in SQL, and it is only re-stamped on a workflow transition.
+  A request submitted under the old wording therefore kept it. Start-up now
+  reconciles every stored owner label against its status, idempotently, so a
+  label rename in code never needs a hand-written data correction; the
+  request that showed the old label was healed at the next start.
 - The organisation directory now shows each viewer their place: a summary
   card with the path from the root to their unit, the branch lit from the
   root down, and an unmistakable marker on their own unit. Names lead and

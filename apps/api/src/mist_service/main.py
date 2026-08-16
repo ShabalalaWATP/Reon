@@ -30,6 +30,7 @@ from mist_service.database import SessionFactory
 from mist_service.demo_seed import seed_demo_users
 from mist_service.errors import InvalidAction, ObjectNotFound, ServiceError
 from mist_service.organisation_seed import seed_organisation_units
+from mist_service.ownership import reconcile_owner_labels
 from mist_service.product_filesystem_storage import PrivateFilesystemObjectStorage
 from mist_service.product_runtime import ProductRuntime, clamav_product_runtime
 from mist_service.product_security import AllowedHttpsLinkPolicy, SafeDocumentScanner
@@ -168,6 +169,7 @@ def create_app(
                     await initialise_admin_identity_sequence(session)
                     await initialise_admin_audit_anchor(session)
                 await initialise_platform_classification(session)
+                await reconcile_owner_labels(session)
                 if restored_configuration:
                     if configured.allow_demo_users:
                         await restore_active_configuration_projection(session)
