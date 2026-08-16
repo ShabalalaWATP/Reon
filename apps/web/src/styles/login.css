@@ -317,7 +317,7 @@
 .cloud-field {
   position: absolute;
   z-index: -1;
-  inset: -10%;
+  inset: -30% -35%;
   overflow: hidden;
   pointer-events: none;
 }
@@ -356,11 +356,26 @@
     transform: scale(1.05);
   }
 }
+/* Travel is in viewport units on purpose. A percentage here would be a
+   fraction of each cloud's own width, which reads as almost stationary.
+   Two paths cross each other so the clouds wander rather than move as one
+   sheet; the field's negative inset gives room before clipping. */
 @keyframes cloud-drift {
   from {
-    transform: translate3d(-20%, 2%, 0);
+    transform: translate3d(-28vw, 8vh, 0);
   }
   to {
-    transform: translate3d(20%, -6%, 0);
+    transform: translate3d(28vw, -16vh, 0);
   }
+}
+@keyframes cloud-drift-counter {
+  from {
+    transform: translate3d(24vw, -14vh, 0) scale(1.08);
+  }
+  to {
+    transform: translate3d(-24vw, 16vh, 0) scale(0.92);
+  }
+}
+.cloud-field span:nth-child(even) {
+  animation-name: cloud-drift-counter;
 }

@@ -58,6 +58,30 @@ describe("mist reveal transition", () => {
     expect(overlay()).toHaveClass("mist-reveal--dense");
   });
 
+  it("delivers a reveal announced before the lazily loaded overlay mounts", () => {
+    vi.useFakeTimers();
+    stubMotionPreference(false);
+    // The overlay is code-split, so in production the first sign-in fires
+    // before any listener exists. The announcement must survive that gap.
+    act(() => revealThroughMist());
+    expect(overlay()).toBeNull();
+
+    render(<MistReveal />);
+    expect(overlay()).toHaveClass("mist-reveal--dense");
+    expect(screen.getByRole("status")).toHaveTextContent("Signing you in…");
+  });
+
+  it("consumes a latched reveal exactly once", () => {
+    vi.useFakeTimers();
+    stubMotionPreference(false);
+    act(() => revealThroughMist());
+    const first = render(<MistReveal />);
+    expect(overlay()).toHaveClass("mist-reveal--dense");
+    first.unmount();
+    render(<MistReveal />);
+    expect(overlay()).toBeNull();
+  });
+
   it("stops listening after unmount and tolerates a missing matchMedia", () => {
     vi.useFakeTimers();
     vi.stubGlobal("matchMedia", undefined);
