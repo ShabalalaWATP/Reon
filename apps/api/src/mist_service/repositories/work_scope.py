@@ -17,7 +17,10 @@ from mist_service.models import (
 )
 from mist_service.models import WorkflowTask as StoredWorkflowTask
 from mist_service.product_models import ProductPackage
-from mist_service.qc_membership import live_qc_membership_condition
+from mist_service.qc_membership import (
+    live_qc_manager_condition,
+    live_qc_membership_condition,
+)
 from mist_service.repositories.route_access import route_membership_condition
 from mist_service.request_participant_models import RequestParticipant
 
@@ -77,8 +80,16 @@ def work_scope_conditions(actor: Actor) -> tuple[ColumnElement[bool], ...]:
             )
         )
     elif actor.role is UserRole.QUALITY_RELEASE:
+        now = datetime.now(UTC)
         conditions.extend(_quality_separation_conditions(actor))
-        conditions.append(live_qc_membership_condition(actor.id, datetime.now(UTC)))
+        conditions.append(live_qc_membership_condition(actor.id, now))
+        # Any QC member reviews; only a QC Manager holds release accountability.
+        conditions.append(
+            or_(
+                ServiceRequest.status != RequestStatus.READY_FOR_RELEASE,
+                live_qc_manager_condition(actor.id, now),
+            )
+        )
     membership = route_membership_condition(actor)
     if membership is not None:
         conditions.append(membership)

@@ -10,11 +10,11 @@ from mist_service.team_models import WorkspacePosition
 
 
 def test_demo_identity_contract_covers_every_workspace() -> None:
-    assert len(DEMO_IDENTITIES) == 100
+    assert len(DEMO_IDENTITIES) == 108
     assert [identity.username for identity in DEMO_IDENTITIES] == [
-        f"admin{number}" for number in range(1, 101)
+        f"admin{number}" for number in range(1, 109)
     ]
-    assert len({identity.display_name for identity in DEMO_IDENTITIES}) == 100
+    assert len({identity.display_name for identity in DEMO_IDENTITIES}) == 108
     assert Counter(identity.role for identity in DEMO_IDENTITIES) == {
         UserRole.PLATFORM_ADMIN: 2,
         UserRole.REQUESTER: 3,
@@ -23,7 +23,7 @@ def test_demo_identity_contract_covers_every_workspace() -> None:
         UserRole.OPERATIONS_ALLOCATION: 20,
         UserRole.DELIVERY_TEAM_LEAD: 29,
         UserRole.DELIVERY_SPECIALIST: 33,
-        UserRole.QUALITY_RELEASE: 2,
+        UserRole.QUALITY_RELEASE: 10,
     }
     disabled = [identity for identity in DEMO_IDENTITIES if not identity.active]
     assert [(identity.username, identity.display_name) for identity in disabled] == [

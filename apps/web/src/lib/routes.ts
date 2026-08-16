@@ -41,6 +41,19 @@ export const roleLabels: Record<UserRole, string> = {
   QUALITY_RELEASE: "QC Manager",
 };
 
+type WorkspacePosition = "MANAGER" | "MEMBER" | null | undefined;
+
+/**
+ * Name a person by role, refined by workspace position where the role spans
+ * two positions. QC is one authorisation role with two positions: a QC User
+ * reviews, a QC Manager also releases. Delivery teams express the same split
+ * as two roles, so only QC needs the position to disambiguate.
+ */
+export function memberLabel(role: UserRole, position: WorkspacePosition): string {
+  if (role === "QUALITY_RELEASE" && position === "MEMBER") return "QC User";
+  return roleLabels[role];
+}
+
 const APP_NAME = "Mist Service";
 
 // Ordered by specificity: the first matching pattern names the page.

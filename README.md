@@ -176,8 +176,8 @@ promoted to private storage and remain accessible only through an authorised
 FastAPI download.
 
 Every current package also requires a covering note to the Customer. A Team
-Manager reviews the frozen package, one QC Manager performs the quality
-review, and a different QC Manager claims the release task and disseminates
+Manager reviews the frozen package, a QC User or QC Manager performs the
+quality review, and a different QC Manager claims the release task and disseminates
 the exact approved package. The Customer receives the artefacts and note inside
 their dashboard and explicitly records acceptance. Rework creates an attributable
 review loop back to the assigned Analysts.
@@ -234,6 +234,7 @@ checks that separation in FastAPI, not only in the interface.
 | Ops Routing User | Direct work to a delivery team | Claim, return or choose a direct team |
 | Team Manager | Make delivery accountable | Assign Lead and Contributors, oversee work, review product |
 | Team Analyst | Produce the product | Work as Lead or assigned Analyst, converse, package and submit |
+| QC User | Check release quality | Claim and complete QC review of an exact product package |
 | QC Manager | Protect release quality | Claim QC review or, as a different person, claim dissemination |
 | Platform Administrator | Maintain safe platform metadata | Accounts, profiles, organisation, configuration and marking |
 
@@ -649,9 +650,9 @@ traffic according to the development configuration.
 
 ## Synthetic accounts
 
-The local seed contains 100 synthetic Scottish-football display names:
+The local seed contains 108 synthetic Scottish-football display names:
 
-- usernames: `admin1` through `admin100`;
+- usernames: `admin1` through `admin108`;
 - local-only password: `admin`;
 - `admin1`: Platform Administrator;
 - `admin2`: Customer John McGinn;
@@ -660,8 +661,10 @@ The local seed contains 100 synthetic Scottish-football display names:
 - `admin6` and `admin82`: representative ACSA-B Ops access;
 - `admin8`: SSG Team Manager Grant Hanley;
 - `admin11`: SSG Team Analyst Lewis Ferguson;
-- `admin15`: QC reviewer Angus Gunn;
-- `admin100`: independent release Manager Neil Alexander; and
+- `admin15`, `admin100` and `admin101`: QC Managers Angus Gunn, Neil Alexander
+  and Zander Clark, any of whom may review, and one of whom, not the reviewer,
+  releases;
+- `admin102` to `admin108`: QC Users, who review but never release; and
 - `admin16`: intentionally inactive for access-control testing.
 
 The complete account ID, name, role, organisation, workspace position and active

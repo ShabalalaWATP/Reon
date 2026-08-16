@@ -7,7 +7,7 @@ import { api } from "../../lib/api/client";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import type { PersonalProfile, PersonalProfileUpdate } from "../../lib/api/types";
 import { useAuth } from "../../lib/auth/AuthProvider";
-import { roleLabels } from "../../lib/routes";
+import { memberLabel } from "../../lib/routes";
 import { formatDate } from "../../lib/status";
 import {
   profileAccessLabel,
@@ -16,6 +16,7 @@ import {
   profileRoleDescription,
   profileScopeLabel,
   profileWorkspacePositionText,
+  soleWorkspacePosition,
 } from "./profileModel";
 import { PersonalProfileDetails } from "./PersonalProfileDetails";
 import { PersonalProfileForm } from "./PersonalProfileForm";
@@ -42,6 +43,7 @@ export function ProfilePage() {
     enabled: user.organisationUnitIds.length > 0,
     staleTime: 60_000,
   });
+  const workspaces = workspaceAccess.data?.items ?? [];
   const memberships = (organisation.data?.items ?? []).filter((unit) =>
     user.organisationUnitIds.includes(unit.id),
   );
@@ -109,11 +111,11 @@ export function ProfilePage() {
             </div>
             <div>
               <dt>Representative role</dt>
-              <dd>{roleLabels[user.role]}</dd>
+              <dd>{memberLabel(user.role, soleWorkspacePosition(workspaces))}</dd>
             </div>
             <div>
               <dt>Workspace access</dt>
-              <dd>{profileAccessLabel(user, workspaceAccess.data?.items ?? [])}</dd>
+              <dd>{profileAccessLabel(user, workspaces)}</dd>
             </div>
           </dl>
         </section>
@@ -158,7 +160,7 @@ export function ProfilePage() {
                 <dd>
                   {profileWorkspacePositionText(
                     user.organisationUnitIds.length,
-                    workspaceAccess.data?.items ?? [],
+                    workspaces,
                     workspaceAccess.isError,
                   )}
                 </dd>

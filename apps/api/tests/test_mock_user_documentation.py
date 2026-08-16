@@ -33,7 +33,7 @@ def test_documented_user_directory_matches_every_seeded_identity() -> None:
         for identity in DEMO_IDENTITIES
     }
     assert documented == expected
-    assert list(documented) == [f"admin{index}" for index in range(1, 101)]
+    assert list(documented) == [f"admin{index}" for index in range(1, 109)]
 
 
 def test_synthetic_user_directory_has_no_duplicate_reference_document() -> None:

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { documentTitleForRoute, isNavigationItemActive } from "./routes";
+import { documentTitleForRoute, isNavigationItemActive, memberLabel } from "./routes";
 
 describe("primary navigation state", () => {
   it.each([
@@ -47,5 +47,20 @@ describe("route document titles", () => {
     ["/unknown/page", "Mist Service"],
   ])("names %s", (pathname, expected) => {
     expect(documentTitleForRoute(pathname)).toBe(expected);
+  });
+});
+
+describe("member labels", () => {
+  it("names QC people by workspace position because one role spans two positions", () => {
+    expect(memberLabel("QUALITY_RELEASE", "MEMBER")).toBe("QC User");
+    expect(memberLabel("QUALITY_RELEASE", "MANAGER")).toBe("QC Manager");
+    expect(memberLabel("QUALITY_RELEASE", undefined)).toBe("QC Manager");
+    expect(memberLabel("QUALITY_RELEASE", null)).toBe("QC Manager");
+  });
+
+  it("leaves every other role on its representative label regardless of position", () => {
+    expect(memberLabel("DELIVERY_SPECIALIST", "MEMBER")).toBe("Team Analyst");
+    expect(memberLabel("DELIVERY_TEAM_LEAD", "MANAGER")).toBe("Team Manager");
+    expect(memberLabel("INTAKE_TRIAGE", "MEMBER")).toBe("CRIOC Routing User");
   });
 });

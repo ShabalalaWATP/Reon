@@ -158,7 +158,7 @@ resulting aggregate test and coverage figures.
 - [x] Keep development chronology in `DEVELOPMENT_STORY.md`; keep current
   product behaviour in the README, architecture, workflow, user stories,
   specifications and operating guides.
-- [x] Maintain one complete synthetic account directory containing all 100
+- [x] Maintain one complete synthetic account directory containing all 108
   accounts, usernames, roles, memberships and Manager or Member positions.
 - [x] Provide separate readable views for system context, containers, routing,
   delivery, durable workflow commands and the organisation hierarchy, together
@@ -270,7 +270,7 @@ resulting aggregate test and coverage figures.
 - [x] Exercise PostgreSQL role validation, reviewed grant execution, dialect
   rejection and guaranteed engine disposal.
 - [x] Establish one authoritative complete synthetic-account directory and test
-  it against all 100 seeded identities.
+  it against all 108 seeded identities.
 - [x] Maintain one roster authority and an automated long-form documentation
   duplication gate.
 - [x] Prove that Markdown documentation is exempt from the hand-written source

@@ -123,8 +123,8 @@ async def test_seeding_inserts_fixture_and_is_idempotent(
     )
     stored = list((await db_session.scalars(select(User))).all())
 
-    assert (first, second) == (100, 0)
-    assert len(stored) == 100
+    assert (first, second) == (108, 0)
+    assert len(stored) == 108
     assert {user.username for user in stored} == {
         identity.username for identity in DEMO_IDENTITIES
     }
@@ -162,7 +162,7 @@ async def test_seeded_memberships_staff_every_team_correctly(
     assert by_team["SSG_TEAM"] == Counter(
         {UserRole.DELIVERY_TEAM_LEAD: 3, UserRole.DELIVERY_SPECIALIST: 7}
     )
-    assert by_team["QC_TEAM"] == Counter({UserRole.QUALITY_RELEASE: 2})
+    assert by_team["QC_TEAM"] == Counter({UserRole.QUALITY_RELEASE: 10})
     for team_code, role_counts in by_team.items():
         if team_code not in {"SSG_TEAM", "QC_TEAM"}:
             assert role_counts == Counter(
@@ -214,7 +214,7 @@ async def test_legacy_username_is_renamed_without_changing_user_id(
     )
 
     migrated = await db_session.scalar(select(User).where(User.username == "admin1"))
-    assert created == 99
+    assert created == 107
     assert migrated is not None
     assert migrated.id == legacy_id
     assert (migrated.display_name, migrated.role, migrated.is_active) == (

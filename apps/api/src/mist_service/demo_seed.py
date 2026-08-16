@@ -179,6 +179,15 @@ _BASE_IDENTITIES = (
 )
 
 _APPROVER_SCOPE = "Platform configuration approval"
+_QC_USER_NAMES = (
+    "Liam Kelly",
+    "Anthony Ralston",
+    "John Souttar",
+    "Lewis Morgan",
+    "Ryan Fraser",
+    "Kevin Nisbet",
+    "Josh Doig",
+)
 
 
 DEMO_IDENTITIES = tuple(
@@ -223,6 +232,25 @@ DEMO_IDENTITIES = tuple(
                 "Combined QC Team",
                 units=("QC_TEAM",),
                 manager=True,
+            ),
+            # The combined QC workspace mirrors a delivery team: three QC
+            # Managers hold release accountability, seven QC Users perform
+            # quality review. Appended last so earlier usernames stay stable.
+            _identity(
+                "Zander Clark",
+                UserRole.QUALITY_RELEASE,
+                "Combined QC Team",
+                units=("QC_TEAM",),
+                manager=True,
+            ),
+            *(
+                _identity(
+                    name,
+                    UserRole.QUALITY_RELEASE,
+                    "Combined QC Team",
+                    units=("QC_TEAM",),
+                )
+                for name in _QC_USER_NAMES
             ),
         ),
         start=1,

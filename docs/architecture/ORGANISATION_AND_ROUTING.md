@@ -169,20 +169,20 @@ can be exercised. Teams never borrow SSG users.
 
 ## Complete synthetic user directory
 
-The local/test product contains the following 100 users. Every account uses its
+The local/test product contains the following 108 users. Every account uses its
 sequential logon and the local-only password `admin`. All accounts start active
 except `admin16`, which is intentionally inactive for access-control testing.
 Names are synthetic fixtures borrowed from Scottish football and do not describe
 the real people. The machine-readable source of truth is `DEMO_IDENTITIES` in
 `apps/api/src/mist_service/demo_seed.py`. The directory below deliberately
-enumerates every account. Automated seed tests assert the count of 100, the exact
-`admin1` to `admin100` sequence, unique display names, role totals, Manager and
+enumerates every account. Automated seed tests assert the count of 108, the exact
+`admin1` to `admin108` sequence, unique display names, role totals, Manager and
 Member coverage in every routing unit, and active Manager and Analyst coverage
 in every delivery team.
 
 ### Local access summary
 
-- Usernames run sequentially from `admin1` through `admin100`.
+- Usernames run sequentially from `admin1` through `admin108`.
 - Initial work emails use the synthetic-only `mist.example.test` domain, for
   example `admin1@mist.example.test`. Administrators can maintain them in the
   application.
@@ -190,7 +190,9 @@ in every delivery team.
   configuration-approval Administrator.
 - `admin4` exercises the CRIOC hierarchy view, `admin5` and `admin6` exercise
   command and Ops routing, `admin8` exercises SSG Team management, and `admin15`
-  exercises QC review. `admin100` exercises independent release and dissemination.
+  exercises QC review. `admin100` and `admin101` are the other QC Managers, so
+  a Manager who did not perform the review can release. `admin102` through
+  `admin108` are QC Users, who review but never see release work.
 - `admin74` through `admin99` provide a named Manager and Member for every
   routing workspace, including CRIOC, each command and each Ops group.
 - These credentials are local and test fixtures. Production identity must use
@@ -298,6 +300,14 @@ in every delivery team.
 | `admin98` | Matt Ritchie | Ops Routing User, Manager | Frontier Ops | Active |
 | `admin99` | Oliver Burke | Ops Routing User, Member | Frontier Ops | Active |
 | `admin100` | Neil Alexander | QC Manager | Combined QC Team | Active |
+| `admin101` | Zander Clark | QC Manager | Combined QC Team | Active |
+| `admin102` | Liam Kelly | QC User | Combined QC Team | Active |
+| `admin103` | Anthony Ralston | QC User | Combined QC Team | Active |
+| `admin104` | John Souttar | QC User | Combined QC Team | Active |
+| `admin105` | Lewis Morgan | QC User | Combined QC Team | Active |
+| `admin106` | Ryan Fraser | QC User | Combined QC Team | Active |
+| `admin107` | Kevin Nisbet | QC User | Combined QC Team | Active |
+| `admin108` | Josh Doig | QC User | Combined QC Team | Active |
 
 ## Selection and authorisation
 

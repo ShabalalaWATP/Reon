@@ -6,7 +6,7 @@ import { PageState } from "../../components/PageState";
 import { api } from "../../lib/api/client";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import { useAuth } from "../../lib/auth/AuthProvider";
-import { roleLabels } from "../../lib/routes";
+import { memberLabel } from "../../lib/routes";
 import { profileInitials } from "../profile/profileModel";
 
 export function TeamMemberProfilePage() {
@@ -57,7 +57,7 @@ export function TeamMemberProfilePage() {
           <span>Team member profile</span>
           <h1>{member.name}</h1>
           <p>
-            {roleLabels[member.role]} in {member.teamName}
+            {memberLabel(member.role, member.workspacePosition)} in {member.teamName}
           </p>
         </div>
         <strong
@@ -85,7 +85,7 @@ export function TeamMemberProfilePage() {
             </div>
             <div>
               <dt>Representative role</dt>
-              <dd>{roleLabels[member.role]}</dd>
+              <dd>{memberLabel(member.role, member.workspacePosition)}</dd>
             </div>
             <div>
               <dt>Rank or grade</dt>

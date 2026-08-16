@@ -3,6 +3,37 @@
 Entries are ordered newest first: the most recent date is at the top of the
 file and the earliest is at the bottom.
 
+## 16 August 2026: QC positions, sign-in mist and a clean local dataset
+
+- Split the combined QC workspace into two positions that mirror delivery
+  teams: QC Users perform quality review, QC Managers also hold release
+  accountability. This is a workspace position within the existing
+  QUALITY_RELEASE role, not a new authorisation role, so the persisted role
+  enum and the reviewed stage, scope and claim rules are unchanged. The QC
+  membership predicate now accepts any live position for review visibility
+  while release remains manager-only, enforced in the work-queue scope and
+  pinned by tests that show a QC User the review task but an empty release
+  queue. The seed now provides three QC Managers and seven QC Users as
+  admin101 to admin108, appended so earlier usernames stay stable, and the
+  interface names people by position wherever a QC member is shown.
+- Confirmed the review loop end to end against the BPMN and projection: a
+  QC changes-required decision returns work to the Analysts on the same
+  rework path a Manager return uses, so the Manager reviews every resubmission
+  and can send it back again.
+- Fixed the sign-in mist reveal twice, for two real faults. The overlay lived
+  inside the AuthProvider subtree, which sign-in re-keys, so it was unmounted
+  in the same commit that showed it; it now sits above that boundary and the
+  test harness mirrors the production composition. The reveal then arrived
+  only after the session committed, letting the landing page paint first;
+  a gathering phase now raises opaque mist before the request is sent, holds
+  it while the request is in flight, drops it on failure and never traps
+  input.
+- Made the login clouds visibly move: travel is now viewport-relative and
+  roughly four times larger on two crossing paths with shorter cycles.
+- Reset the local dataset to human-entered content only through a full
+  volume reset and an unseeded restart, keeping the accounts, organisation
+  tree and attested workflow.
+
 ## 15 August 2026: continuous integration restoration
 
 - Pushing the rebrand revealed that every workflow on main had been failing

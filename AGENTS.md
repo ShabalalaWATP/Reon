@@ -6,8 +6,8 @@ These instructions supplement Alex Orr's global Codex instructions.
 
 - This is a synthetic, public-repository-safe service-request MVP.
 - Use the agreed representative language: Customer, CRIOC Routing User, Request
-  Coordination User, Ops Routing User, Team Manager, Team Analyst, QC Manager,
-  service product and dissemination. Keep technical enum values stable
+  Coordination User, Ops Routing User, Team Manager, Team Analyst, QC User,
+  QC Manager, service product and dissemination. Keep technical enum values stable
   where changing them would add migration risk.
 - Do not introduce legacy RFI, RFA, CM, military, collection-management,
   chatbot or agent-routing language into application code, schemas, routes,

@@ -57,6 +57,12 @@ export function profileMembershipText(expected: number, names: string[], failed:
   return names.join(", ");
 }
 
+/** The one workspace position a person holds, or undefined when none or mixed. */
+export function soleWorkspacePosition(workspaces: TeamWorkspaceAccess[]) {
+  const positions = new Set(workspaces.map((item) => item.workspacePosition).filter(Boolean));
+  return positions.size === 1 ? [...positions][0] : undefined;
+}
+
 export function profilePositionLabel(workspaces: TeamWorkspaceAccess[]) {
   const positions = new Set(workspaces.map((item) => item.workspacePosition).filter(Boolean));
   if (positions.size !== 1) return positions.size > 1 ? "Mixed positions" : null;

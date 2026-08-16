@@ -7,10 +7,11 @@ import {
   profileInitials,
   profilePositionLabel,
   profileWorkspacePositionText,
+  soleWorkspacePosition,
 } from "../features/profile/profileModel";
 import type { TeamWorkspaceAccess } from "../lib/api/teamTypes";
 import type { AccountContext, Session } from "../lib/api/types";
-import { roleLabels } from "../lib/routes";
+import { memberLabel } from "../lib/routes";
 import { formatDate } from "../lib/status";
 
 type Props = {
@@ -41,7 +42,8 @@ export function AccountMenu({
   const menuId = useId();
   const user = session.user;
   const position = profilePositionLabel(workspaceAccess);
-  const identityLabel = `${roleLabels[user.role]}${position ? ` · ${position}` : ""}`;
+  const roleLabel = memberLabel(user.role, soleWorkspacePosition(workspaceAccess));
+  const identityLabel = `${roleLabel}${position ? ` · ${position}` : ""}`;
 
   useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
@@ -119,7 +121,7 @@ export function AccountMenu({
           <dl>
             <div>
               <dt>Role</dt>
-              <dd>{roleLabels[user.role]}</dd>
+              <dd>{roleLabel}</dd>
             </div>
             {user.organisationUnitIds.length > 0 ? (
               <div>

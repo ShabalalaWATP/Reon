@@ -236,7 +236,7 @@ export function AppRoutes() {
                 path="quality-release"
                 element={
                   <StaffQueuePage
-                    description="QC reviewers check an exact product package. A different Release Manager then disseminates the approved package to the Customer."
+                    description="QC Users and QC Managers check an exact product package. A QC Manager who did not perform that review then disseminates the approved package to the Customer."
                     eyebrow="Combined QC Team"
                     title="QC Team workspace"
                   />
