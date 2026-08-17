@@ -115,3 +115,79 @@ async def test_personal_activity_requires_team_detail_or_explicit_private_visibi
         headers=harness.mutation_headers(),
     )
     assert private.status_code == 200
+
+
+async def test_team_event_visibility_redacts_detail_from_other_members(
+    api_harness: ApiHarness,
+) -> None:
+    harness = api_harness
+    await harness.login("admin8")
+    team_id = await harness.unit_id("SSG_TEAM")
+    workspaces = await harness.client.get("/api/v1/team-workspaces")
+    workspace = next(
+        item for item in workspaces.json()["items"] if item["teamId"] == str(team_id)
+    )
+    starts = datetime.now(UTC) + timedelta(days=5)
+    created: dict[str, str] = {}
+    for offset, visibility in enumerate(
+        ("TEAM_DETAIL", "PRIVATE", "AVAILABILITY_ONLY")
+    ):
+        start = starts + timedelta(days=offset)
+        payload = {
+            **_event(),
+            "title": f"{visibility} team event",
+            "notes": f"{visibility} detail must follow its visibility policy.",
+            "startsAt": start.isoformat(),
+            "endsAt": (start + timedelta(hours=2)).isoformat(),
+            "visibility": visibility,
+            "grantId": workspace["grantId"],
+        }
+        if visibility == "PRIVATE":
+            payload.update(
+                recurrence="DAILY",
+                recurrenceUntil=(start + timedelta(days=1)).isoformat(),
+            )
+        response = await harness.client.post(
+            f"/api/v1/team-workspaces/{team_id}/calendar/events",
+            json=payload,
+            headers=harness.mutation_headers(),
+        )
+        assert response.status_code == 200, response.text
+        created[visibility] = response.json()["eventId"]
+
+    window = {
+        "from": (starts - timedelta(days=1)).isoformat(),
+        "to": (starts + timedelta(days=4)).isoformat(),
+    }
+    await harness.login("admin11")
+    shared = await harness.client.get(
+        f"/api/v1/team-workspaces/{team_id}/calendar", params=window
+    )
+    assert shared.status_code == 200, shared.text
+    items = shared.json()["items"]
+    visible = next(item for item in items if item["eventId"] == created["TEAM_DETAIL"])
+    assert visible["title"] == "TEAM_DETAIL team event"
+    assert visible["notes"] == "TEAM_DETAIL detail must follow its visibility policy."
+    concealed = [
+        item
+        for item in items
+        if item["eventId"] in {created["PRIVATE"], created["AVAILABILITY_ONLY"]}
+    ]
+    assert len(concealed) == 3
+    assert {item["title"] for item in concealed} == {"Busy"}
+    assert {item["notes"] for item in concealed} == {None}
+    assert {item["category"] for item in concealed} == {"AVAILABILITY"}
+
+    await harness.login("admin8")
+    personal = await harness.client.get("/api/v1/calendar/personal", params=window)
+    assert personal.status_code == 200, personal.text
+    owned = {
+        item["title"]
+        for item in personal.json()["items"]
+        if item["eventId"] in set(created.values())
+    }
+    assert owned == {
+        "TEAM_DETAIL team event",
+        "PRIVATE team event",
+        "AVAILABILITY_ONLY team event",
+    }

@@ -16,7 +16,7 @@ server-side object, role and membership policy. Customer action prompts are
 shown on `My requests` and through minimal notifications; notification links do
 not confer authority.
 
-Unauthenticated account requests accept only a display name, normalised work email and access reason. They do not accept credentials, role, scope or memberships. Duplicate pending emails receive the same accepted response to limit account enumeration. The endpoint is restricted to environments where synthetic demo identities are enabled. Administrative approval requires an authenticated Platform Administrator, CSRF validation, recent password step-up and optimistic version matching. Approval can create only a Customer role through this path and is written to the administration audit chain.
+Unauthenticated account requests accept only a display name, standards-validated and normalised work email and access reason. They do not accept credentials, role, scope or memberships. Duplicate pending emails receive the same accepted response to limit account enumeration. Administrative `mailto` actions encode the local and domain components before constructing the URI, including for legacy stored addresses, so query or fragment delimiters cannot become mail-client instructions. The endpoint is restricted to environments where synthetic demo identities are enabled. Administrative approval requires an authenticated Platform Administrator, CSRF validation, recent password step-up and optimistic version matching. Approval can create only a Customer role through this path and is written to the administration audit chain.
 
 ## Password assistance and global marking
 
@@ -173,7 +173,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | Link normalisation bypasses the allow-list | Normalise once and reject credentials, fragments, non-standard schemes, loopback, literal private-network hosts and domains outside the versioned allow-list |
 | An expired or withdrawn external product opens | Recheck recipient, release, expiry and lifecycle in the authenticated redirect and apply safe browser isolation |
 | A withdrawn managed package falls back to an older product endpoint | Treat the existence of any managed package as authoritative and forbid legacy availability or download fallback |
-| A new package policy changes an in-flight or legacy product | Pin product mode, artefact policy and workflow version at package creation; require a separate audited migration to move existing records |
+| A new package policy changes an in-flight or legacy product | Pin product mode, artefact policy and workflow version at package creation; revalidate the pinned media-type policy before creating an upload intent and at every content and scan phase boundary; retire active legacy artefacts that already violate their pinned policy through an explicit migration |
 | Synthetic identity confusion | Display one environment-level mock-data notice and document that identities and public-safe sibling names are fictional; do not mark valid routes as demonstration-only |
 | Product link is guessed or shared | Serve through an authenticated, no-store application endpoint; require the originating Customer, completed state and dissemination record on every request |
 | Product acceptance is forged, replayed or inferred from access | Permit only the active originating Customer to accept the current non-withdrawn dissemination; require a unique idempotency key, append one hash-linked ticket event and never infer acceptance from download, redirect or feedback evidence |
@@ -183,7 +183,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | A dual-eligible user mutates a linked planning record for their own request | Recheck stable requester identity on package create, update, move and reservation changes, calendar commitments and task hasteners; exclude the requester as actor, owner, Contributor and reservation or commitment subject; return non-disclosing not-found responses |
 | An expired QC role holder, or a QC User, retains a release notification, action, conversation, product or statistics deep link | Persist the required QC workspace position on each notification recipient; require an active account, Quality and Release role and live exact-team membership for review, plus a live Manager position for release and statistics, on projection and every notification, action, conversation, work, package, request-detail and statistics read |
 | Context switching leaves protected data in the browser | Clear context-bound server state and client caches, refresh counts and reauthorise the destination before rendering |
-| Product response causes active-content execution | Return UTF-8 plain text with safe reference-derived attachment filename, `nosniff` and restrictive security headers |
+| Product response causes active-content execution | Return UTF-8 plain text with safe reference-derived attachment filename, `nosniff` and restrictive security headers; merge the global CSP into endpoint-specific policies without dropping `sandbox`, while replacing any existing `frame-ancestors` directive with the global deny rule |
 | Analyst clarification exposes product work to trackers | Store a structured thread in PostgreSQL; expose messages only to the Customer, assigned Analyst and authorised Team Manager; project state and timing metadata only to routing trackers |
 | A conversation audience is omitted or a new entry type becomes public by default | Persist the narrowest staff-only audience, require an explicit supported audience and filter by current authority before ordering, pagination or cursor construction |
 | A Customer-visible conversation leaks an internal note, assignment reason or recipient identifier | Keep typed entries and lifecycle summaries separate; expose only explicitly addressed Customer content and content-minimised public lifecycle records |
@@ -337,7 +337,10 @@ the same verification and public-error path.
   task reassignment, account disablement and self-request conflict are evaluated at
   access or mutation time. Login-time organisation snapshots are not sufficient.
 - Package policy version is immutable. Existing rows remain version 1, new rows use
-  version 2, and unsupported versions fail closed at artefact and submit boundaries.
+  version 2, and unsupported media types fail closed before intent creation and at
+  every content and scan phase boundary. The version 49 migration withdraws active
+  legacy images that conflict with version 1 without changing valid PDFs, version 2
+  images or artefacts that were already replaced or withdrawn.
 - A dual-eligible stable account must be in effective Customer context to retrieve
   its own released product. The SQL entitlement accepts eligible staff identities
   but still requires active account, exact requester ownership, completed request,

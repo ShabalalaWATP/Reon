@@ -1,4 +1,4 @@
-"""Executable PostgreSQL assurance for revisions 0043 through 0047."""
+"""Executable PostgreSQL assurance for revisions 0043 through 0049."""
 
 from __future__ import annotations
 
@@ -13,6 +13,11 @@ from alembic.config import Config
 from sqlalchemy.ext.asyncio import AsyncConnection, create_async_engine
 
 from postgres_migration_0048_assertions import assert_0048
+from postgres_migration_0049_assertions import (
+    assert_0049,
+    assert_0049_downgrade,
+    seed_0049_legacy_products,
+)
 from postgres_migration_assertions import (
     assert_0043,
     assert_0044,
@@ -42,6 +47,7 @@ REVISION_0045 = "0045_notification_contexts"
 REVISION_0046 = "0046_product_package_policy"
 REVISION_0047 = "0047_action_view_contexts"
 REVISION_0048 = "0048_notification_position"
+REVISION_0049 = "0049_legacy_product_cleanup"
 Phase = Callable[[AsyncConnection], Awaitable[None]]
 
 
@@ -61,6 +67,12 @@ def run_postgres_migration_roundtrip(admin_database_url: str) -> None:
         _upgrade_and_assert(config, database_url, REVISION_0046, assert_0046)
         _upgrade_and_assert(config, database_url, REVISION_0047, assert_0047)
         _upgrade_and_assert(config, database_url, REVISION_0048, assert_0048)
+        asyncio.run(_phase(database_url, seed_0049_legacy_products))
+        _upgrade_and_assert(config, database_url, REVISION_0049, assert_0049)
+
+        _downgrade_and_assert(
+            config, database_url, REVISION_0048, assert_0049_downgrade
+        )
 
         _downgrade_and_assert(
             config, database_url, REVISION_0047, assert_0048_downgrade

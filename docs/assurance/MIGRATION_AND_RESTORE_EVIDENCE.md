@@ -4,7 +4,7 @@
 
 Current-head record reviewed on 17 August 2026.
 
-The current migration head is `0048_notification_position`. The application,
+The current migration head is `0049_legacy_product_cleanup`. The application,
 restore script and restore verifier use that same default rather than a stale
 embedded revision. Empty-database upgrade, metadata drift and downgrade/re-upgrade
 checks run through the isolated compatibility harness as release gates. The
@@ -25,26 +25,27 @@ records. Revision 0029 installs PostgreSQL `pg_trgm` and pgvector, adds the
 all-field request-search projection, backfills every submitted request and
 creates GIN, trigram and HNSW indexes. It also extends recorded related-request
 decisions with `NOT_RELEVANT`. `scripts/restore-postgres.ps1` and the maintenance
-verifier default to the exact `0048_notification_position` revision. Revision
+verifier default to the exact `0049_legacy_product_cleanup` revision. Revision
 0030 adds bounded self-declared user skills, revision 0031 repairs role-aware
 action audiences and queue links, and revision 0032 applies the current
 plain-language coordination presentation values.
 
 The repository now contains an executable PostgreSQL gate for revisions 0043 to
-0048. It uses two uniquely named disposable databases: one populated at 0043 for
+0049. It uses two uniquely named disposable databases: one populated at 0043 for
 stepwise upgrade, downgrade and re-upgrade, and one empty database for the forward
 path. It asserts real backfills, unique and check constraints, the conversation
 delivery trigger, QC membership and notification-position projection, documented
-downgrade losses and `alembic check`. The explicit PostgreSQL CI lane treats any
-skip as a failure.
+downgrade losses, irreversible policy retirement and `alembic check`. The explicit
+PostgreSQL CI lane treats any skip as a failure.
 
 On 17 August 2026 the harness passed against disposable PostgreSQL databases
-through the WSL Docker integration. A populated database upgraded stepwise from
-0043 to 0048, downgraded to 0043 and re-upgraded to 0048. A separate empty
-database upgraded to head. Both paths passed `alembic check` with no metadata
-drift. The rehearsal also verified real backfills, constraints, indexes,
-conversation delivery triggers, QC membership projection, manager-only legacy
-notification backfill and documented downgrade losses.
+in the digest-pinned PostgreSQL 17 pgvector image through Docker Desktop. A
+populated database upgraded stepwise from 0043 to 0049, downgraded to 0043 and
+re-upgraded to 0049. A separate empty database upgraded to head. Both paths passed
+`alembic check` with no metadata drift. The rehearsal also verified real
+backfills, constraints, indexes, conversation delivery triggers, QC membership
+projection, manager-only legacy notification backfill, documented downgrade
+losses and irreversible retirement of active legacy images outside policy 1.
 
 The PostgreSQL backup and restore controls are implemented in:
 

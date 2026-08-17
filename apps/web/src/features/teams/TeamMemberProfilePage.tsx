@@ -6,6 +6,7 @@ import { PageState } from "../../components/PageState";
 import { api } from "../../lib/api/client";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import { useAuth } from "../../lib/auth/AuthProvider";
+import { mailtoHref } from "../../lib/mailto";
 import { memberLabel } from "../../lib/routes";
 import { profileInitials } from "../profile/profileModel";
 
@@ -94,7 +95,7 @@ export function TeamMemberProfilePage() {
             <div>
               <dt>Work email</dt>
               <dd>
-                <a href={`mailto:${member.email}`}>
+                <a href={mailtoHref(member.email)}>
                   <Mail aria-hidden="true" size={14} />
                   {member.email}
                 </a>

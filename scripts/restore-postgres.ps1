@@ -6,7 +6,7 @@ param(
     [string]$EvidenceDirectory,
     [Parameter(Mandatory = $true)]
     [string]$Confirmation,
-    [string]$ExpectedRevision = '0048_notification_position'
+    [string]$ExpectedRevision = '0049_legacy_product_cleanup'
 )
 
 Set-StrictMode -Version Latest

@@ -101,6 +101,9 @@ async def test_staff_review_is_exact_bounded_and_not_customer_visible(
     assert review.headers["cache-control"] == "no-store"
     assert review.headers["x-content-type-options"] == "nosniff"
     assert review.headers["content-disposition"].startswith("inline;")
+    assert review.headers["content-security-policy"] == (
+        "sandbox; default-src 'none'; frame-ancestors 'none'"
+    )
     destination = "https://products.example.test/review?token=synthetic"
     linked = await api_harness.client.post(
         f"/api/v1/product-packages/{package_id}/external-links",

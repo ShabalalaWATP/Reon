@@ -6,6 +6,17 @@ from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 
+def _harden_csp(existing: str | None) -> str:
+    directives = [
+        directive.strip()
+        for directive in (existing or "").split(";")
+        if directive.strip()
+        and directive.lstrip().split(maxsplit=1)[0].lower() != "frame-ancestors"
+    ]
+    directives.append("frame-ancestors 'none'")
+    return "; ".join(directives)
+
+
 class SecurityHeadersMiddleware:
     """Apply non-cacheable API and browser hardening response headers."""
 
@@ -27,7 +38,9 @@ class SecurityHeadersMiddleware:
                 headers = MutableHeaders(scope=message)
                 headers["X-Content-Type-Options"] = "nosniff"
                 headers["X-Frame-Options"] = "DENY"
-                headers["Content-Security-Policy"] = "frame-ancestors 'none'"
+                headers["Content-Security-Policy"] = _harden_csp(
+                    headers.get("Content-Security-Policy")
+                )
                 headers["Referrer-Policy"] = "no-referrer"
                 headers["Permissions-Policy"] = (
                     "camera=(), microphone=(), geolocation=()"

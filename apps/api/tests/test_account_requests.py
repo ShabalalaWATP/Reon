@@ -119,6 +119,30 @@ async def test_account_request_input_is_strict(api_harness: ApiHarness) -> None:
     assert invalid.status_code == 422
 
 
+@pytest.mark.parametrize(
+    "contact_email",
+    (
+        "recipient@example.test?bcc=attacker%40example.test",
+        "recipient@example.test#fragment",
+        "recipient@example.test%0d%0abcc:attacker@example.test",
+        "recipient @example.test",
+    ),
+)
+async def test_account_request_rejects_mailto_field_injection(
+    api_harness: ApiHarness,
+    contact_email: str,
+) -> None:
+    response = await api_harness.client.post(
+        "/api/v1/auth/account-requests",
+        json={
+            "displayName": "Synthetic Customer",
+            "contactEmail": contact_email,
+            "reason": "I need access for a fictional service request.",
+        },
+    )
+    assert response.status_code == 422
+
+
 async def test_account_requests_are_unavailable_when_demo_accounts_are_disabled() -> (
     None
 ):

@@ -278,10 +278,7 @@ class SqlAlchemyCalendarRepository:
         names = await self._names(events)
         output: list[CalendarOccurrence] = []
         for event in events:
-            reveal = (
-                viewer_id == event.subject_user_id
-                or event.kind is CalendarEventKind.TEAM
-            )
+            reveal = viewer_id == event.subject_user_id
             for occurrence in expand_event(event, exceptions[event.id], start, end):
                 output.append(
                     occurrence_view(

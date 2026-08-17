@@ -10,7 +10,7 @@ from postgres_migration_probe import (
     REVISION_0045,
     REVISION_0046,
     REVISION_0047,
-    REVISION_0048,
+    REVISION_0049,
     assert_revision,
     column_exists,
     scalar,
@@ -149,7 +149,7 @@ async def assert_0044_downgrade(connection: AsyncConnection) -> None:
 
 
 async def assert_reupgrade(connection: AsyncConnection) -> None:
-    await assert_revision(connection, REVISION_0048)
+    await assert_revision(connection, REVISION_0049)
     assert (
         await scalar(
             connection, "SELECT count(*) FROM product_packages WHERE policy_version=1"
@@ -192,7 +192,7 @@ async def assert_reupgrade(connection: AsyncConnection) -> None:
 
 
 async def assert_empty_forward_path(connection: AsyncConnection) -> None:
-    await assert_revision(connection, REVISION_0048)
+    await assert_revision(connection, REVISION_0049)
     assert await scalar(connection, "SELECT count(*) FROM users") == 0
     assert (
         await scalar(

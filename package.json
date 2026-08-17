@@ -2,6 +2,9 @@
   "name": "mist-service",
   "version": "0.1.0",
   "private": true,
+  "devDependencies": {
+    "yaml": "2.9.0"
+  },
   "scripts": {
     "build": "corepack pnpm --filter @mist-service/web build",
     "check": "corepack pnpm quality-gate-tests && corepack pnpm dead-code && corepack pnpm line-limit && corepack pnpm format:check && corepack pnpm terminology && corepack pnpm documentation && corepack pnpm operations-contract && corepack pnpm licence-check && corepack pnpm contract:openapi && corepack pnpm --filter @mist-service/web typecheck && corepack pnpm --filter @mist-service/web complexity-ratchet && corepack pnpm --filter @mist-service/web lint",

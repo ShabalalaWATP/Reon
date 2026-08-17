@@ -5,6 +5,7 @@ import { PageState } from "../../components/PageState";
 import { api } from "../../lib/api/client";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
 import { useAuth } from "../../lib/auth/AuthProvider";
+import { mailtoHref } from "../../lib/mailto";
 
 export function AccountRequestRegister() {
   const { session } = useAuth();
@@ -59,7 +60,7 @@ export function AccountRequestRegister() {
               <header>
                 <div>
                   <strong>{item.displayName}</strong>
-                  <a href={`mailto:${item.contactEmail}`}>{item.contactEmail}</a>
+                  <a href={mailtoHref(item.contactEmail)}>{item.contactEmail}</a>
                 </div>
                 <time dateTime={item.createdAt}>
                   {new Date(item.createdAt).toLocaleDateString("en-GB")}

@@ -13,7 +13,7 @@ describe("platform administrator access", () => {
       {
         id: "account-request-1",
         displayName: "Synthetic Customer",
-        contactEmail: "customer@example.test",
+        contactEmail: "customer@example.test?bcc=attacker@example.test",
         reason: "Access is needed for a fictional service request.",
         status: "PENDING",
         decisionNote: null,
@@ -66,6 +66,9 @@ describe("platform administrator access", () => {
     const user = userEvent.setup();
     renderApp("/admin/users");
     expect(await screen.findByText("Synthetic Customer")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "customer@example.test?bcc=attacker@example.test" }),
+    ).toHaveAttribute("href", "mailto:customer%40example.test%3Fbcc%3Dattacker%40example.test");
     await user.type(
       screen.getAllByLabelText("Rejection reason")[1],
       "Access need not established.",

@@ -9,7 +9,11 @@ overrides:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      yaml:
+        specifier: 2.9.0
+        version: 2.9.0
 
   apps/web:
     dependencies:

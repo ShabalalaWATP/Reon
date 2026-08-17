@@ -7,6 +7,7 @@ from uuid import UUID, uuid5
 
 from mist_service.domain import Actor
 from mist_service.product_errors import ProductConflict, ProductValidationFailed
+from mist_service.product_package_policy import validate_managed_type
 from mist_service.product_quota_policy import (
     MAX_GLOBAL_STORAGE_BYTES,
     MAX_REQUEST_STORAGE_BYTES,
@@ -78,6 +79,7 @@ class ProductManagedPhases(ProductServiceSupport[ProductUploadServiceRepository]
             size_bytes=command.size_bytes,
             checksum=command.sha256,
         )
+        validate_managed_type(package.policy_version, media_type)
         if command.size_bytes > self._maximum_file_bytes:
             raise ProductValidationFailed(
                 "The attachment exceeds the configured limit."

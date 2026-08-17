@@ -9,7 +9,11 @@ from uuid import uuid4
 
 import pytest
 
-from mist_service.product_errors import ProductConflict, ProductNotFound
+from mist_service.product_errors import (
+    ProductConflict,
+    ProductNotFound,
+    ProductValidationFailed,
+)
 from mist_service.product_types import (
     ScanDecision,
     ScanResult,
@@ -166,3 +170,58 @@ async def test_scan_claim_and_finalisation_fail_closed_after_races() -> None:
         await service(ProductContentPhases, stale).finalise_scan(
             actor, scan_operation, decision, "released/key"
         )
+
+
+async def test_existing_legacy_image_intent_cannot_resume_any_transfer_phase() -> None:
+    actor, package, _request, artefact, intent, _view = DATA
+    legacy_package = replace(package, policy_version=1)
+    image = replace(artefact, filename="map.png", media_type="image/png")
+    image_repository = repository(
+        package=AsyncMock(return_value=legacy_package),
+        upload_intent=AsyncMock(return_value=(image, intent)),
+    )
+    phases = service(ProductContentPhases, image_repository)
+    with pytest.raises(ProductValidationFailed, match="pinned policy"):
+        await phases.claim_content(
+            actor,
+            package.id,
+            intent.id,
+            expected_version=1,
+            upload_token=TOKEN,
+            lease_ttl=timedelta(minutes=2),
+        )
+    with pytest.raises(ProductValidationFailed, match="pinned policy"):
+        await phases.finalise_content(
+            actor,
+            content_operation(),
+            StoredObject(10, "image/png", CHECKSUM),
+        )
+    command = VersionCommand(expectedVersion=1, idempotencyKey=uuid4())
+    with pytest.raises(ProductValidationFailed, match="pinned policy"):
+        await phases.claim_scan(
+            actor, package.id, intent.id, command, lease_ttl=timedelta(minutes=2)
+        )
+    scan_operation = ScanOperation(
+        package.id,
+        intent.id,
+        image.id,
+        intent.object_key,
+        image.filename or "",
+        image.media_type or "",
+        intent.expected_size_bytes,
+        intent.expected_checksum,
+        1,
+        uuid4(),
+        "owner",
+        1,
+    )
+    with pytest.raises(ProductValidationFailed, match="pinned policy"):
+        await phases.finalise_scan(
+            actor,
+            scan_operation,
+            ScanDecision(ScanResult.CLEAN, "synthetic", "1"),
+            "released/key",
+        )
+    image_repository.upload_token_hash.assert_not_awaited()
+    image_repository.claim_intent_operation.assert_not_awaited()
+    image_repository.record_scan.assert_not_awaited()

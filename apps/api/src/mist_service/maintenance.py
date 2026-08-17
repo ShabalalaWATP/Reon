@@ -46,7 +46,7 @@ def parser() -> argparse.ArgumentParser:
     verification = subcommands.add_parser("verify-restore")
     verification.add_argument(
         "--expected-revision",
-        default="0048_notification_position",
+        default="0049_legacy_product_cleanup",
     )
     snapshot = subcommands.add_parser("health-snapshot")
     snapshot.add_argument("--max-command-age-seconds", type=int, default=300)

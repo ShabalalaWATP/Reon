@@ -1,7 +1,46 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parse } from "yaml";
+
+const digestReference = /@sha256:[a-f0-9]{64}$/u;
+
+function imageReference(value) {
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object" && typeof value.image === "string") {
+    return value.image;
+  }
+  return undefined;
+}
+
+function workflowImages({ name, source }) {
+  const document = parse(source);
+  const jobs = document?.jobs;
+  if (!jobs || typeof jobs !== "object") return [];
+  const images = [];
+  for (const [jobName, job] of Object.entries(jobs)) {
+    if (!job || typeof job !== "object") continue;
+    const container = imageReference(job.container);
+    if (container) images.push({ image: container, location: `${name}:${jobName}` });
+    if (!job.services || typeof job.services !== "object") continue;
+    for (const [serviceName, service] of Object.entries(job.services)) {
+      const image = imageReference(service);
+      if (image) {
+        images.push({ image, location: `${name}:${jobName}:${serviceName}` });
+      }
+    }
+  }
+  return images;
+}
+
+function assertWorkflowImagesArePinned(sources) {
+  const images = sources.flatMap(workflowImages);
+  assert.ok(images.length > 0, "CI must define at least one service image");
+  for (const { image, location } of images) {
+    assert.match(image, digestReference, `${location}: unpinned ${image}`);
+  }
+}
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const workflowPath = join(
@@ -13,6 +52,16 @@ const workflowPath = join(
 );
 const workflow = await readFile(workflowPath, "utf8");
 const repositoryRoot = join(scriptDirectory, "..");
+const workflowsDirectory = join(repositoryRoot, ".github", "workflows");
+const workflowFiles = (await readdir(workflowsDirectory)).filter((name) =>
+  /\.ya?ml$/u.test(name),
+);
+const workflowSources = await Promise.all(
+  workflowFiles.map(async (name) => ({
+    name,
+    source: await readFile(join(workflowsDirectory, name), "utf8"),
+  })),
+);
 const compose = await readFile(join(repositoryRoot, "docker-compose.yml"), "utf8");
 const postgresDockerfile = await readFile(
   join(repositoryRoot, "infra", "postgres", "Dockerfile"),
@@ -39,6 +88,28 @@ const expectedImages = [
   "mist-tool-uv:ci",
   "mist-tool-dockerfile-frontend:ci",
 ];
+
+assertWorkflowImagesArePinned(workflowSources);
+assert.throws(
+  () =>
+    assertWorkflowImagesArePinned([
+      {
+        name: "other.yaml",
+        source: "jobs: { scan: { services: { db: { image: repo/db:latest } } } }",
+      },
+    ]),
+  /other\.yaml:scan:db: unpinned repo\/db:latest/u,
+);
+assert.throws(
+  () =>
+    assertWorkflowImagesArePinned([
+      {
+        name: "other.yml",
+        source: "jobs:\n  scan:\n    container:\n      image: repo/tool:latest\n",
+      },
+    ]),
+  /other\.yml:scan: unpinned repo\/tool:latest/u,
+);
 
 for (const required of [
   "push:",

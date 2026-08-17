@@ -12,6 +12,7 @@ from mist_service.product_errors import (
     ProductDependencyUnavailable,
     ProductNotFound,
 )
+from mist_service.product_package_policy import validate_managed_type
 from mist_service.product_types import (
     ScanDecision,
     StoredObject,
@@ -60,7 +61,8 @@ class ProductContentPhases(ProductServiceSupport[ProductUploadServiceRepository]
         row = await self._repository.upload_intent(package_id, intent_id, lock=True)
         if row is None:
             raise ProductNotFound()
-        _artefact, intent = row
+        artefact, intent = row
+        self._require_pinned_media(package.policy_version, artefact.media_type)
         token_hash = self._token_hash(upload_token)
         stored_hash = await self._repository.upload_token_hash(intent.id)
         valid_token = stored_hash is not None and hmac.compare_digest(
@@ -115,7 +117,8 @@ class ProductContentPhases(ProductServiceSupport[ProductUploadServiceRepository]
         )
         if row is None:
             raise ProductNotFound()
-        _artefact, intent = row
+        artefact, intent = row
+        self._require_pinned_media(package.policy_version, artefact.media_type)
         await self._repository.require_intent_operation(
             intent.id, owner=owner, generation=generation
         )
@@ -159,6 +162,7 @@ class ProductContentPhases(ProductServiceSupport[ProductUploadServiceRepository]
         if row is None:
             raise ProductNotFound()
         artefact, intent = row
+        self._require_pinned_media(package.policy_version, artefact.media_type)
         if intent.consumed_at is not None:
             return await self._repository.view(package_id)
         now = datetime.now(UTC)
@@ -209,6 +213,7 @@ class ProductContentPhases(ProductServiceSupport[ProductUploadServiceRepository]
         if row is None:
             raise ProductNotFound()
         artefact, intent = row
+        self._require_pinned_media(package.policy_version, artefact.media_type)
         await self._repository.require_intent_operation(
             intent.id,
             owner=operation.owner,
@@ -296,3 +301,9 @@ class ProductContentPhases(ProductServiceSupport[ProductUploadServiceRepository]
             raise ProductDependencyUnavailable(
                 "Managed-file uploads are unavailable in this environment."
             )
+
+    @staticmethod
+    def _require_pinned_media(policy_version: int, media_type: str | None) -> None:
+        if media_type is None:
+            raise ProductConflict("The upload intent is unavailable.")
+        validate_managed_type(policy_version, media_type)

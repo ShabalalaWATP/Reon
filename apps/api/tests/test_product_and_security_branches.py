@@ -296,6 +296,40 @@ async def test_security_headers_middleware_passes_non_http_scope_through() -> No
     assert seen == ["lifespan"]
 
 
+@pytest.mark.asyncio
+async def test_security_headers_middleware_preserves_stricter_endpoint_csp() -> None:
+    messages: list[Message] = []
+
+    async def app(scope: Scope, receive: Receive, send: Send) -> None:
+        del scope, receive
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [
+                    (
+                        b"content-security-policy",
+                        b"sandbox; frame-ancestors https://unsafe.test; "
+                        b"default-src 'none'; frame-ancestors *",
+                    )
+                ],
+            }
+        )
+
+    async def receive() -> Message:
+        return {"type": "http.request"}
+
+    async def send(message: Message) -> None:
+        messages.append(message)
+
+    middleware = SecurityHeadersMiddleware(cast(ASGIApp, app))
+    await middleware(cast(Scope, {"type": "http"}), receive, send)
+    headers = dict(messages[0]["headers"])
+    assert headers[b"content-security-policy"] == (
+        b"sandbox; default-src 'none'; frame-ancestors 'none'"
+    )
+
+
 def test_small_configuration_and_policy_branches() -> None:
     assert Settings.parse_allowed_hosts(" Example.TEST, ,API.EXAMPLE.TEST ") == {
         "example.test",

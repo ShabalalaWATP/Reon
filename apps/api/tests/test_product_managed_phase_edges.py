@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from mist_service.product_errors import ProductConflict
+from mist_service.product_errors import ProductConflict, ProductValidationFailed
 from mist_service.product_types import ProductStorageUsage, UploadGrant
 from mist_service.services.product_managed_phases import ProductManagedPhases
 from mist_service.services.product_transfer_types import ManagedPreparation
@@ -35,6 +35,44 @@ async def test_managed_preparation_reuses_only_matching_metadata() -> None:
             phases._require_matching_metadata(
                 mismatch, "synthetic.pdf", "application/pdf", create
             )
+
+
+@pytest.mark.parametrize(
+    ("filename", "media_type"),
+    (("map.png", "image/png"), ("photo.jpg", "image/jpeg")),
+)
+async def test_managed_preparation_enforces_the_pinned_media_policy(
+    filename: str,
+    media_type: str,
+) -> None:
+    actor, package, _request, _artefact, _intent, _view = DATA
+    create = command(filename=filename, mediaType=media_type)
+    legacy_repository = repository(
+        package=AsyncMock(return_value=replace(package, policy_version=1))
+    )
+    with pytest.raises(ProductValidationFailed, match="pinned policy"):
+        await service(ProductManagedPhases, legacy_repository).prepare_managed(
+            actor, package.id, create
+        )
+    legacy_repository.managed_retry.assert_not_awaited()
+    legacy_repository.storage_usage.assert_not_awaited()
+    legacy_repository.create_managed.assert_not_awaited()
+
+    current_repository = repository()
+    plan = await service(ProductManagedPhases, current_repository).prepare_managed(
+        actor, package.id, create
+    )
+    assert plan.media_type == media_type
+    current_repository.create_managed.assert_awaited_once()
+
+    legacy_pdf_repository = repository(
+        package=AsyncMock(return_value=replace(package, policy_version=1))
+    )
+    legacy_pdf = await service(
+        ProductManagedPhases, legacy_pdf_repository
+    ).prepare_managed(actor, package.id, command())
+    assert legacy_pdf.media_type == "application/pdf"
+    legacy_pdf_repository.create_managed.assert_awaited_once()
 
 
 async def test_managed_preparation_and_finalisation_reject_stale_races() -> None:

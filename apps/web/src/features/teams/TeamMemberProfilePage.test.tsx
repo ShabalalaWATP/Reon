@@ -55,7 +55,7 @@ describe("team member profile", () => {
           return json({
             accountId: "analyst-ssg",
             name: "Lewis Ferguson",
-            email: "admin11@mist.example.test",
+            email: "admin11@mist.example.test?bcc=attacker@example.test",
             role: "DELIVERY_SPECIALIST",
             teamId: access.teamId,
             teamName: access.teamName,
@@ -77,6 +77,11 @@ describe("team member profile", () => {
 
     await user.click(await screen.findByRole("link", { name: "Lewis Ferguson" }));
     expect(await screen.findByRole("heading", { name: "Lewis Ferguson" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: "admin11@mist.example.test?bcc=attacker@example.test",
+      }),
+    ).toHaveAttribute("href", "mailto:admin11%40mist.example.test%3Fbcc%3Dattacker%40example.test");
     expect(screen.getByText("Research, Data analysis")).toBeInTheDocument();
     expect(screen.getByText(/Private profile notes and service numbers/)).toBeInTheDocument();
     const back = screen.getByRole("link", { name: "Back to SSG Team people" });
