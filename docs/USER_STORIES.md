@@ -557,9 +557,12 @@ that Manager and QC review the exact artefacts I submit.
 - A package is tied to the assigned request and expected version.
 - The Analyst can order up to ten labelled PDF, DOCX, PPTX, JPEG or PNG files
   within configured limits and/or add approved HTTPS links.
+- The authoring screen asks the Analyst to choose **Upload product to MIST** or
+  **Add a product link**, then shows only the relevant form.
 - A covering note to the Customer is mandatory before submission.
 - Uploaded bytes remain quarantined until type validation and malware scan pass.
-- Submitting creates an immutable package revision for review.
+- The final author action is labelled **Submit product** and creates an immutable
+  package revision for review.
 
 **Acceptance checks**
 

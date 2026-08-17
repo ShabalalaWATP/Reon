@@ -12,12 +12,15 @@ export function PackageReviewPanel({
   productPackage: ProductPackage;
 }) {
   const controller = usePackageReviewController(productPackage, onChanged);
+  const authoring = controller.role === "DELIVERY_SPECIALIST" && productPackage.status === "DRAFT";
 
   return (
     <aside className="product-review-panel" aria-labelledby="review-panel-title">
       <div className="section-heading">
-        <span>Immutable decision</span>
-        <h2 id="review-panel-title">Review version {productPackage.packageVersion}</h2>
+        <span>{authoring ? "Final step" : "Immutable decision"}</span>
+        <h2 id="review-panel-title">
+          {authoring ? "Submit product" : `Review version ${productPackage.packageVersion}`}
+        </h2>
       </div>
       <dl className="product-integrity">
         <div>
@@ -37,8 +40,9 @@ export function PackageReviewPanel({
       </dl>
       <p className="product-integrity-note">
         <Fingerprint aria-hidden="true" size={17} />
-        Manager and QC decisions bind to this exact package checksum. Any change creates another
-        version.
+        {authoring
+          ? "MIST creates the review checksum when you submit. Any later change creates a new version."
+          : "Manager and QC decisions bind to this exact package checksum. Any change creates another version."}
       </p>
       <CoveringNote controller={controller} productPackage={productPackage} />
       <ValidationWarning clean={controller.clean} status={productPackage.status} />
@@ -126,7 +130,7 @@ function SpecialistSubmit({ controller }: { controller: Controller }) {
     !controller.clean || controller.coveringNote.trim().length < 3 || controller.action.isPending;
   return (
     <ActionButton action="submit" controller={controller} disabled={disabled}>
-      Submit exact version for review
+      Submit product
     </ActionButton>
   );
 }

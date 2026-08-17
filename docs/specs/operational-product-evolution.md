@@ -146,6 +146,13 @@ ten artefacts. Each artefact is exactly one of:
    or
 2. an approved external HTTPS product link.
 
+The authoring workspace starts with one explicit source choice: **Upload product
+to MIST** or **Add a product link**. Only the form for the selected source is
+shown. After at least one artefact is ready and the covering note is complete,
+the primary action is **Submit product**. Immutable version and checksum controls
+remain enforced by the service and are explained in review context rather than
+encoded in the action label.
+
 Legacy `.doc` and `.ppt`, macro-enabled Office formats, archives, executables and
 embedded active content are rejected. The approved file list can become narrower
 through configuration but not broader without a new security decision.

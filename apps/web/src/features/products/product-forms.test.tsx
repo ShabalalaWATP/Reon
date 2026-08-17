@@ -22,7 +22,7 @@ describe("product artefact entry", () => {
       .mockResolvedValue(undefined);
     const user = userEvent.setup();
     render(<ManagedFileForm disabled={false} onUpload={upload} />);
-    const button = screen.getByRole("button", { name: "Upload artefact" });
+    const button = screen.getByRole("button", { name: "Upload to MIST" });
     await user.click(button);
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Choose PDF, DOCX, PPTX, PNG or JPEG files.",
@@ -60,13 +60,13 @@ describe("product artefact entry", () => {
     const upload = vi.fn().mockRejectedValue("offline");
     const user = userEvent.setup();
     const { rerender } = render(<ManagedFileForm disabled onUpload={upload} />);
-    expect(screen.getByRole("button", { name: "Upload artefact" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Upload to MIST" })).toBeDisabled();
     rerender(<ManagedFileForm disabled={false} onUpload={upload} />);
     const file = new File(["ok"], "brief.docx");
     Object.defineProperty(file, "arrayBuffer", { value: async () => new Uint8Array([1]).buffer });
     await user.type(screen.getByLabelText("Product label"), "Brief");
     await user.upload(document.querySelector<HTMLInputElement>('input[type="file"]')!, file);
-    await user.click(screen.getByRole("button", { name: "Upload artefact" }));
+    await user.click(screen.getByRole("button", { name: "Upload to MIST" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("The file could not be uploaded.");
   });
 
@@ -84,7 +84,7 @@ describe("product artefact entry", () => {
       Object.defineProperty(file, "arrayBuffer", { value: async () => new Uint8Array([1]).buffer });
     }
     await user.upload(input, [png, jpeg]);
-    await user.click(screen.getByRole("button", { name: "Upload artefact" }));
+    await user.click(screen.getByRole("button", { name: "Upload to MIST" }));
     expect(upload).toHaveBeenCalledWith([
       expect.objectContaining({ label: "map", mediaType: "image/png" }),
       expect.objectContaining({ label: "chart", mediaType: "image/jpeg" }),
@@ -124,7 +124,7 @@ describe("product artefact entry", () => {
       .mockResolvedValue(undefined);
     const user = userEvent.setup();
     render(<ExternalLinkForm disabled={false} onAdd={add} />);
-    const submit = screen.getByRole("button", { name: "Add approved link" });
+    const submit = screen.getByRole("button", { name: "Add product link" });
     await user.click(submit);
     expect(screen.getByRole("alert")).toHaveTextContent("Enter a product label.");
     await user.type(screen.getByLabelText("Product label"), "Dashboard");

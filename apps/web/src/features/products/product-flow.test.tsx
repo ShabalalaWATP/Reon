@@ -101,13 +101,20 @@ describe("managed product authoring journey", () => {
     const user = userEvent.setup();
     renderApp("/product-packages/pkg-1");
     await screen.findByRole("heading", { name: "Build release package" });
+    expect(screen.getByText("Choose one option to add the product.")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Product label")).not.toBeInTheDocument();
+    const uploadChoice = screen.getByRole("button", { name: /Upload product to MIST/u });
+    const linkChoice = screen.getByRole("button", { name: /Add a product link/u });
+    expect(uploadChoice).toHaveAttribute("aria-pressed", "false");
+    await user.click(uploadChoice);
+    expect(uploadChoice).toHaveAttribute("aria-pressed", "true");
     const file = new File(["pdf"], "brief.pdf", { type: "application/pdf" });
     Object.defineProperty(file, "arrayBuffer", {
       value: async () => new TextEncoder().encode("pdf").buffer,
     });
-    await user.type(screen.getAllByLabelText("Product label")[0], "Decision brief");
+    await user.type(screen.getByLabelText("Product label"), "Decision brief");
     await user.upload(document.querySelector<HTMLInputElement>('input[type="file"]')!, file);
-    await user.click(screen.getByRole("button", { name: "Upload artefact" }));
+    await user.click(screen.getByRole("button", { name: "Upload to MIST" }));
     await waitFor(() =>
       expect(screen.getAllByText("brief.pdf", { exact: false })).not.toHaveLength(0),
     );
@@ -117,13 +124,17 @@ describe("managed product authoring journey", () => {
     expect(upload.headers.get("X-CSRF-Token")).toBe("csrf-token");
     const completion = calls.find((call) => call.path.endsWith("/complete"))!;
     expect(JSON.parse(String(completion.body))).toMatchObject({ expectedVersion: 3 });
-    await user.type(screen.getAllByLabelText("Product label")[1], "Interactive product");
+    await user.click(linkChoice);
+    expect(linkChoice).toHaveAttribute("aria-pressed", "true");
+    expect(uploadChoice).toHaveAttribute("aria-pressed", "false");
+    expect(screen.queryByRole("button", { name: "Upload to MIST" })).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText("Product label"), "Interactive product");
     await user.type(
       screen.getByLabelText("HTTPS product URL"),
       "https://products.example.test/view",
     );
     await user.type(screen.getByLabelText("Expiry (optional)"), "2099-08-10T10:00");
-    await user.click(screen.getByRole("button", { name: "Add approved link" }));
+    await user.click(screen.getByRole("button", { name: "Add product link" }));
     await waitFor(() =>
       expect(screen.getByText("products.example.test", { exact: false })).toBeInTheDocument(),
     );
@@ -147,8 +158,9 @@ describe("managed product authoring journey", () => {
     });
     renderApp("/product-packages/pkg-1");
     expect(await screen.findByText(/no approved semantic\/CDR scanner/i)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Upload artefact" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Add approved link" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Upload product to MIST/u })).toBeDisabled();
+    await userEvent.setup().click(screen.getByRole("button", { name: /Add a product link/u }));
+    expect(screen.getByRole("button", { name: "Add product link" })).toBeInTheDocument();
   });
 
   it("keeps legacy downloads visible when managed products are disabled", async () => {
@@ -175,7 +187,7 @@ describe("managed product authoring journey", () => {
       "DELIVERY_SPECIALIST",
       "DRAFT",
       "REVIEW_READY",
-      "Submit exact version for review",
+      "Submit product",
       "/submit",
       "Awaiting Manager review",
     ],

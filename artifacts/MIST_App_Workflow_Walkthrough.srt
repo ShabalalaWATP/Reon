@@ -1,0 +1,227 @@
+1
+00:00:02,000 --> 00:00:03,018
+Welcome to MIST.
+
+2
+00:00:03,018 --> 00:00:08,873
+This is a live walkthrough of the application, using a completely fictional service request.
+
+3
+00:00:08,873 --> 00:00:21,220
+We will follow that request from the Customer, through each human routing and delivery decision, into independent quality control, and finally back to the Customer as an assured service product.
+
+4
+00:00:23,000 --> 00:00:26,383
+Every journey starts at the secure sign-in screen.
+
+5
+00:00:26,383 --> 00:00:32,678
+The workspace shown after authentication is shaped by the person’s role and authorised scope.
+
+6
+00:00:32,678 --> 00:00:36,603
+Navigation is useful, but it is not the security boundary.
+
+7
+00:00:36,603 --> 00:00:43,710
+MIST also checks permission, assignment and access to the individual request whenever an action is taken.
+
+8
+00:00:45,000 --> 00:00:54,124
+The Customer creates a structured request, describing the need, the operational context, the expected service product and the desired delivery date.
+
+9
+00:00:54,124 --> 00:01:02,570
+Clear fields reduce avoidable back-and-forth, while the draft option lets the Customer prepare the request before formally submitting it.
+
+10
+00:01:03,000 --> 00:01:07,974
+Once submitted, the request remains visible in the Customer’s own register.
+
+11
+00:01:07,974 --> 00:01:16,198
+The detail page brings together status, current ownership, important dates, conversation history and the developing product.
+
+12
+00:01:16,198 --> 00:01:22,300
+This means the Customer can follow progress without needing access to internal staff queues.
+
+13
+00:01:24,000 --> 00:01:27,872
+The JIOC Routing User performs the first named routing decision.
+
+14
+00:01:27,872 --> 00:01:34,164
+They review the original request, confirm the appropriate route and record the reason for that decision.
+
+15
+00:01:34,164 --> 00:01:44,570
+At this point, and at later authorised stages, the request can be returned to the Customer for more information instead of being pushed forward with an unclear requirement.
+
+16
+00:02:10,000 --> 00:02:19,869
+The Request Coordination User, represented here by the DGIOC stage, reviews the routed request and coordinates the next organisational destination.
+
+17
+00:02:19,869 --> 00:02:21,950
+The decision remains human-led.
+
+18
+00:02:21,950 --> 00:02:30,880
+MIST records who acted, what changed and why, while keeping the Customer’s original requirement attached to the same service journey.
+
+19
+00:03:18,000 --> 00:03:22,899
+At NCGI-A Ops, the Ops Routing User selects the accountable delivery team.
+
+20
+00:03:22,899 --> 00:03:32,366
+Organisational siblings can be chosen as genuine destinations, and the selected route determines which authorised team queue receives the work.
+
+21
+00:03:32,366 --> 00:03:38,590
+MIST supports the decision with context, but it does not choose the team on the user’s behalf.
+
+22
+00:04:30,000 --> 00:04:37,189
+The OSG Team Manager receives the request in the team queue, reviews demand and assigns an appropriate Team Analyst.
+
+23
+00:04:37,189 --> 00:04:47,230
+Assignment is explicit and attributable, making it clear who owns the work while allowing the Manager to balance workload, skill and availability across the team.
+
+24
+00:05:00,000 --> 00:05:03,923
+The Team Workspace is the team’s shared operating picture.
+
+25
+00:05:03,923 --> 00:05:10,215
+Its work queue, board and calendar help staff see priorities, due dates and work in progress.
+
+26
+00:05:10,215 --> 00:05:21,310
+People, statistics and activity views support workload awareness and service insight, while notices and pinned links keep useful team information close to the work.
+
+27
+00:05:24,000 --> 00:05:27,460
+Each user also has a profile and personal working tools.
+
+28
+00:05:27,460 --> 00:05:33,022
+The profile shows their authorised role, team membership and relevant working information.
+
+29
+00:05:33,022 --> 00:05:46,370
+My assigned actions provides a focused list of work that needs that person’s attention, and the personal calendar brings together due dates and appointments without exposing private appointment details to colleagues.
+
+30
+00:05:50,000 --> 00:05:54,835
+The OSG Team Analyst claims the assigned item and develops the service product.
+
+31
+00:05:54,835 --> 00:06:07,810
+The request context, acceptance expectations and conversation stay connected to the task, so the Analyst can work from one governed record rather than assembling the story from separate messages and spreadsheets.
+
+32
+00:06:15,000 --> 00:06:21,562
+If a material detail is missing, the Analyst can send a formal clarification request back to the Customer.
+
+33
+00:06:21,562 --> 00:06:28,991
+MIST pauses the relevant workflow task, records the question and presents an authorised response action to the Customer.
+
+34
+00:06:28,991 --> 00:06:35,740
+When the Customer replies, the same Analyst journey resumes with the answer preserved in the request history.
+
+35
+00:08:37,000 --> 00:08:42,122
+When the product is ready, the Analyst first chooses how it will be supplied.
+
+36
+00:08:42,122 --> 00:08:50,372
+Upload product to MIST opens the managed file route, where supported documents and images are stored, scanned and validated.
+
+37
+00:08:50,372 --> 00:08:54,430
+Add a product link opens only the approved HTTPS link fields.
+
+38
+00:08:54,430 --> 00:09:00,949
+The two routes are intentionally separate, so the page asks for only the information that applies.
+
+39
+00:09:01,000 --> 00:09:08,113
+After the product has been added, one clear Submit product action creates the exact review version and its checksum.
+
+40
+00:09:08,113 --> 00:09:11,057
+The covering note is released with that version.
+
+41
+00:09:11,057 --> 00:09:20,870
+If any content changes later, MIST creates a new version, protecting the connection between what the Analyst submitted and what each reviewer actually approved.
+
+42
+00:09:34,000 --> 00:09:37,809
+The work returns to the OSG Team Manager for product review.
+
+43
+00:09:37,809 --> 00:09:47,205
+The Manager can inspect the product contents, author, covering note and checksum before approving the exact package for independent quality control.
+
+44
+00:09:47,205 --> 00:09:54,570
+A rejection would return the work for correction, with the reason recorded rather than lost in an informal exchange.
+
+45
+00:11:06,000 --> 00:11:11,028
+The QC Manager’s shared queue provides oversight of incoming assurance work.
+
+46
+00:11:11,028 --> 00:11:16,982
+It shows the request and its current review state without collapsing separation of duties.
+
+47
+00:11:16,982 --> 00:11:24,790
+The QC Manager can monitor flow, while the independent QC User takes responsibility for the detailed quality decision.
+
+48
+00:11:26,000 --> 00:11:33,686
+The QC User claims the review, opens the same Manager-approved product package and records an independent decision.
+
+49
+00:11:33,686 --> 00:11:38,364
+The immutable version and checksum make the review target unambiguous.
+
+50
+00:11:38,364 --> 00:11:44,380
+MIST keeps the evidence, decision, actor and time attached to the request’s audit history.
+
+51
+00:12:51,000 --> 00:12:55,797
+After QC approval, the workflow returns to the QC Manager for dissemination.
+
+52
+00:12:55,797 --> 00:13:04,318
+The Manager confirms the Customer can access the product, reviews the release details and deliberately chooses Disseminate to Customer.
+
+53
+00:13:04,318 --> 00:13:10,630
+This final human decision releases the assured package and covering note to the originating request.
+
+54
+00:14:24,000 --> 00:14:28,572
+The Customer now sees Product available on the original request.
+
+55
+00:14:28,572 --> 00:14:34,288
+They can open the released information, accept the product and provide feedback.
+
+56
+00:14:34,288 --> 00:14:45,433
+From first submission to final acceptance, MIST keeps one visible, attributable chain of routing, assignment, clarification, production, review and release.
+
+57
+00:14:45,433 --> 00:14:49,220
+That is the MIST story: request, coordinate, deliver.

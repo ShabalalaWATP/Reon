@@ -111,7 +111,7 @@ export function ManagedFileForm({
     >
       <div className="section-heading">
         <span>Managed file</span>
-        <h3>Upload for scanning</h3>
+        <h3>Upload product to MIST</h3>
       </div>
       <ProductLabelField
         disabled={controlsDisabled}
@@ -259,7 +259,7 @@ function UploadAction({
   }
   return (
     <button className="button button--primary" disabled={disabled} type="submit">
-      {retrying ? "Preparing secure upload…" : "Upload artefact"}
+      {retrying ? "Preparing secure upload…" : "Upload to MIST"}
     </button>
   );
 }

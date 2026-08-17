@@ -47,7 +47,7 @@ export function ExternalLinkForm({
     <form className="product-entry-form" onSubmit={(event) => void submit(event)} noValidate>
       <div className="section-heading">
         <span>Approved destination</span>
-        <h3>Link to an external product</h3>
+        <h3>Add a product link</h3>
       </div>
       <label className="form-field">
         <span>Product label</span>
@@ -74,7 +74,7 @@ export function ExternalLinkForm({
       ) : null}
       <button className="button button--primary" disabled={disabled || pending} type="submit">
         <ExternalLink aria-hidden="true" size={16} />
-        {pending ? "Checking link…" : "Add approved link"}
+        {pending ? "Checking link…" : "Add product link"}
       </button>
       <p className="product-assurance">
         Mist records the destination domain but never fetches or previews its content.

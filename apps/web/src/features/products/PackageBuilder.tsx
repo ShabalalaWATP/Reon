@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
-import { Layers3 } from "lucide-react";
+import { FileUp, Layers3, Link2 } from "lucide-react";
+import { useState } from "react";
 
 import { productApi } from "../../lib/api/productClient";
 import type { ProductPackage } from "../../lib/api/productTypes";
@@ -18,6 +19,7 @@ export function PackageBuilder({
   onChanged: () => Promise<unknown>;
   productPackage: ProductPackage;
 }) {
+  const [source, setSource] = useState<ProductSource | null>(null);
   const { session } = useAuth();
   const { capabilities } = useCapabilities();
   const csrfToken = session!.csrfToken;
@@ -40,6 +42,11 @@ export function PackageBuilder({
       ),
     onSuccess: onChanged,
   });
+  const sourceLocked = anyTrue(
+    managedUploads.isPending,
+    managedUploads.hasUnfinished,
+    link.isPending,
+  );
 
   return (
     <section className="product-builder" aria-labelledby="package-builder-title">
@@ -59,38 +66,99 @@ export function PackageBuilder({
           This package has reached the ten-artefact limit.
         </p>
       ) : (
-        <div className="product-entry-grid">
-          {capabilities.managedFileUploads ? (
-            <ManagedFileForm
-              disabled={link.isPending}
-              maximumFiles={Math.max(
-                managedUploads.unfinishedCount,
-                10 - productPackage.artefacts.length,
-              )}
-              onRetry={managedUploads.retry}
-              onUpload={managedUploads.start}
-              progress={managedUploads.uploads}
-              uploading={managedUploads.isPending}
-            />
-          ) : (
+        <div className="product-source-workspace">
+          <ProductSourceSelector
+            managedUploadsAvailable={capabilities.managedFileUploads}
+            onChange={setSource}
+            selected={source}
+            sourceLocked={sourceLocked}
+          />
+          {!capabilities.managedFileUploads ? (
             <p className="form-banner" role="status">
               Managed-file uploads are unavailable because this environment has no approved
               semantic/CDR scanner. Approved external links remain available.
             </p>
-          )}
-          <ExternalLinkForm
-            disabled={anyTrue(
-              managedUploads.isPending,
-              managedUploads.hasUnfinished,
-              link.isPending,
-            )}
-            onAdd={async (draft) => {
-              await link.mutateAsync(draft);
-            }}
-          />
+          ) : null}
+          {source === "managed" && capabilities.managedFileUploads ? (
+            <div className="product-source-panel">
+              <ManagedFileForm
+                disabled={link.isPending}
+                maximumFiles={Math.max(
+                  managedUploads.unfinishedCount,
+                  10 - productPackage.artefacts.length,
+                )}
+                onRetry={managedUploads.retry}
+                onUpload={managedUploads.start}
+                progress={managedUploads.uploads}
+                uploading={managedUploads.isPending}
+              />
+            </div>
+          ) : null}
+          {source === "link" ? (
+            <div className="product-source-panel">
+              <ExternalLinkForm
+                disabled={sourceLocked}
+                onAdd={async (draft) => {
+                  await link.mutateAsync(draft);
+                }}
+              />
+            </div>
+          ) : null}
+          {source === null ? (
+            <p className="product-source-prompt">Choose one option to add the product.</p>
+          ) : null}
         </div>
       )}
     </section>
+  );
+}
+
+type ProductSource = "managed" | "link";
+
+function ProductSourceSelector({
+  managedUploadsAvailable,
+  onChange,
+  selected,
+  sourceLocked,
+}: {
+  managedUploadsAvailable: boolean;
+  onChange: (source: ProductSource) => void;
+  selected: ProductSource | null;
+  sourceLocked: boolean;
+}) {
+  return (
+    <fieldset className="product-source-selector">
+      <legend>How do you want to add the product?</legend>
+      <p>Select the source first. MIST will show only the fields you need.</p>
+      <div className="product-source-options">
+        <button
+          aria-pressed={selected === "managed"}
+          className="product-source-option"
+          disabled={!managedUploadsAvailable || sourceLocked}
+          onClick={() => onChange("managed")}
+          type="button"
+        >
+          <FileUp aria-hidden="true" size={21} />
+          <span>
+            <strong>Upload product to MIST</strong>
+            <small>Store and scan a document or image securely.</small>
+          </span>
+        </button>
+        <button
+          aria-pressed={selected === "link"}
+          className="product-source-option"
+          disabled={sourceLocked}
+          onClick={() => onChange("link")}
+          type="button"
+        >
+          <Link2 aria-hidden="true" size={21} />
+          <span>
+            <strong>Add a product link</strong>
+            <small>Point the customer to an approved HTTPS destination.</small>
+          </span>
+        </button>
+      </div>
+    </fieldset>
   );
 }
 
