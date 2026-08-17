@@ -2,26 +2,26 @@
 
 ## Status
 
-Current capability contract. Last reviewed 10 August 2026. Operational,
+Current capability contract. Last reviewed 17 August 2026. Operational,
 security, infrastructure and production acceptance remain governed by the
 current readiness register and release gates.
 
-The proposed `structured-conversations-packages-and-contexts.md` specification
-extends the package envelope, QC separation and dual-context rules. Until that
-amendment is accepted and implemented, this document remains the authority for
-current managed-product behaviour.
+The implemented `structured-conversations-packages-and-contexts.md`
+specification extends the package envelope, QC separation and dual-context
+rules. Read both documents together as the current managed-product contract.
 
 ## Outcome
 
 Give every authorised user a focused operational workspace, notify them when
-their action is required, let Quality and Release Managers disseminate managed
+their action is required, let QC Users and Managers review managed products and
+let QC Managers disseminate managed
 files or approved product links through the Customer dashboard, and let the
 organisation expand without hard-coded teams or unsafe workflow editing.
 
 The human-led route is:
 
 `Customer -> JIOC -> command -> Ops group -> delivery team -> Team Analyst ->
-Team Manager -> Quality and Release Manager -> Customer`.
+Team Manager -> QC User or QC Manager review -> QC Manager release -> Customer`.
 
 JIOC, command and Ops users route and track. They do not approve the product.
 Camunda coordinates named human tasks and never chooses a route, priority,
@@ -79,7 +79,8 @@ released-product and feedback actions stay attached to the relevant request.
 | Ops Routing User | Requests awaiting a team choice, staffing waits and returns |
 | Team Manager | Team intake, assignment, due risk, Manager review and rework |
 | Team Analyst | Assigned work, clarification replies, due risk and returned products |
-| Quality and Release Manager | Quality review, returned products and release-ready work |
+| QC User | Quality review and returned products |
+| QC Manager | Quality review, returned products and release-ready work |
 | Platform Administrator | Configuration, account and operational exceptions without request content |
 
 The workspace provides:

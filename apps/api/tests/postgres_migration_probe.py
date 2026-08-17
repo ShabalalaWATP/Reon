@@ -14,6 +14,7 @@ REVISION_0044 = "0044_context_conversations"
 REVISION_0045 = "0045_notification_contexts"
 REVISION_0046 = "0046_product_package_policy"
 REVISION_0047 = "0047_action_view_contexts"
+REVISION_0048 = "0048_notification_position"
 
 
 async def assert_revision(connection: AsyncConnection, revision: str) -> None:

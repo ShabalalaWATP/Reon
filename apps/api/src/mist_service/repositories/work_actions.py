@@ -22,7 +22,7 @@ from mist_service.models import (
     WorkflowTaskStatus,
 )
 from mist_service.product_models import ProductPackage
-from mist_service.qc_membership import is_live_qc_manager
+from mist_service.qc_membership import is_live_qc_manager, is_live_qc_member
 from mist_service.repositories.clarifications import (
     apply_clarification_effect,
     validate_clarification_effect,
@@ -81,13 +81,18 @@ async def validate_work_effect(
     managed_products_enabled: bool = False,
 ) -> bool:
     del managed_products_enabled
-    if (
-        actor.role is UserRole.QUALITY_RELEASE
-        and request.status
-        in {RequestStatus.QUALITY_REVIEW, RequestStatus.READY_FOR_RELEASE}
-        and not await is_live_qc_manager(session, actor.id, at=datetime.now(UTC))
-    ):
-        raise InvalidAction("A current Combined QC Team membership is required.")
+    if actor.role is UserRole.QUALITY_RELEASE:
+        now = datetime.now(UTC)
+        if (
+            request.status is RequestStatus.QUALITY_REVIEW
+            and not await is_live_qc_member(session, actor.id, at=now)
+        ):
+            raise InvalidAction("A current Combined QC Team membership is required.")
+        if (
+            request.status is RequestStatus.READY_FOR_RELEASE
+            and not await is_live_qc_manager(session, actor.id, at=now)
+        ):
+            raise InvalidAction("A current QC Manager position is required.")
     managed_product = False
     if request.product_mode is ProductMode.MANAGED:
         managed_product = await validate_product_workflow_effect(
@@ -282,6 +287,8 @@ async def apply_work_effect(
 
 def event_message(payload: CompletionPayload, current: RequestStatus) -> str:
     action = payload.action
+    if isinstance(payload, ProgressRequest):
+        return "Intake review completed."
     if hasattr(payload, "reason"):
         return f"{action.replace('_', ' ').capitalize()}: {payload.reason}"
     if hasattr(payload, "information"):

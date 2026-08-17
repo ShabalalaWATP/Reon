@@ -33,6 +33,19 @@ it.each(["/me/actions", "/statistics/scopes", "/statistics"])(
         if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
         if (url.pathname.endsWith(failedPath)) return json({ detail: "Unavailable" }, 503);
         if (url.pathname.endsWith("/me/actions")) return json(actions);
+        if (url.pathname.endsWith("/team-workspaces"))
+          return json({
+            items: [
+              {
+                teamId: "qc-unit",
+                teamCode: "QC_TEAM",
+                teamName: "Combined QC Team",
+                workspacePosition: "MANAGER",
+                grantId: "grant-qc",
+                permissions: ["STATISTICS"],
+              },
+            ],
+          });
         if (url.pathname.endsWith("/statistics/scopes")) return json({ items: [scope] });
         if (url.pathname.endsWith("/statistics")) return json(statistics);
         throw new Error(`Unexpected ${url.pathname}`);

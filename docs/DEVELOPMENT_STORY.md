@@ -3,6 +3,60 @@
 Entries are ordered newest first: the most recent date is at the top of the
 file and the earliest is at the bottom.
 
+## 17 August 2026: post-change audit and QC boundary repair
+
+- Audited the accumulated organisation, workflow, product, notification and
+  interface changes from the current `main` baseline. The baseline static,
+  backend, frontend, build, dependency, container-configuration and repository
+  checks were healthy, but the QC position split had only reached the work-list
+  query. A QC User could see review work but the completion, package and download
+  services still required a Manager, while action, conversation and notification
+  paths could expose release-stage references to any QC member.
+- Made the server boundary stage-aware throughout. Any active Combined QC Team
+  member may claim and complete quality review, inspect its exact package and use
+  review-stage correspondence. Release work, dissemination actions, release
+  package access and release correspondence require a live QC Manager position.
+  Account administration now accepts either position and current owner, role and
+  profile copy names the known position without inventing Manager authority for
+  missing data.
+- Added notification recipient position evidence in migration `0048`. Review
+  alerts reach all live QC Users and Managers; release alerts carry a durable
+  Manager requirement that is checked during projection and every read. The
+  audit also found that QC-team route notifications could be projected but fail
+  the ordinary selected-route read check because the Combined QC Team is
+  deliberately outside the routing tree. The exact QC-team membership path now
+  handles that support-unit exception without widening any operational route.
+- Removed a Customer-visible routing-note leak. The public workflow event now
+  uses the fixed `Intake review completed.` lifecycle message and stores an
+  optional receiving-command note as a separate staff-only hash-linked event.
+  Whitespace-only notes are rejected after trimming.
+- Kept work-detail correspondence unmounted until its disclosure is opened, so
+  a collapsed section cannot fetch threads or mark messages read. The disclosure
+  resets closed when the selected request changes. Reduced-motion sign-in mist
+  now omits the indefinite SVG animation and disables the CSS motion while
+  preserving the short state transition.
+- Closed the remaining least-privilege gaps found during independent quality and
+  security review. An omitted QC position now creates a User rather than a
+  Manager; QC home and statistics data are derived from live membership;
+  completed-package withdrawal and reopening remain Manager-only; and direct
+  request access rechecks the live task stage instead of trusting a stale grant.
+  Legacy queued notification rules without position evidence fail closed to
+  Manager-only delivery, while new review rules explicitly permit every live QC
+  member.
+- Proved migration `0048` against PostgreSQL 17 by upgrading from `0043`,
+  downgrading to `0043`, re-upgrading, and installing an empty database to head.
+  The complete backend suite passed with 1,346 tests and independent 98.76 per
+  cent line and 95.06 per cent branch coverage. The complete frontend suite
+  passed with 569 tests and independent 98.78 per cent line and 95.12 per cent
+  branch coverage; the production build, static checks, mypy and Bandit also
+  passed.
+- Rebuilt the local stack, deployed the validated 11-task BPMN process and used
+  a real browser to submit and reopen a complete synthetic request. A JIOC user
+  then routed it with a distinctive staff-only receiving-command note. A fresh
+  Customer sign-in saw the request advance and the neutral immutable lifecycle
+  event, but not the routing note, confirming the repaired privacy boundary in
+  the running service.
+
 ## 16 August 2026: organisation renames and a directory that shows your place
 
 - Renamed four organisation units for display: JIOC (formerly CRIOC), DIGOC

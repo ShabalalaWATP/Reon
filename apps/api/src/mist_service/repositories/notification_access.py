@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import ColumnElement, and_, exists, or_
+from sqlalchemy import ColumnElement, and_, exists, false, or_
 
 from mist_service.action_notification_models import (
     NotificationAccessKind,
@@ -14,7 +14,11 @@ from mist_service.action_notification_models import (
 from mist_service.domain import Actor
 from mist_service.models import ServiceRequest, UserRole, WorkflowTask
 from mist_service.organisation_models import RequestRouteSelection
-from mist_service.qc_membership import live_qc_membership_condition
+from mist_service.qc_membership import (
+    QC_TEAM_ID,
+    live_qc_manager_condition,
+    live_qc_membership_condition,
+)
 from mist_service.repositories.request_participants import (
     eligible_participant_condition,
 )
@@ -23,6 +27,7 @@ from mist_service.repositories.route_access import (
     live_unit_membership_condition,
 )
 from mist_service.schemas.actions import NotificationFilterState
+from mist_service.team_models import WorkspacePosition
 
 
 def access_condition(actor: Actor) -> ColumnElement[bool]:
@@ -63,6 +68,11 @@ def access_condition(actor: Actor) -> ColumnElement[bool]:
         NotificationRecipient.access_kind == NotificationAccessKind.ASSIGNEE,
         assignee_access,
     )
+    qc_team = (
+        NotificationRecipient.organisation_unit_id == QC_TEAM_ID
+        if actor.role is UserRole.QUALITY_RELEASE
+        else false()
+    )
     route_member = and_(
         NotificationRecipient.access_kind == NotificationAccessKind.ROUTE_MEMBER,
         live_unit_membership_condition(
@@ -72,6 +82,7 @@ def access_condition(actor: Actor) -> ColumnElement[bool]:
         ),
         or_(
             NotificationEvent.request_id.is_(None),
+            qc_team,
             exists().where(
                 RequestRouteSelection.request_id == NotificationEvent.request_id,
                 RequestRouteSelection.unit_id
@@ -107,6 +118,14 @@ def access_condition(actor: Actor) -> ColumnElement[bool]:
     return and_(
         visible,
         live_qc_membership_condition(actor.id, now),
+        or_(
+            NotificationRecipient.required_workspace_position.is_(None),
+            and_(
+                NotificationRecipient.required_workspace_position
+                == WorkspacePosition.MANAGER,
+                live_qc_manager_condition(actor.id, now),
+            ),
+        ),
     )
 
 

@@ -1,5 +1,6 @@
 import { StatusPill } from "../../components/StatusPill";
 import { PageState } from "../../components/PageState";
+import { useState } from "react";
 import type { RequestDetail, Session, WorkAction, WorkItem } from "../../lib/api/types";
 import { elapsedTime } from "../../lib/serviceTiming";
 import { formatDate, statusLabels } from "../../lib/status";
@@ -107,22 +108,38 @@ export function WorkQueueDetail({
               session={session}
             />
             {detail ? (
-              <details className="queue-detail__correspondence">
-                <summary>
-                  <span>Recorded correspondence</span>
-                  <strong>Request information from the Customer or another team</strong>
-                </summary>
-                <RequestConversations
-                  key={item.requestId}
-                  requestId={item.requestId}
-                  status={detail.status}
-                />
-              </details>
+              <RequestCorrespondence
+                key={item.requestId}
+                requestId={item.requestId}
+                status={detail.status}
+              />
             ) : null}
           </div>
         </>
       ) : null}
     </section>
+  );
+}
+
+function RequestCorrespondence({
+  requestId,
+  status,
+}: {
+  requestId: string;
+  status: RequestDetail["status"];
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <details
+      className="queue-detail__correspondence"
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary>
+        <span>Recorded correspondence</span>
+        <strong>Request information from the Customer or another team</strong>
+      </summary>
+      {open ? <RequestConversations requestId={requestId} status={status} /> : null}
+    </details>
   );
 }
 

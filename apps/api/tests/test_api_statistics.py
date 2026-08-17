@@ -5,8 +5,12 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
+from sqlalchemy import select
+
 from conftest import ApiHarness
 from mist_service.management_seed import management_grant_id
+from mist_service.qc_membership import QC_TEAM_ID
+from mist_service.team_models import TeamMembership, WorkspacePosition
 from statistics_test_support import seed_statistics
 
 
@@ -50,6 +54,36 @@ async def test_scope_catalogues_are_explicit_and_cross_branch_access_is_denied(
         params={"scopeId": "platform"},
     )
     assert platform_attack.status_code == 404
+
+
+async def test_qc_statistics_grant_requires_live_manager_position(
+    api_harness: ApiHarness,
+) -> None:
+    harness = api_harness
+    await harness.login("admin15")
+    before = await harness.client.get("/api/v1/statistics/scopes")
+    assert before.status_code == 200
+    assert [item["name"] for item in before.json()["items"]] == ["JIOC"]
+
+    async with harness.sessions() as session, session.begin():
+        membership = await session.scalar(
+            select(TeamMembership).where(
+                TeamMembership.user_id == await harness.user_id("admin15"),
+                TeamMembership.team_id == QC_TEAM_ID,
+                TeamMembership.effective_until.is_(None),
+            )
+        )
+        assert membership is not None
+        membership.workspace_position = WorkspacePosition.MEMBER
+
+    after = await harness.client.get("/api/v1/statistics/scopes")
+    assert after.status_code == 200
+    assert after.json() == {"items": []}
+    direct = await harness.client.get(
+        "/api/v1/statistics",
+        params={"scopeId": str(management_grant_id("admin15", "CRIOC"))},
+    )
+    assert direct.status_code == 404
 
 
 async def test_dashboards_show_only_the_authorised_operational_branch(

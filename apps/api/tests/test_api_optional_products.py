@@ -5,6 +5,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 from conftest import ApiHarness
+from mist_service.models import RequestStatus, ServiceRequest
 from product_test_support import create_product_request, product_actors
 
 
@@ -25,13 +26,27 @@ async def test_accessible_missing_products_return_null_and_others_stay_hidden(
     )
     assert unknown_package.status_code == 404
 
-    for username in ("admin8", "admin15"):
-        await api_harness.login(username)
-        visible_missing_package = await api_harness.client.get(
-            f"/api/v1/product-packages/by-request/{request_id}"
-        )
-        assert visible_missing_package.status_code == 200
-        assert visible_missing_package.json() is None
+    await api_harness.login("admin8")
+    manager_package = await api_harness.client.get(
+        f"/api/v1/product-packages/by-request/{request_id}"
+    )
+    assert manager_package.status_code == 200
+    assert manager_package.json() is None
+
+    await api_harness.login("admin15")
+    premature_qc_package = await api_harness.client.get(
+        f"/api/v1/product-packages/by-request/{request_id}"
+    )
+    assert premature_qc_package.status_code == 404
+    async with api_harness.sessions() as session, session.begin():
+        request = await session.get(ServiceRequest, request_id)
+        assert request is not None
+        request.status = RequestStatus.QUALITY_REVIEW
+    review_package = await api_harness.client.get(
+        f"/api/v1/product-packages/by-request/{request_id}"
+    )
+    assert review_package.status_code == 200
+    assert review_package.json() is None
 
     await api_harness.login("admin2")
     hidden_package = await api_harness.client.get(

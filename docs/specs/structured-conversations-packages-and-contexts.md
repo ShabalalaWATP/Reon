@@ -159,9 +159,9 @@ explicit, audited migration is separately specified and approved.
 
 ## Combined QC Team and separation of duties
 
-The organisation contains one Quality and Release Team with one or more current
-Managers. Membership grants access to the QC workspace, not blanket permission
-to perform every action.
+The organisation contains one Combined QC Team with current QC Users and QC
+Managers. Membership grants review-stage access to the QC workspace, not blanket
+permission to perform every action. Only Managers hold release accountability.
 
 The QC Team has a stable organisation identity for membership and audit
 references, but it is a support unit outside the four-level request-routing
@@ -173,7 +173,7 @@ units.
 
 For each immutable package version:
 
-1. a current QC Manager claims and records the QC review decision;
+1. a current QC User or QC Manager claims and records the QC review decision;
 2. an approved version becomes release-ready;
 3. a different current QC Manager explicitly selects the originating Customer
    and disseminates it; and
@@ -245,10 +245,11 @@ calendar/reservation subject for their own request. Denials use the ordinary
 not-found response and do not disclose that the request exists.
 
 Notification projection, notification reads, action queues and direct request
-detail also recheck current authority. Quality and Release access requires a
-live Manager membership in the exact combined QC Team. Role or scope alone is
-insufficient, and expiry, revocation or deactivation removes references and deep
-links immediately. For Analysts, the stored Lead field and a non-ended
+detail also recheck current authority. Quality-review access requires any live
+membership in the exact Combined QC Team; release-stage access requires a live
+Manager position there. Role or scope alone is insufficient, and expiry,
+revocation or deactivation removes references and deep links immediately. For
+Analysts, the stored Lead field and a non-ended
 participant row are accountability evidence only: action and notification reads
 also require the participant assignment to be effective and a live Delivery
 Specialist membership in the request's exact assigned team.

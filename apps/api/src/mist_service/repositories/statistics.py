@@ -26,6 +26,7 @@ from mist_service.management_models import (
 )
 from mist_service.models import User, UserRole
 from mist_service.organisation_models import OrganisationKind, OrganisationUnit
+from mist_service.qc_membership import live_qc_manager_condition
 from mist_service.repositories import statistics_record_mapping
 from mist_service.schemas.statistics import StatisticsScope, StatisticsUnit
 from mist_service.statistics_records import StatisticsDataset
@@ -33,6 +34,7 @@ from mist_service.statistics_records import StatisticsDataset
 MAX_FACT_ROWS = 50_000
 STATEMENT_TIMEOUT_MS = 2_000
 PLATFORM_SCOPE_ID = "platform"
+ScopeQuery = Select[tuple[ManagementGrant, OrganisationUnit]]
 
 
 class SqlAlchemyStatisticsRepository:
@@ -53,7 +55,7 @@ class SqlAlchemyStatisticsRepository:
             return [await self._platform_scope(root)]
         rows = (
             await self._session.execute(
-                self._active_scope_query(actor.id, effective_at).order_by(
+                self._active_scope_query(actor, effective_at).order_by(
                     OrganisationUnit.sort_order,
                     ManagementGrant.id,
                 )
@@ -175,7 +177,7 @@ class SqlAlchemyStatisticsRepository:
             raise ObjectNotFound() from error
         row = (
             await self._session.execute(
-                self._active_scope_query(actor.id, at).where(
+                self._active_scope_query(actor, at).where(
                     ManagementGrant.id == grant_id
                 )
             )
@@ -187,11 +189,8 @@ class SqlAlchemyStatisticsRepository:
         return scope, await self._select_unit(scope, unit, selected_unit_id)
 
     @staticmethod
-    def _active_scope_query(
-        actor_id: UUID,
-        at: datetime,
-    ) -> Select[tuple[ManagementGrant, OrganisationUnit]]:
-        return (
+    def _active_scope_query(actor: Actor, at: datetime) -> ScopeQuery:
+        query = (
             select(ManagementGrant, OrganisationUnit)
             .join(User, User.id == ManagementGrant.subject_user_id)
             .join(
@@ -203,7 +202,7 @@ class SqlAlchemyStatisticsRepository:
                 OrganisationUnit.id == ManagementGrant.root_unit_id,
             )
             .where(
-                ManagementGrant.subject_user_id == actor_id,
+                ManagementGrant.subject_user_id == actor.id,
                 ManagementGrantAction.action == ManagementAction.STATISTICS,
                 ManagementGrant.effective_from <= at,
                 or_(
@@ -215,6 +214,9 @@ class SqlAlchemyStatisticsRepository:
                 OrganisationUnit.is_configured.is_(True),
             )
         )
+        if actor.role is UserRole.QUALITY_RELEASE:
+            query = query.where(live_qc_manager_condition(actor.id, at))
+        return query
 
     @staticmethod
     def _unit_column(

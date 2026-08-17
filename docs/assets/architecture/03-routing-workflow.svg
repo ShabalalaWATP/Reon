@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="760" viewBox="0 0 1600 760" role="img" aria-labelledby="title desc">
   <title id="title">Request submission and organisational routing</title>
-  <desc id="desc">A plain-English process diagram from Customer submission through CRIOC, command, Ops and delivery-team assignment.</desc>
+  <desc id="desc">A plain-English process diagram from Customer submission through JIOC, command, Ops and delivery-team assignment.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071018"/><stop offset="1" stop-color="#0c1923"/></linearGradient>
     <filter id="shadow"><feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#000" flood-opacity=".25"/></filter>
@@ -17,7 +17,7 @@
     <text x="96" y="333" class="copy">Completes every required field</text><text x="96" y="357" class="copy">and receives a reference</text>
 
     <rect x="350" y="238" width="220" height="154" rx="18" class="step"/>
-    <text x="376" y="270" class="phase">CRIOC</text><text x="376" y="304" class="name">Review and direct</text>
+    <text x="376" y="270" class="phase">JIOC</text><text x="376" y="304" class="name">Review and direct</text>
     <text x="376" y="333" class="copy">May request information, close</text><text x="376" y="357" class="copy">or choose a direct command</text>
 
     <rect x="630" y="238" width="220" height="154" rx="18" class="decision"/>
@@ -34,7 +34,7 @@
 
     <rect x="316" y="520" width="288" height="110" rx="16" class="return"/>
     <text x="340" y="550" class="phase">INFORMATION LOOP</text><text x="340" y="582" class="name">Customer provides details</text>
-    <text x="340" y="608" class="copy">The same request returns to CRIOC</text>
+    <text x="340" y="608" class="copy">The same request returns to JIOC</text>
 
     <rect x="1212" y="520" width="206" height="110" rx="16" class="return"/>
     <text x="1236" y="550" class="phase">RETURN PATH</text><text x="1236" y="582" class="name">Re-route safely</text>
@@ -51,5 +51,5 @@
   <path d="M1212 575C1100 575 1060 456 1050 392" class="loop"/>
 
   <line x1="70" y1="678" x2="1440" y2="678" stroke="#203746"/>
-  <text x="70" y="711" class="copy">Visibility after routing:</text><text x="212" y="711" class="label">CRIOC, command and Ops can track progress, but they do not approve the delivered product.</text>
+  <text x="70" y="711" class="copy">Visibility after routing:</text><text x="212" y="711" class="label">JIOC, command and Ops can track progress, but they do not approve the delivered product.</text>
 </svg>

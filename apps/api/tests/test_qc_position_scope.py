@@ -8,9 +8,17 @@ from sqlalchemy import select
 
 from conftest import ApiHarness
 from mist_service.demo_seed import DEMO_IDENTITIES
-from mist_service.models import RequestStatus, ServiceRequest, User, UserRole
+from mist_service.models import (
+    RequestStatus,
+    ServiceRequest,
+    User,
+    UserRole,
+    WorkflowInstance,
+    WorkflowTask,
+)
 from mist_service.qc_membership import (
     is_live_qc_manager,
+    is_live_qc_member,
     live_qc_manager_condition,
     live_qc_membership_condition,
 )
@@ -55,6 +63,7 @@ async def test_qc_user_reviews_but_cannot_see_release_work(
             select(live_qc_manager_condition(user_row.id, now))
         )
         assert not await is_live_qc_manager(session, user_row.id, at=now)
+        assert await is_live_qc_member(session, user_row.id, at=now)
         work = SqlAlchemyWorkRepository(session, managed_products_enabled=True)
 
         request.status = RequestStatus.QUALITY_REVIEW
@@ -64,10 +73,36 @@ async def test_qc_user_reviews_but_cannot_see_release_work(
         assert [item.record.request.id for item in review_items] == [request_id]
 
         request.status = RequestStatus.READY_FOR_RELEASE
-        await add_claimed_release_task(session, request_id, qc_user.id)
+        release_task = await add_claimed_release_task(session, request_id, qc_user.id)
+        workflow = await session.get(
+            WorkflowInstance, release_task.workflow_instance_id
+        )
+        assert workflow is not None
+        workflow.current_element_id = release_task.element_id
         await session.flush()
         release_items = await work.list_for_actor(qc_user)
         assert release_items == []
+
+    await api_harness.login(QC_USER)
+    denied = await api_harness.client.get(f"/api/v1/requests/{request_id}")
+    assert denied.status_code == 404
+
+    async with api_harness.sessions() as session, session.begin():
+        manager_id = await session.scalar(
+            select(User.id).where(User.username == QC_MANAGER)
+        )
+        release_task = await session.scalar(
+            select(WorkflowTask).where(
+                WorkflowTask.request_id == request_id,
+                WorkflowTask.element_id == "release",
+            )
+        )
+        assert manager_id is not None and release_task is not None
+        release_task.assignee_user_id = manager_id
+
+    await api_harness.login(QC_MANAGER)
+    allowed = await api_harness.client.get(f"/api/v1/requests/{request_id}")
+    assert allowed.status_code == 200, allowed.text
 
 
 async def test_qc_manager_sees_both_review_and_release_work(

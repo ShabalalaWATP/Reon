@@ -1,7 +1,7 @@
 # Workflow and Camunda guide
 
 Status: current executable workflow
-Last reviewed: 14 August 2026
+Last reviewed: 17 August 2026
 
 This guide explains how a request moves through Mist Service. It is written for
 product owners, delivery staff, testers, developers and operators. No knowledge
@@ -30,7 +30,7 @@ The Ops group selects one of its current direct delivery teams. A Manager in tha
 team names one accountable Lead Analyst and up to ten additional assigned
 Analysts. They share the production controls and may ask the Customer or other
 authorised participants for information. The Team Manager checks the result, one
-QC Manager performs quality review, and a different QC Manager releases
+QC User or QC Manager performs quality review, and a different QC Manager releases
 it. The Customer receives and accepts the exact package in their dashboard. JIOC, the
 selected command and the selected Ops group can track progress, but they do not
 approve the product.
@@ -114,7 +114,7 @@ approval.
 3. An assigned Analyst creates an ordered package of managed files and/or
    allowlisted HTTPS links, adds the covering note and submits it.
 4. A Team Manager approves it for QC or returns it to the same assignment.
-5. One QC Manager claims quality review, approves it or returns it.
+5. One QC User or QC Manager claims quality review, approves it or returns it.
 6. A different QC Manager claims dissemination and releases the exact
    approved package.
 7. The owning Customer sees the artefacts and covering note, records acceptance
@@ -149,8 +149,8 @@ names and action labels.
 | Provide production information | `customer_clarification_response` | Owning Customer | Withdraw | Cancelled |
 | Manager Review | `lead_review` | Team Manager | Changes required | Product Production, same assignment |
 | Manager Review | `lead_review` | Team Manager | Approve | QC Review |
-| QC Review | `quality_review` | Claimed QC Manager | Changes required | Product Production, same assignment |
-| QC Review | `quality_review` | Claimed QC Manager | Approve | Dissemination |
+| QC Review | `quality_review` | Claimed QC User or QC Manager | Changes required | Product Production, same assignment |
+| QC Review | `quality_review` | Claimed QC User or QC Manager | Approve | Dissemination |
 | Dissemination | `release` | Different claimed QC Manager | Release exact approved package | Completed, awaiting Customer acceptance |
 
 ### End states

@@ -27,7 +27,7 @@ const queueLabels: Partial<Record<UserRole, string>> = {
   OPERATIONS_ALLOCATION: "Ops routing queue",
   DELIVERY_TEAM_LEAD: "Team work queue",
   DELIVERY_SPECIALIST: "Production queue",
-  QUALITY_RELEASE: "Quality and release queue",
+  QUALITY_RELEASE: "QC Team queue",
 };
 
 export const roleLabels: Record<UserRole, string> = {
@@ -38,7 +38,7 @@ export const roleLabels: Record<UserRole, string> = {
   OPERATIONS_ALLOCATION: "Ops Routing User",
   DELIVERY_TEAM_LEAD: "Team Manager",
   DELIVERY_SPECIALIST: "Team Analyst",
-  QUALITY_RELEASE: "QC Manager",
+  QUALITY_RELEASE: "Combined QC Team",
 };
 
 type WorkspacePosition = "MANAGER" | "MEMBER" | null | undefined;
@@ -51,6 +51,7 @@ type WorkspacePosition = "MANAGER" | "MEMBER" | null | undefined;
  */
 export function memberLabel(role: UserRole, position: WorkspacePosition): string {
   if (role === "QUALITY_RELEASE" && position === "MEMBER") return "QC User";
+  if (role === "QUALITY_RELEASE" && position === "MANAGER") return "QC Manager";
   return roleLabels[role];
 }
 
@@ -79,7 +80,7 @@ const routeTitles: readonly (readonly [RegExp, string])[] = [
   [/^\/allocation$/u, "Ops routing queue"],
   [/^\/delivery\/team$/u, "Team work queue"],
   [/^\/delivery\/my-work$/u, "Production queue"],
-  [/^\/quality-release$/u, "Quality and release queue"],
+  [/^\/quality-release$/u, "QC Team queue"],
   [/^\/requests\/new$/u, "New request"],
   [/^\/requests\/drafts(?:\/|$)/u, "Request draft"],
   [/^\/requests\/[^/]+$/u, "Request detail"],

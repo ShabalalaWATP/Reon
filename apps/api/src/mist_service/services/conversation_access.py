@@ -78,9 +78,7 @@ class ConversationAccess:
         )
         participant = await self._repository.is_active_participant(request, actor)
         team_manager = await self._repository.is_active_team_manager(request, actor)
-        qc_access = request.status in QC_RELEVANT_STATUSES and (
-            await self._repository.is_active_qc_manager(actor)
-        )
+        qc_access = await self._has_qc_access(actor, request.status)
         if not route_member and not participant and not team_manager and not qc_access:
             raise ObjectNotFound()
         return request
@@ -97,10 +95,7 @@ class ConversationAccess:
             allowed.add(ConversationTargetType.TEAM_MANAGERS)
         if await self._repository.is_active_participant(request, actor):
             allowed.add(ConversationTargetType.ASSIGNED_ANALYSTS)
-        if (
-            request.status in QC_RELEVANT_STATUSES
-            and await self._repository.is_active_qc_manager(actor)
-        ):
+        if await self._has_qc_access(actor, request.status):
             allowed.add(ConversationTargetType.QC_TEAM)
         selected_units = {
             unit.id
@@ -245,7 +240,10 @@ class ConversationAccess:
                 else set()
             )
         if target.type is ConversationTargetType.QC_TEAM:
-            return await self._repository.active_qc_ids()
+            return await self._repository.active_qc_ids(
+                manager_only=request.status
+                in {RequestStatus.READY_FOR_RELEASE, RequestStatus.COMPLETED}
+            )
         return await self._current_owner_ids(request)
 
     async def _current_owner_ids(self, request: ServiceRequest) -> set[UUID]:
@@ -263,7 +261,9 @@ class ConversationAccess:
         if role is UserRole.DELIVERY_TEAM_LEAD:
             return await self._team_managers(request)
         if role is UserRole.QUALITY_RELEASE:
-            return await self._repository.active_qc_ids()
+            return await self._repository.active_qc_ids(
+                manager_only=request.status is RequestStatus.READY_FOR_RELEASE
+            )
         position = ROUTE_POSITION_BY_OWNER_ROLE.get(role)
         if position is None:
             return set()
@@ -289,3 +289,10 @@ class ConversationAccess:
         return await self._repository.active_team_manager_ids(
             request.assigned_delivery_team_id
         )
+
+    async def _has_qc_access(self, actor: Actor, status: RequestStatus) -> bool:
+        if status is RequestStatus.QUALITY_REVIEW:
+            return await self._repository.is_active_qc_member(actor)
+        if status in {RequestStatus.READY_FOR_RELEASE, RequestStatus.COMPLETED}:
+            return await self._repository.is_active_qc_manager(actor)
+        return False

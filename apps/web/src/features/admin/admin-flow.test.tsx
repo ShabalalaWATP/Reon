@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { describe, expect, it, vi } from "vitest";
@@ -14,6 +14,15 @@ import { json, mockFetch, renderApp } from "../../test/render";
 import { AdminUserForm } from "./AdminUserForm";
 
 describe("platform administrator user management", () => {
+  it("presents the shared QC role without implying Manager authority", () => {
+    render(<AdminUserForm disabled={false} onSubmit={vi.fn()} units={organisationUnits} />);
+    const role = screen.getByLabelText("Representative role");
+    expect(within(role).getByRole("option", { name: "Combined QC Team" })).toHaveValue(
+      "QUALITY_RELEASE",
+    );
+    expect(within(role).queryByRole("option", { name: "QC Manager" })).not.toBeInTheDocument();
+  });
+
   it("lists, searches and clears account metadata without request content", async () => {
     const paths: string[] = [];
     mockFetch((url) => {

@@ -24,9 +24,7 @@ def workspace_position_for(
             )
         return WorkspacePosition.MEMBER
     if payload.role is UserRole.QUALITY_RELEASE:
-        if payload.workspace_position not in {None, WorkspacePosition.MANAGER}:
-            raise InvalidAdministrationChange(
-                "A QC account must be a workspace Manager."
-            )
-        return WorkspacePosition.MANAGER
+        # Omission must be least-privilege for older or partial clients. A QC
+        # Manager can disseminate products, while a QC User only reviews them.
+        return payload.workspace_position or WorkspacePosition.MEMBER
     return payload.workspace_position or WorkspacePosition.MEMBER

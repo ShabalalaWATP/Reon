@@ -13,7 +13,11 @@ from mist_service.models import (
     WorkflowTaskStatus,
 )
 from mist_service.organisation_models import RequestRouteSelection
-from mist_service.qc_membership import QC_TEAM_ID, live_qc_membership_condition
+from mist_service.qc_membership import (
+    QC_TEAM_ID,
+    live_qc_manager_condition,
+    live_qc_membership_condition,
+)
 from mist_service.repositories.request_participants import (
     eligible_participant_condition,
 )
@@ -73,7 +77,7 @@ def direct_request_access(actor: Actor) -> ColumnElement[bool]:
     return (
         and_(
             result,
-            live_qc_membership_condition(actor.id, now),
+            _qc_action_access(actor, now),
         )
         if actor.role is UserRole.QUALITY_RELEASE
         else result
@@ -124,7 +128,7 @@ def candidate_access(actor: Actor) -> ColumnElement[bool]:
     qc_team = (
         and_(
             ActionProjection.organisation_unit_id == QC_TEAM_ID,
-            live_qc_membership_condition(actor.id, now),
+            _qc_action_access(actor, now),
         )
         if actor.role is UserRole.QUALITY_RELEASE
         else false()
@@ -132,4 +136,14 @@ def candidate_access(actor: Actor) -> ColumnElement[bool]:
     return and_(
         conflict_free,
         or_(platform, scoped, qc_team, and_(membership, routed)),
+    )
+
+
+def _qc_action_access(actor: Actor, now: datetime) -> ColumnElement[bool]:
+    return and_(
+        live_qc_membership_condition(actor.id, now),
+        or_(
+            ActionProjection.action_type != "DISSEMINATE_PRODUCT",
+            live_qc_manager_condition(actor.id, now),
+        ),
     )

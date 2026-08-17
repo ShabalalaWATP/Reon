@@ -52,6 +52,6 @@
   <path d="M736 586C656 586 612 508 538 396" class="loop"/>
 
   <line x1="70" y1="700" x2="1492" y2="700" stroke="#203746"/>
-  <text x="70" y="733" class="copy">The route does not travel back through CRIOC, command or Ops for approval.</text>
+  <text x="70" y="733" class="copy">The route does not travel back through JIOC, command or Ops for approval.</text>
   <text x="514" y="733" class="label">Team review, QC review and a different QC releaser protect the package.</text>
 </svg>

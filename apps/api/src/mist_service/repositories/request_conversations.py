@@ -22,7 +22,10 @@ from mist_service.organisation_models import (
     OrganisationUnit,
     RequestRouteSelection,
 )
-from mist_service.qc_membership import live_qc_membership_condition
+from mist_service.qc_membership import (
+    live_qc_manager_condition,
+    live_qc_membership_condition,
+)
 from mist_service.request_participant_models import RequestParticipant
 from mist_service.team_models import TeamMembership, WorkspacePosition
 
@@ -99,17 +102,26 @@ class RequestConversationRepository:
             in await self.active_team_manager_ids(request.assigned_delivery_team_id)
         )
 
+    async def is_active_qc_member(self, actor: Actor) -> bool:
+        return await self._is_active_qc(actor, manager=False)
+
     async def is_active_qc_manager(self, actor: Actor) -> bool:
+        return await self._is_active_qc(actor, manager=True)
+
+    async def _is_active_qc(self, actor: Actor, *, manager: bool) -> bool:
         if actor.role is not UserRole.QUALITY_RELEASE:
             return False
         now = datetime.now(UTC)
+        condition = (
+            live_qc_manager_condition(cast(ColumnElement[UUID], User.id), now)
+            if manager
+            else live_qc_membership_condition(cast(ColumnElement[UUID], User.id), now)
+        )
         return (
             await self.session.scalar(
                 select(User.id).where(
                     active_actor_condition(actor),
-                    live_qc_membership_condition(
-                        cast(ColumnElement[UUID], User.id), now
-                    ),
+                    condition,
                 )
             )
             is not None
@@ -263,16 +275,19 @@ class RequestConversationRepository:
             query = query.where(User.role == role)
         return set(await self.session.scalars(query))
 
-    async def active_qc_ids(self) -> set[UUID]:
+    async def active_qc_ids(self, *, manager_only: bool = False) -> set[UUID]:
         now = datetime.now(UTC)
+        condition = (
+            live_qc_manager_condition(cast(ColumnElement[UUID], User.id), now)
+            if manager_only
+            else live_qc_membership_condition(cast(ColumnElement[UUID], User.id), now)
+        )
         return set(
             await self.session.scalars(
                 select(User.id).where(
                     User.role == UserRole.QUALITY_RELEASE,
                     User.is_active.is_(True),
-                    live_qc_membership_condition(
-                        cast(ColumnElement[UUID], User.id), now
-                    ),
+                    condition,
                 )
             )
         )

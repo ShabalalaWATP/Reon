@@ -108,6 +108,15 @@
   animation: mist-status-out 0.9s ease-in both;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .mist-reveal,
+  .mist-reveal::before,
+  .mist-reveal__layer,
+  .mist-reveal__status {
+    animation: none !important;
+  }
+}
+
 @keyframes mist-roll-in {
   from {
     opacity: 0;

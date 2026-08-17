@@ -34,14 +34,14 @@ export async function managerApprovePackage(page: Page) {
 }
 
 export async function inspectQcPackage(page: Page) {
-  await page.getByRole("link", { name: "Review and release package" }).click();
+  await page.getByRole("link", { name: "Review product package" }).click();
   await expect(page.getByRole("heading", { name: "Package contents" })).toBeVisible();
   await expect(page.getByText(/^Manager approval:/u)).toBeVisible();
   await page.getByRole("link", { name: "Return to work queue" }).click();
 }
 
 export async function disseminatePackage(page: Page) {
-  await page.getByRole("link", { name: "Review and release package" }).click();
+  await page.getByRole("link", { name: "Disseminate product package" }).click();
   const externalAttestation = page.getByLabel("External access attested");
   if ((await externalAttestation.count()) > 0) await externalAttestation.check();
   await page.getByRole("button", { name: "Disseminate to Customer" }).click();

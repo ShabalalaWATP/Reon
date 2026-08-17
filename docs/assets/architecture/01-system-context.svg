@@ -25,7 +25,7 @@
 
     <rect x="82" y="370" width="280" height="108" rx="14" class="person"/>
     <text x="106" y="400" class="tag">PEOPLE</text><text x="106" y="429" class="name">Routing organisations</text>
-    <text x="106" y="455" class="copy">CRIOC, command and Ops users route work</text>
+    <text x="106" y="455" class="copy">JIOC, command and Ops users route work</text>
 
     <rect x="82" y="504" width="280" height="108" rx="14" class="person"/>
     <text x="106" y="534" class="tag">PEOPLE</text><text x="106" y="563" class="name">Delivery and quality</text>

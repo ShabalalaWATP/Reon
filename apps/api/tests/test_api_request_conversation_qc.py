@@ -108,3 +108,41 @@ async def test_expired_qc_membership_loses_thread_and_recipient_access(
         headers=harness.mutation_headers(),
     )
     assert denied_reply.status_code == 404
+
+
+async def test_qc_user_can_use_review_conversations_but_not_release_threads(
+    api_harness: ApiHarness,
+) -> None:
+    request_id = await reach_delivery_work(api_harness)
+    async with api_harness.sessions() as session, session.begin():
+        request = await session.get(ServiceRequest, UUID(request_id))
+        assert request is not None
+        request.status = RequestStatus.QUALITY_REVIEW
+        request.current_owner = "QC User or QC Manager"
+
+    await api_harness.login("admin102")
+    review_threads = await api_harness.client.get(
+        f"/api/v1/requests/{request_id}/conversations"
+    )
+    assert review_threads.status_code == 200, review_threads.text
+
+    async with api_harness.sessions() as session, session.begin():
+        request = await session.get(ServiceRequest, UUID(request_id))
+        assert request is not None
+        request.status = RequestStatus.READY_FOR_RELEASE
+        request.current_owner = "QC Manager"
+
+    release_threads = await api_harness.client.get(
+        f"/api/v1/requests/{request_id}/conversations"
+    )
+    assert release_threads.status_code == 404
+    release_message = await api_harness.client.post(
+        f"/api/v1/requests/{request_id}/conversations/messages",
+        json={
+            "body": "QC Users must not enter release correspondence.",
+            "clientMutationId": str(uuid4()),
+            "targetType": "QC_TEAM",
+        },
+        headers=api_harness.mutation_headers(),
+    )
+    assert release_message.status_code == 404

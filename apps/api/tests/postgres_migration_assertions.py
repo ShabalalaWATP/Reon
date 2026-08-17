@@ -7,6 +7,7 @@ from uuid import UUID
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection
 
+from postgres_migration_0048_assertions import seed_0048_legacy_recipient
 from postgres_migration_probe import (
     REVISION_0043,
     REVISION_0044,
@@ -345,3 +346,4 @@ async def assert_0047(connection: AsyncConnection) -> None:
         "WHERE owner_user_id=:staff",
         {"staff": STAFF_ID},
     )
+    await seed_0048_legacy_recipient(connection)

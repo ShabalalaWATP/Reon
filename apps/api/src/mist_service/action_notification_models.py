@@ -31,6 +31,7 @@ from mist_service.models import (
     UserRole,
     _enum,
 )
+from mist_service.team_models import WorkspacePosition
 
 
 class ActionSection(StrEnum):
@@ -232,6 +233,9 @@ class NotificationRecipient(TimestampMixin, Base):
         _enum(UserRole, "notification_required_role")
     )
     required_scope: Mapped[str | None] = mapped_column(String(120))
+    required_workspace_position: Mapped[WorkspacePosition | None] = mapped_column(
+        _enum(WorkspacePosition, "notification_required_workspace_position")
+    )
     organisation_unit_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("organisation_units.id", ondelete="RESTRICT"), index=True
     )

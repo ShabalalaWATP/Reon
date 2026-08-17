@@ -157,6 +157,19 @@ describe("role-specific operational overview", () => {
     );
   });
 
+  it("gives a QC User a review-only home without manager statistics", async () => {
+    mockOverview(asRole("QUALITY_RELEASE", "QC User"), false, true);
+    renderApp("/overview");
+
+    expect(await screen.findByRole("heading", { name: "Welcome, Scott" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Your workload" })).toHaveTextContent(
+      "Product reviews currently assigned to you.",
+    );
+    expect(screen.getByText(/Dissemination remains a QC Manager action/)).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "QC Team workload" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Quality statistics/ })).not.toBeInTheDocument();
+  });
+
   it("uses explicit zero states at the lowest authorised organisation", async () => {
     mockOverview(staffSession, false, false, false, {
       ...statistics,
@@ -245,9 +258,9 @@ describe("role-specific operational overview", () => {
 
     mockOverview(asRole("QUALITY_RELEASE", "QC Manager"), false, true);
     renderApp("/overview");
-    expect(
-      await screen.findByRole("heading", { name: "Quality overview could not be loaded" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Welcome, Scott" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Your workload" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Quality statistics/ })).not.toBeInTheDocument();
   });
 });
 
@@ -274,23 +287,33 @@ function mockOverview(
         return json(overviewScopes(emptyScopes, withTeam, scope, teamId));
       if (url.pathname.endsWith("/statistics")) return json(dashboard);
       if (url.pathname.endsWith("/team-workspaces")) {
-        const selectedWorkspace = withTeam
-          ? {
-              teamId,
-              teamCode: "SSG_TEAM",
-              teamName: "SSG Team",
-              workspacePosition: "MANAGER",
-              grantId: "grant-ssg",
-              permissions: ["STATISTICS"],
-            }
-          : {
-              teamId: rootId,
-              teamCode: "CRIOC",
-              teamName: "CRIOC",
-              workspacePosition: "MEMBER",
-              grantId: null,
-              permissions: [],
-            };
+        const selectedWorkspace =
+          session.user.role === "QUALITY_RELEASE"
+            ? {
+                teamId: "00000000-0000-4000-8000-000000000004",
+                teamCode: "QC_TEAM",
+                teamName: "Combined QC Team",
+                workspacePosition: session.user.scope === "QC User" ? "MEMBER" : "MANAGER",
+                grantId: "grant-qc",
+                permissions: session.user.scope === "QC User" ? [] : ["STATISTICS"],
+              }
+            : withTeam
+              ? {
+                  teamId,
+                  teamCode: "SSG_TEAM",
+                  teamName: "SSG Team",
+                  workspacePosition: "MANAGER",
+                  grantId: "grant-ssg",
+                  permissions: ["STATISTICS"],
+                }
+              : {
+                  teamId: rootId,
+                  teamCode: "CRIOC",
+                  teamName: "CRIOC",
+                  workspacePosition: "MEMBER",
+                  grantId: null,
+                  permissions: [],
+                };
         return json({ items: emptyTeams ? [] : [selectedWorkspace] });
       }
       if (url.pathname.endsWith(`/team-workspaces/${teamId}`)) {

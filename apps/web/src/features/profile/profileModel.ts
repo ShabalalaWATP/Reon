@@ -1,7 +1,7 @@
 import type { User } from "../../lib/api/types";
 import type { TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 
-const accessLabels: Record<User["role"], string> = {
+const accessLabels: Record<Exclude<User["role"], "QUALITY_RELEASE">, string> = {
   PLATFORM_ADMIN: "Platform administration",
   REQUESTER: "Own requests and released products",
   INTAKE_TRIAGE: "JIOC routing",
@@ -9,10 +9,9 @@ const accessLabels: Record<User["role"], string> = {
   OPERATIONS_ALLOCATION: "Ops routing",
   DELIVERY_TEAM_LEAD: "Team management",
   DELIVERY_SPECIALIST: "Assigned product work",
-  QUALITY_RELEASE: "Quality control and release",
 };
 
-const roleDescriptions: Record<User["role"], string> = {
+const roleDescriptions: Record<Exclude<User["role"], "QUALITY_RELEASE">, string> = {
   PLATFORM_ADMIN: "Maintains accounts and governed platform configuration.",
   REQUESTER:
     "Submits requests, tracks progress, responds when needed and receives released products.",
@@ -21,20 +20,26 @@ const roleDescriptions: Record<User["role"], string> = {
   OPERATIONS_ALLOCATION: "Routes requests from an Ops group to a delivery team.",
   DELIVERY_TEAM_LEAD: "Plans team work, assigns Analysts and reviews products.",
   DELIVERY_SPECIALIST: "Produces assigned products and requests Customer information when needed.",
-  QUALITY_RELEASE: "Completes quality checks and releases products to Customers.",
 };
 
 export function profileAccessLabel(user: User, workspaces: TeamWorkspaceAccess[] = []) {
   const managed = workspaces
     .filter((item) => item.workspacePosition === "MANAGER")
     .map((item) => item.teamName);
-  return managed.length > 0
-    ? `${accessLabels[user.role]}; Manager controls for ${managed.join(", ")}`
-    : accessLabels[user.role];
+  const access =
+    user.role === "QUALITY_RELEASE"
+      ? qualityAccessLabel(soleWorkspacePosition(workspaces))
+      : accessLabels[user.role];
+  return managed.length > 0 ? `${access}; Manager controls for ${managed.join(", ")}` : access;
 }
 
-export function profileRoleDescription(user: User) {
-  return roleDescriptions[user.role];
+export function profileRoleDescription(user: User, workspaces: TeamWorkspaceAccess[] = []) {
+  if (user.role !== "QUALITY_RELEASE") return roleDescriptions[user.role];
+  const position = soleWorkspacePosition(workspaces);
+  if (position === "MEMBER") return "Completes quality checks on product packages.";
+  if (position === "MANAGER")
+    return "Completes quality checks and disseminates approved products to Customers.";
+  return "Works within the combined quality control team.";
 }
 
 export function profileScopeLabel(user: User) {
@@ -61,6 +66,12 @@ export function profileMembershipText(expected: number, names: string[], failed:
 export function soleWorkspacePosition(workspaces: TeamWorkspaceAccess[]) {
   const positions = new Set(workspaces.map((item) => item.workspacePosition).filter(Boolean));
   return positions.size === 1 ? [...positions][0] : undefined;
+}
+
+function qualityAccessLabel(position: ReturnType<typeof soleWorkspacePosition>) {
+  if (position === "MEMBER") return "Quality control";
+  if (position === "MANAGER") return "Quality control and dissemination";
+  return "Combined quality control";
 }
 
 export function profilePositionLabel(workspaces: TeamWorkspaceAccess[]) {

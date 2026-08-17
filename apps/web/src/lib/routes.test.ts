@@ -38,7 +38,7 @@ describe("route document titles", () => {
     ["/allocation", "Ops routing queue · Mist Service"],
     ["/delivery/team", "Team work queue · Mist Service"],
     ["/delivery/my-work", "Production queue · Mist Service"],
-    ["/quality-release", "Quality and release queue · Mist Service"],
+    ["/quality-release", "QC Team queue · Mist Service"],
     ["/requests", "My requests · Mist Service"],
     ["/requests/new", "New request · Mist Service"],
     ["/requests/drafts/draft-1", "Request draft · Mist Service"],
@@ -54,8 +54,8 @@ describe("member labels", () => {
   it("names QC people by workspace position because one role spans two positions", () => {
     expect(memberLabel("QUALITY_RELEASE", "MEMBER")).toBe("QC User");
     expect(memberLabel("QUALITY_RELEASE", "MANAGER")).toBe("QC Manager");
-    expect(memberLabel("QUALITY_RELEASE", undefined)).toBe("QC Manager");
-    expect(memberLabel("QUALITY_RELEASE", null)).toBe("QC Manager");
+    expect(memberLabel("QUALITY_RELEASE", undefined)).toBe("Combined QC Team");
+    expect(memberLabel("QUALITY_RELEASE", null)).toBe("Combined QC Team");
   });
 
   it("leaves every other role on its representative label regardless of position", () => {

@@ -34,7 +34,7 @@ describe("presentation helpers", () => {
       OPERATIONS_ALLOCATION: "Ops Routing User",
       DELIVERY_TEAM_LEAD: "Team Manager",
       DELIVERY_SPECIALIST: "Team Analyst",
-      QUALITY_RELEASE: "QC Manager",
+      QUALITY_RELEASE: "Combined QC Team",
     });
     expect(navigationForRole("REQUESTER")).toEqual([
       { label: "My requests", path: "/requests" },

@@ -54,6 +54,9 @@ async def test_wrong_team_qc_role_cannot_read_managed_product(
     async with api_harness.sessions() as session, session.begin():
         repository = SqlAlchemyProductRepository(session)
         package = await repository.create_package(request_id, analyst.id, uuid4())
+        request = await session.get(ServiceRequest, request_id)
+        assert request is not None
+        request.status = RequestStatus.QUALITY_REVIEW
         assert await product_service(
             session, InMemoryPrivateObjectStorage(), RecordingAudit()
         ).get_package(qc, package.id)

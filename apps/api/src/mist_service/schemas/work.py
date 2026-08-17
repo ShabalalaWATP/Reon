@@ -25,6 +25,11 @@ class ProgressRequest(StrictApiModel):
     # activity record then carries the default label for the receiving team.
     note: str | None = Field(default=None, min_length=3, max_length=2000)
 
+    @field_validator("note", mode="before")
+    @classmethod
+    def note_is_not_blank(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
 
 class CloseRequest(StrictApiModel):
     action: Literal["close"]

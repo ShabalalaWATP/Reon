@@ -39,6 +39,7 @@ from mist_service.repositories.work_actions import (
     work_event_details,
 )
 from mist_service.repositories.work_claim_projection import project_claim
+from mist_service.repositories.work_event_recording import append_routing_note
 from mist_service.repositories.work_intent_repository import WorkIntentRepositoryMixin
 from mist_service.repositories.work_scope import work_scope_conditions
 from mist_service.repositories.work_staffing import WorkStaffingRepositoryMixin
@@ -302,7 +303,6 @@ class SqlAlchemyWorkRepository(WorkIntentRepositoryMixin, WorkStaffingRepository
             instance.completed_at = now
         elif next_task is not None:
             self._session.add(next_task_projection(request, instance, next_task))
-
         await append_request_event(
             self._session,
             request_id=request.id,
@@ -314,6 +314,7 @@ class SqlAlchemyWorkRepository(WorkIntentRepositoryMixin, WorkStaffingRepository
             audience=work_event_audience(action),
             details=event_details,
         )
+        await append_routing_note(self._session, request, actor, payload, event_details)
         await self._session.flush()
         return await build_request_detail(
             self._session,

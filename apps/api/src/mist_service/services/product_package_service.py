@@ -168,10 +168,7 @@ class ProductPackageService(ProductServiceSupport[ProductPackageServiceRepositor
                 request.assigned_team,
                 manager=True,
             )
-        return (
-            actor.role is UserRole.QUALITY_RELEASE
-            and await self._repository.live_qc_manager(actor.id)
-        )
+        return await self._qc_access_for_status(actor, request)
 
     async def _can_inspect(
         self, actor: Actor, package: PackageRecord, request: ProductRequestRecord
@@ -198,10 +195,7 @@ class ProductPackageService(ProductServiceSupport[ProductPackageServiceRepositor
                 )
                 and await self._repository.manager_task_claimed_by(package.id, actor.id)
             )
-        if (
-            actor.role is not UserRole.QUALITY_RELEASE
-            or not await self._repository.live_qc_manager(actor.id)
-        ):
+        if not await self._qc_access_for_status(actor, request):
             return False
         if request.status == RequestStatus.QUALITY_REVIEW.value:
             return await self._repository.quality_task_claimed_by(package.id, actor.id)
@@ -228,7 +222,20 @@ class ProductPackageService(ProductServiceSupport[ProductPackageServiceRepositor
                 request.assigned_team,
                 manager=True,
             )
-        return (
-            actor.role is UserRole.QUALITY_RELEASE
-            and await self._repository.live_qc_manager(actor.id)
-        )
+        return await self._qc_access_for_status(actor, request)
+
+    async def _qc_access_for_status(
+        self, actor: Actor, request: ProductRequestRecord
+    ) -> bool:
+        if actor.role is not UserRole.QUALITY_RELEASE:
+            return False
+        if request.status == RequestStatus.QUALITY_REVIEW.value:
+            return await self._repository.live_qc_membership(actor.id, manager=False)
+        if request.status == RequestStatus.READY_FOR_RELEASE.value:
+            return await self._repository.live_qc_membership(actor.id, manager=True)
+        if request.status == RequestStatus.COMPLETED.value:
+            # A QC Manager must be able to reopen a disseminated package after
+            # navigation or reload so that the supported withdrawal control is
+            # still reachable. QC Users remain excluded from this release stage.
+            return await self._repository.live_qc_membership(actor.id, manager=True)
+        return False

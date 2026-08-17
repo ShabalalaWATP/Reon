@@ -19,7 +19,7 @@ OWNER_BY_STATUS = {
     RequestStatus.CUSTOMER_INFORMATION_REQUIRED: "Customer",
     RequestStatus.LEAD_REVIEW: "Team Manager",
     RequestStatus.REWORK_REQUIRED: "Team Analyst",
-    RequestStatus.QUALITY_REVIEW: "QC Manager",
+    RequestStatus.QUALITY_REVIEW: "QC User or QC Manager",
     RequestStatus.READY_FOR_RELEASE: "QC Manager",
     RequestStatus.COMPLETED: "Customer",
     RequestStatus.CLOSED_NOT_PROGRESSED: "Customer",

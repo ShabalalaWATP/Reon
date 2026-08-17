@@ -139,6 +139,7 @@ class SqlAlchemyNotificationProjectionRepository:
                     access_kind=rule.access_kind,
                     required_role=rule.required_role,
                     required_scope=rule.required_scope,
+                    required_workspace_position=rule.required_workspace_position,
                     organisation_unit_id=rule.organisation_unit_id,
                     version=1,
                 )
@@ -246,7 +247,7 @@ class SqlAlchemyNotificationProjectionRepository:
             for rule in unique
             if rule.required_role is UserRole.QUALITY_RELEASE
         )
-        current_memberships: set[tuple[UUID, UUID]] = set()
+        current_memberships: set[tuple[UUID, UUID, WorkspacePosition]] = set()
         if required_memberships:
             membership_users = {user_id for user_id, _unit_id in required_memberships}
             membership_units = {unit_id for _user_id, unit_id in required_memberships}
@@ -256,6 +257,7 @@ class SqlAlchemyNotificationProjectionRepository:
                         select(
                             TeamMembership.user_id,
                             TeamMembership.team_id,
+                            TeamMembership.workspace_position,
                         ).where(
                             TeamMembership.user_id.in_(membership_users),
                             TeamMembership.team_id.in_(membership_units),
@@ -263,11 +265,6 @@ class SqlAlchemyNotificationProjectionRepository:
                             or_(
                                 TeamMembership.effective_until.is_(None),
                                 TeamMembership.effective_until > datetime.now(UTC),
-                            ),
-                            or_(
-                                TeamMembership.team_id != QC_TEAM_ID,
-                                TeamMembership.workspace_position
-                                == WorkspacePosition.MANAGER,
                             ),
                         )
                     )
@@ -285,15 +282,27 @@ class SqlAlchemyNotificationProjectionRepository:
     def _rule_is_current(
         rule: RecipientRule,
         users: dict[UUID, tuple[UserRole, str, bool]],
-        memberships: set[tuple[UUID, UUID]],
+        memberships: set[tuple[UUID, UUID, WorkspacePosition]],
     ) -> bool:
         user = users.get(rule.user_id)
         if user is None or not role_is_current(rule.required_role, user):
             return False
+
+        def has_membership(unit_id: UUID) -> bool:
+            return any(
+                membership_user_id == rule.user_id
+                and membership_unit_id == unit_id
+                and (
+                    rule.required_workspace_position is None
+                    or position is rule.required_workspace_position
+                )
+                for membership_user_id, membership_unit_id, position in memberships
+            )
+
         if rule.required_role is UserRole.QUALITY_RELEASE:
-            return (rule.user_id, QC_TEAM_ID) in memberships
+            return has_membership(QC_TEAM_ID)
         if rule.organisation_unit_id is not None:
-            return (rule.user_id, rule.organisation_unit_id) in memberships
+            return has_membership(rule.organisation_unit_id)
         return rule.required_scope is None or user[1] == rule.required_scope
 
     async def _recipients_by_user(

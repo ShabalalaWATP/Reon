@@ -83,3 +83,19 @@ async def is_live_qc_manager(
         )
     )
     return match is not None
+
+
+async def is_live_qc_member(
+    session: AsyncSession, user_id: UUID, *, at: datetime
+) -> bool:
+    """Recheck active account, role and any current QC workspace position."""
+
+    match = await session.scalar(
+        select(User.id).where(
+            User.id == user_id,
+            User.is_active.is_(True),
+            User.role == UserRole.QUALITY_RELEASE,
+            live_qc_membership_condition(User.id, at),
+        )
+    )
+    return match is not None

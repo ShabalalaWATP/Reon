@@ -159,15 +159,16 @@ class ProductReviewService(ProductServiceSupport[ProductPackageServiceRepository
                 )
                 and await self._repository.manager_task_claimed_by(package.id, actor.id)
             )
-        if (
-            actor.role is not UserRole.QUALITY_RELEASE
-            or not await self._repository.live_qc_manager(actor.id)
-        ):
+        if actor.role is not UserRole.QUALITY_RELEASE:
             return False
         if request.status == RequestStatus.QUALITY_REVIEW.value:
-            return await self._repository.quality_task_claimed_by(package.id, actor.id)
+            return await self._repository.live_qc_membership(
+                actor.id, manager=False
+            ) and await self._repository.quality_task_claimed_by(package.id, actor.id)
         if request.status == RequestStatus.READY_FOR_RELEASE.value:
-            return await self._repository.release_task_claimed_by(package.id, actor.id)
+            return await self._repository.live_qc_membership(
+                actor.id, manager=True
+            ) and await self._repository.release_task_claimed_by(package.id, actor.id)
         return False
 
     async def _audit_access(

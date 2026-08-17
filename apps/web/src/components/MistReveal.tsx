@@ -24,16 +24,16 @@ const PHASE_FOR_SIGNAL: Record<MistSignal, Phase> = {
 
 export function MistReveal() {
   const [phase, setPhase] = useState<Phase>("hidden");
+  const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
   useEffect(() => onMistSignal((signal) => setPhase(PHASE_FOR_SIGNAL[signal])), []);
   useEffect(() => {
     if (phase === "hidden" || phase === "gathering") return;
-    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
     const wait =
       phase === "dense"
-        ? reduced
+        ? reducedMotion
           ? REDUCED_PHASE_MS
           : DENSE_MS
-        : reduced
+        : reducedMotion
           ? REDUCED_PHASE_MS
           : CLEAR_MS;
     const timer = window.setTimeout(
@@ -41,7 +41,7 @@ export function MistReveal() {
       wait,
     );
     return () => window.clearTimeout(timer);
-  }, [phase]);
+  }, [phase, reducedMotion]);
   if (phase === "hidden") return null;
   return (
     <div className={`mist-reveal mist-reveal--${phase}`}>
@@ -54,12 +54,14 @@ export function MistReveal() {
             seed="7"
             type="fractalNoise"
           >
-            <animate
-              attributeName="baseFrequency"
-              dur="14s"
-              repeatCount="indefinite"
-              values="0.012 0.03;0.016 0.024;0.012 0.03"
-            />
+            {reducedMotion ? null : (
+              <animate
+                attributeName="baseFrequency"
+                dur="14s"
+                repeatCount="indefinite"
+                values="0.012 0.03;0.016 0.024;0.012 0.03"
+              />
+            )}
           </feTurbulence>
           <feDisplacementMap
             in="SourceGraphic"

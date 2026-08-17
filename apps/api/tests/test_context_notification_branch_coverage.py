@@ -106,14 +106,16 @@ async def test_route_scope_and_invalid_direct_notification_audiences(
             ActionAudience(),
         ]
 
-    async def route_rules(_session, _unit_id, role):
+    async def route_rules(_session, _unit_id, role, *, manager_only):
+        assert manager_only is False
         return [
             notifications.RecipientRule(
                 route_user_id, NotificationAccessKind.ROUTE_MEMBER, role
             )
         ]
 
-    async def scope_rules(_session, _scope, role):
+    async def scope_rules(_session, _scope, role, *, manager_only):
+        assert manager_only is False
         return [
             notifications.RecipientRule(
                 scope_user_id, NotificationAccessKind.ROLE_SCOPE, role

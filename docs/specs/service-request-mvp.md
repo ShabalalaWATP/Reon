@@ -59,6 +59,7 @@ desktop and narrow-screen widths.
 | Ops Routing User | Direct work to the appropriate team | Select any direct team and track progress | Clear demand and workload ownership |
 | Team Manager | Assign and oversee delivery | Assign Analysts and check their service product | One view of origin, ownership and delivery |
 | Team Analyst | Produce the service product | Manage assigned work and submit the product | Visible workload, status and history |
+| QC User | Assure completed work | Review and return products when correction is required | Clear readiness and quality control |
 | QC Manager | Assure and disseminate completed work | Review, return, approve and disseminate | Clear readiness, approval and delivery |
 
 The Platform Administrator is a supporting technical role, not an eighth workflow
@@ -67,9 +68,9 @@ metadata, and cannot browse request content by default.
 
 ## Synthetic user fixtures
 
-The local/test seed contains 100 Scottish-football display names. Logons are
-`admin1` through `admin100`, with the local-only shared password `admin`.
-Every team has at least one Manager and one Analyst. SSG has three Managers and
+The local/test seed contains 108 Scottish-football display names. Logons are
+`admin1` through `admin108`, with the local-only shared password `admin`.
+Every team has at least one Manager and one Analyst. OSG Team has three Managers and
 seven Analysts. The complete traceable roster is maintained in
 `docs/architecture/ORGANISATION_AND_ROUTING.md`.
 
@@ -203,8 +204,8 @@ query scope remain role-specific.
   destination for the applicable routing user, with no demonstration-only choice.
 - Every seeded team has its own active Manager and Analyst membership. A later
   administrative change may make it unstaffed, which shows `Awaiting staffing`
-  and never assigns SSG users.
-- SSG is the initial operational team, with additional Manager and Analyst users.
+  and never assigns OSG Team users.
+- OSG Team is the initial operational team, with additional Manager and Analyst users.
 - A Platform Administrator can provision, edit, deactivate and reactivate users
   and rename organisation display names without accessing request content.
 - Camunda 8.9.14 is pinned locally and accessed only through FastAPI.

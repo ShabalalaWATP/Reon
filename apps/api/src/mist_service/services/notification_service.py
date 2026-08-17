@@ -16,6 +16,7 @@ from mist_service.action_notification_models import (
 )
 from mist_service.domain import Actor
 from mist_service.errors import InvalidAction
+from mist_service.models import UserRole
 from mist_service.notification_catalog import EVENT_LABELS, render_subject
 from mist_service.notification_ports import (
     NotificationProjectionPort,
@@ -37,6 +38,7 @@ from mist_service.schemas.actions import (
     NotificationStateCommand,
     NotificationStateResult,
 )
+from mist_service.team_models import WorkspacePosition
 
 
 @dataclass(frozen=True, slots=True)
@@ -264,6 +266,11 @@ def _validate_link(link: str | None) -> None:
 
 
 def _validate_recipient_rule(rule: RecipientRule) -> None:
+    if rule.required_workspace_position is not None and (
+        rule.required_role is not UserRole.QUALITY_RELEASE
+        or rule.required_workspace_position is not WorkspacePosition.MANAGER
+    ):
+        raise InvalidAction("A notification workspace position is invalid.")
     if rule.access_kind is NotificationAccessKind.ACCOUNT:
         if rule.organisation_unit_id is not None:
             raise InvalidAction("An account notification rule is invalid.")

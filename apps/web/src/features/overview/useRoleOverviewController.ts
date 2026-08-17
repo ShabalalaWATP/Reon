@@ -35,10 +35,11 @@ export type QualityOverviewState =
   | {
       actions: OverviewActions;
       firstName: string;
+      isManager: boolean;
       kind: "ready";
-      metrics: Map<string, number>;
-      scopeId: string;
-      unitId: string;
+      metrics?: Map<string, number>;
+      scopeId?: string;
+      unitId?: string;
     };
 
 export function useScopedOverviewController(
@@ -91,13 +92,22 @@ export function useScopedOverviewController(
 
 export function useQualityOverviewController(session: Session): QualityOverviewState {
   const queryKeys = protectedQueryKeys(session);
+  const capabilityQuery = useCapabilities();
   const actions = useQuery({
     queryKey: queryKeys.actions("quality-overview"),
     queryFn: () => actionNotificationApi.actions(emptyFilters),
   });
+  const workspaces = useQuery({
+    queryKey: queryKeys.teamWorkspaces(),
+    queryFn: api.teamWorkspaces,
+  });
+  const workspace = workspaces.data?.items.find((item) => item.teamCode === "QC_TEAM");
+  const managerReporting =
+    workspace?.workspacePosition === "MANAGER" && capabilityQuery.capabilities.statistics;
   const scopes = useQuery({
     queryKey: queryKeys.statisticsScopes(),
     queryFn: api.statisticsScopes,
+    enabled: managerReporting,
   });
   const scope = scopes.data?.items[0];
   const statistics = useQuery({
@@ -109,39 +119,62 @@ export function useQualityOverviewController(session: Session): QualityOverviewS
       "Europe/London",
     ),
     queryFn: () => loadStatistics(scope?.id, scope?.unitId),
-    enabled: Boolean(scope?.unitId),
+    enabled: managerReporting && Boolean(scope?.unitId),
   });
-  return buildQualityState({ actions, scope, scopes, session, statistics });
+  return buildQualityState({
+    actions,
+    capabilitiesPending: capabilityQuery.isPending,
+    managerReporting,
+    scope,
+    scopes,
+    session,
+    statistics,
+    workspace,
+    workspaces,
+  });
 }
 
 type QualityInput = {
   actions: QueryState<OverviewActions>;
+  capabilitiesPending: boolean;
+  managerReporting: boolean;
   scope?: { id: string; unitId: string | null };
   scopes: QueryState<unknown>;
   session: Session;
   statistics: QueryState<StatisticsDashboard>;
+  workspace?: TeamWorkspaceAccess;
+  workspaces: QueryState<unknown>;
 };
 
 function buildQualityState(input: QualityInput): QualityOverviewState {
   if (qualityLoading(input)) return { kind: "loading" };
-  if (input.actions.isError || input.scopes.isError || input.statistics.isError)
-    return { kind: "error" };
-  if (!input.actions.data || !input.scope?.unitId || !input.statistics.data)
-    return { kind: "error" };
+  if (qualityError(input)) return { kind: "error" };
   return {
-    actions: input.actions.data,
+    actions: input.actions.data!,
     firstName: firstName(input.session),
+    isManager: input.workspace!.workspacePosition === "MANAGER",
     kind: "ready",
-    metrics: new Map(
-      input.statistics.data.summary.map((metric) => [metric.key, metric.value ?? 0]),
-    ),
-    scopeId: input.scope.id,
-    unitId: input.scope.unitId,
+    metrics: input.statistics.data
+      ? new Map(input.statistics.data.summary.map((metric) => [metric.key, metric.value ?? 0]))
+      : undefined,
+    scopeId: input.managerReporting ? input.scope?.id : undefined,
+    unitId: input.managerReporting ? (input.scope?.unitId ?? undefined) : undefined,
   };
 }
 
+function qualityError(input: QualityInput) {
+  if (input.actions.isError || input.workspaces.isError) return true;
+  if (!input.actions.data || !input.workspace) return true;
+  if (!input.managerReporting) return false;
+  if (input.scopes.isError || input.statistics.isError) return true;
+  return Boolean(input.scope) && (!input.scope?.unitId || !input.statistics.data);
+}
+
 function qualityLoading(input: QualityInput) {
-  if (input.actions.isPending || input.scopes.isPending) return true;
+  if (input.capabilitiesPending || input.actions.isPending || input.workspaces.isPending)
+    return true;
+  if (!input.managerReporting) return false;
+  if (input.scopes.isPending) return true;
   return Boolean(input.scope?.unitId) && input.statistics.isPending;
 }
 

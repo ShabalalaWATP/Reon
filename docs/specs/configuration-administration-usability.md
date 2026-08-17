@@ -217,7 +217,7 @@ team so that I remain accountable for the routing decision.
 Acceptance criteria:
 
 1. Minimum Manager and Analyst shortfall is explicit before submission.
-2. The application does not fall back to SSG or another staffed team.
+2. The application does not fall back to OSG Team or another staffed team.
 3. The tracker shows `Awaiting team staffing` until exact-team staffing exists.
 4. Restoring membership progresses only through a named human action.
 

@@ -25,7 +25,7 @@ lifecycle. An exact-route member may reopen the Customer's submitted request in
 a separate read-only view. That view does not expose workflow actions, Analyst
 clarifications, feedback, product metadata, files or links. These routing levels
 do not approve the service product. The Team Manager checks the Analysts' work,
-one QC Manager performs quality control and a different QC Manager
+one QC User or QC Manager performs quality control and a different QC Manager
 disseminates the package. One Lead Analyst remains the accountable Camunda
 assignee. Up to ten additional assigned Analysts have the same production
 controls; the Lead label changes accountability, not functionality.
@@ -60,7 +60,7 @@ configured descendants. Parents and sibling branches are not returned.
 ```text
 JIOC grant       -> JIOC, DIGOC, SYGOC, MYGOC and everything below them
 DIGOC grant      -> DIGOC, its Ops groups and their teams only
-NCGI-A Ops grant -> NCGI-A Ops, SSG, Cedar and Quartz only
+NCGI-A Ops grant -> NCGI-A Ops, OSG Team, Cedar and Quartz only
 OSG Team grant   -> OSG Team only
 ```
 
@@ -106,8 +106,8 @@ JIOC [STAFFED WORKSPACE]
 ├── DIGOC [STAFFED WORKSPACE]
 │   ├── NCGI-A Ops [STAFFED WORKSPACE]
 │   │   ├── OSG Team [STAFFED WORKSPACE]
-│   │   │   ├── SSG Manager
-│   │   │   └── SSG Analyst
+│   │   │   ├── Team Manager
+│   │   │   └── Team Analyst
 │   │   ├── Cedar Team [STAFFED WORKSPACE]
 │   │   └── Quartz Team [STAFFED WORKSPACE]
 │   ├── Aurora Ops [STAFFED WORKSPACE]
@@ -161,11 +161,12 @@ visually downgrades them as routing choices.
 | Ops Routing User | Shared Ops routing | Select a direct team for any configured Ops group and track progress |
 | Team Manager | One configured team | Assign one Lead and optional Contributors, maintain the team and check the submitted product |
 | Team Analyst | One configured team | Produce, collaborate on and resubmit the service product |
-| QC Manager | Shared QC function | Perform final QC and disseminate the download link |
+| QC User | Shared QC function | Review the completed product and return it when correction is required |
+| QC Manager | Shared QC function | Review completed products and disseminate approved download links |
 
-SSG is the initial operational delivery team and has additional staff. Every
+OSG Team is the initial operational delivery team and has additional staff. Every
 sibling team has a synthetic Manager and Analyst so a complete alternative route
-can be exercised. Teams never borrow SSG users.
+can be exercised. Teams never borrow OSG Team users.
 
 ## Complete synthetic user directory
 
@@ -330,9 +331,9 @@ instances retain the hierarchy and process versions with which they started.
 - Route one request through DIGOC → NCGI-A Ops → OSG Team and complete the full
   Analyst → Manager → QC Manager → Customer download journey.
 - Complete a request through SYGOC → Nimbus Ops → Beacon Team using Beacon's
-  distinct Manager and Analyst groups, with no SSG fallback.
+  distinct Manager and Analyst groups, with no OSG Team fallback.
 - If account maintenance makes a destination unstaffed, show `Awaiting staffing`,
-  not an error, completion or SSG work item.
+  not an error, completion or OSG Team work item.
 - Reject non-child unit IDs, skipped levels, stale selections and attempts by a
   role that does not own the current routing task.
 - Prove JIOC, command and Ops trackers can see progress metadata without gaining

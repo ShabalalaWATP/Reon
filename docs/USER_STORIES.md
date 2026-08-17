@@ -1,7 +1,7 @@
 # Current user stories
 
 Status: current product behaviour and acceptance catalogue
-Last reviewed: 14 August 2026
+Last reviewed: 17 August 2026
 
 This catalogue describes Mist Service from the point of view of the people who
 use and operate it. It uses plain English first. Technical identifiers are added
@@ -19,7 +19,7 @@ workflow task.
 7. [Ops routing stories](#ops-routing-stories)
 8. [Team Manager stories](#team-manager-stories)
 9. [Team Analyst stories](#team-analyst-stories)
-10. [QC Manager stories](#qc-manager-stories)
+10. [QC User and Manager stories](#qc-user-and-manager-stories)
 11. [Platform Administrator stories](#platform-administrator-stories)
 12. [Workspace Manager and Member stories](#workspace-manager-and-member-stories)
 13. [Runtime operator and support stories](#runtime-operator-and-support-stories)
@@ -51,7 +51,7 @@ The stories describe current product behaviour. Delivery history belongs in the
 | Team Manager | Assign Analysts, oversee delivery and check the product | Team workspace |
 | Team Analyst, Lead | Carry the accountability badge and share production controls | Team workspace and product package |
 | Team Analyst, assigned | Produce, converse and submit with the same controls as the Lead | Assigned request and team board |
-| QC Manager, reviewer | Perform quality review of the Manager-approved package | QC queue |
+| QC User or Manager, reviewer | Perform quality review of the Manager-approved package | QC queue |
 | QC Manager, releaser | Independently disseminate the QC-approved package | QC queue |
 | Platform Administrator | Maintain people, teams and safe platform configuration | Administration |
 | Workspace Manager | Maintain the exact unit's roster, calendar and operational work | Organisation workspace |
@@ -401,10 +401,10 @@ the responsible Manager receives the assignment task.
 
 **Acceptance checks**
 
-- NCGI-A Ops can select SSG, Cedar or Quartz, but cannot select a team in another
+- NCGI-A Ops can select OSG Team, Cedar or Quartz, but cannot select a team in another
   Ops branch.
 - An unstaffed direct team remains visible as awaiting staffing and never borrows
-  SSG users.
+  OSG Team users.
 - The Ops user can return the request to the selected command.
 
 ### OPS-02: Manage branch demand
@@ -414,7 +414,7 @@ so that I can see demand, timeliness and current distribution.
 
 **Acceptance checks**
 
-- NCGI-A Ops sees NCGI-A Ops, SSG, Cedar and Quartz data.
+- NCGI-A Ops sees NCGI-A Ops, OSG Team, Cedar and Quartz data.
 - It does not see JIOC totals, other commands or sibling Ops groups.
 - Figures use content-free facts and do not reveal request narrative.
 
@@ -593,19 +593,19 @@ details unnecessarily.
 - `Private appointment` exposes only busy time to colleagues.
 - The Analyst cannot attach a personal event to a request ticket.
 
-## QC Manager stories
+## QC User and Manager stories
 
 ### QC-01: Review the approved package
 
-**Need:** As a QC Manager, I want the exact Manager-approved package and review
-history so that I can make the final release decision.
+**Need:** As a QC User or QC Manager, I want the exact Manager-approved package
+and review history so that I can make the quality-review decision.
 
 **Expected behaviour**
 
 - The current package, artefacts, Manager outcome and handling context are visible.
 - Changes required needs a reason and returns work to the same assignment.
 - Approve advances to a separate dissemination action.
-- The QC Manager cannot silently edit the reviewed package.
+- The QC reviewer cannot silently edit the reviewed package.
 
 ### QC-02: Disseminate safely
 
@@ -852,13 +852,14 @@ without bypassing audit or access controls.
 
 These scenarios combine several stories and are useful for acceptance testing.
 
-### E2E-01: Standard SSG delivery
+### E2E-01: Standard OSG Team delivery
 
 - **Given** John McGinn has an active Customer account and all required information
 - **When** he submits a request, JIOC selects DIGOC, DIGOC selects NCGI-A Ops,
-NCGI-A Ops selects OSG Team, the SSG Manager assigns a Lead and two additional
+NCGI-A Ops selects OSG Team, the Team Manager assigns a Lead and two additional
 Analysts, one assigned Analyst submits a managed product, the Team Manager
-approves it, one QC Manager reviews it and a different QC Manager releases it
+approves it, one QC User or QC Manager reviews it and a different QC Manager
+releases it
 - **Then** John sees the released file or link in his dashboard, can download it and
 records acceptance and can submit one feedback response.
 
@@ -868,7 +869,7 @@ controls while the Lead remains visibly accountable.
 
 ### E2E-02: Analyst clarification
 
-- **Given** SSG Analysts are producing a product
+- **Given** OSG Team Analysts are producing a product
 - **When** an assigned Analyst asks the Customer a question with a reason and deadline
 - **Then** the Customer receives an exact dashboard action, the response is stored
 with the request and work returns to the same assignment.
@@ -922,7 +923,7 @@ Another Customer, a stale page or a terminal request cannot perform the action.
 
 ### E2E-08: Private personal appointment
 
-- **Given** a current SSG Analyst creates a personal appointment
+- **Given** a current OSG Team Analyst creates a personal appointment
 - **When** they mark it private
 - **Then** the full entry remains in their personal calendar and the OSG Team
 calendar shows only `Busy` and the time.

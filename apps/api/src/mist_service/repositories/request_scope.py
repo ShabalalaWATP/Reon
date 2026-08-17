@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import Select, or_, select
+from sqlalchemy import Select, and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mist_service.domain import Actor
@@ -21,7 +21,10 @@ from mist_service.models import (
     WorkflowTaskStatus,
 )
 from mist_service.models import WorkflowTask as StoredWorkflowTask
-from mist_service.qc_membership import live_qc_membership_condition
+from mist_service.qc_membership import (
+    live_qc_manager_condition,
+    live_qc_membership_condition,
+)
 from mist_service.repositories.route_access import (
     has_route_membership,
     route_membership_condition,
@@ -246,6 +249,18 @@ def _active_work_query(
     elif actor.role is UserRole.DELIVERY_SPECIALIST:
         query = query.where(ServiceRequest.assigned_specialist_id == actor.id)
     elif actor.role is UserRole.QUALITY_RELEASE:
-        return query.where(live_qc_membership_condition(actor.id, datetime.now(UTC)))
+        now = datetime.now(UTC)
+        return query.where(
+            or_(
+                and_(
+                    ServiceRequest.status == RequestStatus.QUALITY_REVIEW,
+                    live_qc_membership_condition(actor.id, now),
+                ),
+                and_(
+                    ServiceRequest.status == RequestStatus.READY_FOR_RELEASE,
+                    live_qc_manager_condition(actor.id, now),
+                ),
+            )
+        )
     membership = route_membership_condition(actor)
     return query.where(membership) if membership is not None else query

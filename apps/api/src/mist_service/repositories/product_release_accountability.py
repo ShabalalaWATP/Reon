@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mist_service.models import RequestStatus, WorkflowTask, WorkflowTaskStatus
 from mist_service.product_errors import ProductNotFound
 from mist_service.product_models import ProductPackage
-from mist_service.qc_membership import is_live_qc_manager
+from mist_service.qc_membership import is_live_qc_manager, is_live_qc_member
 from mist_service.workflow.projection import (
     LEAD_REVIEW_ELEMENT_ID,
     QUALITY_REVIEW_ELEMENT_ID,
@@ -22,8 +22,9 @@ from mist_service.workflow.projection import (
 class ProductReleaseAccountabilityRepositoryMixin:
     session: AsyncSession
 
-    async def live_qc_manager(self, actor_id: UUID) -> bool:
-        return await is_live_qc_manager(self.session, actor_id, at=datetime.now(UTC))
+    async def live_qc_membership(self, actor_id: UUID, *, manager: bool) -> bool:
+        predicate = is_live_qc_manager if manager else is_live_qc_member
+        return await predicate(self.session, actor_id, at=datetime.now(UTC))
 
     async def manager_task_claimed_by(self, package_id: UUID, actor_id: UUID) -> bool:
         return await self._task_claimed_by(

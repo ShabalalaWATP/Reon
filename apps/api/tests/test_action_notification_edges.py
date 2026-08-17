@@ -53,6 +53,7 @@ from mist_service.services.notification_service import (
     NotificationService,
     _validate_recipient_rule,
 )
+from mist_service.team_models import WorkspacePosition
 
 
 async def _actor(harness: ApiHarness, username: str) -> Actor:
@@ -258,6 +259,12 @@ async def test_notification_policy_and_validation_edges(
             ),
             RecipientRule(
                 customer.id, NotificationAccessKind.ROLE_SCOPE, customer.role
+            ),
+            RecipientRule(
+                customer.id,
+                NotificationAccessKind.REQUESTER,
+                customer.role,
+                required_workspace_position=WorkspacePosition.MANAGER,
             ),
         ]
         for rule in invalid_rules:

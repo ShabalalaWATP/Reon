@@ -12,6 +12,7 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy.ext.asyncio import AsyncConnection, create_async_engine
 
+from postgres_migration_0048_assertions import assert_0048
 from postgres_migration_assertions import (
     assert_0043,
     assert_0044,
@@ -28,6 +29,7 @@ from postgres_migration_downgrade_assertions import (
     assert_0045_downgrade,
     assert_0046_downgrade,
     assert_0047_downgrade,
+    assert_0048_downgrade,
     assert_empty_forward_path,
     assert_reupgrade,
 )
@@ -39,6 +41,7 @@ REVISION_0044 = "0044_context_conversations"
 REVISION_0045 = "0045_notification_contexts"
 REVISION_0046 = "0046_product_package_policy"
 REVISION_0047 = "0047_action_view_contexts"
+REVISION_0048 = "0048_notification_position"
 Phase = Callable[[AsyncConnection], Awaitable[None]]
 
 
@@ -57,6 +60,11 @@ def run_postgres_migration_roundtrip(admin_database_url: str) -> None:
         _upgrade_and_assert(config, database_url, REVISION_0045, assert_0045)
         _upgrade_and_assert(config, database_url, REVISION_0046, assert_0046)
         _upgrade_and_assert(config, database_url, REVISION_0047, assert_0047)
+        _upgrade_and_assert(config, database_url, REVISION_0048, assert_0048)
+
+        _downgrade_and_assert(
+            config, database_url, REVISION_0047, assert_0048_downgrade
+        )
 
         _downgrade_and_assert(
             config, database_url, REVISION_0046, assert_0047_downgrade

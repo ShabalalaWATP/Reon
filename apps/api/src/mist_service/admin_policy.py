@@ -45,7 +45,7 @@ def membership_error(
     if role is UserRole.QUALITY_RELEASE and (
         len(kinds) != 1 or tuple(codes) != ("QC_TEAM",)
     ):
-        return "QC Managers must belong to the Combined QC Team only."
+        return "QC Users and QC Managers must belong to the Combined QC Team only."
     if (
         role
         in {

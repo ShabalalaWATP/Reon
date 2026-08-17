@@ -79,7 +79,7 @@ export function ProfilePage() {
         <div>
           <span>Personal profile</span>
           <h1>{user.displayName}</h1>
-          <p>{profileRoleDescription(user)}</p>
+          <p>{profileRoleDescription(user, workspaces)}</p>
         </div>
         <strong className="profile-status">
           <CheckCircle2 aria-hidden="true" size={16} />

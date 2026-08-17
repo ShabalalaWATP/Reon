@@ -121,24 +121,37 @@ async def recipient_rules_for(
         return [_participant_rule(user_id) for user_id in participant_ids]
     rules: list[RecipientRule] = []
     for audience in await action_audiences(session, request):
+        manager_only = (
+            audience.recipient_role is UserRole.QUALITY_RELEASE
+            or audience.candidate_role is UserRole.QUALITY_RELEASE
+        ) and request.status is RequestStatus.READY_FOR_RELEASE
         if audience.recipient_user_id is not None:
             rules.append(
                 _direct_rule(
                     request,
                     audience.recipient_user_id,
                     audience.recipient_role,
+                    required_workspace_position=(
+                        WorkspacePosition.MANAGER if manager_only else None
+                    ),
                 )
             )
         elif audience.organisation_unit_id is not None and audience.candidate_role:
             rules.extend(
                 await _route_rules(
-                    session, audience.organisation_unit_id, audience.candidate_role
+                    session,
+                    audience.organisation_unit_id,
+                    audience.candidate_role,
+                    manager_only=manager_only,
                 )
             )
         elif audience.required_scope and audience.candidate_role:
             rules.extend(
                 await _scope_rules(
-                    session, audience.required_scope, audience.candidate_role
+                    session,
+                    audience.required_scope,
+                    audience.candidate_role,
+                    manager_only=manager_only,
                 )
             )
     if event_type in {"TASK_ASSIGNED", "TASK_REASSIGNED", "TASK_RETURNED"}:
@@ -203,7 +216,7 @@ async def _route_rules(
     unit_id: UUID,
     role: UserRole,
     *,
-    manager_only: bool = True,
+    manager_only: bool = False,
 ) -> list[RecipientRule]:
     query = (
         select(User.id, User.scope)
@@ -231,16 +244,25 @@ async def _route_rules(
             role,
             required_scope=scope,
             organisation_unit_id=unit_id,
+            required_workspace_position=(
+                WorkspacePosition.MANAGER
+                if role is UserRole.QUALITY_RELEASE and manager_only
+                else None
+            ),
         )
         for user_id, scope in users
     ]
 
 
 async def _scope_rules(
-    session: AsyncSession, scope: str, role: UserRole
+    session: AsyncSession,
+    scope: str,
+    role: UserRole,
+    *,
+    manager_only: bool = True,
 ) -> list[RecipientRule]:
     if role is UserRole.QUALITY_RELEASE:
-        return await _route_rules(session, QC_TEAM_ID, role)
+        return await _route_rules(session, QC_TEAM_ID, role, manager_only=manager_only)
     user_ids = await session.scalars(
         select(User.id).where(
             User.scope == scope, User.role == role, User.is_active.is_(True)
@@ -284,7 +306,11 @@ def _participant_rule(user_id: UUID) -> RecipientRule:
 
 
 def _direct_rule(
-    request: ServiceRequest, user_id: UUID, role: UserRole | None
+    request: ServiceRequest,
+    user_id: UUID,
+    role: UserRole | None,
+    *,
+    required_workspace_position: WorkspacePosition | None = None,
 ) -> RecipientRule:
     if user_id == request.requester_id:
         return _requester_rule(request)
@@ -292,4 +318,9 @@ def _direct_rule(
         return _assignee_rule(request)
     if role is None:
         raise ValueError("a direct notification recipient role is required")
-    return RecipientRule(user_id, NotificationAccessKind.ASSIGNEE, role)
+    return RecipientRule(
+        user_id,
+        NotificationAccessKind.ASSIGNEE,
+        role,
+        required_workspace_position=required_workspace_position,
+    )

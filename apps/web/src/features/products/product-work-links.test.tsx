@@ -117,7 +117,8 @@ describe("managed product work links", () => {
 
   it.each([
     ["DELIVERY_TEAM_LEAD", "LEAD_REVIEW", "/delivery/team", "Review product package"],
-    ["QUALITY_RELEASE", "QUALITY_REVIEW", "/quality-release", "Review and release package"],
+    ["QUALITY_RELEASE", "QUALITY_REVIEW", "/quality-release", "Review product package"],
+    ["QUALITY_RELEASE", "READY_FOR_RELEASE", "/quality-release", "Disseminate product package"],
   ] as const)(
     "links a %s work item to the current immutable package",
     async (role, stage, path, label) => {
@@ -132,7 +133,12 @@ describe("managed product work links", () => {
                 ...workItem,
                 stage,
                 assigneeId: session.user.id,
-                availableActions: role === "QUALITY_RELEASE" ? ["release"] : ["approve"],
+                availableActions:
+                  role === "QUALITY_RELEASE"
+                    ? stage === "QUALITY_REVIEW"
+                      ? ["approve"]
+                      : ["release"]
+                    : ["approve"],
               },
             ],
           });

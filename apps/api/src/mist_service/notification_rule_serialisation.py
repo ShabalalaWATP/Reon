@@ -7,6 +7,7 @@ from uuid import UUID
 from mist_service.action_notification_models import NotificationAccessKind
 from mist_service.models import UserRole
 from mist_service.notification_ports import RecipientRule
+from mist_service.team_models import WorkspacePosition
 
 
 def serialise_rule(rule: RecipientRule) -> dict[str, str | None]:
@@ -18,10 +19,24 @@ def serialise_rule(rule: RecipientRule) -> dict[str, str | None]:
         "organisationUnitId": (
             str(rule.organisation_unit_id) if rule.organisation_unit_id else None
         ),
+        "requiredWorkspacePosition": (
+            rule.required_workspace_position.value
+            if rule.required_workspace_position
+            else None
+        ),
     }
 
 
 def deserialise_rule(value: dict[str, str | None]) -> RecipientRule:
+    workspace_position = value.get("requiredWorkspacePosition")
+    if (
+        "requiredWorkspacePosition" not in value
+        and value.get("requiredRole") == UserRole.QUALITY_RELEASE.value
+    ):
+        # Durable rules written before position-aware QC notifications were
+        # manager-only. Preserve that restriction when an old event is retried;
+        # explicit null remains the representation for new all-QC review rules.
+        workspace_position = WorkspacePosition.MANAGER.value
     return RecipientRule(
         user_id=UUID(value["userId"] or ""),
         access_kind=NotificationAccessKind(value["accessKind"] or ""),
@@ -31,5 +46,8 @@ def deserialise_rule(value: dict[str, str | None]) -> RecipientRule:
             UUID(value["organisationUnitId"])
             if value.get("organisationUnitId")
             else None
+        ),
+        required_workspace_position=(
+            WorkspacePosition(workspace_position) if workspace_position else None
         ),
     )

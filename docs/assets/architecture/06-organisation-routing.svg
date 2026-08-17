@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
   <title id="title">Mist organisation routing hierarchy</title>
-  <desc id="desc">A focused organisation tree showing CRIOC, command organisations, Ops groups and delivery teams, with the SSG operational route highlighted.</desc>
+  <desc id="desc">A focused organisation tree showing JIOC, command organisations, Ops groups and delivery teams, with the OSG Team operational route highlighted.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071018"/><stop offset="1" stop-color="#0c1923"/></linearGradient>
     <filter id="shadow"><feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#000" flood-opacity=".25"/></filter>
@@ -8,7 +8,7 @@
   </defs>
   <rect width="1600" height="900" rx="24" fill="url(#bg)"/>
   <text x="64" y="60" class="eyebrow">ORGANISATION VIEW</text><text x="64" y="101" class="title">One hierarchy, many valid routes</text>
-  <text x="64" y="132" class="subtitle">The cyan path is the initial SSG route. Grey siblings are also staffed, selectable destinations with their own teams and users.</text>
+  <text x="64" y="132" class="subtitle">The cyan path is the initial OSG Team route. Grey siblings are also staffed, selectable destinations with their own teams and users.</text>
 
   <path d="M800 244V300M380 300H1220M380 300V344M800 300V344M1220 300V344" class="line"/>
   <path d="M800 244V344" class="line active"/>
@@ -19,26 +19,26 @@
 
   <g filter="url(#shadow)">
     <rect x="664" y="170" width="272" height="74" rx="16" class="selected"/>
-    <text x="690" y="198" class="level">ROOT ROUTING UNIT</text><text x="690" y="227" class="name">CRIOC</text>
+    <text x="690" y="198" class="level">ROOT ROUTING UNIT</text><text x="690" y="227" class="name">JIOC</text>
 
     <rect x="250" y="344" width="260" height="110" rx="16" class="sibling"/>
     <text x="276" y="374" class="level">COMMAND</text><text x="276" y="404" class="name">SYGOC</text><text x="276" y="430" class="copy">Staffed routing workspace</text>
     <rect x="670" y="344" width="260" height="110" rx="16" class="selected"/>
-    <text x="696" y="374" class="level">SELECTED COMMAND</text><text x="696" y="404" class="name">JOCK</text><text x="696" y="430" class="copy">Can see only its own branch</text>
+    <text x="696" y="374" class="level">SELECTED COMMAND</text><text x="696" y="404" class="name">DIGOC</text><text x="696" y="430" class="copy">Can see only its own branch</text>
     <rect x="1090" y="344" width="260" height="110" rx="16" class="sibling"/>
     <text x="1116" y="374" class="level">COMMAND</text><text x="1116" y="404" class="name">MYGOC</text><text x="1116" y="430" class="copy">Staffed routing workspace</text>
 
     <rect x="350" y="554" width="260" height="110" rx="16" class="sibling"/>
     <text x="376" y="584" class="level">OPS GROUP</text><text x="376" y="614" class="name">Aurora Ops</text><text x="376" y="640" class="copy">Multiple direct delivery teams</text>
     <rect x="670" y="554" width="260" height="110" rx="16" class="selected"/>
-    <text x="696" y="584" class="level">SELECTED OPS GROUP</text><text x="696" y="614" class="name">ACSA-B Ops</text><text x="696" y="640" class="copy">Own demand and teams below</text>
+    <text x="696" y="584" class="level">SELECTED OPS GROUP</text><text x="696" y="614" class="name">NCGI-A Ops</text><text x="696" y="640" class="copy">Own demand and teams below</text>
     <rect x="990" y="554" width="260" height="110" rx="16" class="sibling"/>
     <text x="1016" y="584" class="level">OPS GROUP</text><text x="1016" y="614" class="name">Nimbus Ops</text><text x="1016" y="640" class="copy">Multiple direct delivery teams</text>
 
     <rect x="390" y="764" width="260" height="94" rx="16" class="sibling"/>
     <text x="416" y="794" class="level">DELIVERY TEAM</text><text x="416" y="824" class="name">Cedar Team</text><text x="416" y="846" class="copy">Manager and Analyst</text>
     <rect x="670" y="764" width="260" height="94" rx="16" class="selected"/>
-    <text x="696" y="794" class="level">INITIAL DELIVERY TEAM</text><text x="696" y="824" class="name">SSG Team</text><text x="696" y="846" class="copy">Three Managers, seven Analysts</text>
+    <text x="696" y="794" class="level">INITIAL DELIVERY TEAM</text><text x="696" y="824" class="name">OSG Team</text><text x="696" y="846" class="copy">Three Managers, seven Analysts</text>
     <rect x="950" y="764" width="260" height="94" rx="16" class="sibling"/>
     <text x="976" y="794" class="level">DELIVERY TEAM</text><text x="976" y="824" class="name">Quartz Team</text><text x="976" y="846" class="copy">Manager and Analyst</text>
   </g>

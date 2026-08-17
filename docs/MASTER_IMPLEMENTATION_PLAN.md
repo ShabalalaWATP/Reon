@@ -65,7 +65,7 @@ not position in the file, to judge recency.
 | [Phase 0: Repository and decision foundation](#phase-0-repository-and-decision-foundation) | Phase gate |
 | [Phase 1: Reproducible secure platform](#phase-1-reproducible-secure-platform) | Phase gate |
 | [Phase 2: Customer intake and visibility](#phase-2-customer-intake-and-visibility) | Phase gate |
-| [Phase 3: JIOC and request coordination](#phase-3-crioc-and-request-coordination) | Phase gate |
+| [Phase 3: JIOC and request coordination](#phase-3-jioc-and-request-coordination) | Phase gate |
 | [Phase 4: Camunda routing and resilience](#phase-4-camunda-routing-and-resilience) | Phase gate |
 | [Phase 5: Ops routing and product delivery](#phase-5-ops-routing-and-product-delivery) | Phase gate |
 | [Phase 6: Manager check, QC, dissemination and feedback](#phase-6-manager-check-qc-dissemination-and-feedback) | Phase gate |
@@ -324,7 +324,7 @@ requirements are retained.
   dissemination decisions are made by named people.
 - The first operational path is JIOC → DIGOC → NCGI-A Ops → OSG Team. Every
   synthetic sibling is staffed, selectable and receives its own Camunda task.
-  Later staffing gaps wait visibly instead of borrowing SSG users.
+  Later staffing gaps wait visibly instead of borrowing OSG Team users.
 - Customers see only their records. Staff see only records within their role,
   scope and assignment.
 - The Platform Administrator manages identity, role and safe configuration
@@ -372,7 +372,7 @@ pilot:
 | Priority and dates | JIOC sets priority; Customer gives required date and reason; no automatic service target |
 | Notifications | In-app states only for MVP |
 | Related work | People search and record links; no automated matching |
-| Organisation | JIOC is the root; all configured children route and every team has a synthetic Manager and Analyst; SSG has three Managers and seven Analysts |
+| Organisation | JIOC is the root; all configured children route and every team has a synthetic Manager and Analyst; OSG Team has three Managers and seven Analysts |
 
 The hierarchy, post-delivery assurance path and safe activation rules are defined in
 [Organisation and Routing](architecture/ORGANISATION_AND_ROUTING.md) and
@@ -481,8 +481,8 @@ stale, duplicate, cross-team and invalid-transition actions are denied.
 ## Phase 6: Manager check, QC, dissemination and feedback
 
 - [x] Team Manager review and request changes or approve for QC.
-- [x] QC Manager independently review, return, approve and explicitly disseminate
-  to the originating Customer.
+- [x] QC User or QC Manager independently reviews, returns or approves; a
+  distinct QC Manager explicitly disseminates to the originating Customer.
 - [x] Enforce separation of duties and prevent authors from approving or releasing
   their own output.
 - [x] Show disseminated content through an authenticated application-owned
@@ -543,7 +543,7 @@ measures are captured; no data loss or unresolved severe security finding remain
 | Customer accesses another request or product | Denied |
 | Analyst approves or disseminates own output | Denied |
 | Non-child or skipped organisation selection | Denied |
-| Unstaffed destination selected | Real waiting task; no SSG fallback |
+| Unstaffed destination selected | Real waiting task; no OSG Team fallback |
 | Tracker opens unreleased product content | Denied |
 | Platform Administrator opens request content | Denied |
 | Missing or reused CSRF token | Denied |
@@ -564,7 +564,7 @@ authorisation become mandatory only if files are approved in a later specificati
 3. Search authorised records and link a possible duplicate or related item.
 4. Route through DIGOC → NCGI-A Ops → OSG Team, assign an Analyst and query work.
 5. Complete a route through an alternative command, Ops group and staffed team;
-   prove distinct Manager and Analyst candidate groups with no SSG fallback.
+   prove distinct Manager and Analyst candidate groups with no OSG Team fallback.
 6. Record time-stamped progress notes and observe route-scoped, read-only
    routing trackers through the full lifecycle.
 7. Submit the service product, complete Manager and QC rework, disseminate, download and
@@ -598,9 +598,9 @@ open (its own final checklist item, and the aggregate acceptance gates
 This workstream extended the bounded workflow MVP without changing its
 human-led routing principle. The Customer supplies structured demand. Routing
 levels track and direct it. A delivery-team Analyst produces the service
-product, the Team Manager checks it, and the Quality and Release Manager
-disseminates it. Work does not travel back through JIOC, command or Ops for
-approval.
+product, the Team Manager checks it, a QC User or QC Manager performs quality
+review, and a distinct QC Manager disseminates it. Work does not travel back
+through JIOC, command or Ops for approval.
 
 ### Expansion 0: Rebaseline and authority
 
@@ -749,7 +749,7 @@ Evidence: migration `0008_team_agile_planning`, workflow-projection and transiti
 tests, WIP and concurrency tests, package history, saved-view and keyset tests,
 keyboard-accessible board actions and calendar capacity reconciliation. The real
 React and FastAPI browser journey created and moved a package, reassigned it from
-one SSG Analyst to another, and verified the roster workload and removal guard
+one Team Analyst to another, and verified the roster workload and removal guard
 followed the new owner. Final aggregate coverage is 513 backend tests at 99.59%
 line and 97.48% branch, and 183 frontend tests at 99.41% line and 95.15% branch.
 
@@ -770,7 +770,7 @@ Evidence: the [Definition of Done matrix](assurance/DEFINITION_OF_DONE_MATRIX.md
 and signed [acceptance record](assurance/ACCEPTANCE_RECORD.md).
 
 Evidence to date: migrations and a clean PostgreSQL restore pass. The complete
-Customer, clarification, SSG delivery and alternative-team journeys pass against
+Customer, clarification, OSG Team delivery and alternative-team journeys pass against
 PostgreSQL and Camunda 8.9.14. Current Chrome, Edge and Firefox render and operate
 critical authenticated pages; named pages have zero axe violations and keyboard,
 narrow-width and reduced-motion checks pass. Controlled database and Camunda
@@ -1081,11 +1081,11 @@ remains subject to the enterprise gap register.
 - [x] Pass repository policy, formatting, lint, type, dead-code, line-limit,
   documentation, licence, dependency-audit, Bandit, build and bundle gates.
 - [x] Rebuild the local Compose application, confirm all services healthy,
-  exercise the Camunda route contract and inspect JIOC and SSG workspaces in
+  exercise the Camunda route contract and inspect JIOC and OSG Team workspaces in
   Chromium with no unexpected authenticated-page console error.
 - [x] Upgrade a disposable PostgreSQL database from empty to revision 0027,
   downgrade to 0023, re-upgrade and confirm no model drift.
-- [ ] Obtain representative user acceptance from JIOC, command, Ops, SSG and QC
+- [ ] Obtain representative user acceptance from JIOC, command, Ops, OSG Team and QC
   users before connected-environment rollout.
 
 ## Access assistance and global classification milestone
@@ -1451,7 +1451,7 @@ Status: implementation and runtime verification complete on 14 August 2026.
 - [x] Enforce canonical Prettier and Ruff formatting without lowering coverage,
   security or file-size gates.
 - [x] Add a mandatory PostgreSQL 0043 to 0047 populated round trip and a
-  Chromium journey from Customer submission through routing, SSG, QC, release,
+  Chromium journey from Customer submission through routing, OSG Team, QC, release,
   Customer retrieval and acceptance.
 - [x] Pass the root quality gate, strict MyPy across 440 modules, Ruff, Bandit,
   1,318 backend tests at 98.73 per cent line and 95.00 per cent branch coverage,

@@ -4,7 +4,7 @@
 
 The rebuilt local QA stack must be ready by its own `/ready` contract, not only
 live by `/health`. Operators also need maintained application-level journeys for
-the primary SSG route and a configured alternative route.
+the primary OSG Team route and a configured alternative route.
 
 ## Requirements
 

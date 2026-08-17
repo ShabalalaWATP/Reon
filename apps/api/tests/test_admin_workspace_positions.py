@@ -128,3 +128,24 @@ async def test_administrator_cannot_invert_delivery_workspace_positions(
             headers=harness.mutation_headers(),
         )
         assert response.status_code == 409
+
+
+async def test_administrator_can_appoint_a_qc_user(
+    api_harness: ApiHarness,
+) -> None:
+    await api_harness.login("admin1")
+    await api_harness.elevate()
+    qc_team_id = await api_harness.unit_id("QC_TEAM")
+    created = await api_harness.client.post(
+        "/api/v1/admin/users",
+        json={
+            "displayName": "Synthetic QC User",
+            "role": "QUALITY_RELEASE",
+            "scope": "Combined QC Team",
+            "organisationUnitIds": [str(qc_team_id)],
+            "workspacePosition": "MEMBER",
+        },
+        headers=api_harness.mutation_headers(),
+    )
+    assert created.status_code == 201, created.text
+    assert created.json()["memberships"][0]["workspacePosition"] == "MEMBER"

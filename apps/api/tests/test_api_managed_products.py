@@ -102,8 +102,6 @@ async def test_managed_file_full_http_release_download_and_withdraw(
         f"/api/v1/product-packages/by-request/{request_id}"
     )
     assert response.status_code == 200
-    response = await api_harness.client.get(f"/api/v1/product-packages/{package_id}")
-    assert response.status_code == 200
     response = await api_harness.client.post(
         f"/api/v1/product-packages/{package_id}/managed-artefacts",
         json=_command(
@@ -183,6 +181,8 @@ async def test_managed_file_full_http_release_download_and_withdraw(
     assert "http-product.pdf" in response.headers["content-disposition"]
 
     await api_harness.login("admin15")
+    response = await api_harness.client.get(f"/api/v1/product-packages/{package_id}")
+    assert response.status_code == 200, response.text
     response = await api_harness.client.post(
         f"/api/v1/releases/{package_id}/withdraw",
         json=_command(7, reason="Synthetic HTTP withdrawal."),

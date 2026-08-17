@@ -127,7 +127,11 @@ async def test_validation_and_every_persisted_work_effect(
             TeamMembership(
                 user_id=user.id,
                 team_id=QC_TEAM_ID,
-                workspace_position=WorkspacePosition.MANAGER,
+                workspace_position=(
+                    WorkspacePosition.MEMBER
+                    if user.id == reviewer.id
+                    else WorkspacePosition.MANAGER
+                ),
                 effective_from=now,
                 start_projected_at=now,
                 start_reason="Synthetic QC test membership.",
@@ -234,7 +238,8 @@ async def test_validation_and_every_persisted_work_effect(
             session, request, reviewer_actor, ApproveWork(action="approve")
         )
         assert latest.status is DeliverableStatus.APPROVED
-        with pytest.raises(InvalidAction, match="QC reviewer cannot disseminate"):
+        request.status = RequestStatus.READY_FOR_RELEASE
+        with pytest.raises(InvalidAction, match="QC Manager position"):
             await validate_work_effect(session, request, reviewer_actor, release)
         await validate_work_effect(session, request, releaser_actor, release)
         await apply_work_effect(session, request, releaser_actor, release)

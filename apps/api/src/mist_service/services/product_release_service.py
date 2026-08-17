@@ -33,7 +33,7 @@ class ProductReleaseService(ProductServiceSupport[ProductReleaseServiceRepositor
         latest_package = await self._repository.latest_package(request.id)
         if (
             actor.role is not UserRole.QUALITY_RELEASE
-            or not await self._repository.live_qc_manager(actor.id)
+            or not await self._repository.live_qc_membership(actor.id, manager=True)
             or request.status != RequestStatus.READY_FOR_RELEASE.value
             or latest_package is None
             or latest_package.id != package.id
@@ -84,7 +84,7 @@ class ProductReleaseService(ProductServiceSupport[ProductReleaseServiceRepositor
         package, _request = await self._authorised_package(actor, package_id, lock=True)
         if (
             actor.role is not UserRole.QUALITY_RELEASE
-            or not await self._repository.live_qc_manager(actor.id)
+            or not await self._repository.live_qc_membership(actor.id, manager=True)
             or package.status is not PackageStatus.DISSEMINATED
             or package.version != command.expected_version
         ):

@@ -43,7 +43,8 @@ orient and act, while detailed evidence remains in the Statistics workspace.
 | Team Analyst | My actions | No management statistics without an explicit grant |
 | Team Manager | Team overview | Exact-team statistics |
 | JIOC, Command and Ops routing users | Operational overview | Granted root and descendants |
-| QC Manager | Quality and release overview | Explicitly granted quality scope |
+| QC User | QC Team overview with personal review workload | No quality statistics |
+| QC Manager | QC Team overview | Explicitly granted quality scope |
 | Platform Administrator | Administration overview | Whole-platform aggregate and health |
 
 Profile remains in the account menu. An incomplete personal profile may produce
@@ -65,7 +66,7 @@ Examples:
 
 - JIOC may select JIOC, any Command, any Ops group or any Team;
 - DIGOC may select DIGOC and its descendants, never JIOC, SYGOC or MYGOC;
-- NCGI-A Ops may select that Ops group and SSG, Cedar or Quartz, never an Ops
+- NCGI-A Ops may select that Ops group and OSG Team, Cedar or Quartz, never an Ops
   sibling or DIGOC aggregate; and
 - OSG Team may select only OSG Team.
 

@@ -2,7 +2,7 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { onMistSignal, revealThroughMist } from "../lib/mistReveal";
+import { gatherMist, onMistSignal, revealThroughMist } from "../lib/mistReveal";
 import { requesterSession } from "../test/fixtures";
 import { json, mockFetch, renderApp } from "../test/render";
 import { MistReveal } from "./MistReveal";
@@ -50,6 +50,14 @@ describe("mist reveal transition", () => {
     expect(overlay()).toHaveClass("mist-reveal--clearing");
     act(() => void vi.advanceTimersByTime(250));
     expect(overlay()).toBeNull();
+  });
+
+  it("omits unbounded SVG motion while reduced-motion mist is gathering", () => {
+    stubMotionPreference(true);
+    render(<MistReveal />);
+    act(() => gatherMist());
+    expect(overlay()).toHaveClass("mist-reveal--gathering");
+    expect(overlay()?.querySelector("animate")).toBeNull();
   });
 
   it("restarts from dense mist if sign-in happens while clearing", () => {

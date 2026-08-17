@@ -93,15 +93,20 @@ function EnabledStaffProductAction({
   const labels = {
     DELIVERY_SPECIALIST: "Open product package",
     DELIVERY_TEAM_LEAD: "Review product package",
-    QUALITY_RELEASE: "Review and release package",
   } as const;
+  const label =
+    role === "QUALITY_RELEASE"
+      ? stage === "QUALITY_REVIEW"
+        ? "Review product package"
+        : "Disseminate product package"
+      : labels[role as keyof typeof labels];
   return (
     <Link
       className="button button--primary button--wide"
       to={`/product-packages/${productPackage.data.id}`}
     >
       <PackageOpen aria-hidden="true" size={16} />
-      {labels[role as keyof typeof labels]}
+      {label}
     </Link>
   );
 }

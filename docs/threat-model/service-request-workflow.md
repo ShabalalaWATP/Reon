@@ -116,7 +116,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | Configuration changes between destination display and submission | Pin each request, require expected request/task state and revalidate the selected effective child in the locked human-outcome use case |
 | Staffing or workload indicators become automated routing | Present factual bounded state without ranking, recommendation, default selection or automatic fallback; the named user remains accountable |
 | A browser supplies a candidate-group name | Ignore browser group values; derive candidate groups from governed organisation records in FastAPI |
-| An alternative team silently receives SSG staff | Scope Team Manager and Analyst tasks to the selected team; represent missing membership as `Awaiting team staffing` |
+| An alternative team silently receives OSG Team staff | Scope Team Manager and Analyst tasks to the selected team; represent missing membership as `Awaiting team staffing` |
 | Administrative account changes remove the last Manager or Analyst | Recalculate staffing from active role-qualified memberships after every relevant change; keep the team selectable and surface `Awaiting team staffing` rather than falling back |
 | Tracking access becomes cross-unit or operational access | Apply exact selected-route membership inside list, direct-detail and coordination queries; keep monitoring separate from actionable work; route membership alone never permits claim, completion or transfer; return a non-disclosing not-found response outside scope |
 | Monitoring messages leak request content or become an ownership bypass | Re-authorise every read and write against the immutable selected route and current request state; address messages only to the Customer or current owner; exclude message text from notifications, logs and telemetry; append a hash-linked event without changing workflow state |
@@ -163,7 +163,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | A covering note or artefact order changes after review | Bind the covering note, ordered manifest, artefact checksums and link records into one immutable package version; any change creates a new version and invalidates Manager and QC decisions |
 | A hostile image exhausts a decoder or reaches the Customer as active content | Accept only bounded PNG and JPEG, check signature, dimensions, pixels, frames, metadata and complete decoding before malware scanning; reject SVG, animation, polyglots and decoder failure |
 | An unreleased package reveals filenames, images, links, covering notes or review state | Keep package metadata staff-only until dissemination and apply object-level policy to existence, detail, download and redirect endpoints |
-| One QC Manager approves and releases the same package | Store reviewer and releaser separately and revalidate distinct active identities, exact QC Team membership, immutable package version and recipient at release |
+| A QC reviewer approves and releases the same package | Store reviewer and releaser separately; allow any live QC User or QC Manager to review, require a live QC Manager to release, and revalidate distinct identities, exact QC Team membership, immutable package version and recipient at release |
 | A one-person QC Team silently bypasses separation | Block release, expose an `Awaiting independent releaser` state and alert the owned staffing path without borrowing authority from another unit |
 | The QC Team becomes a request-routing shortcut or invalid hierarchy edge | Keep its stable membership identity outside the configured four-level routing tree; exclude it from route destinations and operational branch aggregation |
 | Allowing QC identity administration admits arbitrary retired support units | Permit only the deterministic QC unit ID, code and Team kind for the Quality and Release role; retain configured-unit checks for every other role and do not create standard routing-management grants for QC membership |
@@ -181,12 +181,13 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | A deep link silently changes context | Authorise it in the active context or require an explicit context change; never accept context from an arbitrary request header |
 | A dual-eligible user routes, assigns, reviews or releases their own request | Bind requester identity permanently and deny every staff action on that request for the same stable identity, regardless of context or later role changes |
 | A dual-eligible user mutates a linked planning record for their own request | Recheck stable requester identity on package create, update, move and reservation changes, calendar commitments and task hasteners; exclude the requester as actor, owner, Contributor and reservation or commitment subject; return non-disclosing not-found responses |
-| An expired QC role holder retains a notification deep link or direct request access | Require an active account, Quality and Release role and live Manager membership in the exact QC Team both before recipient projection and on notification, action, work and request-detail reads; bind effective-time comparisons at application precision |
+| An expired QC role holder, or a QC User, retains a release notification, action, conversation, product or statistics deep link | Persist the required QC workspace position on each notification recipient; require an active account, Quality and Release role and live exact-team membership for review, plus a live Manager position for release and statistics, on projection and every notification, action, conversation, work, package, request-detail and statistics read |
 | Context switching leaves protected data in the browser | Clear context-bound server state and client caches, refresh counts and reauthorise the destination before rendering |
 | Product response causes active-content execution | Return UTF-8 plain text with safe reference-derived attachment filename, `nosniff` and restrictive security headers |
 | Analyst clarification exposes product work to trackers | Store a structured thread in PostgreSQL; expose messages only to the Customer, assigned Analyst and authorised Team Manager; project state and timing metadata only to routing trackers |
 | A conversation audience is omitted or a new entry type becomes public by default | Persist the narrowest staff-only audience, require an explicit supported audience and filter by current authority before ordering, pagination or cursor construction |
 | A Customer-visible conversation leaks an internal note, assignment reason or recipient identifier | Keep typed entries and lifecycle summaries separate; expose only explicitly addressed Customer content and content-minimised public lifecycle records |
+| A routing user's receiving-command note leaks through the public lifecycle event | Publish a fixed content-minimised routing lifecycle message to Customer and staff, then append the human note as a separate staff-only hash-linked event; trim and reject blank notes at the API boundary |
 | Revoked membership remains visible through an old conversation cursor | Reapply account, context, route, ownership, team and assignment policy to every page and treat the cursor only as a bounded ordering key |
 | Clarification response loses the delivery assignment | Persist the team and Analyst on the thread, validate them on response and route the versioned workflow loop back to that Analyst |
 | Two open clarification requests race | Lock the request, require expected state and version, and enforce one open thread per request while permitting sequential closed threads |
@@ -264,7 +265,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 - Direct-identifier tests for requests, tasks, outputs, feedback and admin objects.
 - Invalid, skipped, duplicate and stale workflow-transition tests.
 - Complete alternative-branch candidate-group tests with distinct Manager and
-  Analyst identities, plus dynamic unstaffed-team tests with no SSG fallback.
+  Analyst identities, plus dynamic unstaffed-team tests with no OSG Team fallback.
 - Direct-child search and route-breadcrumb tests, plus stale-destination,
   competing-claim and crafted-parent tests, including confirmation that no
   ranking or fallback occurs.

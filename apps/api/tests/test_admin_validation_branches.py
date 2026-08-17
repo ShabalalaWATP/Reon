@@ -109,7 +109,7 @@ async def test_valid_routing_membership_and_display_only_update(
     assert kept.status_code == 200, kept.text
 
 
-async def test_qc_accounts_require_exact_qc_manager_membership(
+async def test_qc_accounts_require_exact_qc_membership_and_default_to_user(
     api_harness: ApiHarness,
 ) -> None:
     harness = api_harness
@@ -136,7 +136,7 @@ async def test_qc_accounts_require_exact_qc_manager_membership(
         headers=harness.mutation_headers(),
     )
     assert created.status_code == 201, created.text
-    assert created.json()["memberships"][0]["workspacePosition"] == "MANAGER"
+    assert created.json()["memberships"][0]["workspacePosition"] == "MEMBER"
     account = created.json()
     removed = await harness.client.patch(
         f"/api/v1/admin/users/{account['id']}",
@@ -157,7 +157,7 @@ async def test_qc_accounts_require_exact_qc_manager_membership(
         headers=harness.mutation_headers(),
     )
     assert restored.status_code == 200, restored.text
-    assert restored.json()["memberships"][0]["workspacePosition"] == "MANAGER"
+    assert restored.json()["memberships"][0]["workspacePosition"] == "MEMBER"
 
 
 async def test_empty_search_and_unknown_mutation_targets(

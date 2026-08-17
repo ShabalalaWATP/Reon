@@ -244,17 +244,26 @@ function QualityOverview({ session }: { session: import("../../lib/api/types").S
           <span>Combined QC Team</span>
           <h1>Welcome, {state.firstName}</h1>
           <p>
-            QC review and dissemination are separate accountable actions. A different Manager
-            completes each action for an exact product package.
+            {state.isManager
+              ? "A QC User or QC Manager reviews each product package. A different QC Manager then disseminates the approved package."
+              : "QC Users review assigned product packages and return work that needs correction. Dissemination remains a QC Manager action."}
           </p>
         </div>
         <Link className="button" to="/quality-release">
           Open QC Team workspace
         </Link>
       </header>
-      <div className="overview-workloads">
+      <div
+        className={
+          state.metrics ? "overview-workloads" : "overview-workloads overview-workloads--personal"
+        }
+      >
         <WorkloadRegion
-          description="Reviews and release actions currently assigned to you."
+          description={
+            state.isManager
+              ? "Reviews and release actions currently assigned to you."
+              : "Product reviews currently assigned to you."
+          }
           title="Your workload"
           values={[
             ["Needs your action", state.actions.counts.needsMyAction],
@@ -262,15 +271,17 @@ function QualityOverview({ session }: { session: import("../../lib/api/types").S
             ["Due soon", state.actions.counts.dueSoon],
           ]}
         />
-        <WorkloadRegion
-          description="Combined QC Team activity. This is organisation workload, not your personal workload."
-          title="QC Team workload"
-          values={[
-            ["Products released", state.metrics.get("released") ?? 0],
-            ["Rework decisions", state.metrics.get("rework") ?? 0],
-            ["Feedback received", state.metrics.get("feedback") ?? 0],
-          ]}
-        />
+        {state.metrics ? (
+          <WorkloadRegion
+            description="Combined QC Team activity. This is organisation workload, not your personal workload."
+            title="QC Team workload"
+            values={[
+              ["Products released", state.metrics.get("released") ?? 0],
+              ["Rework decisions", state.metrics.get("rework") ?? 0],
+              ["Feedback received", state.metrics.get("feedback") ?? 0],
+            ]}
+          />
+        ) : null}
       </div>
       <nav aria-label="QC Team workspace links" className="overview-links overview-links--wide">
         <span>QC Team links</span>
@@ -283,12 +294,14 @@ function QualityOverview({ session }: { session: import("../../lib/api/types").S
           My assigned actions
           <ArrowUpRight size={15} />
         </Link>
-        <Link
-          to={`/statistics?scopeId=${encodeURIComponent(state.scopeId)}&unitId=${encodeURIComponent(state.unitId)}`}
-        >
-          Quality statistics
-          <ArrowUpRight size={15} />
-        </Link>
+        {state.scopeId && state.unitId ? (
+          <Link
+            to={`/statistics?scopeId=${encodeURIComponent(state.scopeId)}&unitId=${encodeURIComponent(state.unitId)}`}
+          >
+            Quality statistics
+            <ArrowUpRight size={15} />
+          </Link>
+        ) : null}
         <Link to="/calendar/month">
           Personal calendar
           <ArrowUpRight size={15} />

@@ -123,6 +123,9 @@ describe("structured request conversations", () => {
     const user = userEvent.setup();
     const view = renderApp("/delivery/my-work");
 
+    await user.click(
+      await screen.findByText("Request information from the Customer or another team"),
+    );
     expect(
       await screen.findByText("Can you confirm the preferred delivery time?"),
     ).toBeInTheDocument();

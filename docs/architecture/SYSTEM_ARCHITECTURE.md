@@ -353,8 +353,9 @@ are rechecked for every detail read.
 5. The author orders one to ten managed PDF, DOCX, PPTX, JPEG or PNG files and/or
    allowlisted HTTPS links, adds the required covering note and freezes the
    package for review.
-6. A Team Manager reviews it. A QC Manager then performs quality review and
-   a different QC Manager claims release, preserving separation of duty.
+6. A Team Manager reviews it. A QC User or QC Manager then performs quality
+   review and a different QC Manager claims release, preserving separation of
+   duty.
 7. Dissemination makes the exact approved artefacts and covering note visible to
    the owning Customer dashboard.
 8. File download rechecks request ownership and product release state, commits

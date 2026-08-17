@@ -23,6 +23,7 @@ from mist_service.schemas.actions import (
     NotificationStateAction,
     NotificationStateTarget,
 )
+from mist_service.team_models import WorkspacePosition
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +35,7 @@ class RecipientRule:
     required_role: UserRole
     required_scope: str | None = None
     organisation_unit_id: UUID | None = None
+    required_workspace_position: WorkspacePosition | None = None
 
 
 class NotificationRepositoryPort(Protocol):

@@ -10,11 +10,20 @@ from postgres_migration_probe import (
     REVISION_0045,
     REVISION_0046,
     REVISION_0047,
+    REVISION_0048,
     assert_revision,
     column_exists,
     scalar,
 )
 from postgres_migration_seed import PACKAGE_ID, QC_ACTIVE_ID, QC_TEAM_ID, STAFF_ID
+
+
+async def assert_0048_downgrade(connection: AsyncConnection) -> None:
+    await assert_revision(connection, REVISION_0047)
+    assert not await column_exists(
+        connection, "notification_recipients", "required_workspace_position"
+    )
+    assert await scalar(connection, "SELECT count(*) FROM notification_recipients") == 1
 
 
 async def assert_0047_downgrade(connection: AsyncConnection) -> None:
@@ -140,7 +149,7 @@ async def assert_0044_downgrade(connection: AsyncConnection) -> None:
 
 
 async def assert_reupgrade(connection: AsyncConnection) -> None:
-    await assert_revision(connection, REVISION_0047)
+    await assert_revision(connection, REVISION_0048)
     assert (
         await scalar(
             connection, "SELECT count(*) FROM product_packages WHERE policy_version=1"
@@ -183,7 +192,7 @@ async def assert_reupgrade(connection: AsyncConnection) -> None:
 
 
 async def assert_empty_forward_path(connection: AsyncConnection) -> None:
-    await assert_revision(connection, REVISION_0047)
+    await assert_revision(connection, REVISION_0048)
     assert await scalar(connection, "SELECT count(*) FROM users") == 0
     assert (
         await scalar(
