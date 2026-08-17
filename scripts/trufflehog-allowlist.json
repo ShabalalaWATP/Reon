@@ -39,6 +39,12 @@
       "fingerprint": "e916b88f2d3b69b1f635478ba181a68e75087eb218f057109dfdbb25222d59f0",
       "expiresOn": "2027-02-13",
       "reason": "Synthetic parameterised PostgreSQL recovery-policy fixture with placeholder credentials."
+    },
+    {
+      "fingerprint": "500adea79698c42a853433db74e814d786f228ccc94f7d9fb201671f81f8fe78",
+      "expiresOn": "2027-02-13",
+      "reason": "False-positive Lob match on the test function name test_administrator_can_appoint_a_qc_user, a QC workspace-position administration test.",
+      "allowVerifiedFalsePositive": true
     }
   ]
 }
