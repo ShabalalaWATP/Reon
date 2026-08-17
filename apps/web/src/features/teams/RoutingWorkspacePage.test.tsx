@@ -35,6 +35,30 @@ const managerAccess: TeamWorkspaceAccess = {
 };
 
 describe("routing organisation workspace", () => {
+  it("keeps a statistics-only grant inside its advertised projections", async () => {
+    mockRoutingApi({
+      access: {
+        grantId: "statistics-only",
+        permissions: ["STATISTICS"],
+        views: ["OVERVIEW", "STATISTICS", "HANDOVER"],
+        workspacePosition: null,
+      },
+      workloadVisible: false,
+    });
+    renderApp("/teams/crioc/overview");
+
+    expect(await screen.findByRole("heading", { name: "CRIOC" })).toBeInTheDocument();
+    const tabs = screen.getByRole("navigation", { name: "Organisation workspace views" });
+    expect(within(tabs).getAllByRole("link")).toHaveLength(2);
+    expect(within(tabs).getByRole("link", { name: "Statistics" })).toBeInTheDocument();
+    expect(within(tabs).queryByRole("link", { name: "Work queue" })).not.toBeInTheDocument();
+    expect(within(tabs).queryByRole("link", { name: "Calendar" })).not.toBeInTheDocument();
+    expect(within(tabs).queryByRole("link", { name: "People" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Active work")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Routing decisions" })).not.toBeInTheDocument();
+    expect(await screen.findByText("Received in 30 days")).toBeInTheDocument();
+  });
+
   it("contains the actionable unit queue without separate planning or handover", async () => {
     let requestedUnit: string | null = null;
     mockRoutingApi({
@@ -265,6 +289,7 @@ type RoutingMockOptions = {
   workItemFailures?: number;
   workItems?: WorkItem[];
   trackedItems?: TrackedRequest[];
+  workloadVisible?: boolean;
 };
 
 function mockRoutingApi(options: RoutingMockOptions = {}) {

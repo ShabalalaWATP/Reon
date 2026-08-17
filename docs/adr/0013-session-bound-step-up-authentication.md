@@ -14,8 +14,15 @@ left unattended or a session is replayed.
 
 Require password confirmation before every class of administration mutation.
 Successful confirmation sets a five-minute `elevated_until` value on the current
-server-side opaque session. The browser receives the expiry time only. It never
-receives an elevation bearer token and never stores the password.
+server-side opaque session and atomically rotates that session's bearer and CSRF
+hashes. The browser receives the replacement bearer only as an HttpOnly cookie,
+plus the expiry and replacement CSRF proof in the response. It never receives a
+separate elevation bearer token and never stores the password.
+
+The pre-confirmation bearer becomes invalid as soon as the rotation commits.
+Other authenticated tabs receive only a secret-free rotation notification and
+refresh `/auth/me` to adopt the browser-wide cookie's current CSRF proof. A tab
+that is already anonymous is not promoted by that notification.
 
 The FastAPI dependency checks CSRF, trusted origin, active session, Platform
 Administrator role and unexpired elevation before the route handler runs. The
@@ -25,8 +32,13 @@ failure policy.
 
 ## Consequences
 
+- A bearer captured before confirmation cannot inherit the resulting elevation;
+  it fails authentication after the successful rotation.
 - Elevation cannot be copied between sessions or replayed after session
   revocation.
+- API clients must replace their CSRF proof after successful confirmation. The
+  API and browser client must therefore be deployed together for this additive
+  response contract.
 - Read-only account and organisation metadata remains usable without repeated
   confirmation.
 - A future federated identity provider should replace local password

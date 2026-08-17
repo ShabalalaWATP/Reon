@@ -26,21 +26,18 @@ export function useCalendarPage(access?: TeamWorkspaceAccess) {
     : queryKeys.personalCalendar(range.from, range.to);
   const calendar = useQuery({
     queryKey,
-    queryFn: () =>
-      access
-        ? api.teamCalendar(access.teamId, range.from, range.to)
-        : api.personalCalendar(range.from, range.to),
+    queryFn: () => loadCalendar(access, range),
   });
   const workspaces = useQuery({
     queryKey: queryKeys.teamWorkspaces(),
     queryFn: api.teamWorkspaces,
     enabled: !access,
   });
-  const canManage = Boolean(access?.grantId && access.permissions.includes("CALENDAR"));
+  const { canManage, canReadPeople } = calendarPageAccess(access);
   const people = useQuery({
     queryKey: queryKeys.teamPeople(access?.teamId),
     queryFn: () => api.teamPeople(access?.teamId ?? ""),
-    enabled: canManage,
+    enabled: canManage && canReadPeople,
   });
   const personalWorkspace = workspaces.data?.items[0];
 
@@ -69,6 +66,22 @@ export function useCalendarPage(access?: TeamWorkspaceAccess) {
     sharingUnitName: access?.teamName ?? personalWorkspace?.teamName,
     view,
   };
+}
+
+function calendarPageAccess(access: TeamWorkspaceAccess | undefined) {
+  return {
+    canManage: Boolean(access?.grantId && access.permissions.includes("CALENDAR")),
+    canReadPeople: !access?.views || access.views.includes("PEOPLE"),
+  };
+}
+
+function loadCalendar(
+  access: TeamWorkspaceAccess | undefined,
+  range: { from: string; to: string },
+) {
+  return access
+    ? api.teamCalendar(access.teamId, range.from, range.to)
+    : api.personalCalendar(range.from, range.to);
 }
 
 function normaliseCalendarView(value: string | undefined): CalendarView {

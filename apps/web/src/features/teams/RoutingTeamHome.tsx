@@ -5,7 +5,7 @@ import type { Session, WorkItem } from "../../lib/api/types";
 import { elapsedTime } from "../../lib/serviceTiming";
 import { statusLabels } from "../../lib/status";
 import { boardLabel } from "../board/boardPresentation";
-import { useRoutingTeamHomeData, type RoutingHomeData } from "./useTeamHomeData";
+import { hasWorkspaceView, useRoutingTeamHomeData, type RoutingHomeData } from "./useTeamHomeData";
 
 export function RoutingTeamHome({
   access,
@@ -16,15 +16,20 @@ export function RoutingTeamHome({
   overview: TeamWorkspaceOverview;
   session: Session;
 }) {
-  const data = useRoutingTeamHomeData(access.teamId, session);
+  const data = useRoutingTeamHomeData(access, session);
+  const showActivity = hasWorkspaceView(access, "ACTIVITY");
+  const showCalendar = hasWorkspaceView(access, "CALENDAR");
+  const showQueue = hasWorkspaceView(access, "QUEUE");
   return (
     <div className="team-home routing-home">
-      <RoutingDecision access={access} data={data} overview={overview} />
-      <div className="team-home__columns">
-        <CurrentStages data={data} teamId={access.teamId} />
-        <UpcomingCalendar data={data} teamId={access.teamId} />
-      </div>
-      <RecentActivity data={data} teamId={access.teamId} />
+      {showQueue ? <RoutingDecision access={access} data={data} overview={overview} /> : null}
+      {showQueue || showCalendar ? (
+        <div className="team-home__columns">
+          {showQueue ? <CurrentStages data={data} teamId={access.teamId} /> : null}
+          {showCalendar ? <UpcomingCalendar data={data} teamId={access.teamId} /> : null}
+        </div>
+      ) : null}
+      {showActivity ? <RecentActivity data={data} teamId={access.teamId} /> : null}
     </div>
   );
 }
@@ -63,7 +68,9 @@ function RoutingDecision({
           label="Oldest wait"
           value={data.oldestCreatedAt ? elapsedTime(data.oldestCreatedAt) : "None"}
         />
-        <HomeMeasure label="Active branch work" value={overview.activeWorkCount} />
+        {overview.workloadVisible !== false ? (
+          <HomeMeasure label="Active branch work" value={overview.activeWorkCount} />
+        ) : null}
       </div>
       <div className="routing-home__actions">
         <Link className="button button--primary" to={`/teams/${access.teamId}/queue`}>

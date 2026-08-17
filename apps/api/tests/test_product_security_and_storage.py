@@ -35,7 +35,12 @@ async def _chunks(*items: bytes) -> AsyncIterator[bytes]:
         yield item
 
 
-def _office(*, main: str, extra: str | None = None, payload: bytes = b"safe") -> bytes:
+def _office(
+    *,
+    main: str,
+    extra: str | None = None,
+    payload: bytes = b"<document>safe</document>",
+) -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("[Content_Types].xml", b"<Types/>")
@@ -66,15 +71,6 @@ def test_managed_metadata_rejects_unsafe_or_mismatched_values(
             size_bytes=size,
             checksum=checksum,
         )
-
-
-def test_managed_metadata_normalises_approved_format() -> None:
-    assert validate_managed_metadata(
-        filename="Synthetic Report.PDF",
-        media_type="APPLICATION/PDF",
-        size_bytes=10,
-        checksum="A" * 64,
-    ) == ("Synthetic Report.PDF", PDF_MEDIA)
 
 
 @pytest.mark.parametrize(

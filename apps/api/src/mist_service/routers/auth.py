@@ -202,11 +202,16 @@ async def switch_context(
 @router.post("/elevate", response_model=ElevationResponse)
 async def elevate(
     command: PasswordConfirmation,
+    response: Response,
     session: MutationSession,
     service: AuthDependency,
+    settings: AppSettings,
 ) -> ElevationResponse:
+    result = await service.elevate(session, command.password)
+    _set_session_cookie(response, settings, result.session_token)
     return ElevationResponse(
-        elevated_until=await service.elevate(session, command.password)
+        elevated_until=result.elevated_until,
+        csrf_token=result.csrf_token,
     )
 
 

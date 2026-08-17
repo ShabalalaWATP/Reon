@@ -45,6 +45,7 @@ class TeamWorkspaceOverview(ApiModel):
     active_work_count: int = Field(ge=0)
     due_soon_count: int = Field(ge=0)
     overdue_count: int = Field(ge=0)
+    workload_visible: bool = True
 
 
 class TeamMember(ApiModel):

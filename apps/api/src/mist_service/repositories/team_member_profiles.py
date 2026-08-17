@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mist_service.errors import TeamWorkspaceNotFound
+from mist_service.management_models import ManagementAction
 from mist_service.models import User
 from mist_service.organisation_models import OrganisationUnit
 from mist_service.repositories.team_workspaces import (
@@ -27,7 +28,9 @@ class SqlAlchemyTeamMemberProfileRepository:
     async def get(
         self, actor_id: UUID, team_id: UUID, member_id: UUID
     ) -> TeamMemberProfile:
-        await self._workspaces.require_read(actor_id, team_id)
+        await self._workspaces.require_projection_read(
+            actor_id, team_id, ManagementAction.ROSTER
+        )
         row = (
             await self.session.execute(
                 select(TeamMembership, User, OrganisationUnit)

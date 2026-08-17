@@ -19,6 +19,7 @@ export type TeamWorkspaceOverview = {
   activeWorkCount: number;
   dueSoonCount: number;
   overdueCount: number;
+  workloadVisible?: boolean;
 };
 
 export type MembershipState = "CURRENT" | "SCHEDULED" | "ENDED";

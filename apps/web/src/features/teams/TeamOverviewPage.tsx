@@ -55,10 +55,12 @@ export function TeamOverviewPage({
           <span>{delivery ? "Analysts" : "Members"}</span>
           <strong>{delivery ? data.analystCount : (data.memberCount ?? 0)}</strong>
         </div>
-        <div>
-          <span>Active work</span>
-          <strong>{data.activeWorkCount}</strong>
-        </div>
+        {data.workloadVisible !== false ? (
+          <div>
+            <span>Active work</span>
+            <strong>{data.activeWorkCount}</strong>
+          </div>
+        ) : null}
       </section>
       {delivery ? (
         <DeliveryTeamHome access={access} overview={data} session={session!} />
@@ -66,7 +68,9 @@ export function TeamOverviewPage({
         <RoutingTeamHome access={access} overview={data} session={session!} />
       )}
       <TeamNoticeboard access={access} userId={userId} />
-      <TeamStatisticsStrip teamId={access.teamId} userId={userId} />
+      {!access.views || access.views.includes("STATISTICS") ? (
+        <TeamStatisticsStrip teamId={access.teamId} userId={userId} />
+      ) : null}
     </>
   );
 }

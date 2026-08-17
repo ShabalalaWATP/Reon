@@ -43,6 +43,7 @@ class SwitchContextRequest(StrictApiModel):
 
 class ElevationResponse(ApiModel):
     elevated_until: datetime
+    csrf_token: str
 
 
 class CurrentUser(ApiModel):

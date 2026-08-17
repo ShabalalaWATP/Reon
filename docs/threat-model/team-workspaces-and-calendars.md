@@ -31,6 +31,7 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 | Member uses a stale or misconfigured roster grant | Require both a current exact-unit `MANAGER` membership and the active exact-unit roster grant at the FastAPI use-case boundary; React suppression is usability only |
 | A broad role label conceals Manager authority from the account holder | Present the representative role and authoritative effective workspace position together in the account menu and separately in the profile; continue to authorise only from the server-side membership and grant |
 | A workspace user enumerates accounts or reads private profile fields | Require exact-workspace read access and exact-team membership history for the subject; return the same not-found result for absent and inaccessible records; expose only the bounded colleague contract and exclude service number and free-form personal notes |
+| An action-scoped management grant becomes a general workspace read grant | Keep generic overview and collaboration access separate from projection reads; require `ROSTER`, `CALENDAR` or `BOARD` at the shared repository boundary for grant-only users, while preserving current exact-unit member reads |
 | Team Manager alters another roster | Require a current exact-team Manager position and active exact-team roster grant in the mutation transaction; restrict team controls to Member records |
 | Manager creates or promotes a global identity | Team roster commands accept existing active Analysts only; global identity and role stay administrator-only |
 | Concurrent transfers create two home teams | Exclusion constraint or serialised effective-range check plus one-winner concurrency tests |
@@ -56,7 +57,7 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 | Aggregate board totals reveal hidden work | Apply the same exact-team authorisation and filters before every aggregate query; never calculate a broader total and redact it in React |
 | Inspector loads an inaccessible request or package | Reuse the authoritative object-level detail endpoint; allow terminal request history only for a current Manager membership in the exact assigned team; fail closed for parent, sibling, unrelated, expired and revoked access without confirming that an identifier exists |
 | A compact board hides a workflow state | Keep exception, downstream and terminal state groups discoverable, include their scoped totals and provide an equivalent table view |
-| Team home combines data into a broader side channel | Authorise each source independently, use exact-team or authorised descendant scope and render no partial protected data after a failed required query |
+| Team home combines data into a broader side channel | Authorise each source independently, advertise only its permitted view, use exact-team or authorised descendant scope, do not issue hidden projection queries and omit redacted workload rather than presenting a false zero |
 | Embedding the role queue in a workspace broadens task visibility | Pass the exact selected unit identifier to the existing work-item API, reapply server-side role, unit, object and action policy, and treat the workspace tab and hidden standalone link as presentation only |
 | A Customer follows or retains a team-workspace URL and receives a misleading staff access state | Apply the staff role gate before mounting team workspace or member-profile components, redirect Customers to `My requests` without issuing team API calls and retain server-side object authorisation as the controlling security boundary |
 | Capacity reports expose private reasons | Use availability and duration only; omit event title, notes and dispute text |
@@ -75,6 +76,9 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 ## Required evidence
 
 - Exact, sibling, ancestor, descendant, revoked and expired workspace-access tests.
+- Isolated `ROSTER`, `CALENDAR` and `BOARD` grant tests proving that only the
+  matching projection is readable, while Board-only and Calendar-only pages do
+  not depend on an unauthorised People read.
 - Deliberately misconfigured Member-grant tests proving that eligible-person,
   add, transfer and end-membership use cases fail closed independently of React.
 - Membership add, end and scheduled-transfer tests with active-work disposition

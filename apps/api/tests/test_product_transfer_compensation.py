@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -140,3 +141,71 @@ async def test_scan_finalisation_failure_deletes_promoted_object() -> None:
     released = f"released/{operation.package_id}/{operation.artefact_id}"
     context.discard_released.assert_awaited_once_with(released)
     context.release_after_failure.assert_awaited_once_with(operation)
+
+
+async def test_scan_cancellation_before_promotion_releases_operation_lease() -> None:
+    actor, _package, _request, _artefact, _intent, _view = DATA
+    operation = scan_operation()
+    phases = SimpleNamespace(claim_scan=AsyncMock(return_value=operation))
+    scanner = SimpleNamespace(scan=AsyncMock(side_effect=asyncio.CancelledError))
+    context = SimpleNamespace(
+        sessions=sessions,
+        fence=AsyncMock(),
+        content_phases=lambda _session: phases,
+        runtime=SimpleNamespace(
+            storage=SimpleNamespace(stream_quarantine=lambda _key: AsyncMock()),
+            scanner=scanner,
+        ),
+        lease_ttl=None,
+        release_after_failure=AsyncMock(),
+        discard_released=AsyncMock(),
+    )
+
+    with pytest.raises(asyncio.CancelledError):
+        await ProductScanTransfer(context).complete_upload(
+            actor,
+            operation.package_id,
+            operation.intent_id,
+            SimpleNamespace(),
+        )
+
+    context.release_after_failure.assert_awaited_once_with(operation)
+    context.discard_released.assert_not_awaited()
+
+
+async def test_scan_cancellation_after_promotion_avoids_ambiguous_compensation() -> (
+    None
+):
+    actor, _package, _request, _artefact, _intent, _view = DATA
+    operation = scan_operation()
+    phases = SimpleNamespace(
+        claim_scan=AsyncMock(return_value=operation),
+        finalise_scan=AsyncMock(side_effect=asyncio.CancelledError),
+    )
+    storage = SimpleNamespace(
+        stream_quarantine=lambda _key: AsyncMock(),
+        promote=AsyncMock(),
+    )
+    scanner = SimpleNamespace(
+        scan=AsyncMock(return_value=ScanDecision(ScanResult.CLEAN, "test", "1"))
+    )
+    context = SimpleNamespace(
+        sessions=sessions,
+        fence=AsyncMock(),
+        content_phases=lambda _session: phases,
+        runtime=SimpleNamespace(storage=storage, scanner=scanner),
+        lease_ttl=None,
+        release_after_failure=AsyncMock(),
+        discard_released=AsyncMock(),
+    )
+
+    with pytest.raises(asyncio.CancelledError):
+        await ProductScanTransfer(context).complete_upload(
+            actor,
+            operation.package_id,
+            operation.intent_id,
+            SimpleNamespace(),
+        )
+
+    context.release_after_failure.assert_not_awaited()
+    context.discard_released.assert_not_awaited()

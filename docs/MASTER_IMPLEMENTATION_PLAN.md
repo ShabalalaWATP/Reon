@@ -1,23 +1,26 @@
 # Mist Service Master Implementation Plan
 
-## Current position, 15 August 2026
+## Current position, 17 August 2026
 
 The delivered system is the complete local synthetic application: React web
 client, FastAPI backend, PostgreSQL 17, Camunda 8.9 and ClamAV, running end to
 end through Compose. This is a local-first synthetic build, not a production
 deployment.
 
-Session-verified regression evidence:
+Current Codex Security remediation candidate evidence:
 
-- 1,323 backend tests passing (13 skipped) at 98.13 per cent line and branch
-  coverage.
-- 542 frontend tests passing at 98.81 per cent line and 95.06 per cent branch
-  coverage.
-- Every locally runnable repository gate green: formatting, lint, type,
-  dead-code, line-limit, documentation, terminology, OpenAPI contract,
-  complexity and quality-gate self-tests. The licence gate is verified in CI;
-  its local run was blocked by a machine-specific pnpm store fault, not by the
-  repository.
+- 582 frontend tests pass at 98.79 per cent line coverage and 95.07 per cent
+  branch coverage.
+- 1,417 backend tests pass (13 environment-specific tests skipped) at 98.77 per
+  cent line coverage and 95.17 per cent branch coverage.
+- Focused backend security and architecture tests pass.
+
+The preceding complete candidate, verified on 15 August 2026, passed 1,323
+backend tests (13 skipped) at 98.13 per cent line and branch coverage and 542
+frontend tests at 98.81 per cent line and 95.06 per cent branch coverage. Every
+locally runnable repository gate was green for that candidate. The licence gate
+was verified in CI; its local run was blocked by a machine-specific pnpm store
+fault, not by the repository.
 
 The newest applied migration is `0047_saved_action_view_contexts.py`,
 following `0045_notification_preference_contexts.py` and
@@ -46,7 +49,8 @@ not position in the file, to judge recency.
 
 | Section | Date |
 | --- | --- |
-| [Current position](#current-position-15-august-2026) | 15 Aug 2026 |
+| [Current position](#current-position-17-august-2026) | 17 Aug 2026 |
+| [Codex Security remediation](#codex-security-remediation-17-august-2026) | 17 Aug 2026 |
 | [Authentication, coordination and maintainability remediation](#authentication-coordination-and-maintainability-remediation-15-august-2026) | 15 Aug 2026 |
 | [Current-state documentation and resource hygiene](#current-state-documentation-and-resource-hygiene-14-august-2026) | 14 Aug 2026 |
 | [Current team workspace](#current-team-workspace-11-august-2026) | 11 Aug 2026 |
@@ -102,6 +106,39 @@ not position in the file, to judge recency.
 | [Workflow runtime reliability remediation](#workflow-runtime-reliability-remediation) | 14 Aug 2026 |
 | [SOLID, readability and maintainability programme](#solid-readability-and-maintainability-programme) | 14 Aug 2026 |
 
+## Codex Security remediation, 17 August 2026
+
+Status: all six remediations are implemented. Their focused security and
+architecture checks pass, and both complete regression and coverage gates pass.
+
+- [x] Restrict workspace projections to the actions an actor may perform and
+  redact overview data that is outside the actor's authorised scope.
+- [x] Rotate step-up bearer and CSRF credentials together, with safe cross-tab
+  reconciliation that cannot restore superseded credentials.
+- [x] Bound inspection of decoded OOXML package content to prevent compressed
+  documents from bypassing resource limits.
+- [x] Inspect PDF actions lexically so active-content indicators are detected
+  without executing or semantically interpreting the document.
+- [x] Acquire composite malware-scan concurrency capacity before spooling input,
+  preventing queued scans from consuming unbounded spool resources.
+- [x] Make product transfer cancellation-safe, including deterministic cleanup
+  and preservation of the transfer boundary when cancellation interrupts work.
+- [x] Pass all 582 frontend tests at 98.79 per cent line coverage and 95.07 per
+  cent branch coverage.
+- [x] Pass the focused backend security and architecture test selections.
+- [x] Pass all 1,417 backend tests (13 environment-specific tests skipped) at
+  98.77 per cent line coverage and 95.17 per cent branch coverage.
+
+Residual production controls:
+
+- [ ] Select, approve and integrate a semantic content disarm and reconstruction
+  (CDR) control before production acceptance of untrusted document content. The
+  bounded OOXML and lexical PDF inspections are detection controls, not semantic
+  CDR.
+- [ ] Apply deployment-level scanner capacity and concurrency controls across
+  all service replicas. The implemented scanner semaphore is per process and
+  cannot by itself enforce a deployment-wide scan limit.
+
 ## Authentication, coordination and maintainability remediation, 15 August 2026
 
 Status: implemented and verified locally on 15 August 2026.
@@ -123,8 +160,8 @@ Status: implemented and verified locally on 15 August 2026.
 - [x] Correct documentation: the pnpm version, the `--env-file` FastAPI start
   command, local start guidance, QC Manager naming and single-test guidance.
 
-Evidence: see [Current position](#current-position-15-august-2026) for the
-resulting aggregate test and coverage figures.
+Evidence: the preceding complete-candidate figures remain summarised in
+[Current position](#current-position-17-august-2026).
 
 ## Current-state documentation and resource hygiene, 14 August 2026
 

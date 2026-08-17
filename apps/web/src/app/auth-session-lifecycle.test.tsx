@@ -1,4 +1,6 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { AuthProvider, useAuth } from "../lib/auth/AuthProvider";
@@ -6,6 +8,127 @@ import { json, mockFetch, renderApp, TestProviders } from "../test/render";
 import { requesterSession } from "../test/fixtures";
 
 describe("authentication session lifecycle", () => {
+  it("adopts rotated step-up credentials and broadcasts no credential material", async () => {
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+    mockFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+      if (url.pathname.endsWith("/auth/elevate")) {
+        return json({
+          csrfToken: "post-step-csrf",
+          elevatedUntil: "2099-01-01T00:05:00Z",
+        });
+      }
+      return json({ items: [] });
+    });
+    const user = userEvent.setup();
+    renderSessionProbe();
+
+    expect(await screen.findByText(requesterSession.csrfToken)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Elevate" }));
+
+    expect(await screen.findByText("post-step-csrf")).toBeInTheDocument();
+    expect(setItem).toHaveBeenCalledTimes(1);
+    expect(setItem).toHaveBeenCalledWith(
+      "mist:auth-state",
+      expect.stringMatching(/^session-rotated:\d+$/),
+    );
+    expect(localStorage.getItem("mist:auth-state")).not.toContain("post-step-csrf");
+  });
+
+  it("keeps rotated credentials when an earlier elevation expires in flight", async () => {
+    const elevated = {
+      ...requesterSession,
+      elevatedUntil: new Date(Date.now() + 60_000).toISOString(),
+    };
+    const nativeSetTimeout = window.setTimeout.bind(window);
+    let expire: (() => void) | undefined;
+    let resolveElevation: ((response: Response) => void) | undefined;
+    const pendingElevation = new Promise<Response>((resolve) => {
+      resolveElevation = resolve;
+    });
+    vi.spyOn(window, "setTimeout").mockImplementation((handler, timeout, ...arguments_) => {
+      if (typeof handler === "function" && Number(timeout) >= 50_000 && Number(timeout) <= 60_000)
+        expire = () => handler();
+      return nativeSetTimeout(handler, timeout, ...arguments_) as unknown as ReturnType<
+        typeof setTimeout
+      >;
+    });
+    mockFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) return json(elevated);
+      if (url.pathname.endsWith("/auth/elevate")) return pendingElevation;
+      return json({ items: [] });
+    });
+    const user = userEvent.setup();
+    renderSessionProbe();
+    expect(await screen.findByText(elevated.csrfToken)).toBeInTheDocument();
+    await waitFor(() => expect(expire).toEqual(expect.any(Function)));
+
+    await user.click(screen.getByRole("button", { name: "Elevate" }));
+    act(() => expire?.());
+    act(() =>
+      resolveElevation?.(
+        json({ csrfToken: "race-safe-csrf", elevatedUntil: "2099-01-01T00:05:00Z" }),
+      ),
+    );
+
+    expect(await screen.findByText("race-safe-csrf")).toBeInTheDocument();
+  });
+
+  it("reconciles a sibling rotation without clearing same-context query data", async () => {
+    let authoritative = requesterSession;
+    let sessionReads = 0;
+    mockFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) {
+        sessionReads += 1;
+        return json(authoritative);
+      }
+      return json({ items: [] });
+    });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    renderSessionProbe(client);
+    expect(await screen.findByText(requesterSession.csrfToken)).toBeInTheDocument();
+    client.setQueryData(["protected", "retained"], "safe cached data");
+    authoritative = { ...requesterSession, csrfToken: "sibling-rotated-csrf" };
+
+    act(() =>
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "mist:auth-state",
+          newValue: "session-rotated:123",
+        }),
+      ),
+    );
+
+    expect(await screen.findByText("sibling-rotated-csrf")).toBeInTheDocument();
+    expect(sessionReads).toBe(2);
+    expect(client.getQueryData(["protected", "retained"])).toBe("safe cached data");
+  });
+
+  it("does not promote an anonymous tab on a rotation message", async () => {
+    let sessionReads = 0;
+    mockFetch((url) => {
+      if (url.pathname.endsWith("/auth/me")) {
+        sessionReads += 1;
+        return sessionReads === 1 ? json({ detail: "Unauthorised" }, 401) : json(requesterSession);
+      }
+      return json({ items: [] });
+    });
+    renderSessionProbe();
+    expect(await screen.findByText("Anonymous")).toBeInTheDocument();
+
+    act(() =>
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "mist:auth-state",
+          newValue: "session-rotated:123",
+        }),
+      ),
+    );
+
+    expect(screen.getByText("Anonymous")).toBeInTheDocument();
+    expect(sessionReads).toBe(1);
+  });
+
   it("propagates only valid cross-tab sign-out events", async () => {
     mockFetch((url) =>
       url.pathname.endsWith("/auth/me") ? json(requesterSession) : json({ items: [] }),
@@ -69,12 +192,12 @@ describe("authentication session lifecycle", () => {
   it("removes elevation when its timer fires", async () => {
     const elevated = {
       ...requesterSession,
-      elevatedUntil: new Date(Date.now() + 5_000).toISOString(),
+      elevatedUntil: new Date(Date.now() + 60_000).toISOString(),
     };
     const nativeSetTimeout = window.setTimeout.bind(window);
     let expire: (() => void) | undefined;
     vi.spyOn(window, "setTimeout").mockImplementation((handler, timeout, ...arguments_) => {
-      if (typeof handler === "function" && Number(timeout) >= 4_000 && Number(timeout) <= 6_000)
+      if (typeof handler === "function" && Number(timeout) >= 50_000 && Number(timeout) <= 60_000)
         expire = () => handler();
       return nativeSetTimeout(handler, timeout, ...arguments_) as unknown as ReturnType<
         typeof setTimeout
@@ -89,6 +212,7 @@ describe("authentication session lifecycle", () => {
       </TestProviders>,
     );
     expect(await screen.findByText("Elevated")).toBeInTheDocument();
+    await waitFor(() => expect(expire).toEqual(expect.any(Function)));
     act(() => expire?.());
     expect(await screen.findByText("Not elevated")).toBeInTheDocument();
     act(() =>
@@ -136,5 +260,29 @@ function AnonymousLogoutProbe() {
         Clear local session
       </button>
     </>
+  );
+}
+
+function SessionProbe() {
+  const { elevate, session, status } = useAuth();
+  return (
+    <>
+      <span>{session?.csrfToken ?? (status === "anonymous" ? "Anonymous" : "Loading")}</span>
+      <button type="button" onClick={() => void elevate("admin")}>
+        Elevate
+      </button>
+    </>
+  );
+}
+
+function renderSessionProbe(
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+) {
+  return render(
+    <QueryClientProvider client={client}>
+      <AuthProvider>
+        <SessionProbe />
+      </AuthProvider>
+    </QueryClientProvider>,
   );
 }

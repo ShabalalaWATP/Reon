@@ -57,6 +57,13 @@ class AuthRepository(Protocol):
 
     async def rotate_csrf(self, session_id: UUID, csrf_token_hash: str) -> None: ...
 
-    async def set_elevation(self, session_id: UUID, until: datetime) -> None: ...
+    async def set_elevation(
+        self,
+        session_id: UUID,
+        until: datetime,
+        *,
+        token_hash: str,
+        csrf_token_hash: str,
+    ) -> None: ...
 
     async def commit_security_state(self) -> None: ...

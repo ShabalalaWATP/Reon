@@ -20,6 +20,7 @@ from mist_service.errors import (
     TeamWorkspaceNotFound,
 )
 from mist_service.identity_context import require_staff_context
+from mist_service.management_models import ManagementAction
 from mist_service.models import UserRole
 from mist_service.schemas.board import (
     BoardConfigurationCommand,
@@ -77,7 +78,9 @@ class BoardService:
         limit: int,
     ) -> BoardResult:
         self._require_staff(actor)
-        await self._workspaces.require_read(actor.id, team_id)
+        await self._workspaces.require_projection_read(
+            actor.id, team_id, ManagementAction.BOARD
+        )
         try:
             items, next_cursor = await self._board.board_page(
                 team_id, filters, cursor, limit
@@ -105,21 +108,27 @@ class BoardService:
         self, actor: Actor, team_id: UUID, request_id: UUID
     ) -> BoardItem:
         self._require_staff(actor)
-        await self._workspaces.require_read(actor.id, team_id)
+        await self._workspaces.require_projection_read(
+            actor.id, team_id, ManagementAction.BOARD
+        )
         return await self._board.request_item(team_id, request_id)
 
     async def packages(
         self, actor: Actor, team_id: UUID, limit: int
     ) -> WorkPackageList:
         self._require_staff(actor)
-        await self._workspaces.require_read(actor.id, team_id)
+        await self._workspaces.require_projection_read(
+            actor.id, team_id, ManagementAction.BOARD
+        )
         return WorkPackageList(items=await self._board.list_packages(team_id, limit))
 
     async def package(
         self, actor: Actor, team_id: UUID, package_id: UUID
     ) -> WorkPackageResult:
         self._require_staff(actor)
-        await self._workspaces.require_read(actor.id, team_id)
+        await self._workspaces.require_projection_read(
+            actor.id, team_id, ManagementAction.BOARD
+        )
         return await self._board.package(team_id, package_id)
 
     async def create_package(
@@ -229,7 +238,9 @@ class BoardService:
         self, actor: Actor, team_id: UUID, command: SavedBoardViewCommand
     ) -> SavedBoardViewResult:
         self._require_staff(actor)
-        await self._workspaces.require_read(actor.id, team_id)
+        await self._workspaces.require_projection_read(
+            actor.id, team_id, ManagementAction.BOARD
+        )
         view = await self._commands.create_saved_view(actor.id, team_id, command)
         return _saved_view(view.id, view.name, view.filters, view.version)
 
@@ -241,7 +252,9 @@ class BoardService:
         command: SavedBoardViewUpdate,
     ) -> SavedBoardViewResult:
         self._require_staff(actor)
-        await self._workspaces.require_read(actor.id, team_id)
+        await self._workspaces.require_projection_read(
+            actor.id, team_id, ManagementAction.BOARD
+        )
         view = await self._commands.update_saved_view(
             actor.id, team_id, view_id, command
         )
@@ -255,7 +268,9 @@ class BoardService:
         command: DeleteSavedViewCommand,
     ) -> None:
         self._require_staff(actor)
-        await self._workspaces.require_read(actor.id, team_id)
+        await self._workspaces.require_projection_read(
+            actor.id, team_id, ManagementAction.BOARD
+        )
         await self._commands.delete_saved_view(
             actor.id, team_id, view_id, command.expected_version
         )

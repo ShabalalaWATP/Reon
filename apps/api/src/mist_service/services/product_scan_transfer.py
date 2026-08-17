@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from uuid import UUID
 
 from mist_service.domain import Actor
@@ -56,6 +57,10 @@ class ProductScanTransfer:
                     decision,
                     released_key,
                 )
+        except asyncio.CancelledError:
+            if released_key is None:
+                await self._context.release_after_failure(operation)
+            raise
         except Exception:
             if released_key is not None:
                 await self._context.discard_released(released_key)

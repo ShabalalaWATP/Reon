@@ -106,8 +106,8 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | A Customer enumerates staffing or organisation topology | Deny the global organisation reference endpoint to Customers; initialise submission routing from server-owned configuration only |
 | A workspace link targets a local service or exploits URL parser differences | Canonicalise HTTPS links before persistence and reject credentials, fragments, controls, backslashes, unapproved ports and non-global destinations |
 | Administrator uses support role as a content bypass | Separate metadata ports and routes; deny administrator request list, detail and mutation policy |
-| A stolen Administrator session changes access | Require password step-up bound to that opaque session, CSRF and trusted origin; expire elevation after five minutes |
-| Elevation is replayed in another browser session | Store elevation only on the server-side session row and return only its expiry time |
+| A stolen Administrator session changes access | Require password step-up bound to that opaque session, CSRF and trusted origin; rotate both the opaque bearer and CSRF token atomically after successful elevation, and expire elevation after five minutes |
+| Elevation is replayed in another browser session | Store elevation only on the server-side session row, return the replacement bearer only in an HttpOnly cookie, and reconcile sibling tabs through authenticated session bootstrap |
 | Repeated step-up guesses bypass login controls | Use the same Argon2 verifier, generic failure and bounded account lock policy; invalidate locked-account sessions |
 | An Analyst self-approves or disseminates work | Separate Manager and QC roles, immutable author ID and final-boundary checks |
 | A routing user submits a fabricated, skipped or unrelated unit ID | Load valid direct children server-side and recheck stage, parent, actor role, request version and selected path before deriving the Camunda candidate group |
@@ -152,8 +152,8 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | A malicious or disguised file reaches review | Check extension, media type, magic bytes, Office structure, encryption, archive expansion and active content, then require a current clean malware result before promotion |
 | A local heuristic result is mistaken for production semantic assurance | Give every scanner runtime an explicit assurance class; advertise and permit managed-file uploads in production only for an injected `APPROVED_SEMANTIC_CDR` runtime. Local heuristic and ClamAV composition never self-identify as CDR |
 | Scanner failure or stale result is treated as success | Fail closed for unknown, failed, timed-out or superseded scans; bind promotion to object checksum and scan-policy version; derive daily-definition age from signed build metadata and require equality between on-disk and loaded versions |
-| A scanner protocol or archive parser is abused | Run strict PDF/Office structure checks before a bounded ClamAV `INSTREAM` scan; cap object bytes, archive entries, expanded bytes, compression ratio, scanner time and scanner response length |
-| Hostile Office central-directory metadata exhausts parser memory | Parse only the bounded end-of-central-directory window first; reject Zip64, multi-disk, excessive entries and central-directory bytes before `ZipFile` construction, then cap concurrent document inspections |
+| A scanner protocol or archive parser is abused | Acquire the document-inspection permit before spooling input, run strict PDF/Office structure checks before a bounded ClamAV `INSTREAM` scan, and cap object bytes, archive entries, expanded bytes, compression ratio, XML depth/nodes/attributes, scanner time and scanner response length |
+| Hostile Office central-directory metadata exhausts parser memory | Parse only the bounded end-of-central-directory window first; reject Zip64, multi-disk, duplicate or non-canonical names, excessive entries and central-directory bytes before `ZipFile` construction, then decode and validate relationship and field semantics with bounded XML parsing |
 | Parallel upload intents exhaust package or service storage before review | Reserve declared bytes while holding the singleton service quota plus owner, request and package locks; enforce package, request, author and service totals before issuing and again before persisting a grant |
 | Upload finalisation fails after an object write or promotion | Compensate quarantine and released objects immediately, then run a fenced bounded reconciler for expired intents and unreferenced quarantine objects; deletion and expiry transitions are idempotent |
 | Local product paths are replaced by symbolic links | Reject symbolic links in every object path component, use no-follow file descriptors where supported and retain root-contained atomic replacement semantics |
@@ -242,9 +242,10 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
   enabling still requires an explicitly injected private object-storage runtime,
   approved encryption and retention controls, and an internally reachable,
   monitored scanner service with an owned update and incident path.
-- The local deterministic inspector rejects encoded PDF action names, object
-  streams, incremental updates, embedded/active parts, OOXML external
-  relationships, DDE, OLE and bounded archive abuse. It is not a semantic
+- The local deterministic inspector rejects canonical PDF action name objects,
+  object streams, incremental updates, embedded/active parts, decoded OOXML
+  external relationships and fields, DDE, OLE and bounded archive abuse while
+  ignoring inert PDF strings, comments and stream bodies. It is not a semantic
   content-disarm-and-reconstruction service. Production managed documents remain
   blocked until an approved maintained parser or CDR boundary and adversarial
   corpus prove equivalent or stronger fail-closed behaviour.
@@ -316,8 +317,10 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 Authenticated polling is not evidence of human presence. Session validation is
 read-only, while a CSRF-protected and browser-throttled activity endpoint is the
 only path that advances idle state. The client also applies the absolute and idle
-deadlines locally and broadcasts sign-out state between tabs. CSRF bootstrap is
-stable for the opaque session so one tab cannot invalidate another tab's token.
+deadlines locally and broadcasts sign-out state between tabs. CSRF bootstrap
+remains stable until an explicit security-boundary rotation. A secret-free
+rotation event makes authenticated sibling tabs fetch `/auth/me` for their
+replacement CSRF state, while anonymous tabs remain anonymous.
 
 Public login attempts consume independent opaque source and normalised-identifier
 budgets before password verification. This retains brute-force protection across

@@ -18,7 +18,7 @@ const deliveryAccess: TeamWorkspaceAccess = {
   workspacePosition: "MANAGER",
   grantId: "grant-one",
   permissions: ["BOARD", "CALENDAR", "CAPACITY", "ROSTER", "STATISTICS"],
-  views: ["OVERVIEW", "BOARD", "CALENDAR", "PEOPLE", "PLANNING", "STATISTICS"],
+  views: ["OVERVIEW", "BOARD", "CALENDAR", "PEOPLE", "PLANNING", "STATISTICS", "ACTIVITY"],
 };
 
 const routingAccess: TeamWorkspaceAccess = {
@@ -28,7 +28,7 @@ const routingAccess: TeamWorkspaceAccess = {
   teamName: "Routing One",
   unitKind: "COMMAND",
   permissions: ["CALENDAR", "STATISTICS"],
-  views: ["OVERVIEW", "QUEUE", "CALENDAR", "PEOPLE", "STATISTICS"],
+  views: ["OVERVIEW", "QUEUE", "CALENDAR", "PEOPLE", "STATISTICS", "ACTIVITY"],
 };
 
 const managerSession = {
@@ -284,5 +284,21 @@ describe("team home operational states", () => {
     expect(await findText("Routing queue unavailable")).toBeInTheDocument();
     expect(await findText("Calendar unavailable")).toBeInTheDocument();
     expect(await findText("Activity unavailable")).toBeInTheDocument();
+  });
+
+  it("does not present redacted descendant workload as a real zero", async () => {
+    mockFetch(() => json({ items: [] }));
+    render(
+      providers(
+        <RoutingTeamHome
+          access={routingAccess}
+          overview={{ ...overview(routingAccess), activeWorkCount: 0, workloadVisible: false }}
+          session={managerSession}
+        />,
+      ),
+    );
+
+    await screen.findByRole("heading", { name: "Routing decisions" });
+    expect(screen.queryByText("Active branch work")).not.toBeInTheDocument();
   });
 });

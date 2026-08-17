@@ -9,7 +9,10 @@ from collections.abc import AsyncIterable, AsyncIterator
 from typing import Protocol
 
 from mist_service.product_ports import DocumentScanner, ScannerAssurance
-from mist_service.product_security import MAX_FILE_BYTES
+from mist_service.product_security import (
+    MAX_CONCURRENT_DOCUMENT_SCANS,
+    MAX_FILE_BYTES,
+)
 from mist_service.product_types import ScanDecision, ScanResult
 
 
@@ -120,12 +123,34 @@ class CompositeDocumentScanner:
         malware_scanner: DocumentScanner,
         *,
         maximum_bytes: int = MAX_FILE_BYTES,
+        maximum_concurrent_scans: int = MAX_CONCURRENT_DOCUMENT_SCANS,
     ) -> None:
+        if maximum_concurrent_scans < 1:
+            raise ValueError("maximum_concurrent_scans must be positive")
         self._structure = structure_scanner
         self._malware = malware_scanner
         self._maximum_bytes = maximum_bytes
+        self._scan_slots = asyncio.Semaphore(maximum_concurrent_scans)
 
     async def scan(
+        self,
+        chunks: AsyncIterable[bytes],
+        *,
+        filename: str,
+        declared_media_type: str,
+        expected_size: int,
+        expected_checksum: str,
+    ) -> ScanDecision:
+        async with self._scan_slots:
+            return await self._scan(
+                chunks,
+                filename=filename,
+                declared_media_type=declared_media_type,
+                expected_size=expected_size,
+                expected_checksum=expected_checksum,
+            )
+
+    async def _scan(
         self,
         chunks: AsyncIterable[bytes],
         *,

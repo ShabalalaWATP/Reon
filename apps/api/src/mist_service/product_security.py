@@ -11,22 +11,22 @@ from collections.abc import AsyncIterable
 from pathlib import PurePath
 from typing import Protocol
 
+from mist_service.product_document_security import (
+    MAX_UNCOMPRESSED_BYTES as MAX_UNCOMPRESSED_BYTES,
+)
+from mist_service.product_document_security import inspect_office
 from mist_service.product_errors import ProductValidationFailed
 from mist_service.product_image_security import inspect_safe_image
 from mist_service.product_link_security import (
     AllowedHttpsLinkPolicy as AllowedHttpsLinkPolicy,
 )
+from mist_service.product_pdf_security import inspect_pdf
 from mist_service.product_ports import ScannerAssurance
 from mist_service.product_types import ScanDecision, ScanResult
-from mist_service.product_zip_preflight import (
-    MAX_ZIP_ENTRIES,
-    central_directory_preflight,
-)
 
 MAX_FILE_BYTES = 25 * 1024 * 1024
 MAX_PACKAGE_BYTES = 100 * 1024 * 1024
-MAX_UNCOMPRESSED_BYTES = 125 * 1024 * 1024
-MAX_COMPRESSION_RATIO, MAX_CONCURRENT_DOCUMENT_SCANS = 100, 4
+MAX_CONCURRENT_DOCUMENT_SCANS = 4
 PPTX_MEDIA_TYPE = (
     "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 )
@@ -40,33 +40,6 @@ MEDIA_BY_EXTENSION = {
 }
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _SAFE_CORRELATION_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$")
-_ACTIVE_PARTS = (
-    "vbaproject.bin",
-    "/activex/",
-    "/embeddings/",
-    "oleobject",
-    ".exe",
-    ".js",
-    ".vbs",
-    "/externallinks/",
-    "attachedtemplate",
-)
-_PDF_ACTIVE = (
-    b"/javascript",
-    b"/js",
-    b"/launch",
-    b"/embeddedfile",
-    b"/openaction",
-    b"/richmedia",
-    b"/acroform",
-    b"/objstm",
-)
-_PDF_NAME_ESCAPE = re.compile(rb"#([0-9a-fA-F]{2})")
-_EXTERNAL_RELATIONSHIP = re.compile(
-    rb"targetmode\s*=\s*['\"]external['\"]", re.IGNORECASE
-)
-_ACTIVE_XML = (b"ddeauto", b"attachedtemplate", b"oleobject", b"externaldata")
-_STANDARD_ZIPFILE = zipfile.ZipFile
 
 
 class _ReadableSeekable(Protocol):
@@ -74,10 +47,6 @@ class _ReadableSeekable(Protocol):
     def seek(self, offset: int, whence: int = 0) -> int:
         del offset, whence
         raise NotImplementedError
-
-
-def _decode_pdf_name(match: re.Match[bytes]) -> bytes:
-    return bytes((int(match.group(1), 16),))
 
 
 def validate_managed_metadata(
@@ -208,72 +177,11 @@ class SafeDocumentScanner:
 
     @staticmethod
     def _inspect_pdf(stream: _ReadableSeekable) -> str | None:
-        if stream.read(5) != b"%PDF-":
-            return "SIGNATURE_MISMATCH"
-        stream.seek(0)
-        content = stream.read(MAX_FILE_BYTES + 1)
-        if len(content) > MAX_FILE_BYTES:
-            return "ARCHIVE_LIMIT"
-        lowered = _PDF_NAME_ESCAPE.sub(_decode_pdf_name, content).lower()
-        if b"/encrypt" in lowered:
-            return "ENCRYPTED_DOCUMENT"
-        if any(marker in lowered for marker in _PDF_ACTIVE):
-            return "ACTIVE_CONTENT"
-        if lowered.count(b"%%eof") > 1:
-            return "ACTIVE_CONTENT"
-        return None
+        return inspect_pdf(stream)
 
     @staticmethod
     def _inspect_office(stream: _ReadableSeekable, extension: str) -> str | None:
-        if stream.read(4) != b"PK\x03\x04":
-            return "SIGNATURE_MISMATCH"
-        stream.seek(0)
-        zipfile_type = zipfile.ZipFile
-        if isinstance(zipfile_type, type) and issubclass(
-            zipfile_type, _STANDARD_ZIPFILE
-        ):
-            preflight = central_directory_preflight(stream)
-            if preflight is not None:
-                return preflight
-        stream.seek(0)
-        with zipfile.ZipFile(stream) as archive:
-            entries = archive.infolist()
-            if len(entries) > MAX_ZIP_ENTRIES:
-                return "ARCHIVE_LIMIT"
-            total = 0
-            names = {entry.filename.lower() for entry in entries}
-            for entry in entries:
-                if entry.flag_bits & 0x1:
-                    return "ENCRYPTED_DOCUMENT"
-                total += entry.file_size
-                if total > MAX_UNCOMPRESSED_BYTES:
-                    return "ARCHIVE_LIMIT"
-                if entry.file_size and entry.compress_size == 0:
-                    return "ARCHIVE_LIMIT"
-                if (
-                    entry.compress_size
-                    and entry.file_size / entry.compress_size > MAX_COMPRESSION_RATIO
-                ):
-                    return "ARCHIVE_LIMIT"
-                lowered = f"/{entry.filename.lower()}"
-                if any(marker in lowered for marker in _ACTIVE_PARTS):
-                    return "ACTIVE_CONTENT"
-                if entry.filename.lower().endswith((".xml", ".rels")):
-                    with archive.open(entry) as source:
-                        tail = b""
-                        while chunk := source.read(65_536):
-                            inspected = (tail + chunk).lower()
-                            if _EXTERNAL_RELATIONSHIP.search(inspected) or any(
-                                marker in inspected for marker in _ACTIVE_XML
-                            ):
-                                return "ACTIVE_CONTENT"
-                            tail = inspected[-64:]
-            required = (
-                "word/document.xml" if extension == ".docx" else "ppt/presentation.xml"
-            )
-            if "[content_types].xml" not in names or required not in names:
-                return "INVALID_OFFICE_STRUCTURE"
-        return None
+        return inspect_office(stream, extension, zipfile_type=zipfile.ZipFile)
 
     @staticmethod
     def _failed(reason: str) -> ScanDecision:

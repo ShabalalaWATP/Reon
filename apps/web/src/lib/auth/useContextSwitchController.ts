@@ -20,28 +20,37 @@ export function useContextSwitchController(lifecycle: SessionLifecycle) {
     setContextSwitchError(null);
   }, []);
 
-  const reconcileExternalContext = useCallback(() => {
-    const generation = lifecycle.beginOperation();
-    setContextSwitchError(null);
-    setContextSwitching(true);
-    lifecycle.rotateProtectedQueryClient();
-    void api
-      .session()
-      .then((nextSession) => {
-        if (!lifecycle.isCurrentOperation(generation)) return;
-        lifecycle.applySession(nextSession);
-        recordContextChange();
-      })
-      .catch((error: unknown) => {
-        if (!lifecycle.isCurrentOperation(generation)) return;
-        setContextSwitching(false);
-        lifecycle.clearSession(false);
-        if (!(error instanceof ApiError) || error.status !== 401) console.error(error);
-      })
-      .finally(() => {
-        if (lifecycle.isCurrentOperation(generation)) setContextSwitching(false);
-      });
-  }, [lifecycle, recordContextChange]);
+  const reconcileExternalSession = useCallback(
+    (clearProtectedData: boolean) => {
+      const previous = lifecycle.sessionRef.current;
+      if (!previous) return;
+      const generation = lifecycle.beginOperation();
+      setContextSwitchError(null);
+      setContextSwitching(true);
+      if (clearProtectedData) lifecycle.rotateProtectedQueryClient();
+      void api
+        .session()
+        .then((nextSession) => {
+          if (!lifecycle.isCurrentOperation(generation)) return;
+          const contextChanged =
+            nextSession.activeContext !== previous.activeContext ||
+            nextSession.contextVersion !== previous.contextVersion;
+          if (contextChanged && !clearProtectedData) lifecycle.rotateProtectedQueryClient();
+          lifecycle.applySession(nextSession);
+          if (contextChanged) recordContextChange();
+        })
+        .catch((error: unknown) => {
+          if (!lifecycle.isCurrentOperation(generation)) return;
+          setContextSwitching(false);
+          lifecycle.clearSession(false);
+          if (!(error instanceof ApiError) || error.status !== 401) console.error(error);
+        })
+        .finally(() => {
+          if (lifecycle.isCurrentOperation(generation)) setContextSwitching(false);
+        });
+    },
+    [lifecycle, recordContextChange],
+  );
 
   useEffect(() => {
     const synchronise = (event: StorageEvent) => {
@@ -50,12 +59,14 @@ export function useContextSwitchController(lifecycle: SessionLifecycle) {
         setContextSwitching(false);
         lifecycle.clearSession(false);
       } else if (message.kind === "context-changed") {
-        reconcileExternalContext();
+        reconcileExternalSession(true);
+      } else if (message.kind === "session-rotated") {
+        reconcileExternalSession(false);
       }
     };
     window.addEventListener("storage", synchronise);
     return () => window.removeEventListener("storage", synchronise);
-  }, [lifecycle, reconcileExternalContext]);
+  }, [lifecycle, reconcileExternalSession]);
 
   const switchContext = useCallback(
     async (context: AccountContext) => {

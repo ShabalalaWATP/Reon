@@ -36,8 +36,21 @@ async def test_admin_mutations_require_fresh_password_confirmation(
     assert denied.status_code == 403
     assert denied.json()["detail"]["code"] == "STEP_UP_REQUIRED"
 
+    cookie_name = harness.settings.session_cookie_name
+    pre_step_cookie = harness.client.cookies.get(cookie_name)
+    pre_step_csrf = harness.csrf_token
     elevated = await harness.elevate()
+    post_step_cookie = harness.client.cookies.get(cookie_name)
     assert datetime.fromisoformat(elevated["elevatedUntil"]) > datetime.now(UTC)
+    assert elevated["csrfToken"] == harness.csrf_token
+    assert elevated["csrfToken"] != pre_step_csrf
+    assert post_step_cookie != pre_step_cookie
+
+    harness.client.cookies.delete(cookie_name)
+    harness.client.cookies.set(cookie_name, pre_step_cookie)
+    assert (await harness.client.get("/api/v1/auth/me")).status_code == 401
+    harness.client.cookies.delete(cookie_name)
+    harness.client.cookies.set(cookie_name, post_step_cookie)
     current = await harness.client.get("/api/v1/auth/me")
     assert current.status_code == 200
     assert current.json()["elevatedUntil"] == elevated["elevatedUntil"]
@@ -73,6 +86,9 @@ async def test_step_up_rejects_wrong_password_non_admin_and_missing_csrf(
 ) -> None:
     harness = api_harness
     await harness.login("admin1")
+    cookie_name = harness.settings.session_cookie_name
+    original_cookie = harness.client.cookies.get(cookie_name)
+    original_csrf = harness.csrf_token
     wrong = await harness.client.post(
         "/api/v1/auth/elevate",
         json={"password": "incorrect"},
@@ -80,6 +96,8 @@ async def test_step_up_rejects_wrong_password_non_admin_and_missing_csrf(
     )
     assert wrong.status_code == 401
     assert wrong.json()["detail"]["code"] == "AUTHENTICATION_FAILED"
+    assert harness.client.cookies.get(cookie_name) == original_cookie
+    assert harness.csrf_token == original_csrf
     no_csrf = await harness.client.post(
         "/api/v1/auth/elevate",
         json={"password": "admin"},

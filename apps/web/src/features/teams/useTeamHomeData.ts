@@ -6,7 +6,7 @@ import type { BoardColumn, BoardFilters } from "../../lib/api/boardTypes";
 import type { CalendarOccurrence } from "../../lib/api/calendarTypes";
 import { api } from "../../lib/api/client";
 import { protectedQueryKeys } from "../../lib/api/queryKeys";
-import type { TeamActivity, TeamMember } from "../../lib/api/teamTypes";
+import type { TeamActivity, TeamMember, TeamWorkspaceAccess } from "../../lib/api/teamTypes";
 import type { Session, WorkItem } from "../../lib/api/types";
 import { addLocalDays } from "../../lib/dateInputs";
 
@@ -40,24 +40,32 @@ export type RoutingHomeData = {
   upcoming: CalendarOccurrence[];
 };
 
-export function useDeliveryTeamHomeData(teamId: string, session: Session): DeliveryHomeData {
+export function useDeliveryTeamHomeData(
+  access: TeamWorkspaceAccess,
+  session: Session,
+): DeliveryHomeData {
   const queryKeys = protectedQueryKeys(session);
+  const teamId = access.teamId;
   const [calendarFrom, calendarTo] = useCalendarRange();
   const board = useQuery({
     queryKey: queryKeys.teamBoard(teamId, "home-requests"),
     queryFn: () => boardApi.board(teamId, requestBoardFilters, { limit: 8 }),
+    enabled: hasWorkspaceView(access, "BOARD"),
   });
   const people = useQuery({
     queryKey: queryKeys.teamPeople(teamId),
     queryFn: () => api.teamPeople(teamId),
+    enabled: hasWorkspaceView(access, "PEOPLE"),
   });
   const calendar = useQuery({
     queryKey: queryKeys.teamCalendar(teamId, calendarFrom, calendarTo),
     queryFn: () => api.teamCalendar(teamId, calendarFrom, calendarTo),
+    enabled: hasWorkspaceView(access, "CALENDAR"),
   });
   const activity = useQuery({
     queryKey: queryKeys.teamActivity(teamId),
     queryFn: () => api.teamActivity(teamId),
+    enabled: hasWorkspaceView(access, "ACTIVITY"),
   });
   return {
     activity: activity.data?.items.slice(0, 5) ?? [],
@@ -73,20 +81,27 @@ export function useDeliveryTeamHomeData(teamId: string, session: Session): Deliv
   };
 }
 
-export function useRoutingTeamHomeData(teamId: string, session: Session): RoutingHomeData {
+export function useRoutingTeamHomeData(
+  access: TeamWorkspaceAccess,
+  session: Session,
+): RoutingHomeData {
   const queryKeys = protectedQueryKeys(session);
+  const teamId = access.teamId;
   const [from, to] = useCalendarRange();
   const queue = useQuery({
     queryKey: queryKeys.workItems(teamId),
     queryFn: () => api.workItems(undefined, teamId),
+    enabled: hasWorkspaceView(access, "QUEUE"),
   });
   const calendar = useQuery({
     queryKey: queryKeys.teamCalendar(teamId, from, to),
     queryFn: () => api.teamCalendar(teamId, from, to),
+    enabled: hasWorkspaceView(access, "CALENDAR"),
   });
   const activity = useQuery({
     queryKey: queryKeys.teamActivity(teamId),
     queryFn: () => api.teamActivity(teamId),
+    enabled: hasWorkspaceView(access, "ACTIVITY"),
   });
   const items = queue.data?.items ?? [];
   const oldest = [...items].sort((left, right) => left.createdAt.localeCompare(right.createdAt))[0];
@@ -104,6 +119,10 @@ export function useRoutingTeamHomeData(teamId: string, session: Session): Routin
     stages: stageCounts(items),
     upcoming: calendar.data?.items.slice(0, 5) ?? [],
   };
+}
+
+export function hasWorkspaceView(access: TeamWorkspaceAccess, view: string) {
+  return !access.views || access.views.includes(view);
 }
 
 function useCalendarRange() {

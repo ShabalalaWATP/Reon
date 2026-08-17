@@ -280,6 +280,7 @@ def _entry(
             "ARCHIVE_LIMIT",
         ),
         ([_entry("word/document.xml", file_size=1, compress_size=0)], "ARCHIVE_LIMIT"),
+        ([_entry("../word/document.xml")], "INVALID_CONTAINER"),
         (
             [_entry("word/document.xml", file_size=20_000, compress_size=1)],
             "ARCHIVE_LIMIT",

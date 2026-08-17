@@ -86,7 +86,10 @@ describe("platform administrator access", () => {
       if (url.pathname.endsWith("/auth/me")) return json(unelevated);
       if (url.pathname.endsWith("/auth/elevate") && init.method === "POST") {
         confirmedPassword = JSON.parse(String(init.body)).password;
-        return json({ elevatedUntil: "2099-01-01T00:05:00Z" });
+        return json({
+          elevatedUntil: "2099-01-01T00:05:00Z",
+          csrfToken: "rotated-admin-csrf",
+        });
       }
       if (url.pathname.endsWith("/organisation/units")) return json({ items: organisationUnits });
       throw new Error(`${init.method ?? "GET"} ${url.pathname}`);

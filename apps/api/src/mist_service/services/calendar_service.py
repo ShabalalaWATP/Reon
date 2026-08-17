@@ -90,7 +90,9 @@ class CalendarService:
     ) -> list[CalendarOccurrence]:
         self._require_staff(actor)
         _range(start, end)
-        await self._workspaces.require_read(actor.id, team_id)
+        await self._workspaces.require_projection_read(
+            actor.id, team_id, ManagementAction.CALENDAR
+        )
         return await self._calendar.list_team(team_id, start, end)
 
     async def create_personal(

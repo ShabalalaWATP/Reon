@@ -74,7 +74,7 @@ class FakeAuthRepository:
         self.session_lookups: list[tuple[str, datetime, datetime]] = []
         self.revoked_sessions: list[UUID] = []
         self.rotations: list[tuple[UUID, str]] = []
-        self.elevations: list[tuple[UUID, datetime]] = []
+        self.elevations: list[tuple[UUID, datetime, str, str]] = []
         self.security_commits = 0
         self.failure_count = account.failed_login_count if account else 0
 
@@ -136,8 +136,15 @@ class FakeAuthRepository:
     async def rotate_csrf(self, session_id: UUID, csrf_token_hash: str) -> None:
         self.rotations.append((session_id, csrf_token_hash))
 
-    async def set_elevation(self, session_id: UUID, until: datetime) -> None:
-        self.elevations.append((session_id, until))
+    async def set_elevation(
+        self,
+        session_id: UUID,
+        until: datetime,
+        *,
+        token_hash: str,
+        csrf_token_hash: str,
+    ) -> None:
+        self.elevations.append((session_id, until, token_hash, csrf_token_hash))
 
     async def commit_security_state(self) -> None:
         self.security_commits += 1

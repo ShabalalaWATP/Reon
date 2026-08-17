@@ -105,13 +105,15 @@ function WorkPackageWorkstream({ board }: { board: TeamBoardController }) {
               Customer request.
             </span>
           </div>
-          <button
-            className="button button--primary"
-            onClick={() => board.setCreating(true)}
-            type="button"
-          >
-            Create internal card
-          </button>
+          {board.canReadPeople ? (
+            <button
+              className="button button--primary"
+              onClick={() => board.setCreating(true)}
+              type="button"
+            >
+              Create internal card
+            </button>
+          ) : null}
         </header>
         <WorkPackageBoardState board={board} />
       </div>

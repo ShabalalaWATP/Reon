@@ -29,6 +29,13 @@ class TeamWorkspaceReadPort(Protocol):
         self, actor_id: UUID, team_id: UUID
     ) -> TeamWorkspaceAccess: ...
 
+    async def require_projection_read(
+        self,
+        actor_id: UUID,
+        team_id: UUID,
+        required_action: ManagementAction,
+    ) -> TeamWorkspaceAccess: ...
+
 
 class TeamWorkspaceViewPort(TeamWorkspaceReadPort, Protocol):
     """Serve the complete team-workspace query surface."""

@@ -2,7 +2,7 @@ import { fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
-import { renderApp } from "../../test/render";
+import { json, mockFetch, renderApp } from "../../test/render";
 import {
   analystAccess,
   analystSession,
@@ -96,5 +96,33 @@ describe("canonical workforce calendar failure handling", () => {
     await user.click(await screen.findByRole("button", { name: "Ticket commitment" }));
     expect(await screen.findByRole("option", { name: "Requests unavailable" })).toBeInTheDocument();
     expect(screen.getByLabelText(/^Service request/)).toBeDisabled();
+  });
+
+  it("loads a Calendar-only grant without Board or roster reads", async () => {
+    const calendarOnly = {
+      ...managerAccess,
+      workspacePosition: null,
+      permissions: ["CALENDAR"],
+      views: ["OVERVIEW", "CALENDAR", "HANDOVER"],
+    };
+    mockFetch(
+      async (url) => {
+        if (url.pathname.endsWith("/auth/me")) return json(managerSession);
+        if (url.pathname.endsWith("/team-workspaces")) return json({ items: [calendarOnly] });
+        if (url.pathname.endsWith("/calendar")) return json({ items: [] });
+        throw new Error(`Unexpected ${url.pathname}`);
+      },
+      true,
+      true,
+      false,
+    );
+    const user = userEvent.setup();
+
+    renderApp("/teams/team-ssg/calendar");
+    await screen.findByRole("region", { name: "month calendar" });
+    await user.click(screen.getByRole("button", { name: "Add event" }));
+
+    expect(screen.getByRole("button", { name: "Unit event" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ticket commitment" })).not.toBeInTheDocument();
   });
 });

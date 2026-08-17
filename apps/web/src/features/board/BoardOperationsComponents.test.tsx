@@ -108,6 +108,7 @@ describe("board operational components", () => {
     });
     const props = {
       canManage: false,
+      canReadPeople: true,
       filters: emptyBoardFilters,
       mode: "board" as const,
       people: [member("owner-one", "Owner One"), member("owner-two", "Owner Two")],

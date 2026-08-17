@@ -126,4 +126,31 @@ describe("team workflow board", () => {
     expect(await screen.findByRole("heading", { name: "Team delivery" })).toBeInTheDocument();
     expect(attempts).toEqual({ board: 2, people: 2, iterations: 2 });
   });
+
+  it("loads a Board-only grant without requesting the roster", async () => {
+    const boardOnly = {
+      ...managerAccess,
+      workspacePosition: null,
+      permissions: ["BOARD"],
+      views: ["OVERVIEW", "BOARD", "PLANNING", "HANDOVER"],
+    };
+    mockFetch(
+      async (url) => {
+        if (url.pathname.endsWith("/auth/me")) return json(managerSession);
+        if (url.pathname.endsWith("/team-workspaces")) return json({ items: [boardOnly] });
+        if (url.pathname.endsWith("/iterations")) return json({ items: iterations });
+        if (url.pathname.endsWith("/packages")) return json({ items: [packageItem] });
+        if (url.pathname.endsWith("/board")) return json(board);
+        throw new Error(`Unexpected ${url.pathname}`);
+      },
+      true,
+      true,
+      false,
+    );
+
+    renderApp("/teams/team-ssg/board");
+
+    expect(await screen.findByRole("heading", { name: "Team delivery" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Owner")).not.toBeInTheDocument();
+  });
 });

@@ -124,8 +124,20 @@ class SqlAlchemyAuthRepository:
     async def touch_session(self, session_id: UUID, *, now: datetime) -> None:
         await self._sessions.touch_session(session_id, now=now)
 
-    async def set_elevation(self, session_id: UUID, until: datetime) -> None:
-        await self._sessions.set_elevation(session_id, until)
+    async def set_elevation(
+        self,
+        session_id: UUID,
+        until: datetime,
+        *,
+        token_hash: str,
+        csrf_token_hash: str,
+    ) -> None:
+        await self._sessions.set_elevation(
+            session_id,
+            until,
+            token_hash=token_hash,
+            csrf_token_hash=csrf_token_hash,
+        )
 
     async def revoke_session(self, session_id: UUID) -> None:
         await self._sessions.revoke_session(session_id)

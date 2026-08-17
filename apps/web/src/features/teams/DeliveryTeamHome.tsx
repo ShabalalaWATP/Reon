@@ -4,7 +4,11 @@ import { Link } from "react-router";
 import type { Session } from "../../lib/api/types";
 import type { TeamWorkspaceAccess, TeamWorkspaceOverview } from "../../lib/api/teamTypes";
 import { boardLabel } from "../board/boardPresentation";
-import { useDeliveryTeamHomeData, type DeliveryHomeData } from "./useTeamHomeData";
+import {
+  hasWorkspaceView,
+  useDeliveryTeamHomeData,
+  type DeliveryHomeData,
+} from "./useTeamHomeData";
 
 export function DeliveryTeamHome({
   access,
@@ -15,15 +19,21 @@ export function DeliveryTeamHome({
   overview: TeamWorkspaceOverview;
   session: Session;
 }) {
-  const data = useDeliveryTeamHomeData(access.teamId, session);
+  const data = useDeliveryTeamHomeData(access, session);
+  const showActivity = hasWorkspaceView(access, "ACTIVITY");
+  const showBoard = hasWorkspaceView(access, "BOARD");
+  const showCalendar = hasWorkspaceView(access, "CALENDAR");
+  const showPeople = hasWorkspaceView(access, "PEOPLE");
   return (
     <div className="team-home">
-      <TeamAttention access={access} data={data} overview={overview} />
-      <div className="team-home__columns">
-        <UpcomingCalendar data={data} teamId={access.teamId} />
-        <CurrentPeople data={data} teamId={access.teamId} />
-      </div>
-      <RecentActivity data={data} teamId={access.teamId} />
+      {showBoard ? <TeamAttention access={access} data={data} overview={overview} /> : null}
+      {showCalendar || showPeople ? (
+        <div className="team-home__columns">
+          {showCalendar ? <UpcomingCalendar data={data} teamId={access.teamId} /> : null}
+          {showPeople ? <CurrentPeople data={data} teamId={access.teamId} /> : null}
+        </div>
+      ) : null}
+      {showActivity ? <RecentActivity data={data} teamId={access.teamId} /> : null}
     </div>
   );
 }

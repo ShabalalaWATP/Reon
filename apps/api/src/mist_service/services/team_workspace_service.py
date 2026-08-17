@@ -52,7 +52,9 @@ class TeamWorkspaceService:
 
     async def people(self, actor: Actor, team_id: UUID) -> list[TeamMember]:
         self._require_staff(actor)
-        access = await self._views.require_read(actor.id, team_id)
+        access = await self._views.require_projection_read(
+            actor.id, team_id, ManagementAction.ROSTER
+        )
         reveal_reasons = (
             access.workspace_position is WorkspacePosition.MANAGER
             and ManagementAction.ROSTER in access.permissions

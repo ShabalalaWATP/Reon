@@ -19,6 +19,7 @@ from mist_service.board_ports import (
 from mist_service.domain import Actor
 from mist_service.errors import BoardItemNotFound, TeamWorkspaceNotFound
 from mist_service.identity_context import require_staff_context
+from mist_service.management_models import ManagementAction
 from mist_service.schemas.board import (
     IterationCloseCommand,
     IterationCommand,
@@ -88,7 +89,9 @@ class BoardPlanningService:
 
     async def iterations(self, actor: Actor, team_id: UUID) -> IterationList:
         self._require_staff(actor)
-        await self._workspaces.require_read(actor.id, team_id)
+        await self._workspaces.require_projection_read(
+            actor.id, team_id, ManagementAction.BOARD
+        )
         return IterationList(items=await self._board.iterations(team_id))
 
     async def create_iteration(

@@ -28,6 +28,7 @@ analytics repository.
 | Client supplies a sibling or ancestor unit ID | Load the active grant and derive allowable units from closure inside the final repository query |
 | Broad role grants unintended access | Keep action-specific management grants independent of role labels and membership |
 | A workspace Member's Home page implies or acquires Manager reporting access | Render personal actions and exact-unit workspace links only when no statistics grant exists; omit aggregate measures and statistics navigation, while every reporting API continues to require its active grant |
+| An exact-unit parent grant exposes descendant workload through the workspace overview | Preserve descendant permission separately from the public grant summary; require an active descendant-enabled `STATISTICS` grant before expanding non-Team workload through organisation closure, otherwise return hidden zero-valued fields with `workloadVisible=false` |
 | Expired or revoked authority remains cached | Validate grant dates and version on every request; use short content-free client caching only |
 | Organisation cycle expands scope | Enforce cycle-free parent mutations and closure-table constraints transactionally |
 | Administrator reporting exposes request content | Serve aggregates from content-free facts only and retain request-repository denial |
@@ -55,6 +56,8 @@ analytics repository.
 ## Required evidence
 
 - Positive tests for exact-unit and descendant grants at every hierarchy level.
+- Workspace-overview tests for direct Team membership, exact-only statistics,
+  descendant-enabled statistics, unrelated action grants, revocation and expiry.
 - Negative tests for ancestor, sibling, unrelated, expired, revoked and stale
   grants, including direct identifier manipulation.
 - A fixed-fixture aggregate oracle for counts, durations and date boundaries.

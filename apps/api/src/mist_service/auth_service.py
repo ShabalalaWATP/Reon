@@ -49,6 +49,13 @@ class LoginResult:
     csrf_token: str
 
 
+@dataclass(frozen=True, slots=True)
+class ElevationResult:
+    elevated_until: datetime
+    session_token: str
+    csrf_token: str
+
+
 class AuthService:
     def __init__(
         self,
@@ -179,7 +186,7 @@ class AuthService:
     async def record_activity(self, session: SessionRecord) -> None:
         await self._repository.touch_session(session.id, now=datetime.now(UTC))
 
-    async def elevate(self, session: SessionRecord, password: str) -> datetime:
+    async def elevate(self, session: SessionRecord, password: str) -> ElevationResult:
         if session.actor.role is not UserRole.PLATFORM_ADMIN:
             await self._record_security(
                 "STEP_UP",
@@ -219,14 +226,21 @@ class AuthService:
             raise AuthenticationFailed()
         await self._repository.reset_failures(account)
         until = now + timedelta(seconds=self._admin_elevation_seconds)
-        await self._repository.set_elevation(session.id, until)
+        session_token = token_urlsafe(32)
+        csrf_token = csrf_token_for_session(session_token)
+        await self._repository.set_elevation(
+            session.id,
+            until,
+            token_hash=hash_opaque_token(session_token),
+            csrf_token_hash=hash_opaque_token(csrf_token),
+        )
         await self._record_security(
             "STEP_UP",
             SecurityOutcome.SUCCESS,
             "ELEVATED",
             actor_user_id=session.actor.id,
         )
-        return until
+        return ElevationResult(until, session_token, csrf_token)
 
     async def _record_security(
         self,

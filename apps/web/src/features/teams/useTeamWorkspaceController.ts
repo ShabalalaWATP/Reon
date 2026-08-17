@@ -68,9 +68,7 @@ export function useTeamWorkspaceController(session: Session): TeamWorkspaceState
 
 function allowedViews(access: TeamWorkspaceAccess, isRouting: boolean) {
   const baseViews = isRouting ? routingViews : deliveryViews;
-  return baseViews.filter(
-    ([key]) => key === "queue" || !access.views || access.views.includes(key.toUpperCase()),
-  );
+  return baseViews.filter(([key]) => !access.views || access.views.includes(key.toUpperCase()));
 }
 
 function isWorkspaceView(value: string): value is WorkspaceView {

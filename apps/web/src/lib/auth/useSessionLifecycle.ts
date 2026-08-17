@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, ApiError, SESSION_EXPIRED_EVENT } from "../api/client";
 import { createAppQueryClient } from "../api/queryClient";
 import type { Session } from "../api/types";
-import { broadcastSignedIn, broadcastSignedOut } from "./authSync";
+import { broadcastSessionRotated, broadcastSignedIn, broadcastSignedOut } from "./authSync";
 
 const ACTIVITY_THROTTLE_MS = 30_000;
 
@@ -162,12 +162,28 @@ export function useSessionLifecycle(initialQueryClient: QueryClient) {
       const current = sessionRef.current;
       if (!current) throw new ApiError("Sign in is required.", 401);
       const result = await api.elevate(password, current.csrfToken);
-      if (sessionRef.current === current) {
-        applySession({ ...current, elevatedUntil: result.elevatedUntil });
+      const latest = sessionRef.current;
+      if (latest && sameCredentialContext(current, latest)) {
+        applySession({
+          ...latest,
+          csrfToken: result.csrfToken,
+          elevatedUntil: result.elevatedUntil,
+        });
+      } else if (latest) {
+        try {
+          const authoritative = await api.session();
+          if (sessionRef.current === latest) applySession(authoritative);
+        } catch (error: unknown) {
+          if (sessionRef.current === latest) {
+            clearSession(false);
+            if (!(error instanceof ApiError) || error.status !== 401) console.error(error);
+          }
+        }
       }
+      broadcastSessionRotated();
       return result.elevatedUntil;
     },
-    [applySession],
+    [applySession, clearSession],
   );
   const logout = useCallback(async () => {
     const current = sessionRef.current;
@@ -213,3 +229,11 @@ export function useSessionLifecycle(initialQueryClient: QueryClient) {
 }
 
 export type SessionLifecycle = ReturnType<typeof useSessionLifecycle>;
+
+function sameCredentialContext(left: Session, right: Session) {
+  return (
+    left.user.id === right.user.id &&
+    left.activeContext === right.activeContext &&
+    left.contextVersion === right.contextVersion
+  );
+}

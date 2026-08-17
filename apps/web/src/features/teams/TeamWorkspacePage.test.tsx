@@ -33,7 +33,7 @@ describe("team workspace", () => {
       within(screen.getByRole("navigation", { name: "Organisation workspace views" })).getAllByRole(
         "link",
       ),
-    ).toHaveLength(7);
+    ).toHaveLength(6);
     expect(await axe(view.container)).toHaveNoViolations();
 
     const tabs = screen.getByRole("navigation", { name: "Organisation workspace views" });
@@ -45,10 +45,7 @@ describe("team workspace", () => {
       "href",
       "/teams/team-ssg/calendar",
     );
-    expect(within(tabs).getByRole("link", { name: "Work queue" })).toHaveAttribute(
-      "href",
-      "/teams/team-ssg/queue",
-    );
+    expect(within(tabs).queryByRole("link", { name: "Work queue" })).not.toBeInTheDocument();
     expect(within(tabs).queryByRole("link", { name: "Planning" })).not.toBeInTheDocument();
     expect(within(tabs).queryByRole("link", { name: "Handover" })).not.toBeInTheDocument();
     await user.click(within(tabs).getByRole("link", { name: "Activity" }));

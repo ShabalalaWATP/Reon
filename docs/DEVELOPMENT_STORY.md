@@ -3,6 +3,27 @@
 Entries are ordered newest first: the most recent date is at the top of the
 file and the earliest is at the bottom.
 
+## 17 August 2026: Codex Security remediation
+
+- Closed all findings from the focused Codex Security review. Workspace reads
+  now use action-scoped projections, and overview responses redact content that
+  the caller may not inspect through an available action.
+- Hardened step-up authentication by rotating bearer and CSRF credentials
+  together and reconciling cross-tab session changes without allowing stale
+  credentials to overwrite a newer session.
+- Bounded both archive expansion and decoded content during OOXML inspection,
+  and added lexical inspection of PDF actions so unsafe executable or navigation
+  behaviour is rejected without depending on superficial byte patterns.
+- Moved composite scanning before upload spooling and bounded its concurrency,
+  reducing both temporary-storage exposure and scanner resource exhaustion.
+  Product transfer is now cancellation-safe, so interrupted delivery closes its
+  resources without corrupting the streamed response lifecycle.
+- Focused backend security and architecture tests pass. The complete frontend
+  suite passes with 582 tests, 98.79 per cent line coverage and 95.07 per cent
+  branch coverage. The complete backend suite passes with 1,417 tests (13
+  environment-specific tests skipped), 98.77 per cent line coverage and 95.17
+  per cent branch coverage.
+
 ## 17 August 2026: post-change audit and QC boundary repair
 
 - Audited the accumulated organisation, workflow, product, notification and

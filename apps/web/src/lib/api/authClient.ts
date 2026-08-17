@@ -11,7 +11,7 @@ export const authApi = {
   login: (credentials: { username: string; password: string }) =>
     sessionRequest("/auth/login", { body: credentials, method: "POST" }),
   elevate: (password: string, csrfToken: string) =>
-    apiRequest<{ elevatedUntil: string }>("/auth/elevate", {
+    apiRequest<{ elevatedUntil: string; csrfToken: string }>("/auth/elevate", {
       body: { password },
       csrfToken,
       method: "POST",

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from functools import partial, reduce
 from uuid import UUID
 
@@ -8,15 +8,13 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
-from mist_service.analytics_models import RequestAnalyticsFact
 from mist_service.errors import TeamWorkspaceNotFound
 from mist_service.management_models import (
     ManagementAction,
     ManagementGrant,
     ManagementGrantAction,
-    OrganisationClosure,
 )
-from mist_service.models import RequestStatus, User, UserRole
+from mist_service.models import User, UserRole
 from mist_service.organisation_models import (
     OrganisationKind,
     OrganisationUnit,
@@ -31,6 +29,7 @@ from mist_service.repositories.team_workspace_authority import (
 from mist_service.repositories.team_workspace_authority import (
     own_authority as _own_authority,
 )
+from mist_service.repositories.team_workspace_authority import workspace_views
 from mist_service.schemas.team_workspaces import (
     EligibleRosterAnalyst,
     TeamActivity,
@@ -44,7 +43,6 @@ from mist_service.team_models import (
     WorkspacePosition,
 )
 from mist_service.team_workspace_views import (
-    access_pair,
     activity_view,
     current_membership_pair,
     eligible_view,
@@ -52,13 +50,8 @@ from mist_service.team_workspace_views import (
     member_view,
     user_id,
 )
-from mist_service.workspace_workloads import active_work_counts
+from mist_service.workspace_workloads import active_work_counts, overview_work_counts
 
-TERMINAL_STATUSES = {
-    RequestStatus.COMPLETED,
-    RequestStatus.CLOSED_NOT_PROGRESSED,
-    RequestStatus.CANCELLED,
-}
 WORKSPACE_ACTIONS = {
     ManagementAction.ROSTER,
     ManagementAction.CALENDAR,
@@ -75,6 +68,12 @@ class SqlAlchemyTeamWorkspaceRepository:
     async def list_access(
         self, actor_id: UUID, at: datetime | None = None
     ) -> list[TeamWorkspaceAccess]:
+        authority = await self._authority(actor_id, at)
+        return list(map(self._access, authority.values()))
+
+    async def _authority(
+        self, actor_id: UUID, at: datetime | None = None
+    ) -> dict[UUID, _Authority]:
         effective_at = at or datetime.now(UTC)
         own_rows = (
             await self.session.execute(
@@ -123,17 +122,34 @@ class SqlAlchemyTeamWorkspaceRepository:
             )
         ).all()
         reduce(_merge_authority, rows, authority)
-        return list(map(self._access, authority.values()))
+        return authority
 
     async def require_read(self, actor_id: UUID, team_id: UUID) -> TeamWorkspaceAccess:
-        access_by_team = dict(map(access_pair, await self.list_access(actor_id)))
+        authority = await self._authority(actor_id)
         try:
-            return access_by_team[team_id]
+            return self._access(authority[team_id])
         except KeyError as error:
             raise TeamWorkspaceNotFound() from error
 
+    async def require_projection_read(
+        self,
+        actor_id: UUID,
+        team_id: UUID,
+        required_action: ManagementAction,
+    ) -> TeamWorkspaceAccess:
+        authority = await self._authority(actor_id)
+        item = authority.get(team_id)
+        if item is None or (
+            item.position is None and required_action not in item.permissions
+        ):
+            raise TeamWorkspaceNotFound()
+        return self._access(item)
+
     async def overview(self, actor_id: UUID, team_id: UUID) -> TeamWorkspaceOverview:
-        access = await self.require_read(actor_id, team_id)
+        authority = (await self._authority(actor_id)).get(team_id)
+        if authority is None:
+            raise TeamWorkspaceNotFound()
+        access = self._access(authority)
         now = datetime.now(UTC)
         member_rows = (
             await self.session.execute(
@@ -160,35 +176,21 @@ class SqlAlchemyTeamWorkspaceRepository:
         for position, role, count in member_rows:
             role_counts[role] = role_counts.get(role, 0) + count
             position_counts[position] = position_counts.get(position, 0) + count
-        today = datetime.now(UTC).date()
-        active_condition = RequestAnalyticsFact.current_status.not_in(TERMINAL_STATUSES)
-        fact_scope = (
-            RequestAnalyticsFact.team_unit_id == team_id
-            if access.unit_kind is OrganisationKind.TEAM
-            else RequestAnalyticsFact.team_unit_id.in_(
-                select(OrganisationClosure.descendant_id).where(
-                    OrganisationClosure.ancestor_id == team_id
+        workload_visible = (
+            authority.position is not None
+            or bool(
+                authority.permissions.intersection(
+                    {ManagementAction.BOARD, ManagementAction.STATISTICS}
                 )
             )
+            if access.unit_kind is OrganisationKind.TEAM
+            else ManagementAction.STATISTICS in authority.descendant_permissions
         )
         active, due_soon, overdue = (
-            await self.session.execute(
-                select(
-                    func.count(RequestAnalyticsFact.request_id).filter(
-                        active_condition
-                    ),
-                    func.count(RequestAnalyticsFact.request_id).filter(
-                        active_condition,
-                        RequestAnalyticsFact.required_by >= today,
-                        RequestAnalyticsFact.required_by <= today + timedelta(days=7),
-                    ),
-                    func.count(RequestAnalyticsFact.request_id).filter(
-                        active_condition,
-                        RequestAnalyticsFact.required_by < today,
-                    ),
-                ).where(fact_scope)
-            )
-        ).one()
+            await overview_work_counts(self.session, team_id, access.unit_kind)
+            if workload_visible
+            else (0, 0, 0)
+        )
         return TeamWorkspaceOverview(
             access=access,
             manager_count=position_counts.get(WorkspacePosition.MANAGER, 0),
@@ -197,12 +199,13 @@ class SqlAlchemyTeamWorkspaceRepository:
             active_work_count=active or 0,
             due_soon_count=due_soon or 0,
             overdue_count=overdue or 0,
+            workload_visible=workload_visible,
         )
 
     async def people(
         self, actor_id: UUID, team_id: UUID, *, reveal_reasons: bool
     ) -> list[TeamMember]:
-        await self.require_read(actor_id, team_id)
+        await self.require_projection_read(actor_id, team_id, ManagementAction.ROSTER)
         now = datetime.now(UTC)
         rows = (
             await self.session.execute(
@@ -231,7 +234,7 @@ class SqlAlchemyTeamWorkspaceRepository:
     async def eligible_analysts(
         self, actor_id: UUID, team_id: UUID
     ) -> list[EligibleRosterAnalyst]:
-        await self.require_read(actor_id, team_id)
+        await self.require_projection_read(actor_id, team_id, ManagementAction.ROSTER)
         unit = await self.session.scalar(
             select(OrganisationUnit).where(OrganisationUnit.id == team_id)
         )
@@ -278,7 +281,7 @@ class SqlAlchemyTeamWorkspaceRepository:
         )
 
     async def activity(self, actor_id: UUID, team_id: UUID) -> list[TeamActivity]:
-        await self.require_read(actor_id, team_id)
+        await self.require_projection_read(actor_id, team_id, ManagementAction.ROSTER)
         actor = aliased(User)
         subject = aliased(User)
         rows = (
@@ -303,28 +306,5 @@ class SqlAlchemyTeamWorkspaceRepository:
             workspace_position=authority.position,
             grant_id=authority.grant_id,
             permissions=sorted(authority.permissions, key=lambda action: action.value),
-            views=_workspace_views(authority.team.kind),
+            views=workspace_views(authority),
         )
-
-
-def _workspace_views(kind: OrganisationKind) -> list[str]:
-    if kind is OrganisationKind.TEAM:
-        return [
-            "OVERVIEW",
-            "BOARD",
-            "CALENDAR",
-            "PEOPLE",
-            "PLANNING",
-            "STATISTICS",
-            "HANDOVER",
-            "ACTIVITY",
-        ]
-    return [
-        "OVERVIEW",
-        "QUEUE",
-        "CALENDAR",
-        "PEOPLE",
-        "STATISTICS",
-        "HANDOVER",
-        "ACTIVITY",
-    ]

@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
+from mist_service.auth_service import hash_opaque_token
 from mist_service.domain import AccountRecord
 from mist_service.errors import AdministrationAccessDenied, AuthenticationFailed
 from mist_service.models import UserRole
@@ -32,15 +33,24 @@ async def test_elevate_confirms_an_administrator_password_for_a_bounded_period()
     session = make_session(account.actor)
     before = datetime.now(UTC)
 
-    until = await service.elevate(session, TEST_PASSWORD)
+    result = await service.elevate(session, TEST_PASSWORD)
 
     assert (
         before + timedelta(seconds=299)
-        <= until
+        <= result.elevated_until
         <= datetime.now(UTC) + timedelta(seconds=301)
     )
+    assert result.session_token
+    assert result.csrf_token
     assert repository.reset_accounts == [account.actor.id]
-    assert repository.elevations == [(session.id, until)]
+    assert repository.elevations == [
+        (
+            session.id,
+            result.elevated_until,
+            hash_opaque_token(result.session_token),
+            hash_opaque_token(result.csrf_token),
+        )
+    ]
 
 
 @pytest.mark.asyncio

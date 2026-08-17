@@ -30,8 +30,7 @@ export function useCalendarEventForm(options: CalendarEventFormOptions) {
   const queryKeys = protectedQueryKeys(session);
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(initialCalendarEventDraft);
-  const canManage = Boolean(access?.grantId && access.permissions.includes("CALENDAR"));
-  const ticketCommitments = canManage && access?.unitKind === "TEAM";
+  const { canManage, ticketCommitments } = calendarFormAccess(access);
   const requests = useQuery({
     queryKey: queryKeys.teamBoard(access?.teamId ?? "", "calendar-commitments"),
     queryFn: () =>
@@ -77,6 +76,16 @@ export function useCalendarEventForm(options: CalendarEventFormOptions) {
     submit: () => mutation.mutate(),
     ticketCommitments,
     update,
+  };
+}
+
+function calendarFormAccess(access: TeamWorkspaceAccess | undefined) {
+  const canManage = Boolean(access?.grantId && access.permissions.includes("CALENDAR"));
+  const canReadBoard = !access?.views || access.views.includes("BOARD");
+  const canReadPeople = !access?.views || access.views.includes("PEOPLE");
+  return {
+    canManage,
+    ticketCommitments: canManage && canReadBoard && canReadPeople && access?.unitKind === "TEAM",
   };
 }
 

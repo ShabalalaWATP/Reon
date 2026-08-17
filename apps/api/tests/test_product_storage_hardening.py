@@ -33,7 +33,7 @@ def office_document() -> bytes:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("[Content_Types].xml", b"<Types/>")
-        archive.writestr("word/document.xml", b"safe")
+        archive.writestr("word/document.xml", b"<document>safe</document>")
     return buffer.getvalue()
 
 

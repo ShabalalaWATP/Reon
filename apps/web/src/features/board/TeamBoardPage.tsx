@@ -37,6 +37,7 @@ function TeamBoardWorkspace({ board }: { board: TeamBoardController }) {
       {board.deepLinkedRequest.isError ? <DeepLinkError /> : null}
       <BoardToolbar
         canManage={board.canManage}
+        canReadPeople={board.canReadPeople}
         filters={board.filters}
         mode={board.mode}
         onChange={board.changeFilters}
@@ -45,7 +46,7 @@ function TeamBoardWorkspace({ board }: { board: TeamBoardController }) {
         onOpenSettings={() => board.setSettings(true)}
         onSaveView={() => board.save.mutate()}
         onViewNameChange={board.setViewName}
-        people={board.people.data!.items}
+        people={board.people.data?.items ?? []}
         savedViews={board.requestBoard.data!.savedViews}
         saving={board.save.isPending}
         userId={board.session.user.id}
@@ -83,7 +84,7 @@ function BoardDrawers({ board }: { board: TeamBoardController }) {
         <WorkPackageForm
           access={board.access}
           iterations={board.iterations.data!.items}
-          members={board.people.data!.items}
+          members={board.people.data?.items ?? []}
           onCreated={() => {
             board.setCreating(false);
             void board.refresh();

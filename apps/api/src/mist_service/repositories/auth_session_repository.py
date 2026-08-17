@@ -110,11 +110,22 @@ class SqlAlchemyAuthSessionRepository:
             .values(last_seen_at=now)
         )
 
-    async def set_elevation(self, session_id: UUID, until: datetime) -> None:
+    async def set_elevation(
+        self,
+        session_id: UUID,
+        until: datetime,
+        *,
+        token_hash: str,
+        csrf_token_hash: str,
+    ) -> None:
         result = await self._session.execute(
             update(Session)
             .where(Session.id == session_id, Session.revoked_at.is_(None))
-            .values(elevated_until=until)
+            .values(
+                token_hash=token_hash,
+                csrf_token_hash=csrf_token_hash,
+                elevated_until=until,
+            )
         )
         if result.rowcount != 1:  # type: ignore[attr-defined]
             raise LookupError("session no longer available")

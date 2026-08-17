@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import struct
+from pathlib import PurePosixPath
 from typing import Protocol
 
 MAX_ZIP_ENTRIES = 1_000
@@ -53,6 +54,7 @@ def central_directory_preflight(stream: ReadableSeekable) -> str | None:
     stream.seek(central_offset)
     central = stream.read(central_size)
     cursor = 0
+    names: set[str] = set()
     for _ in range(entries):
         if cursor + 46 > len(central) or central[cursor : cursor + 4] != b"PK\x01\x02":
             return "INVALID_CONTAINER"
@@ -67,6 +69,27 @@ def central_directory_preflight(stream: ReadableSeekable) -> str | None:
             or name_length == 0
         ):
             return "ARCHIVE_LIMIT"
+        flags = struct.unpack_from("<H", central, cursor + 8)[0]
+        raw_name = central[cursor + 46 : cursor + 46 + name_length]
+        try:
+            name = raw_name.decode("utf-8" if flags & 0x800 else "cp437")
+        except UnicodeDecodeError:
+            return "INVALID_CONTAINER"
+        canonical_name = str(PurePosixPath(name)).casefold()
+        parts = name.split("/")
+        if name.endswith("/"):
+            parts = parts[:-1]
+        if (
+            b"\\" in raw_name
+            or b"\x00" in raw_name
+            or name.startswith("/")
+            or not parts
+            or any(part in {"", ".", ".."} for part in parts)
+            or ":" in parts[0]
+            or canonical_name in names
+        ):
+            return "INVALID_CONTAINER"
+        names.add(canonical_name)
         cursor += 46 + name_length + extra_length + comment_length
         if cursor > len(central):
             return "INVALID_CONTAINER"

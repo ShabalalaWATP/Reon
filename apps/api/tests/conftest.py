@@ -135,7 +135,9 @@ class ApiHarness:
             headers=self.mutation_headers(),
         )
         assert response.status_code == 200, response.text
-        return response.json()
+        body = response.json()
+        self.csrf_token = body["csrfToken"]
+        return body
 
     async def user_id(self, username: str) -> UUID:
         async with self.sessions() as session:

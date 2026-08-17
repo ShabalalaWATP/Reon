@@ -16,10 +16,13 @@ from mist_service.organisation_models import (
     OrganisationKind,
     UserOrganisationMembership,
 )
+from mist_service.repositories.team_workspace_authority import (
+    WorkspaceAuthority,
+    workspace_views,
+)
 from mist_service.repositories.team_workspaces import (
     _merge_authority,
     _own_authority,
-    _workspace_views,
 )
 from mist_service.team_membership_admin import align_admin_team_membership
 from mist_service.team_membership_seed import seed_team_membership_history
@@ -322,14 +325,25 @@ def test_workspace_authority_helpers_preserve_role_specific_views() -> None:
     assert own_id == team.id
     assert own.position is WorkspacePosition.MANAGER
 
-    first_grant = SimpleNamespace(id=uuid4())
+    first_grant = SimpleNamespace(id=uuid4(), include_descendants=True)
     authority = _merge_authority({}, (first_grant, ManagementAction.STATISTICS, team))
     assert authority[team.id].grant_id == first_grant.id
-    replacement = SimpleNamespace(id=uuid4())
+    replacement = SimpleNamespace(id=uuid4(), include_descendants=False)
     _merge_authority(authority, (replacement, ManagementAction.BOARD, team))
     assert authority[team.id].grant_id == first_grant.id
     _merge_authority(authority, (replacement, ManagementAction.ROSTER, team))
     assert authority[team.id].grant_id == replacement.id
+    assert authority[team.id].descendant_permissions == {ManagementAction.STATISTICS}
 
-    assert "BOARD" in _workspace_views(OrganisationKind.TEAM)
-    assert "QUEUE" in _workspace_views(OrganisationKind.COMMAND)
+    assert "BOARD" in workspace_views(
+        WorkspaceAuthority(
+            team=SimpleNamespace(kind=OrganisationKind.TEAM),
+            position=WorkspacePosition.MEMBER,
+        )
+    )
+    assert "QUEUE" in workspace_views(
+        WorkspaceAuthority(
+            team=SimpleNamespace(kind=OrganisationKind.COMMAND),
+            position=WorkspacePosition.MEMBER,
+        )
+    )

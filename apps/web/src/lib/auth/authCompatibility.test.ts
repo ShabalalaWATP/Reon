@@ -5,6 +5,7 @@ import { requesterSession } from "../../test/fixtures";
 import { json, mockFeatureFetch } from "../../test/render";
 import {
   broadcastContextChanged,
+  broadcastSessionRotated,
   broadcastSignedIn,
   broadcastSignedOut,
   parseAuthSyncEvent,
@@ -79,6 +80,14 @@ describe("authentication compatibility boundaries", () => {
       parseAuthSyncEvent(
         new StorageEvent("storage", {
           key: "mist:auth-state",
+          newValue: "session-rotated:123",
+        }),
+      ),
+    ).toEqual({ kind: "session-rotated" });
+    expect(
+      parseAuthSyncEvent(
+        new StorageEvent("storage", {
+          key: "mist:auth-state",
           newValue: "signed-in:123",
         }),
       ),
@@ -90,6 +99,8 @@ describe("authentication compatibility boundaries", () => {
     expect(localStorage.getItem("mist:auth-state")).toBe("signed-out:123");
     broadcastContextChanged(requesterSession);
     expect(localStorage.getItem("mist:auth-state")).toBe("context-changed:CUSTOMER:1:123");
+    broadcastSessionRotated();
+    expect(localStorage.getItem("mist:auth-state")).toBe("session-rotated:123");
   });
 
   it("normalises capabilities independently and defaults unknown values off", async () => {

@@ -38,6 +38,7 @@ export function useTeamBoardController(access: TeamWorkspaceAccess, session: Ses
   const requestCursor = requestCursors.at(-1) ?? null;
   const packageCursor = packageCursors.at(-1) ?? null;
   const deepLinkedItemId = searchParams.get("itemId");
+  const canReadPeople = !access.views || access.views.includes("PEOPLE");
   const requestFilters = useMemo(
     () => buildRequestFilters(filters, mode, showExceptions, showRequestArchive),
     [filters, mode, showExceptions, showRequestArchive],
@@ -66,6 +67,7 @@ export function useTeamBoardController(access: TeamWorkspaceAccess, session: Ses
   const people = useQuery({
     queryKey: queryKeys.teamPeople(access.teamId),
     queryFn: () => api.teamPeople(access.teamId),
+    enabled: canReadPeople,
   });
   const iterations = useQuery({
     queryKey: queryKeys.teamIterations(access.teamId),
@@ -156,26 +158,23 @@ export function useTeamBoardController(access: TeamWorkspaceAccess, session: Ses
   const toggleExceptions = () => resetCursorToggle(setShowExceptions, setRequestCursors);
   const toggleRequestArchive = () => resetCursorToggle(setShowRequestArchive, setRequestCursors);
   const togglePackageArchive = () => resetCursorToggle(setShowPackageArchive, setPackageCursors);
-  const retryRequiredData = () =>
-    Promise.all([
-      requestBoard.refetch(),
-      people.refetch(),
-      iterations.refetch(),
-      packages.refetch(),
-    ]);
+  const requiredQueries = canReadPeople
+    ? [requestBoard, people, iterations, packages]
+    : [requestBoard, iterations, packages];
+  const retryRequiredData = () => Promise.all(requiredQueries.map((query) => query.refetch()));
 
   return {
     access,
     canManage: Boolean(access.grantId && access.permissions.includes("BOARD")),
+    canReadPeople,
     changeFilters,
     changeMode,
     configure,
     creating,
     deepLinkedRequest,
     filters,
-    isError: requestBoard.isError || people.isError || iterations.isError || packages.isError,
-    isPending:
-      requestBoard.isPending || people.isPending || iterations.isPending || packages.isPending,
+    isError: requiredQueries.some((query) => query.isError),
+    isPending: requiredQueries.some((query) => query.isPending),
     iterations,
     mode,
     move,

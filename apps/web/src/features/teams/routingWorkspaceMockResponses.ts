@@ -12,6 +12,7 @@ type RoutingResponseOptions = {
     unit: string;
     suppressed: boolean;
   }>;
+  workloadVisible?: boolean;
 };
 
 export function routingIdentityResponse(
@@ -33,6 +34,7 @@ export function routingIdentityResponse(
     activeWorkCount: 2,
     dueSoonCount: 1,
     overdueCount: 0,
+    workloadVisible: options.workloadVisible,
   });
 }
 

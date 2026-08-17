@@ -239,7 +239,7 @@ services:
       - product-storage:/var/lib/mist-products
     read_only: true
     tmpfs:
-      - /tmp:mode=1777
+      - /tmp:size=256m,mode=1777
     networks: [data, scanner, service, workflow]
   worker:
     <<: [*runtime-security, *api-image]

@@ -18,6 +18,7 @@ type Props = {
   userId: string;
   viewName: string;
   canManage: boolean;
+  canReadPeople: boolean;
   saving: boolean;
   onChange: (filters: BoardFilters) => void;
   onDeleteView: (view: SavedBoardView) => void;
@@ -102,11 +103,13 @@ export function BoardToolbar(props: Props) {
         ))}
       </nav>
 
-      <OwnerStrip
-        onSelect={(ownerUserId) => props.onChange({ ...props.filters, ownerUserId })}
-        ownerUserId={props.filters.ownerUserId}
-        people={props.people}
-      />
+      {props.canReadPeople ? (
+        <OwnerStrip
+          onSelect={(ownerUserId) => props.onChange({ ...props.filters, ownerUserId })}
+          ownerUserId={props.filters.ownerUserId}
+          people={props.people}
+        />
+      ) : null}
 
       <BoardFilterDisclosures {...props} />
     </section>
@@ -150,15 +153,22 @@ function BoardFilterDisclosures(props: Props) {
             options={["LOW", "MEDIUM", "HIGH", "URGENT"].map((value) => [value, boardLabel(value)])}
             value={props.filters.priorities[0] ?? ""}
           />
-          <SelectFilter
-            emptyLabel="All owners"
-            label="Owner"
-            onChange={(value) => props.onChange({ ...props.filters, ownerUserId: value || null })}
-            options={props.people
-              .filter((item) => item.state === "CURRENT")
-              .map((item) => [item.accountId, item.displayName])}
-            value={props.filters.ownerUserId ?? ""}
-          />
+          {props.canReadPeople ? (
+            <SelectFilter
+              emptyLabel="All owners"
+              label="Owner"
+              onChange={(value) =>
+                props.onChange({
+                  ...props.filters,
+                  ownerUserId: value || null,
+                })
+              }
+              options={props.people
+                .filter((item) => item.state === "CURRENT")
+                .map((item) => [item.accountId, item.displayName])}
+              value={props.filters.ownerUserId ?? ""}
+            />
+          ) : null}
           <label className="form-field">
             Due by
             <input
