@@ -9,7 +9,7 @@ import {
   payloadParser,
   shape,
 } from "./payloadContract";
-import type { RequestDetail, WorkItem } from "./types";
+import type { RequestDetail, WorkAction, WorkItem } from "./types";
 
 const isRequestStatus = isOneOf([
   "ROUTING_PENDING",
@@ -45,7 +45,7 @@ const isWorkStage = isOneOf([
   "READY_FOR_RELEASE",
 ]);
 
-const isWorkActionName = isOneOf([
+export const workActionNames = [
   "request_information",
   "progress",
   "close",
@@ -65,7 +65,9 @@ const isWorkActionName = isOneOf([
   "approve",
   "changes_required",
   "release",
-]);
+] as const satisfies readonly WorkAction["action"][];
+
+const isWorkActionName = isOneOf(workActionNames);
 
 const isPerson = shape({ id: isString, displayName: isString });
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import or_, select
@@ -30,6 +30,8 @@ from mist_service.repositories.notification_projection_checkpoint import (
     update_notification_checkpoint,
 )
 from mist_service.team_models import TeamMembership, WorkspacePosition
+
+_MAXIMUM_RETRY_DELAY_SECONDS = 30
 
 
 class SqlAlchemyNotificationProjectionRepository:
@@ -188,10 +190,14 @@ class SqlAlchemyNotificationProjectionRepository:
         )
         if event is None:
             raise ObjectNotFound()
+        if event.status is NotificationProjectionStatus.PROJECTED:
+            return
         event.attempts += 1
         event.status = NotificationProjectionStatus.FAILED
         event.last_error = error_code[:120]
-        event.available_at = attempted_at
+        bounded_attempts = min(event.attempts, 5)
+        retry_delay = min(2**bounded_attempts, _MAXIMUM_RETRY_DELAY_SECONDS)
+        event.available_at = attempted_at + timedelta(seconds=retry_delay)
         await update_notification_checkpoint(
             self.session, event, attempted_at, failed=True
         )

@@ -1,10 +1,12 @@
 # Service request process contract
 
 `service-request.bpmn` is an executable Camunda 8.9 process containing only
-Camunda user tasks. FastAPI remains authoritative for role, hierarchy,
-assignment and object-level authorisation. Candidate-group expressions consume
-server-computed values. The browser may submit a selected organisational ID,
-but it must never submit a candidate-group string.
+Camunda user tasks. Local Compose pins Camunda 8.9.14, and the API pins
+`camunda-orchestration-sdk==9.0.1` for the V2 Orchestration Cluster API.
+FastAPI remains authoritative for role, hierarchy, assignment and object-level
+authorisation. Candidate-group expressions consume server-computed values. The
+browser may submit a selected organisational ID, but it must never submit a
+candidate-group string or call Camunda directly.
 
 Each `selected*CandidateGroup` variable is a single-item list containing one
 case-sensitive group ID. Camunda requires candidate-group expressions to return
@@ -17,9 +19,10 @@ The direct route is:
 1. CRIOC Routing selects a command.
 2. The selected command routes directly to one of its Ops functions.
 3. The selected Ops function routes directly to one of its teams.
-4. The team manager assigns an Analyst.
-5. The Analyst submits the work to the same team manager.
-6. The manager checks it, QC reviews it, and QC disseminates it to the customer.
+4. The Team Manager assigns an Analyst.
+5. The Analyst submits the work to the same Team Manager.
+6. The Team Manager checks it, QC reviews it, and QC disseminates it to the
+   Customer.
 
 CRIOC, command and Ops routing do not form an approval climb after delivery.
 Existing return, hold, close and rework decision values remain part of the MVP
@@ -76,6 +79,14 @@ values and CSRF values never belong in Camunda. PostgreSQL owns that data and
 the application audit identifies each human action.
 
 ## Smoke evidence
+
+`scripts/smoke-camunda.ps1` is a target-mutating, Camunda-only
+contract exercise. It validates and deploys the BPMN through unauthenticated V2
+HTTP, then creates and completes its own process instances. It deliberately
+skips application-database availability attestation. Run it only against a
+fresh disposable Camunda service, such as the isolated CI smoke topology. Do
+not run it after `scripts/start-local.ps1`, because the extra deployed process
+version will conflict with the guarded single-definition startup contract.
 
 The bounded Camunda smoke uses two independent process instances:
 

@@ -47,7 +47,7 @@ into existence or permission disclosures.
 | Object/action | Allowed context | Required denials |
 | --- | --- | --- |
 | Create or list customer requests | Customer account | Every staff and platform role |
-| View request detail | Owning Customer, active assigned routing user, exact assigned Team Manager, assigned or contributing Analyst | Other Customer, platform support, unassigned colleague, sibling route or sibling team |
+| View request detail | Owning Customer, active assigned routing user, exact assigned Team Manager, assigned Lead or additional Team Analyst | Other Customer, platform support, unassigned colleague, sibling route or sibling team |
 | Cancel request | Owning Customer | Other Customer and every staff role |
 | Submit feedback | Owning Customer after completion | Other Customer and every staff role; valid owner before completion receives the existing conflict |
 | Download customer product | Owning Customer with a released product | Other Customer and every staff role |

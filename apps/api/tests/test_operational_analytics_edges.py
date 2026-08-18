@@ -11,7 +11,11 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from conftest import ApiHarness
-from mist_service.analytics_evolution_models import OperationalFactType
+from mist_service.analytics_evolution_models import (
+    OPERATIONAL_ANALYTICS_DEFINITIONS,
+    AnalyticsDefinitionVersion,
+    OperationalFactType,
+)
 from mist_service.board_models import IterationStatus, TeamIteration
 from mist_service.calendar_models import CalendarCapacitySnapshot
 from mist_service.models import ServiceRequest
@@ -51,14 +55,25 @@ class _AppendSession:
     def __init__(self, dialect: str, value: UUID | None = None) -> None:
         self.bind = SimpleNamespace(dialect=SimpleNamespace(name=dialect))
         self.value = value
-        self.statement: Any = None
+        self.statements: list[Any] = []
 
     def get_bind(self) -> Any:
         return self.bind
 
     async def execute(self, statement: Any) -> _ScalarResult:
-        self.statement = statement
+        self.statements.append(statement)
         return _ScalarResult(self.value)
+
+    async def scalar(self, _statement: Any) -> Any:
+        definition = OPERATIONAL_ANALYTICS_DEFINITIONS[
+            OperationalFactType.DISSEMINATION_RELEASED
+        ]
+        return SimpleNamespace(
+            label=definition.label,
+            description=definition.description,
+            unit=definition.unit,
+            is_active=True,
+        )
 
 
 class _ScopeSession:
@@ -110,7 +125,9 @@ async def test_append_uses_postgresql_conflict_insert_and_rejects_other_dialects
 ):
     postgres = _AppendSession("postgresql", uuid4())
     assert await append_operational_fact(cast(AsyncSession, postgres), _fact())
-    assert postgres.statement is not None
+    assert len(postgres.statements) == 2
+    assert "analytics_definition_versions" in str(postgres.statements[0])
+    assert "operational_analytics_facts" in str(postgres.statements[1])
 
     unsupported = _AppendSession("mysql")
     with pytest.raises(
@@ -135,6 +152,35 @@ async def test_scope_resolution_fails_closed_for_missing_or_cyclic_routes(
     cycle_session = _ScopeSession({cycle_id: cycle})
     resolved = await unit_operational_scope(cast(AsyncSession, cycle_session), cycle_id)
     assert resolved is None
+
+
+async def test_append_rejects_definition_metadata_drift(
+    api_harness: ApiHarness,
+) -> None:
+    definition = OPERATIONAL_ANALYTICS_DEFINITIONS[
+        OperationalFactType.DISSEMINATION_RELEASED
+    ]
+    root_unit_id = await api_harness.unit_id("CRIOC")
+    fact = OperationalFactInput(
+        source_key="definition-drift:" + "a" * 64,
+        type=OperationalFactType.DISSEMINATION_RELEASED,
+        scope=OperationalScope(root_unit_id=root_unit_id),
+        occurred_at=datetime.now(UTC),
+    )
+    async with api_harness.sessions() as session, session.begin():
+        session.add(
+            AnalyticsDefinitionVersion(
+                key=definition.key,
+                version=definition.version,
+                label="Conflicting historical label",
+                description=definition.description,
+                unit=definition.unit,
+                is_active=True,
+            )
+        )
+        await session.flush()
+        with pytest.raises(RuntimeError, match="without a version increment"):
+            await append_operational_fact(session, fact)
 
 
 async def test_projectors_skip_unrecognised_or_unscoped_sources(

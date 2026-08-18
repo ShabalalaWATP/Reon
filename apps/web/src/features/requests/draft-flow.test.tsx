@@ -34,14 +34,17 @@ const fullDraft: RequestDraft = {
 
 describe("private Customer drafts", () => {
   it("shows private drafts in the Customer register", async () => {
-    mockFetch((url) => {
-      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
-      if (url.pathname.endsWith("/request-drafts")) {
-        return json({ items: [{ ...fullDraft, title: null }] });
-      }
-      if (url.pathname.endsWith("/requests")) return json({ items: [requestSummary] });
-      throw new Error(url.pathname);
-    }, false);
+    mockFetch(
+      (url) => {
+        if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+        if (url.pathname.endsWith("/request-drafts")) {
+          return json({ items: [{ ...fullDraft, title: null }] });
+        }
+        if (url.pathname.endsWith("/requests")) return json({ items: [requestSummary] });
+        throw new Error(url.pathname);
+      },
+      { emptyDraftRegister: false },
+    );
     renderApp("/requests");
     expect(await screen.findByRole("heading", { name: "Drafts" })).toBeInTheDocument();
     expect(screen.getByText("Untitled request")).toBeInTheDocument();
@@ -55,20 +58,23 @@ describe("private Customer drafts", () => {
   it("saves an incomplete new draft and deletes it", async () => {
     const blankDraft = { ...fullDraft, title: "", version: 1 };
     let deleted = false;
-    mockFetch((url, init) => {
-      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
-      if (url.pathname.endsWith("/request-drafts") && init.method === "POST") {
-        return json(blankDraft, 201);
-      }
-      if (url.pathname.endsWith("/request-drafts/draft-1") && init.method === "DELETE") {
-        deleted = true;
-        return new Response(null, { status: 204 });
-      }
-      if (url.pathname.endsWith("/request-drafts/draft-1")) return json(blankDraft);
-      if (url.pathname.endsWith("/request-drafts")) return json({ items: [] });
-      if (url.pathname.endsWith("/requests")) return json({ items: [] });
-      throw new Error(`${init.method ?? "GET"} ${url.pathname}`);
-    }, false);
+    mockFetch(
+      (url, init) => {
+        if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+        if (url.pathname.endsWith("/request-drafts") && init.method === "POST") {
+          return json(blankDraft, 201);
+        }
+        if (url.pathname.endsWith("/request-drafts/draft-1") && init.method === "DELETE") {
+          deleted = true;
+          return new Response(null, { status: 204 });
+        }
+        if (url.pathname.endsWith("/request-drafts/draft-1")) return json(blankDraft);
+        if (url.pathname.endsWith("/request-drafts")) return json({ items: [] });
+        if (url.pathname.endsWith("/requests")) return json({ items: [] });
+        throw new Error(`${init.method ?? "GET"} ${url.pathname}`);
+      },
+      { emptyDraftRegister: false },
+    );
     const user = userEvent.setup();
     renderApp("/requests/new");
     await screen.findByRole("heading", { name: "New service request" });
@@ -84,22 +90,25 @@ describe("private Customer drafts", () => {
     let savedBody: Record<string, unknown> | undefined;
     let submittedBody: Record<string, unknown> | undefined;
     const savedDraft = { ...fullDraft, version: 2, title: "Updated draft title" };
-    mockFetch((url, init) => {
-      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
-      if (url.pathname.endsWith("/request-drafts/draft-1/submit")) {
-        submittedBody = JSON.parse(String(init.body)) as Record<string, unknown>;
-        return json({ ...requestDetail, title: "Updated draft title" });
-      }
-      if (url.pathname.endsWith("/request-drafts/draft-1") && init.method === "PATCH") {
-        savedBody = JSON.parse(String(init.body)) as Record<string, unknown>;
-        return json(savedDraft);
-      }
-      if (url.pathname.endsWith("/request-drafts/draft-1")) return json(fullDraft);
-      if (url.pathname.endsWith(`/${requestDetail.id}`)) {
-        return json({ ...requestDetail, title: "Updated draft title" });
-      }
-      throw new Error(`${init.method ?? "GET"} ${url.pathname}`);
-    }, false);
+    mockFetch(
+      (url, init) => {
+        if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+        if (url.pathname.endsWith("/request-drafts/draft-1/submit")) {
+          submittedBody = JSON.parse(String(init.body)) as Record<string, unknown>;
+          return json({ ...requestDetail, title: "Updated draft title" });
+        }
+        if (url.pathname.endsWith("/request-drafts/draft-1") && init.method === "PATCH") {
+          savedBody = JSON.parse(String(init.body)) as Record<string, unknown>;
+          return json(savedDraft);
+        }
+        if (url.pathname.endsWith("/request-drafts/draft-1")) return json(fullDraft);
+        if (url.pathname.endsWith(`/${requestDetail.id}`)) {
+          return json({ ...requestDetail, title: "Updated draft title" });
+        }
+        throw new Error(`${init.method ?? "GET"} ${url.pathname}`);
+      },
+      { emptyDraftRegister: false },
+    );
     const user = userEvent.setup();
     renderApp("/requests/drafts/draft-1");
     await screen.findByRole("heading", { name: "Edit request draft" });
@@ -122,7 +131,7 @@ describe("private Customer drafts", () => {
         url.pathname.endsWith("/auth/me")
           ? json(requesterSession)
           : json({ detail: "Not found" }, 404),
-      false,
+      { emptyDraftRegister: false },
     );
     renderApp("/requests/drafts/missing");
     expect(

@@ -112,9 +112,7 @@ describe("canonical workforce calendar failure handling", () => {
         if (url.pathname.endsWith("/calendar")) return json({ items: [] });
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      false,
+      { emptyTeamWorkspaces: false },
     );
     const user = userEvent.setup();
 

@@ -1,30 +1,51 @@
 # Mist Service Master Implementation Plan
 
-## Current position, 17 August 2026
+## Current position, 18 August 2026
 
 The delivered system is the complete local synthetic application: React web
 client, FastAPI backend, PostgreSQL 17, Camunda 8.9 and ClamAV, running end to
 end through Compose. This is a local-first synthetic build, not a production
 deployment.
 
-Current Codex Security remediation candidate evidence:
+Current maintainability remediation candidate evidence:
 
-- 582 frontend tests pass at 98.79 per cent line coverage and 95.07 per cent
+- All intended maintainability changes are implemented. Architecture checks
+  pass 12/12, together with Ruff, strict MyPy across 444 modules, dead-code and
+  line-limit gates.
+- 582 frontend tests pass at 98.80 per cent line coverage and 95.07 per cent
   branch coverage.
-- 1,417 backend tests pass (13 environment-specific tests skipped) at 98.77 per
-  cent line coverage and 95.17 per cent branch coverage.
-- Focused backend security and architecture tests pass.
+- A read-only internal review found no application security regression in the
+  maintainability diff from base commit
+  `1e7c52ffe7d1649bedaea037470dd40430d2fc6f`; the uncommitted target is not
+  immutable release evidence.
+- The complete backend suite passes with 1,410 tests and 13
+  environment-specific skips at 98.83 per cent line coverage and 95.10 per
+  cent branch coverage.
+- Independent code-quality review identified worker-accounting and analytics-
+  definition drift. Both fixes pass 21 focused tests, and the independent
+  recheck found no remaining issue.
+- The current documentation release passes the complete repository static gate,
+  indexes 141 Markdown files, validates 42 current guides, regenerates seven
+  deterministic Structurizr SVGs and replaces all nine screenshots from the
+  rebuilt 89-journey synthetic stack.
 
-The preceding complete candidate, verified on 15 August 2026, passed 1,323
-backend tests (13 skipped) at 98.13 per cent line and branch coverage and 542
-frontend tests at 98.81 per cent line and 95.06 per cent branch coverage. Every
-locally runnable repository gate was green for that candidate. The licence gate
-was verified in CI; its local run was blocked by a machine-specific pnpm store
-fault, not by the repository.
+The preceding complete candidate, verified on 17 August 2026, passed 1,417
+backend tests (13 environment-specific tests skipped) at 98.77 per cent line
+coverage and 95.17 per cent branch coverage and 582 frontend tests at 98.79 per
+cent line coverage and 95.07 per cent branch coverage.
 
-The newest applied migration is `0047_saved_action_view_contexts.py`,
-following `0045_notification_preference_contexts.py` and
-`0046_product_package_policy.py` (`apps/api/alembic/versions`).
+The newest applied migration is `0049_legacy_product_policy_cleanup.py`,
+following `0047_saved_action_view_contexts.py` and
+`0048_notification_workspace_position.py` (`apps/api/alembic/versions`).
+
+The 18 August documentation audit identified current implementation gaps that
+earlier instructions obscured: the fresh-stack maintenance role lacks database
+`CONNECT` for privileged retention apply, privileged command transport and
+target confirmations are incomplete, the restore helper mixes native and async
+connection-URL contracts, source-mode semantic cache provenance is absent, and
+workspace/capability values do not fully match the maintained UI. These are now
+explicit `NOT IMPLEMENTED` entries in the gap register; no current runbook or
+evidence record treats them as passed.
 
 Remaining decisions before a connected or production deployment, identity
 provider, hosting, secrets management, a distinct migration owner, staging
@@ -49,7 +70,9 @@ not position in the file, to judge recency.
 
 | Section | Date |
 | --- | --- |
-| [Current position](#current-position-17-august-2026) | 17 Aug 2026 |
+| [Current position](#current-position-18-august-2026) | 18 Aug 2026 |
+| [Documentation authority and visual evidence refresh](#documentation-authority-and-visual-evidence-refresh-18-august-2026) | 18 Aug 2026 |
+| [Maintainability remediation](#maintainability-remediation-18-august-2026) | 18 Aug 2026 |
 | [Codex Security remediation](#codex-security-remediation-17-august-2026) | 17 Aug 2026 |
 | [Authentication, coordination and maintainability remediation](#authentication-coordination-and-maintainability-remediation-15-august-2026) | 15 Aug 2026 |
 | [Current-state documentation and resource hygiene](#current-state-documentation-and-resource-hygiene-14-august-2026) | 14 Aug 2026 |
@@ -106,6 +129,67 @@ not position in the file, to judge recency.
 | [Workflow runtime reliability remediation](#workflow-runtime-reliability-remediation) | 14 Aug 2026 |
 | [SOLID, readability and maintainability programme](#solid-readability-and-maintainability-programme) | 14 Aug 2026 |
 
+## Documentation authority and visual evidence refresh, 18 August 2026
+
+Status: current guides, visual evidence and their automated currency gates are
+updated and verified against the current source and rebuilt synthetic stack.
+
+- [x] Audit all 141 Markdown records and strengthen the current-state gate from
+  18 to 42 guides, including API, infrastructure, workflow, operations,
+  security, threat-model and index authorities.
+- [x] Add complete architecture, operations, assurance, security, threat-model,
+  specification and ADR indexes. The specification and ADR catalogues cover
+  41/41 and 37/37 records respectively.
+- [x] Rebuild the Structurizr model around current runtime, workflow,
+  persistence, scanning, analytics and organisation boundaries. Generate all
+  seven committed SVGs from named views through pinned Structurizr and PlantUML
+  images; validation, XML parsing and deterministic SHA-256 checks pass.
+- [x] Rebuild and seed the current Compose stack with 89 synthetic journeys,
+  then replace all nine screenshots with visually inspected Chromium 151
+  captures at one 1600 by 1000 viewport.
+- [x] Correct product, role, permission, route, version, migration, environment,
+  release, recovery, security and evidence descriptions without rewriting
+  historical ADR or dated assurance context as current proof.
+- [x] Record uncovered implementation gaps instead of hiding them in prose:
+  privileged maintenance transport and confirmation, maintenance-role database
+  connection, restore URL compatibility, source semantic-cache provenance,
+  optional capability enforcement and visible stable organisation codes.
+- [x] Pass the complete repository static gate, documentation links and
+  duplication, current-guide source references, terminology, operations
+  contracts, image validation and the reproducible architecture render.
+
+## Maintainability remediation, 18 August 2026
+
+Status: implementation and verification are complete. Static, architecture,
+backend and frontend gates pass. Independent internal reviews are complete, but
+their uncommitted targets are not immutable release evidence.
+
+- [x] Remove confirmed dead, production-exposed test-only and duplicate code.
+- [x] Make notification failure and retry handling, analytics recovery and
+  analytics definitions explicit operational behaviour.
+- [x] Eliminate every oversized application port while preserving focused
+  composition boundaries.
+- [x] Simplify `create_app`, remove frontend production duplication and
+  consolidate shared frontend test helpers.
+- [x] Pass architecture checks 12/12, Ruff, strict MyPy across 444 modules,
+  dead-code and line-limit gates.
+- [x] Pass all 582 frontend tests at 98.80 per cent line coverage and 95.07 per
+  cent branch coverage.
+- [x] Complete the scoped internal review of the maintainability diff; its
+  uncommitted target is recorded as a review note, not release evidence.
+- [x] Correct the worker-accounting and analytics-definition drift found by the
+  independent code-quality reviewer; 21 focused tests pass for the fixes.
+- [x] Pass the complete backend suite with 1,410 tests and 13
+  environment-specific skips at 98.83 per cent line coverage and 95.10 per
+  cent branch coverage.
+- [x] Complete the short independent code-quality recheck of both reviewer
+  findings.
+
+Current next step: retain the existing production-readiness boundary and move
+to connected-environment acceptance only when its named external prerequisites
+are available. Existing production acceptance risks and controls remain
+unchanged.
+
 ## Codex Security remediation, 17 August 2026
 
 Status: all six remediations are implemented. Their focused security and
@@ -160,8 +244,10 @@ Status: implemented and verified locally on 15 August 2026.
 - [x] Correct documentation: the pnpm version, the `--env-file` FastAPI start
   command, local start guidance, QC Manager naming and single-test guidance.
 
-Evidence: the preceding complete-candidate figures remain summarised in
-[Current position](#current-position-17-august-2026).
+Evidence: the then-current complete-candidate figures are retained in the
+[Codex Security remediation](#codex-security-remediation-17-august-2026)
+section. The nine wide ports exposed here were eliminated by the
+[18 August maintainability remediation](#maintainability-remediation-18-august-2026).
 
 ## Current-state documentation and resource hygiene, 14 August 2026
 
@@ -858,9 +944,9 @@ was 880 backend tests at 98.84 per cent line and 95.19 per cent branch
 coverage, plus 288 frontend tests at 99.49 per cent statements and 95.06 per
 cent branches, with migrations 0012 to 0021 passing the repository's empty
 SQLite upgrade, schema drift, downgrade and re-upgrade gates. That evidence is
-long superseded: the current aggregate is 1,323 backend tests and migrations
-through 0047, recorded in
-[Current position](#current-position-15-august-2026) at the top of this plan.
+long superseded: the current aggregate is 1,410 backend tests and migrations
+through 0049, recorded in
+[Current position](#current-position-18-august-2026) at the top of this plan.
 Independent code-quality, workflow and security reviews at the time produced
 findings that were addressed in the working tree. Fresh PostgreSQL migration
 and runtime-denial evidence passed. One-winner activation, deployed Camunda

@@ -1,6 +1,67 @@
 # Security scan evidence
 
-## Current maintainability candidate, 14 August 2026
+## Current maintainability candidate, 18 August 2026
+
+The complete backend suite passed 1,410 tests with 13 environment-specific
+skips at 98.83 per cent line and 95.10 per cent branch coverage. The complete
+frontend suite passed 582 tests at 98.80 per cent line and 95.07 per cent branch
+coverage. Both independent coverage thresholds remain above 95 per cent.
+
+All 12 backend architecture checks passed. Ruff, strict MyPy across 444 source
+modules, the dead-code checks and the hand-written source line limit also passed.
+The maintainability review found two operational defects rather than a security
+finding: notification projection failures were not fully represented in worker
+job accounting, and analytics definition metadata could drift without an
+explicit version change. Both were corrected, 21 focused tests passed and the
+independent code-quality recheck found no remaining issue. An independent,
+read-only internal review on 18 August examined the application maintainability
+diff from base commit `1e7c52ffe7d1649bedaea037470dd40430d2fc6f` through the
+then-current uncommitted working tree and found no application security
+regression within that scope. Because the target was not an immutable commit and
+no separately immutable report exists, this is an internal review note, not
+release evidence.
+
+Notification projection now records each event failure with bounded retry delay,
+continues the bounded batch and reports an aggregate failure to the fenced worker
+health record. Analytics rebuild and replay are exposed through bounded operator
+commands; rebuild refuses an over-limit source set, replay requires an explicit
+aware interval and source limit, and persisted definition metadata must match its
+versioned code definition.
+
+These are current source, regression and maintainability results. The dated
+CodeQL, dependency, secret, image and dynamic-scan evidence below remains bound to
+its stated candidates. No hosted CodeQL job, current-image scan, fresh DAST run or
+independent penetration test is restated as having run on 18 August.
+
+## Codex Security remediation, 17 August 2026
+
+The focused Codex Security review findings were closed in the 17 August
+candidate. Action-scoped workspace projections and overview redaction prevent a
+workspace read from becoming broader object access. Successful Platform
+Administrator step-up rotates the opaque bearer and CSRF credentials atomically,
+and sibling tabs reconcile through a secret-free notification and authenticated
+session bootstrap without restoring superseded credentials.
+
+Managed-product inspection now bounds decoded OOXML content and validates
+relationship and field semantics, while PDF action inspection uses a bounded
+lexical parser that ignores inert strings, comments and stream bodies. Composite
+scan capacity is acquired before upload spooling begins, and interrupted product
+transfer closes resources without corrupting the streamed response boundary.
+
+Focused security and architecture checks passed. The complete candidate passed
+1,417 backend tests with 13 environment-specific skips at 98.77 per cent line
+and 95.17 per cent branch coverage, and 582 frontend tests at 98.79 per cent line
+and 95.07 per cent branch coverage. The later 18 August maintainability candidate
+above supersedes those aggregate counts, not the dated remediation result. The
+[Codex Security remediation matrix](../security/CODEX_SECURITY_REMEDIATION_MATRIX_2026-08-17.md)
+records the finding-by-finding boundary.
+
+Production acceptance still requires an approved semantic content disarm and
+reconstruction control for untrusted documents and deployment-wide scanner
+capacity enforcement across replicas. The in-process scanner semaphore and
+deterministic local inspectors do not close those gates.
+
+## Maintainability candidate, 14 August 2026
 
 The complete backend suite passed 1,318 tests with 13 environment-dependent
 skips at 98.73 per cent line and 95.00 per cent branch coverage. The complete
@@ -31,7 +92,7 @@ Those results are recorded only when their named jobs are actually executed.
 
 ## SOLID and Secure by Design programme, 11 August 2026
 
-The current programme candidate passed Ruff formatting and lint, MyPy across
+The 11 August programme candidate passed Ruff formatting and lint, MyPy across
 308 source files, Vulture and Knip dead-code checks, and the 350-line source
 limit. Bandit scanned 45,044 lines of application and migration code with zero
 low, medium or high finding. Strict audit of the lock-derived Python dependency
@@ -52,7 +113,7 @@ residual-risk assessment is in
 
 ## Unified workspace source verification, 10 August 2026
 
-The complete current source passed Ruff formatting and lint across 485 Python
+The complete 10 August candidate source passed Ruff formatting and lint across 485 Python
 files, MyPy across 290 source files, Bandit across 43,405 lines with zero low,
 medium or high finding, and the repository's Knip and Vulture dead-code gates.
 Strict `pip-audit` of the lock-derived third-party dependency export and
@@ -92,9 +153,10 @@ release-evidence gate. This does not affect fresh installations or the clean
 component and migration rehearsals, and no unsupported system-catalog edit was
 used to hide the warning.
 
-## Current remediation candidate, 9 August 2026
+## Remediation candidate, 9 August 2026
 
-This section applies to the current `codex/product-evolution` and `main` source.
+This section applies to the `codex/product-evolution` and `main` source as it
+stood on 9 August 2026.
 Local evidence is supplemented by the successful hosted
 [CI run](https://github.com/ShabalalaWATP/Reon/actions/runs/31320684197),
 [container-validation run](https://github.com/ShabalalaWATP/Reon/actions/runs/31320684213)
@@ -105,7 +167,7 @@ exclusion was changed or counted as remediated.
 
 ### Source, dependency and secret controls
 
-| Control | Current result |
+| Control | Dated result |
 |---|---|
 | Ruff and MyPy | Ruff format/check passed 421 Python files; MyPy passed 250 source files |
 | Bandit | 38,945 lines across API source and migrations, zero low, medium or high finding and zero `nosec` line |
@@ -214,14 +276,14 @@ private production Camunda authentication, production object storage/CDR,
 signed provenance, IaC/admission policy, a joined production recovery exercise
 or an independent penetration test. Those remain explicit production gates.
 
-## Current-source static verification, 8 August 2026
+## Candidate-source static verification, 8 August 2026
 
 The runtime-hardening source passed Bandit across API source and migrations
 with no low, medium or high finding and no `nosec` suppression. The locked
 Python environment and Node dependency tree reported no known vulnerability;
 the editable first-party package was the only non-PyPI audit exclusion. MyPy,
 Ruff, Vulture, Knip, TypeScript, ESLint, licence and repository contract gates
-also passed. These are current source and dependency results, not a claim that
+also passed. These were candidate source and dependency results, not a claim that
 the historical image or secret-scan artefacts below were regenerated.
 
 ## Historical release-candidate results
@@ -231,7 +293,7 @@ that existed on that date. It is not a claim about the current candidate.
 
 | Control | Result |
 | --- | --- |
-| Bandit | Current API source scanned, no low, medium or high issue; no `nosec` suppression |
+| Bandit | Candidate API source scanned, no low, medium or high issue; no `nosec` suppression |
 | Python dependency audit | Local locked environment, excluding only the editable first-party package, no known vulnerability |
 | Node dependency audit | Production dependencies, no known vulnerability at high threshold |
 | Licence gate | Two Node licence groups and 82 Python packages passed; reviewed Camunda and first-party metadata exceptions documented |

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -14,7 +15,10 @@ from mist_service.product_runtime import ProductRuntime
 from mist_service.services.product_content_phases import ProductContentPhases
 from mist_service.services.product_managed_phases import ProductManagedPhases
 from mist_service.services.product_repository_port import (
-    ProductUploadServiceRepository,
+    ProductManagedUploadRepository,
+    ProductOperationLeaseRepository,
+    ProductTransferRepository,
+    ProductUploadContentRepository,
 )
 from mist_service.services.product_transfer_types import (
     ContentOperation,
@@ -24,8 +28,21 @@ from mist_service.services.product_transfer_types import (
 MINIMUM_OPERATION_LEASE = timedelta(minutes=2)
 LOGGER = logging.getLogger(__name__)
 SessionFactory = Callable[[], Any]
-RepositoryFactory = Callable[[Any], ProductUploadServiceRepository]
+TransferRepositoryFactory = Callable[[Any], ProductTransferRepository]
+ManagedUploadRepositoryFactory = Callable[[Any], ProductManagedUploadRepository]
+UploadContentRepositoryFactory = Callable[[Any], ProductUploadContentRepository]
+OperationLeaseRepositoryFactory = Callable[[Any], ProductOperationLeaseRepository]
 MutationFence = Callable[[Any, SessionRecord], Awaitable[bool]]
+
+
+@dataclass(frozen=True, slots=True)
+class ProductTransferRepositories:
+    """Factories for the persistence roles used in detached transfer phases."""
+
+    transfers: TransferRepositoryFactory
+    managed_uploads: ManagedUploadRepositoryFactory
+    upload_content: UploadContentRepositoryFactory
+    operation_leases: OperationLeaseRepositoryFactory
 
 
 class ProductTransferContext:
@@ -36,13 +53,13 @@ class ProductTransferContext:
         sessions: SessionFactory,
         runtime: ProductRuntime,
         mutation_session: SessionRecord,
-        repository_factory: RepositoryFactory,
+        repositories: ProductTransferRepositories,
         mutation_fence: MutationFence,
     ) -> None:
         self.sessions = sessions
         self.runtime = runtime
         self.mutation_session = mutation_session
-        self._repository_factory = repository_factory
+        self._repositories = repositories
         self._mutation_fence = mutation_fence
         self.lease_ttl = max(runtime.upload_ttl, MINIMUM_OPERATION_LEASE)
 
@@ -53,7 +70,8 @@ class ProductTransferContext:
 
     def managed_phases(self, session: Any) -> ProductManagedPhases:
         return ProductManagedPhases(
-            self._repository_factory(session),
+            self._repositories.transfers(session),
+            self._repositories.managed_uploads(session),
             upload_ttl=self.runtime.upload_ttl,
             maximum_file_bytes=self.runtime.maximum_file_bytes,
             maximum_package_bytes=self.runtime.maximum_package_bytes,
@@ -65,7 +83,9 @@ class ProductTransferContext:
 
     def content_phases(self, session: Any) -> ProductContentPhases:
         return ProductContentPhases(
-            self._repository_factory(session),
+            self._repositories.transfers(session),
+            self._repositories.upload_content(session),
+            self._repositories.operation_leases(session),
             managed_file_uploads_enabled=self.runtime.managed_file_uploads_enabled,
         )
 

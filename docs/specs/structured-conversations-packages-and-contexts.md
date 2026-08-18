@@ -175,10 +175,10 @@ For each immutable package version:
 
 1. a current QC User or QC Manager claims and records the QC review decision;
 2. an approved version becomes release-ready;
-3. a different current QC Manager explicitly selects the originating Customer
-   and disseminates it; and
+3. a different current QC Manager disseminates it to the originating Customer,
+   whom the server resolves from the request; and
 4. final-boundary checks revalidate both actors, exact QC Team membership,
-   package version, scan evidence, review state and recipient.
+   package version, scan evidence, review state and the server-resolved Customer.
 
 The reviewer and releaser identifiers must differ. Reassignment, account
 deactivation or membership expiry removes live authority. A single-person QC
@@ -231,18 +231,19 @@ not add authority and cannot override object-level checks.
 ### Self-request conflicts
 
 A request created by an identity in Customer context is marked with that stable
-identity as requester. While it is active, the same identity is excluded from
-staff actions on that request, including routing decisions, ownership returns,
-team assignment, production participation, Manager review, QC review and release.
-It cannot be selected as an assigned Analyst or Contributor.
+identity as its originating Customer. While it is active, the same identity is
+excluded from staff actions on that request, including routing decisions,
+ownership returns, team assignment, production participation, Manager review,
+QC review and release.
+It cannot be selected as a Lead or additional assigned Analyst.
 
 The conflict follows identity, not username, active context or current role.
 It is rechecked at every staff mutation boundary that references the request,
 including work-package creation, editing, movement and reservations, calendar
 commitments, task hasteners, conversations, related-record decisions and product
-operations. A requester cannot be selected as a package owner, Contributor or
-calendar/reservation subject for their own request. Denials use the ordinary
-not-found response and do not disclose that the request exists.
+operations. The originating Customer cannot be selected as a package owner,
+additional Analyst or calendar/reservation subject for their own request. Denials
+use the ordinary not-found response and do not disclose that the request exists.
 
 Notification projection, notification reads, action queues and direct request
 detail also recheck current authority. Quality-review access requires any live

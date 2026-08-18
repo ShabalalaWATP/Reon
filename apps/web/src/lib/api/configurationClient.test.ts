@@ -16,11 +16,13 @@ describe("configuration API client", () => {
         });
         return json({ items: [] });
       },
-      false,
-      false,
-      false,
-      false,
-      false,
+      {
+        emptyActionWorkspace: false,
+        emptyDraftRegister: false,
+        emptyNotificationWorkspace: false,
+        emptyStatisticsScopes: false,
+        emptyTeamWorkspaces: false,
+      },
     );
     const draft = {
       basedOnVersionId: configurationVersion.basedOnVersionId,

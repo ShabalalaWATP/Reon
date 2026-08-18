@@ -1,7 +1,7 @@
 # Current user stories
 
 Status: current product behaviour and acceptance catalogue
-Last reviewed: 17 August 2026
+Last reviewed: 18 August 2026
 
 This catalogue describes Mist Service from the point of view of the people who
 use and operate it. It uses plain English first. Technical identifiers are added
@@ -15,7 +15,7 @@ workflow task.
 3. [Rules shared by every story](#rules-shared-by-every-story)
 4. [Customer stories](#customer-stories)
 5. [JIOC routing stories](#jioc-routing-stories)
-6. [Command coordination stories](#command-coordination-stories)
+6. [Request coordination stories](#request-coordination-stories)
 7. [Ops routing stories](#ops-routing-stories)
 8. [Team Manager stories](#team-manager-stories)
 9. [Team Analyst stories](#team-analyst-stories)
@@ -205,7 +205,7 @@ inside my request so that the full exchange is kept with the work.
 **Expected behaviour**
 
 - The dashboard highlights that information is required.
-- The question, reason, requester and response deadline are visible.
+- The question, reason, asking staff member and response deadline are visible.
 - The Customer submits an answer from the request page.
 - The answer is appended to the history and work returns to JIOC or the same Analyst assignment,
   depending on where the question began.
@@ -237,23 +237,28 @@ do not continue work that I no longer need.
 - If Camunda is unavailable, Mist records a durable cancellation command and
   shows pending completion rather than reporting success early.
 
-### CUST-08: Receive the product and give feedback
+### CUST-08: Receive and accept the product, then give feedback
 
-**Need:** As a Customer, I want the released product in my dashboard and a simple
-feedback form so that I can use the result and rate the service.
+**Need:** As a Customer, I want the released product in my dashboard, an explicit
+acceptance action and a simple feedback form so that I can use the result and
+rate the service.
 
 **Expected behaviour**
 
-- A released PDF, DOCX or PPTX has an authenticated download action.
+- A released PDF, DOCX, PPTX, PNG or JPEG has an authenticated download action.
 - An approved external product has a labelled HTTPS link.
 - The request identifies the released product and release time.
-- The Customer submits one service rating and optional comments.
+- The Customer can explicitly select `Accept product`; opening a file or link
+  does not imply acceptance.
+- The Customer submits one service rating and mandatory comments.
 
 **Acceptance checks**
 
 - Product bytes are never exposed as a public storage URL.
 - Download rechecks ownership and release state every time.
 - Unreleased and withdrawn product versions are not downloadable.
+- Product acceptance is owner-only, idempotent and stored independently of
+  product access and feedback.
 - Feedback is accepted once and only for the owning completed request.
 
 ### CUST-09: Maintain a personal profile
@@ -289,15 +294,16 @@ that one named person can review and direct each request.
 - A JIOC user claims the item before recording a decision.
 - The reviewer can read the submitted revision and current request history needed
   for routing.
-- The reviewer can request information, close with a reason or select one direct
-  command.
+- The reviewer can request information, close with a reason or choose a mandatory
+  human priority and select one direct Command.
 
 **Acceptance checks**
 
 - A non-JIOC account cannot list, claim or complete the task.
 - Two JIOC users cannot both become the assignee.
+- Progression rejects a missing or invalid priority.
 - The selected command is revalidated as a current effective direct child.
-- The decision, actor, destination and reason are audited.
+- The priority, decision, actor, destination and reason are audited.
 
 ### JIOC-02: Examine possible related requests
 
@@ -339,7 +345,7 @@ see where it sits without becoming a product approver.
 - JIOC sees DIGOC, SYGOC and MYGOC branches, because they are descendants.
 - The tracking permission does not expose unreleased files or Customer feedback.
 
-## Command coordination stories
+## Request coordination stories
 
 ### CMD-01: Coordinate and route a request
 
@@ -537,8 +543,8 @@ queue so that accountability is unambiguous.
 - Analysts cannot claim open Team Assignment or Product Production tasks.
 - The named Lead sees the production task in personal actions and production
   queue.
-- Contributors see the authorised request and collaboration context without a
-  Lead-completion action.
+- The Lead and every additional assigned Analyst see the same production actions.
+  The Lead label is an accountability badge, not extra authority.
 
 **Acceptance checks**
 
@@ -617,9 +623,10 @@ the owning Customer so that dissemination is controlled and traceable.
 
 **Acceptance checks**
 
-- At least one valid recipient is required.
+- The server resolves and revalidates the originating Customer as the sole
+  managed-release recipient; the QC Manager does not select recipients.
 - Only clean promoted files and allowlisted HTTPS links can be released.
-- Release records actor, package revision, recipients and time.
+- Release records actor, package revision, originating Customer and time.
 - The person who performed QC review cannot claim release for the same package.
 - The Customer sees the product only after successful release finalisation.
 
@@ -720,17 +727,21 @@ action.
 - Public submissions do not disclose whether an account exists.
 - Resolved requests remain attributable and cannot be processed twice.
 
-### PA-05: See platform health without request content
+### PA-05: See content-free platform statistics
 
-**Need:** As a Platform Administrator, I want content-free service status so that
-I can identify operational problems without becoming a support super-user.
+**Need:** As a Platform Administrator, I want content-free operational totals so
+that I can understand whole-platform demand without becoming a support super-user
+or gaining request access.
 
 **Acceptance checks**
 
-- Health identifies dependency categories and stale worker state.
-- It does not include request titles, narrative, products, cookies or tokens.
-- Platform administration grants no implicit routing, production or download
-  access.
+- The server issues the bounded platform statistics scope; other staff require a
+  current reporting grant.
+- Aggregates do not include request titles, narrative, product content, Customer
+  identity, cookies or tokens.
+- Platform administration grants no implicit routing, production, download or
+  operational-diagnostics access. Statistics projection health is not dependency
+  diagnosis. Readiness and recovery remain controlled operator functions.
 
 ## Workspace Manager and Member stories
 
@@ -794,7 +805,7 @@ within my team so that follow-up is clear, targeted and accountable.
 
 **Acceptance checks**
 
-- The server derives eligible active Leads and Contributors from the exact-team
+- The server derives eligible active Leads and additional Analysts from the exact-team
   request assignment. A browser-supplied recipient cannot widen that set.
 - Team ownership and active production state are revalidated against a locked,
   refreshed request before the event is appended.
@@ -803,9 +814,10 @@ within my team so that follow-up is clear, targeted and accountable.
   normalisation and trimming.
 - Each recipient receives a mandatory safe notification linking to the exact
   board request, independently of current filters, pagination or lane visibility.
-- The request history records the Manager, resolved recipients, message and time.
-- Every user authorised to view the request, including its Customer, can see the
-  accountable hastener history.
+- Staff request history records the Manager, resolved recipients, message and
+  time.
+- Customer request history excludes the hastener because it is an internal
+  coordination event. The notification remains limited to the resolved Analysts.
 - The reminder does not change ownership, assignment or Camunda workflow stage.
 - Analysts, routing-unit Managers, sibling teams and Managers outside active
   production cannot send the reminder.
@@ -900,7 +912,7 @@ JIOC can see both branches because both are its descendants.
 
 ### E2E-05: Team staffing change during work
 
-- **Given** a request is assigned to a current Lead and Contributors
+- **Given** a request is assigned to a current Lead and additional Analysts
 - **When** an authorised Manager schedules a membership change
 - **Then** access follows the effective membership and participant rules at the
 boundary, the change is recorded, and previous assignment history remains.

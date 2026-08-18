@@ -1,6 +1,7 @@
 # Production deployment gates
 
 Status: blocking acceptance checklist
+Last reviewed: 18 August 2026
 
 Passing local tests is necessary but not sufficient. Mist must not contain real
 service content or be called enterprise-ready until every applicable row below
@@ -12,17 +13,17 @@ has dated evidence, an accountable owner and explicit acceptance.
 | Camunda security | Supported/licensed topology, HTTPS, client authentication, authorisation, tenant/group controls and private ingress tests | Local topology is unprotected |
 | Product runtime | Private cloud object adapter, durable upload grants, approved scanner/CDR, quarantine/release policy and replica-crossing tests | Not implemented |
 | Platform code | Reviewed IaC, Kubernetes/application deployment assets, policy-as-code and drift detection | Not implemented |
-| Database | Managed PostgreSQL bootstrap, `ssl=verify-full`, role separation, capacity budget, PITR and failover/failback evidence | Target only |
+| Database | Managed PostgreSQL bootstrap, `ssl=verify-full`, role separation, maintenance permissions, capacity budget, PITR and failover/failback evidence | Target only; fresh Compose omits database `CONNECT` for the maintenance role, blocking retention and legal-hold apply evidence |
 | Edge security | Approved DNS/TLS, WAF/login rate limits, trusted-proxy handling, HSTS, host tests and private API | Shared application limiter and explicit proxy trust implemented; managed edge, TLS and HSTS target not implemented |
 | Secrets and keys | Workload identity, secret-manager injection, certificate rotation, audit-key keyring/rotation and access tests | Not implemented |
 | Supply chain | Locked dependencies, SBOMs, all-image/IaC scans, image signatures, provenance and admission verification | Locked dependency audits, all-five-image scans and CycloneDX SBOMs implemented in CI; IaC scans, signing, provenance and admission remain open |
 | Availability | Replica, lease-contention, disruption, zone-failure and dependency-recovery evidence against accepted SLOs | Not accepted |
-| Recovery | Joined PostgreSQL, Camunda and object-store backup/restore exercise against accepted RPO/RTO | Local database evidence only |
+| Recovery | Joined PostgreSQL, Camunda and object-store backup/restore exercise against accepted RPO/RTO | Historical local evidence only; the current restore script has incompatible libpq and async-verifier URL schemes and no current-head rehearsal can be claimed |
 | Observability | Content-free logs/metrics/traces, dashboards, alerts, SIEM routing, on-call rota and alert exercises | Foundations only |
 | Security assurance | Updated threat model, abuse-case tests, external penetration test and no unaccepted high/critical finding | Current local automated evidence ready; external penetration test and owner acceptance open |
 | Privacy and data | Classification, residency, retention, legal hold, disposal, DPIA where required and supplier approval | Decision required |
 | Accessibility and UAT | Manual WCAG 2.2 AA evidence and named representative-role journeys | Acceptance open |
-| Operations | Release, incident, support, continuity, access-review, change and decommissioning owners | Decision required |
+| Operations | Release, incident, support, retention/legal-hold execution, continuity, access-review, change and decommissioning owners | Decision required; maintenance apply is blocked on a fresh local database |
 
 ## Gate procedure
 

@@ -7,8 +7,11 @@ from typing import cast
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mist_service.platform_security_ports import (
+    AssistanceBudgetPort,
+    AssistanceDirectoryPort,
+    AssistanceQueuePort,
+    ClassificationPort,
     PasswordAssistancePublisherPort,
-    PlatformSecurityApplicationPort,
 )
 from mist_service.repositories.password_assistance_publisher import (
     SqlAlchemyPasswordAssistancePublisher,
@@ -25,11 +28,12 @@ def platform_security_service(
     pseudonym_key: bytes = b"\0" * 32,
     pseudonym_key_id: str = "legacy",
 ) -> PlatformSecurityService:
+    application = SqlAlchemyPlatformSecurityApplication(session)
     return PlatformSecurityService(
-        cast(
-            PlatformSecurityApplicationPort,
-            SqlAlchemyPlatformSecurityApplication(session),
-        ),
+        cast(ClassificationPort, application),
+        cast(AssistanceBudgetPort, application),
+        cast(AssistanceDirectoryPort, application),
+        cast(AssistanceQueuePort, application),
         cast(
             PasswordAssistancePublisherPort,
             SqlAlchemyPasswordAssistancePublisher(session),

@@ -28,6 +28,7 @@ from mist_service.schemas.products import (
 )
 from mist_service.services.product_repository_port import (
     ProductPackageServiceRepository,
+    ProductReviewTaskRepository,
 )
 from mist_service.services.product_service_support import ProductServiceSupport
 
@@ -38,10 +39,12 @@ class ProductPackageService(ProductServiceSupport[ProductPackageServiceRepositor
     def __init__(
         self,
         repository: ProductPackageServiceRepository,
+        review_tasks: ProductReviewTaskRepository,
         *,
         maximum_package_bytes: int = MAX_PACKAGE_BYTES,
     ) -> None:
         super().__init__(repository)
+        self._review_tasks = review_tasks
         self._maximum_package_bytes = maximum_package_bytes
 
     async def create_package(self, actor: Actor, command: PackageCreate) -> PackageView:
@@ -116,7 +119,7 @@ class ProductPackageService(ProductServiceSupport[ProductPackageServiceRepositor
             or package.status is not PackageStatus.REVIEW_READY
         ):
             raise ProductNotFound()
-        if not await self._repository.manager_task_claimed_by(package.id, actor.id):
+        if not await self._review_tasks.manager_task_claimed_by(package.id, actor.id):
             raise ProductNotFound()
         self._expect(package, command.expected_version, command.package_checksum)
         await self._repository.approve(package.id, actor.id, now=datetime.now(UTC))
@@ -193,14 +196,20 @@ class ProductPackageService(ProductServiceSupport[ProductPackageServiceRepositor
                     request.assigned_team,
                     manager=True,
                 )
-                and await self._repository.manager_task_claimed_by(package.id, actor.id)
+                and await self._review_tasks.manager_task_claimed_by(
+                    package.id, actor.id
+                )
             )
         if not await self._qc_access_for_status(actor, request):
             return False
         if request.status == RequestStatus.QUALITY_REVIEW.value:
-            return await self._repository.quality_task_claimed_by(package.id, actor.id)
+            return await self._review_tasks.quality_task_claimed_by(
+                package.id, actor.id
+            )
         if request.status == RequestStatus.READY_FOR_RELEASE.value:
-            return await self._repository.release_task_claimed_by(package.id, actor.id)
+            return await self._review_tasks.release_task_claimed_by(
+                package.id, actor.id
+            )
         return False
 
     async def _can_review_request(

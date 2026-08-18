@@ -103,8 +103,8 @@ JIOC
       → selected delivery team
 ```
 
-Every configured sibling is a real staffed destination. There is no hidden SSG
-fallback. A route cannot skip a level or cross into a sibling branch.
+Every configured sibling is a real staffed destination. There is no hidden
+default-team fallback. A route cannot skip a level or cross into a sibling branch.
 
 The initial operational route is:
 
@@ -790,9 +790,9 @@ are:
 | What can each role do? | [Role and permission matrix](docs/reference/ROLE_PERMISSION_MATRIX.md) |
 | How do I run it locally? | [Local Docker](docs/deployment/LOCAL_DOCKER.md) |
 | How do I configure it? | [Configuration reference](docs/deployment/CONFIGURATION_REFERENCE.md) |
-| How do I operate or recover it? | [Operations guides](docs/operations/) |
-| What security risks are controlled? | [Threat models](docs/threat-model/) and [SECURITY.md](SECURITY.md) |
-| What has actually been tested? | [Assurance evidence](docs/assurance/) |
+| How do I operate or recover it? | [Operations runbook index](docs/operations/README.md) |
+| What security risks are controlled? | [Threat-model index](docs/threat-model/README.md), [security records](docs/security/README.md) and [SECURITY.md](SECURITY.md) |
+| What has actually been tested? | [Assurance record index](docs/assurance/README.md) |
 | What remains before production? | [Enterprise readiness gaps](docs/ENTERPRISE_READINESS_GAP_REGISTER.md) |
 | What work is complete or open? | [Master implementation plan](docs/MASTER_IMPLEMENTATION_PLAN.md) |
 | How did the codebase develop? | [Development story](docs/DEVELOPMENT_STORY.md) |
@@ -800,8 +800,10 @@ are:
 Specifications, ADRs and assurance records remain separate because they have
 different purposes:
 
-- a **specification** records detailed behaviour and acceptance criteria;
-- an **ADR** records a decision and the reasons it is expensive to reverse;
+- a [**specification**](docs/specs/README.md) records detailed behaviour and
+  acceptance criteria;
+- an [**ADR**](docs/adr/README.md) records a decision and the reasons it is
+  expensive to reverse;
 - an **assurance record** preserves dated evidence; and
 - a **current-state guide** explains how the product works now.
 
@@ -824,6 +826,9 @@ The following are not implemented or approved here:
 - infrastructure as code and an application Kubernetes chart;
 - managed TLS, DNS, WAF, ingress and private-network deployment;
 - accepted production SLIs, SLOs, capacity plan and alert ownership;
+- aligned server and web rollback controls for optional workspace capabilities,
+  plus representative display mappings for stable organisation codes;
+- a passing current restore rehearsal and least-privilege maintenance-role apply path;
 - approved backup, continuity and disaster-recovery targets;
 - classification, privacy, residency and DPIA decisions for real data;
 - named production service owners, support hours and training ownership; and

@@ -1,27 +1,32 @@
 # Enterprise readiness gap register
 
-Last reviewed: 9 August 2026
+Last reviewed: 18 August 2026
 
 This register prevents local release-candidate capability from being mistaken for
 production enterprise readiness. Status values are `IMPLEMENTED`, `EVIDENCE
-READY`, `DECISION REQUIRED`, `NOT IMPLEMENTED` and `OUT OF SCOPE`.
+READY`, `ACCEPTANCE OPEN`, `DECISION REQUIRED`, `NOT IMPLEMENTED` and `OUT OF
+SCOPE`. Multiple values may be combined when implementation exists but named
+acceptance is still outstanding.
 
 | Domain | Current state | Status | Exit evidence or decision |
 |---|---|---|---|
 | Human-led service workflow | Camunda-coordinated named human decisions and pinned configuration | IMPLEMENTED | Accepted representative-role UAT remains required |
 | Routing destination usability | Authorised path breadcrumb, selected-route summary and literal direct-child name/code search are implemented without ranking or global enumeration | IMPLEMENTED, ACCEPTANCE OPEN | Complete representative JIOC, Command and Ops routing UAT on the immutable candidate |
 | Organisation configuration | Effective-dated revisions, all-checkpoint preview, canonical approval digest, PostgreSQL snapshot guards, validation, independent approval and guided workspace | IMPLEMENTED | Runtime-role denial and fresh-current-head evidence recorded; Camunda sibling-route, activation race and recovery acceptance remain open |
+| Capability and workspace contract | The current UI deliberately omits Planning and Handover, but server-authorised view values still advertise them in some workspaces; planning and statistics-evolution API routes remain registered when their flags are false, and the web does not consume the planning flag | NOT IMPLEMENTED | Align server-authorised views, route composition and capability flags with the maintained UI, then add end-to-end flag-on and flag-off evidence |
+| Representative display language | Workspace headings and navigation use OSG and JIOC, but visible authority badges still expose the stable internal codes `SSG_TEAM` and `CRIOC` | NOT IMPLEMENTED | Map stable technical identifiers to current display labels, or remove them from user-facing badges, then refresh affected browser evidence |
 | Identity and MFA | Synthetic database accounts, Argon2/session controls and shared local fixture password; no OIDC/bootstrap | NOT IMPLEMENTED | Approved OIDC, MFA, claims/group bootstrap, privileged access and account lifecycle |
 | Authorisation | Central role, scope, ownership, assignment and action policy | EVIDENCE READY | Full production identity-group and negative-access matrix |
 | Segregation of duties | Different-actor configuration approval and independent QC | IMPLEMENTED | Named groups, periodic review and break-glass ownership |
 | Data classification | Public-safe synthetic development data only | DECISION REQUIRED | Production classification, handling, residency and privacy assessment |
-| Retention and legal hold | Application retention jobs exist for defined MVP records | DECISION REQUIRED | Owner-approved schedule, legal hold and secure disposal procedure |
+| Retention and legal hold | Application jobs exist, but the fresh-stack maintenance role lacks database `CONNECT`; the privileged URL bypasses production transport validation; preview and apply are not target-bound; and hold release has no mandatory reason, readback or expiring target-bound confirmation | NOT IMPLEMENTED | Enforce asyncpg plus approved-CA server verification, bind preview and apply to one database/policy/count/operator/expiry, add safe hold-release confirmation, grant least privilege, pass cross-target and transport-negative tests, then obtain owner approval |
 | Encryption and keys | TLS/deployment responsibility documented; no production key owner | DECISION REQUIRED | KMS/HSM, rotation, certificate and secret ownership |
 | Network trust boundaries | Local Compose and private synthetic AWS/GCP/Azure tunnel patterns documented; explicit login proxy trust and isolated ClamAV update egress implemented; Kubernetes target is design-only | NOT IMPLEMENTED | Reviewed IaC, approved production topology, ingress/WAF, egress policy and private monitoring plane with validation evidence |
 | PostgreSQL availability | Correct relational source of truth and migrations | NOT IMPLEMENTED | HA topology, failover/failback and production capacity evidence |
 | Camunda availability | Camunda 8.9 integration, durable command/outbox, reconciliation and local controlled interruption evidence; client auth only `NONE`/`BASIC` | EVIDENCE READY | Supported licensed target HA cluster, approved authentication and target fault/backup rehearsal |
-| Product storage and scanning | Local filesystem quarantine, ClamAV scan, loaded-signature freshness health and authenticated managed downloads implemented; production runtime deliberately absent | NOT IMPLEMENTED | Approved S3/GCS/selected private object adapter, semantic/CDR scanner corpus, owned update path and no-public-access inspection |
-| Backup and restore | Local scripts and empty-target rehearsal | EVIDENCE READY | Accepted RPO/RTO, immutable backup, PITR and multi-store restore rehearsal |
+| Product storage and scanning | Local filesystem quarantine, ClamAV scan, per-process scan admission, loaded-signature freshness health and authenticated managed downloads implemented; production runtime and fleet-wide admission are deliberately absent | NOT IMPLEMENTED | Approved S3/GCS/selected private object adapter, semantic/CDR scanner corpus, shared scanner capacity control, owned update path and no-public-access inspection |
+| Semantic model provenance | Compose pins and checksum-verifies the offline embedding cache, but source mode has no shared verified-cache preparation command and must keep semantic enrichment disabled | NOT IMPLEMENTED | Reuse one repository-owned revision- and blob-verifying cache preparation path for image and source modes, then add drift-negative evidence |
+| Backup and restore | Backup tooling and dated empty-target evidence exist, but the current restore helper cannot supply one URL scheme that satisfies both PostgreSQL tooling and the async verification client | NOT IMPLEMENTED | Split native PostgreSQL and async verification connection contracts, rerun empty-target restore, then obtain accepted RPO/RTO, immutable-backup, PITR and multi-store evidence |
 | Observability and alerting | Content-free health, readiness and operational metrics | EVIDENCE READY | SIEM integration, alert owners, on-call rota and target-environment tests |
 | Service levels | Pilot performance targets documented | DECISION REQUIRED | Accepted SLOs, SLIs, error budgets, load and capacity model |
 | Secure development | CI, coverage gates, CodeQL, dependency and secret checks, all-deployed-image Trivy gates and CycloneDX SBOM artefacts | EVIDENCE READY | Accepted immutable release-candidate reports and external penetration test |

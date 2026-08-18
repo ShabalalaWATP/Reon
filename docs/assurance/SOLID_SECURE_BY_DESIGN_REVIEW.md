@@ -1,5 +1,35 @@
 # SOLID and Secure by Design review
 
+## Current maintainability addendum, 18 August 2026
+
+The current maintainability candidate preserves the boundaries assessed below
+and reduces production coupling further. Application construction moved into a
+focused HTTP composition module, production no longer exposes test-only workflow
+fakes, wide application ports were split by consumer responsibility, and shared
+repository and service behaviour replaced duplicate implementations. The API
+lifespan does not host the independent worker.
+
+All 12 architecture checks passed, together with Ruff, strict MyPy across 444
+source modules, dead-code checks and the hand-written source line limit. The
+complete backend suite passed 1,410 tests with 13 environment-specific skips at
+98.83 per cent line and 95.10 per cent branch coverage. The complete frontend
+suite passed 582 tests at 98.80 per cent line and 95.07 per cent branch coverage.
+
+Independent code-quality review found two operational correctness gaps.
+Notification event failures now commit their retry state independently and
+propagate an aggregate failure into fenced worker accounting. Analytics recovery
+now has bounded operator entry points, and persisted analytics-definition
+metadata cannot change without an explicit version increment. Twenty-one focused
+tests passed after both fixes, and the independent recheck found no remaining
+issue. The scoped internal security review note is identified in
+[security scan evidence](SECURITY_SCAN_EVIDENCE.md#current-maintainability-candidate-18-august-2026);
+its uncommitted target is not immutable release evidence.
+
+This addendum does not supersede the dated 11 August runtime interruption
+figures or claim new external security testing. Production identity, private
+storage and semantic CDR, authenticated Camunda, joined recovery, monitoring,
+target-environment DAST and named acceptance remain external gates.
+
 ## Scope and status
 
 This implementation review covers the 11 August 2026 programme changes. It is a

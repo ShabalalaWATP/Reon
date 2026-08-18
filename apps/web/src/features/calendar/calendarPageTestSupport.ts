@@ -1,31 +1,10 @@
 import type { CalendarOccurrence } from "../../lib/api/calendarTypes";
 import type { Session } from "../../lib/api/types";
 import type { TeamMember, TeamWorkspaceAccess } from "../../lib/api/teamTypes";
-import { requesterSession } from "../../test/fixtures";
 import { json, mockFetch } from "../../test/render";
+import { createTeamWorkspaceAccess, managerSession } from "../../test/teamFixtures";
 
-export const managerSession: Session = {
-  ...requesterSession,
-  user: {
-    ...requesterSession.user,
-    id: "manager-ssg",
-    username: "admin8",
-    displayName: "Grant Hanley",
-    role: "DELIVERY_TEAM_LEAD",
-    scope: "SSG Team",
-  },
-};
-
-export const analystSession: Session = {
-  ...managerSession,
-  user: {
-    ...managerSession.user,
-    id: "analyst-ssg",
-    username: "admin11",
-    displayName: "Lewis Ferguson",
-    role: "DELIVERY_SPECIALIST",
-  },
-};
+export { analystSession, managerSession } from "../../test/teamFixtures";
 
 export const staffWithoutWorkspace: Session = {
   ...managerSession,
@@ -39,15 +18,9 @@ export const staffWithoutWorkspace: Session = {
   },
 };
 
-export const managerAccess: TeamWorkspaceAccess = {
-  teamId: "team-ssg",
-  teamCode: "SSG_TEAM",
-  teamName: "SSG Team",
-  unitKind: "TEAM",
-  workspacePosition: "MANAGER",
-  grantId: "grant-ssg",
+export const managerAccess = createTeamWorkspaceAccess({
   permissions: ["CALENDAR", "CAPACITY", "ROSTER"],
-};
+});
 
 export const analystAccess: TeamWorkspaceAccess = {
   ...managerAccess,
@@ -128,9 +101,7 @@ export function mockCalendar(
   return mockFetch(
     async (url, init) =>
       handleCalendarRequest(url, init, { access, calls, items, options, session, state }),
-    true,
-    true,
-    false,
+    { emptyTeamWorkspaces: false },
   );
 }
 

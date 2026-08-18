@@ -1,5 +1,7 @@
 # Personalised Overview and Primary Navigation
 
+Status: implemented current navigation contract. Last reviewed 18 August 2026.
+
 ## Purpose
 
 Make the staff landing page immediately answer three questions: who is signed
@@ -46,7 +48,8 @@ Staff navigation follows the operating sequence:
 
 1. `Home`
 2. `My assigned actions`
-3. the named organisation workspace, containing the unit work queue
+3. the named organisation workspace, containing a Work queue for routing units
+   or a Board for delivery teams
 4. `Personal calendar` and product tools where applicable
 5. `Request tracking` where authorised
 6. `Operational statistics` where authorised

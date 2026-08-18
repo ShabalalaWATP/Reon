@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "devDependencies": {
+    "@playwright/cli": "0.1.18",
     "yaml": "2.9.0"
   },
   "scripts": {
     "build": "corepack pnpm --filter @mist-service/web build",
+    "architecture:check": "pwsh -NoProfile -File docs/architecture/structurizr/render-svg.ps1 -Check",
     "check": "corepack pnpm quality-gate-tests && corepack pnpm dead-code && corepack pnpm line-limit && corepack pnpm format:check && corepack pnpm terminology && corepack pnpm documentation && corepack pnpm operations-contract && corepack pnpm licence-check && corepack pnpm contract:openapi && corepack pnpm --filter @mist-service/web typecheck && corepack pnpm --filter @mist-service/web complexity-ratchet && corepack pnpm --filter @mist-service/web lint",
     "contract:openapi": "corepack pnpm --filter @mist-service/web contract:openapi",
     "dead-code": "corepack pnpm --filter @mist-service/web dead-code && uv run --directory apps/api vulture src --min-confidence 80",
@@ -16,7 +18,7 @@
     "line-limit": "node scripts/check-file-lines.mjs",
     "licence-check": "pwsh -File scripts/check-licences.ps1",
     "operations-contract": "pwsh -File scripts/test-operations-scripts.ps1",
-    "quality-gate-tests": "node scripts/test-quality-gates.mjs && node scripts/test-container-workflow.mjs && node scripts/test-browser-workflow.mjs && node scripts/test-dependabot-config.mjs && node scripts/test-tracked-source-stage.mjs && node scripts/test-trufflehog-gate.mjs",
+    "quality-gate-tests": "node scripts/test-quality-gates.mjs && node scripts/test-documentation-links.mjs && node scripts/test-container-workflow.mjs && node scripts/test-browser-workflow.mjs && node scripts/test-dependabot-config.mjs && node scripts/test-tracked-source-stage.mjs && node scripts/test-trufflehog-gate.mjs",
     "smoke-contract": "node scripts/test-smoke-camunda.mjs",
     "terminology": "node scripts/check-terminology.mjs",
     "test": "corepack pnpm --filter @mist-service/web test"

@@ -7,7 +7,11 @@ from typing import cast
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mist_service.account_request_ports import AccountRequestPort
-from mist_service.admin_ports import AdminApplicationPort
+from mist_service.admin_ports import (
+    AdminIdentityPolicyPort,
+    AdminMutationPort,
+    AdminQueryPort,
+)
 from mist_service.auth_service import PasswordHasher
 from mist_service.config import Settings
 from mist_service.repositories.account_requests import (
@@ -23,8 +27,11 @@ from mist_service.services.admin_service import AdminService
 def admin_service(
     session: AsyncSession, settings: Settings, hasher: PasswordHasher
 ) -> AdminService:
+    application = SqlAlchemyAdminApplication(session)
     return AdminService(
-        cast(AdminApplicationPort, SqlAlchemyAdminApplication(session)),
+        cast(AdminQueryPort, application),
+        cast(AdminIdentityPolicyPort, application),
+        cast(AdminMutationPort, application),
         settings,
         hasher,
     )

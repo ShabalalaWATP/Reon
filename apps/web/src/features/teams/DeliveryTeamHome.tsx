@@ -3,7 +3,7 @@ import { Link } from "react-router";
 
 import type { Session } from "../../lib/api/types";
 import type { TeamWorkspaceAccess, TeamWorkspaceOverview } from "../../lib/api/teamTypes";
-import { boardLabel } from "../board/boardPresentation";
+import { UpcomingTeamCalendar } from "./UpcomingTeamCalendar";
 import {
   hasWorkspaceView,
   useDeliveryTeamHomeData,
@@ -29,7 +29,15 @@ export function DeliveryTeamHome({
       {showBoard ? <TeamAttention access={access} data={data} overview={overview} /> : null}
       {showCalendar || showPeople ? (
         <div className="team-home__columns">
-          {showCalendar ? <UpcomingCalendar data={data} teamId={access.teamId} /> : null}
+          {showCalendar ? (
+            <UpcomingTeamCalendar
+              error={data.calendarError}
+              heading="Upcoming team calendar"
+              items={data.upcoming}
+              pending={data.calendarPending}
+              teamId={access.teamId}
+            />
+          ) : null}
           {showPeople ? <CurrentPeople data={data} teamId={access.teamId} /> : null}
         </div>
       ) : null}
@@ -92,39 +100,6 @@ function TeamAttention({
       </div>
       {data.boardError ? <InlineUnavailable label="Board attention" /> : null}
     </section>
-  );
-}
-
-function UpcomingCalendar({ data, teamId }: { data: DeliveryHomeData; teamId: string }) {
-  return (
-    <HomeList
-      heading="Upcoming team calendar"
-      link={`/teams/${teamId}/calendar`}
-      linkLabel="Open Calendar"
-    >
-      {data.upcoming.map((item) => (
-        <li key={`${item.eventId}-${item.occurrenceStart}`}>
-          <time>
-            {new Date(item.startsAt).toLocaleString("en-GB", {
-              dateStyle: "medium",
-              timeStyle: "short",
-            })}
-          </time>
-          <strong>{item.title}</strong>
-          <small>
-            {item.subjectDisplayName} · {boardLabel(item.category)}
-          </small>
-        </li>
-      ))}
-      {!data.calendarPending && data.upcoming.length === 0 ? (
-        <li className="inline-empty">No events in the next 14 days.</li>
-      ) : null}
-      {data.calendarError ? (
-        <li>
-          <InlineUnavailable label="Calendar" />
-        </li>
-      ) : null}
-    </HomeList>
   );
 }
 

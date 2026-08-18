@@ -20,8 +20,8 @@ from mist_service.config import Environment, Settings
 from mist_service.errors import AuthenticationFailed, ServiceError
 from mist_service.main import create_app
 from mist_service.routers.health import health, readiness
-from mist_service.workflow.fake import FakeWorkflowEngine
 from mist_service.workflow_client import camunda_client_configuration
+from workflow_test_support import FakeWorkflowEngine
 
 
 class FastHasher(PasswordHasher):

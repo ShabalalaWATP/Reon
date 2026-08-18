@@ -9,7 +9,7 @@ from uuid import UUID
 
 from mist_service.board_models import BoardColumn, WorkPackage, WorkPackageStatus
 from mist_service.models import RequestStatus, ServiceRequest
-from mist_service.schemas.board import BoardFilters, BoardItem, BoardItemType
+from mist_service.schemas.board import BoardItem, BoardItemType
 
 REQUEST_COLUMNS = {
     RequestStatus.DELIVERY_PLANNING: BoardColumn.AWAITING_ASSIGNMENT,
@@ -113,24 +113,6 @@ def package_projection(package: WorkPackage, owner_name: str) -> ProjectedBoardI
         ),
         changed_at=_utc(package.updated_at),
     )
-
-
-def apply_filters(
-    rows: list[ProjectedBoardItem], filters: BoardFilters
-) -> list[ProjectedBoardItem]:
-    search = filters.search.strip().casefold()
-    return [
-        row
-        for row in rows
-        if (not search or search in f"{row.item.reference} {row.item.title}".casefold())
-        and (not filters.columns or row.item.column in filters.columns)
-        and (not filters.priorities or row.item.priority in filters.priorities)
-        and (
-            not filters.owner_user_id or row.item.owner_user_id == filters.owner_user_id
-        )
-        and (not filters.item_types or row.item.item_type in filters.item_types)
-        and (not filters.due_before or row.item.due_on <= filters.due_before)
-    ]
 
 
 def paginate(

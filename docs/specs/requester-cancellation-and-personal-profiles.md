@@ -1,4 +1,6 @@
-# Requester cancellation and personal profiles
+# Customer cancellation and personal profiles
+
+Status: implemented current capability contract. Last reviewed 18 August 2026.
 
 ## Outcome
 

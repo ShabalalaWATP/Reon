@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterable
+from dataclasses import dataclass
 from datetime import timedelta
 from uuid import UUID
 
@@ -40,9 +41,34 @@ from mist_service.services.product_customer_release_service import (
 )
 from mist_service.services.product_package_service import ProductPackageService
 from mist_service.services.product_release_service import ProductReleaseService
-from mist_service.services.product_repository_port import ProductRepository
+from mist_service.services.product_repository_port import (
+    ProductCustomerReleaseRepository,
+    ProductLinkRepository,
+    ProductManagedUploadRepository,
+    ProductPackageServiceRepository,
+    ProductReleaseServiceRepository,
+    ProductReviewServiceRepository,
+    ProductReviewTaskRepository,
+    ProductUploadContentRepository,
+    ProductUploadServiceRepository,
+)
 from mist_service.services.product_review_service import ProductReviewService
 from mist_service.services.product_upload_service import ProductUploadService
+
+
+@dataclass(frozen=True, slots=True)
+class ProductServiceRepositories:
+    """Explicit narrow persistence roles used by the product facade."""
+
+    packages: ProductPackageServiceRepository
+    review_tasks: ProductReviewTaskRepository
+    reviews: ProductReviewServiceRepository
+    uploads: ProductUploadServiceRepository
+    managed_uploads: ProductManagedUploadRepository
+    upload_content: ProductUploadContentRepository
+    links: ProductLinkRepository
+    releases: ProductReleaseServiceRepository
+    customer_releases: ProductCustomerReleaseRepository
 
 
 class ProductService:
@@ -50,7 +76,7 @@ class ProductService:
 
     def __init__(
         self,
-        repository: ProductRepository,
+        repositories: ProductServiceRepositories,
         storage: PrivateObjectStorage,
         scanner: DocumentScanner,
         link_policy: ExternalLinkPolicy,
@@ -65,12 +91,16 @@ class ProductService:
         managed_file_uploads_enabled: bool = True,
     ) -> None:
         self.packages = ProductPackageService(
-            repository,
+            repositories.packages,
+            repositories.review_tasks,
             maximum_package_bytes=maximum_package_bytes,
         )
-        self.reviews = ProductReviewService(repository, storage, access_audit)
+        self.reviews = ProductReviewService(repositories.reviews, storage, access_audit)
         self.uploads = ProductUploadService(
-            repository,
+            repositories.uploads,
+            repositories.managed_uploads,
+            repositories.upload_content,
+            repositories.links,
             storage,
             scanner,
             link_policy,
@@ -82,9 +112,12 @@ class ProductService:
             maximum_global_storage_bytes=maximum_global_storage_bytes,
             managed_file_uploads_enabled=managed_file_uploads_enabled,
         )
-        self.releases = ProductReleaseService(repository)
+        self.releases = ProductReleaseService(
+            repositories.releases, repositories.review_tasks
+        )
         self.customer_access = ProductCustomerReleaseService(
-            repository,
+            repositories.customer_releases,
+            repositories.links,
             storage,
             link_policy,
             access_audit,

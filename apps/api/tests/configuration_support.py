@@ -148,8 +148,12 @@ async def activate_second_configuration(
     effective_from: datetime | None = None,
     payload: ConfigurationDraftCreate | None = None,
 ) -> ConfigurationVersionDetail:
+    repository = SqlAlchemyConfigurationRepository(session)
     lifecycle = ConfigurationLifecycleService(
-        SqlAlchemyConfigurationRepository(session),
+        repository,
+        repository,
+        repository,
+        repository,
         settings,
         CollectingConfigurationPublisher(),
         clock=lambda: actors.now + timedelta(minutes=1),

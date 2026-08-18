@@ -25,7 +25,8 @@ from mist_service.schemas.products import (
     UploadIntentView,
 )
 from mist_service.services.product_repository_port import (
-    ProductUploadServiceRepository,
+    ProductManagedUploadRepository,
+    ProductTransferRepository,
 )
 from mist_service.services.product_service_collaborators import (
     ProductStorageLimits,
@@ -35,12 +36,13 @@ from mist_service.services.product_service_support import ProductServiceSupport
 from mist_service.services.product_transfer_types import ManagedPreparation
 
 
-class ProductManagedPhases(ProductServiceSupport[ProductUploadServiceRepository]):
+class ProductManagedPhases(ProductServiceSupport[ProductTransferRepository]):
     """Perform only database work; storage grants are passed in as values."""
 
     def __init__(
         self,
-        repository: ProductUploadServiceRepository,
+        repository: ProductTransferRepository,
+        managed_uploads: ProductManagedUploadRepository,
         *,
         upload_ttl: timedelta = timedelta(minutes=10),
         maximum_file_bytes: int = MAX_FILE_BYTES,
@@ -51,10 +53,11 @@ class ProductManagedPhases(ProductServiceSupport[ProductUploadServiceRepository]
         managed_file_uploads_enabled: bool = True,
     ) -> None:
         super().__init__(repository)
+        self._managed_uploads = managed_uploads
         self._upload_ttl = upload_ttl
         self._maximum_file_bytes = maximum_file_bytes
         self._upload_policy = ProductUploadPolicy(
-            repository,
+            managed_uploads,
             ProductStorageLimits(
                 package_bytes=maximum_package_bytes,
                 request_bytes=maximum_request_storage_bytes,
@@ -84,7 +87,7 @@ class ProductManagedPhases(ProductServiceSupport[ProductUploadServiceRepository]
             raise ProductValidationFailed(
                 "The attachment exceeds the configured limit."
             )
-        retry = await self._repository.managed_retry(
+        retry = await self._managed_uploads.managed_retry(
             package.id, command.idempotency_key
         )
         if retry is not None:
@@ -97,7 +100,7 @@ class ProductManagedPhases(ProductServiceSupport[ProductUploadServiceRepository]
             await self._upload_policy.require_capacity(package, command.size_bytes)
             object_id = uuid5(package.id, str(command.idempotency_key))
             object_key = f"quarantine/{package.id}/{object_id}"
-            await self._repository.create_managed(
+            await self._managed_uploads.create_managed(
                 package.id,
                 label=command.label,
                 filename=filename,
@@ -129,7 +132,7 @@ class ProductManagedPhases(ProductServiceSupport[ProductUploadServiceRepository]
         )
         await self._require_draft_author(actor, package, request)
         command = plan.command
-        retry = await self._repository.managed_retry(
+        retry = await self._managed_uploads.managed_retry(
             package.id, command.idempotency_key
         )
         if retry is not None:
@@ -139,7 +142,7 @@ class ProductManagedPhases(ProductServiceSupport[ProductUploadServiceRepository]
             )
             if intent.object_key != grant.object_key:
                 raise ProductConflict()
-            intent = await self._repository.refresh_upload_grant(
+            intent = await self._managed_uploads.refresh_upload_grant(
                 intent.id,
                 token_hash=self._token_hash(grant.token),
                 expires_at=grant.expires_at,

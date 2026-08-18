@@ -1,7 +1,7 @@
 # Mist Service system architecture
 
 Status: current executable architecture and explicit deployment boundaries
-Last reviewed: 14 August 2026
+Last reviewed: 18 August 2026
 
 ## 1. Purpose and scope
 
@@ -48,9 +48,11 @@ failure, trust and scaling detail needed to change or run it safely.
 ![Mist Service system context](../assets/architecture/01-system-context.svg)
 
 The browser calls FastAPI only. It never calls Camunda or PostgreSQL. Application
-code never reads Camunda-owned database tables. The local Compose deployment
-shares one PostgreSQL server but creates separately owned application and
-Camunda databases; that co-location is not a production recommendation.
+code never reads Camunda-owned state. Local Camunda keeps primary/runtime state
+in its own named volumes and uses a separately owned PostgreSQL database for
+secondary storage. The application database and that secondary database share
+one local PostgreSQL server only for synthetic evaluation; that co-location is
+not a production recommendation.
 
 The people on the left use one product. They do not need separate Camunda,
 database or storage accounts to perform ordinary application work. The services
@@ -87,7 +89,11 @@ The browser never treats a visual role label as authority.
 
 ### FastAPI application
 
-`apps/api/src/mist_service` is composed in `main.py`:
+`main.py` is the process composition root. It owns lifespan, persisted baseline
+initialisation, the workflow runtime and product-runtime selection.
+`application_composition.py` owns HTTP middleware, bounded exception handling,
+feature-gated router registration and the `/api/v1` surface. Capability-specific
+`*_composition.py` modules then construct services from focused ports:
 
 - `routers/` handles HTTP translation and dependencies;
 - `schemas/` validates API requests and responses;
@@ -97,6 +103,13 @@ The browser never treats a visual role label as authority.
 - `workflow/` adapts the Camunda V2 API to the internal workflow port;
 - product storage, scanning and link-policy adapters implement product ports;
 - maintenance, retention, restore verification and telemetry support operators.
+
+Composition passes the same transactional adapter to several narrow protocols
+when that adapter implements several concerns. The service still receives each
+query, policy or mutation dependency separately. Broad composition-only union
+ports are not application contracts. Product composition follows the same rule
+through named repository bundles, while one `ProductRuntime` owns storage,
+scanner assurance, link policy, limits and upload policy.
 
 `worker.py` is a separate executable composition root. Named PostgreSQL leases
 fence singleton projection jobs, while existing row-level outbox leases permit
@@ -151,7 +164,8 @@ Local Compose separates identities:
 - a migration owner applies Alembic and grants;
 - the API runtime role reads and writes ordinary application data;
 - a read-only backup role runs `pg_dump`;
-- the Camunda role is limited to the Camunda database.
+- the Camunda role is limited to its secondary-storage database. Camunda primary
+  and runtime state remains on Camunda-owned volumes in the local topology.
 
 ### Camunda 8.9
 
@@ -205,10 +219,10 @@ transaction ownership do not drift between phases.
 |---|---|
 | Browser | React 19.2, React Router 8, TanStack Query 5, React Hook Form 7, Zod 4 |
 | Web build | TypeScript 5.9, Vite 7, Vitest, Testing Library, Playwright, Nginx |
-| API and worker | Python 3.12+, FastAPI 0.116+, Pydantic 2, SQLAlchemy 2 async, asyncpg, Alembic |
-| Workflow | Camunda 8.9 and Camunda Python SDK 9, BPMN 2.0 contract |
-| Application data | PostgreSQL 17, pgvector 0.8, `pg_trgm`, full-text search |
-| Product boundary | Private filesystem adapter for local use, ClamAV 1.5, Pillow validation |
+| API, worker and maintenance | Python 3.12+, FastAPI 0.116+, Pydantic 2, SQLAlchemy 2 async, asyncpg, Alembic |
+| Workflow | Camunda 8.9.14 and Camunda Python SDK 9, BPMN 2.0 contract |
+| Application data | PostgreSQL 17.10, pgvector 0.8.1, `pg_trgm`, full-text search |
+| Product boundary | Private filesystem adapter for local use, ClamAV 1.5.3, Pillow validation |
 | Toolchain | Node.js 22+, pnpm 11, `uv`, Ruff, MyPy, ESLint and Prettier |
 
 Manifests define supported ranges and lockfiles pin reproducible dependency
@@ -392,9 +406,14 @@ loop. The separate `mist-worker` executable coordinates:
 
 - process-start outbox dispatch;
 - human workflow-command dispatch;
+- workflow-cancellation dispatch;
 - workflow projection reconciliation;
 - notification projection reconciliation when enabled;
-- leases, bounded retry and health state.
+- request-search embedding reconciliation when enabled;
+- expired product-upload cleanup when managed products are enabled;
+- effective team-membership projection;
+- pseudonymised password-assistance processing; and
+- leases, bounded retry and content-free health state.
 
 Each singleton job has an expiring named lease, owner and monotonically
 increasing generation. Long jobs renew their lease. A stale worker cannot record
@@ -402,6 +421,17 @@ success after takeover, and one job failure does not stop later jobs. Local
 Compose runs one worker; multiple replicas are safe but still require a measured
 connection budget. Alembic remains a one-shot release job, never API or worker
 startup work.
+
+Analytics uses two controlled paths. Authorised request and product actions
+write versioned request, stage, capacity, notification and operational facts in
+the same application transaction as their source evidence. Operators can run
+`mist-maintenance rebuild-analytics` for a complete request projection rebuild,
+or `mist-maintenance replay-operational-analytics` for a bounded time window.
+Both commands reject unbounded source sets: the request rebuild is capped at
+5,000 records and every invocation supplies or accepts an explicit bounded
+source limit.
+Operational definition metadata is persisted by key and version; changing its
+meaning without increasing that version fails closed.
 
 ## 8. Bounded read projections
 
@@ -581,6 +611,18 @@ patterns using encrypted management tunnels, not production designs. The
 unimplemented: there are no application manifests, Helm values, infrastructure
 as code, OIDC bootstrap, production object-storage adapter or validated topology.
 
+The executable local topology separates front-door, service, data, workflow,
+scanner and signature-update networks. Only the web listener, API diagnostic
+listener, PostgreSQL development port and Camunda development endpoints bind to
+host loopback. Every service drops Linux capabilities and uses
+`no-new-privileges`. All services except the Camunda orchestration runtime also
+use a read-only root filesystem; Camunda is the explicit local-runtime exception
+and writes only to its named state volumes. Three no-network one-shot
+initialisers set volume ownership before unprivileged services start. The
+migrator must complete before the API and worker, and plain `docker compose up`
+remains insufficient because the BPMN deployment step is performed by
+`scripts/start-local.ps1`.
+
 ## 15. Design and quality principles
 
 ### Dependency direction
@@ -611,8 +653,10 @@ interface for every function:
   hooks own server communication.
 
 The editable [Structurizr workspace](structurizr/workspace.dsl) contains system,
-container, component, dynamic request-delivery and deployment views. It is the C4
-model for these boundaries; the curated SVGs are the Markdown presentation set.
+container, component, dynamic workflow, custom organisation and deployment
+views. It is the C4 and custom-element model for these boundaries. The seven SVGs
+are generated from named views by the pinned
+[rendering workflow](structurizr/README.md), not maintained as independent art.
 
 An abstraction is introduced when it protects a real boundary, such as storage,
 workflow, identity, scanning or persistence. It is not introduced merely to make

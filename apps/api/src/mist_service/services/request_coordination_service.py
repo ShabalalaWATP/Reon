@@ -21,7 +21,6 @@ from mist_service.request_coordination_ports import (
     CoordinationReturnReader,
 )
 from mist_service.request_event_audience import RequestEventAudience
-from mist_service.request_event_models import RequestEvent
 from mist_service.schemas.conversations import ConversationMessageCreate
 from mist_service.schemas.coordination import (
     CoordinationAudience,
@@ -29,6 +28,7 @@ from mist_service.schemas.coordination import (
     ReturnRequestCreate,
 )
 from mist_service.schemas.organisation import TrackedRequestEvent
+from mist_service.services.conversation_rendering import tracked_event_view
 
 CURRENT_ROUTE_POSITION = {
     RequestStatus.ROUTING_PENDING: 0,
@@ -127,7 +127,7 @@ class RequestCoordinationService:
             audience=RequestEventAudience.STAFF_ONLY,
             details={"targetUnitId": str(command.target_unit_id)},
         )
-        return self._event_view(event, actor.display_name)
+        return tracked_event_view(event, actor.display_name)
 
     async def _authorised_request(
         self, actor: Actor, request_id: UUID
@@ -147,15 +147,3 @@ class RequestCoordinationService:
         ):
             raise ObjectNotFound()
         return request, route_member
-
-    @staticmethod
-    def _event_view(event: RequestEvent, actor_name: str) -> TrackedRequestEvent:
-        return TrackedRequestEvent(
-            id=event.id,
-            type=event.type,
-            message=event.message,
-            actor_display_name=actor_name,
-            prior_status=event.prior_status,
-            next_status=event.next_status,
-            created_at=event.created_at,
-        )

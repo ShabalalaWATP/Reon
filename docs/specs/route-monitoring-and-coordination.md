@@ -1,5 +1,7 @@
 # Route monitoring and coordination
 
+Status: implemented current tracking contract. Last reviewed 18 August 2026.
+
 ## Outcome
 
 Routing users can distinguish work requiring a decision from requests they have
@@ -9,7 +11,7 @@ tamper-evident journey without regaining action authority.
 
 ## Monitoring register
 
-- `My actions` contains only personal or shared-unit work requiring action.
+- `My assigned actions` contains only personal or shared-unit work requiring action.
 - `Request tracking` contains requests whose immutable selected route includes
   one of the user's exact organisation memberships.
 - The register shows reference, title, status, current owner, age, required date

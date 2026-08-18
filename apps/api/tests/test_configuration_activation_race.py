@@ -53,6 +53,9 @@ async def test_only_one_approved_draft_can_replace_the_same_active_version() -> 
             repository = SqlAlchemyConfigurationRepository(session)
             lifecycle = ConfigurationLifecycleService(
                 repository,
+                repository,
+                repository,
+                repository,
                 settings,
                 clock=lambda: actors.now + timedelta(minutes=1),
             )

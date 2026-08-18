@@ -55,13 +55,7 @@ describe("platform administrator access", () => {
         }
         throw new Error(`${init.method ?? "GET"} ${url.pathname}`);
       },
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      false,
+      { emptyAccountRequests: false },
     );
     const user = userEvent.setup();
     renderApp("/admin/users");

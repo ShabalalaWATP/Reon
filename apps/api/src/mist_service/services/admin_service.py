@@ -6,8 +6,10 @@ from anyio import to_thread
 
 from mist_service.admin_policy import is_security_change, require_memberships
 from mist_service.admin_ports import (
-    AdminApplicationPort,
+    AdminIdentityPolicyPort,
     AdminIdentityRecord,
+    AdminMutationPort,
+    AdminQueryPort,
     AdminUnitRecord,
     CreateIdentityChange,
     StatusIdentityChange,
@@ -37,11 +39,15 @@ from mist_service.team_models import WorkspacePosition
 class AdminService:
     def __init__(
         self,
-        repository: AdminApplicationPort,
+        queries: AdminQueryPort,
+        identity_policy: AdminIdentityPolicyPort,
+        mutations: AdminMutationPort,
         settings: Settings,
         hasher: PasswordHasher,
     ) -> None:
-        self._repository = repository
+        self._queries = queries
+        self._identity_policy = identity_policy
+        self._mutations = mutations
         self._settings = settings
         self._hasher = hasher
 
@@ -56,7 +62,7 @@ class AdminService:
 
     async def list_users(self, actor: Actor, query: str | None) -> list[AdminUser]:
         self.authorise(actor)
-        return await self._repository.list_user_views(query)
+        return await self._queries.list_user_views(query)
 
     async def list_user_page(
         self,
@@ -67,26 +73,26 @@ class AdminService:
         cursor: str | None = None,
     ) -> tuple[list[AdminUser], str | None]:
         self.authorise(actor)
-        return await self._repository.page_user_views(query, limit=limit, cursor=cursor)
+        return await self._queries.page_user_views(query, limit=limit, cursor=cursor)
 
     async def get_user(self, actor: Actor, user_id: UUID) -> AdminUser:
         self.authorise(actor)
-        return await self._repository.user_view(user_id)
+        return await self._queries.user_view(user_id)
 
     async def create_user(self, actor: Actor, payload: AdminUserCreate) -> AdminUser:
         self.authorise(actor)
-        units = await self._repository.load_units(
+        units = await self._queries.load_units(
             payload.organisation_unit_ids,
             role=payload.role,
         )
         require_memberships(payload.role, units)
         password = self._demo_password()
         password_hash = await to_thread.run_sync(self._hasher.hash, password)
-        username = await self._repository.next_username()
+        username = await self._identity_policy.next_username()
         email = payload.email or f"{username}@mist.example.test"
-        await self._repository.ensure_unique_email(email)
+        await self._identity_policy.ensure_unique_email(email)
         position = workspace_position_for(payload)
-        return await self._repository.create_identity(
+        return await self._mutations.create_identity(
             CreateIdentityChange(
                 actor_id=actor.id,
                 username=username,
@@ -105,20 +111,22 @@ class AdminService:
         self, actor: Actor, user_id: UUID, payload: AdminUserPatch
     ) -> AdminUser:
         self.authorise(actor)
-        await self._repository.lock_identity_sequence()
-        user = await self._repository.locked_user(user_id, payload.expected_version)
-        units = await self._repository.load_units(
+        await self._identity_policy.lock_identity_sequence()
+        user = await self._identity_policy.locked_user(
+            user_id, payload.expected_version
+        )
+        units = await self._queries.load_units(
             payload.organisation_unit_ids,
             role=payload.role,
         )
         require_memberships(payload.role, units)
-        old_ids = await self._repository.membership_ids(user.id)
+        old_ids = await self._identity_policy.membership_ids(user.id)
         next_ids = {unit.id for unit in units}
-        old_position = await self._repository.workspace_position(user.id)
+        old_position = await self._identity_policy.workspace_position(user.id)
         next_position = workspace_position_for(payload)
         next_scope = self._effective_scope(payload.role, payload.scope, units)
         next_email = payload.email or user.email
-        await self._repository.ensure_unique_email(
+        await self._identity_policy.ensure_unique_email(
             next_email,
             excluding_user_id=user.id,
         )
@@ -138,9 +146,9 @@ class AdminService:
                 "You cannot remove your own Platform Administrator role."
             )
         if user.role is UserRole.PLATFORM_ADMIN and payload.role is not user.role:
-            await self._repository.require_another_admin(user.id)
+            await self._identity_policy.require_another_admin(user.id)
         if security_change:
-            await self._repository.reject_active_work(user.id)
+            await self._identity_policy.reject_active_work(user.id)
         changed = self._changed_fields(
             user,
             payload,
@@ -150,7 +158,7 @@ class AdminService:
             old_position,
             next_position,
         )
-        return await self._repository.update_identity(
+        return await self._mutations.update_identity(
             UpdateIdentityChange(
                 actor_id=actor.id,
                 user_id=user.id,
@@ -172,18 +180,20 @@ class AdminService:
         self, actor: Actor, user_id: UUID, payload: AdminStatusPatch
     ) -> AdminUser:
         self.authorise(actor)
-        await self._repository.lock_identity_sequence()
-        user = await self._repository.locked_user(user_id, payload.expected_version)
+        await self._identity_policy.lock_identity_sequence()
+        user = await self._identity_policy.locked_user(
+            user_id, payload.expected_version
+        )
         if user.is_active == payload.is_active:
-            return await self._repository.user_view(user.id)
+            return await self._queries.user_view(user.id)
         if actor.id == user.id and not payload.is_active:
             raise InvalidAdministrationChange("You cannot deactivate your own account.")
         if user.role is UserRole.PLATFORM_ADMIN and not payload.is_active:
-            await self._repository.require_another_admin(user.id)
+            await self._identity_policy.require_another_admin(user.id)
         if not payload.is_active:
-            await self._repository.reject_active_work(user.id)
-        team_ids = await self._repository.membership_ids(user.id)
-        return await self._repository.set_identity_status(
+            await self._identity_policy.reject_active_work(user.id)
+        team_ids = await self._identity_policy.membership_ids(user.id)
+        return await self._mutations.set_identity_status(
             StatusIdentityChange(
                 actor_id=actor.id,
                 user_id=user.id,
@@ -200,18 +210,18 @@ class AdminService:
         payload: AdminOrganisationRename,
     ) -> OrganisationUnitView:
         self.authorise(actor)
-        unit = await self._repository.locked_unit(unit_id, payload.expected_version)
+        unit = await self._mutations.locked_unit(unit_id, payload.expected_version)
         if unit.name == payload.name:
             return OrganisationUnitView.model_validate(unit)
         if self._settings.configuration_admin_enabled:
             raise InvalidAdministrationChange(
                 "Rename configured units through Configuration administration."
             )
-        await self._repository.ensure_unique_sibling_name(
+        await self._mutations.ensure_unique_sibling_name(
             unit.id, unit.version, payload.name
         )
         old_name = unit.name
-        return await self._repository.rename_unit(
+        return await self._mutations.rename_unit(
             unit.id,
             unit.version,
             old_name=old_name,

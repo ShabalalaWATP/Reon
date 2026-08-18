@@ -39,9 +39,11 @@ describe("board API client", () => {
         if (init.method === "DELETE") return new Response(null, { status: 204 });
         return json({ items: [], id: "result", filters, wipLimits: {}, version: 1 });
       },
-      false,
-      false,
-      false,
+      {
+        emptyDraftRegister: false,
+        emptyStatisticsScopes: false,
+        emptyTeamWorkspaces: false,
+      },
     );
 
     await boardApi.board("team one");

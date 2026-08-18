@@ -2,7 +2,7 @@
 
 ## Status
 
-Implementation milestone, 11 August 2026.
+Implemented and verified milestone. Last reviewed 18 August 2026.
 
 ## Objective
 

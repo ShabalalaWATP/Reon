@@ -201,8 +201,11 @@ async def test_last_admin_guard_with_distinct_actor(api_harness: ApiHarness) -> 
         assert target is not None and approver is not None
         approver.is_active = False
         await session.flush()
+        application = SqlAlchemyAdminApplication(session)
         service = AdminService(
-            SqlAlchemyAdminApplication(session),
+            application,
+            application,
+            application,
             harness.settings,
             PasswordHasher(time_cost=1, memory_cost=8_192, parallelism=1),
         )

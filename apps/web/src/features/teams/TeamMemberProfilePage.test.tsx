@@ -68,9 +68,7 @@ describe("team member profile", () => {
         if (url.pathname.endsWith("/people")) return json({ items: [member] });
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      false,
+      { emptyTeamWorkspaces: false },
     );
     const user = userEvent.setup();
     const view = renderApp("/teams/team-ssg/people");
@@ -119,9 +117,7 @@ describe("team member profile", () => {
         }
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      false,
+      { emptyTeamWorkspaces: false },
     );
     const user = userEvent.setup();
     renderApp("/teams/team-ssg/people/analyst-ssg");

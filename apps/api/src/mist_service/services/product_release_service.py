@@ -16,6 +16,7 @@ from mist_service.schemas.products import (
 )
 from mist_service.services.product_repository_port import (
     ProductReleaseServiceRepository,
+    ProductReviewTaskRepository,
 )
 from mist_service.services.product_service_support import ProductServiceSupport
 
@@ -23,8 +24,13 @@ from mist_service.services.product_service_support import ProductServiceSupport
 class ProductReleaseService(ProductServiceSupport[ProductReleaseServiceRepository]):
     """Release the latest approved package through a claimed QC task."""
 
-    def __init__(self, repository: ProductReleaseServiceRepository) -> None:
+    def __init__(
+        self,
+        repository: ProductReleaseServiceRepository,
+        review_tasks: ProductReviewTaskRepository,
+    ) -> None:
         super().__init__(repository)
+        self._review_tasks = review_tasks
 
     async def disseminate(
         self, actor: Actor, package_id: UUID, command: DisseminationCommand
@@ -42,7 +48,7 @@ class ProductReleaseService(ProductServiceSupport[ProductReleaseServiceRepositor
             raise ProductNotFound()
         if actor.id in await self._repository.release_excluded_actor_ids(package.id):
             raise ProductNotFound()
-        if not await self._repository.release_task_claimed_by(package.id, actor.id):
+        if not await self._review_tasks.release_task_claimed_by(package.id, actor.id):
             raise ProductNotFound()
         view = await self._repository.view(package.id)
         has_links = any(

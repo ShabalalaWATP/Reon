@@ -1,5 +1,7 @@
 # Organisation Directory Function Labels
 
+Status: implemented current presentation contract. Last reviewed 18 August 2026.
+
 ## Purpose
 
 Make the organisation directory describe operational functions in concise,

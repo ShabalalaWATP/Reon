@@ -2,22 +2,24 @@
 
 Status: implemented and assured locally, 13 August 2026.
 
-The proposed `structured-conversations-packages-and-contexts.md` amendment does
-not change the meaning of dissemination, access, acceptance or feedback defined
-here. It adds bounded conversation and actor-context rules around those existing
-records.
+The implemented
+[structured conversations, packages and contexts](structured-conversations-packages-and-contexts.md)
+amendment does not change the meaning of dissemination, access, acceptance or
+feedback defined here. It adds bounded conversation and actor-context rules
+around those existing records.
 
-## Problem
+## Problem addressed
 
-Routing workspaces currently show only open human tasks. After a unit routes a
-request onwards, the request disappears from that workspace even though its
-members retain exact-route monitoring access. Actionable work, active monitored
-work and completed history must not be mixed because only the first category
-grants workflow authority.
+Routing workspaces previously showed only open human tasks. After a unit routed
+a request onwards, the request disappeared from that workspace even though its
+members retained exact-route monitoring access. The implementation separates
+actionable work, active monitored work and completed history because only the
+first category grants workflow authority.
 
-Dissemination currently records delivery and completes the workflow, but it
-does not record whether the originating Customer accepted the product. Opening
-an artefact or submitting optional feedback is not an acceptance decision.
+Dissemination previously recorded delivery and completed the workflow without
+recording whether the originating Customer accepted the product. The explicit
+acceptance action remains separate from opening an artefact or submitting
+feedback.
 
 ## Behaviour
 

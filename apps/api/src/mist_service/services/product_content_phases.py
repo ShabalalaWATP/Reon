@@ -24,7 +24,9 @@ from mist_service.schemas.products import (
     VersionCommand,
 )
 from mist_service.services.product_repository_port import (
-    ProductUploadServiceRepository,
+    ProductOperationLeaseRepository,
+    ProductTransferRepository,
+    ProductUploadContentRepository,
 )
 from mist_service.services.product_service_support import ProductServiceSupport
 from mist_service.services.product_transfer_types import (
@@ -33,16 +35,20 @@ from mist_service.services.product_transfer_types import (
 )
 
 
-class ProductContentPhases(ProductServiceSupport[ProductUploadServiceRepository]):
+class ProductContentPhases(ProductServiceSupport[ProductTransferRepository]):
     """Never call storage or the scanner while a transaction is active."""
 
     def __init__(
         self,
-        repository: ProductUploadServiceRepository,
+        repository: ProductTransferRepository,
+        upload_content: ProductUploadContentRepository,
+        operation_leases: ProductOperationLeaseRepository,
         *,
         managed_file_uploads_enabled: bool = True,
     ) -> None:
         super().__init__(repository)
+        self._upload_content = upload_content
+        self._operation_leases = operation_leases
         self._managed_file_uploads_enabled = managed_file_uploads_enabled
 
     async def claim_content(
@@ -58,13 +64,13 @@ class ProductContentPhases(ProductServiceSupport[ProductUploadServiceRepository]
         self._require_managed_file_uploads()
         package, request = await self._authorised_package(actor, package_id, lock=True)
         await self._require_draft_author(actor, package, request)
-        row = await self._repository.upload_intent(package_id, intent_id, lock=True)
+        row = await self._upload_content.upload_intent(package_id, intent_id, lock=True)
         if row is None:
             raise ProductNotFound()
         artefact, intent = row
         self._require_pinned_media(package.policy_version, artefact.media_type)
         token_hash = self._token_hash(upload_token)
-        stored_hash = await self._repository.upload_token_hash(intent.id)
+        stored_hash = await self._upload_content.upload_token_hash(intent.id)
         valid_token = stored_hash is not None and hmac.compare_digest(
             token_hash, stored_hash
         )
@@ -85,7 +91,7 @@ class ProductContentPhases(ProductServiceSupport[ProductUploadServiceRepository]
         ):
             raise ProductNotFound()
         owner = uuid4().hex
-        generation = await self._repository.claim_intent_operation(
+        generation = await self._operation_leases.claim_intent_operation(
             intent.id,
             owner=owner,
             now=now,
@@ -112,17 +118,17 @@ class ProductContentPhases(ProductServiceSupport[ProductUploadServiceRepository]
             actor, operation.package_id, lock=True
         )
         await self._require_draft_author(actor, package, request)
-        row = await self._repository.upload_intent(
+        row = await self._upload_content.upload_intent(
             operation.package_id, operation.intent_id, lock=True
         )
         if row is None:
             raise ProductNotFound()
         artefact, intent = row
         self._require_pinned_media(package.policy_version, artefact.media_type)
-        await self._repository.require_intent_operation(
+        await self._operation_leases.require_intent_operation(
             intent.id, owner=owner, generation=generation
         )
-        stored_hash = await self._repository.upload_token_hash(intent.id)
+        stored_hash = await self._upload_content.upload_token_hash(intent.id)
         now = datetime.now(UTC)
         if (
             package.version != operation.expected_version
@@ -133,8 +139,8 @@ class ProductContentPhases(ProductServiceSupport[ProductUploadServiceRepository]
             or self._aware(intent.expires_at) <= now
         ):
             raise ProductConflict()
-        await self._repository.mark_uploaded(intent.id, now=now)
-        await self._repository.release_intent_operation(
+        await self._upload_content.mark_uploaded(intent.id, now=now)
+        await self._operation_leases.release_intent_operation(
             intent.id, owner=owner, generation=generation
         )
         view = await self._repository.view(package.id)
@@ -158,7 +164,7 @@ class ProductContentPhases(ProductServiceSupport[ProductUploadServiceRepository]
         self._require_managed_file_uploads()
         package, request = await self._authorised_package(actor, package_id, lock=True)
         await self._require_draft_author(actor, package, request)
-        row = await self._repository.upload_intent(package_id, intent_id, lock=True)
+        row = await self._upload_content.upload_intent(package_id, intent_id, lock=True)
         if row is None:
             raise ProductNotFound()
         artefact, intent = row
@@ -175,7 +181,7 @@ class ProductContentPhases(ProductServiceSupport[ProductUploadServiceRepository]
         ):
             raise ProductConflict("The upload intent is unavailable.")
         owner = uuid4().hex
-        generation = await self._repository.claim_intent_operation(
+        generation = await self._operation_leases.claim_intent_operation(
             intent.id,
             owner=owner,
             now=now,
@@ -207,14 +213,14 @@ class ProductContentPhases(ProductServiceSupport[ProductUploadServiceRepository]
             actor, operation.package_id, lock=True
         )
         await self._require_draft_author(actor, package, request)
-        row = await self._repository.upload_intent(
+        row = await self._upload_content.upload_intent(
             operation.package_id, operation.intent_id, lock=True
         )
         if row is None:
             raise ProductNotFound()
         artefact, intent = row
         self._require_pinned_media(package.policy_version, artefact.media_type)
-        await self._repository.require_intent_operation(
+        await self._operation_leases.require_intent_operation(
             intent.id,
             owner=operation.owner,
             generation=operation.generation,
@@ -226,14 +232,14 @@ class ProductContentPhases(ProductServiceSupport[ProductUploadServiceRepository]
             or intent.consumed_at is not None
         ):
             raise ProductConflict()
-        await self._repository.record_scan(
+        await self._upload_content.record_scan(
             artefact.id,
             operation.idempotency_key,
             decision,
             operation.expected_checksum,
             released_key,
         )
-        await self._repository.release_intent_operation(
+        await self._operation_leases.release_intent_operation(
             intent.id,
             owner=operation.owner,
             generation=operation.generation,
@@ -247,7 +253,7 @@ class ProductContentPhases(ProductServiceSupport[ProductUploadServiceRepository]
         generation: int | None,
     ) -> None:
         if owner is not None and generation is not None:
-            await self._repository.release_intent_operation(
+            await self._operation_leases.release_intent_operation(
                 intent_id, owner=owner, generation=generation
             )
 

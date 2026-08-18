@@ -1,7 +1,5 @@
-import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
-
 import { LoadMoreButton } from "../../components/LoadMoreButton";
+import { useActivityPagination } from "../../components/useActivityPagination";
 import { api } from "../../lib/api/client";
 import type { TrackedRequestEvent } from "../../lib/api/types";
 import { formatDate, trackingStatusLabel } from "../../lib/status";
@@ -13,19 +11,9 @@ type Props = {
 };
 
 export function TrackingActivity({ initialCursor, initialEvents, requestId }: Props) {
-  const [events, setEvents] = useState(initialEvents);
-  const [cursor, setCursor] = useState(initialCursor ?? null);
-  const older = useMutation({
-    mutationFn: () => api.trackedRequest(requestId, cursor ?? undefined),
-    onSuccess: (page) => {
-      const byId = new Map(events.map((event) => [event.id, event]));
-      page.events.forEach((event) => byId.set(event.id, event));
-      setEvents(
-        [...byId.values()].sort((left, right) => left.createdAt.localeCompare(right.createdAt)),
-      );
-      setCursor(page.eventsNextCursor ?? null);
-    },
-  });
+  const { cursor, events, older } = useActivityPagination(initialEvents, initialCursor, (cursor) =>
+    api.trackedRequest(requestId, cursor),
+  );
   return (
     <section
       aria-labelledby="tracking-activity-title"

@@ -1,8 +1,8 @@
 # Configuration administration usability
 
-Status: implementation in progress
+Status: implemented and locally verified
 Owner: Platform administration
-Last reviewed: 8 August 2026
+Last reviewed: 18 August 2026
 
 ## Purpose
 
@@ -141,7 +141,7 @@ group or workflow definition.
 Acceptance criteria:
 
 1. Every submitted request is pinned to an immutable configuration and workflow.
-2. Historical paths remain readable for audit and requester tracking.
+2. Historical paths remain readable for audit and Customer tracking.
 3. A renamed unit retains its stable identifier.
 4. Retirement prevents new routing only from its effective time.
 

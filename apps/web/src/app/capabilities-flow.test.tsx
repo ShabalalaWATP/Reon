@@ -129,12 +129,11 @@ describe("server capabilities", () => {
         if (url.pathname.endsWith("/requests")) return json({ items: [] });
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      true,
-      false,
-      false,
-      false,
+      {
+        disabledCapabilities: false,
+        emptyActionWorkspace: false,
+        emptyNotificationWorkspace: false,
+      },
     );
     const user = userEvent.setup();
     renderApp("/my-work");
@@ -158,12 +157,11 @@ describe("server capabilities", () => {
         if (url.pathname.endsWith("/requests")) return json({ items: [] });
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      true,
-      false,
-      false,
-      false,
+      {
+        disabledCapabilities: false,
+        emptyActionWorkspace: false,
+        emptyNotificationWorkspace: false,
+      },
     );
     renderApp("/requests");
     const link = await screen.findByRole("link", { name: "120 unread notifications" });

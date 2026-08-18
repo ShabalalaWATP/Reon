@@ -16,7 +16,6 @@ from mist_service.workflow.errors import (
     WorkflowEngineUnavailable,
     WorkflowTaskNotFound,
 )
-from mist_service.workflow.fake import FakeWorkflowEngine
 from mist_service.workflow.types import (
     ActiveTaskQuery,
     ClaimTaskCommand,
@@ -31,6 +30,7 @@ from mist_service.workflow.types import (
     WorkflowProcessState,
     WorkflowTask,
 )
+from workflow_test_support import FakeWorkflowEngine
 
 REQUEST_ID = UUID("00000000-0000-4000-8000-000000000001")
 OTHER_REQUEST_ID = UUID("00000000-0000-4000-8000-000000000004")

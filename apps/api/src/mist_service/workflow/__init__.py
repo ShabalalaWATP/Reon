@@ -1,8 +1,7 @@
-"""Workflow ports, adapters, deterministic fake and projection helpers."""
+"""Workflow ports, adapters and projection helpers."""
 
 from mist_service.workflow.camunda import CamundaWorkflowEngine
 from mist_service.workflow.engine import WorkflowEngine
-from mist_service.workflow.fake import FakeWorkflowEngine
 from mist_service.workflow.lookup import (
     TaskLookupPolicy,
     single_active_task,
@@ -42,7 +41,6 @@ __all__ = [
     "ClaimTaskCommand",
     "CompleteTaskCommand",
     "DeliveryTeamId",
-    "FakeWorkflowEngine",
     "StartProcessCommand",
     "StartedProcess",
     "StartedProcessQuery",

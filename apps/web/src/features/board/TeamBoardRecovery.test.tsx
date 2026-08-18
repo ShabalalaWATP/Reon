@@ -70,9 +70,7 @@ describe("team workflow board", () => {
         if (url.pathname.endsWith("/board")) return json(board);
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      false,
+      { emptyTeamWorkspaces: false },
     );
     const user = userEvent.setup();
     renderApp("/teams/team-ssg/board");
@@ -113,9 +111,7 @@ describe("team workflow board", () => {
         if (url.pathname.endsWith("/packages")) return json({ items: [packageItem] });
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      false,
+      { emptyTeamWorkspaces: false },
     );
     const user = userEvent.setup();
     renderApp("/teams/team-ssg/board");
@@ -143,9 +139,7 @@ describe("team workflow board", () => {
         if (url.pathname.endsWith("/board")) return json(board);
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      false,
+      { emptyTeamWorkspaces: false },
     );
 
     renderApp("/teams/team-ssg/board");

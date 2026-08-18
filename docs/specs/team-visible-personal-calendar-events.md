@@ -1,5 +1,7 @@
 # Team-visible Personal Calendar Events
 
+Status: implemented current calendar contract. Last reviewed 18 August 2026.
+
 ## Purpose
 
 Every staff account has a personal calendar. Personal calendar activity created

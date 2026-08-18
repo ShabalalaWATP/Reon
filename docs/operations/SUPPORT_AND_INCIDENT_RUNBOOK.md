@@ -1,5 +1,8 @@
 # Support and incident runbook
 
+Status: operational decision procedure, pending named production owners
+Last reviewed: 18 August 2026
+
 ## Pilot ownership
 
 Named people must be entered in the signed
@@ -75,10 +78,21 @@ change.
   use capped delay and cover approximately 13 minutes. Never fabricate task
   state.
 - If an exact request exhausted its workflow retries during a longer outage,
-  inspect it first with `python -m mist_service.maintenance workflow-recovery
-  --request-id <uuid>`. Requeue only after Camunda is healthy, using `--apply
-  --confirm REQUEUE_FAILED_WORKFLOW`. The command refuses non-failed work,
-  rechecks state in a transaction and appends a content-free recovery event.
+  inspect it first in local Compose:
+
+  ```powershell
+  docker compose exec --no-TTY api python -m mist_service.maintenance workflow-recovery --request-id <uuid>
+  ```
+
+  Requeue only after Camunda is healthy:
+
+  ```powershell
+  docker compose exec --no-TTY api python -m mist_service.maintenance workflow-recovery --request-id <uuid> --apply --confirm REQUEUE_FAILED_WORKFLOW
+  ```
+
+  The command requeues only recognised failed workflow work, rechecks state in
+  a transaction and appends a content-free recovery event when it applies a
+  repair.
 - After recovery, prove the expected current task exists exactly once. Confirm
   the failed-command, pending-command, projection-error and alert counts return
   to zero before closing the incident.

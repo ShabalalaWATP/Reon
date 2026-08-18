@@ -1,7 +1,7 @@
 # SOLID, readability and maintainability improvement specification
 
 Status: implemented and verified
-Last reviewed: 14 August 2026
+Last reviewed: 18 August 2026
 
 ## Objective
 
@@ -125,7 +125,16 @@ The programme is complete only when:
 
 ## Current implementation evidence
 
-Reviewed on 14 August 2026.
+Baseline reviewed on 14 August 2026.
+
+The 18 August maintainability pass preserved these ratchets while removing the
+production workflow fake, separating HTTP application composition from lifespan
+initialisation, eliminating the remaining wide application ports and
+consolidating duplicated frontend components, hooks, schemas and test fixtures.
+It also connected bounded analytics repair commands and notification-projection
+failure accounting to their runtime entry points. Static, architecture, backend,
+frontend, independent quality and independent security checks passed for that
+candidate; exact run evidence remains in the master plan and development story.
 
 The source-level programme has reached its zero-debt target:
 

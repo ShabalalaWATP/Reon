@@ -11,7 +11,11 @@ from mist_service.board_policy import (
     authorise_package_change,
     require,
 )
-from mist_service.board_ports import BoardCommandPort, BoardRepositoryPort
+from mist_service.board_ports import (
+    BoardCommandPort,
+    BoardPlanningReadPort,
+    BoardQueryPort,
+)
 from mist_service.board_projection import PACKAGE_TRANSITIONS
 from mist_service.domain import Actor
 from mist_service.errors import (
@@ -60,14 +64,16 @@ COLUMN_TO_PACKAGE_STATUS = {
 class BoardService:
     def __init__(
         self,
-        board: BoardRepositoryPort,
+        queries: BoardQueryPort,
+        planning: BoardPlanningReadPort,
         commands: BoardCommandPort,
         workspaces: TeamWorkspaceReadPort,
     ) -> None:
-        self._board = board
+        self._queries = queries
+        self._planning = planning
         self._commands = commands
         self._workspaces = workspaces
-        self._package_policy = BoardPackagePolicy(board)
+        self._package_policy = BoardPackagePolicy(planning, queries)
 
     async def board(
         self,
@@ -82,13 +88,13 @@ class BoardService:
             actor.id, team_id, ManagementAction.BOARD
         )
         try:
-            items, next_cursor = await self._board.board_page(
+            items, next_cursor = await self._queries.board_page(
                 team_id, filters, cursor, limit
             )
         except (ValueError, UnicodeError) as error:
             raise InvalidBoardChange("The board cursor is invalid.") from error
-        column_counts = await self._board.board_column_counts(team_id, filters)
-        config = await self._board.configuration(team_id)
+        column_counts = await self._queries.board_column_counts(team_id, filters)
+        config = await self._queries.configuration(team_id)
         return BoardResult(
             items=items,
             next_cursor=next_cursor,
@@ -100,7 +106,7 @@ class BoardService:
             ),
             wip_limits=config.wip_limits if config else {},
             configuration_version=config.version if config else 0,
-            saved_views=await self._board.saved_views(team_id, actor.id),
+            saved_views=await self._queries.saved_views(team_id, actor.id),
             generated_at=datetime.now(UTC),
         )
 
@@ -111,7 +117,7 @@ class BoardService:
         await self._workspaces.require_projection_read(
             actor.id, team_id, ManagementAction.BOARD
         )
-        return await self._board.request_item(team_id, request_id)
+        return await self._queries.request_item(team_id, request_id)
 
     async def packages(
         self, actor: Actor, team_id: UUID, limit: int
@@ -120,7 +126,7 @@ class BoardService:
         await self._workspaces.require_projection_read(
             actor.id, team_id, ManagementAction.BOARD
         )
-        return WorkPackageList(items=await self._board.list_packages(team_id, limit))
+        return WorkPackageList(items=await self._queries.list_packages(team_id, limit))
 
     async def package(
         self, actor: Actor, team_id: UUID, package_id: UUID
@@ -129,21 +135,21 @@ class BoardService:
         await self._workspaces.require_projection_read(
             actor.id, team_id, ManagementAction.BOARD
         )
-        return await self._board.package(team_id, package_id)
+        return await self._queries.package(team_id, package_id)
 
     async def create_package(
         self, actor: Actor, team_id: UUID, command: WorkPackageCommand
     ) -> WorkPackageResult:
         self._require_staff(actor)
         await self._package_policy.authorise_create(actor, team_id, command)
-        await self._board.lock_planning_aggregate(team_id)
+        await self._planning.lock_planning_aggregate(team_id)
         await self._package_policy.validate_links(actor, team_id, command)
         package = await self._commands.create_package(actor.id, team_id, command)
         if await self._commands.dependency_cycle(
             team_id, package.id, set(command.dependency_ids)
         ):
             raise InvalidBoardChange("Package dependencies cannot contain a cycle.")
-        return await self._board.package(team_id, package.id)
+        return await self._queries.package(team_id, package.id)
 
     async def update_package(
         self,
@@ -153,17 +159,17 @@ class BoardService:
         command: WorkPackageUpdate,
     ) -> WorkPackageResult:
         self._require_staff(actor)
-        package = await self._board.locked_package(
+        package = await self._planning.locked_package(
             team_id, package_id, command.expected_version
         )
-        await authorise_package_change(self._board, actor, package, command.grant_id)
-        await require_package_requester_excluded(self._board, package, actor.id)
+        await authorise_package_change(self._planning, actor, package, command.grant_id)
+        await require_package_requester_excluded(self._planning, package, actor.id)
         require(
             actor.role is not UserRole.DELIVERY_SPECIALIST
             or command.owner_user_id == package.owner_user_id,
             BoardItemNotFound(),
         )
-        await self._board.lock_planning_aggregate(team_id)
+        await self._planning.lock_planning_aggregate(team_id)
         await self._package_policy.validate_links(actor, team_id, command)
         if (
             package.id in command.dependency_ids
@@ -173,7 +179,7 @@ class BoardService:
         ):
             raise InvalidBoardChange("Package dependencies cannot contain a cycle.")
         await self._commands.replace_package(package, actor.id, command)
-        return await self._board.package(team_id, package.id)
+        return await self._queries.package(team_id, package.id)
 
     async def move_package(
         self,
@@ -183,11 +189,11 @@ class BoardService:
         command: WorkPackageMove,
     ) -> WorkPackageResult:
         self._require_staff(actor)
-        package = await self._board.locked_package(
+        package = await self._planning.locked_package(
             team_id, package_id, command.expected_version
         )
-        await authorise_package_change(self._board, actor, package, command.grant_id)
-        await require_package_requester_excluded(self._board, package, actor.id)
+        await authorise_package_change(self._planning, actor, package, command.grant_id)
+        await require_package_requester_excluded(self._planning, package, actor.id)
         require(
             command.target in PACKAGE_TRANSITIONS[package.status],
             InvalidBoardChange("That package transition is not available."),
@@ -196,7 +202,7 @@ class BoardService:
         await self._commands.move_package(
             package, actor.id, command.target, command.reason
         )
-        return await self._board.package(team_id, package.id)
+        return await self._queries.package(team_id, package.id)
 
     async def move_board_item(
         self, actor: Actor, team_id: UUID, command: BoardMoveAttempt
@@ -227,8 +233,8 @@ class BoardService:
         self, actor: Actor, team_id: UUID, command: BoardConfigurationCommand
     ) -> BoardConfigurationResult:
         self._require_staff(actor)
-        await authorise_board_manager(self._board, actor, team_id, command.grant_id)
-        await self._board.lock_planning_aggregate(team_id)
+        await authorise_board_manager(self._planning, actor, team_id, command.grant_id)
+        await self._planning.lock_planning_aggregate(team_id)
         config = await self._commands.set_configuration(team_id, command)
         return BoardConfigurationResult(
             wip_limits=config.wip_limits, version=config.version

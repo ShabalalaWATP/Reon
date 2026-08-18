@@ -12,6 +12,20 @@ import { AuthProvider } from "../lib/auth/AuthProvider";
 import { ThemeProvider } from "../lib/theme/ThemeProvider";
 
 export type FetchHandler = (url: URL, init: RequestInit) => Response | Promise<Response>;
+type MockFetchOptions = {
+  disabledCapabilities?: boolean;
+  emptyAccountRequests?: boolean;
+  emptyActionWorkspace?: boolean;
+  emptyDraftRegister?: boolean;
+  emptyNotificationWorkspace?: boolean;
+  emptyStatisticsScopes?: boolean;
+  emptyTeamWorkspaces?: boolean;
+};
+
+type MockFeatureFetchOptions = Omit<
+  MockFetchOptions,
+  "disabledCapabilities" | "emptyAccountRequests"
+>;
 
 export function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -22,13 +36,15 @@ export function json(data: unknown, status = 200) {
 
 export function mockFetch(
   handler: FetchHandler,
-  useEmptyDraftRegister = true,
-  useEmptyStatisticsScopes = true,
-  useEmptyTeamWorkspaces = true,
-  useEmptyActionWorkspace = true,
-  useEmptyNotificationWorkspace = true,
-  useDisabledCapabilities = true,
-  useEmptyAccountRequests = true,
+  {
+    disabledCapabilities = true,
+    emptyAccountRequests = true,
+    emptyActionWorkspace = true,
+    emptyDraftRegister = true,
+    emptyNotificationWorkspace = true,
+    emptyStatisticsScopes = true,
+    emptyTeamWorkspaces = true,
+  }: MockFetchOptions = {},
 ) {
   const mock = vi.fn((input: RequestInfo | URL, init: RequestInit = {}) => {
     const value = typeof input === "string" ? input : input.toString();
@@ -41,7 +57,7 @@ export function mockFetch(
         json({ classification: "OFFICIAL", version: 1, updatedAt: "2026-08-10T00:00:00Z" }),
       );
     }
-    if (useDisabledCapabilities && url.pathname.endsWith("/me/capabilities")) {
+    if (disabledCapabilities && url.pathname.endsWith("/me/capabilities")) {
       return Promise.resolve(
         json({
           myWork: false,
@@ -54,32 +70,32 @@ export function mockFetch(
       );
     }
     if (
-      useEmptyDraftRegister &&
+      emptyDraftRegister &&
       url.pathname.endsWith("/request-drafts") &&
       (!init.method || init.method === "GET")
     )
       return Promise.resolve(json({ items: [] }));
     if (
-      useEmptyAccountRequests &&
+      emptyAccountRequests &&
       url.pathname.endsWith("/admin/account-requests") &&
       (!init.method || init.method === "GET")
     ) {
       return Promise.resolve(json({ items: [] }));
     }
     if (
-      useEmptyTeamWorkspaces &&
+      emptyTeamWorkspaces &&
       url.pathname.endsWith("/team-workspaces") &&
       (!init.method || init.method === "GET")
     )
       return Promise.resolve(json({ items: [] }));
     if (
-      useEmptyStatisticsScopes &&
+      emptyStatisticsScopes &&
       url.pathname.endsWith("/statistics/scopes") &&
       (!init.method || init.method === "GET")
     )
       return Promise.resolve(json({ items: [] }));
     if (
-      useEmptyActionWorkspace &&
+      emptyActionWorkspace &&
       url.pathname.endsWith("/me/actions") &&
       (!init.method || init.method === "GET")
     )
@@ -98,14 +114,14 @@ export function mockFetch(
           },
         }),
       );
-    if (useEmptyNotificationWorkspace && url.pathname.endsWith("/me/notifications/count")) {
+    if (emptyNotificationWorkspace && url.pathname.endsWith("/me/notifications/count")) {
       return Promise.resolve(json({ unreadCount: 0, projectedAt: null }));
     }
-    if (useEmptyNotificationWorkspace && url.pathname.endsWith("/me/notifications/preferences")) {
+    if (emptyNotificationWorkspace && url.pathname.endsWith("/me/notifications/preferences")) {
       return Promise.resolve(json({ groups: [] }));
     }
     if (
-      useEmptyNotificationWorkspace &&
+      emptyNotificationWorkspace &&
       url.pathname.endsWith("/me/notifications") &&
       (!init.method || init.method === "GET")
     )
@@ -129,23 +145,8 @@ export function mockFetch(
   return mock;
 }
 
-export function mockFeatureFetch(
-  handler: FetchHandler,
-  useEmptyDraftRegister = true,
-  useEmptyStatisticsScopes = true,
-  useEmptyTeamWorkspaces = true,
-  useEmptyActionWorkspace = true,
-  useEmptyNotificationWorkspace = true,
-) {
-  return mockFetch(
-    handler,
-    useEmptyDraftRegister,
-    useEmptyStatisticsScopes,
-    useEmptyTeamWorkspaces,
-    useEmptyActionWorkspace,
-    useEmptyNotificationWorkspace,
-    false,
-  );
+export function mockFeatureFetch(handler: FetchHandler, options: MockFeatureFetchOptions = {}) {
+  return mockFetch(handler, { ...options, disabledCapabilities: false });
 }
 
 export function TestProviders({ children }: { children: ReactNode }) {

@@ -58,12 +58,6 @@ class ProductServiceSupport[RepositoryT: ProductAccessRepository]:
             raise ProductConflict()
 
     @staticmethod
-    def _assigned_team(actor: Actor, request: ProductRequestRecord) -> bool:
-        if request.assigned_team_id is not None:
-            return request.assigned_team_id in actor.organisation_unit_ids
-        return request.assigned_team == actor.scope
-
-    @staticmethod
     def _assigned_analyst(actor: Actor, request: ProductRequestRecord) -> bool:
         return request.assigned_specialist_id == actor.id or (
             actor.id in request.participant_ids

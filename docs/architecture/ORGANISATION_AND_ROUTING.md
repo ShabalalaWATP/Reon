@@ -1,5 +1,9 @@
 # Organisation and Routing Model
 
+Status: current organisation and routing authority
+
+Last reviewed: 18 August 2026
+
 ## Current workflow
 
 Customers submit into JIOC. Named routing users select each destination down the
@@ -56,6 +60,12 @@ Statistics use the same stored organisation closure as routing, but a statistics
 grant is independent of workflow-task ownership. A reporting request names a
 grant root and a selected node. The selected node must be the root or one of its
 configured descendants. Parents and sibling branches are not returned.
+
+The aggregate response is backed by versioned request, stage, capacity and
+operational facts in PostgreSQL. Fact projection never creates a routing grant.
+Bounded operator rebuild and replay commands reconstruct projections from
+authorised source evidence without asking Camunda to make an organisation or
+reporting decision.
 
 ```text
 JIOC grant       -> JIOC, DIGOC, SYGOC, MYGOC and everything below them

@@ -1,5 +1,8 @@
 # Mist Service Expansion: Definitions of Done
 
+Status: current completion standard
+Last reviewed: 18 August 2026
+
 ## Purpose
 
 These definitions govern the expansion programme covering Customer data quality,
@@ -152,7 +155,7 @@ the MVP pilot uses these thresholds:
 
 Done when:
 
-- the current 99-account organisation baseline is fully staffed and includes an
+- the current 108-account organisation baseline is fully staffed and includes an
   independent configuration approver;
 - the current capability specifications, management-grant ADR, analytics ADR,
   calendar ADR and threat models are accepted;
@@ -173,8 +176,10 @@ Done when:
   are tested;
 - every recorded routing, hold, resume, rework and release decision has the
   mandatory evidence defined by its action schema;
-- a released product is visibly downloadable from both the Customer register and
-  request detail through an authenticated no-store endpoint;
+- a released product is visibly retrievable from both the Customer register and
+  request detail through an authenticated no-store download or redirect endpoint;
+- the originating Customer can explicitly accept the current disseminated
+  product, idempotently and independently of download, redirect or feedback;
 - feedback requires the agreed rating and comment fields, is accepted once only
   after successful dissemination and remains unavailable for cancelled or closed
   without delivery requests; and
@@ -222,8 +227,8 @@ Done when:
 - command managers see only their command and descendants;
 - Ops managers see only their Ops group and direct teams;
 - team managers see only their team;
-- Platform Administrators see whole-organisation aggregates and platform health
-  without request content;
+- Platform Administrators see content-free whole-organisation aggregates and
+  statistics projection health without receiving operational diagnostics;
 - traffic, WIP, age, due risk, throughput, stage duration, clarification, rework,
   feedback and child-unit comparisons are available for bounded date ranges;
 - small feedback cohorts are suppressed and every chart has a table equivalent;

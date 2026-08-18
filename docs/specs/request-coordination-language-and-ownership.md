@@ -1,5 +1,7 @@
 # Request coordination language and ownership
 
+Status: implemented current language contract. Last reviewed 18 August 2026.
+
 ## Purpose
 
 Use language that tells staff what needs attention while keeping stable Camunda

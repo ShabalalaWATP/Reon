@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-Status: implementation approved on 9 August 2026.
+Status: implemented and locally verified. Last reviewed 18 August 2026.
 
 This specification remediates the findings from the full repository, dependency,
 container and local dynamic security assessment completed on 9 August 2026. It

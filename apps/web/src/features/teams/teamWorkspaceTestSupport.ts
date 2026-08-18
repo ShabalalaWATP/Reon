@@ -5,40 +5,16 @@ import type {
   TeamMember,
   TeamWorkspaceAccess,
 } from "../../lib/api/teamTypes";
-import { enabledCapabilities, requesterSession } from "../../test/fixtures";
+import { enabledCapabilities } from "../../test/fixtures";
 import { json, mockFeatureFetch } from "../../test/render";
+import { createTeamWorkspaceAccess } from "../../test/teamFixtures";
 
-export const managerSession: Session = {
-  ...requesterSession,
-  user: {
-    ...requesterSession.user,
-    id: "manager-ssg",
-    username: "admin8",
-    displayName: "Grant Hanley",
-    role: "DELIVERY_TEAM_LEAD",
-    scope: "SSG Team",
-  },
-};
-export const analystSession: Session = {
-  ...managerSession,
-  user: {
-    ...managerSession.user,
-    id: "analyst-ssg",
-    username: "admin11",
-    displayName: "Lewis Ferguson",
-    role: "DELIVERY_SPECIALIST",
-  },
-};
-export const managerAccess: TeamWorkspaceAccess = {
-  teamId: "team-ssg",
-  teamCode: "SSG_TEAM",
-  teamName: "SSG Team",
-  unitKind: "TEAM",
-  workspacePosition: "MANAGER",
-  grantId: "grant-ssg",
+export { analystSession, managerSession } from "../../test/teamFixtures";
+
+export const managerAccess = createTeamWorkspaceAccess({
   permissions: ["BOARD", "CALENDAR", "CAPACITY", "ROSTER", "STATISTICS"],
   views: ["OVERVIEW", "BOARD", "CALENDAR", "PEOPLE", "STATISTICS", "ACTIVITY"],
-};
+});
 export const analystAccess: TeamWorkspaceAccess = {
   ...managerAccess,
   grantId: null,
@@ -170,9 +146,7 @@ export function mockTeamApi(
         });
       throw new Error(`Unexpected ${url.pathname}`);
     },
-    true,
-    true,
-    false,
+    { emptyTeamWorkspaces: false },
   );
 }
 

@@ -18,7 +18,6 @@ from mist_service.board_policy import require
 from mist_service.board_projection import (
     PACKAGE_COLUMNS,
     ProjectedBoardItem,
-    apply_filters,
     decode_cursor,
     encode_cursor,
     package_projection,
@@ -28,7 +27,6 @@ from mist_service.board_projection import (
 from mist_service.models import RequestStatus, ServiceRequest
 from mist_service.schemas.board import (
     BoardConfigurationCommand,
-    BoardFilters,
     BoardItem,
     BoardItemType,
     IterationCommand,
@@ -169,9 +167,8 @@ def test_request_and_package_projection_rules_are_complete() -> None:
         assert result.item.available_columns
 
 
-def test_filters_and_keyset_pagination_compose_without_leaking_rows() -> None:
-    owner = uuid4()
-    wanted = item(owner_id=owner, title="Urgent customer product")
+def test_keyset_pagination_does_not_repeat_rows() -> None:
+    wanted = item(title="Urgent customer product")
     rows = [
         wanted,
         item(column=BoardColumn.BLOCKED),
@@ -180,17 +177,6 @@ def test_filters_and_keyset_pagination_compose_without_leaking_rows() -> None:
         item(item_type=BoardItemType.SERVICE_REQUEST),
         item(days=30),
     ]
-    filters = BoardFilters(
-        search="customer",
-        columns=[BoardColumn.READY],
-        priorities=["HIGH"],
-        ownerUserId=owner,
-        itemTypes=[BoardItemType.WORK_PACKAGE],
-        dueBefore=datetime.now(UTC).date() + timedelta(days=2),
-    )
-    assert apply_filters(rows, filters) == [wanted]
-    assert apply_filters(rows, BoardFilters()) == rows
-
     first_page, cursor = paginate(rows, None, 2)
     assert len(first_page) == 2
     assert cursor is not None

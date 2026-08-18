@@ -1,39 +1,15 @@
 import type { BoardItem, BoardResult, WorkPackage } from "../../lib/api/boardTypes";
 import type { RequestDetail, Session } from "../../lib/api/types";
 import type { TeamMember, TeamWorkspaceAccess } from "../../lib/api/teamTypes";
-import { requestDetail, requesterSession } from "../../test/fixtures";
+import { requestDetail } from "../../test/fixtures";
 import { json, mockFetch } from "../../test/render";
+import { createTeamWorkspaceAccess } from "../../test/teamFixtures";
 
-export const managerSession: Session = {
-  ...requesterSession,
-  user: {
-    ...requesterSession.user,
-    id: "manager-ssg",
-    username: "admin8",
-    displayName: "Grant Hanley",
-    role: "DELIVERY_TEAM_LEAD",
-    scope: "SSG Team",
-  },
-};
-export const analystSession: Session = {
-  ...managerSession,
-  user: {
-    ...managerSession.user,
-    id: "analyst-ssg",
-    username: "admin11",
-    displayName: "Lewis Ferguson",
-    role: "DELIVERY_SPECIALIST",
-  },
-};
-export const managerAccess: TeamWorkspaceAccess = {
-  teamId: "team-ssg",
-  teamCode: "SSG_TEAM",
-  teamName: "SSG Team",
-  unitKind: "TEAM",
-  workspacePosition: "MANAGER",
-  grantId: "grant-ssg",
+export { analystSession, managerSession } from "../../test/teamFixtures";
+
+export const managerAccess = createTeamWorkspaceAccess({
   permissions: ["BOARD", "CALENDAR", "CAPACITY", "ROSTER", "STATISTICS"],
-};
+});
 export const analystAccess: TeamWorkspaceAccess = {
   ...managerAccess,
   workspacePosition: "MEMBER",
@@ -227,9 +203,7 @@ export function mockBoard(
         ? boardGetResponse(url.pathname, session, access, value, deepLinkedItem, state)
         : boardMutationResponse(url.pathname, method, body, session, value, failMutations, state);
     },
-    true,
-    true,
-    false,
+    { emptyTeamWorkspaces: false },
   );
 }
 

@@ -19,11 +19,13 @@ describe("product API client", () => {
         });
         return json({ id: "response" });
       },
-      false,
-      false,
-      false,
-      false,
-      false,
+      {
+        emptyActionWorkspace: false,
+        emptyDraftRegister: false,
+        emptyNotificationWorkspace: false,
+        emptyStatisticsScopes: false,
+        emptyTeamWorkspaces: false,
+      },
     );
     await productApi.createPackage({ requestId: "request/one", ...versioned }, csrf);
     await productApi.package("package/one");
@@ -88,11 +90,13 @@ describe("product API client", () => {
         seen = { headers: new Headers(init.headers), path: `${url.pathname}${url.search}` };
         return json({ intentId: "intent", packageVersion: 2 });
       },
-      false,
-      false,
-      false,
-      false,
-      false,
+      {
+        emptyActionWorkspace: false,
+        emptyDraftRegister: false,
+        emptyNotificationWorkspace: false,
+        emptyStatisticsScopes: false,
+        emptyTeamWorkspaces: false,
+      },
     );
     const receipt = await productApi.uploadContent(
       "package",

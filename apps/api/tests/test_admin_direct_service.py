@@ -48,8 +48,11 @@ async def test_direct_service_happy_paths_cover_transactional_continuations(
             scope=stored_actor.scope,
         )
         repository = SqlAlchemyAdminRepository(session)
+        application = SqlAlchemyAdminApplication(session)
         service = AdminService(
-            SqlAlchemyAdminApplication(session),
+            application,
+            application,
+            application,
             harness.settings,
             PasswordHasher(time_cost=1, memory_cost=8_192, parallelism=1),
         )

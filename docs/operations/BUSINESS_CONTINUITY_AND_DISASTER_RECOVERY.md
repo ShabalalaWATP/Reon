@@ -1,7 +1,7 @@
 # Business continuity and disaster recovery framework
 
 Status: decision framework, not an accepted production plan
-Last reviewed: 8 August 2026
+Last reviewed: 18 August 2026
 
 ## Purpose and scope
 
@@ -69,9 +69,12 @@ must be used until the information-handling model is approved.
 
 ## Current evidence and limitations
 
-Local PostgreSQL backup and restore tooling, integrity checks, fail-closed
-readiness and controlled dependency recovery exist. Historical and current-head
-migration evidence is in `docs/assurance/MIGRATION_AND_RESTORE_EVIDENCE.md`.
-There is no accepted production RTO/RPO, immutable backup platform,
-point-in-time recovery rehearsal, multi-store recovery exercise, on-call rota or
-signed continuity plan.
+Local PostgreSQL backup tooling, integrity checks, fail-closed readiness and
+controlled dependency recovery exist. Historical migration evidence is in
+[`MIGRATION_AND_RESTORE_EVIDENCE.md`](../assurance/MIGRATION_AND_RESTORE_EVIDENCE.md),
+but the current restore script cannot complete its Python verification because
+its libpq and async-SQLAlchemy consumers require incompatible URL schemes. The
+current fresh Compose bootstrap also omits the maintenance role's database-level
+`CONNECT` grant. There is no accepted production RTO/RPO, current-head restore
+rehearsal, immutable backup platform, point-in-time recovery rehearsal,
+multi-store recovery exercise, on-call rota or signed continuity plan.

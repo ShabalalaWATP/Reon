@@ -51,9 +51,7 @@ describe("QC profile presentation", () => {
           });
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      false,
+      { emptyTeamWorkspaces: false },
     );
 
     renderApp("/profile");

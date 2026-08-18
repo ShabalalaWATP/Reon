@@ -1,12 +1,13 @@
 # Workstation and Linux host setup
 
 Status: current setup authority for the executable Docker Compose topology
-Last reviewed: 14 August 2026
+Last reviewed: 18 August 2026
 
 This guide prepares Windows, macOS and Linux hosts for Mist Service. It is the
 common prerequisite for local use and for the private AWS and Google Cloud
-synthetic-evaluation guides. The repository supplies one executable topology:
-Docker Compose. It is suitable for development and synthetic evaluation only.
+and Azure synthetic-evaluation guides. The repository supplies one executable
+topology: Docker Compose. It is suitable for development and synthetic
+evaluation only.
 
 ## 1. Choose a host path
 
@@ -27,8 +28,10 @@ All platforms also need:
 - Docker Compose v2, invoked as `docker compose`;
 - PowerShell 7.4 or later, invoked as `pwsh`;
 - a current Chromium browser; and
-- optional Node.js 22+, pnpm 11 and Python 3.12+ with `uv` when developing from
-  source outside containers.
+- optional Node.js 22+, pnpm 11.21.0, Python 3.12+ and `uv` when developing from
+  source outside containers. Repository scripts also require the `corepack`
+  command; install an approved Corepack package when the Node distribution does
+  not include it.
 
 ## 2. Windows 11
 
@@ -109,11 +112,18 @@ supplied Compose file binds them to loopback.
 
 ## 5. Obtain and configure the source
 
-Clone from the approved repository endpoint. Never put a personal access token
+Clone from the approved repository endpoint and detach at the exact 40-character
+commit recorded in the approved release evidence. Never execute a mutable
+default branch, tag or archive by name alone. Never put a personal access token
 in the clone URL, shell history or `.env`.
 
 ```powershell
+$approvedCommit = '<approved-40-character-release-commit>'
 git clone <approved-repository-url> Mist-Service
+git -C Mist-Service checkout --detach $approvedCommit
+if ((git -C Mist-Service rev-parse HEAD).Trim() -ne $approvedCommit) {
+    throw 'The checkout does not match the approved release commit.'
+}
 Set-Location Mist-Service
 Copy-Item .env.example .env
 ```
@@ -121,15 +131,25 @@ Copy-Item .env.example .env
 On macOS or Linux, the final two commands can be:
 
 ```bash
+approved_commit='<approved-40-character-release-commit>'
+git -C Mist-Service checkout --detach "$approved_commit"
+test "$(git -C Mist-Service rev-parse HEAD)" = "$approved_commit"
 cd Mist-Service
 cp .env.example .env
 chmod 600 .env
 ```
 
-Replace every placeholder secret in `.env`. Keep `ENVIRONMENT=local` for this
-topology. Setting `ENVIRONMENT=prod` is not a production deployment shortcut and
-will deliberately fail without an approved external product-storage runtime.
-Use the [configuration reference](CONFIGURATION_REFERENCE.md) for every setting.
+Where the release authority requires signed commits, run `git verify-commit`
+against that same commit and retain the successful identity result. A commit ID
+still requires approval through a trusted release record; it is not approval by
+itself.
+
+Replace every placeholder secret in `.env`, including separate maintenance and
+security-pseudonym credentials. Keep `ENVIRONMENT=local` for this topology.
+Setting `ENVIRONMENT=prod` is not a production deployment shortcut and will
+deliberately fail with the demonstration feature set because no approved
+managed-product runtime is injected. Use the
+[configuration reference](CONFIGURATION_REFERENCE.md) for every setting.
 
 ## 6. Start and prove the complete application
 
@@ -156,15 +176,14 @@ On macOS or Linux, `curl -fsS http://127.0.0.1:8000/ready` is equivalent. Every
 required readiness check must be `ok`. Then open
 [http://127.0.0.1:5173](http://127.0.0.1:5173).
 
-Run a non-destructive workflow smoke exercise when qualifying the environment:
-
-```powershell
-pwsh -File ./scripts/smoke-camunda.ps1
-```
+Qualify workflow through the integrated synthetic application journey documented
+in [Local Docker](LOCAL_DOCKER.md). Do not run the Camunda-only smoke against an
+attested application stack because it deploys another process-definition
+version.
 
 ## 7. Develop from source
 
-Install Node.js 22+, enable Corepack, install pnpm 11, install `uv`, then run:
+Install Node.js 22+, Corepack, pnpm 11.21.0 and `uv`, then run:
 
 ```powershell
 corepack enable

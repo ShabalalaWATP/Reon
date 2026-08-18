@@ -61,14 +61,17 @@ describe("requester experience", () => {
 
   it("shows empty and recoverable error states", async () => {
     let fail = true;
-    mockFeatureFetch((url) => {
-      if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
-      if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
-      if (url.pathname.endsWith("/request-drafts"))
-        return fail ? json({ detail: "Unavailable" }, 503) : json({ items: [] });
-      if (url.pathname.endsWith("/requests")) return json({ items: [] });
-      throw new Error(url.pathname);
-    }, false);
+    mockFeatureFetch(
+      (url) => {
+        if (url.pathname.endsWith("/auth/me")) return json(requesterSession);
+        if (url.pathname.endsWith("/me/capabilities")) return json(enabledCapabilities);
+        if (url.pathname.endsWith("/request-drafts"))
+          return fail ? json({ detail: "Unavailable" }, 503) : json({ items: [] });
+        if (url.pathname.endsWith("/requests")) return json({ items: [] });
+        throw new Error(url.pathname);
+      },
+      { emptyDraftRegister: false },
+    );
     const user = userEvent.setup();
     renderApp("/requests");
     expect(

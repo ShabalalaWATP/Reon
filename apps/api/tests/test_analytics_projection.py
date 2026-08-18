@@ -5,11 +5,12 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
+import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api_helpers import perform, reach_delivery_work
-from conftest import ApiHarness
+from conftest import ApiHarness, request_payload
 from mist_service.analytics_models import (
     AnalyticsProjectionState,
     ProjectionHealth,
@@ -144,6 +145,29 @@ async def test_projection_is_idempotent_scoped_and_content_free(
         request = await session.get(ServiceRequest, UUID(request_id))
         assert request is not None
         assert state.source_event_count == request.audit_event_count
+
+
+async def test_projection_rebuild_refuses_unbounded_or_incomplete_source_sets(
+    api_harness: ApiHarness,
+) -> None:
+    await api_harness.login("admin2")
+    for _index in range(2):
+        response = await api_harness.client.post(
+            "/api/v1/requests",
+            json=request_payload(),
+            headers=api_harness.mutation_headers(),
+        )
+        assert response.status_code == 201, response.text
+
+    async with api_harness.sessions() as session:
+        for invalid_limit in (0, 5_001):
+            with pytest.raises(ValueError, match="request limit is invalid"):
+                await rebuild_analytics_projections(
+                    session,
+                    request_limit=invalid_limit,
+                )
+        with pytest.raises(ValueError, match="exceeds the bounded request limit"):
+            await rebuild_analytics_projections(session, request_limit=1)
 
 
 def _analytics_columns() -> set[str]:

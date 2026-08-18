@@ -5,6 +5,7 @@ import type { Session, WorkItem } from "../../lib/api/types";
 import { elapsedTime } from "../../lib/serviceTiming";
 import { statusLabels } from "../../lib/status";
 import { boardLabel } from "../board/boardPresentation";
+import { UpcomingTeamCalendar } from "./UpcomingTeamCalendar";
 import { hasWorkspaceView, useRoutingTeamHomeData, type RoutingHomeData } from "./useTeamHomeData";
 
 export function RoutingTeamHome({
@@ -26,7 +27,15 @@ export function RoutingTeamHome({
       {showQueue || showCalendar ? (
         <div className="team-home__columns">
           {showQueue ? <CurrentStages data={data} teamId={access.teamId} /> : null}
-          {showCalendar ? <UpcomingCalendar data={data} teamId={access.teamId} /> : null}
+          {showCalendar ? (
+            <UpcomingTeamCalendar
+              error={data.calendarError}
+              heading="Upcoming unit calendar"
+              items={data.upcoming}
+              pending={data.calendarPending}
+              teamId={access.teamId}
+            />
+          ) : null}
         </div>
       ) : null}
       {showActivity ? <RecentActivity data={data} teamId={access.teamId} /> : null}
@@ -103,37 +112,6 @@ function CurrentStages({ data, teamId }: { data: RoutingHomeData; teamId: string
       ) : (
         <p className="inline-empty">No routing decisions are currently visible.</p>
       )}
-    </section>
-  );
-}
-
-function UpcomingCalendar({ data, teamId }: { data: RoutingHomeData; teamId: string }) {
-  return (
-    <section className="team-home__list">
-      <header>
-        <h2>Upcoming unit calendar</h2>
-        <Link to={`/teams/${teamId}/calendar`}>Open Calendar</Link>
-      </header>
-      <ol>
-        {data.upcoming.map((item) => (
-          <li key={`${item.eventId}-${item.occurrenceStart}`}>
-            <time>
-              {new Date(item.startsAt).toLocaleString("en-GB", {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })}
-            </time>
-            <strong>{item.title}</strong>
-            <small>
-              {item.subjectDisplayName} · {boardLabel(item.category)}
-            </small>
-          </li>
-        ))}
-        {!data.calendarPending && data.upcoming.length === 0 ? (
-          <li className="inline-empty">No events in the next 14 days.</li>
-        ) : null}
-        {data.calendarError ? <li className="inline-unavailable">Calendar unavailable</li> : null}
-      </ol>
     </section>
   );
 }

@@ -330,8 +330,6 @@ function mockRoutingApi(options: RoutingMockOptions = {}) {
       if (workItems) return workItems;
       throw new Error(`Unexpected ${url.pathname}`);
     },
-    true,
-    false,
-    false,
+    { emptyStatisticsScopes: false, emptyTeamWorkspaces: false },
   );
 }

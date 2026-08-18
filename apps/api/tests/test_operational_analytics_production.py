@@ -11,6 +11,8 @@ from sqlalchemy import func, select
 from api_helpers import perform, reach_delivery_work
 from conftest import ApiHarness
 from mist_service.analytics_evolution_models import (
+    OPERATIONAL_ANALYTICS_DEFINITIONS,
+    AnalyticsDefinitionVersion,
     OperationalAnalyticsFact,
     OperationalFactType,
 )
@@ -68,6 +70,17 @@ async def test_real_activity_populates_only_the_exact_statistics_scope(
                 "destination_url",
             }
         )
+        definitions = list(await session.scalars(select(AnalyticsDefinitionVersion)))
+        definitions_by_key = {item.key: item for item in definitions}
+        for fact in facts:
+            expected = OPERATIONAL_ANALYTICS_DEFINITIONS[fact.type]
+            recorded = definitions_by_key[expected.key]
+            assert fact.definition_version == expected.version == recorded.version
+            assert (recorded.label, recorded.description, recorded.unit) == (
+                expected.label,
+                expected.description,
+                expected.unit,
+            )
 
     params = _statistics_params(grant_id)
     await harness.login("admin8")

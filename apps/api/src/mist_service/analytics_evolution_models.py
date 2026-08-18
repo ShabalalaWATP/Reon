@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import date, datetime
 from enum import StrEnum
 from uuid import UUID
@@ -36,6 +37,96 @@ class OperationalFactType(StrEnum):
     CAPACITY_RESERVED = "CAPACITY_RESERVED"
     PLANNING_ACTIVE_WORK = "PLANNING_ACTIVE_WORK"
     PLANNING_DEMAND = "PLANNING_DEMAND"
+
+
+@dataclass(frozen=True, slots=True)
+class OperationalAnalyticsDefinition:
+    """Code-owned definition recorded alongside a versioned fact family."""
+
+    key: str
+    version: int
+    label: str
+    description: str
+    unit: str
+
+
+_DEFINITION_DETAILS = {
+    OperationalFactType.NOTIFICATION_SENT: (
+        "Notifications sent",
+        "Count of content-free notification delivery events.",
+        "count",
+    ),
+    OperationalFactType.NOTIFICATION_RESPONDED: (
+        "Notification responses",
+        "Elapsed seconds to the first recorded read or completed action.",
+        "seconds",
+    ),
+    OperationalFactType.DISSEMINATION_RELEASED: (
+        "Disseminations released",
+        "Count of approved service products disseminated to recipients.",
+        "count",
+    ),
+    OperationalFactType.DISSEMINATION_DOWNLOADED: (
+        "Managed downloads",
+        "Count of allowed managed service-product downloads.",
+        "count",
+    ),
+    OperationalFactType.DISSEMINATION_LINK_OPENED: (
+        "External links opened",
+        "Count of allowed managed external-link opens.",
+        "count",
+    ),
+    OperationalFactType.DISSEMINATION_REPLACED: (
+        "Disseminations replaced",
+        "Count of disseminated service products replaced after release.",
+        "count",
+    ),
+    OperationalFactType.DISSEMINATION_WITHDRAWN: (
+        "Disseminations withdrawn",
+        "Count of disseminated service products withdrawn after release.",
+        "count",
+    ),
+    OperationalFactType.ITERATION_COMMITTED: (
+        "Iteration commitments",
+        "Count of non-cancelled work packages committed to a closed iteration.",
+        "count",
+    ),
+    OperationalFactType.ITERATION_COMPLETED: (
+        "Iteration completions",
+        "Count of completed work packages in a closed iteration.",
+        "count",
+    ),
+    OperationalFactType.CAPACITY_AVAILABLE: (
+        "Available capacity",
+        "Aggregate available team capacity in minutes.",
+        "minutes",
+    ),
+    OperationalFactType.CAPACITY_RESERVED: (
+        "Reserved capacity",
+        "Aggregate reserved team capacity in minutes.",
+        "minutes",
+    ),
+    OperationalFactType.PLANNING_ACTIVE_WORK: (
+        "Active work",
+        "Aggregate remaining effort for active team work in minutes.",
+        "minutes",
+    ),
+    OperationalFactType.PLANNING_DEMAND: (
+        "Planning demand",
+        "Aggregate remaining effort for open team demand in minutes.",
+        "minutes",
+    ),
+}
+OPERATIONAL_ANALYTICS_DEFINITIONS = {
+    fact_type: OperationalAnalyticsDefinition(
+        key=fact_type.value.lower(),
+        version=1,
+        label=label,
+        description=description,
+        unit=unit,
+    )
+    for fact_type, (label, description, unit) in _DEFINITION_DETAILS.items()
+}
 
 
 class AnalyticsExportFormat(StrEnum):

@@ -1,7 +1,7 @@
 # Role and permission matrix
 
 Status: current application permissions with production boundary decisions identified
-Last reviewed: 14 August 2026
+Last reviewed: 18 August 2026
 
 ## Enforcement principles
 
@@ -17,28 +17,67 @@ Last reviewed: 14 August 2026
 - An account with dual capability acts in one explicit Customer or Staff context;
   switching context rotates session and CSRF proof and clears protected client state.
 
+## Release capabilities
+
+`GET /api/v1/me/capabilities` is intended as a compatibility and rollback
+contract. A true value reports that the setting is enabled. It does not grant a
+role, organisation scope or object permission. FastAPI repeats those checks for
+every read and mutation. The current `planning` and `statistics` composition
+gaps recorded below mean those two values are not yet reliable server-route
+rollback controls.
+
+| Capability | Server condition | Client effect |
+|---|---|---|
+| `myWork` | Personal action workspace is enabled | Shows `My assigned actions` and permits the `/my-work` route |
+| `notifications` | Notification workspace is enabled | Shows the notification centre and unread count |
+| `configuration` | Configuration administration is enabled | Permits the Platform Administrator configuration route |
+| `products` | Managed products are enabled | Permits managed product-package routes and controls |
+| `managedFileUploads` | Managed products are enabled and the configured product runtime permits uploads | Enables managed-file authoring; approved external links remain independently available |
+| `planning` | Planning evolution is enabled | Reports server rollout for the planning APIs; the current web workspace does not independently gate or render a Planning panel with this flag |
+| `statistics` | Statistics evolution is enabled | Gates the web statistics route, subject to a server-issued scope; Platform Administrators receive the content-free platform scope |
+| `conversationReads` | Conversation read routes are registered | Renders authorised conversation history |
+| `conversationWrites` | Conversation mutation routes are registered | Renders message controls for server-offered targets |
+| `contextSwitching` | The context-switch route is registered | Offers switching only when the session also has both server-calculated contexts |
+
+### Known capability-composition gaps
+
+- The planning routes are nested under the always-registered board router as
+  well as registered conditionally. They therefore remain reachable when
+  `planning` is false, subject to their normal server authorisation.
+- The enhanced statistics routes are nested under the always-registered base
+  statistics router as well as registered conditionally. They therefore remain
+  reachable when `statistics` is false, even though the web route is hidden.
+- Workspace access can return `PLANNING` and `HANDOVER`, but the current web
+  workspace renders neither panel. These values must not be presented as
+  completed user journeys until the UI or server contract is reconciled.
+- Backend role, scope, object and action checks remain the security controls for
+  all affected routes. Fixing the flags must not weaken those checks.
+
 ## Application permissions
 
 | Actor | Permitted action | Required scope and state | Object/action check | Separation and audit |
 |---|---|---|---|---|
 | Authenticated user | Maintain their profile | Own active account | Subject is always the authenticated user | Profile changes remain attributable; bounded personal fields do not enter workflow or analytics |
-| Customer | Create and submit a request | Own authenticated account; every submission field valid | Requester ID becomes immutable ownership | Submission audited without narrative in admin telemetry |
-| Customer | Track, answer clarification, download and give feedback | Own request; matching workflow state; released product for download | Ownership and action-state check on every request | Download and feedback events attributable to Customer |
+| Customer | Create and submit a request | Own authenticated account; every submission field valid | Customer ID becomes immutable ownership | Submission audited without narrative in admin telemetry |
+| Customer | Cancel an active request | Own non-terminal request; matching expected version and bounded reason | Request ownership and terminal-state checks repeat under lock | Local work closes atomically; one durable process-cancellation command and route notifications are recorded |
+| Customer | Track, answer clarification, retrieve or accept a released product and give feedback | Own request; matching workflow state; current dissemination for product access | Ownership, release-cycle and action-state checks on every request, download or redirect | Product access, acceptance and feedback events remain attributable to the Customer |
 | Dual-capability account | Switch between Customer and Staff context | Context appears in server-calculated available contexts | New session generation, CSRF rotation and context-scoped cache reset | Staff authority cannot be used on the actor's own Customer request |
-| JIOC Routing User | Review, request information, close or choose a Command | Active JIOC candidate group and personally claimed task | Destination must be an effective direct Command child | Manager and Member use the same claim-based routing action; no product approval |
+| JIOC Routing User | Review, choose priority, request information, close or choose a Command | Active JIOC candidate group and personally claimed task | Priority is mandatory when progressing; destination must be an effective direct Command child | Manager and Member use the same claim-based routing action; no product approval |
 | Request Coordination User | Choose an Ops group, return, hold or close | Active candidate group for the selected Command and personally claimed task | Destination must be an effective direct Ops-group child | Manager and Member use the same action; no team or Analyst selection |
 | Ops Routing User | Choose a delivery team or return | Active candidate group for the selected Ops group and personally claimed task | Destination must be an effective direct team child | Manager and Member use the same action; unstaffed choice remains explicit |
 | Workspace Member | Create, edit and cancel personal calendar activity | Current effective membership in the exact unit | Subject is always the authenticated user; no request link or alternate subject accepted | Private detail is redacted from shared views |
 | Workspace Member | View a colleague's bounded team profile | Authorised read access to the exact workspace; subject has membership history in that workspace | Exact team and subject relationship checked on every read | Service number and free-form personal notes are excluded; inaccessible records are not disclosed |
+| Workspace Member | Read noticeboard entries and pinned links | Authorised read access to the exact workspace in Staff context | Exact workspace read relationship checked on every request | Records are bounded collaboration metadata and do not grant workflow authority |
+| Workspace Manager | Create or resolve noticeboard entries and pinned links | Current exact-unit Manager position and active exact-unit `ROSTER` grant | Workspace view, grant identifier and locked exact-root authority are revalidated | Actor, record type, content and resolution state remain attributable |
 | Routing Manager | Maintain exact-unit Members and unit events | Current Manager position and exact management grant | No parent, child or sibling management and no ticket commitment | Does not add routing approval or assign routing tasks |
-| Team Manager | Assign one Lead and up to ten Contributors and review submitted work | Exact active team membership and candidate group; claimed task | Every participant must be a current Member of that exact team | Assignment reason, history and approval/rework outcome audited |
+| Team Manager | Assign one Lead and up to ten additional Analysts and review submitted work | Exact active team membership and candidate group; claimed task | Every participant must be a current Member of that exact team | Assignment reason, history and approval/rework outcome audited |
 | Team Manager | Manage roster, board and team calendar | Current exact-team Manager position and exact active management grant | Position, grant, membership state and optimistic revision checked | Membership and planning events attributable and reversible |
-| Team Manager | Send a task hastener to one or all assigned Analysts | Current Manager position; locked current request is in active production and assigned to the exact team | Recipients are server-resolved current Leads and Contributors who are active exact-team Delivery Specialists; every recipient projection is required | Reminder is mandatory-notified and stored in Customer-visible tamper-evident request history; ownership, assignments and Camunda state do not change |
+| Team Manager | Send a task hastener to one or all assigned Analysts | Current Manager position; locked current request is in active production and assigned to the exact team | Recipients are server-resolved current Leads and additional Analysts who are active exact-team Team Analysts; every recipient projection is required | Reminder is mandatory-notified and stored in staff-only tamper-evident request history; ownership, assignments and Camunda state do not change |
 | Assigned Team Analyst | Produce, converse, revise and submit a product package | Current Lead or additional assignment and active exact-team membership | Same production controls for every assigned Analyst; package state and expected revision checked | Lead remains the accountable badge; every mutation retains its actual actor |
 | QC User or QC Manager, reviewer | Review, return or approve a product | Live QC membership in either position, personally claimed quality task and matching package state | Exact Team-Manager-approved package | Cannot disseminate the package they reviewed; a QC User never sees release work |
 | QC Manager, releaser | Disseminate or withdraw a product | Live QC Manager position, personally claimed release task and ready-for-release package | Exact approved package and Customer relationship | Must be a different person from the QC reviewer; Manager approval cannot substitute for QC release |
 | Authorised request participant | Send a structured conversation message | Server-calculated target among Customer, current owner, Team Managers, assigned Analysts, route unit or QC Team | Request scope, active context, target and visibility checked on every read/write | Immutable author, context, audience, time, delivery and read state |
-| Platform Administrator | Manage accounts, profiles, memberships and safe configuration metadata | Active Platform Administrator and fresh step-up for sensitive changes | Dedicated metadata schemas and action checks | No implicit request/product access; tamper-evident admin audit |
+| Platform Administrator | Manage local/test identity metadata, roles, status, memberships and safe configuration metadata | Active Platform Administrator; demo-account register enabled where applicable; fresh step-up for sensitive changes | Dedicated metadata schemas and action checks; personal profile fields remain self-managed | No implicit request, product or operational-diagnostics access; tamper-evident admin audit |
 | Platform Administrator | Change the global visual classification marking | Active Platform Administrator, CSRF and fresh step-up | Exact singleton and expected version | New value and actor recorded in the administration audit chain |
 | Platform Administrator | Receive a password-assistance notification | Active Platform Administrator | A submitted email matched an active account after shared rate limits | Notification identifies the account but never stores the submitted email in the attempt record |
 | Configuration Approver | Approve or reject proposed changes | Platform Administrator, fresh step-up, proposal awaiting approval | Must not be proposal creator; exact immutable revision | Reason and reviewed revision recorded |

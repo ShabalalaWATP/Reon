@@ -1,6 +1,7 @@
 # Private Azure synthetic sandbox
 
 Status: documented evaluation pattern, not a production topology
+Last reviewed: 18 August 2026
 
 This procedure runs the unchanged local Compose topology on one private Azure
 Linux VM. Azure Bastion carries SSH to the VM, then SSH local forwarding reaches
@@ -74,8 +75,14 @@ git --version
 
 ## 4. Configure and start Mist
 
+Apply the [immutable source procedure](HOST_SETUP.md#5-obtain-and-configure-the-source)
+with the exact commit from the approved Azure sandbox release record.
+
 ```bash
+approved_commit='<approved-40-character-release-commit>'
 git clone <approved-repository-url> Mist-Service
+git -C Mist-Service checkout --detach "$approved_commit"
+test "$(git -C Mist-Service rev-parse HEAD)" = "$approved_commit"
 cd Mist-Service
 cp .env.example .env
 chmod 600 .env
@@ -89,8 +96,12 @@ users, loopback origins and synthetic content. Follow the
 pwsh -File ./scripts/start-local.ps1
 docker compose ps
 curl -fsS http://127.0.0.1:8000/ready
-pwsh -File ./scripts/smoke-camunda.ps1
 ```
+
+After opening the tunnel, exercise a representative synthetic request through
+the application UI. Do not run `scripts/smoke-camunda.ps1` against this stack
+because it deploys another, unattested process-definition version and is only
+for disposable standalone Camunda testing.
 
 ## 5. Forward the browser through SSH
 

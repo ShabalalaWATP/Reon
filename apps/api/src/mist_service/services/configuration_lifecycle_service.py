@@ -22,7 +22,12 @@ from mist_service.services.configuration_activation_service import (
 from mist_service.services.configuration_draft_service import (
     ConfigurationDraftService,
 )
-from mist_service.services.configuration_ports import ConfigurationApplicationPort
+from mist_service.services.configuration_ports import (
+    ConfigurationActivationPort,
+    ConfigurationDraftPort,
+    ConfigurationReviewPort,
+    ConfigurationValidationPort,
+)
 from mist_service.services.configuration_review_service import (
     ConfigurationReviewOperations,
 )
@@ -36,23 +41,26 @@ class ConfigurationLifecycleService:
 
     def __init__(
         self,
-        repository: ConfigurationApplicationPort,
+        drafts: ConfigurationDraftPort,
+        validation: ConfigurationValidationPort,
+        review: ConfigurationReviewPort,
+        activation: ConfigurationActivationPort,
         settings: Settings,
         publisher: ConfigurationEventPublisher | None = None,
         *,
         clock: Callable[[], datetime] | None = None,
     ) -> None:
         self._draft = ConfigurationDraftService(
-            repository, settings, publisher, clock=clock
+            drafts, settings, publisher, clock=clock
         )
         self._validation = ConfigurationValidationService(
-            repository, settings, publisher, clock=clock
+            validation, settings, publisher, clock=clock
         )
         self._review = ConfigurationReviewOperations(
-            repository, settings, publisher, clock=clock
+            review, settings, publisher, clock=clock
         )
         self._activation = ConfigurationActivationService(
-            repository, settings, publisher, clock=clock
+            activation, settings, publisher, clock=clock
         )
 
     async def create(

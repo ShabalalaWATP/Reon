@@ -10,7 +10,7 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mist_service.board_models import BoardColumn, WorkPackage
+from mist_service.board_models import BoardColumn
 from mist_service.board_projection import ProjectedBoardItem, encode_cursor
 from mist_service.repositories.board_page import SqlAlchemyBoardPageRepository
 from mist_service.schemas.board import BoardFilters, BoardItem, BoardItemType
@@ -130,55 +130,6 @@ async def test_source_queries_handle_empty_statuses_and_cursors() -> None:
     assert await repository._requests(team_id, BoardFilters(), cursor, 10) == []
     assert await repository._packages(team_id, BoardFilters(), cursor, 10) == []
     assert len(session.statements) == 2
-
-
-def test_filter_builders_cover_every_optional_database_predicate() -> None:
-    owner_id = uuid4()
-    due_before = datetime.now(UTC).date()
-    filters = BoardFilters(
-        search=" Synthetic%_query ",
-        priorities=["HIGH", "UNSET"],
-        ownerUserId=owner_id,
-        dueBefore=due_before,
-    )
-    assert len(SqlAlchemyBoardPageRepository._request_filters(filters)) == 4
-    assert len(SqlAlchemyBoardPageRepository._package_filters(filters)) == 4
-    assert (
-        len(
-            SqlAlchemyBoardPageRepository._request_filters(
-                BoardFilters(priorities=["UNSET"])
-            )
-        )
-        == 1
-    )
-    assert (
-        len(
-            SqlAlchemyBoardPageRepository._request_filters(
-                BoardFilters(priorities=["HIGH"])
-            )
-        )
-        == 1
-    )
-    assert SqlAlchemyBoardPageRepository._request_filters(BoardFilters()) == []
-    assert SqlAlchemyBoardPageRepository._package_filters(BoardFilters()) == []
-
-
-def test_cursor_filter_supports_both_item_types_and_equal_ids() -> None:
-    changed_at = datetime.now(UTC)
-    item_id = uuid4()
-    cursors: tuple[tuple[BoardItemType, str], ...] = (
-        (BoardItemType.SERVICE_REQUEST, BoardItemType.WORK_PACKAGE.value),
-        (BoardItemType.WORK_PACKAGE, BoardItemType.WORK_PACKAGE.value),
-        (BoardItemType.WORK_PACKAGE, BoardItemType.SERVICE_REQUEST.value),
-    )
-    for item_type, cursor_type in cursors:
-        expression = SqlAlchemyBoardPageRepository._cursor_filter(
-            WorkPackage.updated_at,
-            WorkPackage.id,
-            item_type,
-            (changed_at, cursor_type, str(item_id)),
-        )
-        assert expression is not None
 
 
 def test_selected_source_predicate_defaults_to_both_sources() -> None:

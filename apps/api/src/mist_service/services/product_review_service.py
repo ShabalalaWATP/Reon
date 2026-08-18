@@ -19,7 +19,7 @@ from mist_service.product_types import (
     ReleaseAccessRecord,
 )
 from mist_service.services.product_repository_port import (
-    ProductPackageServiceRepository,
+    ProductReviewServiceRepository,
 )
 from mist_service.services.product_service_collaborators import (
     ProductAccessRecorder,
@@ -28,12 +28,12 @@ from mist_service.services.product_service_collaborators import (
 from mist_service.services.product_service_support import ProductServiceSupport
 
 
-class ProductReviewService(ProductServiceSupport[ProductPackageServiceRepository]):
+class ProductReviewService(ProductServiceSupport[ProductReviewServiceRepository]):
     """Authorise and audit manager, analyst and QC review downloads."""
 
     def __init__(
         self,
-        repository: ProductPackageServiceRepository,
+        repository: ProductReviewServiceRepository,
         storage: PrivateObjectStorage,
         access_audit: ProductAccessAudit,
     ) -> None:

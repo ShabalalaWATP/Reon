@@ -190,7 +190,14 @@ async def test_commitment_decision_and_team_change_authority_branches() -> None:
     calendar.locked_event = AsyncMock(return_value=event)
     calendar.set_commitment = AsyncMock(return_value=event)
     workspaces = MagicMock()
-    service = CalendarService(calendar, workspaces, MagicMock(), MagicMock())
+    service = CalendarService(
+        calendar,
+        calendar,
+        calendar,
+        workspaces,
+        MagicMock(),
+        MagicMock(),
+    )
 
     acknowledged = await service.decide_commitment(
         actor,
@@ -270,7 +277,14 @@ async def test_requester_stable_identity_is_excluded_from_commitments() -> None:
     calendar = MagicMock()
     calendar.session = MagicMock()
     calendar.request_requester_id = AsyncMock(return_value=actor.id)
-    service = CalendarService(calendar, MagicMock(), MagicMock(), MagicMock())
+    service = CalendarService(
+        calendar,
+        calendar,
+        calendar,
+        MagicMock(),
+        MagicMock(),
+        MagicMock(),
+    )
 
     with pytest.raises(CalendarItemNotFound):
         await service._access.require_no_requester_conflict(

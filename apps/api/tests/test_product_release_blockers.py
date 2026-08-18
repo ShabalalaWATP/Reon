@@ -26,6 +26,7 @@ from product_test_support import (
     chunks,
     create_product_request,
     product_actors,
+    product_service_repositories,
 )
 
 
@@ -35,7 +36,7 @@ def _service(
     domains: frozenset[str] = frozenset({"products.example.test"}),
 ) -> ProductService:
     return ProductService(
-        SqlAlchemyProductRepository(session),
+        product_service_repositories(SqlAlchemyProductRepository(session)),
         storage,
         SafeDocumentScanner(),
         AllowedHttpsLinkPolicy(domains),

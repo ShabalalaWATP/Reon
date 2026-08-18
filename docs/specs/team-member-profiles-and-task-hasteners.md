@@ -24,14 +24,14 @@ unit without losing my place.
 ### Remind one assigned Analyst
 
 As a delivery-team Manager, I want to send a task-specific reminder to one Lead
-or Contributor so that the follow-up reaches the right person and remains part
+or additional Analyst so that the follow-up reaches the right person and remains part
 of the request record.
 
 ### Remind the assigned delivery group
 
 As a delivery-team Manager, I want to send the same reminder to the Lead and all
-current Contributors assigned within my team so that I do not have to repeat a
-message or maintain a recipient list by hand.
+additional Analysts currently assigned within my team so that I do not have to
+repeat a message or maintain a recipient list by hand.
 
 ### Receive an accountable reminder
 
@@ -67,8 +67,8 @@ a link to the relevant board item so that I can act on it in context.
   and the hastener then uses that resulting current state.
 - Active production means `In progress`, `Customer information required` or
   `Rework required`.
-- Eligible recipients are active Delivery Specialists with a current exact-team
-  membership and an active Lead or Contributor assignment on the request.
+- Eligible recipients are active Team Analysts with a current exact-team
+  membership and an active Lead or additional-Analyst assignment on the request.
 - The server derives the complete recipient list. The browser cannot supply a
   wider list for the `all assigned` option.
 - A named recipient must be one of the server-derived eligible recipients.
@@ -91,9 +91,9 @@ a link to the relevant board item so that I can act on it in context.
   unrelated item.
 - Sending a hastener does not claim the request, change ownership, alter the
   workflow stage, change assignments or send a command to Camunda.
-- Hasteners form part of the accountable request history. Every user already
-  authorised to view the request, including its Customer, can see that history.
-  The notification itself remains limited to resolved assigned Analysts.
+- Hasteners form part of the staff-only accountable request history. Customer
+  request history excludes the event. The notification itself remains limited
+  to resolved assigned Analysts.
 - Analysts, routing-workspace Managers, sibling teams, inactive members,
   unassigned Analysts and Managers acting after production has ended are denied.
 

@@ -335,10 +335,10 @@ function mockOverview(
       if (url.pathname.endsWith("/requests")) return json({ items: [] });
       throw new Error(`Unexpected ${url.pathname}`);
     },
-    true,
-    false,
-    false,
-    false,
-    true,
+    {
+      emptyActionWorkspace: false,
+      emptyStatisticsScopes: false,
+      emptyTeamWorkspaces: false,
+    },
   );
 }

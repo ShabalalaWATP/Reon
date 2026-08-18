@@ -173,9 +173,7 @@ describe("team workspace", () => {
           });
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      false,
+      { emptyTeamWorkspaces: false },
     );
     const user = userEvent.setup();
     renderApp("/teams/team-ssg/overview");
@@ -208,9 +206,7 @@ describe("team workspace", () => {
         }
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      false,
+      { emptyTeamWorkspaces: false },
     );
     const user = userEvent.setup();
     renderApp("/teams/team-ssg/activity");
@@ -245,9 +241,7 @@ describe("team workspace", () => {
         if (url.pathname.endsWith("/memberships")) return json({ detail: "Roster conflict" }, 409);
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      false,
+      { emptyTeamWorkspaces: false },
     );
     renderApp("/teams/team-ssg/people");
     expect(

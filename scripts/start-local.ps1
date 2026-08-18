@@ -51,7 +51,8 @@ $requiredSettings = @(
     "TRUSTED_ORIGINS",
     "ALLOW_DEMO_USERS",
     "DEMO_USER_PASSWORD",
-    "AUDIT_HMAC_KEY"
+    "AUDIT_HMAC_KEY",
+    "SECURITY_PSEUDONYM_KEY"
 )
 foreach ($settingName in $requiredSettings) {
     $settingValue = $settings[$settingName]
@@ -95,6 +96,14 @@ if ([Text.Encoding]::UTF8.GetByteCount($settings.AUDIT_HMAC_KEY) -lt 32) {
 }
 if ($settings.AUDIT_HMAC_KEY -in ($databasePasswords + $settings.DEMO_USER_PASSWORD)) {
     throw "AUDIT_HMAC_KEY must differ from database and demo-user passwords."
+}
+if ([Text.Encoding]::UTF8.GetByteCount($settings.SECURITY_PSEUDONYM_KEY) -lt 32) {
+    throw "SECURITY_PSEUDONYM_KEY must contain at least 32 UTF-8 bytes."
+}
+if ($settings.SECURITY_PSEUDONYM_KEY -in (
+        $databasePasswords + $settings.DEMO_USER_PASSWORD + $settings.AUDIT_HMAC_KEY
+    )) {
+    throw "SECURITY_PSEUDONYM_KEY must differ from audit, database and demo-user secrets."
 }
 
 $databaseUri = [Uri]$settings.DATABASE_URL

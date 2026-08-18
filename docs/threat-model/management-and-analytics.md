@@ -1,5 +1,8 @@
 # Management and Analytics Threat Model
 
+Status: living threat model
+Last reviewed: 18 August 2026
+
 ## Scope and assets
 
 This model covers management grants, organisation closure, content-free request
@@ -35,8 +38,10 @@ analytics repository.
 | Feedback identifies a small group | Suppress rating aggregates and child comparisons below a cohort of five |
 | Timing or filters reveal a single Customer | Bound dimensions, avoid free-text grouping and apply cohort suppression to sensitive measures |
 | Projection duplicates inflate metrics | Use unique event keys, projection versions and idempotent upserts; reconcile against source counts |
+| Definition labels, descriptions or units drift while facts retain the old version | Persist the code-owned definition by key and version and fail fact insertion unless label, description, unit and active state match exactly; any semantic change requires a new version |
 | Workflow completion and QC dissemination double-count one managed release | Treat `PRODUCT_DISSEMINATED` as the sole managed-release analytics boundary; exclude `WORKFLOW_RELEASE` from live projection and repair replay |
 | Duplicate or out-of-order repair replay changes historical facts | Derive opaque source keys from the authoritative event and fact type, insert with a unique conflict guard, keep facts immutable and bound replay by aware dates and source count; repair never deletes or rewrites facts |
+| An operator rebuilds or replays an unbounded analytics source | Rebuild only when the complete request set fits an explicit 1 to 5,000 limit; replay requires an explicit timezone-aware interval and bounded source count, and both operations run transactionally |
 | Stale projection misleads a manager | Return freshness and degraded state; alert on lag instead of presenting it as current |
 | Large ranges cause denial of service | Limit date range, dimensions and page size; use statement timeout and indexed closure joins |
 | CSV or table export bypasses scope | Use the same scoped query and suppression service; no separate unrestricted export path |
@@ -65,6 +70,7 @@ analytics repository.
   narrative, product, Customer identity or feedback comment.
 - Cohort suppression tests at zero, one, four, five and combined child totals.
 - Projection duplicate, out-of-order, rebuild and lag tests.
+- Definition-metadata drift, rebuild-overflow and bounded operator-command tests.
 - Real authoritative release, access, notification, iteration and capacity events
   produce content-free facts; bounded replay is idempotent and exact sibling scope
   remains empty.
@@ -85,6 +91,8 @@ analytics repository.
 Fine-grained operational counts may still be sensitive even without content.
 Pilot owners must approve dimensions, cohort size and retention. Production needs
 database grants that prevent the analytics identity from reading content tables,
-monitored projection lag and tested restore/rebuild procedures.
+monitored projection lag and tested target-scale restore/rebuild procedures. The
+current operator commands are bounded implementation evidence, not a production
+recovery rehearsal or approved invocation process.
 Aggregate CSV and PDF exports remain disabled until the target-environment owner
 accepts their formats, cohort policy, retention and audit requirements.

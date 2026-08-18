@@ -1,5 +1,8 @@
 # Platform Administration MVP
 
+Status: implemented for synthetic local/test administration. Last reviewed
+18 August 2026.
+
 ## Outcome
 
 Give a synthetic Platform Administrator a bounded workspace for maintaining MVP

@@ -188,8 +188,7 @@ describe("operational statistics", () => {
         }
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      false,
+      { emptyStatisticsScopes: false },
     );
     const user = userEvent.setup();
     const view = renderApp(`/statistics?scopeId=platform&unitId=${platformScope.units[2].id}`);
@@ -238,8 +237,7 @@ describe("operational statistics", () => {
         }
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      false,
+      { emptyStatisticsScopes: false },
     );
     const user = userEvent.setup();
     renderApp("/statistics");
@@ -281,8 +279,7 @@ describe("operational statistics", () => {
         }
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      false,
+      { emptyStatisticsScopes: false },
     );
     const user = userEvent.setup();
     renderApp("/statistics");

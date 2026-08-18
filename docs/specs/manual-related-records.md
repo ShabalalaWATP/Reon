@@ -1,5 +1,7 @@
 # Explainable Related-Request Matching
 
+Status: implemented current advisory-matching contract. Last reviewed 18 August 2026.
+
 ## Outcome
 
 During an actively claimed JIOC intake task, Mist automatically compares the

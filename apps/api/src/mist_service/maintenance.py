@@ -6,8 +6,10 @@ import argparse
 import asyncio
 import json
 from dataclasses import asdict
+from datetime import datetime
 from uuid import UUID
 
+from mist_service.analytics_projection import rebuild_analytics_projections
 from mist_service.config import get_settings
 from mist_service.database import (
     SessionFactory,
@@ -16,6 +18,9 @@ from mist_service.database import (
     dispose_database,
 )
 from mist_service.legal_holds import LegalHoldService
+from mist_service.operational_analytics_reconciliation import (
+    reconcile_operational_analytics,
+)
 from mist_service.operational_snapshot import capture_operational_snapshot
 from mist_service.restore_verification import verify_restored_database
 from mist_service.retention import (
@@ -65,6 +70,12 @@ def parser() -> argparse.ArgumentParser:
     attestation.add_argument("--operator-subject", required=True)
     attestation.add_argument("--apply", action="store_true")
     attestation.add_argument("--confirm")
+    rebuild = subcommands.add_parser("rebuild-analytics")
+    rebuild.add_argument("--request-limit", type=int, default=1_000)
+    replay = subcommands.add_parser("replay-operational-analytics")
+    replay.add_argument("--start", type=datetime.fromisoformat, required=True)
+    replay.add_argument("--end", type=datetime.fromisoformat, required=True)
+    replay.add_argument("--source-limit", type=int, default=1_000)
     return command
 
 
@@ -202,6 +213,24 @@ async def async_main(arguments: argparse.Namespace) -> int:
                     confirmation=arguments.confirm,
                 )
                 result = {"valid": valid, "applied": arguments.apply}
+                exit_code = 0
+        elif arguments.job == "rebuild-analytics":
+            async with SessionFactory() as session, session.begin():
+                rebuilt = await rebuild_analytics_projections(
+                    session,
+                    request_limit=arguments.request_limit,
+                )
+                result = {"rebuilt_requests": rebuilt}
+                exit_code = 0
+        elif arguments.job == "replay-operational-analytics":
+            async with SessionFactory() as session, session.begin():
+                replay = await reconcile_operational_analytics(
+                    session,
+                    start=arguments.start,
+                    end=arguments.end,
+                    source_limit=arguments.source_limit,
+                )
+                result = asdict(replay)
                 exit_code = 0
         else:
             raise ValueError("unsupported maintenance job")

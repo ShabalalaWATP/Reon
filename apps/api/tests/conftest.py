@@ -26,9 +26,9 @@ from mist_service.database import (
 from mist_service.main import create_app
 from mist_service.models import User
 from mist_service.organisation_models import OrganisationUnit
-from mist_service.workflow.fake import FakeWorkflowEngine
 from mist_service.workflow.lookup import TaskLookupPolicy
 from mist_service.workflow_dispatch import WorkflowOutboxDispatcher
+from workflow_test_support import FakeWorkflowEngine
 
 DEMO_PASSWORD = "Synthetic-demo-passphrase-42"
 ORIGIN = "http://test.local"

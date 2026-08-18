@@ -26,30 +26,29 @@ from mist_service.product_types import (
 )
 from mist_service.schemas.products import AcceptanceCommand, CustomerReleaseView
 from mist_service.services.product_repository_port import (
-    ProductReleaseServiceRepository,
+    ProductCustomerReleaseRepository,
+    ProductLinkRepository,
 )
 from mist_service.services.product_service_collaborators import (
     ProductAccessRecorder,
     ProductLinkAuthoriser,
 )
-from mist_service.services.product_service_support import ProductServiceSupport
 
 
-class ProductCustomerReleaseService(
-    ProductServiceSupport[ProductReleaseServiceRepository]
-):
+class ProductCustomerReleaseService:
     """Expose only disseminated products owned by the active Customer."""
 
     def __init__(
         self,
-        repository: ProductReleaseServiceRepository,
+        repository: ProductCustomerReleaseRepository,
+        links: ProductLinkRepository,
         storage: PrivateObjectStorage,
         link_policy: ExternalLinkPolicy,
         access_audit: ProductAccessAudit,
     ) -> None:
-        super().__init__(repository)
+        self._repository = repository
         self._storage = storage
-        self._links = ProductLinkAuthoriser(repository, link_policy)
+        self._links = ProductLinkAuthoriser(links, link_policy)
         self._access_recorder = ProductAccessRecorder(access_audit)
 
     async def customer_release(
@@ -284,3 +283,7 @@ class ProductCustomerReleaseService(
             correlation_id,
             access,
         )
+
+    @staticmethod
+    def _aware(value: datetime) -> datetime:
+        return value if value.tzinfo is not None else value.replace(tzinfo=UTC)

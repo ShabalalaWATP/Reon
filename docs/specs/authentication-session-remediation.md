@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-Status: implementation approved on 13 August 2026.
+Status: implemented and locally verified. Last reviewed 18 August 2026.
 
 This specification closes the authentication and browser-session findings from
 the final defensive security review. It covers local password authentication,

@@ -1,5 +1,7 @@
 # Team Operations Workspace
 
+Status: implemented current workspace contract. Last reviewed 18 August 2026.
+
 ## Purpose
 
 Turn each authorised organisation workspace into a useful daily operating surface.
@@ -63,8 +65,8 @@ due-date predicates and are not calculated from the current page.
 
 The board provides:
 
-- built-in views for Needs assignment, Due this week, Blocked, Manager review and
-  My actions;
+- built-in views for Needs assignment, Overdue, Due this week, Blocked, Manager
+  review and My work;
 - personal saved views;
 - a compact filter drawer and board/table presentation;
 - visible WIP limits and breaches;
@@ -160,7 +162,7 @@ External calendar synchronisation remains out of scope until separately approved
 
 - A Manager can identify assignment, due-risk, blocked, clarification and review
   work from the overview without opening Statistics.
-- An Analyst can open My actions and inspect complete authorised context.
+- An Analyst can open `My assigned actions` and inspect complete authorised context.
 - Column totals remain correct when more rows exist than the returned page.
 - Terminal columns are collapsed by default and remain discoverable.
 - The Service request board and Work package Kanban are visually and

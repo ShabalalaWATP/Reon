@@ -1,5 +1,7 @@
 # Action deep links and workspace navigation
 
+Status: implemented current navigation contract. Last reviewed 18 August 2026.
+
 ## Purpose
 
 Give every authorised action a safe link to its exact current work item. Keep

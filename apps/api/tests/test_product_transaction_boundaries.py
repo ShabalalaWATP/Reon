@@ -42,7 +42,10 @@ from mist_service.services.product_customer_release_service import (
 )
 from mist_service.services.product_download_service import ProductDownloadService
 from mist_service.services.product_review_service import ProductReviewService
-from mist_service.services.product_transfer_context import ProductTransferContext
+from mist_service.services.product_transfer_context import (
+    ProductTransferContext,
+    ProductTransferRepositories,
+)
 from mist_service.services.product_transfer_service import ProductTransferService
 from product_test_support import (
     PDF_MEDIA,
@@ -196,7 +199,16 @@ async def test_product_external_io_and_slow_stream_release_database_connections(
                 api_harness.sessions,
                 runtime,
                 mutation_session,
-                lambda session: SqlAlchemyProductRepository(session),
+                ProductTransferRepositories(
+                    transfers=lambda session: SqlAlchemyProductRepository(session),
+                    managed_uploads=lambda session: SqlAlchemyProductRepository(
+                        session
+                    ),
+                    upload_content=lambda session: SqlAlchemyProductRepository(session),
+                    operation_leases=lambda session: SqlAlchemyProductRepository(
+                        session
+                    ),
+                ),
                 mutation_fence,  # type: ignore[arg-type]
             )
         )

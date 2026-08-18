@@ -1,6 +1,7 @@
 # Private AWS synthetic sandbox
 
 Status: documented evaluation pattern, not a production topology
+Last reviewed: 18 August 2026
 
 Complete the Linux sections of [Host setup](HOST_SETUP.md) and the local
 [Docker topology](LOCAL_DOCKER.md) before creating cloud resources. This guide
@@ -86,11 +87,16 @@ On the instance:
 
 ## 4. Transfer and configure Mist
 
-Use an approved private Git endpoint or controlled artefact transfer. Do not put
-a personal access token in shell history, user data or `.env`.
+Use an approved private Git endpoint or controlled artefact transfer. Apply the
+[immutable source procedure](HOST_SETUP.md#5-obtain-and-configure-the-source)
+with the exact commit from the approved AWS sandbox release record. Do not put a
+personal access token in shell history, user data or `.env`.
 
 ```bash
+approved_commit='<approved-40-character-release-commit>'
 git clone <approved-repository-url> Mist-Service
+git -C Mist-Service checkout --detach "$approved_commit"
+test "$(git -C Mist-Service rev-parse HEAD)" = "$approved_commit"
 cd Mist-Service
 cp .env.example .env
 chmod 600 .env
@@ -109,11 +115,11 @@ docker compose ps
 curl -fsS http://127.0.0.1:8000/ready
 ```
 
-Readiness must be `ready`. Run the workflow exercise:
-
-```bash
-pwsh -File ./scripts/smoke-camunda.ps1
-```
+Readiness must be `ready`. Exercise a representative synthetic request through
+the application UI after opening the tunnel below. Do not run
+`scripts/smoke-camunda.ps1` against this stack: it deploys a new, unattested
+process-definition version and is reserved for disposable standalone Camunda
+testing.
 
 ## 5. Open a private browser tunnel
 

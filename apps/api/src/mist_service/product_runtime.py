@@ -4,14 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import timedelta
-from pathlib import Path
 
 from mist_service.product_clamav import (
     ClamAvInstreamScanner,
     CompositeDocumentScanner,
-)
-from mist_service.product_filesystem_storage import (
-    PrivateFilesystemObjectStorage,
 )
 from mist_service.product_ports import (
     DocumentScanner,
@@ -27,7 +23,6 @@ from mist_service.product_quota_policy import (
 from mist_service.product_security import (
     MAX_FILE_BYTES,
     MAX_PACKAGE_BYTES,
-    AllowedHttpsLinkPolicy,
     SafeDocumentScanner,
 )
 
@@ -55,20 +50,6 @@ class ProductRuntime:
     @property
     def approved_semantic_cdr(self) -> bool:
         return self.scanner_assurance is ScannerAssurance.APPROVED_SEMANTIC_CDR
-
-
-def local_product_runtime(
-    private_root: Path,
-    *,
-    allowed_external_domains: frozenset[str] = frozenset(),
-) -> ProductRuntime:
-    """Build local-only defaults; the external allow-list fails closed."""
-
-    return ProductRuntime(
-        storage=PrivateFilesystemObjectStorage(private_root),
-        scanner=SafeDocumentScanner(),
-        link_policy=AllowedHttpsLinkPolicy(allowed_external_domains),
-    )
 
 
 def clamav_product_runtime(

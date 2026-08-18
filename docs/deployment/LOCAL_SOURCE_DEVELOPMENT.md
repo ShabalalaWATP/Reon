@@ -9,8 +9,8 @@ Linux runtime preparation before following this source-specific path.
 ## Prerequisites
 
 - Python 3.12 or later and `uv`
-- Node.js 22 or later and pnpm 11.21.0 through Corepack. pnpm 11 is retained
-  because it is the newest major version supported by Dependabot for pnpm lockfiles.
+- Node.js 22 or later, pnpm 11.21.0 and the `corepack` command. Install an
+  approved Corepack package when the Node distribution does not bundle it.
 - Docker Compose v2
 - PowerShell 7.4 or later
 - Git
@@ -80,6 +80,8 @@ On macOS/Linux, use `cp .env.example .env`. Configure `.env` as described in the
    ALLOW_DEMO_USERS=true
    DEMO_USER_PASSWORD=admin
    AUDIT_HMAC_KEY=<unique-local-value-at-least-32-bytes>
+   SECURITY_PSEUDONYM_KEY=<different-stable-local-value-at-least-32-bytes>
+   SECURITY_PSEUDONYM_KEY_ID=stable-v1
    MANAGED_PRODUCTS_ENABLED=false
    ```
 
@@ -98,8 +100,10 @@ On macOS/Linux, use `cp .env.example .env`. Configure `.env` as described in the
 
    When qualifying a migration against a separate host-reachable database,
    create an untracked `.env.migrate` whose `DATABASE_URL` uses the migration
-   owner and which includes `APP_RUNTIME_DATABASE_USER` and
-   `APP_BACKUP_DATABASE_USER`. Then run:
+   owner and which includes `APP_RUNTIME_DATABASE_USER`,
+   `APP_BACKUP_DATABASE_USER` and `APP_MAINTENANCE_DATABASE_USER`. The
+   migration environment uses `DATABASE_URL`, not `MIGRATION_DATABASE_URL`,
+   because these commands run outside Compose. Then run:
 
    ```powershell
    uv run --directory apps/api --env-file ../../.env.migrate alembic upgrade head
@@ -119,7 +123,9 @@ On macOS/Linux, use `cp .env.example .env`. Configure `.env` as described in the
    ```
 
    Restore the Compose worker after the source process stops. Never run a source
-   worker with migration-owner credentials.
+   worker with migration-owner credentials. The worker's only optional flag is
+   `--once`, which performs one leased iteration and exits. Use it only while the
+   Compose worker remains stopped; it is not a migration or readiness shortcut.
 
 Never start multiple replicas that all attempt the migration. The Docker image
 does not auto-migrate; Compose uses its explicit one-shot `migrator` service.

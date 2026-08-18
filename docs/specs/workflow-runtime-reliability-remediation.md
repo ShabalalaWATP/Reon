@@ -70,6 +70,6 @@ role permissions or the durable outbox recovery model.
   Beacon Team journeys plus two consecutive JIOC, DIGOC, NCGI-A Ops, OSG Team
   and QC journeys, with verified Customer downloads and no 5xx or deadlock log
   entries.
-- A clean authenticated Customer browser context opened a completed SSG request,
+- A clean authenticated Customer browser context opened a completed OSG Team request,
   loaded its optional release lookup with `200`, and reported zero console errors
   or warnings.

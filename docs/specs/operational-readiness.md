@@ -1,16 +1,21 @@
 # Operational readiness specification
 
+Status: current local-pilot contract; production acceptance remains open. Last
+reviewed 18 August 2026.
+
 ## Purpose
 
 Provide safe, reproducible operating controls for the pilot without turning the
 application into a production deployment. Controls must remain content-minimised,
 fail closed, and be independently verifiable.
 
-## Retention policy v1
+## Retention policy v2
 
 The scheduled job runs in dry-run mode unless an operator supplies the exact
-application confirmation token. One run processes at most 1,000 records per data
-class so locks and transactions stay bounded.
+application confirmation token. Disposal of business content also requires a
+separately authorised disposal identity. One run processes at most 1,000 records
+per data class so locks and transactions stay bounded. Active legal holds exclude
+their exact records from both disposal and identity anonymisation.
 
 | Data class | Retention action | Period | Rationale |
 | --- | --- | ---: | --- |
@@ -18,13 +23,21 @@ class so locks and transactions stay bounded.
 | Unsubmitted Customer drafts | Delete | 90 days after last update | Remove abandoned content while allowing practical resumption |
 | Successfully sent workflow-outbox commands | Delete | 30 days after send | Business history remains in request events and workflow projections |
 | Failed or pending workflow commands | Preserve | Indefinite until resolved | Required for recovery and diagnosis |
-| Requests, revisions, events, clarifications, deliverables, feedback, links and team activity | Preserve | No automated deletion in v1 | Destruction requires an approved information policy and dependency-aware design |
-| Administration and operational audit records | Preserve | No automated deletion | Required for accountability |
+| Resolved account requests | Delete | 365 days after review | Removes expired access-request metadata under legal-hold control |
+| Completed, closed or cancelled requests and their dependent records | Report as eligible; do not yet delete | 2,555 days after last update | Coordinated request and object disposal requires the approved transactional storage adapter |
+| Team and work-package activity | Delete | 730 days after event | Bounded operational history after the accountability period |
+| Feedback and closed clarification threads | Delete | 730 days after creation or closure | Applies the approved content lifecycle while preserving open work |
+| Notification records | Delete | 180 days after occurrence | Removes expired action-delivery metadata |
+| Product packages | Report as eligible; do not yet delete | 2,555 days after last update | Product metadata and stored objects must be disposed atomically through the production adapter |
+| Product-access and security events | Delete | 730 days after event | Retains a bounded investigation and access-accountability window |
+| Inactive identities | Anonymise bounded identity and profile fields | 730 days after last update | Preserves referential history without retaining reusable account data |
+| Request events, conversations and administration audit records | Preserve with their owning record | No independent deletion | Prevents orphaned or selectively rewritten accountable history |
 
 Dry-run and applied results contain class counts and policy metadata only. They
 must never contain identifiers, request text, Customer details or credentials.
 Applied runs are recorded as append-only operational evidence in the same
-transaction as the deletion.
+transaction as the deletion. If completed-request or product candidates exist,
+apply fails closed until the coordinated storage-disposal adapter is available.
 
 ## Backup and restore
 

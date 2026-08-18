@@ -22,8 +22,8 @@ from mist_service.schemas.products import (
     SubmitPackageCommand,
 )
 from mist_service.services.product_service import ProductService
-from mist_service.services.product_service_support import ProductServiceSupport
 from product_phase_test_support import DATA, repository
+from product_test_support import product_service_repositories
 
 
 def _service(
@@ -34,7 +34,7 @@ def _service(
 ) -> ProductService:
     placeholder = SimpleNamespace()
     return ProductService(
-        repository_value,  # type: ignore[arg-type]
+        product_service_repositories(repository_value),
         placeholder,
         placeholder,
         placeholder,
@@ -97,15 +97,6 @@ async def test_missing_request_conceals_an_existing_package() -> None:
     service = _service(repository(request=AsyncMock(return_value=None)))
     with pytest.raises(ProductNotFound):
         await service.packages._authorised_package(actor, package.id, lock=False)
-
-
-def test_legacy_team_name_fallback_requires_the_exact_scope() -> None:
-    actor, _package, request, _artefact, _intent, _view = DATA
-    legacy = replace(request, assigned_team_id=None)
-    assert ProductServiceSupport._assigned_team(actor, legacy)
-    assert not ProductServiceSupport._assigned_team(
-        replace(actor, scope="Another Team"), legacy
-    )
 
 
 async def test_non_file_staff_review_is_audited_as_unavailable() -> None:

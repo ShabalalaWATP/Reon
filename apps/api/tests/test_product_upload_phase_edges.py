@@ -35,8 +35,12 @@ def operations(
     maximum_file_bytes: int = 50,
 ) -> ProductUploadOperations:
     placeholder = cast(Any, object())
+    repository_port = cast(Any, repository_value)
     return ProductUploadOperations(
-        cast(Any, repository_value),
+        repository_port,
+        repository_port,
+        repository_port,
+        repository_port,
         cast(Any, storage or SimpleNamespace()),
         cast(Any, scanner or SimpleNamespace()),
         placeholder,

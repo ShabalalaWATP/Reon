@@ -2,7 +2,7 @@
 
 ## Status
 
-Current product contract. Last reviewed 11 August 2026.
+Current product contract. Last reviewed 18 August 2026.
 
 ## Objective
 
@@ -53,8 +53,8 @@ desktop and narrow-screen widths.
 
 | Role | Objective | MVP activity | Value |
 | --- | --- | --- | --- |
-| Customer | Receive a timely response | Submit, track, download and give feedback | Complete requests and visible progress |
-| JIOC Routing User | Understand and direct incoming demand | Review, categorise, request information or select a command | One source of truth and less administration |
+| Customer | Receive a timely response | Submit, track, retrieve and accept products, and give feedback | Complete requests and visible progress |
+| JIOC Routing User | Understand and direct incoming demand | Review, choose priority, request information or select a Command | One source of truth and less administration |
 | Request Coordination User | Direct work to the appropriate Ops group | Hold, resume, track and select a direct Ops group | Visible demand, ownership and progress |
 | Ops Routing User | Direct work to the appropriate team | Select any direct team and track progress | Clear demand and workload ownership |
 | Team Manager | Assign and oversee delivery | Assign Analysts and check their service product | One view of origin, ownership and delivery |
@@ -75,16 +75,16 @@ seven Analysts. The complete traceable roster is maintained in
 `docs/architecture/ORGANISATION_AND_ROUTING.md`.
 
 Team Analysts never claim an unassigned workflow task. A Team Manager selects
-the Lead Analyst and any Contributors; Camunda then creates the production task
-for the named Lead Analyst. The Analyst sees only work assigned to them and the
-claim endpoint rejects an Analyst even if a malformed or stale open-task
+the Lead Analyst and any additional Analysts; Camunda then creates the production
+task for the named Lead Analyst. The Analyst sees only work assigned to them and
+the claim endpoint rejects an Analyst even if a malformed or stale open-task
 projection is presented.
 
-The assignment form presents Contributors as independent, ordinary checkbox
-choices rather than a browser-native multi-select. A Manager can select up to ten
-Contributing Analysts without modifier keys. The selected Lead is visibly
-excluded from the Contributor choices and is removed automatically if the Lead
-selection changes.
+The assignment form presents additional Analysts as independent, ordinary
+checkbox choices rather than a browser-native multi-select. A Manager can select
+up to ten additional Analysts without modifier keys. The selected Lead is
+visibly excluded from the additional-Analyst choices and is removed
+automatically if the Lead selection changes.
 
 ## Form contract
 
@@ -118,10 +118,14 @@ record a possible duplicate, related request or existing output link. Matching a
 the decision to progress remain manual. Search results are filtered by the same
 scope policy as all other data access.
 
-Binary attachments are outside this MVP. Team Analysts submit a titled plain-text
-service product. Controlled file handling requires a separate specification
-covering quarantine, malware scanning, magic-byte validation, immutable versions
-and download authorisation.
+Customer request intake does not accept attachments. Product delivery supports
+two server-controlled modes. The compatibility mode retains a titled plain-text
+service product. The managed mode uses an immutable release package containing
+one to ten PDF, DOCX, PPTX, PNG or JPEG files, approved external HTTPS links, or
+a mixture of both. Managed files are quota-reserved, quarantined, structurally
+validated, malware-scanned and authorised again at retrieval. The current package
+and context contract is defined in
+[Structured conversations, managed packages and bounded contexts](structured-conversations-packages-and-contexts.md).
 
 ## Human-led workflow
 
@@ -141,23 +145,50 @@ Submit request
                     -> Team Manager assignment
                        -> Return to Ops routing
                        -> Analyst product development
-                       -> Team Manager review
-                          -> Changes required -> Analyst product development
-                          -> QC review
-                             -> Changes required -> Analyst product development
-                             -> Ready for dissemination
-                             -> Disseminate -> Customer download -> Completed
+                          -> Customer clarification -> Analyst product development
+                          -> Team Manager review
+                           -> Changes required -> Analyst product development
+                           -> QC review
+                              -> Changes required -> Analyst product development
+                              -> Ready for dissemination
+                              -> Disseminate -> Customer retrieval and explicit acceptance
 ```
 
 All gateway variables are supplied by the named user completing the preceding
 task. Camunda must not infer or recommend a route.
 
+Customer cancellation is a separate owner-only application action available in
+every non-terminal request state. It closes local work atomically and records a
+durable, idempotent Camunda process-cancellation command. It is not a routing
+decision or a substitute workflow task.
+
+### Human action map
+
+Technical action values remain stable at the FastAPI and Camunda boundary. The
+person, current state and server-side policy determine whether one is available.
+
+| Current state | Named person | Permitted human result |
+|---|---|---|
+| JIOC review | Claimed JIOC Routing User | Request information, choose priority and progress to a Command, or close without delivery |
+| Customer information required after JIOC review | Customer | Provide information or withdraw |
+| Request coordination | Claimed Request Coordination User | Send to Ops routing, return to JIOC, hold, or close |
+| On hold | Claimed Request Coordination User | Resume or close |
+| Ops routing | Claimed Ops Routing User | Allocate to a direct team or return to request coordination |
+| Delivery planning | Claimed Team Manager | Assign the Lead and additional Analysts, or return for reallocation |
+| Product development or rework | Any current assigned Team Analyst | Submit a package or request Customer clarification |
+| Customer clarification required during production | Customer | Provide clarification or withdraw |
+| Team Manager review | Claimed Team Manager | Approve or require changes |
+| QC review | Claimed QC User or QC Manager | Approve or require changes |
+| Ready for dissemination | Claimed QC Manager who did not perform QC review | Disseminate to the Customer |
+| Disseminated managed product | Originating Customer | Retrieve the product, explicitly accept it and optionally submit feedback |
+
 ## Status projection
 
 `ROUTING_PENDING`, `TRIAGE_REVIEW`, `INFORMATION_REQUIRED`,
 `COORDINATION_REVIEW`, `ON_HOLD`, `ALLOCATION_REVIEW`, `DELIVERY_PLANNING`,
-`IN_PROGRESS`, `LEAD_REVIEW`, `REWORK_REQUIRED`, `QUALITY_REVIEW`,
-`READY_FOR_RELEASE`, `COMPLETED`, `CLOSED_NOT_PROGRESSED` and `CANCELLED`.
+`IN_PROGRESS`, `CUSTOMER_INFORMATION_REQUIRED`, `LEAD_REVIEW`,
+`REWORK_REQUIRED`, `QUALITY_REVIEW`, `READY_FOR_RELEASE`, `COMPLETED`,
+`CLOSED_NOT_PROGRESSED` and `CANCELLED`.
 
 The Customer dashboard groups these into Needs your input, In progress and
 Completed without exposing engine terminology.
@@ -175,7 +206,12 @@ criteria are in `tracking-lifecycle-and-analytical-visuals.md`.
 - `/login`
 - `/requests`
 - `/requests/new`
+- `/requests/drafts/:draftId`
 - `/requests/:requestId`
+- `/overview`
+- `/my-work`
+- `/notifications`
+- `/profile`
 - `/triage`
 - `/coordination`
 - `/allocation`
@@ -183,11 +219,25 @@ criteria are in `tracking-lifecycle-and-analytical-visuals.md`.
 - `/delivery/my-work`
 - `/quality-release`
 - `/organisation`
+- `/calendar/:calendarView?`
+- `/teams/:teamId/:view?`
+- `/teams/:teamId/people/:memberId`
 - `/tracking`
-- `/administration`
+- `/tracking/:requestId`
+- `/statistics`
+- `/product-packages/new`
+- `/product-packages/:packageId`
+- `/admin/users`
+- `/admin/users/new`
+- `/admin/users/:userId`
+- `/admin/configuration/:configurationId?`
 
-All staff work routes may share one queue component, but backend permissions and
-query scope remain role-specific.
+Role gates, reported server capabilities and navigation determine which
+destinations are offered. They are usability controls. Most capability settings
+also provide rollback controls, but the current planning and statistics router
+composition gaps are explicitly recorded in the
+[role and permission matrix](../reference/ROLE_PERMISSION_MATRIX.md#known-capability-composition-gaps).
+Backend permissions and query scope remain role-specific for every route.
 
 ## Acceptance criteria
 
@@ -196,7 +246,8 @@ query scope remain role-specific.
 - A Customer can submit the complete form and view only their requests.
 - A Customer can save and resume a private draft without starting Camunda.
 - Each representative role sees only its applicable queue and actions.
-- Staff can append attributable notes, and permitted leads can see scoped workload.
+- Staff can append attributable notes, and authorised Managers or reporting-scope
+  holders can see scoped workload.
 - Intake can record manual duplicate or related-work checks without automated
   recommendations or cross-scope data exposure.
 - Every route-affecting choice is a human-completed Camunda user task.
@@ -210,8 +261,9 @@ query scope remain role-specific.
   and rename organisation display names without accessing request content.
 - Camunda 8.9.14 is pinned locally and accessed only through FastAPI.
 - PostgreSQL 17 stores application state; Camunda uses separate owned storage.
-- A disseminated plain-text service product is downloadable only by the
-  originating Customer through an authenticated application-owned endpoint.
+- A disseminated service product is retrievable only by the originating Customer
+  through an authenticated application-owned download or redirect endpoint.
+  Compatibility-mode plain text remains subject to the same ownership rule.
 - Feedback can be submitted once and only after successful completion.
 - Object-level authorisation, CSRF, session expiry and disabled-account behaviour
   are covered by tests.
@@ -229,7 +281,9 @@ query scope remain role-specific.
 
 ## Explicit exclusions
 
-Chat, voice, LLMs, automated routing, recommendations, shared product search,
-binary files, dynamic process editing, external messaging, calendars, capacity
-optimisation, broad organisation administration, production deployment and
-production identity federation.
+Voice, LLMs, automated routing or prioritisation, recommendation engines, shared
+product search, Customer-supplied attachments, arbitrary process editing,
+unstructured chat, external messaging, automated capacity optimisation,
+production deployment and production identity federation. Bounded in-app
+conversations, managed release artefacts, calendars, capacity signals and
+governed organisation configuration are part of the current product.

@@ -108,6 +108,19 @@ class FakeWorkRepository:
         assert isinstance(user.role, UserRole)
         return self.bundles
 
+    async def page_for_actor(
+        self,
+        user: Actor,
+        *,
+        limit: int = 50,
+        cursor: str | None = None,
+        unit_id: UUID | None = None,
+        request_id: UUID | None = None,
+    ) -> tuple[list[WorkBundle], str | None]:
+        assert isinstance(user.role, UserRole)
+        del limit, cursor, unit_id, request_id
+        return self.bundles, None
+
     async def get(self, work_id: UUID, user: Actor | None = None) -> WorkBundle | None:
         del user
         if self.value is not None and self.value.record.id == work_id:
@@ -190,8 +203,9 @@ async def test_list_filters_visibility_and_adds_actions_only_when_claimed() -> N
     repository = FakeWorkRepository()
     repository.bundles = [open_item, claimed, other_claim, completed, wrong_stage]
     service = WorkService(repository, FakeCommandDispatcher(repository))
-    items = await service.list_items(triage)
+    items, cursor = await service.list_page(triage)
     assert [item.id for item in items] == [open_item.record.id, claimed.record.id]
+    assert cursor is None
     assert items[0].available_actions == []
     assert "progress" in items[1].available_actions
 
@@ -313,6 +327,6 @@ async def test_analyst_cannot_claim_an_open_task_even_if_it_is_projected() -> No
     repository.bundles = [value]
     service = WorkService(repository, FakeCommandDispatcher(repository))
 
-    assert await service.list_items(specialist) == []
+    assert await service.list_page(specialist) == ([], None)
     with pytest.raises(ObjectNotFound):
         await service.claim(specialist, value.record.id)

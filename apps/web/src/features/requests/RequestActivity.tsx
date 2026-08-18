@@ -1,7 +1,5 @@
-import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
-
 import { LoadMoreButton } from "../../components/LoadMoreButton";
+import { useActivityPagination } from "../../components/useActivityPagination";
 import { api } from "../../lib/api/client";
 import type { RequestEvent } from "../../lib/api/types";
 import { formatDate } from "../../lib/status";
@@ -13,19 +11,9 @@ type RequestActivityProps = {
 };
 
 export function RequestActivity({ initialCursor, initialEvents, requestId }: RequestActivityProps) {
-  const [events, setEvents] = useState(initialEvents);
-  const [cursor, setCursor] = useState(initialCursor ?? null);
-  const older = useMutation({
-    mutationFn: () => api.request(requestId, cursor ?? undefined),
-    onSuccess: (page) => {
-      const byId = new Map(events.map((event) => [event.id, event]));
-      page.events.forEach((event) => byId.set(event.id, event));
-      setEvents(
-        [...byId.values()].sort((left, right) => left.createdAt.localeCompare(right.createdAt)),
-      );
-      setCursor(page.eventsNextCursor ?? null);
-    },
-  });
+  const { cursor, events, older } = useActivityPagination(initialEvents, initialCursor, (cursor) =>
+    api.request(requestId, cursor),
+  );
   return (
     <section className="detail-section" aria-labelledby="activity-title" id="request-activity">
       <div className="section-heading">

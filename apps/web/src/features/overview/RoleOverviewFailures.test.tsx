@@ -50,11 +50,11 @@ it.each(["/me/actions", "/statistics/scopes", "/statistics"])(
         if (url.pathname.endsWith("/statistics")) return json(statistics);
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      false,
-      false,
-      false,
-      true,
+      {
+        emptyActionWorkspace: false,
+        emptyStatisticsScopes: false,
+        emptyTeamWorkspaces: false,
+      },
     );
     renderApp("/overview");
 

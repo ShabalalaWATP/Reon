@@ -1,14 +1,15 @@
 # Tracking lifecycle and analytical visuals
 
-Status: implementation candidate, 10 August 2026.
+Status: implemented current capability contract. Last reviewed 18 August 2026.
 
-## Problem
+## Problem addressed
 
-The Tracking register exposes a reference, current owner and a text route, but
-not the request title. Operators cannot reopen a request after their routing
-task has moved downstream, and the route does not explain how the request sits
-within the delivery lifecycle. The shared Statistics surface has accessible
-data but relies heavily on small horizontal bars and tables.
+The earlier Tracking register exposed a reference, current owner and text route
+but not the request title. Operators could not reopen a request after their
+routing task moved downstream, and the route did not explain how the request sat
+within the delivery lifecycle. The earlier Statistics surface had accessible
+data but relied heavily on small horizontal bars and tables. The behaviours
+below are the implemented remedy.
 
 ## Users and scope
 
@@ -16,7 +17,7 @@ data but relies heavily on small horizontal bars and tables.
   unit.
 - Request Coordination Users track requests whose pinned route contains one of their
   exact command memberships.
-- Operations routing users track requests whose pinned route contains one of
+- Ops Routing Users track requests whose pinned route contains one of
   their exact Ops memberships.
 - Statistics remain constrained to the reporting roots and descendant units in
   the existing server-issued scope. A visual must never broaden the dataset.

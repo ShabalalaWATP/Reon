@@ -1,6 +1,7 @@
 # Private Google Cloud synthetic sandbox
 
 Status: documented evaluation pattern, not a production topology
+Last reviewed: 18 August 2026
 
 Complete the Linux sections of [Host setup](HOST_SETUP.md) and the local
 [Docker topology](LOCAL_DOCKER.md) before creating cloud resources. This guide
@@ -86,10 +87,15 @@ On the VM:
 
 Use approved source or artefact transfer. `gcloud compute scp
 --tunnel-through-iap` may be used for a reviewed archive, but never package a
-`.env`, Git credential, local product or database dump unintentionally.
+`.env`, Git credential, local product or database dump unintentionally. Apply
+the [immutable source procedure](HOST_SETUP.md#5-obtain-and-configure-the-source)
+with the exact commit from the approved GCP sandbox release record.
 
 ```bash
+approved_commit='<approved-40-character-release-commit>'
 git clone <approved-repository-url> Mist-Service
+git -C Mist-Service checkout --detach "$approved_commit"
+test "$(git -C Mist-Service rev-parse HEAD)" = "$approved_commit"
 cd Mist-Service
 cp .env.example .env
 chmod 600 .env
@@ -103,11 +109,13 @@ not satisfy the `prod` boundary.
 pwsh -File ./scripts/start-local.ps1
 docker compose ps
 curl -fsS http://127.0.0.1:8000/ready
-pwsh -File ./scripts/smoke-camunda.ps1
 ```
 
 The guarded helper deploys the BPMN and records availability through Compose.
-Readiness must report every required check as `ok`.
+Readiness must report every required check as `ok`. After opening the tunnel,
+exercise a representative synthetic request through the application UI. Do not
+run `scripts/smoke-camunda.ps1` against this stack because it deploys another,
+unattested process-definition version.
 
 ## 5. Open a private browser tunnel
 

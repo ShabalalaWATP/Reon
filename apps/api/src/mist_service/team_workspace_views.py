@@ -13,13 +13,8 @@ from mist_service.schemas.team_workspaces import (
     MembershipState,
     TeamActivity,
     TeamMember,
-    TeamWorkspaceAccess,
 )
 from mist_service.team_models import TeamMembership
-
-
-def access_pair(access: TeamWorkspaceAccess) -> tuple[UUID, TeamWorkspaceAccess]:
-    return access.team_id, access
 
 
 def member_user_id(row: Any) -> UUID:
@@ -34,10 +29,6 @@ def current_membership_pair(
     row: Any,
 ) -> tuple[UUID, tuple[TeamMembership, OrganisationUnit]]:
     return row[0].user_id, (row[0], row[1])
-
-
-def work_count_pair(row: Any) -> tuple[UUID, int]:
-    return row[0], row[1]
 
 
 def member_view(

@@ -24,10 +24,7 @@ describe("action and notification API client", () => {
           ? new Response(null, { status: 204 })
           : json({ id: "view/one", ...view, version: 2 });
       },
-      true,
-      true,
-      true,
-      false,
+      { emptyActionWorkspace: false },
     );
 
     await actionNotificationApi.actions({ ...view.filters, cursor: "next page", limit: 20 });
@@ -65,11 +62,7 @@ describe("action and notification API client", () => {
         calls.push({ path: `${url.pathname}${url.search}`, init });
         return json({ items: [], groups: [], unreadCount: 2, projectedAt: null });
       },
-      true,
-      true,
-      true,
-      true,
-      false,
+      { emptyNotificationWorkspace: false },
     );
     const item = { id: "notice-1", version: 4 } as PersonalNotification;
     const preference = { eventGroup: "RELEASE/SAFETY", version: 7 } as NotificationPreference;

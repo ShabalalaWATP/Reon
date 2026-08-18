@@ -24,7 +24,7 @@ from mist_service.repositories.team_workspaces import (
     _merge_authority,
     _own_authority,
 )
-from mist_service.team_membership_admin import align_admin_team_membership
+from mist_service.team_membership_admin import align_admin_workspace_memberships
 from mist_service.team_membership_seed import seed_team_membership_history
 from mist_service.team_membership_sync import synchronise_due_team_memberships
 from mist_service.team_models import TeamMembership, WorkspacePosition
@@ -230,10 +230,11 @@ async def test_scheduled_transfer_blocks_second_schedule_and_admin_override(
         analyst = await session.get(User, analyst_id)
         assert analyst is not None
         try:
-            await align_admin_team_membership(
+            await align_admin_workspace_memberships(
                 session,
                 user=analyst,
-                next_team_id=cedar_id,
+                next_unit_ids={cedar_id},
+                workspace_position=WorkspacePosition.MEMBER,
                 actor_id=admin_id,
             )
         except InvalidAdministrationChange as error:

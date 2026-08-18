@@ -135,12 +135,3 @@ class AdminMutationPort(Protocol):
         new_name: str,
         actor_id: UUID,
     ) -> OrganisationUnitView: ...
-
-
-class AdminApplicationPort(
-    AdminQueryPort,
-    AdminIdentityPolicyPort,
-    AdminMutationPort,
-    Protocol,
-):
-    """Composition-facing union implemented by the SQLAlchemy adapter."""

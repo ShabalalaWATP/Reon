@@ -48,10 +48,7 @@ describe("staff landing policy", () => {
         if (url.pathname.endsWith("/statistics")) return json(emptyStatistics);
         throw new Error("Request content must not be fetched");
       },
-      true,
-      false,
-      true,
-      false,
+      { emptyActionWorkspace: false, emptyStatisticsScopes: false },
     );
 
     renderApp("/");
@@ -75,10 +72,11 @@ describe("staff landing policy", () => {
         if (url.pathname.endsWith("/team-workspaces")) return json({ items: [overviewWorkspace] });
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      false,
-      false,
-      false,
+      {
+        emptyActionWorkspace: false,
+        emptyStatisticsScopes: false,
+        emptyTeamWorkspaces: false,
+      },
     );
 
     renderApp("/requests");
@@ -98,10 +96,7 @@ describe("staff landing policy", () => {
         if (url.pathname.endsWith("/team-workspaces")) return json({ items: [overviewWorkspace] });
         throw new Error(`Disabled Home must not request ${url.pathname}`);
       },
-      true,
-      true,
-      false,
-      true,
+      { emptyTeamWorkspaces: false },
     );
 
     renderApp("/");

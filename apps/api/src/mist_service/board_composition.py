@@ -8,7 +8,8 @@ from mist_service.board_ports import (
     BoardCommandPort,
     BoardIterationAnalyticsPort,
     BoardPlanningCommandPort,
-    BoardRepositoryPort,
+    BoardPlanningReadPort,
+    BoardQueryPort,
 )
 from mist_service.repositories.board import SqlAlchemyBoardRepository
 from mist_service.repositories.board_analytics import (
@@ -35,12 +36,14 @@ def board_services(
     workspaces = SqlAlchemyTeamWorkspaceRepository(session)
     return (
         BoardService(
-            cast(BoardRepositoryPort, board),
+            cast(BoardQueryPort, board),
+            cast(BoardPlanningReadPort, board),
             cast(BoardCommandPort, SqlAlchemyBoardCommandRepository(board)),
             cast(TeamWorkspaceReadPort, workspaces),
         ),
         BoardPlanningService(
-            cast(BoardRepositoryPort, board),
+            cast(BoardQueryPort, board),
+            cast(BoardPlanningReadPort, board),
             cast(
                 BoardPlanningCommandPort,
                 SqlAlchemyBoardPlanningCommandRepository(board),

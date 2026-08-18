@@ -1,4 +1,4 @@
-"""Application port for managed-product metadata persistence."""
+"""Narrow application ports for managed-product persistence."""
 
 from __future__ import annotations
 
@@ -20,11 +20,9 @@ from mist_service.schemas.products import CustomerReleaseView, PackageView
 
 
 class ProductAccessRepository(Protocol):
-    """Actor, request and package access needed by product policies."""
+    """Package and request access shared by product policy support."""
 
     async def active_actor(self, actor: Actor) -> bool: ...
-
-    async def live_qc_membership(self, actor_id: UUID, *, manager: bool) -> bool: ...
 
     async def request(
         self, request_id: UUID, *, lock: bool
@@ -43,13 +41,35 @@ class ProductAccessRepository(Protocol):
         manager: bool,
     ) -> bool: ...
 
+
+class ProductLinkRepository(Protocol):
+    """Request-pinned external-link configuration."""
+
     async def approved_link_domains(
         self, request_id: UUID
     ) -> frozenset[str] | None: ...
 
 
-class ProductPackageRepository(Protocol):
-    """Package creation, projection and immutable review lifecycle."""
+class ProductReviewTaskRepository(Protocol):
+    """Accountability for the human tasks which can change a package."""
+
+    async def manager_task_claimed_by(
+        self, package_id: UUID, actor_id: UUID
+    ) -> bool: ...
+
+    async def release_task_claimed_by(
+        self, package_id: UUID, actor_id: UUID
+    ) -> bool: ...
+
+    async def quality_task_claimed_by(
+        self, package_id: UUID, actor_id: UUID
+    ) -> bool: ...
+
+
+class ProductPackageServiceRepository(ProductAccessRepository, Protocol):
+    """Package authoring, inspection and approval persistence."""
+
+    async def live_qc_membership(self, actor_id: UUID, *, manager: bool) -> bool: ...
 
     async def create_package(
         self, request_id: UUID, actor_id: UUID, creation_key: UUID
@@ -60,8 +80,6 @@ class ProductPackageRepository(Protocol):
     async def view(
         self, package_id: UUID, *, include_review_details: bool = False
     ) -> PackageView: ...
-
-    async def review_access(self, artefact_id: UUID) -> ReleaseAccessRecord | None: ...
 
     async def package_digest(
         self, package_id: UUID, covering_note: str | None
@@ -76,8 +94,47 @@ class ProductPackageRepository(Protocol):
     ) -> PackageRecord: ...
 
 
-class ProductUploadRepository(Protocol):
-    """Managed and linked artefact persistence."""
+class ProductReviewServiceRepository(ProductAccessRepository, Protocol):
+    """Staff review access and claimed-task accountability."""
+
+    async def live_qc_membership(self, actor_id: UUID, *, manager: bool) -> bool: ...
+
+    async def review_access(self, artefact_id: UUID) -> ReleaseAccessRecord | None: ...
+
+    async def manager_task_claimed_by(
+        self, package_id: UUID, actor_id: UUID
+    ) -> bool: ...
+
+    async def release_task_claimed_by(
+        self, package_id: UUID, actor_id: UUID
+    ) -> bool: ...
+
+    async def quality_task_claimed_by(
+        self, package_id: UUID, actor_id: UUID
+    ) -> bool: ...
+
+
+class ProductUploadServiceRepository(ProductAccessRepository, Protocol):
+    """Draft projection and external-link authoring persistence."""
+
+    async def view(
+        self, package_id: UUID, *, include_review_details: bool = False
+    ) -> PackageView: ...
+
+    async def create_external(
+        self,
+        package_id: UUID,
+        *,
+        label: str,
+        destination: str,
+        domain: str,
+        expires_at: datetime | None,
+        creation_key: UUID,
+    ) -> ArtefactRecord: ...
+
+
+class ProductManagedUploadRepository(Protocol):
+    """Managed artefact reservation, grant and quota persistence."""
 
     async def storage_usage(
         self, package_id: UUID, request_id: UUID, author_id: UUID
@@ -111,16 +168,9 @@ class ProductUploadRepository(Protocol):
         expires_at: datetime,
     ) -> UploadIntentRecord: ...
 
-    async def create_external(
-        self,
-        package_id: UUID,
-        *,
-        label: str,
-        destination: str,
-        domain: str,
-        expires_at: datetime | None,
-        creation_key: UUID,
-    ) -> ArtefactRecord: ...
+
+class ProductUploadContentRepository(Protocol):
+    """Upload-intent content and scan-result persistence."""
 
     async def upload_intent(
         self, package_id: UUID, intent_id: UUID, *, lock: bool
@@ -138,6 +188,14 @@ class ProductUploadRepository(Protocol):
         checksum: str,
         released_key: str | None,
     ) -> ArtefactRecord: ...
+
+
+class ProductTransferRepository(ProductAccessRepository, Protocol):
+    """Package access and projection for detached transfer phases."""
+
+    async def view(
+        self, package_id: UUID, *, include_review_details: bool = False
+    ) -> PackageView: ...
 
 
 class ProductOperationLeaseRepository(Protocol):
@@ -169,8 +227,16 @@ class ProductOperationLeaseRepository(Protocol):
     ) -> bool: ...
 
 
-class ProductReleaseRepository(Protocol):
-    """Review accountability, dissemination and Customer access."""
+class ProductReleaseServiceRepository(ProductAccessRepository, Protocol):
+    """QC release and withdrawal persistence."""
+
+    async def live_qc_membership(self, actor_id: UUID, *, manager: bool) -> bool: ...
+
+    async def latest_package(self, request_id: UUID) -> PackageRecord | None: ...
+
+    async def view(
+        self, package_id: UUID, *, include_review_details: bool = False
+    ) -> PackageView: ...
 
     async def attest_links(
         self, package_id: UUID, actor_id: UUID, *, now: datetime
@@ -192,17 +258,28 @@ class ProductReleaseRepository(Protocol):
 
     async def release_excluded_actor_ids(self, package_id: UUID) -> frozenset[UUID]: ...
 
-    async def manager_task_claimed_by(
-        self, package_id: UUID, actor_id: UUID
-    ) -> bool: ...
+    async def withdraw(
+        self,
+        package_id: UUID,
+        actor_id: UUID,
+        reason: str,
+        *,
+        now: datetime,
+    ) -> PackageRecord: ...
 
-    async def release_task_claimed_by(
-        self, package_id: UUID, actor_id: UUID
-    ) -> bool: ...
 
-    async def quality_task_claimed_by(
-        self, package_id: UUID, actor_id: UUID
-    ) -> bool: ...
+class ProductCustomerReleaseRepository(Protocol):
+    """Customer release projection, acceptance and artefact access."""
+
+    async def active_actor(self, actor: Actor) -> bool: ...
+
+    async def request(
+        self, request_id: UUID, *, lock: bool
+    ) -> ProductRequestRecord | None: ...
+
+    async def release_view(
+        self, request_id: UUID, requester_id: UUID
+    ) -> CustomerReleaseView | None: ...
 
     async def accept(
         self,
@@ -213,55 +290,6 @@ class ProductReleaseRepository(Protocol):
         now: datetime,
     ) -> PackageRecord: ...
 
-    async def withdraw(
-        self,
-        package_id: UUID,
-        actor_id: UUID,
-        reason: str,
-        *,
-        now: datetime,
-    ) -> PackageRecord: ...
-
-    async def release_view(
-        self, request_id: UUID, requester_id: UUID
-    ) -> CustomerReleaseView | None: ...
-
     async def access(
         self, artefact_id: UUID, requester_id: UUID
     ) -> ReleaseAccessRecord | None: ...
-
-
-class ProductPackageServiceRepository(
-    ProductAccessRepository,
-    ProductPackageRepository,
-    ProductReleaseRepository,
-    Protocol,
-):
-    """Capabilities consumed by package authoring and review use cases."""
-
-
-class ProductUploadServiceRepository(
-    ProductAccessRepository,
-    ProductPackageRepository,
-    ProductUploadRepository,
-    ProductOperationLeaseRepository,
-    Protocol,
-):
-    """Capabilities consumed by managed-product upload use cases."""
-
-
-class ProductReleaseServiceRepository(
-    ProductAccessRepository,
-    ProductPackageRepository,
-    ProductReleaseRepository,
-    Protocol,
-):
-    """Capabilities consumed by release and Customer-access use cases."""
-
-
-class ProductRepository(
-    ProductUploadServiceRepository,
-    ProductReleaseServiceRepository,
-    Protocol,
-):
-    """Compatibility aggregate implemented by the SQLAlchemy adapter."""

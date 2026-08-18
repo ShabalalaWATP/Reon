@@ -1,5 +1,8 @@
 # Managed product upload hardening
 
+Status: implemented for the local candidate; production storage, scanner and
+semantic CDR acceptance remain release gates. Last reviewed 18 August 2026.
+
 ## Purpose
 
 Managed product files must not exhaust metadata, storage, scanner or local

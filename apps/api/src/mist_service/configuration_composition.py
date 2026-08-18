@@ -15,8 +15,11 @@ from mist_service.services.configuration_lifecycle_service import (
     ConfigurationLifecycleService,
 )
 from mist_service.services.configuration_ports import (
-    ConfigurationApplicationPort,
+    ConfigurationActivationPort,
+    ConfigurationDraftPort,
     ConfigurationQueryPort,
+    ConfigurationReviewPort,
+    ConfigurationValidationPort,
 )
 from mist_service.services.configuration_query_service import (
     ConfigurationQueryService,
@@ -46,11 +49,12 @@ def configuration_lifecycle_service(
         ConfigurationEventPublisher | None,
         getattr(request.app.state, "configuration_event_publisher", None),
     )
+    repository = SqlAlchemyConfigurationRepository(session)
     return ConfigurationLifecycleService(
-        cast(
-            ConfigurationApplicationPort,
-            SqlAlchemyConfigurationRepository(session),
-        ),
+        cast(ConfigurationDraftPort, repository),
+        cast(ConfigurationValidationPort, repository),
+        cast(ConfigurationReviewPort, repository),
+        cast(ConfigurationActivationPort, repository),
         settings,
         publisher,
     )

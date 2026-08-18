@@ -26,12 +26,23 @@ the version held on disk.
 
 Use `scripts/start-local.ps1` as the guarded entry point. It rejects placeholder
 values, shared database passwords, non-local origins and non-local environments.
-It starts and waits for Compose, then deploys and attests the BPMN from inside the
-API container with `-AttestWithCompose`. Compose explicitly forwards database
-pool sizing, session lifetime/elevation and process identity settings. The
+It starts and waits for Compose, then `deploy-workflow-compose.ps1` inspects,
+deploys when absent and attests the BPMN through the API container. Compose has
+no optional profiles. Plain `docker compose up` starts the services but does not
+perform workflow deployment or attestation, so request routing remains unready.
+Compose explicitly forwards an allowlist of database-pool, session,
+feature-flag and process settings rather than injecting every `.env` value. The
 one-shot `migrator` applies Alembic and runtime grants before API startup.
 Production deployments must likewise run migrations as an explicit release job
 before application replicas are started or rolled forward.
+
+The bootstrap creates a separate maintenance role and the migrator applies its
+table-level grants, but a fresh Compose database does not currently grant that
+role `CONNECT` on the application database. Retention apply and legal-hold apply
+or release cannot run in the local stack until that provisioning defect is
+fixed and retested. Preview, health and worker operations continue to use the
+runtime identity. This limitation is not a reason to grant disposal permissions
+to the API role.
 
 Do not expose this topology on a shared host or use it in production. Production
 requires private networking, OIDC, explicit Camunda authorisation, externally

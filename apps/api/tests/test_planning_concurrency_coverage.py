@@ -240,7 +240,7 @@ async def test_service_link_validation_and_non_wip_target_paths() -> None:
         request_requester_id=AsyncMock(return_value=None),
         lock_planning_aggregate=AsyncMock(),
     )
-    service = BoardService(board, SimpleNamespace(), SimpleNamespace())
+    service = BoardService(board, board, SimpleNamespace(), SimpleNamespace())
     actor = SimpleNamespace(id=uuid4())
     linked = uuid4()
     command = _work_command(linkedRequestId=linked)
@@ -266,7 +266,7 @@ async def test_service_link_validation_excludes_requester_stable_identity() -> N
         request_requester_id=AsyncMock(return_value=requester_id),
         iteration_in_team=AsyncMock(),
     )
-    service = BoardService(board, SimpleNamespace(), SimpleNamespace())
+    service = BoardService(board, board, SimpleNamespace(), SimpleNamespace())
 
     own = _work_command(ownerUserId=other_id, linkedRequestId=request_id)
     with pytest.raises(BoardItemNotFound):
@@ -308,7 +308,7 @@ async def test_service_create_rejects_cycle_after_aggregate_lock() -> None:
         create_package=AsyncMock(return_value=SimpleNamespace(id=package_id)),
         dependency_cycle=AsyncMock(return_value=True),
     )
-    service = BoardService(board, commands, SimpleNamespace())
+    service = BoardService(board, board, commands, SimpleNamespace())
     service._package_policy.authorise_create = AsyncMock()  # type: ignore[method-assign]
     service._package_policy.validate_links = AsyncMock()  # type: ignore[method-assign]
 

@@ -1,9 +1,10 @@
 # Security review remediation matrix, 13 August 2026
 
-This matrix is the completion record for
-`docs/specs/security-review-remediation-2026-08-13.md`. A row may be marked
-complete only when the implementation, focused regression and broader gate have
-all passed against the current worktree.
+This matrix is the dated completion record for
+`docs/specs/security-review-remediation-2026-08-13.md`. A row was marked
+complete only after the implementation, focused regression and broader gate
+passed against the 13 August candidate. It is not a current-worktree scan or a
+record of the later Codex Security remediation.
 
 | Finding | Required implementation evidence | Required verification | Status |
 | --- | --- | --- | --- |
@@ -30,7 +31,7 @@ all passed against the current worktree.
 | Weak local orchestration segmentation | Networkless/read-only init and isolated orchestration network | Compose contract and local smoke test | Complete |
 | `GET /auth/me` mutates CSRF state | Read-only session read or safe multi-token bootstrap | Parallel-tab token and no-write tests | Complete |
 
-## Global release evidence
+## Dated global release evidence
 
 - [x] Backend test suite passes with at least 95 per cent line and branch coverage.
 - [x] Frontend test suite passes with at least 95 per cent line and branch coverage.

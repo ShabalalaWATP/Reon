@@ -1,5 +1,7 @@
 # Deployment guide
 
+Last reviewed: 18 August 2026
+
 ## Choose the correct path
 
 | Goal | Use | Data allowed |
@@ -24,10 +26,10 @@ Engine and Azure VM hosts can run that same loopback-bound Compose topology
 behind SSM, IAP or Bastion/SSH tunnels. These are not production patterns.
 
 The same current application runs in each supported host path: React/Nginx,
-FastAPI, the independent worker, PostgreSQL, Camunda and ClamAV. AWS and Google
-Cloud instructions do not replace PostgreSQL with a different application
-database or introduce a cloud-native product store. They host the unchanged
-synthetic topology on one private Linux VM.
+FastAPI, the independent worker, PostgreSQL, Camunda and ClamAV. AWS, Google
+Cloud and Azure instructions do not replace PostgreSQL with a different
+application database or introduce a cloud-native product store. They host the
+unchanged synthetic topology on one private Linux VM.
 
 The production direction is Kubernetes, an external managed PostgreSQL service,
 a supported Camunda 8.9 Helm deployment, an enterprise identity provider,
@@ -45,6 +47,11 @@ Helm chart, Terraform modules or validated cloud topology in the repository.
 - The web image contains local Nginx host and upstream assumptions.
 - There is no infrastructure as code, production secret integration, HA design
   evidence, capacity test or multi-store disaster-recovery rehearsal.
+- Fresh Compose provisioning omits database `CONNECT` for the maintenance role,
+  so retention apply and legal-hold apply/release are not current local evidence.
+- The restore helper currently cannot pass one database URL through both its
+  libpq tools and async Python verifier, so no current-head restore rehearsal can
+  be claimed from that command.
 
 These blockers cannot be removed by setting `ENVIRONMENT=prod`.
 

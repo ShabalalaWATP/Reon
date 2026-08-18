@@ -1,5 +1,7 @@
 # Live QA readiness and primary-route assurance
 
+Status: implemented and locally verified. Last reviewed 18 August 2026.
+
 ## Purpose
 
 The rebuilt local QA stack must be ready by its own `/ready` contract, not only

@@ -12,8 +12,14 @@ from mist_service.product_runtime import ProductRuntime
 from mist_service.repositories.auth import SqlAlchemyAuthRepository
 from mist_service.repositories.products import SqlAlchemyProductRepository
 from mist_service.services.product_download_service import ProductDownloadService
-from mist_service.services.product_service import ProductService
-from mist_service.services.product_transfer_context import ProductTransferContext
+from mist_service.services.product_service import (
+    ProductService,
+    ProductServiceRepositories,
+)
+from mist_service.services.product_transfer_context import (
+    ProductTransferContext,
+    ProductTransferRepositories,
+)
 from mist_service.services.product_transfer_service import ProductTransferService
 
 
@@ -22,8 +28,19 @@ def build_product_service(
     sessions: async_sessionmaker[AsyncSession],
     runtime: ProductRuntime,
 ) -> ProductService:
+    repository = SqlAlchemyProductRepository(session)
     return ProductService(
-        SqlAlchemyProductRepository(session),
+        ProductServiceRepositories(
+            packages=repository,
+            review_tasks=repository,
+            reviews=repository,
+            uploads=repository,
+            managed_uploads=repository,
+            upload_content=repository,
+            links=repository,
+            releases=repository,
+            customer_releases=repository,
+        ),
         runtime.storage,
         runtime.scanner,
         runtime.link_policy,
@@ -58,7 +75,12 @@ def build_transfer_service(
             sessions,
             runtime,
             mutation_session,
-            repository,
+            ProductTransferRepositories(
+                transfers=repository,
+                managed_uploads=repository,
+                upload_content=repository,
+                operation_leases=repository,
+            ),
             fence,
         )
     )

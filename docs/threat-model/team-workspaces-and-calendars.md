@@ -1,5 +1,8 @@
 # Team Workspaces and Calendars Threat Model
 
+Status: living threat model
+Last reviewed: 18 August 2026
+
 ## Scope and assets
 
 This model covers team workspace access, membership lifecycle, calendar events,
@@ -48,7 +51,7 @@ Only named workflow commands cross the existing outbox boundary to Camunda.
 | Board drag skips workflow steps | Map source/target to a named application command and recheck task, assignment, state and version server-side |
 | A Manager sends a hastener to an unassigned or cross-team Analyst, or races a workflow transition | Require a current exact-team Manager position; lock and refresh the request before validating exact assigned-team ownership and active production state; derive active Lead and Contributor recipients on the server and validate every named recipient against that set |
 | A hastener becomes an untracked workflow shortcut | Append it to tamper-evident request history with unchanged prior and next status; keep ownership and assignment unchanged and send no Camunda command |
-| A reminder notification exposes request narrative to the wrong person | Project only to the resolved assigned Delivery Specialists through exact-team recipient rules; make the direct hastener event mandatory despite general assignment preferences; verify that every resolved recipient was projected before commit; keep the subject content-minimal and link back to the authorised exact-request board endpoint where object access is rechecked |
+| A reminder notification exposes request narrative to the wrong person | Project only to the resolved assigned Team Analysts through exact-team recipient rules; make the direct hastener event mandatory despite general assignment preferences; verify that every resolved recipient was projected before commit; keep the subject content-minimal and link back to the authorised exact-request board endpoint where object access is rechecked |
 | Hastener history is disclosed beyond users already authorised for the request | Treat the reminder as accountable request history and rely on the existing object-level request policy: the Customer can see their own request history, while unrelated Customers and teams remain denied; notification delivery remains limited to assigned Analysts |
 | A hostile reminder message manipulates rendering, storage or logs | Normalise and trim before applying the 10–500 character bounds, reject control and bidirectional formatting characters, escape content at render time and keep structured logs content-free |
 | Package link changes request state | Keep package aggregate and request commands separate; link is reference-only |

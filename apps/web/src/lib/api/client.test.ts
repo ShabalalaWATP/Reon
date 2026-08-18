@@ -64,9 +64,11 @@ describe("API client", () => {
         if (url.pathname.endsWith("/requests")) return json({ items: [requestSummary] });
         return json(requestDetail);
       },
-      false,
-      false,
-      false,
+      {
+        emptyDraftRegister: false,
+        emptyStatisticsScopes: false,
+        emptyTeamWorkspaces: false,
+      },
     );
 
     await api.login({ username: "admin2", password: "admin" });

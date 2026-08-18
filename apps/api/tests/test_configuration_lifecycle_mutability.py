@@ -51,8 +51,12 @@ async def test_proposals_are_mutable_only_before_validation_and_activation_time(
     _, sessions, settings = configuration_database
     async with sessions() as session, session.begin():
         actors = await seed_configuration_context(session)
+        repository = SqlAlchemyConfigurationRepository(session)
         lifecycle = ConfigurationLifecycleService(
-            SqlAlchemyConfigurationRepository(session),
+            repository,
+            repository,
+            repository,
+            repository,
             settings,
             clock=lambda: actors.now - timedelta(seconds=1),
         )

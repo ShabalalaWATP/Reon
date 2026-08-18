@@ -115,9 +115,7 @@ function mockPeople(access: TeamWorkspaceAccess, eligible: EligibleRosterAnalyst
       if (url.pathname.endsWith("/eligible-analysts")) return json({ items: eligible });
       throw new Error(`Unexpected ${url.pathname}`);
     },
-    true,
-    true,
-    false,
+    { emptyTeamWorkspaces: false },
   );
 }
 

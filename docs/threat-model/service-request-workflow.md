@@ -1,5 +1,8 @@
 # Service Request Workflow Threat Model
 
+Status: living threat model
+Last reviewed: 18 August 2026
+
 ## Customer intake and account-request boundary
 
 The Customer request contract excludes service classification, internal business areas, routing destinations and intended recipients. This reduces topology disclosure and prevents a requester from influencing classification, authorisation or routing through untrusted form values. The persisted service-category value is server-owned compatibility metadata and is not part of Customer input. The authenticated requester identity is bound server-side and is the eventual dissemination recipient.
@@ -100,7 +103,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | A notification leaks protected content | Store a minimum safe subject only; exclude request narrative, clarification text, product content, Customer identity and private calendar text from payloads, logs and metrics |
 | A copied notification deep link grants access | Recheck current recipient, role, object, assignment and organisation policy at the target endpoint; notification possession is never authority |
 | Internal coordination appears in Customer history | Persist a server-owned event audience, backfill legacy `CURRENT_OWNER` and internal event types to `STAFF_ONLY`, and filter before pagination at every Customer history query |
-| A removed or deactivated Lead or Contributor retains action or notification authority | Treat the Lead field and non-ended participant rows as accountability evidence only; at projection, every read, command dispatch and finalisation, revalidate an effective participant assignment, active Delivery Specialist account and live membership in the request's exact assigned team |
+| A removed or deactivated Lead or Contributor retains action or notification authority | Treat the Lead field and non-ended participant rows as accountability evidence only; at projection, every read, command dispatch and finalisation, revalidate an effective participant assignment, active Team Analyst account and live membership in the request's exact assigned team |
 | A removed routing user or Team Lead retains a projected card or notification | For direct and candidate projections, revalidate live membership in the request's exact selected route unit; Team Lead access must also match the current assigned delivery team |
 | A saved staff action view appears after switching to Customer context | Namespace saved views by stable identity and effective context, backfill existing rows as staff views and apply the context predicate to list, create, update and delete operations |
 | A Customer enumerates staffing or organisation topology | Deny the global organisation reference endpoint to Customers; initialise submission routing from server-owned configuration only |
@@ -153,6 +156,7 @@ Authenticated redirect -> approved external HTTPS destination (browser only)
 | A local heuristic result is mistaken for production semantic assurance | Give every scanner runtime an explicit assurance class; advertise and permit managed-file uploads in production only for an injected `APPROVED_SEMANTIC_CDR` runtime. Local heuristic and ClamAV composition never self-identify as CDR |
 | Scanner failure or stale result is treated as success | Fail closed for unknown, failed, timed-out or superseded scans; bind promotion to object checksum and scan-policy version; derive daily-definition age from signed build metadata and require equality between on-disk and loaded versions |
 | A scanner protocol or archive parser is abused | Acquire the document-inspection permit before spooling input, run strict PDF/Office structure checks before a bounded ClamAV `INSTREAM` scan, and cap object bytes, archive entries, expanded bytes, compression ratio, XML depth/nodes/attributes, scanner time and scanner response length |
+| Multiple API replicas exceed the intended aggregate scan capacity | Treat the in-process semaphore as a local resource bound only; require shared deployment admission, target-load exhaustion evidence, monitoring and an owned response before connected managed-file upload is accepted |
 | Hostile Office central-directory metadata exhausts parser memory | Parse only the bounded end-of-central-directory window first; reject Zip64, multi-disk, duplicate or non-canonical names, excessive entries and central-directory bytes before `ZipFile` construction, then decode and validate relationship and field semantics with bounded XML parsing |
 | Parallel upload intents exhaust package or service storage before review | Reserve declared bytes while holding the singleton service quota plus owner, request and package locks; enforce package, request, author and service totals before issuing and again before persisting a grant |
 | Upload finalisation fails after an object write or promotion | Compensate quarantine and released objects immediately, then run a fenced bounded reconciler for expired intents and unreferenced quarantine objects; deletion and expiry transitions are idempotent |

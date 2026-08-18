@@ -6,8 +6,6 @@ from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import InstrumentedAttribute
-from sqlalchemy.sql.elements import ColumnElement
 
 from mist_service.board_models import BoardColumn
 from mist_service.board_projection import (
@@ -17,10 +15,7 @@ from mist_service.board_projection import (
 )
 from mist_service.repositories.board_page_counts import SqlAlchemyBoardCountQueries
 from mist_service.repositories.board_page_filters import (
-    cursor_filter,
     includes,
-    package_filters,
-    request_filters,
 )
 from mist_service.repositories.board_page_sources import (
     SqlAlchemyBoardProjectionQueries,
@@ -100,20 +95,3 @@ class SqlAlchemyBoardPageRepository:
     @staticmethod
     def _includes(filters: BoardFilters, item_type: BoardItemType) -> bool:
         return includes(filters, item_type)
-
-    @staticmethod
-    def _request_filters(filters: BoardFilters) -> list[ColumnElement[bool]]:
-        return request_filters(filters)
-
-    @staticmethod
-    def _package_filters(filters: BoardFilters) -> list[ColumnElement[bool]]:
-        return package_filters(filters)
-
-    @staticmethod
-    def _cursor_filter(
-        changed_column: InstrumentedAttribute[datetime],
-        id_column: InstrumentedAttribute[UUID],
-        item_type: BoardItemType,
-        cursor: tuple[datetime, str, str],
-    ) -> ColumnElement[bool]:
-        return cursor_filter(changed_column, id_column, item_type, cursor)

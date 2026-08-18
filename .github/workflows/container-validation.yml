@@ -48,6 +48,10 @@ jobs:
           # The secret-scan gate built below walks reachable history; a shallow
           # clone would observe a different finding set from the CI scan.
           fetch-depth: 0
+      - name: Validate generated architecture
+        run: >-
+          timeout --signal=TERM --kill-after=10s 5m pwsh -NoProfile -File
+          ./docs/architecture/structurizr/render-svg.ps1 -Check
       - run: timeout --signal=TERM --kill-after=10s 2m docker compose config --quiet
       - run: >-
           timeout --signal=TERM --kill-after=30s 15m docker compose

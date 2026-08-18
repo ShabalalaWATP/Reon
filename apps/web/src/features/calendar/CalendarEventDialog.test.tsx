@@ -44,9 +44,7 @@ describe("calendar event dialog", () => {
         }
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      false,
+      { emptyTeamWorkspaces: false },
     );
     const user = userEvent.setup();
     const view = renderApp("/teams/crioc/calendar");

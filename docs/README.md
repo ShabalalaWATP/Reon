@@ -1,7 +1,7 @@
 # Mist Service documentation home
 
 Status: current documentation map
-Last reviewed: 14 August 2026
+Last reviewed: 18 August 2026
 
 This is the starting point for product, delivery, engineering, security,
 operations and assurance documentation. It separates current behaviour from
@@ -25,8 +25,9 @@ without knowing its development history.
 | Qualify a release candidate | [Release runbook](deployment/RELEASE_RUNBOOK.md) |
 | Respond to an incident | [Support and incident runbook](operations/SUPPORT_AND_INCIDENT_RUNBOOK.md) |
 | Back up, restore or maintain data | [Backup, restore and maintenance](operations/BACKUP_RESTORE_AND_MAINTENANCE.md) |
-| Review security design and evidence | [SECURITY.md](../SECURITY.md), [threat models](threat-model/), [security evidence](assurance/SECURITY_SCAN_EVIDENCE.md) |
+| Review security design and evidence | [SECURITY.md](../SECURITY.md), [security records](security/README.md), [threat models](threat-model/README.md), [assurance records](assurance/README.md) |
 | Review accessibility design, evidence and remaining human acceptance | [Accessibility and WCAG 2.2 evidence](assurance/ACCESSIBILITY_EVIDENCE.md) |
+| See the current application at a consistent browser viewport | [Browser and workflow evidence](assurance/BROWSER_AND_WORKFLOW_EVIDENCE.md#current-application-screenshots) |
 | See what is not ready for production | [Enterprise readiness gap register](ENTERPRISE_READINESS_GAP_REGISTER.md) |
 | See current delivery status | [Master implementation plan](MASTER_IMPLEMENTATION_PLAN.md) |
 | Understand how the codebase developed | [Development story](DEVELOPMENT_STORY.md) |
@@ -52,7 +53,8 @@ without knowing its development history.
 
 ### Developer or architect
 
-1. Read [System architecture](architecture/SYSTEM_ARCHITECTURE.md).
+1. Start at the [architecture documentation map](architecture/README.md), then
+   read [System architecture](architecture/SYSTEM_ARCHITECTURE.md).
 2. Open the editable
    [Structurizr model and view catalogue](architecture/structurizr/README.md).
 3. Read the ADRs linked from the architecture section being changed.
@@ -63,7 +65,7 @@ without knowing its development history.
 
 1. Read [SECURITY.md](../SECURITY.md) for reporting and repository policy.
 2. Review the [trust boundaries](architecture/SYSTEM_ARCHITECTURE.md#10-trust-boundaries).
-3. Review all [threat models](threat-model/).
+3. Review the complete [threat-model index](threat-model/README.md).
 4. Compare controls with the [role matrix](reference/ROLE_PERMISSION_MATRIX.md).
 5. Check the dated [security scan evidence](assurance/SECURITY_SCAN_EVIDENCE.md)
    and [security matrix](assurance/SECURITY_MATRIX_EVIDENCE.md).
@@ -88,8 +90,9 @@ without knowing its development history.
 
 ## Current architecture views
 
-The architecture uses several focused C4/Structurizr-style views. Each diagram
-answers one question and avoids placing the entire system on one canvas.
+The architecture uses seven focused architecture views generated from the maintained
+Structurizr workspace. Each diagram answers one question and avoids placing the
+entire system on one canvas.
 
 | View | Question answered | Detailed guide |
 |---|---|---|
@@ -99,9 +102,10 @@ answers one question and avoids placing the entire system on one canvas.
 | [Delivery workflow](assets/architecture/04-delivery-workflow.svg) | How is the product produced, checked and released? | [Producing and releasing](architecture/WORKFLOW_AND_BPMN.md#producing-and-releasing-the-product) |
 | [Durable command](assets/architecture/05-durable-workflow-command.svg) | How do PostgreSQL and Camunda remain aligned? | [How Mist and Camunda share responsibility](architecture/WORKFLOW_AND_BPMN.md#how-mist-and-camunda-share-responsibility) |
 | [Organisation hierarchy](assets/architecture/06-organisation-routing.svg) | Which branches are visible and selectable? | [Organisation and routing](architecture/ORGANISATION_AND_ROUTING.md) |
+| [Scanner supply chain](assets/architecture/07-scanner-supply-chain.svg) | Where do quarantined products and malware signatures cross trust boundaries? | [Trust boundaries](architecture/SYSTEM_ARCHITECTURE.md#10-trust-boundaries) |
 
-The editable C4 model includes system, container, web/API component, dynamic
-request-delivery and local/private-cloud deployment views. See the
+The editable model includes one system-context, two container, three component,
+three dynamic, one custom and two deployment views. See the
 [Structurizr model guide](architecture/structurizr/README.md) and
 [`architecture/structurizr/workspace.dsl`](architecture/structurizr/workspace.dsl).
 The SVG files are committed so GitHub and offline readers can see the diagrams
@@ -140,14 +144,15 @@ when behaviour changes.
 - [Root README](../README.md)
 - [Documentation home](README.md)
 - [Current user stories](USER_STORIES.md)
-- [Architecture](architecture/)
-- [Deployment](deployment/)
-- [Operations](operations/)
-- [Reference](reference/)
+- [Architecture](architecture/README.md)
+- [Deployment](deployment/README.md)
+- [Operations](operations/README.md)
+- [Role and permission reference](reference/ROLE_PERMISSION_MATRIX.md)
 
 ### Specifications
 
-Specifications define detailed behaviour and acceptance criteria. They are
+Specifications define detailed behaviour and acceptance criteria. The complete
+[specification index](specs/README.md) groups every maintained record. They are
 implementation records and may use requirement identifiers needed for
 traceability. The current guides are the preferred reading path for stakeholders.
 
@@ -156,7 +161,7 @@ Key specifications include:
 - [Structured service request MVP](specs/service-request-mvp.md)
 - [Action deep links and workspace navigation](specs/action-deep-links-and-workspace-navigation.md)
 - [Customer intake and account requests](specs/customer-intake-and-account-requests.md)
-- [Requester cancellation and profiles](specs/requester-cancellation-and-personal-profiles.md)
+- [Customer cancellation and personal profiles](specs/requester-cancellation-and-personal-profiles.md)
 - [Manual related records](specs/manual-related-records.md)
 - [Tracking lifecycle and analytical visuals](specs/tracking-lifecycle-and-analytical-visuals.md)
 - [Hierarchical operational overviews](specs/hierarchical-operational-overviews.md)
@@ -182,7 +187,7 @@ ADRs explain decisions that would be expensive to reverse. They retain the
 decision context and alternatives considered. That historical context is useful
 inside a decision record but is not repeated in current product guides.
 
-The numbered set in [`adr/`](adr/) covers:
+The complete [ADR index](adr/README.md) covers:
 
 - application, workflow and modular boundaries;
 - durable Camunda commands and data-driven routing;
@@ -198,7 +203,8 @@ The numbered set in [`adr/`](adr/) covers:
 
 ### Threat models and security reference
 
-Threat models are current risk and control authorities:
+The [threat-model index](threat-model/README.md) is the complete map of current
+risk and control authorities:
 
 - [Service request and product workflow](threat-model/service-request-workflow.md)
 - [Platform administration](threat-model/platform-administration.md)
@@ -210,8 +216,9 @@ Threat models are current risk and control authorities:
 
 ### Dated assurance evidence
 
-Assurance files preserve what was tested, scanned or rehearsed at a point in time.
-They do not override current architecture or status.
+The [assurance index](assurance/README.md) catalogues what was tested, scanned or
+rehearsed at a point in time. Dated evidence does not override current
+architecture or status.
 
 | Evidence group | Records |
 |---|---|
@@ -246,6 +253,7 @@ connected-environment decision.
 
 ### Operations
 
+- [Operations runbook index](operations/README.md)
 - [Support and incident response](operations/SUPPORT_AND_INCIDENT_RUNBOOK.md)
 - [Configuration and routing administration](operations/CONFIGURATION_AND_ROUTING_RUNBOOK.md)
 - [Backup, restore and maintenance](operations/BACKUP_RESTORE_AND_MAINTENANCE.md)
@@ -264,7 +272,9 @@ recovery evidence.
 It does not yet provide an approved production identity model, managed product
 storage adapter, infrastructure as code, validated high-availability topology,
 accepted service levels, production monitoring ownership, real-data governance or
-connected-environment acceptance. The
+connected-environment acceptance. The current restore, privileged maintenance
+and optional-capability contract defects, plus two visible stable-code badges,
+also remain implementation gaps. The
 [gap register](ENTERPRISE_READINESS_GAP_REGISTER.md) is the authority for these
 open decisions.
 
@@ -295,6 +305,22 @@ Markdown documentation is exempt from the 350-line source limit. A coherent
 guide may exceed 400 lines when headings, contents and links keep it usable. Do
 not split a guide merely to satisfy a source-code line rule.
 
+### Visual evidence
+
+Application screenshots are evidence, not decoration. Capture them from the
+current built source with the supported synthetic seed, Chromium at a fixed
+1600 by 1000 CSS-pixel viewport and no real or private data. Record the capture
+date, route, synthetic account, viewport and reproducible interaction path in
+[Browser and workflow evidence](assurance/BROWSER_AND_WORKFLOW_EVIDENCE.md).
+Replace the whole maintained screenshot set when navigation, naming or the
+shared visual system changes so readers do not see a mixture of releases.
+
+The Structurizr DSL is the editable architecture source. The seven committed SVG
+views are its reviewable GitHub and offline renderings. Update the model, view
+catalogue and affected SVGs together, then validate both the model and the
+committed assets with the commands in the
+[Structurizr model guide](architecture/structurizr/README.md).
+
 ### Required checks
 
 Run these before documentation review:
@@ -302,11 +328,14 @@ Run these before documentation review:
 ```powershell
 pnpm documentation
 pnpm terminology
+pnpm architecture:check
 ```
 
 The checks detect broken relative links, duplicate maintained passages and
-prohibited application terminology. Also run `pnpm check` when documentation
-changes executable scripts, contracts or repository policy.
+prohibited application terminology. The architecture check requires Docker and
+byte-compares a fresh pinned sandboxed render with all seven committed SVGs.
+Also run `pnpm check` when documentation changes executable scripts, contracts
+or repository policy.
 
 Use UK English. Keep every example synthetic. Never add credentials, private
 addresses, real service names, real content or production topology details to

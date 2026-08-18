@@ -1,5 +1,7 @@
 # Definition of Done Matrix
 
+Last reviewed: 18 August 2026
+
 ## Purpose
 
 This is the single authoritative completion register for Mist Service. The
@@ -20,7 +22,7 @@ defined in the [programme Definitions of Done](../PROGRAMME_DEFINITIONS_OF_DONE.
 | DOD-01 | Source control has an initial reviewed baseline and an approved remote with recorded visibility, or a signed local-only exception | `docs/assurance/SOURCE_CONTROL_BASELINE.md`, remote record and decision entry | EVIDENCE READY |
 | DOD-02 | Every feature has an accepted specification, applicable ADR and threat-model coverage | Spec/ADR/threat-model traceability review | EVIDENCE READY |
 | DOD-03 | Representative terminology is clean and every hand-written source file is at most 350 lines | `pnpm terminology` and `pnpm line-limit` | EVIDENCE READY |
-| DOD-04 | Backend and frontend independently meet 95% line and branch coverage | Aggregate pytest and Vitest coverage reports | EVIDENCE READY |
+| DOD-04 | Backend and frontend independently meet 95% line and branch coverage | Aggregate pytest and Vitest coverage reports summarised in [security scan evidence](SECURITY_SCAN_EVIDENCE.md) | EVIDENCE READY |
 | DOD-05 | Empty, previous-revision, downgrade, re-upgrade and drift migration rehearsals pass on PostgreSQL | `docs/assurance/MIGRATION_AND_RESTORE_EVIDENCE.md` | EVIDENCE READY |
 
 ## Functional gates
@@ -42,12 +44,12 @@ defined in the [programme Definitions of Done](../PROGRAMME_DEFINITIONS_OF_DONE.
 
 | Gate | Definition of done | Required evidence | Status |
 | --- | --- | --- | --- |
-| DOD-20 | Role, object, assignment, organisation and action policies deny every matrix abuse case at the server boundary | `docs/assurance/SECURITY_MATRIX_EVIDENCE.md` | EVIDENCE READY |
+| DOD-20 | Role, object, assignment, organisation and action policies deny every matrix abuse case at the server boundary | [Security matrix evidence](SECURITY_MATRIX_EVIDENCE.md), including current action-scoped projection and object-access verification | EVIDENCE READY |
 | DOD-21 | Session, CSRF, origin, throttling, disabled-account and replay controls pass | Automated security tests and browser negative cases | EVIDENCE READY |
 | DOD-22 | Audit events are append-only in behaviour, HMAC-linked and independently verifiable | Integrity command, tamper test and PostgreSQL privilege evidence | EVIDENCE READY |
 | DOD-23 | Logs, analytics and audit summaries contain no prohibited content | Redaction tests plus captured-log inspection | EVIDENCE READY |
-| DOD-24 | Dependency, static, secret, container and licence scans have no unresolved high or critical finding | Versioned scan summary and raw local/CI artefacts | EVIDENCE READY |
-| DOD-25 | Retention and deletion rules preserve required history and safely purge eligible data | Accepted policy, dry-run report, job tests and audit evidence | EVIDENCE READY |
+| DOD-24 | Dependency, static, secret, container and licence scans have no unresolved high or critical finding | [Versioned scan summary](SECURITY_SCAN_EVIDENCE.md), dated [Codex Security remediation matrix](../security/CODEX_SECURITY_REMEDIATION_MATRIX_2026-08-17.md) and raw local/CI artefacts | IN PROGRESS |
+| DOD-25 | Retention and deletion rules preserve required history and safely purge eligible data | Accepted policy, target-bound dry-run and apply report, job tests and audit evidence | IN PROGRESS |
 
 ## Accessibility, compatibility and performance gates
 
@@ -63,8 +65,8 @@ defined in the [programme Definitions of Done](../PROGRAMME_DEFINITIONS_OF_DONE.
 | Gate | Definition of done | Required evidence | Status |
 | --- | --- | --- | --- |
 | DOD-40 | Health, structured logs, metrics and alerts cover database, Camunda, outbox, projections and backup age without content leakage | Runbook, metrics tests and alert rehearsal | EVIDENCE READY |
-| DOD-41 | PostgreSQL backup and clean restore meet integrity and 30-minute rehearsal targets | Backup/restore script, clean database proof and evidence record | EVIDENCE READY |
-| DOD-42 | Database and Camunda interruption recover without loss, duplicate records or invented state within 15 minutes | Controlled recovery scenarios and reconciliation evidence | EVIDENCE READY |
+| DOD-41 | PostgreSQL backup and clean restore meet integrity and 30-minute rehearsal targets | Backup/restore script, clean database proof and evidence record | IN PROGRESS |
+| DOD-42 | Database and Camunda interruption recover without loss, duplicate records or invented state within 15 minutes | Controlled scenarios and dated [recovery evidence](RECOVERY_EVIDENCE.md); current worker and analytics checks are supplementary automated evidence | IN PROGRESS |
 | DOD-43 | Support hours, incident ownership, severity, escalation, rollback and safe diagnostics are accepted | `docs/operations/SUPPORT_AND_INCIDENT_RUNBOOK.md` | IN PROGRESS |
 | DOD-44 | Complete Customer, routing, Analyst, Manager, QC, statistics, roster, calendar, board and admin journeys pass on PostgreSQL and Camunda | Final Playwright HTML/JUnit artefacts | EVIDENCE READY |
 
@@ -147,7 +149,7 @@ accepted while an applicable detailed gate remains open.
 
 | Gate | Objective completion condition | Required evidence | Status |
 | --- | --- | --- | --- |
-| PE-DOD-60 | All abuse cases in the current threat models have an assigned automated or manual test layer and no unresolved high or critical finding | Threat-to-test traceability and versioned dependency, static, secret, licence, container and object-scanner reports | IN PROGRESS |
+| PE-DOD-60 | All abuse cases in the current threat models have an assigned automated or manual test layer and no unresolved high or critical finding | Threat-to-test traceability, [security scan evidence](SECURITY_SCAN_EVIDENCE.md), the [Codex Security remediation matrix](../security/CODEX_SECURITY_REMEDIATION_MATRIX_2026-08-17.md) and versioned dependency, static, secret, licence, container and object-scanner reports | IN PROGRESS |
 | PE-DOD-61 | Every mutation enforces CSRF, trusted origin, active session, current role/scope, expected version and idempotency where retry can duplicate an effect | API security matrix and browser negative cases | OPEN |
 | PE-DOD-62 | Product, notification, configuration, planning and analytics logs, metrics and audit metadata meet the documented minimisation rules | Captured-log and audit-field inspection with prohibited-value canaries | OPEN |
 | PE-DOD-63 | `My assigned actions`, notifications, product review/release, configuration, planning and statistics pass keyboard, focus, 200 per cent zoom, reduced motion, chart-table parity and 390-pixel-width review with no serious or critical axe finding | [Accessibility evidence](ACCESSIBILITY_EVIDENCE.md), axe reports, screenshots and keyboard transcripts | OPEN |

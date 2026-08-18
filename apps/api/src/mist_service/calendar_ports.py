@@ -145,12 +145,3 @@ class CalendarManagementPort(Protocol):
         grant_id: UUID,
         action: ManagementAction,
     ) -> bool: ...
-
-
-class CalendarRepositoryPort(
-    CalendarReadPort,
-    CalendarEventPort,
-    CalendarIdentityPort,
-    Protocol,
-):
-    """Composition-facing union implemented by the calendar adapter."""

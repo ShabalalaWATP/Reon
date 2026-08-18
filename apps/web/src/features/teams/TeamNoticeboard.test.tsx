@@ -147,9 +147,7 @@ function mockOverview(
         });
       throw new Error(`Unexpected ${url.pathname}`);
     },
-    true,
-    true,
-    false,
+    { emptyTeamWorkspaces: false },
   );
 }
 

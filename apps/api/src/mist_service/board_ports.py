@@ -203,7 +203,3 @@ class BoardIterationAnalyticsPort(Protocol):
     async def project_closed_iteration(
         self, iteration: IterationRecord, *, occurred_at: datetime
     ) -> None: ...
-
-
-class BoardRepositoryPort(BoardQueryPort, BoardPlanningReadPort, Protocol):
-    """Composition-facing union implemented by the board adapter."""

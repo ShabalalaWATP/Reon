@@ -1,14 +1,34 @@
 # Browser and workflow evidence
 
 This file contains current visual orientation and dated assurance records. The
-source-controlled screenshots below were captured from the running synthetic
-local application between 9 and 11 August 2026. Screenshots are refreshed when their
-surface changes materially. The latest Customer form, Customer register, team
-board, calendar, people, CRIOC workspace and administration captures use the
-current local source and produced no browser warning or error. The images prove
-that the documented screens rendered, but are not a source-to-image attestation,
+nine source-controlled screenshots below were refreshed on 18 August 2026 from
+one coordinated current-source local Compose rebuild and synthetic portfolio.
+Every image is a 1,600 by 1,000 CSS-pixel Chromium viewport capture in the dark
+theme. The anonymous pair uses the supported reduced-motion presentation so the
+decorative cloud field is deterministic. No credential, submitted email or
+non-synthetic record is shown.
+
+The rebuilt candidate used repository HEAD
+`1e7c52ffe7d1649bedaea037470dd40430d2fc6f` plus the coordinated working-tree
+changes present at rebuild time. It produced web image
+`sha256:0439408b678412b750df67d12b9903a8f657cf9be1dae23f3808e9e19d4c364c`
+on 18 August 2026 at 00:52 UTC. The idempotent seed completed 89 synthetic
+request journeys. API readiness reported the database, workflow,
+configuration and maintenance dependencies as ready before capture. Chromium
+identified itself as Headless Chrome 151.0.0.0. The capture used
+`@playwright/cli` 0.1.18. The only console error was the expected anonymous
+`/api/v1/auth/me` 401 session probe; authenticated pages produced no unexpected
+console warning or error.
+
+These images prove that the named routes and states rendered from that
+candidate. They are not a cryptographic source-to-image attestation,
 accessibility acceptance or evidence that every detailed capability gate is
 closed.
+
+The OSG and JIOC workspace headings are current, but their visible authority
+badges still expose the stable technical codes `SSG_TEAM` and `CRIOC`. This is
+a current application limitation, not stale screenshot labelling, and is
+tracked in the [enterprise readiness gap register](../ENTERPRISE_READINESS_GAP_REGISTER.md).
 
 The workflow and cross-browser records after the screenshots are dated evidence.
 Their recorded scope does not prove managed-product or guided-configuration
@@ -48,6 +68,65 @@ no warnings or errors.
 The images deliberately contain only synthetic fixtures. Nine representative
 screens are retained in source control, with one current image for each surface.
 
+### Reproduce the capture
+
+Start from the guarded current-source path and wait for the seed, health and
+readiness checks to complete:
+
+```powershell
+corepack pnpm install --frozen-lockfile
+pwsh -File ./scripts/start-local.ps1 -SeedDemoData
+```
+
+Use the Playwright CLI from `output/playwright/screenshot-refresh`, take a fresh
+snapshot before using an element reference, and set the viewport immediately
+before every screenshot:
+
+```powershell
+corepack pnpm exec playwright-cli --session mist-capture open http://127.0.0.1:5173/login
+corepack pnpm exec playwright-cli --session mist-capture resize 1600 1000
+corepack pnpm exec playwright-cli --session mist-capture snapshot
+corepack pnpm exec playwright-cli --session mist-capture screenshot --filename C:/path/to/repository/docs/assets/screenshots/login.png
+```
+
+For authenticated captures, use the synthetic account ID in the matrix below
+and the local `DEMO_USER_PASSWORD` from the untracked `.env`. Never put the
+password in a command transcript or image. Follow the current in-application
+workspace link so UUID-backed routes are resolved by the application, then use
+the named tab. Element references are session-specific, so assign the three
+references from the immediately preceding snapshot before signing in:
+
+```powershell
+$env:MIST_CAPTURE_PASSWORD = Read-Host 'Synthetic DEMO_USER_PASSWORD' -MaskInput
+corepack pnpm exec playwright-cli --session mist-capture fill $accountRef admin8 | Out-Null
+corepack pnpm exec playwright-cli --session mist-capture fill $passwordRef $env:MIST_CAPTURE_PASSWORD | Out-Null
+corepack pnpm exec playwright-cli --session mist-capture click $signInRef | Out-Null
+```
+
+Remove the temporary process value with `Remove-Item Env:MIST_CAPTURE_PASSWORD`
+after the authenticated capture set is complete.
+
+For the anonymous pair, set the supported reduced-motion preference before
+taking a new snapshot. Capture the blank form, select **Forgotten password?**
+using the fresh reference, and capture again:
+
+```powershell
+corepack pnpm exec playwright-cli --session mist-capture run-code "async (page) => { await page.emulateMedia({ reducedMotion: 'reduce' }); await page.reload(); }"
+corepack pnpm exec playwright-cli --session mist-capture snapshot
+```
+
+| Image | Synthetic source state | Current route or in-application path |
+| --- | --- | --- |
+| `login.png` | Anonymous blank sign-in | `/login` |
+| `password-assistance.png` | Anonymous blank assistance form | `/login`, then **Forgotten password?** |
+| `platform-classification-admin.png` | `admin1`, before step-up | `/admin/users` |
+| `new-service-request-form.png` | `admin2`, blank mandatory form | `/requests/new` |
+| `customer-request-dashboard.png` | `admin2`, seeded request register | `/requests` |
+| `team-workflow-board.png` | `admin8`, OSG Team Manager | **OSG Team workspace**, then **Board** |
+| `routing-workspace-overview.png` | `admin4`, JIOC Routing User and Manager | **JIOC workspace**, then **Overview** |
+| `team-calendar-manager.png` | `admin8`, OSG Team Manager | **OSG Team workspace**, then **Calendar** |
+| `team-people-manager.png` | `admin8`, OSG Team Manager | **OSG Team workspace**, then **People** |
+
 ### Login
 
 Blank login form in the graphite Mist visual system. No credential is shown.
@@ -71,9 +150,9 @@ notification is sent.
 
 Platform Administrator `admin1` on User accounts. The global classification
 control shows the default `OFFICIAL` marking and remains disabled until the
-Administrator confirms their current password for a five-minute sensitive change
-window. The page states that the strip is a visual marking and does not
-change request permissions or handling rules.
+Administrator confirms their current password for a five-minute
+sensitive-change window. The page states that the strip is a visual marking and
+does not change request permissions or handling rules.
 
 ![Platform classification administration](../assets/screenshots/platform-classification-admin.png)
 
@@ -87,10 +166,11 @@ while private incomplete drafts remain possible.
 
 ### Customer request tracking
 
-Customer `admin2` on `My requests`. The summary separates requests needing the
-Customer's input from other in-progress and completed requests. Each visible row
-shows its title, status, current owner, age, required-date proximity and a direct
-request link. Authenticated product download and feedback appear here after
+Customer `admin2` on `My requests` after the current 89-request portfolio seed.
+The loaded cursor page separates requests needing the Customer's input from
+other in-progress and completed requests. Each visible row shows its title,
+status, current owner, age, required-date proximity and a direct request link.
+Authenticated product download and feedback appear on the request after
 dissemination; the historical completed-journey evidence below proves that
 separate state-changing path.
 
@@ -98,43 +178,43 @@ separate state-changing path.
 
 ### Team workflow board
 
-SSG Team Manager `admin8` on the SSG Team Board. The view identifies requests as
-Camunda-derived projections and exposes quick views, filters, saved views and a
-table alternative without allowing board gestures to bypass named workflow
-actions.
+OSG Team Manager `admin8` on the OSG Team Board. The view separates the
+Camunda-derived service-request board from internal work-package planning and
+exposes quick views, owner filters, saved views and a table alternative. Service
+requests change stage only through named workflow actions.
 
-![SSG Team workflow board](../assets/screenshots/team-workflow-board.png)
+![OSG Team workflow board](../assets/screenshots/team-workflow-board.png)
 
 ### Routing workspace
 
-CRIOC Manager `admin74` on the CRIOC Overview. The routing workspace provides a
-single operational entry point to its Work queue, Calendar, People, Statistics
-and Activity views. It does not expose delivery-team package controls or add a
-Manager approval stage to routing.
+JIOC Routing User and Manager `admin4` on the JIOC Overview. The routing
+workspace provides one operational entry point to its Work queue, Calendar,
+People, Statistics and Activity views. It does not expose delivery-team package
+controls or add a Manager approval stage to routing.
 
-![CRIOC routing workspace overview](../assets/screenshots/routing-workspace-overview.png)
+![JIOC routing workspace overview](../assets/screenshots/routing-workspace-overview.png)
 
 ### Shared team calendar
 
-SSG Team Manager `admin8` on the shared Calendar. Every current member can add
+OSG Team Manager `admin8` on the shared Calendar. Every current member can add
 their own leave, course, training and availability records. Exact-team Managers
 can also add unit events and, for delivery teams only, link commitments to
 eligible tickets. Month, week and agenda modes share the same governed records.
 
-![SSG Team shared calendar](../assets/screenshots/team-calendar-manager.png)
+![OSG Team shared calendar](../assets/screenshots/team-calendar-manager.png)
 
 ### Effective-dated team roster
 
-SSG Team Manager `admin8` on People. Current and historical Manager and Member
+OSG Team Manager `admin8` on People. Current and historical Manager and Member
 positions remain visible. Manager appointment, transfer and end actions require
 effective dates and reasons; platform administrators retain organisation-wide
 control.
 
-![SSG Team effective-dated roster](../assets/screenshots/team-people-manager.png)
+![OSG Team effective-dated roster](../assets/screenshots/team-people-manager.png)
 
 ## Automated workspace-state coverage
 
-The current 490-test frontend suite passed on 14 August 2026 with 98.80 per cent
+The then-current 490-test frontend suite passed on 14 August 2026 with 98.80 per cent
 line and 95.04 per cent branch coverage. It includes access-assistance,
 classification, routing-workspace,
 effective-membership, self-service calendar, assigned-Analyst, conversation, context-switch, collaboration
@@ -265,7 +345,7 @@ against the synthetic local API. The Customer workspace showed exactly one
 `aria-current="page"` item on both `/requests` and `/requests/new`. The account
 dialog closed on Escape and route change, remained within a 640-pixel viewport,
 and keyboard focus produced a visible two-pixel outline. Current profile content
-and fields are specified in the [user stories](../USER_STORIES.md#cust-09-maintain-a-personal-profile-and-calendar)
+and fields are specified in the [user stories](../USER_STORIES.md#cust-09-maintain-a-personal-profile)
 and verified by the current component suite.
 
 This focused check covers the changed shell at desktop and narrow width. It does

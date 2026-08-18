@@ -1,7 +1,7 @@
 # Current-state documentation and resource-cleanup specification
 
 Status: implemented and verified
-Last reviewed: 14 August 2026
+Last reviewed: 18 August 2026
 
 ## Objective
 
@@ -48,11 +48,13 @@ the current-state authority.
 
 ## Verified result
 
-- the official Structurizr CLI 2025.11.09 validated the workspace;
+- the pinned Structurizr 2026.06.28 image, with libraries 6.2.2, validated the
+  workspace through the sandboxed repository renderer;
 - documentation duplication, link and current-source-reference gates passed;
 - the focused storage regression passed with warnings treated as errors;
-- the complete backend suite passed 1,318 tests with 13 skips and no resource
-  warning at 98.73 per cent line and 95.00 per cent branch coverage;
-- all 490 frontend tests passed at 98.80 per cent line and 95.04 per cent branch
+- the complete backend suite passed 1,410 tests with 13 environment-specific
+  skips and no resource warning at 98.83 per cent line and 95.10 per cent branch
+  coverage;
+- all 582 frontend tests passed at 98.80 per cent line and 95.07 per cent branch
   coverage; and
 - the root repository quality gate passed.

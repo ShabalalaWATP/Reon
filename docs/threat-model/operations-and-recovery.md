@@ -1,5 +1,8 @@
 # Operations and recovery threat model
 
+Status: living threat model
+Last reviewed: 18 August 2026
+
 ## Audit rotation, disposal and legal hold
 
 Request event messages and details are content-bearing and use the request's
@@ -31,6 +34,9 @@ backup storage and restore targets are separate trust boundaries.
 | Retention deletes active or accountable data | Fixed allow-list, age and state predicates, bounded batches, one transaction | Boundary and rollback tests |
 | An operator runs deletion accidentally | Dry-run default plus exact `APPLY_RETENTION` confirmation | CLI and service tests |
 | Retention report leaks content | Counts and policy metadata only | Schema tests and log inspection |
+| An operator previews one database and applies retention to another | Not implemented: block apply until preview and confirmation are bound to one content-free database fingerprint, policy, counts, operator and expiry | Two-database and stale-confirmation negative tests |
+| A privileged maintenance connection is intercepted or redirected | Not implemented for non-loopback maintenance: enforce `postgresql+asyncpg`, server identity verification and the approved CA before engine creation | Wrong-scheme, plaintext, wrong-CA and hostname-mismatch tests |
+| A stale or mistyped command releases the wrong legal hold | Not implemented: require hold readback, a release reason or change reference and expiring confirmation bound to hold, database and operator; consider independent approval | Wrong-target, missing-reason, stale-token and concurrent-release tests |
 | Concurrent state change makes a candidate unsafe | Reapply eligibility predicates in the delete statement | Concurrency-oriented repository test |
 | Backup is incomplete, corrupted, or replaced together with its adjacent checksum | Custom format validation, an HMAC-SHA256 authenticated manifest, a separately stored 256-bit integrity key and non-zero command handling | Pester tamper tests and backup rehearsal |
 | Restore overwrites live data | Exact confirmation and empty-target precondition; no `--clean` | Restore negative test |
@@ -48,6 +54,9 @@ backup storage and restore targets are separate trust boundaries.
 | Malformed durable start payload selects the wrong workflow or identity | Serialise and parse one immutable workflow-start command, validate UUID, process ID, version and checksum, then compare the immutable configuration pin and returned Camunda identity | Start-command validation, pin-tamper, legacy-marker and recovery tests |
 | API replica scaling multiplies maintenance work | Run maintenance as a separate workload and fence singleton jobs with expiring PostgreSQL leases | Overlapping worker and lease-takeover rehearsal |
 | Worker stops while API health remains green | Persist a content-free heartbeat and make readiness fail when it becomes stale | Stale-heartbeat readiness test |
+| One poison notification event is retried hot, hides later work or is counted as worker success | Process one event per transaction, persist content-free failure and bounded backoff, continue the bounded batch, then raise an aggregate failure so fenced worker accounting records the unsuccessful iteration; propagate cancellation without converting it into event failure | Notification projection failure, continuation, retry-delay, job-health and cancellation tests |
+| Analytics recovery scans an unbounded source or partially rewrites projections | Require a bounded complete-source rebuild limit, fail before entering rebuilding state when the source exceeds it, and require an explicit timezone-aware interval and source limit for insert-once operational replay | Rebuild overflow, replay bound, idempotency and maintenance-command tests |
+| Analytics definition text or unit changes while retaining the same version | Persist the exact code-owned definition metadata by key and version and fail fact insertion when label, description, unit or active state drifts without a version increment | Definition-integrity and rollback tests |
 | Membership projection is stale at an effective boundary | Query only due transitions in the worker, retain the effective-dated timeline as authority and fail closed for unapplied future access | Due-transition and authorisation tests |
 | Backup credentials or content leak | No credential logging, restrictive directory ACL, controlled storage and deletion | Script review and operator evidence |
 | A recovery connection is intercepted or a CA path is substituted | Require `sslmode=verify-full` and the exact existing operator-approved CA path for every non-loopback host; limit the plaintext exception to `localhost`, `127.0.0.1` and `[::1]` without DNS or subnet expansion | Pester URL-policy tests and script contracts |
@@ -83,3 +92,9 @@ Private AWS, Google Cloud and Azure VM procedures remain synthetic evaluation
 patterns. The local Camunda API is unauthenticated, product files use a local
 volume, application OIDC is absent and the web image is local-host specific.
 These limitations are production blockers, not configuration tasks.
+
+The bounded analytics maintenance commands and notification worker accounting are
+automated recovery controls, not proof of a target-environment recovery
+objective. Production still requires owned invocation authority, large-dataset
+rebuild timing, monitored projection lag and a joined database, object-store,
+scanner and Camunda recovery rehearsal.

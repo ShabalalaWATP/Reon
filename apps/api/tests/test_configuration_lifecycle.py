@@ -83,6 +83,9 @@ async def test_configuration_approval_activation_and_queries(
         repository = SqlAlchemyConfigurationRepository(session)
         lifecycle = ConfigurationLifecycleService(
             repository,
+            repository,
+            repository,
+            repository,
             settings,
             publisher,
             clock=lambda: actors.now + timedelta(minutes=1),
@@ -239,7 +242,13 @@ async def test_rejection_invalid_validation_and_access_boundaries(
         actors = await seed_configuration_context(session)
         repository = SqlAlchemyConfigurationRepository(session)
         lifecycle = ConfigurationLifecycleService(
-            repository, settings, publisher, clock=lambda: actors.now
+            repository,
+            repository,
+            repository,
+            repository,
+            settings,
+            publisher,
+            clock=lambda: actors.now,
         )
         payload = await draft_from_active(
             session, actors, label="Invalid then rejected"

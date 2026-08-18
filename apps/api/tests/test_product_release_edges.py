@@ -40,6 +40,7 @@ from product_test_support import (
     add_claimed_release_task,
     create_product_request,
     product_actors,
+    product_service_repositories,
     set_synthetic_active_link_domains,
 )
 
@@ -163,7 +164,7 @@ def _service(
     domains: frozenset[str],
 ) -> ProductService:
     return ProductService(
-        SqlAlchemyProductRepository(session),
+        product_service_repositories(SqlAlchemyProductRepository(session)),
         storage,
         SafeDocumentScanner(),
         AllowedHttpsLinkPolicy(domains),

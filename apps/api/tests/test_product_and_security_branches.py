@@ -336,7 +336,7 @@ def test_small_configuration_and_policy_branches() -> None:
         "api.example.test",
     }
     settings = Settings(audit_hmac_key="a" * 32)
-    assert settings.audit_hmac_key_bytes == b"a" * 32
+    assert settings.audit_hmac_keys == {"legacy": b"a" * 32}
 
     actor = requester()
     request = RequestRecord(

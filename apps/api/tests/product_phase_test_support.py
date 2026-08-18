@@ -26,6 +26,7 @@ from mist_service.schemas.products import (
     PackageView,
 )
 from mist_service.services.product_content_phases import ProductContentPhases
+from mist_service.services.product_managed_phases import ProductManagedPhases
 
 CHECKSUM = "a" * 64
 TOKEN = "synthetic-upload-token"
@@ -181,4 +182,14 @@ def repository(**updates: object) -> SimpleNamespace:
 def service(
     service_type: type[Any], repository_value: object, **options: object
 ) -> Any:
-    return service_type(cast(Any, repository_value), **options)
+    repository_port = cast(Any, repository_value)
+    if service_type is ProductManagedPhases:
+        return service_type(repository_port, repository_port, **options)
+    if service_type is ProductContentPhases:
+        return service_type(
+            repository_port,
+            repository_port,
+            repository_port,
+            **options,
+        )
+    return service_type(repository_port, **options)

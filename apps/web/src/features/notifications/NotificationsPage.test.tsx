@@ -110,12 +110,7 @@ describe("Notifications", () => {
           return json({ unreadCount: 1, projectedAt: null });
         return json(notifications);
       },
-      true,
-      true,
-      true,
-      true,
-      false,
-      false,
+      { disabledCapabilities: false, emptyNotificationWorkspace: false },
     );
     const user = userEvent.setup();
     const view = renderApp("/notifications");
@@ -229,12 +224,7 @@ describe("Notifications", () => {
               });
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      true,
-      true,
-      false,
-      false,
+      { disabledCapabilities: false, emptyNotificationWorkspace: false },
     );
     const user = userEvent.setup();
     renderApp("/notifications");
@@ -266,12 +256,7 @@ describe("Notifications", () => {
         }
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      true,
-      true,
-      false,
-      false,
+      { disabledCapabilities: false, emptyNotificationWorkspace: false },
     );
     const empty = renderApp("/notifications");
     expect(

@@ -21,8 +21,8 @@ from mist_service.product_types import (
 )
 from mist_service.repositories.product_lifecycle_events import (
     ProductLifecycleEventMixin,
-    package_record,
 )
+from mist_service.repositories.product_records import package_record
 
 
 class ProductReleaseLifecycleMixin(ProductLifecycleEventMixin):

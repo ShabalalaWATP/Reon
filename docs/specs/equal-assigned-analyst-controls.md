@@ -1,11 +1,13 @@
 # Equal assigned Analyst controls
 
-## Problem
+Status: implemented current capability contract. Last reviewed 18 August 2026.
 
-A Delivery Manager can assign one Lead Analyst and additional Analysts, but only
-the Lead receives the production work item and its controls. Additional Analysts
-can see request context elsewhere, yet their personal action view does not make
-the assignment clear and the production queue denies workflow actions.
+## Problem addressed
+
+A Team Manager can assign one Lead Analyst and additional Analysts. Previously,
+only the Lead received the production work item and its controls. Additional
+Analysts could see request context elsewhere, yet their personal action view did
+not make the assignment clear and the production queue denied workflow actions.
 
 ## Required behaviour
 

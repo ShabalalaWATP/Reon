@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mist_service.action_notification_models import (
     NotificationAccessKind,
-    NotificationEvent,
 )
 from mist_service.models import (
     RequestStatus,
@@ -87,15 +86,6 @@ async def reconcile_pending_notifications(
             projected_at=current,
         )
     return len(events)
-
-
-async def recipient_rules(
-    session: AsyncSession, event: NotificationEvent
-) -> list[RecipientRule]:
-    request = await session.get(ServiceRequest, event.request_id)
-    if request is None:
-        return []
-    return await recipient_rules_for(session, event.event_type, request)
 
 
 async def recipient_rules_for(

@@ -31,6 +31,7 @@ from mist_service.request_event_models import RequestEvent
 
 PROJECTION_NAME = "request-operations"
 PROJECTION_VERSION = 1
+MAX_REBUILD_REQUESTS = 5_000
 ROOT_STAGES = {
     RequestStatus.ROUTING_PENDING,
     RequestStatus.TRIAGE_REVIEW,
@@ -126,12 +127,24 @@ async def rebuild_analytics_projections(
     session: AsyncSession,
     *,
     projected_at: datetime | None = None,
+    request_limit: int = 1_000,
 ) -> int:
+    """Rebuild every request projection when the complete source set is bounded."""
+    if not 1 <= request_limit <= MAX_REBUILD_REQUESTS:
+        raise ValueError("Analytics projection rebuild request limit is invalid.")
     now = projected_at or datetime.now(UTC)
+    request_ids = tuple(
+        await session.scalars(
+            select(ServiceRequest.id)
+            .order_by(ServiceRequest.id)
+            .limit(request_limit + 1)
+        )
+    )
+    if len(request_ids) > request_limit:
+        raise ValueError("Analytics source exceeds the bounded request limit.")
     state = await _projection_state(session)
     state.health = ProjectionHealth.REBUILDING
     await session.flush()
-    request_ids = tuple(await session.scalars(select(ServiceRequest.id)))
     for request_id in request_ids:
         await project_request_analytics(
             session,

@@ -47,14 +47,17 @@ def actor(role: UserRole) -> Actor:
 
 
 def test_service_rejects_short_pseudonym_keys() -> None:
+    repo = repository()
     with pytest.raises(ValueError, match="at least 32 bytes"):
-        PlatformSecurityService(repository(), publisher(), pseudonym_key=b"short")
+        PlatformSecurityService(
+            repo, repo, repo, repo, publisher(), pseudonym_key=b"short"
+        )
 
 
 @pytest.mark.asyncio
 async def test_classification_mutation_checks_role_and_version() -> None:
     repo = repository()
-    service = PlatformSecurityService(repo, publisher())
+    service = PlatformSecurityService(repo, repo, repo, repo, publisher())
     command = PlatformClassificationUpdate(
         classification=PlatformClassification.LEVEL_THREE,
         expected_version=2,
@@ -80,7 +83,9 @@ async def test_classification_mutation_checks_role_and_version() -> None:
 @pytest.mark.asyncio
 async def test_assistance_budget_enforces_each_limit_and_records_allowed_work() -> None:
     repo = repository()
-    service = PlatformSecurityService(repo, publisher(), pseudonym_key=b"x" * 32)
+    service = PlatformSecurityService(
+        repo, repo, repo, repo, publisher(), pseudonym_key=b"x" * 32
+    )
     now = datetime.now(UTC)
 
     repo.attempt_count.side_effect = [5, 0]
@@ -117,7 +122,9 @@ async def test_pending_assistance_handles_indexing_key_rotation_and_empty_queue(
     None
 ):
     repo = repository()
-    service = PlatformSecurityService(repo, publisher(), pseudonym_key_id="current")
+    service = PlatformSecurityService(
+        repo, repo, repo, repo, publisher(), pseudonym_key_id="current"
+    )
 
     repo.assistance_index_is_complete.return_value = False
     assert await service.process_pending_password_assistance() is True
@@ -133,30 +140,16 @@ async def test_pending_assistance_handles_indexing_key_rotation_and_empty_queue(
 
 
 @pytest.mark.asyncio
-async def test_assistance_indexing_and_direct_processing_cover_match_paths() -> None:
+async def test_assistance_indexing_updates_every_stale_user() -> None:
     repo = repository()
     first = SimpleNamespace(id=uuid4(), email=" One@example.test ")
     second = SimpleNamespace(id=uuid4(), email="two@example.test")
     repo.users_needing_assistance_index.return_value = [first, second]
-    service = PlatformSecurityService(repo, publisher(), pseudonym_key_id="current")
+    service = PlatformSecurityService(
+        repo, repo, repo, repo, publisher(), pseudonym_key_id="current"
+    )
     assert await service.reconcile_assistance_email_indexes() is True
     assert repo.set_assistance_index.await_count == 2
-
-    service._publish_password_assistance = AsyncMock()  # type: ignore[method-assign]
-    attempt_id = uuid4()
-    repo.active_user_by_email = AsyncMock(return_value=None)
-    await service.process_password_assistance(attempt_id, "none@example.test")
-    repo.match_attempt.assert_not_awaited()
-
-    user = SimpleNamespace(id=uuid4())
-    repo.active_user_by_email.return_value = user
-    repo.has_recent_user_attempt.return_value = True
-    await service.process_password_assistance(attempt_id, "known@example.test")
-    service._publish_password_assistance.assert_not_awaited()
-
-    repo.has_recent_user_attempt.return_value = False
-    await service.process_password_assistance(attempt_id, "known@example.test")
-    service._publish_password_assistance.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -166,7 +159,9 @@ async def test_pending_assistance_completes_matches_and_retries_failures() -> No
     user = SimpleNamespace(id=uuid4())
     repo.pending_attempt.return_value = attempt
     repo.active_user_by_email_hash.return_value = user
-    service = PlatformSecurityService(repo, publisher(), pseudonym_key_id="current")
+    service = PlatformSecurityService(
+        repo, repo, repo, repo, publisher(), pseudonym_key_id="current"
+    )
     service._publish_password_assistance = AsyncMock()  # type: ignore[method-assign]
 
     repo.has_recent_user_attempt.return_value = True

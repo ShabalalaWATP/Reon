@@ -1,4 +1,4 @@
-"""Deterministic in-memory implementation of the workflow-engine port."""
+"""Deterministic in-memory workflow-engine implementation for tests."""
 
 from __future__ import annotations
 

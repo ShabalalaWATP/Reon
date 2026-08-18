@@ -1,7 +1,7 @@
 # Maintainability and portable evaluation specification
 
 Status: current engineering and evaluation contract, production acceptance excluded
-Last reviewed: 10 August 2026
+Last reviewed: 18 August 2026
 
 ## Objective
 
@@ -33,6 +33,10 @@ for local, AWS, Google Cloud, Azure and future Kubernetes environments.
 | MPE-18 | Restore an unchanged configuration without incrementing stable unit versions or rewriting an identical organisation closure | Restart and materialisation idempotency tests |
 | MPE-19 | Keep selected routing and calendar edit state aligned with the item visibly presented, and format browser date values in local calendar time | Focused state and date regression tests |
 | MPE-20 | Remove production abstractions proved to exist only for their own tests, and keep test adapters outside the production package | Reference review, Vulture and full tests |
+| MPE-21 | Keep HTTP application assembly separate from lifespan and persistence initialisation, with stable middleware, router and error-handler composition | Architecture tests, focused application tests and reviewed dependency direction |
+| MPE-22 | Persist each notification-projection failure, retry it with bounded backoff and report a content-free batch failure without rolling back other outcomes | Projection reconciliation and worker-accounting tests |
+| MPE-23 | Expose bounded analytics rebuild and replay entry points and reject analytics definition drift unless its version advances | Maintenance-entrypoint, definition-integrity and replay tests |
+| MPE-24 | Consolidate duplicated frontend activity pagination, upcoming-calendar presentation, payload schemas and test fixtures without changing product behaviour | Focused component tests, full frontend suite and dead-code gate |
 
 ## Non-functional constraints
 
@@ -50,17 +54,13 @@ for local, AWS, Google Cloud, Azure and future Kubernetes environments.
 
 The following are valid next milestones, not hidden claims of this one:
 
-- keyset pagination and matching PostgreSQL indexes for unbounded registers;
 - batch product-release metadata for expanded completed history;
 - debounced/abortable board search;
-- move effective-dated membership reconciliation out of every HTTP request while
-  ensuring stale projections cannot over-authorise access;
-- lease workflow commands and managed-product operations before Camunda,
-  storage or scanning I/O so database locks are not held across the network;
-- close database sessions before streaming product downloads;
 - push board filtering, pagination and concurrent WIP enforcement into
   PostgreSQL;
-- split product repository capabilities and deploy the maintenance worker
-  independently from API replicas;
 - split and format the densest React orchestration modules before enforcing a
   practical source-line-length gate.
+
+The earlier keyset-pagination, independently deployed worker, membership
+projection, external-I/O fencing, streamed-download transaction and focused
+product-port items are implemented. They are no longer deferred work.

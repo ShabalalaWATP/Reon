@@ -1,6 +1,7 @@
 # Local Docker setup
 
 Status: implemented development and synthetic-evaluation topology
+Last reviewed: 18 August 2026
 
 Prepare the operating system first using the
 [Windows, macOS and Linux host guide](HOST_SETUP.md). This document covers the
@@ -8,10 +9,12 @@ application-specific Compose topology and verification.
 
 ## What this starts
 
-Docker Compose starts PostgreSQL 17.10, Camunda 8.9.14, an internal ClamAV daemon
-and separate signature updater, a one-shot database migrator, FastAPI, the
-independent maintenance worker, the React/Nginx image and private product-storage
-volumes.
+Docker Compose starts PostgreSQL 17.10 with pgvector 0.8.1, Camunda 8.9.14, an
+internal ClamAV 1.5.3 daemon and separate signature updater, a one-shot database
+migrator, FastAPI, the independent worker, the React/Nginx image and private
+product-storage volumes. There are no Compose profiles: the supplied topology
+starts every service. Plain `docker compose up` does not deploy or attest the
+BPMN, so it cannot make request routing ready. Use the guarded helper below.
 Every published port is bound to `127.0.0.1`. Camunda has no authentication in
 this topology. Do not change the binding to `0.0.0.0` or run it on a shared host.
 
@@ -29,7 +32,7 @@ helpful during Camunda image build/start and the ClamAV signature initialisation
 All platforms need Git, Docker with Compose v2 and PowerShell 7.4 or later. The
 guarded start and BPMN validation/deployment scripts are PowerShell scripts.
 
-### Windows 10/11
+### Windows 11
 
 1. Enable hardware virtualisation and WSL 2.
 2. Install [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
@@ -62,8 +65,8 @@ guarded start and BPMN validation/deployment scripts are PowerShell scripts.
 2. Configure non-root Docker access according to organisational policy. Logging
    out and back in may be required after group changes.
 3. Install Git and PowerShell 7.4 or later.
-4. Optionally install [uv](https://docs.astral.sh/uv/), required only for the
-   `-SeedDemoData` start option described below.
+4. Optionally install [uv](https://docs.astral.sh/uv/), required for the
+   `-SeedDemoData` option and command-line application journey described below.
 5. Start Docker and verify the four commands shown above.
 
 Review Docker Desktop licensing before enterprise or government use.
@@ -71,17 +74,26 @@ Review Docker Desktop licensing before enterprise or government use.
 ## 2. Obtain and configure the repository
 
 ```powershell
+$approvedCommit = '<approved-40-character-release-commit>'
 git clone <approved-repository-url> Mist-Service
+git -C Mist-Service checkout --detach $approvedCommit
+if ((git -C Mist-Service rev-parse HEAD).Trim() -ne $approvedCommit) {
+    throw 'The checkout does not match the approved release commit.'
+}
 Set-Location Mist-Service
 Copy-Item .env.example .env
 ```
 
-On macOS or Linux, the equivalent copy command is `cp .env.example .env`.
+On macOS or Linux, use the same approved commit, verify `git rev-parse HEAD`
+matches it exactly, then run `cp .env.example .env`. Do not execute a mutable
+default branch, tag or archive by name alone. Where signed commits are required,
+also retain the successful `git verify-commit` result.
 
 Edit `.env` and replace every `CHANGE_ME`. Use a different randomly generated
-value for the bootstrap, migration-owner, runtime, backup and Camunda database
-passwords. `AUDIT_HMAC_KEY` must contain at least 32 UTF-8 bytes and differ from
-all passwords. Keep these local values outside source control.
+value for the bootstrap, migration-owner, runtime, backup, maintenance and
+Camunda database passwords. `AUDIT_HMAC_KEY` and `SECURITY_PSEUDONYM_KEY` must
+each contain at least 32 UTF-8 bytes, differ from each other and differ from all
+passwords. Keep these local values outside source control.
 
 For this synthetic fixture only, retain:
 
@@ -164,11 +176,23 @@ Open [http://localhost:5173](http://localhost:5173). Synthetic accounts are
 The complete mapping is in the
 [synthetic user directory](../architecture/ORGANISATION_AND_ROUTING.md#complete-synthetic-user-directory).
 
-Run a representative Camunda exercise after a fresh setup:
+Exercise the integrated application route only with synthetic data. The script
+uses the already attested process definition and requires `uv` on the host:
 
 ```powershell
-pwsh -File ./scripts/smoke-camunda.ps1
+$env:APP_JOURNEY_PASSWORD = Read-Host "Synthetic demo password"
+try {
+  uv run --directory apps/api python ../../scripts/run-primary-app-journey.py
+}
+finally {
+  Remove-Item Env:APP_JOURNEY_PASSWORD
+}
 ```
+
+Do not run `scripts/smoke-camunda.ps1` against this stack. That bounded
+Camunda-only test deploys a new, unattested process-definition version and is
+reserved for a disposable Camunda instance with no application workflow
+deployment.
 
 ## 5. Logs and troubleshooting
 

@@ -2,9 +2,22 @@
 
 ## Status
 
-Current capability contract. Last reviewed 17 August 2026. Operational,
+Current capability contract. Last reviewed 18 August 2026. Operational,
 security, infrastructure and production acceptance remain governed by the
 current readiness register and release gates.
+
+Two presentation and rollout limitations remain in the current implementation:
+
+- workspace authority can return `PLANNING` and `HANDOVER`, but the current web
+  workspace renders neither panel; and
+- the `planning` and `statistics` settings are reported through the capability
+  endpoint, but nested router composition leaves the corresponding server routes
+  registered when either flag is false. The web client does not consume the
+  planning flag and uses the statistics flag only to hide its route.
+
+These are open implementation gaps. Existing backend role, scope, object and
+action checks remain authoritative; the flags must not be represented as
+effective server-route rollback controls until composition is corrected.
 
 The implemented `structured-conversations-packages-and-contexts.md`
 specification extends the package envelope, QC separation and dual-context
@@ -33,8 +46,8 @@ This contract covers:
 
 1. role-specific action workspaces and personal inboxes;
 2. an auditable in-application notification centre;
-3. dashboard dissemination of managed PDF, Word and PowerPoint products or an
-   approved external HTTPS product link;
+3. dashboard dissemination of managed PDF, Word, PowerPoint, PNG and JPEG
+   products or an approved external HTTPS product link;
 4. versioned organisation, routing and bounded workflow configuration;
 5. enhancements to the existing team board, calendar and planning workspace;
 6. enhancements to existing organisation-scoped operational statistics; and
@@ -66,7 +79,7 @@ and threat model before activation.
 
 ## Role-specific action workspace
 
-Each staff account receives a `My actions` workspace. The server assembles action
+Each staff account receives a `My assigned actions` workspace. The server assembles action
 items from current Camunda tasks and product-owned projections, then applies
 role, assignment, object and organisation policy before returning them. The
 Customer's equivalent action surface is `My requests`, where clarification,
@@ -128,7 +141,7 @@ The notification centre records at least:
 - Revoked grants, ended memberships and disabled accounts remove live access
   immediately while retaining the audit record.
 - The header count and active action page (`My requests` for Customers or
-  `My actions` for staff) refresh without a full-page reload. A bounded polling
+  `My assigned actions` for staff) refresh without a full-page reload. A bounded polling
   fallback remains available if live updates fail.
 
 Preferences cover in-application event groups and due-date reminder windows.
@@ -142,8 +155,8 @@ External delivery preferences remain dormant until an approved connector exists.
 An Analyst submits a versioned product release package. A package contains one to
 ten artefacts. Each artefact is exactly one of:
 
-1. a managed file in PDF (`.pdf`), Word (`.docx`) or PowerPoint (`.pptx`) format;
-   or
+1. a managed file in PDF (`.pdf`), Word (`.docx`), PowerPoint (`.pptx`), PNG
+   (`.png`) or JPEG (`.jpg`, `.jpeg`) format; or
 2. an approved external HTTPS product link.
 
 The authoring workspace starts with one explicit source choice: **Upload product
@@ -162,13 +175,19 @@ version and explicitly disseminates it to the originating Customer. Changing an
 artefact after review creates a new package version and invalidates earlier
 approval.
 
+The package lifecycle is `DRAFT` to `REVIEW_READY` to `MANAGER_APPROVED` to
+`DISSEMINATED`. A disseminated package may later become `REPLACED` or
+`WITHDRAWN`. File artefacts independently pass from upload intent through
+quarantine and clean scan evidence before release. Pending, quarantined, failed,
+expired, replaced or withdrawn artefacts cannot satisfy a release check.
+
 ### Managed files
 
 - PostgreSQL stores metadata, version, checksum, scan result, ownership,
   lifecycle and dissemination evidence. It does not store file bytes.
-- An S3-compatible object store holds quarantine and released objects. Local
-  development uses a local-compatible service; production selects an approved
-  managed equivalent.
+- The current local candidate stores quarantine and released objects through a
+  private filesystem adapter rooted outside the served web tree. A separately
+  approved transactional object-storage adapter remains a production gate.
 - Uploads use a short-lived, single-purpose upload intent with server-enforced
   object key, size and expected media type.
 - The scanner checks size, extension, media type, magic bytes, archive structure,
@@ -302,8 +321,16 @@ Enhancements add:
 - controlled aggregate CSV and accessible PDF exports with audit, cohort
   suppression and the same grant checks as the screen.
 
-No chart identifies or ranks an Analyst. Platform Administrators retain
-content-free whole-platform health only. Every chart uses the same tabular API
+Each operational fact family has code-owned, versioned definition metadata. A
+fact write records the matching definition and fails closed if label, description
+or unit changes without a version increment. Operators can run bounded request-
+projection rebuilds and bounded, time-zone-aware operational-fact replays through
+the maintenance entry point. An oversized source set or replay window is rejected
+instead of being partially presented as current.
+
+No chart identifies or ranks an Analyst. Platform Administrators retain a
+content-free whole-platform aggregate scope and statistics projection health,
+not operational dependency diagnostics. Every chart uses the same tabular API
 rows as its accessible table and textual summary.
 
 ## Data ownership and principal records
@@ -313,8 +340,9 @@ product-package and artefact metadata, scan and dissemination records, external
 link policy, configuration versions and approvals, planning extensions,
 analytics facts and append-only audit events.
 
-The object store owns quarantined and released file bytes. Camunda owns process
-position and human task state. React owns transient presentation state only.
+The configured private storage adapter owns quarantined and released file bytes.
+Camunda owns process position and human task state. React owns transient
+presentation state only.
 
 All cross-boundary operations use outbox, idempotency and reconciliation. The
 system exposes freshness or pending state instead of inventing success.
@@ -352,12 +380,12 @@ system exposes freshness or pending state instead of inventing success.
 The capability is complete only when:
 
 1. every representative role can complete its action journey (`My requests` for
-   Customers and `My actions` for staff) and cannot see sibling, ancestor or
+   Customers and `My assigned actions` for staff) and cannot see sibling, ancestor or
    unrelated action items;
 2. every required event creates one correctly scoped notification and replay
    creates no duplicate;
-3. a Customer can download released PDF, DOCX and PPTX artefacts or open an
-   approved HTTPS product link from both dashboard and request detail;
+3. a Customer can download released PDF, DOCX, PPTX, PNG and JPEG artefacts or
+   open an approved HTTPS product link from both dashboard and request detail;
 4. malicious, mismatched, oversized, unscanned, unreleased, replaced and
    cross-Customer artefacts are denied;
 5. an administrator can prepare and validate proposed changes, a separate

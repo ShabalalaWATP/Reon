@@ -275,10 +275,6 @@ class Settings(BaseSettings):
         return self
 
     @property
-    def audit_hmac_key_bytes(self) -> bytes | None:
-        return self.audit_hmac_keys.get(self.audit_hmac_active_key_id)
-
-    @property
     def audit_hmac_keys(self) -> dict[str, bytes]:
         if self.audit_hmac_keyring is not None:
             parsed = json.loads(self.audit_hmac_keyring.get_secret_value())

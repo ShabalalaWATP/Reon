@@ -1,5 +1,43 @@
 # Recovery evidence
 
+## Current worker and analytics recovery verification, 18 August 2026
+
+The maintainability candidate connects recovery paths that were previously
+implemented only as internal functions. The operator maintenance interface now
+exposes:
+
+```powershell
+uv run --directory apps/api python -m mist_service.maintenance `
+  rebuild-analytics --request-limit 1000
+uv run --directory apps/api python -m mist_service.maintenance `
+  replay-operational-analytics `
+  --start 2026-08-17T00:00:00+00:00 `
+  --end 2026-08-18T00:00:00+00:00 `
+  --source-limit 1000
+```
+
+Projection rebuild refuses limits outside 1 to 5,000 and fails before changing
+projection state when the complete source set exceeds the selected limit.
+Operational replay requires an explicit timezone-aware interval and a bounded
+source count. It uses stable opaque source keys and insert-once facts, so retry
+does not rewrite or duplicate prior facts. Analytics definition metadata is
+persisted by key and version and must match the code-owned label, description,
+unit and active state. A change without a version increment fails closed.
+
+Notification projection recovery now processes each event in its own
+transaction. A failed event receives content-free failure state and bounded
+retry delay, later events in the batch remain eligible for repair, and an
+aggregate exception makes durable worker job accounting record the unsuccessful
+iteration. Cancellation is propagated and is not misreported as an ordinary
+event failure.
+
+A 21-test focused selection covering the worker-accounting and analytics-
+definition corrections passed, followed by the complete 1,410-test backend
+suite with 13 environment-specific skips. This is source and automated recovery
+evidence. No fresh live worker-kill, large-dataset analytics rebuild, joined
+multi-store restore or target-environment disaster-recovery rehearsal was run on
+18 August, so the corresponding detailed recovery gates remain open.
+
 ## Camunda interruption
 
 Recorded on 7 August 2026 using the local PostgreSQL and Camunda topology.

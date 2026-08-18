@@ -22,9 +22,9 @@ from mist_service.models import (
     WorkflowInstanceStatus,
     WorkflowOutbox,
 )
-from mist_service.workflow.fake import FakeWorkflowEngine
 from mist_service.workflow.lookup import TaskLookupPolicy
 from mist_service.workflow_dispatch import WorkflowOutboxDispatcher
+from workflow_test_support import FakeWorkflowEngine
 
 
 async def test_direct_and_draft_requests_dispatch_the_pinned_workflow(

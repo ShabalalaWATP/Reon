@@ -1,5 +1,7 @@
 # Request and workflow authorisation hardening
 
+Status: implemented current authorisation contract. Last reviewed 18 August 2026.
+
 ## Decision
 
 Request-event audience is server-owned persisted data. Customer request history
@@ -10,7 +12,7 @@ cursor pagination.
 
 Every delivery completion boundary locks and revalidates the current actor and all
 active request participants. The single Lead must match the request Lead, and the
-Lead plus every Contributor must still be active Delivery Specialists with a
+Lead plus every additional Analyst must still be active Team Analysts with a
 current membership of the exact assigned delivery team. Assignment validates the
 complete proposed participant set by the same rule. Stale participant IDs are not
 projected into actions or notifications.
@@ -30,7 +32,7 @@ membership.
 - Customer history never returns a `STAFF_ONLY` event, across all pages.
 - Staff tracking retains the complete authorised event history.
 - Legacy `CURRENT_OWNER` and internal events are backfilled to `STAFF_ONLY`.
-- Dispatch and finalisation fail closed after any Lead or Contributor becomes
+- Dispatch and finalisation fail closed after any Lead or additional Analyst becomes
   inactive, changes role or leaves the assigned team.
 - Action and notification projections omit stale participants.
 - Customers cannot enumerate global organisation or staffing data.

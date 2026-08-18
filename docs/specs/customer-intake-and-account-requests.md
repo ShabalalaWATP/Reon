@@ -1,8 +1,10 @@
 # Customer intake and account requests
 
+Status: implemented current Customer contract. Last reviewed 18 August 2026.
+
 ## Outcome
 
-Customers can request an Mist account from the sign-in page and submit a complete service brief without choosing an internal organisation, team or recipient. Administrators can review access requests. Internal routing remains a human decision after submission.
+Customers can request a Mist account from the sign-in page and submit a complete service brief without choosing an internal organisation, team or recipient. Administrators can review access requests. Internal routing remains a human decision after submission.
 
 ## Service-request acceptance criteria
 
@@ -13,7 +15,7 @@ Customers can request an Mist account from the sign-in page and submit a complet
 - Period end cannot precede period start and the required-by date cannot be in the past.
 - The Customer is the release recipient. Internal routing and assignment are selected later by authorised people.
 - Incomplete private drafts remain permitted, but a draft cannot enter workflow until it satisfies the complete request contract.
-- `My requests` is the Customer home and action workspace. Clarification responses, released products and feedback due are grouped with the affected request rather than duplicated in the staff-only `My actions` page.
+- `My requests` is the Customer home and action workspace. Clarification responses, released products and feedback due are grouped with the affected request rather than duplicated in the staff-only `My assigned actions` page.
 - Customer action notifications deep-link to the affected request. A notification does not replace the action state held on the request.
 
 ## Customer profile acceptance criteria

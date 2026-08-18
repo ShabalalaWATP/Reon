@@ -1,14 +1,15 @@
-"""Notification repair and maintenance-loop branch coverage."""
+"""Notification repair branch coverage."""
 
 from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime, timedelta
-from typing import Any, cast
+from uuid import UUID
 
 import pytest
 from sqlalchemy import func, select
 
+import mist_service.request_event_projection as projection_module
 from conftest import ApiHarness
 from mist_service.action_notification_models import (
     NotificationAccessKind,
@@ -17,17 +18,20 @@ from mist_service.action_notification_models import (
     NotificationProjectionStatus,
     NotificationRecipient,
 )
+from mist_service.maintenance_models import MaintenanceJobState
 from mist_service.models import UserRole
+from mist_service.repositories.maintenance_leases import HEARTBEAT_JOB
 from mist_service.repositories.notification_projection import (
     RecipientRule,
     SqlAlchemyNotificationProjectionRepository,
 )
-from mist_service.request_event_projection import NotificationProjectionReconciler
-from mist_service.request_notification_projection import serialise_rule
-from mist_service.workflow_maintenance import (
-    WorkflowMaintenanceHealth,
-    run_workflow_maintenance,
+from mist_service.request_action_projection import as_utc
+from mist_service.request_event_projection import (
+    NotificationProjectionBatchFailed,
+    NotificationProjectionReconciler,
 )
+from mist_service.request_notification_projection import serialise_rule
+from mist_service.worker_runtime import MaintenanceJob, WorkerIteration
 
 
 async def _publish_pending(
@@ -110,24 +114,161 @@ async def test_notification_reconciler_projects_one_bounded_batch(
 
 
 @pytest.mark.asyncio
-async def test_notification_reconciler_rolls_back_invalid_audience(
+async def test_notification_reconciler_persists_failure_and_continues_batch(
     api_harness: ApiHarness,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    user_id = await api_harness.user_id("admin2")
+    rule = RecipientRule(
+        user_id,
+        NotificationAccessKind.ACCOUNT,
+        UserRole.REQUESTER,
+    )
+    failed = await _publish_pending(
+        api_harness,
+        key="account-security:projection-failure",
+        audience=[serialise_rule(rule)],
+    )
+    progressed = await _publish_pending(
+        api_harness,
+        key="account-security:progress-after-failure",
+        audience=[serialise_rule(rule)],
+    )
+    original_project = SqlAlchemyNotificationProjectionRepository.project_event
+    failed_once = False
+
+    async def project_then_fail_once(
+        projection: SqlAlchemyNotificationProjectionRepository,
+        event_id: UUID,
+        recipients: list[RecipientRule],
+        *,
+        projected_at: datetime,
+        update_checkpoint: bool = True,
+    ) -> list[NotificationRecipient]:
+        nonlocal failed_once
+        projected = await original_project(
+            projection,
+            event_id,
+            recipients,
+            projected_at=projected_at,
+            update_checkpoint=update_checkpoint,
+        )
+        if event_id == failed.id and not failed_once:
+            failed_once = True
+            raise RuntimeError("synthetic sensitive failure details")
+        return projected
+
+    monkeypatch.setattr(
+        SqlAlchemyNotificationProjectionRepository,
+        "project_event",
+        project_then_fail_once,
+    )
+
+    attempt_started = datetime.now(UTC)
+    failure_observed = attempt_started + timedelta(seconds=10)
+    clock_values = [attempt_started, failure_observed, failure_observed]
+
+    def slow_failure_clock() -> datetime:
+        if clock_values:
+            return clock_values.pop(0)
+        return datetime.now(UTC)
+
+    monkeypatch.setattr(projection_module, "_utc_now", slow_failure_clock)
+    reconciler = NotificationProjectionReconciler(
+        api_harness.sessions,
+        batch_size=2,
+    )
+    iteration = WorkerIteration(
+        api_harness.sessions,
+        (MaintenanceJob("notification-projection", reconciler.reconcile_once),),
+        lease_seconds=5,
+        owner="notification-test-worker",
+    )
+    assert not await iteration.run_once()
+
+    async with api_harness.sessions() as session:
+        stored_failed = await session.get(NotificationEvent, failed.id)
+        stored_progressed = await session.get(NotificationEvent, progressed.id)
+        assert stored_failed is not None
+        assert stored_progressed is not None
+        assert stored_failed.status is NotificationProjectionStatus.FAILED
+        assert stored_failed.attempts == 1
+        assert stored_failed.last_error == "RUNTIMEERROR"
+        assert as_utc(stored_failed.available_at) > failure_observed
+        assert stored_progressed.status is NotificationProjectionStatus.PROJECTED
+        failed_recipient_count = await session.scalar(
+            select(func.count(NotificationRecipient.id)).where(
+                NotificationRecipient.notification_event_id == failed.id
+            )
+        )
+        assert failed_recipient_count == 0
+        job = await session.get(MaintenanceJobState, "notification-projection")
+        heartbeat = await session.get(MaintenanceJobState, HEARTBEAT_JOB)
+        expected_error = NotificationProjectionBatchFailed.__name__
+        assert job is not None and job.last_error_code == expected_error
+        assert heartbeat is not None and heartbeat.last_error_code == expected_error
+
+    async with api_harness.sessions() as session, session.begin():
+        stored_failed = await session.get(NotificationEvent, failed.id)
+        assert stored_failed is not None
+        stored_failed.available_at = datetime.now(UTC) - timedelta(seconds=1)
+
+    assert await NotificationProjectionReconciler(
+        api_harness.sessions,
+        batch_size=1,
+    ).reconcile_once()
+    async with api_harness.sessions() as session:
+        repaired = await session.get(NotificationEvent, failed.id)
+        assert repaired is not None
+        assert repaired.status is NotificationProjectionStatus.PROJECTED
+        assert repaired.attempts == 2
+        assert repaired.last_error is None
+
+    async with api_harness.sessions() as session, session.begin():
+        await SqlAlchemyNotificationProjectionRepository(
+            session
+        ).mark_projection_failed(
+            failed.id,
+            error_code="LATE_FAILURE",
+            attempted_at=datetime.now(UTC),
+        )
+    async with api_harness.sessions() as session:
+        still_projected = await session.get(NotificationEvent, failed.id)
+        assert still_projected is not None
+        assert still_projected.status is NotificationProjectionStatus.PROJECTED
+        assert still_projected.attempts == 2
+        assert still_projected.last_error is None
+
+
+@pytest.mark.asyncio
+async def test_notification_reconciler_propagates_cancellation_without_failure(
+    api_harness: ApiHarness,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     event = await _publish_pending(
         api_harness,
-        key="account-security:invalid-audience",
-        audience=[
-            {
-                "userId": "",
-                "accessKind": NotificationAccessKind.ACCOUNT.value,
-                "requiredRole": UserRole.REQUESTER.value,
-                "requiredScope": None,
-                "organisationUnitId": None,
-            }
-        ],
+        key="account-security:cancelled-projection",
+        audience=[],
     )
 
-    with pytest.raises(ValueError):
+    async def cancel_projection(
+        _projection: SqlAlchemyNotificationProjectionRepository,
+        _event_id: UUID,
+        _recipients: list[RecipientRule],
+        *,
+        projected_at: datetime,
+        update_checkpoint: bool = True,
+    ) -> list[NotificationRecipient]:
+        del projected_at, update_checkpoint
+        raise asyncio.CancelledError
+
+    monkeypatch.setattr(
+        SqlAlchemyNotificationProjectionRepository,
+        "project_event",
+        cancel_projection,
+    )
+
+    with pytest.raises(asyncio.CancelledError):
         await NotificationProjectionReconciler(api_harness.sessions).reconcile_once()
 
     async with api_harness.sessions() as session:
@@ -135,76 +276,4 @@ async def test_notification_reconciler_rolls_back_invalid_audience(
         assert stored is not None
         assert stored.status is NotificationProjectionStatus.PENDING
         assert stored.attempts == 0
-
-
-class _MaintenanceStep:
-    def __init__(
-        self,
-        result: bool,
-        *,
-        stop: asyncio.Event | None = None,
-        error: Exception | None = None,
-    ) -> None:
-        self.result = result
-        self.stop = stop
-        self.error = error
-        self.calls = 0
-
-    async def dispatch_once(self) -> bool:
-        return await self._run()
-
-    async def reconcile_once(self) -> bool:
-        return await self._run()
-
-    async def _run(self) -> bool:
-        self.calls += 1
-        if self.stop is not None:
-            self.stop.set()
-        if self.error is not None:
-            raise self.error
-        return self.result
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("notification_worked", [True, False])
-async def test_maintenance_runs_optional_notification_reconciler(
-    notification_worked: bool,
-) -> None:
-    stop = asyncio.Event()
-    dispatcher = _MaintenanceStep(False)
-    workflow_reconciler = _MaintenanceStep(False)
-    notification_reconciler = _MaintenanceStep(
-        notification_worked,
-        stop=stop,
-    )
-
-    await run_workflow_maintenance(
-        cast(Any, dispatcher),
-        cast(Any, workflow_reconciler),
-        stop,
-        notification_reconciler=cast(Any, notification_reconciler),
-    )
-
-    assert dispatcher.calls == 1
-    assert workflow_reconciler.calls == 1
-    assert notification_reconciler.calls == 1
-
-
-@pytest.mark.asyncio
-async def test_maintenance_supervises_notification_reconciler_failure() -> None:
-    stop = asyncio.Event()
-    failure = RuntimeError("synthetic reconciliation failure")
-    notification_reconciler = _MaintenanceStep(False, stop=stop, error=failure)
-    health = WorkflowMaintenanceHealth()
-
-    await run_workflow_maintenance(
-        cast(Any, _MaintenanceStep(False)),
-        cast(Any, _MaintenanceStep(False)),
-        stop,
-        notification_reconciler=cast(Any, notification_reconciler),
-        health=health,
-    )
-
-    assert notification_reconciler.calls == 1
-    assert health.consecutive_failures == 1
-    assert health.last_failure_at is not None
+        assert stored.last_error is None

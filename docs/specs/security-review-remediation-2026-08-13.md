@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-Status: implementation approved on 13 August 2026.
+Status: implemented and locally verified. Last reviewed 18 August 2026.
 
 This specification covers every confirmed finding from the full application,
 browser, workflow, data, dependency, container and operations security review.
@@ -34,9 +34,9 @@ below requires a focused regression or adversarial test.
 - Customer-visible request history contains Customer-addressed and public
   lifecycle events only. Internal current-owner coordination remains available
   to authorised staff and is never inferred from a JSON convention alone.
-- At workflow dispatch and final persistence, the lead and every contributor are
-  active Analysts in the exact current delivery team. A stale participant gains
-  no request, action or notification metadata.
+- At workflow dispatch and final persistence, the Lead and every additional
+  assigned Team Analyst are active in the exact current delivery team. A stale
+  participant gains no request, action or notification metadata.
 - Customers cannot enumerate the global organisational or staffing topology.
   Submission continues to expose only the routing choices required for that
   Customer operation.

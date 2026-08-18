@@ -2,6 +2,7 @@
 
 Status: local release-candidate procedure
 Production owner: pending nomination
+Last reviewed: 18 August 2026
 
 ## Preconditions
 
@@ -22,16 +23,17 @@ bodies containing operational detail into an unrestricted ticket.
 
 ```powershell
 docker compose ps
-Invoke-WebRequest http://localhost:8000/health -UseBasicParsing
-Invoke-WebRequest http://localhost:8000/ready -UseBasicParsing
-uv run --directory apps/api python -m mist_service.maintenance status
+Invoke-RestMethod http://127.0.0.1:8000/health
+Invoke-RestMethod http://127.0.0.1:8000/ready
+docker compose exec --no-TTY api python -m mist_service.maintenance health-snapshot
 ```
 
 Expected local results are running or healthy containers, HTTP 200 for health,
-HTTP 200 for readiness and a content-free maintenance status with no failed
-supervisor. HTTP 503 readiness is a stop condition for new routing. Diagnose its
-named dependency before continuing. HTTP 200 health does not override failed
-readiness.
+HTTP 200 for readiness and an operational snapshot whose `status` is `ok` and
+whose `alerts` list is empty. The maintenance CLI has no `status` subcommand.
+HTTP 503 readiness or exit code 2 from `health-snapshot` is a stop condition for
+new routing. Diagnose the named dependency or alert before continuing. HTTP 200
+health does not override failed readiness.
 
 For a pre-0018 database whose imported current configuration has no independent
 approval and activation evidence, 503 is expected. Prepare, validate,

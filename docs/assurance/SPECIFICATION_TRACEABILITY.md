@@ -1,9 +1,10 @@
 # Specification, decision and threat traceability
 
-Recorded on 7 August 2026 and updated on 14 August 2026. Each implemented capability is mapped to its accepted
-Markdown specification, expensive-to-reverse decision record and current threat
-model. Shared foundation records apply where a feature uses an existing boundary
-rather than creating a new architectural decision.
+Recorded on 7 August 2026 and updated on 18 August 2026. Each implemented
+capability is mapped to its accepted Markdown specification,
+expensive-to-reverse decision record and current threat model. Shared foundation
+records apply where a feature uses an existing boundary rather than creating a
+new architectural decision.
 
 | Capability | Specification | ADR | Threat model |
 | --- | --- | --- | --- |
@@ -17,16 +18,20 @@ rather than creating a new architectural decision.
 | Shared and personal calendars | `team-visible-personal-calendar-events.md` | 0006, 0008 | `team-workspaces-and-calendars.md` |
 | Workflow board and agile planning | `team-operations-workspace-evolution.md` | 0006, 0009, 0028 | `team-workspaces-and-calendars.md` |
 | Team colleague profiles and task hasteners | `team-member-profiles-and-task-hasteners.md` | 0015, 0025, 0028 | `team-workspaces-and-calendars.md` |
+| Action-scoped workspace projections and overview redaction | `unified-organisation-workspaces.md`, `hierarchical-operational-overviews.md` | 0006, 0024, 0025 | `team-workspaces-and-calendars.md`, `management-and-analytics.md` |
 | Explainable related-request matching and human decisions | `manual-related-records.md` | 0012, 0027 | `service-request-workflow.md` |
 | Platform administration | `platform-administration-mvp.md` | 0005, 0013 | `platform-administration.md` |
+| Session-bound step-up credential rotation and cross-tab reconciliation | `platform-administration-mvp.md` | 0013 | `platform-administration.md`, `service-request-workflow.md` |
 | Retention, telemetry, backup and recovery | `operational-readiness.md` | 0014 | `operations-and-recovery.md` |
 | Action and notification workspace | `operational-product-evolution.md` | 0015 | `service-request-workflow.md` |
 | Managed product files and external links | `operational-product-evolution.md` | 0016 | `service-request-workflow.md` |
+| Bounded managed-product semantic inspection, scan admission and transfer cancellation | `managed-product-upload-hardening.md` | 0016, 0020 | `service-request-workflow.md`, `operations-and-recovery.md` |
 | Effective-dated organisation configuration | `operational-product-evolution.md` | 0017 | `platform-administration.md` |
 | Guided configuration and routing experience | `configuration-administration-usability.md` | 0018 | `platform-administration.md`, `service-request-workflow.md` |
 | Operator shell orientation and factual service timing | `operator-orientation-and-service-timing.md` | Existing shell and human-routing boundaries | `service-request-workflow.md` |
 | Maintainability, dead-code control and portable evaluation | `maintainability-and-portable-evaluation.md` | 0019 | `operations-and-recovery.md` |
 | Fenced maintenance, external-I/O phases and bounded operational feeds | `runtime-scaling-and-worker-hardening.md` | 0020 | `operations-and-recovery.md`, `service-request-workflow.md` |
+| Notification worker failure accounting and bounded analytics recovery | `runtime-scaling-and-worker-hardening.md`, `hierarchical-operational-overviews.md` | 0007, 0014, 0015, 0020, 0024 | `operations-and-recovery.md`, `management-and-analytics.md` |
 | Structured conversations, package envelopes, QC separation and bounded actor contexts | `structured-conversations-packages-and-contexts.md` | 0036 | `service-request-workflow.md` |
 | Executable SOLID, readability and maintainability programme | `solid-readability-maintainability-ratchets.md` | 0037 | `service-request-workflow.md`, `operations-and-recovery.md` |
 

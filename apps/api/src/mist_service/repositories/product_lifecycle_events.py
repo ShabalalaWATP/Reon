@@ -8,23 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mist_service.models import ServiceRequest
 from mist_service.product_models import ProductPackage
-from mist_service.product_types import PackageRecord
 from mist_service.repositories.event_store import append_request_event
 from mist_service.request_event_audience import RequestEventAudience
-
-
-def package_record(package: ProductPackage) -> PackageRecord:
-    return PackageRecord(
-        id=package.id,
-        request_id=package.request_id,
-        author_user_id=package.author_user_id,
-        status=package.status,
-        covering_note=package.covering_note,
-        package_checksum=package.package_checksum,
-        version=package.version,
-        package_version=package.package_version,
-        policy_version=package.policy_version,
-    )
 
 
 class ProductLifecycleEventMixin:

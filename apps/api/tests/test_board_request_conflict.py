@@ -56,7 +56,7 @@ async def test_requester_cannot_move_own_linked_package(
     actor_id, team_id = uuid4(), uuid4()
     board, package = _board(actor_id)
     monkeypatch.setattr(board_module, "authorise_package_change", AsyncMock())
-    service = BoardService(board, SimpleNamespace(), SimpleNamespace())
+    service = BoardService(board, board, SimpleNamespace(), SimpleNamespace())
 
     with pytest.raises(BoardItemNotFound):
         await service.move_package(
@@ -80,7 +80,11 @@ async def test_requester_cannot_change_own_linked_package_reservations(
     board, package = _board(actor_id)
     monkeypatch.setattr(planning_module, "authorise_package_change", AsyncMock())
     service = BoardPlanningService(
-        board, SimpleNamespace(), SimpleNamespace(), SimpleNamespace()
+        board,
+        board,
+        SimpleNamespace(),
+        SimpleNamespace(),
+        SimpleNamespace(),
     )
     if operation == "reserve":
         start = datetime.now(UTC) + timedelta(days=1)
@@ -110,7 +114,11 @@ async def test_requester_cannot_be_reservation_subject_on_linked_package(
     board, package = _board(requester_id)
     monkeypatch.setattr(planning_module, "authorise_package_change", AsyncMock())
     service = BoardPlanningService(
-        board, SimpleNamespace(), SimpleNamespace(), SimpleNamespace()
+        board,
+        board,
+        SimpleNamespace(),
+        SimpleNamespace(),
+        SimpleNamespace(),
     )
     start = datetime.now(UTC) + timedelta(days=1)
     command = ReservationCommand(

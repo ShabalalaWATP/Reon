@@ -1,7 +1,7 @@
 # Workflow and Camunda guide
 
 Status: current executable workflow
-Last reviewed: 17 August 2026
+Last reviewed: 18 August 2026
 
 This guide explains how a request moves through Mist Service. It is written for
 product owners, delivery staff, testers, developers and operators. No knowledge
@@ -255,6 +255,10 @@ Statistics follow the same hierarchy rule:
 Request narrative, product content, passwords, sessions, CSRF values and file
 bytes are never stored as Camunda variables.
 
+The same ownership boundary applies to storage. Local Camunda primary/runtime
+volumes and its PostgreSQL secondary-storage database are Camunda-owned. Mist
+uses the supported V2 API and never queries or updates either store directly.
+
 ### Durable command pattern
 
 ![Durable workflow command and reconciliation](../assets/architecture/05-durable-workflow-command.svg)
@@ -263,10 +267,14 @@ PostgreSQL and Camunda cannot commit one shared database transaction. Mist uses
 a durable command pattern instead:
 
 1. authorise the actor and validate the current version;
-2. commit the requested action and audit context in PostgreSQL;
-3. let the fenced worker call Camunda without holding a database lock;
-4. prove the exact task or process result; and
-5. commit the new visible projection and audit event.
+2. commit the requested action, audit context, owner and generation in
+   PostgreSQL;
+3. let the fenced start, command or cancellation dispatcher call Camunda without
+   holding a database transaction or row lock;
+4. prove the exact task, process, definition, owner and generation after success,
+   conflict, timeout or search lag; and
+5. reauthorise, compare the fence, then commit the new visible projection and
+   audit event.
 
 This makes retries safe and gives support staff an explicit pending or failed
 state instead of invented progress.
@@ -303,6 +311,11 @@ child at each routing stage. Adding a new command, Ops group or team therefore
 does not require a separate BPMN file for every organisation.
 
 ## Source and verification
+
+The editable architecture source and six reproducible presentation views are in
+the [Structurizr catalogue](structurizr/README.md). Validate the model with
+`render-svg.ps1 -ValidateOnly`; regenerate every workflow diagram with
+`render-svg.ps1` rather than editing SVG output.
 
 | Need | Source |
 |---|---|

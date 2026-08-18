@@ -1,6 +1,7 @@
 # Portable Kubernetes production target
 
 Status: target architecture only, not implemented or validated
+Last reviewed: 18 August 2026
 
 The repository contains no application Helm chart, Kubernetes manifests or
 infrastructure as code. These steps describe the intended delivery sequence and
@@ -16,18 +17,22 @@ flowchart TB
     Edge --> Web["Stateless React web pods"]
     Edge --> API["Stateless FastAPI pods"]
     API --> AppDB["Managed PostgreSQL application database"]
-    API --> Camunda["Camunda 8.9 supported Helm deployment"]
+    API -->|"V2 Orchestration Cluster API"| Camunda["Camunda 8.9 supported Helm deployment"]
+    Camunda --> CamundaDB["Separate Camunda secondary-storage PostgreSQL"]
+    Camunda --> CamundaPrimary["Camunda primary-state volumes"]
     API --> Objects["Private quarantine and released object storage"]
     API --> Scanner["Approved isolated scanning and CDR service"]
-    Worker["Dedicated workflow maintenance worker target"] --> AppDB
-    Worker --> Camunda
+    Worker["Dedicated workflow and projection worker target"] --> AppDB
+    Worker -->|"V2 Orchestration Cluster API"| Camunda
     Operator["Release jobs and audited operators"] --> AppDB
     Operator --> Camunda
 ```
 
-PostgreSQL, Camunda primary state and product objects are separate authorities.
-They require a joined recovery plan. The application already packages
-maintenance as the separately deployable `mist-worker` executable. A
+Application PostgreSQL, Camunda primary state, Camunda secondary storage and
+product objects have distinct ownership and recovery semantics. They require a
+joined recovery plan. Application code must not read Camunda-owned database
+tables. The application already packages asynchronous workflow and projection
+work as the separately deployable `mist-worker` executable. A
 production chart still needs to define its probes, resources, disruption
 policy, connection budget and replica strategy.
 

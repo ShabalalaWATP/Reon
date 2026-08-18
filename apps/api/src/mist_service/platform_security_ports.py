@@ -65,8 +65,6 @@ class AssistanceBudgetPort(Protocol):
 
 
 class AssistanceDirectoryPort(Protocol):
-    async def active_user_by_email(self, email: str) -> AssistanceUserRecord | None: ...
-
     async def active_user_by_email_hash(
         self, email_hash: str, key_id: str
     ) -> AssistanceUserRecord | None: ...
@@ -106,13 +104,3 @@ class PasswordAssistancePublisherPort(Protocol):
         administrator_ids: list[UUID],
         occurred_at: datetime,
     ) -> None: ...
-
-
-class PlatformSecurityApplicationPort(
-    ClassificationPort,
-    AssistanceBudgetPort,
-    AssistanceDirectoryPort,
-    AssistanceQueuePort,
-    Protocol,
-):
-    """Composition-facing union implemented by one transactional adapter."""

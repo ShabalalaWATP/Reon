@@ -1,5 +1,8 @@
 # Platform Administration Threat Model
 
+Status: living threat model
+Last reviewed: 18 August 2026
+
 ## Scope and assets
 
 This model covers the local/test account register, profile and membership edits,
@@ -32,6 +35,8 @@ administration dependencies.
 | A non-administrator calls an admin endpoint | Require an active `PLATFORM_ADMIN` at the route and final service boundary; return a non-disclosing denial |
 | An administrator uses the role to read request content | Use dedicated metadata schemas, repositories and navigation; retain explicit denial in every request, tracking, task and product policy |
 | Cross-site request forgery changes an account | Require the session-bound CSRF header and trusted origin on every mutation |
+| A bearer captured before step-up inherits the resulting privileged authority | Atomically rotate opaque bearer and CSRF credentials when elevation succeeds; the earlier bearer fails immediately and only the replacement HttpOnly cookie can use the elevated session |
+| A sibling tab restores stale credentials after step-up rotation | Broadcast only a secret-free rotation event, fetch replacement CSRF state through authenticated `/auth/me`, ignore stale responses and never promote a tab that is already anonymous |
 | A bounded but large configuration request either fails or writes into the read-only web image | Keep the container read-only and direct Nginx client/proxy buffering to its isolated, non-executable `/tmp` tmpfs; retain request-size limits and a configuration-body regression test |
 | A crafted role or membership bypasses scope | Accept enum roles and UUIDs only; validate role-to-unit-kind compatibility and exact membership cardinality in FastAPI |
 | Concurrent edits silently overwrite one another | Require `expectedVersion`, lock the target and return `409` for stale mutations |
@@ -74,6 +79,7 @@ administration dependencies.
 - Administrator and non-administrator list, detail and mutation tests.
 - Explicit administrator denials for request, tracker, work-item and product APIs.
 - CSRF, inactive-account, unknown-ID and malformed-membership tests.
+- Bearer/CSRF rotation, stale pre-step-up bearer and cross-tab race tests.
 - Self-deactivation, last-administrator and active-work conflict tests.
 - Stale version and competing username-allocation tests.
 - Session revocation and subsequent authentication denial tests.

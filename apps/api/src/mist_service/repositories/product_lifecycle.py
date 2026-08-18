@@ -19,7 +19,7 @@ from mist_service.product_types import ArtefactLifecycle, PackageRecord, Package
 from mist_service.repositories.product_access_repository import (
     ProductAccessRepositoryMixin,
 )
-from mist_service.repositories.product_lifecycle_events import package_record
+from mist_service.repositories.product_records import package_record
 from mist_service.repositories.product_release_accountability import (
     ProductReleaseAccountabilityRepositoryMixin,
 )

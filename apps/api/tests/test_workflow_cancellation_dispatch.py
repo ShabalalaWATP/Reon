@@ -21,7 +21,6 @@ from mist_service.models import (
     WorkflowOutbox,
 )
 from mist_service.workflow.errors import WorkflowTaskNotFound
-from mist_service.workflow.fake import FakeWorkflowEngine
 from mist_service.workflow.types import (
     CancelProcessCommand,
     ProcessStateQuery,
@@ -34,6 +33,7 @@ from mist_service.workflow_cancellation_dispatch import (
     PendingCancellation,
     WorkflowCancellationDispatcher,
 )
+from workflow_test_support import FakeWorkflowEngine
 
 
 async def _cancelled_request(harness: ApiHarness) -> UUID:

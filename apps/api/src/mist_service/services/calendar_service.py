@@ -13,8 +13,10 @@ from mist_service.calendar_models import (
 )
 from mist_service.calendar_ports import (
     CalendarCapacityPort,
+    CalendarEventPort,
+    CalendarIdentityPort,
     CalendarManagementPort,
-    CalendarRepositoryPort,
+    CalendarReadPort,
 )
 from mist_service.domain import Actor
 from mist_service.errors import (
@@ -68,22 +70,26 @@ __all__ = [
 class CalendarService:
     def __init__(
         self,
-        calendar: CalendarRepositoryPort,
+        reads: CalendarReadPort,
+        events: CalendarEventPort,
+        identities: CalendarIdentityPort,
         workspaces: TeamWorkspaceReadPort,
         capacity: CalendarCapacityPort,
         management: CalendarManagementPort,
     ) -> None:
-        self._calendar = calendar
+        self._reads = reads
+        self._events = events
+        self._identities = identities
         self._workspaces = workspaces
         self._capacity = capacity
-        self._access = CalendarAccessPolicy(calendar, workspaces, management)
+        self._access = CalendarAccessPolicy(identities, workspaces, management)
 
     async def personal(
         self, actor: Actor, start: datetime, end: datetime
     ) -> list[CalendarOccurrence]:
         self._require_staff(actor)
         _range(start, end)
-        return await self._calendar.list_personal(actor.id, start, end)
+        return await self._reads.list_personal(actor.id, start, end)
 
     async def team(
         self, actor: Actor, team_id: UUID, start: datetime, end: datetime
@@ -93,7 +99,7 @@ class CalendarService:
         await self._workspaces.require_projection_read(
             actor.id, team_id, ManagementAction.CALENDAR
         )
-        return await self._calendar.list_team(team_id, start, end)
+        return await self._reads.list_team(team_id, start, end)
 
     async def create_personal(
         self, actor: Actor, command: PersonalEventCommand
@@ -107,7 +113,7 @@ class CalendarService:
                 "Choose team-visible detail or select Private appointment."
             ),
         )
-        event = await self._calendar.create_event(
+        event = await self._events.create_event(
             actor_id=actor.id,
             subject_id=actor.id,
             team_id=None,
@@ -126,7 +132,7 @@ class CalendarService:
             actor, team_id, command.grant_id, ManagementAction.CALENDAR
         )
         _command(command)
-        event = await self._calendar.create_event(
+        event = await self._events.create_event(
             actor_id=actor.id,
             subject_id=actor.id,
             team_id=team_id,
@@ -147,16 +153,16 @@ class CalendarService:
             actor, team_id, command.grant_id, ManagementAction.CALENDAR
         )
         _command(command)
-        members = await self._calendar.current_team_members(team_id)
+        members = await self._identities.current_team_members(team_id)
         _require(command.subject_user_id in members, CalendarItemNotFound())
         _require(
-            await self._calendar.request_belongs_to_team(command.request_id, team_id),
+            await self._identities.request_belongs_to_team(command.request_id, team_id),
             CalendarItemNotFound(),
         )
         await self._access.require_no_requester_conflict(
             actor, command.request_id, command.subject_user_id
         )
-        event = await self._calendar.create_event(
+        event = await self._events.create_event(
             actor_id=actor.id,
             subject_id=command.subject_user_id,
             team_id=team_id,
@@ -171,46 +177,46 @@ class CalendarService:
         self, actor: Actor, event_id: UUID, command: CalendarEventUpdate
     ) -> CalendarEventResult:
         self._require_staff(actor)
-        event = await self._calendar.locked_event(event_id, command.expected_version)
+        event = await self._events.locked_event(event_id, command.expected_version)
         await self._access.authorise_event_change(actor, event)
         _command(command)
-        await self._calendar.replace_event(event, command)
+        await self._events.replace_event(event, command)
         return _result(event)
 
     async def cancel(
         self, actor: Actor, event_id: UUID, command: OccurrenceCancelCommand
     ) -> CalendarEventResult:
         self._require_staff(actor)
-        event = await self._calendar.locked_event(event_id, command.expected_version)
+        event = await self._events.locked_event(event_id, command.expected_version)
         await self._access.authorise_event_change(actor, event)
-        await self._calendar.cancel_event(event, command.reason)
+        await self._events.cancel_event(event, command.reason)
         return _result(event)
 
     async def cancel_occurrence(
         self, actor: Actor, event_id: UUID, command: OccurrenceCancelCommand
     ) -> CalendarEventResult:
         self._require_staff(actor)
-        event = await self._calendar.locked_event(event_id, command.expected_version)
+        event = await self._events.locked_event(event_id, command.expected_version)
         await self._access.authorise_event_change(actor, event)
         _require_occurrence(event, command.occurrence_start)
-        await self._calendar.cancel_occurrence(event, actor.id, command)
+        await self._events.cancel_occurrence(event, actor.id, command)
         return _result(event)
 
     async def edit_occurrence(
         self, actor: Actor, event_id: UUID, command: OccurrenceEditCommand
     ) -> CalendarEventResult:
         self._require_staff(actor)
-        event = await self._calendar.locked_event(event_id, command.expected_version)
+        event = await self._events.locked_event(event_id, command.expected_version)
         await self._access.authorise_event_change(actor, event)
         _require_occurrence(event, command.occurrence_start)
-        await self._calendar.edit_occurrence(event, actor.id, command)
+        await self._events.edit_occurrence(event, actor.id, command)
         return _result(event)
 
     async def split(
         self, actor: Actor, event_id: UUID, command: FutureSplitCommand
     ) -> CalendarEventResult:
         self._require_staff(actor)
-        event = await self._calendar.locked_event(event_id, command.expected_version)
+        event = await self._events.locked_event(event_id, command.expected_version)
         await self._access.authorise_event_change(actor, event)
         _require(
             event.recurrence is not RecurrenceFrequency.NONE,
@@ -224,7 +230,7 @@ class CalendarService:
                 "The replacement series must start at the split occurrence."
             ),
         )
-        replacement = await self._calendar.split_series(
+        replacement = await self._events.split_series(
             event,
             actor_id=actor.id,
             split_from=command.split_from,
@@ -241,7 +247,7 @@ class CalendarService:
         acknowledge: bool,
     ) -> CalendarEventResult:
         self._require_staff(actor)
-        event = await self._calendar.locked_event(event_id, command.expected_version)
+        event = await self._events.locked_event(event_id, command.expected_version)
         _require(
             event.kind is CalendarEventKind.COMMITMENT
             and event.subject_user_id == actor.id,
@@ -262,7 +268,7 @@ class CalendarService:
         status = (
             CommitmentStatus.ACKNOWLEDGED if acknowledge else CommitmentStatus.DISPUTED
         )
-        await self._calendar.set_commitment(event, status, command.reason)
+        await self._events.set_commitment(event, status, command.reason)
         return _result(event)
 
     async def preview_capacity(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import select, update
@@ -41,9 +42,28 @@ from mist_service.repositories.products import SqlAlchemyProductRepository
 from mist_service.repositories.request_route_initialisation import (
     initialise_request_route,
 )
-from mist_service.services.product_service import ProductService
+from mist_service.services.product_service import (
+    ProductService,
+    ProductServiceRepositories,
+)
 
 PDF_MEDIA = "application/pdf"
+
+
+def product_service_repositories(repository: Any) -> ProductServiceRepositories:
+    """Expose one test adapter through each narrow product persistence role."""
+
+    return ProductServiceRepositories(
+        packages=repository,
+        review_tasks=repository,
+        reviews=repository,
+        uploads=repository,
+        managed_uploads=repository,
+        upload_content=repository,
+        links=repository,
+        releases=repository,
+        customer_releases=repository,
+    )
 
 
 class RecordingAudit:
@@ -281,7 +301,7 @@ def product_service(
     audit: RecordingAudit,
 ) -> ProductService:
     return ProductService(
-        SqlAlchemyProductRepository(session),
+        product_service_repositories(SqlAlchemyProductRepository(session)),
         storage,
         SafeDocumentScanner(),
         AllowedHttpsLinkPolicy(frozenset({"products.example.test"})),

@@ -174,7 +174,6 @@ async def test_product_policy_and_attestation_reject_invalid_identity() -> None:
         assigned_team="Renamed Team",
         assigned_specialist_id=actor.id,
     )
-    assert not ProductServiceSupport._assigned_team(actor, request)  # type: ignore[arg-type]
     package = SimpleNamespace(
         status=PackageStatus.REVIEW_READY,
         author_user_id=actor.id,

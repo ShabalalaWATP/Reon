@@ -249,7 +249,7 @@ def test_audit_keyring_exposes_valid_key_material() -> None:
         audit_hmac_active_key_id="next",
         audit_hmac_keyring=SecretStr('{"next":"' + "n" * 32 + '"}'),
     )
-    assert settings.audit_hmac_key_bytes == b"n" * 32
+    assert settings.audit_hmac_keys == {"next": b"n" * 32}
     with pytest.raises(ValidationError, match="ClamAV host"):
         Settings(
             environment=Environment.TEST,

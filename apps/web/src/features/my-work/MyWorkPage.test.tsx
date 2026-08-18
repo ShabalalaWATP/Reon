@@ -94,12 +94,7 @@ describe("My actions", () => {
           return new Response(null, { status: 204 });
         return json(workspace);
       },
-      true,
-      true,
-      true,
-      false,
-      true,
-      false,
+      { disabledCapabilities: false, emptyActionWorkspace: false },
     );
     const user = userEvent.setup();
     const view = renderApp("/my-work");
@@ -181,12 +176,7 @@ describe("My actions", () => {
         }
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      true,
-      false,
-      true,
-      false,
+      { disabledCapabilities: false, emptyActionWorkspace: false },
     );
     const user = userEvent.setup();
     renderApp("/my-work");
@@ -237,12 +227,7 @@ describe("My actions", () => {
         }
         throw new Error(`Unexpected ${url.pathname}`);
       },
-      true,
-      true,
-      true,
-      false,
-      true,
-      false,
+      { disabledCapabilities: false, emptyActionWorkspace: false },
     );
 
     const user = userEvent.setup();

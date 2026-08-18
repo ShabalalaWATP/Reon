@@ -7,8 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mist_service.calendar_capacity import CalendarCapacityService
 from mist_service.calendar_ports import (
     CalendarCapacityPort,
+    CalendarEventPort,
+    CalendarIdentityPort,
     CalendarManagementPort,
-    CalendarRepositoryPort,
+    CalendarReadPort,
 )
 from mist_service.repositories.calendar import SqlAlchemyCalendarRepository
 from mist_service.repositories.calendar_management import (
@@ -26,7 +28,9 @@ def calendar_service(session: AsyncSession) -> CalendarService:
 
     calendar = SqlAlchemyCalendarRepository(session)
     return CalendarService(
-        cast(CalendarRepositoryPort, calendar),
+        cast(CalendarReadPort, calendar),
+        cast(CalendarEventPort, calendar),
+        cast(CalendarIdentityPort, calendar),
         cast(TeamWorkspaceReadPort, SqlAlchemyTeamWorkspaceRepository(session)),
         cast(CalendarCapacityPort, CalendarCapacityService(session, calendar)),
         cast(CalendarManagementPort, SqlAlchemyCalendarManagement(session)),

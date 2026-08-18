@@ -18,12 +18,15 @@ from mist_service.domain import Actor
 from mist_service.main import create_app
 from mist_service.models import UserRole
 from mist_service.product_errors import ProductDependencyUnavailable
+from mist_service.product_filesystem_storage import PrivateFilesystemObjectStorage
 from mist_service.product_ports import ScannerAssurance
-from mist_service.product_runtime import ProductRuntime, local_product_runtime
+from mist_service.product_runtime import ProductRuntime
+from mist_service.product_security import AllowedHttpsLinkPolicy, SafeDocumentScanner
 from mist_service.product_types import ScanDecision, ScanResult
 from mist_service.routers.capabilities import capabilities
 from mist_service.schemas.products import ManagedArtefactCreate, VersionCommand
 from mist_service.services.product_service import ProductService
+from product_test_support import product_service_repositories
 
 
 class ApprovedCdrScanner:
@@ -43,6 +46,20 @@ class ApprovedCdrScanner:
             scanner_version="1",
             reason_code="SYNTHETIC_TEST_ONLY",
         )
+
+
+def local_product_runtime(
+    private_root: Path,
+    *,
+    allowed_external_domains: frozenset[str] = frozenset(),
+) -> ProductRuntime:
+    """Build the test-only local runtime used by composition boundary tests."""
+
+    return ProductRuntime(
+        storage=PrivateFilesystemObjectStorage(private_root),
+        scanner=SafeDocumentScanner(),
+        link_policy=AllowedHttpsLinkPolicy(allowed_external_domains),
+    )
 
 
 def production_settings(private_root: Path, **overrides: Any) -> Settings:
@@ -143,7 +160,7 @@ async def test_every_managed_upload_stage_fails_before_repository_access(
         managed_file_uploads_enabled=False,
     )
     service = ProductService(
-        repository,
+        product_service_repositories(repository),
         runtime.storage,
         runtime.scanner,
         runtime.link_policy,

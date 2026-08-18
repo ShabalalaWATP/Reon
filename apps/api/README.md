@@ -6,37 +6,49 @@ projection. Camunda owns process position and human user-task lifecycle.
 
 ## Local development
 
-From the repository root, install every API dependency group:
+From the repository root, install every locked API dependency group:
 
 ```powershell
-uv sync --project apps/api --all-groups
+uv sync --project apps/api --all-groups --frozen
 ```
 
-Copy the repository `.env.example` to `.env`, replace its placeholder values, and
-then run migrations from this directory:
+The repository `.env.example` is for Compose. Its database and Camunda hosts use
+Compose DNS and its `DATABASE_URL` is the runtime identity, so do not use that
+file directly for a host-run API or Alembic command. Create separate untracked
+`.env.source` and `.env.migrate` files as described in
+[local source development](../../docs/deployment/LOCAL_SOURCE_DEVELOPMENT.md).
+Run migrations with the migration-owner URL:
 
 ```powershell
-uv run --directory apps/api --env-file ../../.env alembic upgrade head
+uv run --directory apps/api --env-file ../../.env.migrate alembic upgrade head
+uv run --directory apps/api --env-file ../../.env.migrate python -m mist_service.postgres_permissions
 ```
 
 Start only the API when its PostgreSQL and Camunda dependencies are already
 available:
 
 ```powershell
-uv run --directory apps/api --env-file ../../.env uvicorn mist_service.main:app --reload
+uv run --directory apps/api --env-file ../../.env.source uvicorn mist_service.main:app --reload
 ```
 
-Source-running the worker with semantic request matching enabled also needs the
-approved model in its offline cache. Download it once during an authorised
-development setup, then start the worker without network-dependent model access:
+The repository does not yet provide one source-mode cache preparation command
+that applies the image build's exact model revision and blob checks. Do not
+bootstrap source mode from the mutable model alias. Keep semantic enrichment
+disabled when source-running the worker; deterministic text matching remains
+available:
 
 ```powershell
-uv run --directory apps/api python -c "from fastembed import TextEmbedding; TextEmbedding(model_name='BAAI/bge-small-en-v1.5', cache_dir='.local/request-embedding-cache')"
-uv run --directory apps/api --env-file ../../.env mist-worker
+$env:REQUEST_MATCHING_SEMANTIC_ENABLED = "false"
+$env:HF_HUB_OFFLINE = "1"
+uv run --directory apps/api --env-file ../../.env.source mist-worker
 ```
 
-The normal Compose image bakes and checksum-verifies this cache during its
-build, so the runtime containers do not download request content or model data.
+Use the normal Compose image when semantic matching is required. It bakes and
+checksum-verifies the accepted cache during its build, sets `HF_HUB_OFFLINE=1`
+and runs without model-host access. A future source preparation script must reuse
+that exact revision and every blob digest before this restriction is removed. A
+source API and worker must use the same stable `SECURITY_PSEUDONYM_KEY` so
+restart or process boundaries do not change security-event pseudonyms.
 
 The normal full-stack entry point is the guarded helper from the repository root:
 

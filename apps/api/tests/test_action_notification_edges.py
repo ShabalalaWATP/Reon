@@ -40,7 +40,6 @@ from mist_service.request_notification_projection import (
     _assignee_rule,
     deserialise_rule,
     publish_request_notification,
-    recipient_rules,
     recipient_rules_for,
     serialise_rule,
 )
@@ -157,14 +156,6 @@ async def test_notification_policy_and_validation_edges(
             actor_id=specialist_id,
             reason="Synthetic current Lead for notification projection.",
         )
-        stored_policy_event = NotificationEvent(
-            request_id=request.id,
-            event_type="PRODUCT_WITHDRAWN",
-            audience=[],
-        )
-        assert (await recipient_rules(session, stored_policy_event))[
-            0
-        ].user_id == customer.id
         rules = await recipient_rules_for(session, "PRODUCT_WITHDRAWN", request)
         assert rules[0].access_kind is NotificationAccessKind.REQUESTER
         rules = await recipient_rules_for(session, "CLARIFICATION_ANSWERED", request)
@@ -180,10 +171,6 @@ async def test_notification_policy_and_validation_edges(
         with pytest.raises(ValueError):
             _assignee_rule(_request(RequestStatus.IN_PROGRESS))
 
-        missing = NotificationEvent(
-            request_id=uuid4(), event_type="TASK_ASSIGNED", audience=[]
-        )
-        assert await recipient_rules(session, missing) == []
         unknown = RequestEvent(type="unrelated", created_at=now)
         await publish_request_notification(session, unknown, request)
 

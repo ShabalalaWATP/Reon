@@ -1,6 +1,7 @@
 # Configuration reference
 
 Status: current application and local Compose settings
+Last reviewed: 18 August 2026
 
 Settings are read from environment variables through Pydantic. Variable names
 are case-insensitive in the API, but deployments should use the uppercase names
@@ -17,6 +18,10 @@ Compose output, passwords, session cookies or connection strings.
   characters.
 - Secrets should come from the platform secret manager in a connected target,
   not a ConfigMap, image, Git variable or command line.
+- Compose uses an explicit `environment` allowlist. A name in `.env.example`
+  is not automatically present in API or worker containers. Settings described
+  as operator-only or not forwarded must be supplied to the bounded operator
+  process that consumes them.
 
 ## Application database
 
@@ -55,10 +60,32 @@ Local PostgreSQL initialisation additionally uses:
 | `APP_DATABASE_USER` / `APP_DATABASE_PASSWORD` | Schema/migration owner used by the one-shot migrator. |
 | `APP_RUNTIME_DATABASE_USER` / `APP_RUNTIME_DATABASE_PASSWORD` | Least-privileged API role. |
 | `APP_BACKUP_DATABASE_USER` / `APP_BACKUP_DATABASE_PASSWORD` | Read-only dump role. |
+| `APP_MAINTENANCE_DATABASE_USER` / `APP_MAINTENANCE_DATABASE_PASSWORD` | Intended retention and legal-hold role. A fresh Compose database currently omits its database-level `CONNECT` grant, so apply operations are blocked. |
 | `MIGRATION_DATABASE_URL` | Async URL for the migration owner, consumed by the migrator. |
 
 Every local database identity and password must be distinct. Production database
-provisioning is not supplied by Compose.
+provisioning is not supplied by Compose. Do not grant disposal rights to the API
+role to work around the current maintenance-role provisioning defect.
+
+## Bounded maintenance commands
+
+| Variable | Default | Meaning and constraint |
+|---|---|---|
+| `MAINTENANCE_DATABASE_URL` | none | Async PostgreSQL URL used only by retention apply and legal-hold commands. It must identify the separately authorised maintenance role. The current runtime does not apply production scheme, server-identity or approved-CA validation to this URL, so non-loopback maintenance is not implemented. Not forwarded into Compose API or worker containers. |
+| `MAINTENANCE_OPERATOR_SUBJECT` | none | Bounded operator/deployment subject recorded by disposal and legal-hold actions. Not forwarded by Compose. |
+| `MAINTENANCE_DISPOSAL_AUTHORITY` | none | Must equal `RETENTION_DISPOSAL` for retention apply. Not forwarded by Compose. |
+| `MAINTENANCE_LEGAL_HOLD_AUTHORITY` | none | Must equal `LEGAL_HOLD_ADMIN` for legal-hold apply or release. Not forwarded by Compose. |
+
+Dry-run retention, health, recovery, analytics and workflow-attestation commands
+use `DATABASE_URL`. Apply retention and legal-hold commands construct a separate
+engine from `MAINTENANCE_DATABASE_URL`. The current fresh Compose database does
+not grant the maintenance role `CONNECT`, so those apply commands are not valid
+local evidence even when all four variables are set.
+
+Do not use maintenance apply or legal-hold release with real data or a
+non-loopback host until the runtime requires `postgresql+asyncpg`, verifies the
+server identity through an approved CA, binds retention preview and apply to one
+target and implements a reasoned, target-bound legal-hold release confirmation.
 
 ## Camunda
 
@@ -124,10 +151,17 @@ work. Production still needs edge protection for volumetric attacks.
 | `AUDIT_HMAC_KEY` | unique value of at least 32 bytes | Legacy single HMAC key for tamper-evident audit events. Required in production unless the versioned keyring is configured. |
 | `AUDIT_HMAC_ACTIVE_KEY_ID` | `legacy` | Safe identifier written on new audit events and anchors. Must name a key in the configured keyring. |
 | `AUDIT_HMAC_KEYRING` | JSON object of key ID to 32-byte-or-longer secret | Rotation keyring. Retain every historic key referenced by live events or backups; secrets must come from the approved secret store. |
+| `SECURITY_PSEUDONYM_KEY` | separate stable value of at least 32 bytes | One-way security-event pseudonym key. Required in production and must remain stable across API and worker replicas and restarts. |
+| `SECURITY_PSEUDONYM_KEY_ID` | `stable-v1` | Safe identifier for the active pseudonym key generation. |
 | `ALLOW_DEMO_USERS` | `true` | Permits synthetic fixture seeding. Must be `false` in production. |
 | `DEMO_USER_PASSWORD` | `admin` | Deliberately weak local-only shared fixture password. Must differ from infrastructure secrets. |
 
 Do not set `ALLOW_DEMO_USERS=true` outside an isolated synthetic environment.
+Current Compose forwards `AUDIT_HMAC_KEY` and `SECURITY_PSEUDONYM_KEY`, but not
+`AUDIT_HMAC_ACTIVE_KEY_ID`, `AUDIT_HMAC_KEYRING` or
+`SECURITY_PSEUDONYM_KEY_ID`. Uncommenting rotation values in the local `.env`
+therefore does not rotate a running Compose stack. Rotation requires an explicit
+runtime transport change and release evidence.
 
 ## Managed products
 
@@ -177,10 +211,23 @@ failure.
 | `PLANNING_EVOLUTION_ENABLED` | `false` | Enhanced planning/capacity capability. |
 | `STATISTICS_EVOLUTION_ENABLED` | `false` | Extended scoped statistics. |
 
-`.env.example` enables these features for the complete synthetic demonstration.
+`.env.example` enables these features for the complete synthetic demonstration,
+and `docker-compose.yml` forwards them explicitly.
 Enable them in another environment only after its acceptance evidence and data
 dependencies are ready. Feature flags reduce exposure; they are not
 authorisation controls.
+
+## Operator-shell backup and restore variables
+
+These variables are consumed by PowerShell recovery scripts, not Pydantic or
+Compose services:
+
+| Variable | Purpose |
+|---|---|
+| `MIST_BACKUP_DATABASE_URL` | Libpq URL for the read-only backup identity. |
+| `MIST_RESTORE_DATABASE_URL` | Restore-target URL consumed by libpq tools and the Python verifier. The current script has an open scheme incompatibility described in the backup runbook. |
+| `MIST_POSTGRES_APPROVED_SSL_ROOT_CERT` | Exact existing CA bundle required for a non-loopback backup or restore URL. |
+| `MIST_BACKUP_INTEGRITY_KEY_BASE64` | Separately stored HMAC key for backup-manifest authentication, at least 256 bits after base64 decoding. |
 
 ## Local host ports
 
@@ -200,15 +247,19 @@ development. Compose services always use container port 5432.
 With `ENVIRONMENT=prod`, settings validation requires:
 
 - demo users disabled and secure cookies;
+- a required fresh independent-worker heartbeat;
 - PostgreSQL/asyncpg with a TLS requirement in the URL;
 - an HTTPS Camunda endpoint and non-`NONE` authentication;
 - HTTPS browser origins and explicit allowed hosts;
-- an audit HMAC key and absolute product-storage path.
+- an audit HMAC key whose active ID exists in its keyring;
+- a stable security-pseudonym key;
+- an absolute product-storage path; and
+- an absolute request-embedding cache path when semantic matching is enabled.
 
-Application startup then rejects its built-in production managed-product
-runtime. Production still requires approved identity, product storage/scanning,
-secret injection, ingress and platform implementation described in
-[Production gates](PRODUCTION_GATES.md).
+When `MANAGED_PRODUCTS_ENABLED=true`, application startup rejects its built-in
+production managed-product runtime. Production still requires approved identity,
+product storage/scanning, secret injection, ingress and platform implementation
+described in [Production gates](PRODUCTION_GATES.md).
 
 Production application construction also removes `/openapi.json`, `/docs` and
 `/redoc`. Health and readiness routes are excluded from the schema and must be

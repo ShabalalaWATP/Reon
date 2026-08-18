@@ -98,26 +98,6 @@ async def align_admin_workspace_memberships(
         )
 
 
-async def align_admin_team_membership(
-    session: AsyncSession,
-    *,
-    user: User,
-    next_team_id: UUID | None,
-    actor_id: UUID,
-    at: datetime | None = None,
-) -> None:
-    """Compatibility wrapper for callers that manage one delivery team."""
-
-    await align_admin_workspace_memberships(
-        session,
-        user=user,
-        next_unit_ids={next_team_id} if next_team_id else set(),
-        workspace_position=WorkspacePosition.MEMBER,
-        actor_id=actor_id,
-        at=at,
-    )
-
-
 def _require(condition: bool, error: Exception) -> None:
     if condition:
         return

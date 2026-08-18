@@ -43,6 +43,9 @@ from mist_service.schemas.products import (
     VersionCommand,
 )
 from mist_service.services.product_repository_port import (
+    ProductLinkRepository,
+    ProductManagedUploadRepository,
+    ProductUploadContentRepository,
     ProductUploadServiceRepository,
 )
 from mist_service.services.product_service_collaborators import (
@@ -59,6 +62,9 @@ class ProductUploadService(ProductServiceSupport[ProductUploadServiceRepository]
     def __init__(
         self,
         repository: ProductUploadServiceRepository,
+        managed_uploads: ProductManagedUploadRepository,
+        upload_content: ProductUploadContentRepository,
+        links: ProductLinkRepository,
         storage: PrivateObjectStorage,
         scanner: DocumentScanner,
         link_policy: ExternalLinkPolicy,
@@ -72,11 +78,13 @@ class ProductUploadService(ProductServiceSupport[ProductUploadServiceRepository]
         managed_file_uploads_enabled: bool = True,
     ) -> None:
         super().__init__(repository)
+        self._managed_uploads = managed_uploads
+        self._upload_content = upload_content
         self._storage = storage
         self._scanner = scanner
-        self._links = ProductLinkAuthoriser(repository, link_policy)
+        self._links = ProductLinkAuthoriser(links, link_policy)
         self._upload_policy = ProductUploadPolicy(
-            repository,
+            managed_uploads,
             ProductStorageLimits(
                 package_bytes=maximum_package_bytes,
                 request_bytes=maximum_request_storage_bytes,
@@ -105,7 +113,7 @@ class ProductUploadService(ProductServiceSupport[ProductUploadServiceRepository]
             raise ProductValidationFailed(
                 "The attachment exceeds the configured limit."
             )
-        retry = await self._repository.managed_retry(
+        retry = await self._managed_uploads.managed_retry(
             package.id, command.idempotency_key
         )
         if retry is not None:
@@ -123,7 +131,7 @@ class ProductUploadService(ProductServiceSupport[ProductUploadServiceRepository]
             grant = await self._storage.issue_upload(
                 intent.object_key, expires_at=expires_at
             )
-            intent = await self._repository.refresh_upload_grant(
+            intent = await self._managed_uploads.refresh_upload_grant(
                 intent.id,
                 token_hash=self._token_hash(grant.token),
                 expires_at=grant.expires_at,
@@ -136,7 +144,7 @@ class ProductUploadService(ProductServiceSupport[ProductUploadServiceRepository]
         object_key = f"quarantine/{package.id}/{object_id}"
         expires_at = datetime.now(UTC) + self._upload_ttl
         grant = await self._storage.issue_upload(object_key, expires_at=expires_at)
-        artefact, intent = await self._repository.create_managed(
+        artefact, intent = await self._managed_uploads.create_managed(
             package.id,
             label=command.label,
             filename=filename,
@@ -206,12 +214,12 @@ class ProductUploadService(ProductServiceSupport[ProductUploadServiceRepository]
         package, request = await self._authorised_package(actor, package_id, lock=True)
         await self._require_draft_author(actor, package, request)
         require_supported_policy(package.policy_version)
-        row = await self._repository.upload_intent(package_id, intent_id, lock=True)
+        row = await self._upload_content.upload_intent(package_id, intent_id, lock=True)
         if row is None:
             raise ProductNotFound()
         _artefact, intent = row
         now = datetime.now(UTC)
-        token_hash = await self._repository.upload_token_hash(intent.id)
+        token_hash = await self._upload_content.upload_token_hash(intent.id)
         valid_token = token_hash is not None and hmac.compare_digest(
             self._token_hash(upload_token), token_hash
         )
@@ -242,7 +250,7 @@ class ProductUploadService(ProductServiceSupport[ProductUploadServiceRepository]
         ):
             await self._storage.delete_quarantine(intent.object_key)
             raise ProductValidationFailed("The uploaded bytes do not match the intent.")
-        await self._repository.mark_uploaded(intent.id, now=now)
+        await self._upload_content.mark_uploaded(intent.id, now=now)
         view = await self._repository.view(package.id)
         return UploadContentReceipt(
             intent_id=intent.id,
@@ -263,7 +271,7 @@ class ProductUploadService(ProductServiceSupport[ProductUploadServiceRepository]
         package, request = await self._authorised_package(actor, package_id, lock=True)
         await self._require_draft_author(actor, package, request)
         require_supported_policy(package.policy_version)
-        row = await self._repository.upload_intent(package_id, intent_id, lock=True)
+        row = await self._upload_content.upload_intent(package_id, intent_id, lock=True)
         if row is None:
             raise ProductNotFound()
         artefact, intent = row
@@ -288,7 +296,7 @@ class ProductUploadService(ProductServiceSupport[ProductUploadServiceRepository]
         if decision.result is ScanResult.CLEAN:
             released_key = f"released/{package_id}/{artefact.id}"
             await self._storage.promote(intent.object_key, released_key)
-        await self._repository.record_scan(
+        await self._upload_content.record_scan(
             artefact.id,
             command.idempotency_key,
             decision,

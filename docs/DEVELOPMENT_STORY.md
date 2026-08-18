@@ -3,6 +3,54 @@
 Entries are ordered newest first: the most recent date is at the top of the
 file and the earliest is at the bottom.
 
+## 18 August 2026: documentation authority and visual evidence refresh
+
+- Audited the complete product, architecture, deployment, operations,
+  assurance, security, threat-model, specification and reference set against
+  current source. Added complete architecture, operations, assurance, security,
+  threat-model, 41-specification and 37-ADR indexes.
+- Rebuilt the Structurizr workspace around the current runtime and human-led
+  workflow, added a pinned Docker-based validation/render script and generated
+  all seven committed SVGs from named views. Structurizr validation, XML parsing,
+  Chromium inspection and deterministic SHA-256 comparison pass.
+- Rebuilt the current Compose candidate, attested its workflow and seeded 89
+  synthetic journeys. Replaced all nine browser images with visually inspected
+  Chromium 151 captures at a consistent 1600 by 1000 viewport and recorded the
+  source, image, actors, routes and capture procedure.
+- Corrected current versions, migration head, roles, permissions, workspace
+  behaviour, operational commands and evidence state. Preserved ADRs and dated
+  assurance as historical records rather than rewriting them as current proof.
+- The audit exposed implementation limitations that current docs now state
+  plainly, including maintenance command safety, incompatible restore URL
+  contracts, incomplete optional-capability enforcement, source semantic-cache
+  provenance and visible stable organisation codes in current workspace badges.
+- Expanded the documentation currency checks to all nine screenshots, seven SVGs
+  and 42 current guides. The full repository static gate, documentation links,
+  duplication, terminology, operations contracts and visual-asset checks pass.
+
+## 18 August 2026: maintainability cleanup
+
+- Removed dead and test-only production code, moved `FakeWorkflowEngine` into
+  test support, and centralised duplicate implementations, contracts and
+  fixtures. Split application construction out of `create_app`, removed the
+  remaining wide ports, and consolidated frontend components, hooks, schemas
+  and test support without changing the product boundary.
+- Wired notification failure retry and worker-accounting paths that had existed
+  only as disconnected maintenance behaviour. Analytics maintenance commands
+  now reach their runtime entry points, and analytics definition integrity is
+  checked rather than assumed.
+- Focused backend tests pass, including all 12 architecture tests. Ruff, MyPy,
+  dead-code and file-line checks pass. The complete frontend suite passes with
+  582 tests, 98.80 per cent line coverage and 95.07 per cent branch coverage.
+- A read-only internal review found no application security regression in the
+  maintainability diff from base commit
+  `1e7c52ffe7d1649bedaea037470dd40430d2fc6f`; the uncommitted target was
+  recorded as a review note rather than release evidence. The independent quality
+  review findings were fixed and the focused recheck reported no remaining
+  issue. The complete backend suite passes with 1,410 tests (13
+  environment-specific tests skipped), 98.83 per cent line coverage and 95.10
+  per cent branch coverage.
+
 ## 17 August 2026: Codex Security remediation
 
 - Closed all findings from the focused Codex Security review. Workspace reads

@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-Status: implementation approved on 13 August 2026.
+Status: implemented and locally verified. Last reviewed 18 August 2026.
 
 This change covers the local container build boundary, content-minimised HTTP
 telemetry, PostgreSQL backup and restore tooling, and the local Camunda network

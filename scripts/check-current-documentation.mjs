@@ -4,11 +4,20 @@ import { join, resolve } from "node:path";
 const root = process.cwd();
 const currentGuides = [
   "README.md",
+  "SECURITY.md",
+  "apps/api/README.md",
+  "infra/README.md",
+  "workflow/README.md",
   "docs/README.md",
+  "docs/ENTERPRISE_READINESS_GAP_REGISTER.md",
   "docs/USER_STORIES.md",
+  "docs/adr/README.md",
+  "docs/architecture/README.md",
   "docs/architecture/SYSTEM_ARCHITECTURE.md",
   "docs/architecture/WORKFLOW_AND_BPMN.md",
   "docs/architecture/ORGANISATION_AND_ROUTING.md",
+  "docs/architecture/structurizr/README.md",
+  "docs/assurance/README.md",
   "docs/reference/ROLE_PERMISSION_MATRIX.md",
   "docs/deployment/README.md",
   "docs/deployment/HOST_SETUP.md",
@@ -20,6 +29,22 @@ const currentGuides = [
   "docs/deployment/KUBERNETES_TARGET.md",
   "docs/deployment/CONFIGURATION_REFERENCE.md",
   "docs/deployment/PRODUCTION_GATES.md",
+  "docs/deployment/RELEASE_RUNBOOK.md",
+  "docs/operations/README.md",
+  "docs/operations/BACKUP_RESTORE_AND_MAINTENANCE.md",
+  "docs/operations/BUSINESS_CONTINUITY_AND_DISASTER_RECOVERY.md",
+  "docs/operations/CONFIGURATION_AND_ROUTING_RUNBOOK.md",
+  "docs/operations/SUPPORT_AND_INCIDENT_RUNBOOK.md",
+  "docs/security/README.md",
+  "docs/security/AUDIT_EVENT_CATALOGUE.md",
+  "docs/security/LICENCE_POLICY.md",
+  "docs/specs/README.md",
+  "docs/threat-model/README.md",
+  "docs/threat-model/management-and-analytics.md",
+  "docs/threat-model/operations-and-recovery.md",
+  "docs/threat-model/platform-administration.md",
+  "docs/threat-model/service-request-workflow.md",
+  "docs/threat-model/team-workspaces-and-calendars.md",
 ];
 const staleCurrentStateTerms = [
   "RequestMessageForm",
@@ -39,8 +64,11 @@ const requiredCoverage = new Map([
     ["Windows 11", "MacBook", "Linux workstation or private VM", "AWS", "Google Cloud"],
   ],
 ]);
-const sourcePrefixes = ["apps/", "scripts/", "workflow/", ".github/"];
+const sourcePrefixes = ["apps/", "docs/", "infra/", "scripts/", "workflow/", ".github/"];
 const sourceNames = new Set([
+  ".env.example",
+  "README.md",
+  "SECURITY.md",
   "docker-compose.yml",
   "package.json",
   "pnpm-lock.yaml",

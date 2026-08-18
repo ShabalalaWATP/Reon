@@ -1,7 +1,7 @@
 # Runtime scaling and worker hardening specification
 
 Status: implemented and target-scale evidenced
-Last reviewed: 8 August 2026
+Last reviewed: 18 August 2026
 
 ## Objective
 
@@ -41,7 +41,7 @@ is explicitly outside scope.
   result after another worker acquires a later lease generation.
 - Keyset cursors contain ordering keys only. They carry no content or authority,
   are bounded at the HTTP boundary and fail closed when malformed.
-- Pagination must never widen role, route, team or requester scope.
+- Pagination must never widen role, route, team or Customer scope.
 - Product access audits are committed independently of the download stream and
   contain metadata only.
 
@@ -58,20 +58,26 @@ is explicitly outside scope.
 
 ## Worker contract
 
-The `mist-worker` process owns workflow-start dispatch, workflow-command
-dispatch, task reconciliation, notification projection and scheduled membership
-projection. Each loop:
+The `mist-worker` process owns workflow-start, workflow-command and workflow-
+cancellation dispatch, task reconciliation and scheduled membership projection.
+When their capabilities are enabled, it also owns notification projection,
+semantic request indexing and managed-upload cleanup. Password-assistance
+processing is always a worker job, never an in-process API background task. Each
+loop:
 
 1. records a durable heartbeat;
 2. executes bounded work, with outbox rows retaining their existing per-item
    leases;
 3. acquires named expiring leases for singleton reconciliation jobs;
-4. records success or a content-free failure code;
+4. records success or a content-free failure code; notification failures are
+   persisted individually and retried with bounded backoff;
 5. uses bounded idle backoff when no work is available.
 
-The API performs no maintenance work. Local Docker runs one worker service;
-production may run multiple replicas because work and singleton jobs are
-fenced.
+The API performs no periodic maintenance work. A mutating API call may attempt
+the durable workflow command it just recorded during the synchronous grace
+period, but the worker remains the recovery owner. Local Docker runs one worker
+service; production may run multiple replicas because work and singleton jobs
+are fenced.
 
 ## Performance target
 
@@ -80,7 +86,7 @@ The synthetic evidence target is at least:
 - 250 active users;
 - 2,500 Board packages;
 - 5,000 calendar occurrences;
-- 2,500 requester, work, tracking and history rows where the fixture supports
+- 2,500 Customer, work, tracking and history rows where the fixture supports
   the scope;
 - two overlapping worker replicas in the contention rehearsal;
 - ordinary page/API p95 below two seconds at the documented pilot concurrency;
@@ -91,7 +97,7 @@ claim. Connected production remains subject to the production gates.
 
 ## Acceptance result
 
-The current source passed the full requirement set on 8 August 2026, except the
+The 8 August 2026 milestone candidate passed the full requirement set, except the
 explicit WIP exclusion below. A clean PostgreSQL 17.9 database migrated to
 `0019_runtime_scaling` and held 2,500 request, draft, work and history rows,
 2,500 Board packages, 5,000 calendar events and 250 active users.
@@ -105,10 +111,10 @@ run returned 2,500 HTTP 200 responses, with 473.19 ms p95 and 576.60 ms p99.
 Production-built browser journeys loaded a second Customer, routing, Board and
 administrator page in 31.6 to 51.7 ms locally.
 
-The final clean regression run passed 858 backend tests at 98.83 per cent line
-and 95.18 per cent branch coverage. The frontend passed 284 tests at 99.49 per
-cent statements and 95.06 per cent branches. Both dimensions are enforced
-independently at a 95 per cent floor.
+That candidate's final clean regression run passed 858 backend tests at 98.83
+per cent line and 95.18 per cent branch coverage. The frontend passed 284 tests
+at 99.49 per cent statements and 95.06 per cent branches. Both dimensions are
+enforced independently at a 95 per cent floor.
 
 The content-free raw results and Playwright trace hashes are indexed by
 `output/load/runtime-scale-manifest.json`. These generated local artefacts are

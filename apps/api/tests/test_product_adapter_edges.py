@@ -22,7 +22,7 @@ from mist_service.product_errors import (
 )
 from mist_service.product_filesystem_storage import PrivateFilesystemObjectStorage
 from mist_service.product_ports import ScannerAssurance
-from mist_service.product_runtime import clamav_product_runtime, local_product_runtime
+from mist_service.product_runtime import clamav_product_runtime
 from mist_service.product_security import (
     AllowedHttpsLinkPolicy,
     SafeDocumentScanner,
@@ -162,13 +162,7 @@ async def test_filesystem_empty_chunks_limits_cleanup_and_missing_objects(
     assert not list((root / "quarantine/package").glob(".upload-*"))
 
 
-def test_runtime_factories_preserve_limits_and_fail_closed_domains(tmp_path) -> None:
-    local = local_product_runtime(
-        tmp_path / "local", allowed_external_domains=frozenset({"example.test"})
-    )
-    assert local.link_policy.normalise("https://example.test/")[1] == "example.test"
-    assert local.scanner_assurance is ScannerAssurance.LOCAL_HEURISTIC
-    assert local.approved_semantic_cdr is False
+def test_clamav_runtime_factory_preserves_limits() -> None:
     runtime = clamav_product_runtime(
         InMemoryPrivateObjectStorage(),
         AllowedHttpsLinkPolicy(frozenset()),

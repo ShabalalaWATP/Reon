@@ -1,26 +1,34 @@
 # Unified Organisation Workspaces
 
+Status: implemented with presentation gaps. Last reviewed 18 August 2026.
+
 ## Purpose
 
 Provide every staffed organisation unit with a useful shared workspace while
 preserving the difference between human-led routing functions and delivery
 teams. Every active member can maintain their own calendar availability.
-Managers receive bounded local administration. Delivery Managers may assign one
-Lead Analyst and several Contributors to a service request. Routing Managers do
-not assign routing work: an eligible user claims the Camunda task and records
-the routing decision themselves.
+Managers receive bounded local administration. Team Managers may assign one
+Lead Analyst and several additional Analysts to a service request. Routing
+Managers do not assign routing work: an eligible user claims the Camunda task
+and records the routing decision themselves.
 
 ## Workspace shape
 
-| Unit kind | Required views | Manager-only controls |
+| Unit kind | Current web panels | Manager-only controls |
 | --- | --- | --- |
-| JIOC root | Overview, Work queue, Calendar, People, Statistics, Activity | Membership and team events |
-| Command | Overview, Work queue, Calendar, People, Statistics, Activity | Membership and team events |
-| Ops group | Overview, Work queue, Calendar, People, Statistics, Activity | Membership and team events |
-| Delivery team | Overview, Work queue, Board, Calendar, People, Statistics, Activity | Membership, request assignment, commitments and WIP |
+| JIOC root | Overview, Work queue, Calendar, People and Activity | Membership, noticeboard, pinned links and team events |
+| Command | Overview, Work queue, Calendar, People and Activity | Membership, noticeboard, pinned links and team events |
+| Ops group | Overview, Work queue, Calendar, People and Activity | Membership, noticeboard, pinned links and team events |
+| Delivery team | Overview, Board, Calendar, People and Activity | Membership, noticeboard, pinned links, request assignment, commitments and WIP |
 
-The server returns capabilities for the selected unit. React does not infer
-authority from a role name, navigation item or organisation kind.
+`Statistics` is added only when the server returns its separately authorised
+view. The backend authority projection also reports `Planning` for delivery
+members and `Handover` for every readable workspace. Those values support the
+implemented planning APIs and future presentation, but the current web
+workspace has no separate Planning or Handover panel. This is an open
+implementation gap, not a released user journey. React filters the panels above
+against the server-returned views and does not infer authority from a role name,
+navigation item or organisation kind.
 
 The account menu and personal profile must present the representative workflow
 role and the effective workspace position as separate facts. For example, a

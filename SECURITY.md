@@ -29,5 +29,18 @@ complete.
 ## Production boundary
 
 Local passwords, unauthenticated local Camunda access, filesystem product
-storage and local Compose are evaluation-only. Review the production gates and
-threat models before considering any connected deployment.
+storage and local Compose are evaluation-only. Local step-up authentication
+rotates the opaque bearer and CSRF credentials together, but it is not approved
+OIDC, MFA, privileged-access management or enterprise account recovery.
+
+The local product inspectors and ClamAV composition are bounded detection
+controls, not semantic content disarm and reconstruction. Their concurrency
+limit is per process, not deployment-wide. Connected use therefore remains
+blocked pending approved private object storage, semantic CDR, shared scanner
+capacity, authenticated TLS Camunda access, independent security monitoring,
+joined recovery evidence and authorised staging security assessment.
+
+Review the production gates, threat models and current assurance matrices before
+considering any connected deployment. Internal review and local automated
+evidence do not constitute production accreditation or named security-owner
+acceptance.

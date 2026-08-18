@@ -28,8 +28,8 @@ from mist_service.product_types import (
     ReleaseAccessRecord,
 )
 from mist_service.services.product_repository_port import (
-    ProductAccessRepository,
-    ProductUploadRepository,
+    ProductLinkRepository,
+    ProductManagedUploadRepository,
 )
 
 
@@ -46,7 +46,7 @@ class ProductUploadPolicy:
 
     def __init__(
         self,
-        repository: ProductUploadRepository,
+        repository: ProductManagedUploadRepository,
         limits: ProductStorageLimits,
         *,
         enabled: bool,
@@ -96,7 +96,7 @@ class ProductLinkAuthoriser:
 
     def __init__(
         self,
-        repository: ProductAccessRepository,
+        repository: ProductLinkRepository,
         environment_policy: ExternalLinkPolicy,
     ) -> None:
         self._repository = repository

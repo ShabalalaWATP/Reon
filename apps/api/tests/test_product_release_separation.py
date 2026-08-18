@@ -29,6 +29,7 @@ from product_test_support import (
     add_claimed_release_task,
     create_product_request,
     product_actors,
+    product_service_repositories,
 )
 
 
@@ -73,7 +74,7 @@ async def test_dissemination_excludes_prior_product_decision_makers(
         await session.flush()
         await add_claimed_release_task(session, request_id, qc.id)
         service = ProductService(
-            repository,
+            product_service_repositories(repository),
             InMemoryPrivateObjectStorage(),
             SafeDocumentScanner(),
             AllowedHttpsLinkPolicy(frozenset({"products.example.test"})),

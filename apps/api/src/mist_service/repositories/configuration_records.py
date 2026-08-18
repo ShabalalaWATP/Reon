@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from mist_service.configuration_models import (
-    ApprovedWorkflowDefinition,
     ConfigurationCandidateGroup,
     ConfigurationHierarchyEdge,
     ConfigurationUnitRevision,
@@ -18,7 +17,6 @@ from mist_service.configuration_records import (
     stored_utc,
 )
 from mist_service.configuration_types import (
-    ApprovedWorkflowSpec,
     CandidateGroupSpec,
     ConfigurationDraftSpec,
     HierarchyEdgeSpec,
@@ -91,15 +89,3 @@ class ConfigurationBundle:
                 workflow_definition_id=template.workflow_definition_id,
             ),
         )
-
-
-def workflow_specification(
-    workflow: ApprovedWorkflowDefinition | None,
-) -> ApprovedWorkflowSpec | None:
-    if workflow is None:
-        return None
-    return ApprovedWorkflowSpec(
-        id=workflow.id,
-        compatibility_key=workflow.compatibility_key,
-        available=workflow.is_available,
-    )

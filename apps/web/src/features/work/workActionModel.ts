@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { workActionNames } from "../../lib/api/payloadSchemas";
 import type { WorkAction } from "../../lib/api/types";
 
 export type WorkActionName = WorkAction["action"];
@@ -124,27 +125,7 @@ const actionValidators: Partial<Record<WorkActionName, ActionValidator>> = {
 };
 
 const workActionSchemaBase = z.object({
-  action: z.enum([
-    "request_information",
-    "progress",
-    "close",
-    "provide_information",
-    "withdraw",
-    "send_to_allocation",
-    "return_to_triage",
-    "hold",
-    "resume",
-    "allocate",
-    "return_to_coordination",
-    "assign",
-    "return_for_reallocation",
-    "submit",
-    "request_clarification",
-    "provide_clarification",
-    "approve",
-    "changes_required",
-    "release",
-  ]),
+  action: z.enum(workActionNames),
   reason: z.string().optional(),
   note: z.string().optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"], { error: "Choose a priority." }).optional(),

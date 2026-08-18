@@ -1,6 +1,7 @@
 # Configuration and routing evidence
 
 Status: local automated and Chromium journey evidence recorded, not accepted
+Record created: 9 August 2026
 Revision: uncommitted working tree based on
 `9f520ba4cb2d648a5730b6420e63e956adac10d5`; no immutable candidate exists yet
 

@@ -11,8 +11,12 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.dml import Insert
 
 from mist_service.analytics_evolution_models import (
+    OPERATIONAL_ANALYTICS_DEFINITIONS,
+    AnalyticsDefinitionVersion,
+    OperationalAnalyticsDefinition,
     OperationalAnalyticsFact,
     OperationalFactType,
 )
@@ -22,7 +26,6 @@ from mist_service.organisation_models import (
     RequestRouteSelection,
 )
 
-DEFINITION_VERSION = 1
 PROJECTION_VERSION = 1
 
 
@@ -57,6 +60,7 @@ async def append_operational_fact(
 ) -> bool:
     """Insert once using the production and test databases' conflict primitives."""
 
+    definition = OPERATIONAL_ANALYTICS_DEFINITIONS[fact.type]
     values = {
         "id": uuid4(),
         "source_key": fact.source_key,
@@ -69,11 +73,25 @@ async def append_operational_fact(
         "count_value": fact.count_value,
         "duration_seconds": fact.duration_seconds,
         "measure_minutes": fact.measure_minutes,
-        "definition_version": DEFINITION_VERSION,
+        "definition_version": definition.version,
         "projection_version": PROJECTION_VERSION,
     }
     dialect = session.get_bind().dialect.name
+    definition_values = {
+        "key": definition.key,
+        "version": definition.version,
+        "label": definition.label,
+        "description": definition.description,
+        "unit": definition.unit,
+        "is_active": True,
+    }
+    definition_statement: Insert
     if dialect == "postgresql":
+        definition_statement = (
+            postgresql_insert(AnalyticsDefinitionVersion)
+            .values(**definition_values)
+            .on_conflict_do_nothing(index_elements=["key", "version"])
+        )
         statement = (
             postgresql_insert(OperationalAnalyticsFact)
             .values(**values)
@@ -81,6 +99,11 @@ async def append_operational_fact(
             .returning(OperationalAnalyticsFact.id)
         )
     elif dialect == "sqlite":
+        definition_statement = (
+            sqlite_insert(AnalyticsDefinitionVersion)
+            .values(**definition_values)
+            .on_conflict_do_nothing(index_elements=["key", "version"])
+        )
         statement = (
             sqlite_insert(OperationalAnalyticsFact)
             .values(**values)
@@ -89,7 +112,37 @@ async def append_operational_fact(
         )
     else:
         raise RuntimeError("operational analytics requires PostgreSQL or SQLite")
+    await session.execute(definition_statement)
+    recorded_definition = await session.scalar(
+        select(AnalyticsDefinitionVersion).where(
+            AnalyticsDefinitionVersion.key == definition.key,
+            AnalyticsDefinitionVersion.version == definition.version,
+        )
+    )
+    _require_matching_definition(recorded_definition, definition)
     return (await session.execute(statement)).scalar_one_or_none() is not None
+
+
+def _require_matching_definition(
+    recorded: AnalyticsDefinitionVersion | None,
+    expected: OperationalAnalyticsDefinition,
+) -> None:
+    """Reject metadata drift unless code explicitly advances the definition."""
+    if recorded is not None and (
+        recorded.label,
+        recorded.description,
+        recorded.unit,
+        recorded.is_active,
+    ) == (
+        expected.label,
+        expected.description,
+        expected.unit,
+        True,
+    ):
+        return
+    raise RuntimeError(
+        "Operational analytics definition metadata changed without a version increment."
+    )
 
 
 async def request_operational_scope(

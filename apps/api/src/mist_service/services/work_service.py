@@ -50,11 +50,6 @@ class WorkService:
         self._repository = repository
         self._dispatcher = dispatcher
 
-    async def list_items(self, actor: Actor) -> list[WorkItem]:
-        bundles = await self._repository.list_for_actor(actor)
-        visible = [bundle for bundle in bundles if self._visible(actor, bundle)]
-        return [self._with_actions(actor, bundle) for bundle in visible]
-
     async def list_page(
         self,
         actor: Actor,
