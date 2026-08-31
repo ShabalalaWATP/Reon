@@ -3,7 +3,7 @@
 FROM golang:1.26.6-alpine3.23@sha256:5978cc992ad5ef96a7469713c8af849c1433824761ce3be2c56381403cd8d9a3 AS build
 RUN GOBIN=/out go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
 
-FROM alpine:3.23@sha256:fd791d74b68913cbb027c6546007b3f0d3bc45125f797758156952bc2d6daf40
+FROM alpine:3.24@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
 COPY --from=build /out/actionlint /usr/local/bin/actionlint
 WORKDIR /repo
 ENTRYPOINT ["actionlint"]
