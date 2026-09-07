@@ -2,7 +2,7 @@
 
 # Keep the reviewed v8.30.1 rules and CLI while rebuilding its static binary
 # with patched Go and x/* modules.
-FROM golang:1.26.6-alpine3.23@sha256:5978cc992ad5ef96a7469713c8af849c1433824761ce3be2c56381403cd8d9a3 AS build
+FROM golang:1.27.1-alpine3.23@sha256:d9e2f2f07b10cc922da3e80e035c3058810b328d5aef82d2c63680967c5e2ec9 AS build
 WORKDIR /build
 RUN go mod init mist.local/gitleaks-build \
     && go get github.com/zricethezav/gitleaks/v8@v8.30.1 \
