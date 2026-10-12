@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile-upstream:master@sha256:655d8ec53fd4a740c5e5a7031454a72020caf93841bad4a9f7f4f4d85929c083
 
-FROM trufflesecurity/trufflehog:3.96.0@sha256:aa821cf4ace8861c7d096d83818cdf7bb9719028a52d37a52eaad44086a52577 AS tool
+FROM trufflesecurity/trufflehog:3.98.0@sha256:0f32a1d73e552eaf528a4ac0800a26d32169d159bcd77303c833eb9dcdcb848b AS tool
 
 FROM tool AS scan
 WORKDIR /repo
