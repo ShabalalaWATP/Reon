@@ -44,7 +44,7 @@ test = [
 ]
 
 [build-system]
-requires = ["hatchling==1.31.0"]
+requires = ["hatchling==1.32.4"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
@@ -52,7 +52,7 @@ packages = ["src/mist_service"]
 
 [tool.uv]
 exclude-newer = "7 days"
-build-constraint-dependencies = ["hatchling==1.31.0"]
+build-constraint-dependencies = ["hatchling==1.32.4"]
 default-groups = ["dev", "test"]
 
 [tool.pytest.ini_options]
