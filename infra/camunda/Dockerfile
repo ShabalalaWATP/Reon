@@ -1,4 +1,4 @@
-FROM camunda/camunda:8.9.14@sha256:0a3b161ddf9018d052f1e20bda0696cdf4667e8c749f6ac86f6586fb14598f58
+FROM camunda/camunda:8.10.6@sha256:fba3be5c2264dad524c246a1f7641bb47bd28bc3386bf6824e70519065b0f4ae
 
 USER 0:0
 
